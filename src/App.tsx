@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 
 import Index from "./pages/Index";
+import ExplorePage from "./pages/ExplorePage";
 import AuthPage from "./pages/AuthPage";
 import StudioShell from "./components/studio/StudioShell";
 import Dashboard from "./pages/studio/Dashboard";
@@ -20,6 +21,7 @@ const App = () => (
       <Routes>
         {/* Marketing */}
         <Route path="/" element={<Index />} />
+        <Route path="/explore" element={<ExplorePage />} />
         <Route path="/auth" element={<AuthPage />} />
 
         {/* Studio — all routes nested inside shell */}
