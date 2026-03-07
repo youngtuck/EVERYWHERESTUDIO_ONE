@@ -1,27 +1,21 @@
 const STATS = [
-  { value: "40", label: "AI Agents" },
-  { value: "12", label: "Output Formats" },
-  { value: "7", label: "Quality Gates" },
-  { value: "15min", label: "To Voice DNA" },
-  { value: "100%", label: "Your Voice" },
+  { num:"40", label:"Specialized Agents" },
+  { num:"12", label:"Output Formats" },
+  { num:"07", label:"Quality Gates" },
+  { num:"1000", label:"Betterish Maximum" },
+  { num:"3", label:"Layers — Watch Work Wrap" },
 ];
-
 const StatsBar = () => (
-  <section style={{ background: "#F8F8F8", borderTop: "1px solid #E8E8E8", borderBottom: "1px solid #E8E8E8", padding: "52px 24px" }}>
-    <div style={{
-      maxWidth: 1080, margin: "0 auto",
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      flexWrap: "wrap", gap: 32,
-    }} className="stats-inner">
-      {STATS.map((s, i) => (
-        <div key={s.label} className="fade-in" style={{ transitionDelay: `${i * 60}ms`, textAlign: "center", flex: "1 1 140px" }}>
-          <p style={{ fontSize: "clamp(32px, 4vw, 52px)", fontWeight: 800, color: "#0A0A0A", letterSpacing: "-2px", lineHeight: 1, marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>{s.value}</p>
-          <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "#BBBBBB", fontFamily: "'Afacad Flux', sans-serif" }}>{s.label}</p>
+  <div style={{ background:"var(--bg-secondary)", borderTop:"1px solid var(--border)", borderBottom:"1px solid var(--border)", padding:"28px" }}>
+    <div style={{ maxWidth:1100, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:20 }} className="stats-grid">
+      {STATS.map(s => (
+        <div key={s.num} style={{ textAlign:"center" }}>
+          <p style={{ fontSize:"clamp(28px,3vw,42px)", fontWeight:900, color:"var(--text-primary)", letterSpacing:"-2px", lineHeight:1, fontFamily:"'Afacad Flux',sans-serif" }}>{s.num}</p>
+          <p style={{ fontSize:10, fontWeight:600, letterSpacing:"1.5px", textTransform:"uppercase", color:"var(--text-muted)", marginTop:6, fontFamily:"'Afacad Flux',sans-serif" }}>{s.label}</p>
         </div>
       ))}
     </div>
-    <style>{`@media(max-width:500px){.stats-inner{gap:24px!important;justify-content:center!important}}`}</style>
-  </section>
+    <style>{`@media(max-width:700px){.stats-grid{grid-template-columns:repeat(3,1fr)!important}}`}</style>
+  </div>
 );
-
 export default StatsBar;

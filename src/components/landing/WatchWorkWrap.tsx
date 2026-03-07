@@ -1,147 +1,83 @@
-import { Eye, PenLine, Package } from "lucide-react";
-
-const STAGES = [
+const SECTIONS = [
   {
-    id: "watch", num: "01", label: "Watch", Icon: Eye,
-    headline: "Your market. Briefed daily.",
-    body: "Sentinel monitors your category, competitors, and signals around the clock. Every morning you wake up knowing what moved, what matters, what to act on. Intelligence reserved for analysts — now yours automatically.",
-    tags: ["Daily briefings", "Competitor tracking", "Trend signals", "Event radar"],
+    num:"01", id:"watch", label:"Watch",
+    headline:"Signal, not noise.",
+    body:"Before a word gets written, EVERYWHERE Studio does the intelligence work. Sentinel monitors your category overnight — surfacing what's moving, what's forming, what has your name on it. You wake up to a briefing. Three to five things that matter for your world today.",
+    detail:"Content triggers with angles. Competitor moves. Event radar. Trend signals. Everything organized and scannable. Tap what resonates — and you're already in a conversation with Watson.",
+    color:"#188FA7",
+    side: [
+      "Overnight category monitoring",
+      "Content triggers with ready angles",
+      "Competitor intelligence",
+      "Event radar with local scope",
+      "Trend signal detection",
+    ]
   },
   {
-    id: "work", num: "02", label: "Work", Icon: PenLine,
-    headline: "Your ideas. Your voice.",
-    body: "Bring a sentence, a voice memo, a half-formed thought. Watson draws it out. 40 specialist agents shape it into content that sounds exactly like you — not AI, not generic. Nine output types. Seven gates. Nothing ships that isn't ready.",
-    tags: ["Voice DNA", "40 agents", "7 quality gates", "9 output types"],
+    num:"02", id:"work", label:"Work",
+    headline:"The interview before the essay.",
+    body:"Watson, your First Listener, interviews you. Not a form. Not a prompt box. A conversation. Watson asks the questions that pull the real story out — the one that was stuck in your head, the one with the actual insight in it.",
+    detail:"What emerges sounds like you because it came from you. Voice DNA captures your rhythm, your vocabulary, your argumentative structure. It sharpens with every session. The longer you use it, the wider the gap.",
+    color:"#F5C642",
+    side: [
+      "Watson conversation-first production",
+      "Voice DNA — 3 layers, sharpening over time",
+      "7 Quality Gates in sequence",
+      "Betterish Score 0–1000",
+      "12 output formats from one session",
+    ]
   },
   {
-    id: "wrap", num: "03", label: "Wrap", Icon: Package,
-    headline: "Published. Tracked. Done.",
-    body: "One idea becomes 12 formats, each built natively for its platform. LinkedIn knows LinkedIn. Your podcast gets music cues. Your talk gets stage direction. It ships. The Impact System starts the clock.",
-    tags: ["12 formats", "Platform-native", "Impact tracking", "Delivery"],
+    num:"03", id:"wrap", label:"Wrap",
+    headline:"Every audience it deserves.",
+    body:"Real publishing means every piece of thinking you produce reaches every audience it deserves, in the format that audience actually uses, with nothing left on the table.",
+    detail:"A single idea becomes a complete publishing event. LinkedIn post, newsletter, podcast script, video brief, press release — all from one conversation. Export to any platform. Nothing left to chance.",
+    color:"#FFFFFF",
+    side: [
+      "12 format outputs from one session",
+      "Platform-native formatting",
+      "One-click export suite",
+      "Impact tracking",
+      "Scheduling integration (coming)",
+    ]
   },
 ];
 
 const WatchWorkWrap = () => (
-  <section id="watch" style={{ background: "#FFFFFF", padding: "120px 24px" }}>
-    <div style={{ maxWidth: 1080, margin: "0 auto" }}>
-
-      <div className="fade-up" style={{ marginBottom: 88 }}>
-        <p className="eyebrow" style={{ marginBottom: 16 }}>The System</p>
-        <h2 style={{
-          fontSize: "clamp(40px, 5.5vw, 68px)",
-          fontWeight: 800, color: "#0A0A0A",
-          letterSpacing: "-2.5px", lineHeight: 1.0,
-          fontFamily: "'Afacad Flux', sans-serif",
-        }}>
-          Watch. Work. Wrap.
-        </h2>
-        <p style={{
-          fontSize: 18, fontWeight: 400, color: "#777777",
-          maxWidth: 460, marginTop: 18, lineHeight: 1.65,
-          fontFamily: "'Afacad Flux', sans-serif",
-        }}>
-          Three layers. One system. The mountain between your idea and its audience — carried.
-        </p>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {STAGES.map((stage, i) => {
-          const isDark = i % 2 !== 0;
-          return (
-            <div key={stage.id} id={i === 1 ? "work" : undefined}
-              className="fade-up" style={{ transitionDelay: `${i * 80}ms` }}>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                borderRadius: 10,
-                overflow: "hidden",
-                border: "1px solid #E8E8E8",
-                marginBottom: 12,
-              }} className="stage-grid">
-                {/* Number panel */}
-                <div style={{
-                  background: isDark ? "#0A0A0A" : "#F8F8F8",
-                  padding: "60px 52px",
-                  display: "flex", flexDirection: "column", justifyContent: "space-between",
-                  order: isDark ? 1 : 0,
-                }}>
-                  <div>
-                    <span style={{
-                      fontSize: 9, fontWeight: 700, letterSpacing: "3px",
-                      textTransform: "uppercase",
-                      color: isDark ? "rgba(255,255,255,0.2)" : "#BBBBBB",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      display: "block", marginBottom: 20,
-                    }}>Stage {stage.num}</span>
-                    <span style={{
-                      fontSize: 112, fontWeight: 800, lineHeight: 1,
-                      letterSpacing: "-6px",
-                      color: isDark ? "rgba(255,255,255,0.04)" : "#EBEBEB",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      display: "block", marginBottom: 28,
-                    }}>{stage.num}</span>
+  <div>
+    {SECTIONS.map((s, i) => {
+      const dark = i === 0 || i === 2;
+      return (
+        <section key={s.id} id={s.id} style={{ background:dark?"#0A0A0A":"var(--bg-primary)", padding:"80px 28px", borderTop:`1px solid ${dark?"rgba(255,255,255,0.06)":"var(--border)"}` }}>
+          <div style={{ maxWidth:1100, margin:"0 auto", display:"grid", gridTemplateColumns:i===1?"1fr 1fr":"1fr 1fr", gap:60, alignItems:"start" }} className="www-grid">
+            {/* Left */}
+            <div style={{ order:i===1?1:0 }}>
+              <div style={{ display:"flex", alignItems:"baseline", gap:16, marginBottom:24 }}>
+                <span style={{ fontSize:72, fontWeight:900, color:dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)", letterSpacing:"-4px", lineHeight:1, fontFamily:"'Afacad Flux',sans-serif", userSelect:"none" }}>{s.num}</span>
+                <span style={{ fontSize:11, fontWeight:700, letterSpacing:"3px", textTransform:"uppercase", color:s.color, fontFamily:"'Afacad Flux',sans-serif" }}>{s.label}</span>
+              </div>
+              <h2 style={{ fontSize:"clamp(28px,3.5vw,44px)", fontWeight:900, letterSpacing:"-1.5px", color:dark?"#FFFFFF":"var(--text-primary)", marginBottom:20, fontFamily:"'Afacad Flux',sans-serif", lineHeight:1.05 }}>
+                {s.headline}
+              </h2>
+              <p style={{ fontSize:16, lineHeight:1.75, color:dark?"rgba(255,255,255,0.5)":"var(--text-secondary)", marginBottom:16, fontFamily:"'Afacad Flux',sans-serif" }}>{s.body}</p>
+              <p style={{ fontSize:14, lineHeight:1.7, color:dark?"rgba(255,255,255,0.35)":"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>{s.detail}</p>
+            </div>
+            {/* Right */}
+            <div style={{ order:i===1?0:1 }}>
+              <div style={{ background:dark?"rgba(255,255,255,0.02)":"var(--bg-secondary)", border:`1px solid ${dark?"rgba(255,255,255,0.06)":"var(--border)"}`, borderRadius:12, padding:"28px" }}>
+                {s.side.map((item, j) => (
+                  <div key={j} style={{ display:"flex", alignItems:"flex-start", gap:12, padding:"12px 0", borderBottom:j<s.side.length-1?`1px solid ${dark?"rgba(255,255,255,0.05)":"var(--border)"}`:undefined }}>
+                    <span style={{ fontSize:13, fontWeight:700, color:s.color, fontFamily:"'Afacad Flux',sans-serif", lineHeight:1, marginTop:2, flexShrink:0 }}>→</span>
+                    <span style={{ fontSize:14, color:dark?"rgba(255,255,255,0.6)":"var(--text-secondary)", fontFamily:"'Afacad Flux',sans-serif", lineHeight:1.5 }}>{item}</span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 7,
-                      background: isDark ? "rgba(255,255,255,0.05)" : "#EBEBEB",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <stage.Icon size={16} color={isDark ? "rgba(255,255,255,0.4)" : "#555555"} />
-                    </div>
-                    <span style={{
-                      fontSize: 26, fontWeight: 800,
-                      color: isDark ? "#ffffff" : "#0A0A0A",
-                      letterSpacing: "-0.5px",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                    }}>{stage.label}</span>
-                  </div>
-                </div>
-
-                {/* Content panel */}
-                <div style={{
-                  background: isDark ? "#F8F8F8" : "#0A0A0A",
-                  padding: "60px 52px",
-                  display: "flex", flexDirection: "column", justifyContent: "center",
-                  order: isDark ? 0 : 1,
-                }}>
-                  <h3 style={{
-                    fontSize: "clamp(24px, 2.8vw, 38px)",
-                    fontWeight: 800,
-                    color: isDark ? "#0A0A0A" : "#ffffff",
-                    letterSpacing: "-1px", lineHeight: 1.1,
-                    marginBottom: 20,
-                    fontFamily: "'Afacad Flux', sans-serif",
-                  }}>{stage.headline}</h3>
-                  <p style={{
-                    fontSize: 15, fontWeight: 400,
-                    color: isDark ? "#555555" : "rgba(255,255,255,0.5)",
-                    lineHeight: 1.75, marginBottom: 28,
-                    fontFamily: "'Afacad Flux', sans-serif",
-                  }}>{stage.body}</p>
-                  <div style={{
-                    borderTop: `1px solid ${isDark ? "#E8E8E8" : "rgba(255,255,255,0.07)"}`,
-                    paddingTop: 18,
-                    display: "flex", flexWrap: "wrap", gap: 8,
-                  }}>
-                    {stage.tags.map(t => (
-                      <span key={t} style={{
-                        fontSize: 10, fontWeight: 700, letterSpacing: "2px",
-                        textTransform: "uppercase",
-                        color: isDark ? "#BBBBBB" : "rgba(255,255,255,0.2)",
-                        fontFamily: "'Afacad Flux', sans-serif",
-                      }}>{t}</span>
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-    <style>{`@media(max-width:700px){.stage-grid{grid-template-columns:1fr!important}}`}</style>
-  </section>
+          </div>
+          <style>{`@media(max-width:768px){.www-grid{grid-template-columns:1fr!important}.www-grid>*{order:unset!important}}`}</style>
+        </section>
+      );
+    })}
+  </div>
 );
-
 export default WatchWorkWrap;
