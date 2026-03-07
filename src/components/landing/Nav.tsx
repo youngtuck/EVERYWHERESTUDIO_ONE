@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Logo from "./Logo";
+import Logo from "../Logo";
 
 const Nav = () => {
   const [scrolled, setScrolled] = useState(false);
