@@ -503,10 +503,9 @@ export default function Index() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "flex-end",
           gap: 0,
-          // Push text slightly below center to sit under the orb
-          paddingTop: "52vh",
+          paddingBottom: "14vh",
         }}>
           {/* Eyebrow */}
           <div style={{

@@ -1,21 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MAIA Orb</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #08080a; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-.orb-wrap { width: 300px; height: 300px; }
-.orb-wrap canvas { width: 100%; height: 100%; display: block; }
-</style>
-</head>
-<body>
-<div class="orb-wrap">
-  <canvas id="myOrb"></canvas>
-</div>
-<script src="orb.js"></script>
-<script>initOrb('myOrb', 300);</script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVERYWHERE Studio — Ideas to Impact</title>
+    <meta name="description" content="Composed Intelligence for Thought Leaders. One idea. Twelve formats. EVERYWHERE it belongs." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;450;500;600;700;800;900&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
