@@ -1,208 +1,63 @@
-import { useNavigate } from "react-router-dom";
-
 const STEPS = [
-  {
-    num: "01",
-    label: "Voice DNA",
-    tag: "Free · 15 minutes",
-    desc: "A conversation with Watson. He asks questions. You answer naturally. The system builds a precise model of how you think and communicate. This is the foundation everything else runs on.",
-    cta: "Start Here",
-    ctaLink: "voice-dna",
-    accent: "#4A90D9",
-  },
-  {
-    num: "02",
-    label: "Testdrive",
-    tag: "Free · One output",
-    desc: "Bring one real idea. Watson draws it out with questions, then 40 agents shape it into one format of your choice. You see exactly what EVERYWHERE Studio produces before committing to anything.",
-    cta: "Try It",
-    ctaLink: "voice-dna",
-    accent: "#9ca3af",
-  },
-  {
-    num: "03",
-    label: "Conversation",
-    tag: "30 minutes · With Mark",
-    desc: "If you want the full system, we talk. Not a sales call — a conversation about your goals, your market, and whether the system is the right tool for where you're trying to go.",
-    cta: "Get In Touch",
-    ctaLink: "contact",
-    accent: "#F5C642",
-  },
+  { num: "01", label: "Voice DNA", tag: "Free · 15 min", desc: "A conversation with Watson. He asks questions, you answer naturally. The system builds a precise model of how you think and communicate. Everything runs on this." },
+  { num: "02", label: "Testdrive", tag: "Free · 1 output", desc: "Bring one real idea. Watson draws it out, then the system shapes it into a format of your choice. You see what EVERYWHERE produces before committing to anything." },
+  { num: "03", label: "Conversation", tag: "30 min · With Mark", desc: "If you want the full system, we talk. Not a sales call — a conversation about your goals and whether this is the right tool for where you're trying to go." },
 ];
 
-const HowYouStart = () => {
-  const navigate = useNavigate();
+const HowYouStart = () => (
+  <section id="wrap" style={{ background: "#F8F8F8", padding: "120px 24px" }}>
+    <div style={{ maxWidth: 1080, margin: "0 auto" }}>
 
-  return (
-    <section
-      id="wrap"
-      style={{
-        background: "#f9fafb",
-        padding: "120px 24px",
-      }}
-    >
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
-
-        {/* Header */}
-        <div className="fade-up" style={{ marginBottom: 72 }}>
-          <span className="section-label" style={{ display: "block", marginBottom: 16 }}>
-            Getting Started
-          </span>
-          <h2
-            style={{
-              fontSize: "clamp(36px, 5vw, 56px)",
-              fontWeight: 800,
-              color: "#0D1B2A",
-              letterSpacing: "-1.5px",
-              lineHeight: 1.05,
-              marginBottom: 20,
-              fontFamily: "'Afacad Flux', sans-serif",
-            }}
-          >
-            Three steps.
-            <br />
-            <span style={{ fontWeight: 300, color: "#9ca3af" }}>No obligation until step three.</span>
-          </h2>
-        </div>
-
-        {/* Steps */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 20,
-          }}
-          className="steps-grid"
-        >
-          {STEPS.map((step, i) => (
-            <div
-              key={step.num}
-              className="fade-up"
-              style={{ transitionDelay: `${i * 120}ms` }}
-            >
-              <div
-                style={{
-                  background: "#ffffff",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: "40px 36px",
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                {/* Step number */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
-                  <span
-                    style={{
-                      fontSize: 48,
-                      fontWeight: 800,
-                      color: "#f3f4f6",
-                      lineHeight: 1,
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      letterSpacing: "-2px",
-                    }}
-                  >
-                    {step.num}
-                  </span>
-                  <div
-                    style={{
-                      height: 1,
-                      flex: 1,
-                      background: "#e5e7eb",
-                    }}
-                  />
-                </div>
-
-                {/* Label + tag */}
-                <div style={{ marginBottom: 20 }}>
-                  <h3
-                    style={{
-                      fontSize: 24,
-                      fontWeight: 800,
-                      color: "#0D1B2A",
-                      letterSpacing: "-0.5px",
-                      marginBottom: 8,
-                      fontFamily: "'Afacad Flux', sans-serif",
-                    }}
-                  >
-                    {step.label}
-                  </h3>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: "1.5px",
-                      textTransform: "uppercase",
-                      color: step.accent,
-                      fontFamily: "'Afacad Flux', sans-serif",
-                    }}
-                  >
-                    {step.tag}
-                  </span>
-                </div>
-
-                <p
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 400,
-                    color: "#6b7280",
-                    lineHeight: 1.7,
-                    flex: 1,
-                    marginBottom: 32,
-                    fontFamily: "'Afacad Flux', sans-serif",
-                  }}
-                >
-                  {step.desc}
-                </p>
-
-                <button
-                  onClick={() => {
-                    if (step.ctaLink === "voice-dna") {
-                      document.getElementById("voice-dna")?.scrollIntoView({ behavior: "smooth" });
-                    } else {
-                      document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-                    }
-                  }}
-                  style={{
-                    background: i === 0 ? "#0D1B2A" : "transparent",
-                    color: i === 0 ? "#ffffff" : "#374151",
-                    border: i === 0 ? "1px solid #0D1B2A" : "1px solid #e5e7eb",
-                    cursor: "pointer",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: "1.5px",
-                    textTransform: "uppercase",
-                    padding: "12px 24px",
-                    borderRadius: 4,
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    transition: "all 0.2s ease",
-                    width: "100%",
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget;
-                    if (i === 0) { el.style.background = "#1B263B"; } else { el.style.background = "#f9fafb"; }
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget;
-                    if (i === 0) { el.style.background = "#0D1B2A"; } else { el.style.background = "transparent"; }
-                  }}
-                >
-                  {step.cta}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="fade-up" style={{ marginBottom: 80 }}>
+        <p className="eyebrow" style={{ marginBottom: 16 }}>Getting Started</p>
+        <h2 style={{ fontSize: "clamp(36px, 5vw, 60px)", fontWeight: 800, color: "#0A0A0A", letterSpacing: "-2px", lineHeight: 1.0, fontFamily: "'Afacad Flux', sans-serif" }}>
+          Three steps.<br /><span style={{ fontWeight: 300, color: "#BBBBBB" }}>No commitment until step three.</span>
+        </h2>
       </div>
 
-      <style>{`
-        @media (max-width: 768px) {
-          .steps-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-    </section>
-  );
-};
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }} className="steps-grid">
+        {STEPS.map((s, i) => (
+          <div key={s.num} className="fade-up" style={{ transitionDelay: `${i * 100}ms` }}>
+            <div style={{
+              background: i === 0 ? "#0A0A0A" : "#ffffff",
+              border: `1px solid ${i === 0 ? "transparent" : "#E8E8E8"}`,
+              borderRadius: 10, padding: "40px 34px",
+              height: "100%", display: "flex", flexDirection: "column",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
+                <span style={{ fontSize: 52, fontWeight: 800, color: i === 0 ? "rgba(255,255,255,0.06)" : "#F2F2F2", lineHeight: 1, letterSpacing: "-3px", fontFamily: "'Afacad Flux', sans-serif" }}>{s.num}</span>
+                <div style={{ height: 1, flex: 1, background: i === 0 ? "rgba(255,255,255,0.06)" : "#E8E8E8" }} />
+              </div>
+
+              <h3 style={{ fontSize: 24, fontWeight: 800, color: i === 0 ? "#ffffff" : "#0A0A0A", letterSpacing: "-0.5px", marginBottom: 8, fontFamily: "'Afacad Flux', sans-serif" }}>{s.label}</h3>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: i === 0 ? "#F5C642" : "#BBBBBB", marginBottom: 18, fontFamily: "'Afacad Flux', sans-serif" }}>{s.tag}</p>
+              <p style={{ fontSize: 14, color: i === 0 ? "rgba(255,255,255,0.45)" : "#777777", lineHeight: 1.75, flex: 1, marginBottom: 32, fontFamily: "'Afacad Flux', sans-serif" }}>{s.desc}</p>
+
+              <button
+                onClick={() => document.getElementById("voice-dna")?.scrollIntoView({ behavior: "smooth" })}
+                style={{
+                  background: i === 0 ? "#ffffff" : "transparent",
+                  color: i === 0 ? "#0A0A0A" : "#555555",
+                  border: i === 0 ? "none" : "1px solid #E8E8E8",
+                  cursor: "pointer", fontSize: 10, fontWeight: 700,
+                  letterSpacing: "1.5px", textTransform: "uppercase",
+                  padding: "12px 20px", borderRadius: 4,
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "opacity 0.2s ease",
+                  width: "100%",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
+                onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+              >
+                {i === 0 ? "Start Here" : i === 1 ? "Try It" : "Get In Touch"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <style>{`@media(max-width:700px){.steps-grid{grid-template-columns:1fr!important}}`}</style>
+  </section>
+);
 
 export default HowYouStart;

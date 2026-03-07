@@ -7,7 +7,6 @@ const App = () => (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<AuthPage />} />
-      <Route path="*" element={<Index />} />
     </Routes>
   </BrowserRouter>
 );
