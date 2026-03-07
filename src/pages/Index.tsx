@@ -27,7 +27,7 @@ const Index = () => {
     <>
       <Nav />
       <Hero />
-      <Marquee inverted />
+      <Marquee />
       <StatsBar />
       <WatchWorkWrap />
       <Marquee />
