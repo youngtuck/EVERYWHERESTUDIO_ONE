@@ -1,56 +1,38 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
 
 export default function CTASection() {
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [done, setDone] = useState(false);
   const navigate = useNavigate();
-  const { theme } = useTheme();
-  const dark = theme === "dark";
-
-  // CTA is a high-contrast closing statement — dark in dark, rich off-black in light
-  const bg      = dark ? "#050505" : "#0F0F0F";
-  const eyeC    = "rgba(255,255,255,0.22)";
-  const headC   = "#FFFFFF";
-  const subC    = "rgba(255,255,255,0.36)";
-  const inputBg = "rgba(255,255,255,0.05)";
-  const inputBd = "rgba(255,255,255,0.1)";
 
   return (
-    <section style={{ padding:"120px 36px", background:bg, borderTop:"1px solid rgba(255,255,255,0.06)", textAlign:"center" }}>
-      <div style={{ maxWidth:580, margin:"0 auto" }}>
-        <p style={{ fontSize:9, fontWeight:700, letterSpacing:"3.5px", textTransform:"uppercase", color:eyeC, fontFamily:"'Afacad Flux',sans-serif", marginBottom:26 }}>The mountain gets carried.</p>
-        <h2 style={{ fontSize:"clamp(38px,5.5vw,76px)", fontWeight:900, letterSpacing:"-3.5px", color:headC, marginBottom:22, fontFamily:"'Afacad Flux',sans-serif", lineHeight:0.93 }}>
-          Your thinking.<br /><span style={{ color:"#F5C642" }}>Composed.</span>
+    <section style={{ padding:"120px 40px", background:"var(--bg-inverse)", borderTop:"1px solid var(--border)", textAlign:"center" }}>
+      <div style={{ maxWidth:560, margin:"0 auto" }}>
+        <h2 style={{ fontSize:"clamp(36px,5vw,68px)", fontWeight:800, letterSpacing:"-0.04em", color:"var(--text-inverse)", marginBottom:20, fontFamily:"'Geist',sans-serif", lineHeight:0.96 }}>
+          Your thinking.<br /><span style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontWeight:400, color:"#E8A820" }}>Composed.</span>
         </h2>
-        <p style={{ fontSize:16, color:subC, lineHeight:1.78, marginBottom:52, fontFamily:"'Afacad Flux',sans-serif" }}>
-          EVERYWHERE Studio is currently invitation only.<br />Join the founding member list.
+        <p style={{ fontSize:16, color:"rgba(255,255,255,0.4)", lineHeight:1.72, marginBottom:48, fontFamily:"'Geist',sans-serif", letterSpacing:"-0.01em" }}>
+          Invitation only. Currently onboarding founding members.
         </p>
-        {!submitted ? (
-          <form onSubmit={e => { e.preventDefault(); setSubmitted(true); }}
-            style={{ display:"flex", gap:10, maxWidth:440, margin:"0 auto", flexWrap:"wrap", justifyContent:"center" }}>
+        {!done ? (
+          <form onSubmit={e=>{e.preventDefault();setDone(true);}}
+            style={{ display:"flex", gap:8, maxWidth:400, margin:"0 auto 20px", flexWrap:"wrap", justifyContent:"center" }}>
             <input type="email" required placeholder="your@email.com" value={email} onChange={e=>setEmail(e.target.value)}
-              style={{ flex:1, minWidth:200, background:inputBg, border:`1px solid ${inputBd}`, borderRadius:5, padding:"14px 18px", color:"#FFFFFF", fontSize:14, fontFamily:"'Afacad Flux',sans-serif", outline:"none" }} />
+              style={{ flex:1, minWidth:180, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:7, padding:"12px 16px", color:"#fff", fontSize:14, fontFamily:"'Geist',sans-serif", outline:"none", letterSpacing:"-0.01em" }} />
             <button type="submit"
-              style={{ background:"#F5C642", color:"#0A0A0A", border:"none", cursor:"pointer", fontSize:11, fontWeight:700, letterSpacing:"2px", textTransform:"uppercase", padding:"14px 30px", borderRadius:5, fontFamily:"'Afacad Flux',sans-serif", transition:"opacity 0.2s" }}
-              onMouseEnter={e=>(e.currentTarget.style.opacity="0.85")}
-              onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
-              Request Access
+              style={{ background:"#fff", color:"#000", border:"none", cursor:"pointer", fontSize:13, fontWeight:600, padding:"12px 22px", borderRadius:7, fontFamily:"'Geist',sans-serif", transition:"opacity 0.15s", letterSpacing:"-0.01em" }}
+              onMouseEnter={e=>(e.currentTarget.style.opacity="0.85")} onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
+              Request access
             </button>
           </form>
         ) : (
-          <div style={{ padding:"18px 32px", background:"rgba(24,143,167,0.1)", border:"1px solid rgba(24,143,167,0.22)", borderRadius:8, display:"inline-block" }}>
-            <p style={{ color:"#188FA7", fontSize:15, fontWeight:600, fontFamily:"'Afacad Flux',sans-serif" }}>You're on the list. We'll be in touch.</p>
+          <div style={{ padding:"14px 24px", background:"rgba(24,143,167,0.12)", border:"1px solid rgba(24,143,167,0.24)", borderRadius:8, display:"inline-block", marginBottom:20 }}>
+            <p style={{ color:"#188FA7", fontSize:14, fontFamily:"'Geist',sans-serif" }}>You're on the list. We'll be in touch.</p>
           </div>
         )}
-        <p style={{ marginTop:26, fontSize:11, color:"rgba(255,255,255,0.16)", fontFamily:"'Afacad Flux',sans-serif" }}>
-          Or{" "}
-          <button onClick={() => navigate("/studio/dashboard")} style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.32)", fontSize:11, fontFamily:"'Afacad Flux',sans-serif", textDecoration:"underline", transition:"color 0.2s" }}
-            onMouseEnter={e=>(e.currentTarget.style.color="rgba(255,255,255,0.55)")}
-            onMouseLeave={e=>(e.currentTarget.style.color="rgba(255,255,255,0.32)")}>
-            explore the demo studio
-          </button>
+        <p style={{ fontSize:12, color:"rgba(255,255,255,0.18)", fontFamily:"'Geist',sans-serif" }}>
+          Or <button onClick={()=>navigate("/studio/dashboard")} style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.32)", fontSize:12, fontFamily:"'Geist',sans-serif", textDecoration:"underline" }}>explore the demo</button>
         </p>
       </div>
     </section>

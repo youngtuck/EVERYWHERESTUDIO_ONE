@@ -11,15 +11,15 @@ import AboutMark from "../components/landing/AboutMark";
 import CTASection from "../components/landing/CTASection";
 import Footer from "../components/landing/Footer";
 
-const Index = () => {
-  const observed = useRef(false);
+export default function Index() {
+  const init = useRef(false);
   useEffect(() => {
-    if (observed.current) return;
-    observed.current = true;
+    if (init.current) return;
+    init.current = true;
     const els = document.querySelectorAll(".fade-up, .fade-in");
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); obs.unobserve(e.target); } });
-    }, { threshold: 0.1 });
+    }, { threshold: 0.08 });
     els.forEach(el => obs.observe(el));
     return () => obs.disconnect();
   }, []);
@@ -39,5 +39,4 @@ const Index = () => {
       <Footer />
     </>
   );
-};
-export default Index;
+}

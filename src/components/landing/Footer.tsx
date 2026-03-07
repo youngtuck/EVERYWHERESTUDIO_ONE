@@ -3,18 +3,17 @@ import { useNavigate } from "react-router-dom";
 export default function Footer() {
   const navigate = useNavigate();
   return (
-    <footer style={{ background:"#080808", borderTop:"1px solid rgba(255,255,255,0.05)", padding:"30px 36px" }}>
-      <div style={{ maxWidth:1160, margin:"0 auto", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16 }}>
-        <Logo size="sm" onDark={true} />
-        <div style={{ display:"flex", gap:24, alignItems:"center" }}>
-          {[["Studio","/studio/dashboard"],["Sign In","/auth"],["Get Access","/auth"]].map(([label,path])=>(
-            <button key={label} onClick={()=>navigate(path!)}
-              style={{ background:"none", border:"none", cursor:"pointer", fontSize:12, color:"rgba(255,255,255,0.22)", fontFamily:"'Afacad Flux',sans-serif", transition:"color 0.2s" }}
-              onMouseEnter={e=>(e.currentTarget.style.color="rgba(255,255,255,0.5)")}
-              onMouseLeave={e=>(e.currentTarget.style.color="rgba(255,255,255,0.22)")}>{label}</button>
+    <footer style={{ background:"var(--bg-inverse)", borderTop:"1px solid rgba(255,255,255,0.06)", padding:"28px 40px" }}>
+      <div style={{ maxWidth:1120, margin:"0 auto", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:16 }}>
+        <Logo size="sm" onDark />
+        <div style={{ display:"flex", gap:24 }}>
+          {[["Studio","/studio/dashboard"],["Sign in","/auth"],["Get access","/auth"]].map(([l,p])=>(
+            <button key={l} onClick={()=>navigate(p!)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:12, color:"rgba(255,255,255,0.25)", fontFamily:"'Geist',sans-serif", transition:"color 0.15s", letterSpacing:"-0.01em" }}
+              onMouseEnter={e=>(e.currentTarget.style.color="rgba(255,255,255,0.55)")}
+              onMouseLeave={e=>(e.currentTarget.style.color="rgba(255,255,255,0.25)")}>{l}</button>
           ))}
         </div>
-        <p style={{ fontSize:11, color:"rgba(255,255,255,0.14)", fontFamily:"'Afacad Flux',sans-serif" }}>© 2026 Mixed Grill LLC · EVERYWHERE Studio™</p>
+        <p style={{ fontSize:11, color:"rgba(255,255,255,0.15)", fontFamily:"'Geist',sans-serif" }}>© 2026 Mixed Grill LLC</p>
       </div>
     </footer>
   );

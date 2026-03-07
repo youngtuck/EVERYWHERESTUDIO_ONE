@@ -3,12 +3,12 @@ import { Outlet } from "react-router-dom";
 import StudioTopBar from "./StudioTopBar";
 import StudioSidebar from "./StudioSidebar";
 
-const StudioShell = () => {
+export default function StudioShell() {
   const [collapsed, setCollapsed] = useState(false);
   return (
-    <div className="studio-layout">
-      <StudioTopBar sidebarCollapsed={collapsed} onToggleSidebar={() => setCollapsed(c => !c)} />
-      <div className="studio-body">
+    <div style={{ display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden" }}>
+      <StudioTopBar onToggleSidebar={() => setCollapsed(c => !c)} />
+      <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
         <StudioSidebar collapsed={collapsed} />
         <main className="studio-main">
           <Outlet />
@@ -16,5 +16,4 @@ const StudioShell = () => {
       </div>
     </div>
   );
-};
-export default StudioShell;
+}

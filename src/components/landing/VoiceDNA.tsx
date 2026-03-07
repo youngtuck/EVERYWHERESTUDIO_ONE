@@ -1,49 +1,49 @@
 const LAYERS = [
-  { name:"Voice Layer", pct:97, note:"Directness, cadence, signature constructions" },
-  { name:"Value Layer", pct:94, note:"Positions, beliefs, what you won't compromise" },
-  { name:"Personality Layer", pct:91, note:"Tone, warmth, what makes you memorable" },
+  { name:"Voice", pct:97, note:"Rhythm, cadence, signature constructions" },
+  { name:"Value", pct:94, note:"Positions, beliefs, what you won't compromise" },
+  { name:"Personality", pct:91, note:"Tone, warmth, what makes you recognizable" },
 ];
 export default function VoiceDNA() {
   return (
-    <section style={{ padding:"96px 36px", background:"var(--bg-primary)", borderTop:"1px solid var(--border)" }}>
-      <div style={{ maxWidth:1160, margin:"0 auto", display:"grid", gridTemplateColumns:"1fr 1fr", gap:80, alignItems:"start" }} className="vdna-grid">
+    <section style={{ padding:"100px 32px", background:"var(--bg)", borderTop:"1px solid var(--line)" }}>
+      <div style={{ maxWidth:1160, margin:"0 auto", display:"grid", gridTemplateColumns:"1fr 1fr", gap:100, alignItems:"start" }} className="vdna-g">
         <div>
-          <p style={{ fontSize:9, fontWeight:700, letterSpacing:"3px", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif", marginBottom:18 }}>Voice DNA</p>
-          <h2 style={{ fontSize:"clamp(28px,3.5vw,54px)", fontWeight:900, letterSpacing:"-2px", color:"var(--text-primary)", marginBottom:24, fontFamily:"'Afacad Flux',sans-serif", lineHeight:1.0 }}>
-            It learns your voice.<br />Permanently.
+          <p className="eyebrow" style={{ marginBottom:20 }}>Voice DNA</p>
+          <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", marginBottom:22, lineHeight:1.08 }}>
+            It learns your voice.<br /><em style={{fontStyle:"italic"}}>Permanently.</em>
           </h2>
-          <p style={{ fontSize:16, lineHeight:1.8, color:"var(--text-secondary)", fontFamily:"'Afacad Flux',sans-serif", marginBottom:16 }}>
-            A 15-minute conversation. Three extracted layers. A Voice Fidelity Score that climbs with every session. The longer you use EVERYWHERE Studio, the more it sounds like you — and only you.
+          <p style={{ fontSize:16, lineHeight:1.82, color:"var(--fg-2)", fontFamily:"'DM Sans',sans-serif", fontWeight:300, marginBottom:14 }}>
+            A 15-minute conversation. Three extracted layers. A Voice Fidelity Score that climbs with every session. The longer you use EVERYWHERE Studio, the more it sounds like you.
           </p>
-          <p style={{ fontSize:14, color:"var(--text-muted)", lineHeight:1.72, fontFamily:"'Afacad Flux',sans-serif" }}>
+          <p style={{ fontSize:14, lineHeight:1.78, color:"var(--fg-3)", fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>
             Competitors can copy the output format. They cannot copy the system underneath it.
           </p>
         </div>
         <div>
-          {/* Score */}
-          <div style={{ display:"flex", alignItems:"baseline", gap:14, marginBottom:40, padding:"24px 28px", background:"var(--bg-secondary)", border:"1px solid var(--border)", borderRadius:10, borderLeft:"3px solid #F5C642" }}>
-            <span style={{ fontSize:68, fontWeight:900, color:"#F5C642", letterSpacing:"-3.5px", fontFamily:"'Afacad Flux',sans-serif", lineHeight:1 }}>94.7</span>
-            <div>
-              <p style={{ fontSize:10, fontWeight:700, letterSpacing:"2px", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>Voice Fidelity Score</p>
-              <p style={{ fontSize:12, color:"var(--text-muted)", marginTop:5, fontFamily:"'Afacad Flux',sans-serif" }}>↑ Sharpens with every session</p>
+          {/* Score card */}
+          <div style={{ padding:"28px 32px", background:"var(--surface)", border:"1px solid var(--line)", borderRadius:12, marginBottom:24, boxShadow:"var(--shadow-sm)" }}>
+            <p className="eyebrow" style={{ marginBottom:16 }}>Voice Fidelity Score</p>
+            <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
+              <span style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:72, fontWeight:400, color:"var(--gold-l)", letterSpacing:"-3px", lineHeight:1 }}>94.7</span>
+              <span style={{ fontSize:13, color:"var(--fg-3)", fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>/100 · ↑ 2.3 this week</span>
             </div>
           </div>
           {/* Layers */}
           {LAYERS.map((l,i) => (
-            <div key={i} style={{ marginBottom:22 }}>
+            <div key={i} style={{ marginBottom:20 }}>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-                <span style={{ fontSize:14, fontWeight:700, color:"var(--text-primary)", fontFamily:"'Afacad Flux',sans-serif" }}>{l.name}</span>
-                <span style={{ fontSize:14, fontWeight:800, color:"#F5C642", fontFamily:"'Afacad Flux',sans-serif" }}>{l.pct}%</span>
+                <span style={{ fontSize:13, fontWeight:400, color:"var(--fg)", fontFamily:"'DM Sans',sans-serif" }}>{l.name} Layer</span>
+                <span style={{ fontSize:13, fontWeight:500, color:"var(--gold)", fontFamily:"'DM Sans',sans-serif" }}>{l.pct}%</span>
               </div>
-              <div style={{ height:4, background:"var(--bg-tertiary)", borderRadius:2, marginBottom:7, overflow:"hidden" }}>
-                <div style={{ height:"100%", width:`${l.pct}%`, background:"linear-gradient(90deg,#F5C642,#E8B800)", borderRadius:2 }} />
+              <div style={{ height:3, background:"var(--bg-3)", borderRadius:2, marginBottom:6, overflow:"hidden" }}>
+                <div style={{ height:"100%", width:`${l.pct}%`, background:"var(--gold-l)", borderRadius:2 }} />
               </div>
-              <p style={{ fontSize:12, color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>{l.note}</p>
+              <p style={{ fontSize:11, color:"var(--fg-3)", fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>{l.note}</p>
             </div>
           ))}
         </div>
       </div>
-      <style>{`@media(max-width:800px){.vdna-grid{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@media(max-width:820px){.vdna-g{grid-template-columns:1fr!important}}`}</style>
     </section>
   );
 }

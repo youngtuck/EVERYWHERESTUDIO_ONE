@@ -1,24 +1,15 @@
 import { useTheme } from "../context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
-
-interface Props { size?: number; onDark?: boolean; }
-const ThemeToggle = ({ size = 15, onDark = false }: Props) => {
+interface Props { onDark?: boolean; }
+const ThemeToggle = ({ onDark = false }: Props) => {
   const { theme, toggle } = useTheme();
-  const isDark = theme === "dark" || onDark;
+  const dark = theme === "dark" || onDark;
   return (
-    <button onClick={toggle} title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      style={{
-        background:"none",
-        border:`1px solid ${isDark ? "rgba(255,255,255,0.18)" : "var(--border-strong)"}`,
-        borderRadius:5, cursor:"pointer", padding:"6px",
-        display:"flex", alignItems:"center", justifyContent:"center",
-        color: isDark ? "rgba(255,255,255,0.5)" : "var(--text-secondary)",
-        transition:"all 0.2s ease",
-      }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.4)" : "var(--text-primary)"; e.currentTarget.style.color = isDark ? "#FFF" : "var(--text-primary)"; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.18)" : "var(--border-strong)"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.5)" : "var(--text-secondary)"; }}
-    >
-      {theme === "dark" ? <Sun size={size} /> : <Moon size={size} />}
+    <button onClick={toggle}
+      style={{ background:"none", border:`1px solid ${dark?"rgba(255,255,255,0.14)":"var(--line-2)"}`, borderRadius:6, cursor:"pointer", padding:"5px 7px", display:"flex", alignItems:"center", justifyContent:"center", color:dark?"rgba(255,255,255,0.4)":"var(--fg-3)", transition:"all 0.15s" }}
+      onMouseEnter={e=>{ e.currentTarget.style.borderColor=dark?"rgba(255,255,255,0.32)":"var(--fg-3)"; e.currentTarget.style.color=dark?"rgba(255,255,255,0.8)":"var(--fg)"; }}
+      onMouseLeave={e=>{ e.currentTarget.style.borderColor=dark?"rgba(255,255,255,0.14)":"var(--line-2)"; e.currentTarget.style.color=dark?"rgba(255,255,255,0.4)":"var(--fg-3)"; }}>
+      {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
     </button>
   );
 };

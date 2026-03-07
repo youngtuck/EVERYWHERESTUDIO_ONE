@@ -1,176 +1,173 @@
 import { useNavigate } from "react-router-dom";
-import { PenLine, Eye, TrendingUp, Clock, CheckCircle, ArrowRight, Lightbulb, BarChart2 } from "lucide-react";
+import { ArrowRight, TrendingUp, Eye, Zap } from "lucide-react";
 
-const ACTIVE_ITEMS = [
-  { type: "Essay", title: "Leadership habits of quiet operators", status: "In Progress", statusClass: "pill-active" },
-  { type: "LinkedIn Post", title: "The AI tools nobody talks about", status: "Draft", statusClass: "pill-draft" },
-  { type: "Newsletter", title: "March edition — momentum edition", status: "Ready", statusClass: "pill-ready" },
+const RECENT = [
+  { type:"LinkedIn Post", title:"The CEO who reads everything", score:912, date:"Mar 4" },
+  { type:"Essay", title:"Why slow thinking wins", score:847, date:"Mar 1" },
+  { type:"Newsletter", title:"February round-up", score:871, date:"Feb 28" },
 ];
 
-const RECENT_OUTPUTS = [
-  { type: "LinkedIn Post", title: "The CEO who reads everything", score: 912, date: "Mar 4" },
-  { type: "Essay", title: "Why slow thinking wins", score: 847, date: "Mar 1" },
-  { type: "Newsletter", title: "February round-up", score: 871, date: "Feb 28" },
+const SIGNALS = [
+  "AI leadership content spiked 38% this week — angle ready",
+  "Competitor published on burnout — gap identified",
+  "Your 'delegation' essay trending in SB entrepreneur circles",
 ];
 
-const ScoreBar = ({ score }: { score: number }) => {
-  const color = score >= 800 ? "#F5C642" : score >= 600 ? "#188FA7" : "#999999";
+function ScoreBar({ score }: { score: number }) {
+  const c = score >= 800 ? "#E8A820" : score >= 600 ? "#188FA7" : "var(--text-muted)";
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-      <div className="score-bar-track" style={{ flex:1 }}>
-        <div className="score-bar-fill" style={{ width:`${(score/1000)*100}%`, background:color }} />
+    <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:8 }}>
+      <div style={{ flex:1, height:2, background:"var(--bg-tertiary)", borderRadius:1, overflow:"hidden" }}>
+        <div style={{ height:"100%", width:`${(score/1000)*100}%`, background:c, borderRadius:1 }} />
       </div>
-      <span style={{ fontSize:11, fontWeight:700, color, fontFamily:"'Afacad Flux',sans-serif", minWidth:28 }}>{score}</span>
+      <span style={{ fontSize:11, fontWeight:700, color:c, fontFamily:"'Geist',sans-serif", minWidth:28 }}>{score}</span>
     </div>
   );
-};
+}
 
-// First session state — shown if no prior work
-const FirstSession = () => {
+export default function Dashboard() {
   const navigate = useNavigate();
-  return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"calc(100vh - 54px)", padding:24 }}>
-      <div style={{ maxWidth:460, textAlign:"center" }}>
-        <div style={{ width:56, height:56, borderRadius:12, background:"var(--bg-secondary)", border:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 24px" }}>
-          <PenLine size={22} style={{ color:"var(--text-muted)" }} />
-        </div>
-        <h2 style={{ fontSize:"clamp(24px,3vw,32px)", fontWeight:800, color:"var(--text-primary)", letterSpacing:"-1px", marginBottom:12, fontFamily:"'Afacad Flux',sans-serif" }}>
-          Good morning. Your studio is ready.
-        </h2>
-        <p style={{ fontSize:15, color:"var(--text-secondary)", lineHeight:1.7, marginBottom:36, fontFamily:"'Afacad Flux',sans-serif" }}>
-          Watson is here. What would you like to make today? Or I can set up your studio first — takes about 3 minutes.
-        </p>
-        <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap" }}>
-          <button className="btn-primary" onClick={() => navigate("/studio/work")}>Let's Make Something</button>
-          <button className="btn-ghost" onClick={() => navigate("/studio/work?setup=true")}>Set Up My Studio First</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const Dashboard = () => {
-  const navigate = useNavigate();
-  const firstSession = false; // Set to true to see first session state
-
-  if (firstSession) return <FirstSession />;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div style={{ padding:"32px 28px", maxWidth:1200 }}>
+    <div style={{ padding:"48px 40px", maxWidth:960, margin:"0 auto" }}>
+
       {/* Header */}
-      <div style={{ marginBottom:32 }}>
-        <p className="eyebrow" style={{ marginBottom:8 }}>Dashboard</p>
-        <h1 style={{ fontSize:"clamp(24px,3vw,36px)", fontWeight:800, color:"var(--text-primary)", letterSpacing:"-1px", fontFamily:"'Afacad Flux',sans-serif" }}>
-          Good morning, Mark.
-        </h1>
-        <p style={{ fontSize:14, color:"var(--text-secondary)", marginTop:4, fontFamily:"'Afacad Flux',sans-serif" }}>
-          Saturday, March 7, 2026
+      <div style={{ marginBottom:56 }}>
+        <p style={{ fontSize:13, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif", marginBottom:8, letterSpacing:"-0.01em" }}>
+          {new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}
         </p>
+        <h1 style={{ fontSize:"clamp(28px,3vw,42px)", fontWeight:700, color:"var(--text-primary)", letterSpacing:"-0.04em", fontFamily:"'Geist',sans-serif", lineHeight:1.08, marginBottom:16 }}>
+          {greeting}, Mark.
+        </h1>
+        {/* Primary CTA — the single most important action */}
+        <button onClick={() => navigate("/studio/work")}
+          style={{ display:"inline-flex", alignItems:"center", gap:8, background:"var(--text-primary)", color:"var(--bg-primary)", border:"none", cursor:"pointer", fontSize:14, fontWeight:600, padding:"14px 28px", borderRadius:8, fontFamily:"'Geist',sans-serif", transition:"opacity 0.15s", letterSpacing:"-0.02em" }}
+          onMouseEnter={e=>(e.currentTarget.style.opacity="0.82")} onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
+          Start a new session <ArrowRight size={15} />
+        </button>
       </div>
 
-      {/* 3-column grid */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16 }} className="dashboard-grid">
+      {/* Two column: main + sidebar */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 320px", gap:32 }} className="dash-grid">
 
-        {/* Col 1 — Active */}
+        {/* Left — primary content */}
         <div>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
-            <Clock size={13} style={{ color:"var(--text-muted)" }} />
-            <span style={{ fontSize:9, fontWeight:700, letterSpacing:"2.5px", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>Today's Focus</span>
-          </div>
-          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-            {ACTIVE_ITEMS.map((item, i) => (
-              <div key={i} className="card" style={{ padding:"14px 16px", cursor:"pointer" }}
-                onClick={() => navigate("/studio/work/" + (i+1))}
-                onMouseEnter={e=>(e.currentTarget.style.borderColor="var(--border-strong)")}
-                onMouseLeave={e=>(e.currentTarget.style.borderColor="var(--border)")}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6 }}>
-                  <span style={{ fontSize:9, fontWeight:700, letterSpacing:"2px", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>{item.type}</span>
-                  <span className={`pill ${item.statusClass}`}>{item.status}</span>
-                </div>
-                <p style={{ fontSize:13, fontWeight:600, color:"var(--text-primary)", lineHeight:1.4, fontFamily:"'Afacad Flux',sans-serif" }}>{item.title}</p>
+          {/* In progress — the 1 most important item */}
+          <div style={{ marginBottom:40 }}>
+            <p style={{ fontSize:10, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Geist',sans-serif", marginBottom:16 }}>In Progress</p>
+            <div
+              style={{ padding:"24px 28px", background:"var(--bg-secondary)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", transition:"all 0.15s" }}
+              onClick={() => navigate("/studio/work/1")}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--border-strong)";e.currentTarget.style.boxShadow="var(--shadow-sm)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.boxShadow="none";}}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                <span style={{ fontSize:10, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>Essay</span>
+                <span style={{ fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:4, background:"rgba(24,143,167,0.08)", color:"#188FA7", border:"1px solid rgba(24,143,167,0.15)", fontFamily:"'Geist',sans-serif" }}>Gate 5 of 7</span>
               </div>
-            ))}
-            <button className="btn-ghost" onClick={() => navigate("/studio/work")} style={{ marginTop:4, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-              <PenLine size={13} /> New Session
-            </button>
-          </div>
-        </div>
-
-        {/* Col 2 — What's Next */}
-        <div>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
-            <Lightbulb size={13} style={{ color:"var(--text-muted)" }} />
-            <span style={{ fontSize:9, fontWeight:700, letterSpacing:"2.5px", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>What's Next</span>
-          </div>
-          {/* Suggestion card */}
-          <div style={{ background:"rgba(245,198,66,0.04)", border:"1px solid rgba(245,198,66,0.14)", borderRadius:8, padding:"16px", marginBottom:12 }}>
-            <p style={{ fontSize:13, color:"var(--text-secondary)", lineHeight:1.65, marginBottom:14, fontFamily:"'Afacad Flux',sans-serif" }}>
-              You haven't published in 8 days. The leadership essay is 70% through gates. Ready to pick it up?
-            </p>
-            <div style={{ display:"flex", gap:8 }}>
-              <button className="btn-gold" style={{ padding:"8px 16px", fontSize:10 }} onClick={() => navigate("/studio/work/1")}>Pick It Up</button>
-              <button style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>Not Now</button>
+              <h3 style={{ fontSize:18, fontWeight:700, color:"var(--text-primary)", letterSpacing:"-0.03em", fontFamily:"'Geist',sans-serif", marginBottom:6, lineHeight:1.3 }}>
+                Leadership habits of quiet operators
+              </h3>
+              <p style={{ fontSize:13, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif", marginBottom:16 }}>Last edited 2 days ago</p>
+              <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                <div style={{ flex:1, height:3, background:"var(--bg-tertiary)", borderRadius:2, overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:"71%", background:"linear-gradient(90deg,#188FA7,#4A90D9)", borderRadius:2 }} />
+                </div>
+                <span style={{ fontSize:11, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif", minWidth:32 }}>71%</span>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:16 }}>
+                <span style={{ fontSize:12, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>Betterish: 763 → needs Impact Gate</span>
+                <span style={{ fontSize:12, fontWeight:600, color:"var(--text-primary)", fontFamily:"'Geist',sans-serif", display:"flex", alignItems:"center", gap:4 }}>
+                  Resume <ArrowRight size={12} />
+                </span>
+              </div>
             </div>
           </div>
+
           {/* Recent outputs */}
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10, marginTop:20 }}>
-            <BarChart2 size={13} style={{ color:"var(--text-muted)" }} />
-            <span style={{ fontSize:9, fontWeight:700, letterSpacing:"2.5px", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>Recent Outputs</span>
-          </div>
-          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-            {RECENT_OUTPUTS.map((o, i) => (
-              <div key={i} className="card" style={{ padding:"12px 14px", cursor:"pointer" }} onClick={() => navigate("/studio/outputs/" + (i+1))}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
-                  <span style={{ fontSize:10, color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>{o.type}</span>
-                  <span style={{ fontSize:10, color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>{o.date}</span>
+          <div>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <p style={{ fontSize:10, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>Recent Outputs</p>
+              <button onClick={() => navigate("/studio/outputs")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:12, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif", display:"flex", alignItems:"center", gap:4, letterSpacing:"-0.01em" }}
+                onMouseEnter={e=>(e.currentTarget.style.color="var(--text-primary)")} onMouseLeave={e=>(e.currentTarget.style.color="var(--text-muted)")}>
+                View all <ArrowRight size={11} />
+              </button>
+            </div>
+            <div style={{ borderTop:"1px solid var(--border)" }}>
+              {RECENT.map((o,i) => (
+                <div key={i} style={{ display:"flex", alignItems:"center", gap:16, padding:"16px 0", borderBottom:"1px solid var(--border)", cursor:"pointer" }}
+                  onClick={() => navigate("/studio/outputs/"+(i+1))}
+                  onMouseEnter={e=>(e.currentTarget.style.opacity="0.7")} onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:4 }}>
+                      <span style={{ fontSize:10, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>{o.type}</span>
+                      <span style={{ fontSize:10, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>·  {o.date}</span>
+                    </div>
+                    <p style={{ fontSize:14, fontWeight:600, color:"var(--text-primary)", fontFamily:"'Geist',sans-serif", letterSpacing:"-0.02em" }}>{o.title}</p>
+                  </div>
+                  <div style={{ textAlign:"right", flexShrink:0 }}>
+                    <span style={{ fontSize:16, fontWeight:700, color:o.score>=800?"#E8A820":"#188FA7", fontFamily:"'Geist',sans-serif", letterSpacing:"-0.02em" }}>{o.score}</span>
+                    <p style={{ fontSize:9, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif", textTransform:"uppercase", letterSpacing:"0.06em" }}>Betterish</p>
+                  </div>
                 </div>
-                <p style={{ fontSize:12, fontWeight:600, color:"var(--text-primary)", marginBottom:8, fontFamily:"'Afacad Flux',sans-serif" }}>{o.title}</p>
-                <ScoreBar score={o.score} />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Col 3 — Sentinel */}
-        <div>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
-            <Eye size={13} style={{ color:"var(--text-muted)" }} />
-            <span style={{ fontSize:9, fontWeight:700, letterSpacing:"2.5px", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>Watch</span>
-          </div>
-          <div className="card" style={{ padding:"16px", marginBottom:12 }}>
-            <p style={{ fontSize:10, fontWeight:700, letterSpacing:"2px", textTransform:"uppercase", color:"var(--text-muted)", marginBottom:10, fontFamily:"'Afacad Flux',sans-serif" }}>Today · Mar 7</p>
-            {[
-              { icon: TrendingUp, label: "3 content triggers", color: "#188FA7" },
-              { icon: Eye, label: "1 competitor move", color: "#F5C642" },
-              { icon: Clock, label: "2 upcoming events", color: "var(--text-muted)" },
-            ].map((s, i) => (
-              <div key={i} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                <s.icon size={13} style={{ color:s.color }} />
-                <span style={{ fontSize:13, color:"var(--text-secondary)", fontFamily:"'Afacad Flux',sans-serif" }}>{s.label}</span>
-              </div>
-            ))}
-            <button className="btn-ghost" style={{ marginTop:8, width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"8px 16px" }} onClick={() => navigate("/studio/watch")}>
-              View Full Briefing <ArrowRight size={12} />
-            </button>
-          </div>
+        {/* Right sidebar */}
+        <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
 
           {/* Voice Fidelity */}
-          <div style={{ background:"rgba(245,198,66,0.04)", border:"1px solid rgba(245,198,66,0.14)", borderRadius:8, padding:"16px" }}>
-            <p style={{ fontSize:9, fontWeight:700, letterSpacing:"2.5px", textTransform:"uppercase", color:"var(--text-muted)", marginBottom:12, fontFamily:"'Afacad Flux',sans-serif" }}>Voice Fidelity</p>
-            <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:8 }}>
-              <span style={{ fontSize:32, fontWeight:800, color:"#F5C642", letterSpacing:"-1.5px", fontFamily:"'Afacad Flux',sans-serif" }}>94.7</span>
-              <span style={{ fontSize:12, color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>/ 100</span>
+          <div style={{ padding:"22px 24px", background:"var(--bg-secondary)", border:"1px solid var(--border)", borderRadius:10 }}>
+            <p style={{ fontSize:10, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Geist',sans-serif", marginBottom:14 }}>Voice Fidelity</p>
+            <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:10 }}>
+              <span style={{ fontSize:40, fontWeight:700, color:"#E8A820", letterSpacing:"-0.04em", fontFamily:"'Geist',sans-serif", lineHeight:1 }}>94.7</span>
+              <span style={{ fontSize:12, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>/ 100</span>
             </div>
-            <div className="score-bar-track">
-              <div className="score-bar-fill" style={{ width:"94.7%", background:"#F5C642" }} />
+            <div style={{ height:3, background:"var(--bg-tertiary)", borderRadius:2, overflow:"hidden", marginBottom:8 }}>
+              <div style={{ height:"100%", width:"94.7%", background:"linear-gradient(90deg,#E8A820,#F5C642)", borderRadius:2 }} />
             </div>
-            <p style={{ fontSize:11, color:"var(--text-muted)", marginTop:6, fontFamily:"'Afacad Flux',sans-serif" }}>↑ 2.3 since last week</p>
+            <p style={{ fontSize:11, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>↑ 2.3 since last session</p>
           </div>
+
+          {/* Sentinel signals */}
+          <div style={{ padding:"22px 24px", background:"var(--bg-secondary)", border:"1px solid var(--border)", borderRadius:10 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <p style={{ fontSize:10, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>Today's Signals</p>
+              <span style={{ width:6, height:6, borderRadius:"50%", background:"#188FA7", display:"inline-block", boxShadow:"0 0 8px rgba(24,143,167,0.6)" }} />
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+              {SIGNALS.map((s,i) => (
+                <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                  <div style={{ width:4, height:4, borderRadius:"50%", background:"#188FA7", marginTop:5, flexShrink:0 }} />
+                  <p style={{ fontSize:12, color:"var(--text-secondary)", lineHeight:1.55, fontFamily:"'Geist',sans-serif", letterSpacing:"-0.01em" }}>{s}</p>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => navigate("/studio/watch")}
+              style={{ display:"flex", alignItems:"center", gap:6, marginTop:16, background:"none", border:"none", cursor:"pointer", fontSize:12, fontWeight:600, color:"#188FA7", fontFamily:"'Geist',sans-serif", letterSpacing:"-0.01em" }}
+              onMouseEnter={e=>(e.currentTarget.style.opacity="0.7")} onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
+              Full briefing <ArrowRight size={11} />
+            </button>
+          </div>
+
+          {/* Quick action */}
+          <button onClick={() => navigate("/studio/work")}
+            style={{ padding:"16px 20px", background:"none", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", textAlign:"left", transition:"all 0.15s", display:"flex", alignItems:"center", gap:12 }}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--border-strong)";e.currentTarget.style.background="var(--bg-secondary)";}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.background="none";}}>
+            <Zap size={16} style={{ color:"#E8A820", flexShrink:0 }} />
+            <div>
+              <p style={{ fontSize:13, fontWeight:600, color:"var(--text-primary)", fontFamily:"'Geist',sans-serif", letterSpacing:"-0.02em" }}>Quick capture</p>
+              <p style={{ fontSize:11, color:"var(--text-muted)", fontFamily:"'Geist',sans-serif" }}>Speak an idea, Watson listens</p>
+            </div>
+          </button>
         </div>
       </div>
 
-      <style>{`@media(max-width:900px){.dashboard-grid{grid-template-columns:1fr 1fr!important}}@media(max-width:600px){.dashboard-grid{grid-template-columns:1fr!important}}`}</style>
+      <style>{`@media(max-width:800px){.dash-grid{grid-template-columns:1fr!important}}`}</style>
     </div>
   );
-};
-export default Dashboard;
+}
