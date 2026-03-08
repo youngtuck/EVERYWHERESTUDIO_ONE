@@ -262,6 +262,9 @@ export default function ExplorePage() {
 
   const toggle = () => setDark(d => !d);
   useEffect(()=>{ const t=setTimeout(()=>setMounted(true),80); return()=>clearTimeout(t); },[]);
+  
+  // Tell GlobalCursor what theme we're on
+  useEffect(()=>{ document.body.setAttribute("data-explore-theme", dark ? "dark" : "light"); },[dark]);
 
   useEffect(()=>{
     const onScroll=()=>{
@@ -302,9 +305,9 @@ export default function ExplorePage() {
     navBg:     dark ? "rgba(7,9,15,0.92)" : "rgba(244,242,237,0.92)",
     ctaBg:     dark ? "#E8E8E6" : "#1C1C1A",
     ctaText:   dark ? "#07090f" : "#F4F2ED",
-    watchBg:   dark ? "linear-gradient(170deg,#040c1a 0%,#050d1c 100%)" : "linear-gradient(170deg,#E8EEFA 0%,#DDE6F5 100%)",
-    workBg:    dark ? "linear-gradient(170deg,#030d0f 0%,#040c0e 100%)" : "linear-gradient(170deg,#DCF0F3 0%,#D1EBF0 100%)",
-    wrapBg:    dark ? "linear-gradient(170deg,#080412 0%,#070312 100%)" : "linear-gradient(170deg,#EAE4F8 0%,#E2DAF5 100%)",
+    watchBg:   dark ? "linear-gradient(170deg,#040c1a 0%,#030d0f 100%)" : "linear-gradient(170deg,#E8EEFA 0%,#DCF0F3 100%)",
+    workBg:    dark ? "linear-gradient(170deg,#030d0f 0%,#080412 100%)" : "linear-gradient(170deg,#DCF0F3 0%,#EAE4F8 100%)",
+    wrapBg:    dark ? "linear-gradient(170deg,#080412 0%,#07090f 100%)" : "linear-gradient(170deg,#EAE4F8 0%,#F4F2ED 100%)",
     watchA:    "#4A90F5",
     workA:     "#0D8C9E",
     wrapA:     "#A080F5",
@@ -324,6 +327,7 @@ export default function ExplorePage() {
           *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
           html{scroll-behavior:smooth;}
           ::selection{background:${T.gold}40;}
+          ${!dark ? "*, *::before, *::after { cursor: auto !important; } a, button, [role='button'], [style*='cursor:pointer'], [style*='cursor: pointer'] { cursor: pointer !important; }" : ""}
         `}</style>
 
         {/* NAV */}
@@ -345,11 +349,6 @@ export default function ExplorePage() {
         {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
         <section style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"110px 40px 72px",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",inset:0,pointerEvents:"none",background:dark?"radial-gradient(ellipse 70% 50% at 50% 52%, rgba(58,123,213,0.10) 0%, transparent 68%)":"radial-gradient(ellipse 70% 50% at 50% 52%, rgba(120,160,240,0.07) 0%, transparent 68%)"}} />
-
-          {/* Orb */}
-          <div style={{marginBottom:24,opacity:mounted?1:0,transform:mounted?"none":"translateY(10px)",transition:"opacity .9s .1s ease, transform .9s .1s cubic-bezier(.16,1,.3,1)",filter:`drop-shadow(0 0 64px ${heroGlow})`}}>
-            <SiriOrb size={210} energy={orbEnergy} palette={hPal} dark={dark} />
-          </div>
 
           {/* Eyebrow */}
           <div style={{fontSize:10,letterSpacing:".22em",color:T.textFaint,textTransform:"uppercase",marginBottom:18,fontWeight:500,opacity:mounted?1:0,transition:"opacity .8s .3s ease"}}>
@@ -424,7 +423,6 @@ export default function ExplorePage() {
         </section>
 
         {/* ══ WATCH ════════════════════════════════════════════════════════════ */}
-        <div style={{height:1,background:`linear-gradient(90deg,transparent,${T.watchA}44,transparent)`}} />
         <div ref={watchRef} style={{display:"flex",minHeight:"130vh"}}>
           <RoomPanel name="WATCH" subtitle="The Signal Room" palette={PALETTES.watch} accent={T.watchA} bg={T.watchBg} energy={orbSection==="watch"?orbEnergy:.10} dark={dark}>
             {/* subtle radial ambient */}
@@ -450,7 +448,6 @@ export default function ExplorePage() {
         </div>
 
         {/* ══ WORK ═════════════════════════════════════════════════════════════ */}
-        <div style={{height:1,background:`linear-gradient(90deg,transparent,${T.workA}44,transparent)`}} />
         <div ref={workRef} style={{display:"flex",minHeight:"145vh"}}>
           <RoomPanel name="WORK" subtitle="The Engine Room" palette={PALETTES.work} accent={T.workA} bg={T.workBg} energy={orbSection==="work"?orbEnergy:.10} dark={dark}>
             <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.workA}10 0%, transparent 70%)`,pointerEvents:"none"}} />
@@ -479,7 +476,6 @@ export default function ExplorePage() {
         </div>
 
         {/* ══ WRAP ═════════════════════════════════════════════════════════════ */}
-        <div style={{height:1,background:`linear-gradient(90deg,transparent,${T.wrapA}44,transparent)`}} />
         <div ref={wrapRef} style={{display:"flex",minHeight:"120vh"}}>
           <RoomPanel name="WRAP" subtitle="The Distribution Room" palette={PALETTES.wrap} accent={T.wrapA} bg={T.wrapBg} energy={orbSection==="wrap"?orbEnergy:.10} dark={dark}>
             <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.wrapA}10 0%, transparent 70%)`,pointerEvents:"none"}} />
