@@ -143,7 +143,7 @@ function FadeUp({ children, delay=0 }: { children:React.ReactNode; delay?:number
 function WordReveal({ text, size, weight=700, color, lh=1.1, delay=0, center=false }:{text:string;size:string|number;weight?:number;color:string;lh?:number;delay?:number;center?:boolean}) {
   const ref=useRef<HTMLDivElement>(null); const [vis,setVis]=useState(false);
   useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.06}); ob.observe(el);return()=>ob.disconnect(); },[]);
-  return <div ref={ref} style={{textAlign:center?"center":"left"}}>
+  return <div ref={ref} style={{textAlign:center?"center":"left",overflowWrap:"break-word",wordBreak:"break-word"}}>
     {text.split(" ").map((w,i)=>(
       <span key={i} style={{display:"inline-block",marginRight:"0.24em",opacity:vis?1:0,transform:vis?"none":"translateY(10px)",transition:`opacity .48s ${delay+i*.025}s ease, transform .48s ${delay+i*.025}s cubic-bezier(.16,1,.3,1)`,fontSize:size,fontWeight:weight,color,lineHeight:lh}}>{w}</span>
     ))}
@@ -232,7 +232,7 @@ function RoomPanel({ name, subtitle, palette, accent, bg, energy, dark, children
   const lc = dark ? "#E8E8E6" : "#1a1a1a";
   const num = name === "WATCH" ? "Room One" : name === "WORK" ? "Room Two" : "Room Three";
   return (
-    <div style={{position:"sticky",top:0,height:"100vh",width:"48%",flexShrink:0,overflow:"hidden",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0}}>
+    <div style={{position:"sticky",top:0,height:"100vh",width:420,flexShrink:0,overflow:"hidden",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0}}>
       {children}
       <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",gap:0}}>
         <div style={{fontSize:9,letterSpacing:".22em",color:accent,textTransform:"uppercase",marginBottom:14,fontWeight:700,opacity:.65}}>{num}</div>
@@ -430,7 +430,7 @@ export default function ExplorePage() {
             {/* subtle radial ambient */}
             <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.watchA}12 0%, transparent 70%)`,pointerEvents:"none"}} />
           </RoomPanel>
-          <div style={{flex:1,padding:"64px 52px 64px 56px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.watchA}12`}}>
+          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.watchA}12`}}>
             <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
             <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
             <div style={{display:"flex",flexDirection:"column",gap:0}}>
@@ -455,7 +455,7 @@ export default function ExplorePage() {
           <RoomPanel name="WORK" subtitle="The Engine Room" palette={PALETTES.work} accent={T.workA} bg={T.workBg} energy={orbSection==="work"?orbEnergy:.10} dark={dark}>
             <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.workA}10 0%, transparent 70%)`,pointerEvents:"none"}} />
           </RoomPanel>
-          <div style={{flex:1,padding:"64px 52px 64px 56px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.workA}12`}}>
+          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.workA}12`}}>
             <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
             <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
             <FadeUp delay={0.12}>
@@ -484,7 +484,7 @@ export default function ExplorePage() {
           <RoomPanel name="WRAP" subtitle="The Distribution Room" palette={PALETTES.wrap} accent={T.wrapA} bg={T.wrapBg} energy={orbSection==="wrap"?orbEnergy:.10} dark={dark}>
             <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.wrapA}10 0%, transparent 70%)`,pointerEvents:"none"}} />
           </RoomPanel>
-          <div style={{flex:1,padding:"64px 52px 64px 56px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.wrapA}12`}}>
+          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.wrapA}12`}}>
             <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
             <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
             <div style={{display:"flex",flexDirection:"column",gap:0}}>
