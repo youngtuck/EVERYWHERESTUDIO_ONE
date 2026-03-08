@@ -6,7 +6,7 @@ const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
 // ─────────────────────────────────────────────────────────────────────────────
 // LIQUID MERCURY ORB  v2 — "Elevated"
 //
-// Perf: FBM 3 octaves (was 5), dpr capped at 1.5, shared noise pre-computed
+// Perf: FBM 3 octaves, full native DPR for crisp rendering
 // Visual: vivid iridescence, caustic rings, luminous emission, clean edge fade
 // ─────────────────────────────────────────────────────────────────────────────
 const FRAG = `
@@ -246,7 +246,7 @@ function OrbCanvas({ size }: { size: number }) {
   useEffect(() => {
     const canvas = ref.current!;
     // Cap at 1.5× — still sharp on retina, much faster on high-dpi screens
-    const dpr = Math.min(window.devicePixelRatio, 1.5);
+    const dpr = window.devicePixelRatio || 1;
     canvas.width  = Math.round(size * dpr);
     canvas.height = Math.round(size * dpr);
 
