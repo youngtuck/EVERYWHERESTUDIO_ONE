@@ -2,6 +2,190 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// WATSON ORB — WebGL orb from the landing page, miniaturized.
+// thinking=false: calm, slow drift, reactive to cursor.
+// thinking=true:  faster spin, turbulent interior, breathing glow ring.
+// ─────────────────────────────────────────────────────────────────────────────
+const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
+
+const ORB_FRAG = `
+precision highp float;
+uniform float u_t;
+uniform float u_energy;
+uniform vec2  u_res;
+uniform vec2  u_rotXY;
+#define TAU 6.28318530718
+mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
+vec3 rotX(vec3 p,float a){ p.yz=rot2(a)*p.yz; return p; }
+vec3 rotY(vec3 p,float a){ p.xz=rot2(a)*p.xz; return p; }
+float hash21(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(hash21(i),hash21(i+vec2(1,0)),f.x),mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),f.x),f.y);
+}
+float fbm(vec2 p){ return noise(p)*.5+noise(p*2.1+vec2(1.7,9.2))*.25+noise(p*4.3+vec2(8.3,2.8))*.125; }
+vec3 thinFilm(float cosA,float thick){
+  float opd=2.*thick*sqrt(max(0.,1.-(1./1.45/1.45)*(1.-cosA*cosA)));
+  return .5+.5*cos(TAU*opd/vec3(.650,.550,.450));
+}
+vec3 interior(vec3 lp,float t,float energy){
+  float r=length(lp);
+  float phi=atan(lp.z,lp.x), theta=acos(clamp(lp.y/max(r,.001),-1.,1.));
+  float spd=1.0+energy*2.2;
+  float f1=fbm(vec2(phi*1.1+t*.07*spd,theta*1.6+t*.045*spd));
+  float f2=fbm(vec2(phi*.8-t*.055*spd,theta*1.2-t*.038*spd)+vec2(3.1,7.4));
+  float f3=fbm(vec2(phi*1.8+t*.09*spd,theta*2.2+t*.06*spd)+vec2(5.9,2.2));
+  float r1=pow(max(0.,1.-abs(f1-.54)*5.5),2.0);
+  float r2=pow(max(0.,1.-abs(f2-.47)*6.5),2.3);
+  float r3=pow(max(0.,1.-abs(f3-.51)*5.0),1.8);
+  float boost=1.0+energy*1.1;
+  vec3 c1=vec3(.20,.55,1.00)*r1*1.6*boost;
+  vec3 c2=vec3(.10,.30,.95)*r2*1.3*boost;
+  vec3 c3=vec3(.55,.80,1.00)*r3*.85*boost;
+  float core=exp(-r*r*2.5)*(.45+.55*sin(t*.38+.8));
+  return vec3(.02,.03,.14)*(.4+.6*(1.-r))+vec3(.08,.14,.60)*core*2.2*boost+c1+c2+c3;
+}
+void main(){
+  vec2 uv=(gl_FragCoord.xy/u_res)*2.-1.;
+  float ar=u_res.x/u_res.y; uv.x*=ar;
+  float rx=u_rotXY.x, ry=u_rotXY.y, t=u_t;
+  vec3 ro=vec3(0.,0.,2.3), rd=normalize(vec3(uv,-1.65));
+  float b=dot(ro,rd), c=dot(ro,ro)-.72*.72, disc=b*b-c;
+  if(disc<0.0){gl_FragColor=vec4(0.);return;}
+  float sqD=sqrt(disc);
+  float edgeAA=smoothstep(0.,.004,sqD);
+  float t1=max(-b-sqD,0.), t2=-b+sqD;
+  if(t2<0.){gl_FragColor=vec4(0.);return;}
+  vec3 pF=ro+rd*t1, N=normalize(pF), V=-rd;
+  float NoV=max(dot(N,V),0.);
+  vec3 lp=rotX(rotY(pF,-ry),-rx);
+  float ps=atan(lp.z,lp.x), ts=acos(clamp(lp.y/max(length(lp),.001),-1.,1.));
+  vec3 film=thinFilm(NoV,.28+fbm(vec2(ps*.6+t*.020,ts-.015*t))*.65);
+  float fresnel=min(.06+(1.-.06)*pow(1.-NoV,4.0)+pow(1.-NoV,5.5)*1.1,.98);
+  vec3 shellCol=mix(mix(vec3(.06,.10,.42),vec3(.55,.68,.96),NoV*.6),film*.98,.82);
+  vec3 Lk=normalize(vec3(-.42,.78,.48)), H=normalize(Lk+V);
+  shellCol+=pow(max(dot(N,H),0.),180.)*1.3+vec3(.65,.80,1.)*pow(max(dot(N,normalize(vec3(.70,.12,.52)+V)),0.),55.)*.4;
+  vec3 intCol=vec3(0.);
+  float span=t2-t1;
+  for(int i=0;i<6;i++){
+    float fi=float(i)/5.;
+    intCol+=interior(rotX(rotY(ro+rd*(t1+span*(fi*.82+.09)),-ry),-rx),t,u_energy)*(1.-fi*.35);
+  }
+  intCol/=4.2;
+  vec3 col=mix(intCol,shellCol,mix(.50,.92,fresnel));
+  col+=vec3(.25,.50,1.0)*pow(1.-NoV,5.5)*1.1*.60;
+  col=max(col,vec3(0.));
+  col=(col*(2.51*col+.03))/(col*(2.43*col+.59)+.14);
+  gl_FragColor=vec4(clamp(col,0.,1.)*edgeAA*(.90+fresnel*.10),edgeAA*(.90+fresnel*.10));
+}
+`;
+
+class OrbSpring {
+  x=0;y=0;vx=0;vy=0;tx=0;ty=0;
+  step(stiffness=0.062, damping=0.86){
+    this.vx+=(this.tx-this.x)*stiffness; this.vy+=(this.ty-this.y)*stiffness;
+    this.vx*=damping; this.vy*=damping;
+    this.x+=this.vx; this.y+=this.vy;
+  }
+}
+
+function WatsonOrb({ size, thinking }: { size: number; thinking: boolean }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const spring = useRef(new OrbSpring());
+  const raf = useRef(0);
+  const thinkingRef = useRef(thinking);
+  const energyRef = useRef(0);
+
+  // Update thinking ref without restarting WebGL
+  useEffect(() => { thinkingRef.current = thinking; }, [thinking]);
+
+  useEffect(() => {
+    const canvas = ref.current!;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true });
+    if (!gl) return;
+    const mkS = (type: number, src: string) => {
+      const s = gl.createShader(type)!;
+      gl.shaderSource(s, src); gl.compileShader(s); return s;
+    };
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, mkS(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, mkS(gl.FRAGMENT_SHADER, ORB_FRAG));
+    gl.linkProgram(prog); gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+    const al = gl.getAttribLocation(prog, "a");
+    gl.enableVertexAttribArray(al); gl.vertexAttribPointer(al, 2, gl.FLOAT, false, 0, 0);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const uT    = gl.getUniformLocation(prog, "u_t");
+    const uR    = gl.getUniformLocation(prog, "u_res");
+    const uRot  = gl.getUniformLocation(prog, "u_rotXY");
+    const uEnergy = gl.getUniformLocation(prog, "u_energy");
+
+    // Cursor tracking — only when not thinking (thinking = autonomous rotation)
+    const onMove = (e: MouseEvent) => {
+      if (!thinkingRef.current) {
+        spring.current.tx = (e.clientY / window.innerHeight - .5) * 2 * .55;
+        spring.current.ty = (e.clientX / window.innerWidth - .5) * 2 * .55;
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+
+    const draw = (ts: number) => {
+      const isThinking = thinkingRef.current;
+      // Smoothly ramp energy up/down
+      const targetEnergy = isThinking ? 1.0 : 0.0;
+      energyRef.current += (targetEnergy - energyRef.current) * 0.04;
+
+      if (isThinking) {
+        // Autonomous slow spin when thinking
+        const t = ts * 0.0008;
+        spring.current.tx = Math.sin(t * 0.7) * 0.6;
+        spring.current.ty = Math.cos(t * 0.5) * 0.4;
+        spring.current.step(0.025, 0.94);
+      } else {
+        spring.current.step(0.062, 0.86);
+      }
+
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform1f(uT, ts * .001);
+      gl.uniform1f(uEnergy, energyRef.current);
+      gl.uniform2f(uR, canvas.width, canvas.height);
+      gl.uniform2f(uRot, spring.current.x, spring.current.y);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      raf.current = requestAnimationFrame(draw);
+    };
+    raf.current = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(raf.current);
+      window.removeEventListener("mousemove", onMove);
+    };
+  }, [size]);
+
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      {/* Breathing glow ring — only visible when thinking */}
+      <div style={{
+        position: "absolute",
+        inset: -6,
+        borderRadius: "50%",
+        background: "transparent",
+        boxShadow: thinking
+          ? `0 0 ${size * 0.5}px rgba(74,144,245,0.35), 0 0 ${size * 0.25}px rgba(74,144,245,0.22)`
+          : "none",
+        animation: thinking ? "orbPulse 1.8s ease-in-out infinite" : "none",
+        pointerEvents: "none",
+        transition: "box-shadow 0.6s ease",
+      }} />
+      <canvas ref={ref} style={{ width: size, height: size, borderRadius: "50%", display: "block" }} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EVERYWHERE STUDIO - WORK SESSION
 // Inspired by the best: ChatGPT, Claude, Perplexity, Grok, Gemini.
 // Clean. Simple. The model is the product.
@@ -90,7 +274,7 @@ function TypingIndicator() {
 }
 
 // Message bubble
-function MessageBubble({ msg }: { msg: Message }) {
+function MessageBubble({ msg, thinking }: { msg: Message; thinking?: boolean }) {
   const isUser = msg.role === "user";
   return (
     <div style={{
@@ -99,15 +283,11 @@ function MessageBubble({ msg }: { msg: Message }) {
       gap: 12, alignItems: "flex-end",
       maxWidth: "100%",
     }}>
-      {/* Avatar */}
+      {/* Watson orb avatar */}
       {!isUser && (
-        <div style={{
-          width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
-          background: "linear-gradient(135deg, #4A90D9 0%, #2563eb 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 11, fontWeight: 700, color: "#fff", letterSpacing: ".02em",
-          marginBottom: 2,
-        }}>W</div>
+        <div style={{ flexShrink: 0, marginBottom: 2 }}>
+          <WatsonOrb size={30} thinking={!!thinking} />
+        </div>
       )}
 
       <div style={{
@@ -155,14 +335,8 @@ function EmptyState({ outputType, onSuggestion }: { outputType: string; onSugges
       alignItems: "center", justifyContent: "center",
       padding: "60px 40px", gap: 32, textAlign: "center",
     }}>
-      {/* Watson orb indicator */}
-      <div style={{
-        width: 52, height: 52, borderRadius: "50%",
-        background: `linear-gradient(135deg, ${type.color}33 0%, ${type.color}11 100%)`,
-        border: `1px solid ${type.color}44`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 18, fontWeight: 700, color: type.color,
-      }}>W</div>
+      {/* Watson orb — live WebGL, reactive */}
+      <WatsonOrb size={64} thinking={false} />
 
       <div style={{ maxWidth: 460 }}>
         <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--fg)", marginBottom: 10, letterSpacing: "-.02em" }}>
@@ -351,6 +525,10 @@ export default function WorkSession() {
           0%, 80%, 100% { transform: translateY(0); opacity: .4; }
           40%            { transform: translateY(-4px); opacity: 1; }
         }
+        @keyframes orbPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50%       { opacity: 0.7; transform: scale(1.12); }
+        }
       `}</style>
 
       {/* ── Top bar ─────────────────────────────────────────────────── */}
@@ -423,7 +601,7 @@ export default function WorkSession() {
             maxWidth: 760, width: "100%", margin: "0 auto",
             padding: "32px 24px 8px", display: "flex", flexDirection: "column", gap: 20,
           }}>
-            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
+            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} thinking={msg.typing && loading} />)}
             <div ref={bottomRef} />
           </div>
         )}
