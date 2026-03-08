@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
+import GlobalCursor from "./components/GlobalCursor";
 
 import Index from "./pages/Index";
 import ExplorePage from "./pages/ExplorePage";
@@ -18,13 +19,11 @@ import TheLot from "./pages/studio/TheLot";
 const App = () => (
   <ThemeProvider>
     <BrowserRouter>
+      <GlobalCursor />
       <Routes>
-        {/* Marketing */}
         <Route path="/" element={<Index />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/auth" element={<AuthPage />} />
-
-        {/* Studio — all routes nested inside shell */}
         <Route path="/studio" element={<StudioShell />}>
           <Route index element={<Navigate to="/studio/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
@@ -39,8 +38,6 @@ const App = () => (
           <Route path="settings" element={<Settings />} />
           <Route path="lot" element={<TheLot />} />
         </Route>
-
-        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

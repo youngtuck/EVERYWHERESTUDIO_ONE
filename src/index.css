@@ -231,6 +231,49 @@ button { font-family: var(--font); }
   background: var(--gold-l);
 }
 
+/* ─── CUSTOM CURSOR ──────────────────────────────────────────── */
+*, *::before, *::after { cursor: none !important; }
+
+#ew-cursor-dot {
+  position: fixed; top: 0; left: 0; z-index: 99999;
+  width: 8px; height: 8px; border-radius: 50%;
+  pointer-events: none; will-change: transform;
+  transition: opacity 0.2s, background 0.25s, transform 0.08s;
+  mix-blend-mode: difference;
+}
+#ew-cursor-ring {
+  position: fixed; top: 0; left: 0; z-index: 99998;
+  width: 36px; height: 36px; border-radius: 50%;
+  pointer-events: none; will-change: transform;
+  border: 1.5px solid;
+  transition: opacity 0.2s, border-color 0.25s, width 0.25s, height 0.25s;
+}
+
+/* Dark pages (landing, explore) — white cursor */
+body.cursor-on-dark #ew-cursor-dot  { background: #ffffff; }
+body.cursor-on-dark #ew-cursor-ring { border-color: rgba(255,255,255,0.55); }
+
+/* Light pages (studio) — charcoal cursor */
+body.cursor-on-light #ew-cursor-dot  { background: #1a1a18; }
+body.cursor-on-light #ew-cursor-ring { border-color: rgba(20,20,18,0.35); }
+
+/* Hover state — expand ring, gold accent */
+body.cursor-hover #ew-cursor-ring {
+  width: 48px; height: 48px;
+  margin-top: -6px; margin-left: -6px;
+  border-color: rgba(200,150,26,0.70);
+}
+body.cursor-hover #ew-cursor-dot  { transform: scale(0.5) !important; opacity: 0.6; }
+
+/* ─── PAGE TRANSITIONS ───────────────────────────────────────── */
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: pageSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* ─── EYEBROW ────────────────────────────────────────────────── */
 .eyebrow {
   font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
