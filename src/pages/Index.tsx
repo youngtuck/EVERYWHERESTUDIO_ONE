@@ -2,11 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EVERYWHERE STUDIO — Intro Hero
-// Ray-marched ribbed sphere. Geometric, animated, iridescent.
-// Technique: SDF sphere with sinusoidal horizontal displacement bands.
-// The ribs are actual 3D geometry derived from polar coordinates — not noise.
-// Caustic rainbow streaks from thin-film iridescence simulation.
+// EVERYWHERE STUDIO — Intro Hero  v3
+//
+// The key insight from studying the Telefónica orb:
+// Mouse rotates the ENTIRE 3D coordinate system of the sphere via a rotation
+// matrix. The ribs stay "horizontal relative to the sphere", so as it tilts,
+// they go diagonal — proving it's true 3D rotation, not a 2D shift.
+//
+// Added life: spring-physics rotation with inertia/momentum, organic band
+// waviness along longitude, breathing pulse, caustic energy streaks.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
@@ -15,65 +19,88 @@ const FRAG = `
 precision highp float;
 uniform float u_t;
 uniform vec2  u_res;
-uniform vec2  u_mouse;
+uniform vec2  u_rotXY;   // spring-physics rotation angles (radians)
 
-#define PI    3.14159265359
-#define TAU   6.28318530718
+#define PI  3.14159265359
+#define TAU 6.28318530718
 
-// ── Rib SDF: sphere with animated sinusoidal ridges ─────────────────────────
-// p        = sample point in 3D
-// t        = time
-// returns  = signed distance to surface
-float ribSDF(vec3 p, float t) {
-  float r = length(p);
-  float eps = 0.0001;
-  
-  // Polar theta (0=north pole, PI=south pole)
-  float cosT = clamp(p.y / max(r, eps), -1.0, 1.0);
-  float theta = acos(cosT);
-  
-  // ── Primary ribs — 7 horizontal bands scrolling downward ──────────────────
-  float numRibs  = 7.0;
-  float scroll   = t * 0.20;                    // scroll speed
-  float ribAngle = theta * numRibs - scroll;
-  float rib1     = sin(ribAngle);               // primary rib wave
-  
-  // ── Secondary slow undulation — makes the whole shape breathe ─────────────
-  float undulate = sin(theta * 3.5 - t * 0.11) * 0.38;
-  float rib2     = sin(ribAngle * 0.5 + undulate) * 0.45;
-  
-  // ── Tertiary micro-ripple — fine surface detail ────────────────────────────
-  float micro    = sin(ribAngle * 2.0 + t * 0.28) * 0.15;
-  
-  // Combined displacement — shallower at poles (natural pinch)
-  float sinT     = sin(theta);                  // 0 at poles, 1 at equator
-  float poleClamp = sinT * sinT;                // squared = gentler taper
-  float disp     = (rib1 * 0.55 + rib2 + micro) * 0.044 * poleClamp;
-  
-  // Mouse tilt — nudge the whole rib phase slightly toward cursor
-  float mx = (u_mouse.x - 0.5) * 0.10;
-  float my = (u_mouse.y - 0.5) * 0.07;
-  float tilt = mx * (p.x / max(r, eps)) + my * (p.z / max(r, eps));
-  disp += tilt * 0.018;
-  
-  return r - (0.72 + disp);
+// ── 3D rotation matrices ─────────────────────────────────────────────────────
+// Rotate point p around X axis by angle a
+vec3 rotX(vec3 p, float a) {
+  float c = cos(a), s = sin(a);
+  return vec3(p.x, c*p.y - s*p.z, s*p.y + c*p.z);
+}
+// Rotate point p around Y axis by angle a
+vec3 rotY(vec3 p, float a) {
+  float c = cos(a), s = sin(a);
+  return vec3(c*p.x + s*p.z, p.y, -s*p.x + c*p.z);
 }
 
-// ── Surface normal via tetrahedron finite differences (fast & accurate) ──────
-vec3 normal(vec3 p, float t) {
-  const float e = 0.0009;
+// ── Organic band waviness along longitude ─────────────────────────────────────
+// Hash for pseudo-random variation per band
+float hash(float n) { return fract(sin(n) * 43758.5453123); }
+
+// Ribbed sphere SDF with true 3D rotation
+// p     = point in world space
+// rx,ry = rotation angles (from spring-physics mouse)
+float orbSDF(vec3 p, float rx, float ry, float t) {
+  // Apply inverse rotation to bring point into sphere's local frame
+  // (rotating the SDF space = rotating the object)
+  vec3 lp = rotX(rotY(p, -ry), -rx);
+  
+  float r     = length(lp);
+  float eps   = 0.0001;
+  float cosT  = clamp(lp.y / max(r, eps), -1.0, 1.0);
+  float theta = acos(cosT);                    // polar: 0=N pole, PI=S pole
+  float phi   = atan(lp.z, lp.x);             // azimuthal: -PI..PI
+
+  // ── Primary ribs — 7 bands, scrolling ─────────────────────────────────────
+  float scroll  = t * 0.22;
+  float numRibs = 7.0;
+  float ribAngle = theta * numRibs - scroll;
+  
+  // Organic waviness: each band wobbles slightly in phi direction
+  // This creates the non-perfectly-horizontal wiggle visible in reference
+  float bandIdx = floor(theta * numRibs / PI);
+  float waveFreq = 3.0 + hash(bandIdx) * 2.0;    // 3-5 waves per band
+  float waveAmp  = 0.018 + hash(bandIdx + 17.3) * 0.012;
+  float organic  = sin(phi * waveFreq + t * (0.15 + hash(bandIdx)*0.1)) * waveAmp;
+  
+  // Secondary slow morph — whole shape breathes
+  float breath   = sin(t * 0.28) * 0.008;
+  float morph    = sin(theta * 3.0 - t * 0.12) * 0.022;
+  
+  // Rib wave (displaced by organic wobble)
+  float rib1    = sin(ribAngle + organic * 8.0);
+  float rib2    = sin(ribAngle * 0.5 - t * 0.10) * 0.40;
+  float micro   = sin(ribAngle * 2.2 + phi * 1.5 + t * 0.31) * 0.12;
+  
+  // Pole pinch: ribs narrow near poles naturally
+  float sinT  = sin(theta);
+  float pole  = sinT * sinT * (3.0 - 2.0*sinT);  // smoothstep-like 0..1..0
+  float disp  = (rib1 * 0.55 + rib2 + micro) * 0.046 * pole;
+  disp += organic * pole * 0.5;
+  disp += morph * pole;
+  disp += breath;
+  
+  // Sphere base radius with displacement
+  return r - (0.720 + disp);
+}
+
+// ── Tetrahedron normal (4 SDF evaluations — fast & accurate) ─────────────────
+vec3 calcNormal(vec3 p, float rx, float ry, float t) {
+  const float e = 0.0008;
   const vec2 k = vec2(1.0, -1.0);
   return normalize(
-    k.xyy * ribSDF(p + k.xyy*e, t) +
-    k.yyx * ribSDF(p + k.yyx*e, t) +
-    k.yxy * ribSDF(p + k.yxy*e, t) +
-    k.xxx * ribSDF(p + k.xxx*e, t)
+    k.xyy * orbSDF(p + k.xyy*e, rx, ry, t) +
+    k.yyx * orbSDF(p + k.yyx*e, rx, ry, t) +
+    k.yxy * orbSDF(p + k.yxy*e, rx, ry, t) +
+    k.xxx * orbSDF(p + k.xxx*e, rx, ry, t)
   );
 }
 
-// ── Iridescent thin-film color ────────────────────────────────────────────────
-// Simulates the rainbow prismatic effect from thin glass/soap-bubble optics
-vec3 thinFilm(float phase) {
+// ── Thin-film iridescence (rainbow caustic color) ─────────────────────────────
+vec3 iridescent(float phase) {
   return vec3(
     0.5 + 0.5 * cos(TAU * (phase + 0.00)),
     0.5 + 0.5 * cos(TAU * (phase + 0.33)),
@@ -82,153 +109,197 @@ vec3 thinFilm(float phase) {
 }
 
 void main() {
-  // Aspect-corrected UV in [-1, 1] range
-  vec2 uv = (gl_FragCoord.xy / u_res) * 2.0 - 1.0;
-  float aspect = u_res.x / u_res.y;
-  uv.x *= aspect;
+  // Aspect-corrected UV [-aspect..aspect, -1..1]
+  vec2 uv  = (gl_FragCoord.xy / u_res) * 2.0 - 1.0;
+  float ar = u_res.x / u_res.y;
+  uv.x    *= ar;
   
-  // Mouse parallax — camera shifts subtly toward cursor
-  vec2 mNorm  = u_mouse - 0.5;                  // -0.5..0.5
-  vec3 ro = vec3(mNorm.x * 0.22, mNorm.y * 0.16, 2.1);
-  vec3 rd = normalize(vec3(uv, -1.6));
+  float rx = u_rotXY.x;   // X rotation (mouse Y → tilt forward/back)
+  float ry = u_rotXY.y;   // Y rotation (mouse X → spin left/right)
+  float t  = u_t;
   
-  float time = u_t;
+  // Camera: fixed, looking straight at origin
+  vec3 ro = vec3(0.0, 0.0, 2.15);
+  vec3 rd = normalize(vec3(uv, -1.60));
   
-  // ── Ray march ─────────────────────────────────────────────────────────────
+  // ── Ray march ──────────────────────────────────────────────────────────────
   float dist = 0.0;
   bool  hit  = false;
   vec3  p;
   
-  for (int i = 0; i < 96; i++) {
+  for (int i = 0; i < 100; i++) {
     p = ro + rd * dist;
-    float d = ribSDF(p, time);
-    if (d < 0.0004) { hit = true; break; }
-    if (dist > 4.5) break;
-    dist += d * 0.82;         // conservative — curved SDF needs smaller steps
+    float d = orbSDF(p, rx, ry, t);
+    if (abs(d) < 0.00035) { hit = true; break; }
+    if (dist > 5.0) break;
+    dist += d * 0.80;
   }
   
   if (!hit) { gl_FragColor = vec4(0.0); return; }
   
-  // ── Surface geometry ──────────────────────────────────────────────────────
-  vec3 N = normal(p, time);
+  // ── Surface properties ─────────────────────────────────────────────────────
+  vec3 N = calcNormal(p, rx, ry, t);
   vec3 V = -rd;
-  vec3 R = reflect(rd, N);    // reflection direction
   
-  float r    = length(p);
-  float cosT = clamp(p.y / max(r, 0.0001), -1.0, 1.0);
+  // Get the sphere's LOCAL coordinates for rib coloring
+  vec3 lp    = rotX(rotY(p, -ry), -rx);
+  float r    = length(lp);
+  float cosT = clamp(lp.y / max(r, 0.0001), -1.0, 1.0);
   float theta = acos(cosT);
-  float phi   = atan(p.z, p.x);
+  float phi   = atan(lp.z, lp.x);
   
-  // ── Rib phase — where are we on the rib cycle right now ─────────────────
-  float scroll   = time * 0.20;
+  // Rib phase for this pixel
+  float scroll   = t * 0.22;
   float ribPhase = fract(theta * 7.0 / PI - scroll / TAU);
-  // ribPhase: 0=rib top, 0.5=valley, 1=back to rib top
+  // 0=valley, 0.5=ridge top, 1=back to valley
+  float ridge = 1.0 - abs(ribPhase * 2.0 - 1.0);  // 0=valley, 1=ridge peak
+  float ridgeSmooth = ridge * ridge * (3.0 - 2.0*ridge);  // smoothstep
   
-  // Ridge vs valley (0=valley, 1=ridge top)
-  float ridge = abs(ribPhase * 2.0 - 1.0);     // V-shape: 0 at valley, 1 at ridge
-  float ridgeSmooth = smoothstep(0.0, 1.0, ridge * ridge);
+  // Under-rib shadow: normal pointing downward in LOCAL space
+  vec3 localN = rotX(rotY(N, -ry), -rx);
+  float underShadow = max(0.0, -localN.y) * (1.0 - ridgeSmooth);
   
-  // Under-rib shadow — the key visual. Normals pointing slightly down = shadow
-  float underShadow = max(0.0, -dot(N, vec3(0.0, 1.0, 0.0)));
-  float ribShadow   = underShadow * smoothstep(0.0, 0.6, 1.0 - ridge) * 0.7;
-  
-  // ── Lighting ──────────────────────────────────────────────────────────────
-  // Key light — upper left
-  vec3 L1    = normalize(vec3(-0.55, 0.75, 0.85));
+  // ── Lighting ───────────────────────────────────────────────────────────────
+  // Key light: upper-left front
+  vec3 L1    = normalize(vec3(-0.50,  0.72, 0.82));
   float ndl1 = max(dot(N, L1), 0.0);
   
-  // Fill light — lower right (cooler)
-  vec3 L2    = normalize(vec3(0.65, -0.35, 0.55));
-  float ndl2 = max(dot(N, L2), 0.0) * 0.28;
+  // Fill light: lower-right
+  vec3 L2    = normalize(vec3( 0.62, -0.38, 0.58));
+  float ndl2 = max(dot(N, L2), 0.0) * 0.25;
   
-  // Back rim light — creates the glowing edge
-  vec3 L3    = normalize(vec3(0.0, 0.1, -1.0));
-  float ndl3 = max(dot(N, L3), 0.0) * 0.15;
+  // Back rim (creates glowing edge opposite key)
+  vec3 L3    = normalize(vec3( 0.10,  0.20, -1.00));
+  float ndl3 = max(dot(N, L3), 0.0) * 0.18;
   
-  // Specular — Blinn-Phong
+  // Specular (Blinn-Phong, two lobes)
   vec3 H1    = normalize(L1 + V);
-  float spec1 = pow(max(dot(N, H1), 0.0), 80.0)  * 0.85;
-  float spec2 = pow(max(dot(N, H1), 0.0), 400.0) * 0.55; // tight glint
+  float spec1 = pow(max(dot(N, H1), 0.0), 72.0) * 0.90;
+  float spec2 = pow(max(dot(N, H1), 0.0), 480.0) * 0.65;  // tight glint
   
-  // Fresnel — glass edge
-  float NoV    = max(dot(N, V), 0.0);
-  float fresnel = pow(1.0 - NoV, 3.8);
+  // Fresnel: glass-edge brightness
+  float NoV     = max(dot(N, V), 0.0);
+  float fresnel = pow(1.0 - NoV, 4.0);
   
-  // ── Color — translucent pearl glass matching Telefónica palette ─────────
-  // Ridge tops: bright pearl-lavender
-  // Valleys: deeper, slightly blue-violet
-  vec3 ridgeColor  = vec3(0.80, 0.84, 0.99);   // pearl-white with blue tint
-  vec3 valleyColor = vec3(0.50, 0.58, 0.92);   // deeper indigo-blue
-  vec3 shadowColor = vec3(0.36, 0.44, 0.82);   // under-rib shadow
+  // ── Base color ─────────────────────────────────────────────────────────────
+  // Ridge top: bright pearl-white with light lavender
+  vec3 ridgeCol  = vec3(0.82, 0.86, 1.00);
+  // Valley: deeper blue (you can see into the groove)
+  vec3 valleyCol = vec3(0.48, 0.56, 0.90);
+  // Under-rib shadow (underside of each rib)
+  vec3 shadowCol = vec3(0.32, 0.40, 0.80);
   
-  // Slight warm tint on ridge tops facing the key light
-  ridgeColor = mix(ridgeColor, vec3(0.88, 0.88, 1.0), ndl1 * 0.25);
+  // Light the ridge tops from key light
+  ridgeCol = mix(ridgeCol, vec3(0.90, 0.90, 1.0), ndl1 * 0.30);
   
-  vec3 base = mix(valleyColor, ridgeColor, ridgeSmooth);
-  base = mix(base, shadowColor, ribShadow);
+  vec3 base = mix(valleyCol, ridgeCol, ridgeSmooth);
+  base = mix(base, shadowCol, underShadow * 0.68);
   
-  // Translucency — bg bleeds through slightly at grazing angles
-  vec3 bgTint = vec3(0.24, 0.32, 0.82);
-  base = mix(base, bgTint, (1.0 - NoV) * 0.08 + fresnel * 0.06);
+  // Subtle bg bleed through translucency at edges
+  vec3 bgCol = vec3(0.24, 0.32, 0.82);
+  base = mix(base, bgCol, (1.0 - NoV) * 0.06 + fresnel * 0.05);
   
-  // ── Iridescent caustic streaks ────────────────────────────────────────────
-  // These appear at rib transitions and at high-angle specular patches
-  // Phase varies with rib position + azimuthal angle + time drift
-  float iriPhase   = ribPhase * 2.5 + phi * 0.12 + time * 0.05;
-  vec3  iriColor   = thinFilm(iriPhase);
+  // ── Caustic iridescent streaks ──────────────────────────────────────────────
+  // Phase varies with rib position, azimuthal angle, time drift
+  // Appears concentrated at rib edges and forward-facing specular patches
+  float iriPhase = ribPhase * 2.8 + phi * 0.15 + t * 0.07;
+  vec3  iriCol   = iridescent(iriPhase);
   
-  // Caustic mask: concentrated at rib edges (where ribPhase ≈ 0.5)
-  float edgeMask   = smoothstep(0.35, 0.50, ribPhase) * smoothstep(0.65, 0.50, ribPhase);
-  // Additional specular caustic from key light
-  float causticSpec = pow(max(dot(N, normalize(vec3(-0.25, 0.55, 0.85))), 0.0), 12.0);
-  float causticMask = (edgeMask * 0.7 + causticSpec * 0.3) * 0.22;
+  // Caustic mask: rib edges + specular-facing geometry
+  float edgeMask   = smoothstep(0.30, 0.50, ribPhase) * smoothstep(0.70, 0.50, ribPhase);
+  float specFacing = pow(max(dot(N, normalize(vec3(-0.3, 0.5, 0.9))), 0.0), 8.0);
+  // Animate streaks: they travel along the surface
+  float streakPhi  = phi + t * 0.12;
+  float streakMask = smoothstep(0.6, 0.9, sin(streakPhi * 2.5 + theta * 3.0));
+  float causticStr = (edgeMask * 0.65 + specFacing * 0.25 + streakMask * 0.10) * 0.20;
   
-  // ── Assemble final color ──────────────────────────────────────────────────
+  // ── Energy / alive quality ──────────────────────────────────────────────────
+  // Traveling bright spots ("generation" feel — data moving through the sphere)
+  float energy = 0.0;
+  for (int i = 0; i < 4; i++) {
+    float fi = float(i);
+    // Each spark travels along a rib at slightly different speed/phase
+    float sparkTheta = fract(fi * 0.25 + t * (0.08 + fi * 0.02)) * PI;
+    float sparkPhi   = fi * 1.57 + t * (0.15 + fi * 0.07);
+    // Position on sphere surface in local coords
+    float dTheta = abs(theta - sparkTheta);
+    float dPhi   = abs(phi - sparkPhi);
+    dPhi = min(dPhi, TAU - dPhi);  // wrap around
+    float sparkDist = sqrt(dTheta*dTheta + dPhi*dPhi*0.3);
+    float sparkGlow = exp(-sparkDist * 12.0) * (0.12 + sin(t * (1.2 + fi*0.3)) * 0.06);
+    energy += sparkGlow;
+  }
+  
+  // ── Global breathing / pulse ───────────────────────────────────────────────
+  float breath = 0.96 + sin(t * 0.31) * 0.04 + sin(t * 0.71) * 0.015;
+  
+  // ── Assemble color ─────────────────────────────────────────────────────────
   vec3 col = base;
   
-  // Diffuse lighting
-  col *= (ndl1 * 0.68 + ndl2 + ndl3 + 0.28);
+  // Diffuse shading
+  col *= (ndl1 * 0.70 + ndl2 + ndl3 + 0.24) * breath;
   
   // Caustics (additive)
-  col += iriColor * causticMask;
+  col += iriCol * causticStr;
   
-  // Specular highlights
-  col += vec3(1.00, 0.99, 0.97) * spec1;       // warm white primary
-  col += vec3(0.90, 0.93, 1.00) * spec2;       // cool tight glint
+  // Energy sparks (additive — white-blue traveling glow)
+  col += vec3(0.80, 0.88, 1.0) * energy;
   
-  // Rim / Fresnel — brightens the silhouette edge
-  vec3 rimCol = mix(vec3(0.65, 0.72, 1.0), vec3(0.88, 0.90, 1.0), fresnel);
-  col += rimCol * fresnel * 0.55;
+  // Specular
+  col += vec3(1.00, 0.99, 0.97) * spec1;   // warm white
+  col += vec3(0.90, 0.93, 1.00) * spec2;   // cool glint
   
-  // Subtle chromatic aberration on the rim (prismatic edge)
-  float rimEdge  = smoothstep(0.60, 0.80, length(uv / vec2(aspect, 1.0)));
-  col.r += rimEdge * 0.04 * fresnel;
-  col.b += rimEdge * 0.08 * fresnel;
+  // Fresnel rim glow
+  vec3 rimCol = mix(vec3(0.60, 0.70, 1.0), vec3(0.85, 0.88, 1.0), fresnel);
+  col += rimCol * fresnel * 0.60;
   
-  // Soft sphere-edge fade for clean silhouette
-  float distFromCenter = length(uv / vec2(aspect, 1.0));
-  float edgeFade = 1.0 - smoothstep(0.70, 0.85, distFromCenter);
+  // Prismatic edge (chromatic rim)
+  float edgeDist = length(uv / vec2(ar, 1.0));
+  float rimZone  = smoothstep(0.62, 0.80, edgeDist);
+  col.r += rimZone * fresnel * 0.05;
+  col.b += rimZone * fresnel * 0.10;
   
-  // Tonemap (keep it bright — not over-compressed)
-  col = col / (col + 0.45) * 1.30;
+  // Tonemap — bright and airy
+  col = col / (col + 0.42) * 1.32;
   col = clamp(col, 0.0, 1.0);
   
-  // Alpha — glass edge transparency + edge fade
-  float alpha = (0.86 + fresnel * 0.14) * edgeFade;
+  // Alpha
+  float edgeFade = 1.0 - smoothstep(0.68, 0.84, edgeDist);
+  float alpha = (0.88 + fresnel * 0.12) * edgeFade;
   
   gl_FragColor = vec4(col, alpha);
 }
 `;
 
+// ─── Spring physics for rotation ─────────────────────────────────────────────
+// Returns smoothly interpolated rotation angles with inertia
+class SpringVec2 {
+  x = 0; y = 0;          // current position
+  vx = 0; vy = 0;        // velocity
+  tx = 0; ty = 0;        // target
+  stiffness = 0.08;      // spring force (0=limp, 1=instant)
+  damping = 0.78;        // velocity decay (0=bouncy, 1=overdamped)
+
+  setTarget(tx: number, ty: number) { this.tx = tx; this.ty = ty; }
+
+  step() {
+    this.vx += (this.tx - this.x) * this.stiffness;
+    this.vy += (this.ty - this.y) * this.stiffness;
+    this.vx *= this.damping;
+    this.vy *= this.damping;
+    this.x  += this.vx;
+    this.y  += this.vy;
+  }
+}
+
 // ─── WebGL Orb Component ──────────────────────────────────────────────────────
 function RibbedOrb({ size }: { size: number }) {
-  const ref  = useRef<HTMLCanvasElement>(null);
-  const mouse  = useRef({ x: 0.5, y: 0.5 });
-  const target = useRef({ x: 0.5, y: 0.5 });
-  const raf  = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const spring    = useRef(new SpringVec2());
+  const raf       = useRef(0);
 
   useEffect(() => {
-    const canvas = ref.current!;
+    const canvas = canvasRef.current!;
     const dpr = Math.min(window.devicePixelRatio, 2);
     canvas.width  = size * dpr;
     canvas.height = size * dpr;
@@ -236,25 +307,26 @@ function RibbedOrb({ size }: { size: number }) {
     const gl = canvas.getContext("webgl", {
       alpha: true, premultipliedAlpha: false, antialias: true,
     });
-    if (!gl) { console.warn("WebGL not available"); return; }
+    if (!gl) return;
 
-    const mk = (type: number, src: string) => {
+    const mkShader = (type: number, src: string) => {
       const s = gl.createShader(type)!;
       gl.shaderSource(s, src);
       gl.compileShader(s);
       const log = gl.getShaderInfoLog(s);
-      if (log && log.trim()) console.error("Shader:", log);
+      if (log?.trim()) console.error("Shader compile:", log);
       return s;
     };
 
     const prog = gl.createProgram()!;
-    gl.attachShader(prog, mk(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(prog, mk(gl.FRAGMENT_SHADER, FRAG));
+    gl.attachShader(prog, mkShader(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, mkShader(gl.FRAGMENT_SHADER, FRAG));
     gl.linkProgram(prog);
     const linkLog = gl.getProgramInfoLog(prog);
-    if (linkLog && linkLog.trim()) console.error("Link:", linkLog);
+    if (linkLog?.trim()) console.error("Link:", linkLog);
     gl.useProgram(prog);
 
+    // Full-screen quad
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
@@ -264,29 +336,34 @@ function RibbedOrb({ size }: { size: number }) {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    const uT = gl.getUniformLocation(prog, "u_t");
-    const uR = gl.getUniformLocation(prog, "u_res");
-    const uM = gl.getUniformLocation(prog, "u_mouse");
+    const uT    = gl.getUniformLocation(prog, "u_t");
+    const uR    = gl.getUniformLocation(prog, "u_res");
+    const uRot  = gl.getUniformLocation(prog, "u_rotXY");
+
+    // Mouse → target rotation angles
+    // Mouse at center = (0,0) = facing straight
+    // Mouse at extreme corners = ±maxAngle
+    const MAX_ANGLE = 0.52;  // ~30 degrees max tilt
 
     const onMove = (e: MouseEvent) => {
-      target.current = {
-        x: e.clientX / window.innerWidth,
-        y: 1.0 - e.clientY / window.innerHeight,
-      };
+      const nx = (e.clientX / window.innerWidth  - 0.5) * 2;   // -1..1
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2;   // -1..1 (inverted Y)
+      // rx (tilt forward/back) driven by mouse Y
+      // ry (spin left/right) driven by mouse X
+      spring.current.setTarget(ny * MAX_ANGLE, nx * MAX_ANGLE);
     };
     window.addEventListener("mousemove", onMove);
 
     const draw = (ts: number) => {
-      const m = mouse.current, tm = target.current;
-      m.x += (tm.x - m.x) * 0.05;
-      m.y += (tm.y - m.y) * 0.05;
+      spring.current.step();
+      const { x: rx, y: ry } = spring.current;
 
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform1f(uT, ts * 0.001);
-      gl.uniform2f(uR, canvas.width, canvas.height);
-      gl.uniform2f(uM, m.x, m.y);
+      gl.uniform1f(uT,   ts * 0.001);
+      gl.uniform2f(uR,   canvas.width, canvas.height);
+      gl.uniform2f(uRot, rx, ry);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       raf.current = requestAnimationFrame(draw);
     };
@@ -300,29 +377,29 @@ function RibbedOrb({ size }: { size: number }) {
 
   return (
     <canvas
-      ref={ref}
+      ref={canvasRef}
       style={{
         width: size, height: size, display: "block",
         filter: [
-          "drop-shadow(0 0 50px rgba(150,180,255,0.55))",
-          "drop-shadow(0 0 110px rgba(100,140,255,0.28))",
-          "drop-shadow(0 0 8px  rgba(255,255,255,0.20))",
+          "drop-shadow(0 0 55px rgba(140,175,255,0.60))",
+          "drop-shadow(0 0 120px rgba(90,130,255,0.28))",
+          "drop-shadow(0 0 6px rgba(255,255,255,0.18))",
         ].join(" "),
       }}
     />
   );
 }
 
-// ─── 2D scene layer: background + satellites + orbit dots ─────────────────────
+// ─── 2D canvas: background + satellite blobs + orbit dot rings ───────────────
 function SceneCanvas() {
-  const ref  = useRef<HTMLCanvasElement>(null);
-  const raf  = useRef(0);
+  const ref    = useRef<HTMLCanvasElement>(null);
+  const raf    = useRef(0);
   const angles = useRef([0, 1.3, 2.7, 4.0, 5.4, 0.7, 3.5]);
 
   useEffect(() => {
     const canvas = ref.current!;
-    const ctx = canvas.getContext("2d")!;
-    const dpr = Math.min(window.devicePixelRatio, 2);
+    const ctx    = canvas.getContext("2d")!;
+    const dpr    = Math.min(window.devicePixelRatio, 2);
 
     const resize = () => {
       canvas.width  = window.innerWidth  * dpr;
@@ -334,35 +411,35 @@ function SceneCanvas() {
     resize();
     window.addEventListener("resize", resize);
 
-    // Satellite blobs — same blue family as background
     const blobs = [
-      { oR:.52, spd:.00040, ph:0,   r:.100, col:[130,155,255], a:.52 },
-      { oR:.42, spd:-.00028,ph:2.0, r:.065, col:[110,140,250], a:.42 },
-      { oR:.62, spd:.00022, ph:1.1, r:.130, col:[145,165,255], a:.36 },
-      { oR:.48, spd:-.00036,ph:3.8, r:.048, col:[120,150,255], a:.30 },
-      { oR:.70, spd:.00018, ph:2.5, r:.090, col:[100,130,240], a:.22 },
-      { oR:.38, spd:-.00050,ph:5.1, r:.036, col:[160,175,255], a:.28 },
-      { oR:.78, spd:.00013, ph:4.2, r:.060, col:[110,145,248], a:.18 },
+      { oR:.52, spd:.00040, ph:0,   r:.100, rgb:[130,155,255], a:.50 },
+      { oR:.42, spd:-.00028,ph:2.0, r:.068, rgb:[110,140,250], a:.40 },
+      { oR:.62, spd:.00022, ph:1.1, r:.130, rgb:[145,165,255], a:.34 },
+      { oR:.48, spd:-.00036,ph:3.8, r:.048, rgb:[120,150,255], a:.28 },
+      { oR:.70, spd:.00018, ph:2.5, r:.090, rgb:[100,130,240], a:.22 },
+      { oR:.38, spd:-.00050,ph:5.1, r:.036, rgb:[160,175,255], a:.26 },
+      { oR:.78, spd:.00013, ph:4.2, r:.060, rgb:[110,145,248], a:.17 },
     ];
 
-    // Orbit rings
     const rings = [
-      { r:.30, dots:48,  dotR:1.4, a:.26 },
-      { r:.41, dots:65,  dotR:1.0, a:.18 },
-      { r:.52, dots:84,  dotR:.80, a:.12 },
-      { r:.64, dots:106, dotR:.62, a:.08 },
+      { r:.30, dots:50,  dotR:1.4, a:.26 },
+      { r:.41, dots:66,  dotR:1.0, a:.18 },
+      { r:.53, dots:84,  dotR:.78, a:.12 },
+      { r:.65, dots:106, dotR:.60, a:.08 },
     ];
 
     const draw = (ts: number) => {
-      const t = ts * .001;
-      const W = window.innerWidth, H = window.innerHeight;
-      const cx = W * .5, cy = H * .5;
+      const t  = ts * .001;
+      const W  = window.innerWidth;
+      const H  = window.innerHeight;
+      const cx = W * .5;
+      const cy = H * .5;
       const base = Math.min(W, H) * .30;
 
       ctx.clearRect(0, 0, W, H);
 
-      // ── Background — vivid electric indigo ──────────────────────────────
-      const bg = ctx.createRadialGradient(cx, cy*.88, 0, cx, cy, Math.max(W,H)*.85);
+      // Background gradient
+      const bg = ctx.createRadialGradient(cx, cy*.88, 0, cx, cy, Math.max(W,H)*.86);
       bg.addColorStop(0,   "#4a5fd4");
       bg.addColorStop(.30, "#3d52cc");
       bg.addColorStop(.65, "#2e43c0");
@@ -370,48 +447,44 @@ function SceneCanvas() {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
-      // Edge vignette
+      // Vignette
       const vig = ctx.createRadialGradient(cx, cy, base*.2, cx, cy, Math.max(W,H)*.72);
-      vig.addColorStop(0, "rgba(60,85,210,.00)");
-      vig.addColorStop(1, "rgba(12,18,82,.38)");
+      vig.addColorStop(0, "rgba(55,80,210,.00)");
+      vig.addColorStop(1, "rgba(10,16,78,.40)");
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, W, H);
 
-      // ── Orbit dot rings ─────────────────────────────────────────────────
+      // Orbit dot rings
       rings.forEach(ring => {
         const rPx = base * (ring.r / .30);
-        const rY  = rPx * .28;
+        const rY  = rPx * .26;
         for (let i = 0; i < ring.dots; i++) {
-          const angle = (i / ring.dots) * Math.PI * 2 + t * .065;
-          const x = cx + Math.cos(angle) * rPx;
-          const y = cy + Math.sin(angle) * rY;
+          const angle = (i / ring.dots) * Math.PI * 2 + t * .062;
           const depth = (Math.sin(angle) + 1.5) / 2.5;
           ctx.globalAlpha = ring.a * depth;
           ctx.fillStyle = "#b8c8ff";
           ctx.beginPath();
-          ctx.arc(x, y, ring.dotR, 0, Math.PI*2);
+          ctx.arc(cx + Math.cos(angle)*rPx, cy + Math.sin(angle)*rY, ring.dotR, 0, Math.PI*2);
           ctx.fill();
         }
       });
 
-      // ── Satellite blobs ─────────────────────────────────────────────────
+      // Satellite blobs
       blobs.forEach((b, i) => {
         angles.current[i] += b.spd;
         const angle = angles.current[i];
-        const rPx = base * (b.oR / .30);
-        const rY  = rPx * .28;
-        const bx  = cx + Math.cos(angle) * rPx;
-        const by  = cy + Math.sin(angle) * rY;
-        const bR  = base * b.r;
+        const rPx  = base * (b.oR / .30);
+        const rY   = rPx * .26;
+        const bx   = cx + Math.cos(angle) * rPx;
+        const by   = cy + Math.sin(angle) * rY;
+        const bR   = base * b.r;
         const depth = (Math.sin(angle) + 1.0) * .5;
-        const alpha = b.a * (.45 + depth * .55);
-
-        const [r,g,bv] = b.col;
+        const [r,g,bv] = b.rgb;
         const gr = ctx.createRadialGradient(bx-bR*.22, by-bR*.22, 0, bx, by, bR*1.35);
-        gr.addColorStop(0,  `rgba(${r},${g},${bv},.92)`);
-        gr.addColorStop(.45,`rgba(${r},${g},${bv},.52)`);
-        gr.addColorStop(1,  `rgba(${r},${g},${bv},0)`);
-        ctx.globalAlpha = alpha;
+        gr.addColorStop(0,   `rgba(${r},${g},${bv},.92)`);
+        gr.addColorStop(.45, `rgba(${r},${g},${bv},.50)`);
+        gr.addColorStop(1,   `rgba(${r},${g},${bv},0)`);
+        ctx.globalAlpha = b.a * (.45 + depth * .55);
         ctx.fillStyle = gr;
         ctx.beginPath();
         ctx.arc(bx, by, bR, 0, Math.PI*2);
@@ -421,147 +494,118 @@ function SceneCanvas() {
       ctx.globalAlpha = 1;
       raf.current = requestAnimationFrame(draw);
     };
-    raf.current = requestAnimationFrame(draw);
 
+    raf.current = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(raf.current);
       window.removeEventListener("resize", resize);
     };
   }, []);
 
-  return (
-    <canvas ref={ref} style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none" }} />
-  );
+  return <canvas ref={ref} style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none" }} />;
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function Index() {
   const navigate = useNavigate();
-  const [ready, setReady]   = useState(false);
+  const [ready,   setReady]   = useState(false);
   const [orbSize, setOrbSize] = useState(560);
 
   useEffect(() => {
-    const calc = () => {
-      // Orb fills ~65% of viewport shorter dimension — fills center like Telefónica
-      setOrbSize(Math.min(
-        window.innerWidth  * 0.68,
-        window.innerHeight * 0.80,
-        720
-      ));
-    };
+    const calc = () => setOrbSize(Math.min(
+      window.innerWidth * 0.70,
+      window.innerHeight * 0.82,
+      740,
+    ));
     calc();
     window.addEventListener("resize", calc);
     const t = setTimeout(() => setReady(true), 100);
     return () => { window.removeEventListener("resize", calc); clearTimeout(t); };
   }, []);
 
-  const fi = (delay: number) => ({
+  const fi = (d: number) => ({
     opacity:   ready ? 1 : 0,
     transform: ready ? "translateY(0)" : "translateY(14px)",
-    transition: `opacity 1s ${delay}s cubic-bezier(.16,1,.3,1), transform 1s ${delay}s cubic-bezier(.16,1,.3,1)`,
+    transition: `opacity 1s ${d}s cubic-bezier(.16,1,.3,1), transform 1s ${d}s cubic-bezier(.16,1,.3,1)`,
   });
 
   return (
-    <div style={{
-      width:"100vw", height:"100vh", overflow:"hidden",
-      position:"relative", fontFamily:"'Afacad Flux',sans-serif",
-    }}>
+    <div style={{ width:"100vw", height:"100vh", overflow:"hidden",
+      position:"relative", fontFamily:"'Afacad Flux',sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
-        ::selection{background:rgba(255,230,120,.32);color:#fff;}
-
+        ::selection{background:rgba(255,230,100,.30);color:#fff;}
         @keyframes shimmer{to{background-position:200% center;}}
 
-        /* The CTA pill — matching Telefónica's frosted white button */
         .cta-pill{
           display:inline-flex;align-items:center;gap:10px;
-          background:rgba(255,255,255,.92);
-          border:none;
-          color:#3d52cc;
+          background:rgba(255,255,255,.93);border:none;color:#3244c8;
           font-family:'Afacad Flux',sans-serif;
           font-size:16px;font-weight:500;letter-spacing:.01em;
-          padding:15px 40px;border-radius:100px;cursor:pointer;
-          transition:background .25s,transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s;
-          box-shadow:0 4px 24px rgba(30,45,160,.25);
+          padding:15px 42px;border-radius:100px;cursor:pointer;
+          box-shadow:0 4px 28px rgba(28,44,160,.28);
+          transition:background .22s,transform .38s cubic-bezier(.16,1,.3,1),box-shadow .38s;
         }
         .cta-pill:hover{
-          background:rgba(255,255,255,1);
+          background:#fff;
           transform:translateY(-3px);
-          box-shadow:0 12px 48px rgba(30,45,160,.35);
+          box-shadow:0 14px 52px rgba(28,44,160,.38);
         }
-        .cta-pill .arr{
-          font-size:18px;
-          transition:transform .35s cubic-bezier(.16,1,.3,1);
-        }
-        .cta-pill:hover .arr{ transform:translateX(4px); }
+        .cta-pill .arr{font-size:18px;transition:transform .38s cubic-bezier(.16,1,.3,1);}
+        .cta-pill:hover .arr{transform:translateX(5px);}
       `}</style>
 
-      {/* Scene: bg + satellites + orbit rings */}
+      {/* Background + satellites */}
       <SceneCanvas />
 
-      {/* Orb — absolute center */}
-      <div style={{
-        position:"fixed", inset:0, zIndex:2,
-        pointerEvents:"none",
-        display:"flex", alignItems:"center", justifyContent:"center",
-      }}>
+      {/* Orb — centered */}
+      <div style={{ position:"fixed", inset:0, zIndex:2, pointerEvents:"none",
+        display:"flex", alignItems:"center", justifyContent:"center" }}>
         <RibbedOrb size={orbSize} />
       </div>
 
-      {/* UI overlay — exactly like Telefónica layout */}
-      <div style={{
-        position:"fixed", inset:0, zIndex:10,
-        display:"flex", flexDirection:"column",
-        pointerEvents:"none",
-      }}>
+      {/* UI overlay */}
+      <div style={{ position:"fixed", inset:0, zIndex:10, pointerEvents:"none",
+        display:"flex", flexDirection:"column" }}>
 
-        {/* Logo — top center */}
-        <div style={{ display:"flex", justifyContent:"center", paddingTop:32, ...fi(.1) }}>
-          <div style={{ display:"flex", alignItems:"baseline", gap:0 }}>
-            <span style={{ fontSize:20, fontWeight:800, letterSpacing:"-.02em", color:"rgba(255,255,255,.96)" }}>EVERY</span>
-            <span style={{ fontSize:20, fontWeight:800, letterSpacing:"-.02em", color:"rgba(255,255,255,.52)" }}>WHERE</span>
-            <span style={{ fontSize:10, fontWeight:600, letterSpacing:".14em", color:"rgba(255,255,255,.52)",
-              marginLeft:6, alignSelf:"center", textTransform:"uppercase" }}>Studio</span>
+        {/* Logo */}
+        <div style={{ display:"flex", justifyContent:"center", paddingTop:30, ...fi(.10) }}>
+          <div style={{ display:"flex", alignItems:"baseline" }}>
+            <span style={{ fontSize:20, fontWeight:800, letterSpacing:"-.02em",
+              color:"rgba(255,255,255,.96)" }}>EVERY</span>
+            <span style={{ fontSize:20, fontWeight:800, letterSpacing:"-.02em",
+              color:"rgba(255,255,255,.50)" }}>WHERE</span>
+            <span style={{ fontSize:10, fontWeight:600, letterSpacing:".14em",
+              color:"rgba(255,255,255,.50)", marginLeft:6, alignSelf:"center",
+              textTransform:"uppercase" }}>Studio</span>
           </div>
         </div>
 
-        {/* Center — headline over the orb (like Telefónica) */}
+        {/* Center — headline + button */}
         <div style={{ flex:1, display:"flex", flexDirection:"column",
-          alignItems:"center", justifyContent:"center", gap:0 }}>
+          alignItems:"center", justifyContent:"center" }}>
 
-          {/* Headline — large, centered, sits over the orb */}
           <h1 style={{
             ...fi(.22),
-            fontSize:"clamp(48px,8vw,108px)",
-            fontWeight:600,
-            lineHeight:.95,
-            color:"#fff",
-            textAlign:"center",
-            letterSpacing:"-.025em",
+            fontSize:"clamp(48px,8vw,110px)",
+            fontWeight:600, lineHeight:.94, letterSpacing:"-.025em",
+            color:"#fff", textAlign:"center",
             textShadow:"0 2px 40px rgba(20,40,160,.35)",
             marginBottom:2,
-          }}>
-            Your thinking.
-          </h1>
-          <h1 style={{
-            ...fi(.32),
-            fontSize:"clamp(48px,8vw,108px)",
-            fontWeight:600,
-            lineHeight:.95,
-            letterSpacing:"-.025em",
-            textAlign:"center",
-            background:"linear-gradient(110deg, #ffe066 0%, #fff 38%, #cce0ff 78%)",
-            backgroundSize:"200% auto",
-            WebkitBackgroundClip:"text",
-            WebkitTextFillColor:"transparent",
-            animation:"shimmer 6s linear infinite",
-            marginBottom:52,
-          }}>
-            Everywhere.
-          </h1>
+          }}>Your thinking.</h1>
 
-          {/* CTA — white pill, exactly like Telefónica */}
+          <h1 style={{
+            ...fi(.34),
+            fontSize:"clamp(48px,8vw,110px)",
+            fontWeight:600, lineHeight:.94, letterSpacing:"-.025em",
+            textAlign:"center", marginBottom:52,
+            background:"linear-gradient(115deg,#ffe566 0%,#fff 38%,#cce4ff 80%)",
+            backgroundSize:"200% auto",
+            WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+            animation:"shimmer 6s linear infinite",
+          }}>Everywhere.</h1>
+
           <div style={{ ...fi(.52), pointerEvents:"auto" }}>
             <button className="cta-pill" onClick={() => navigate("/explore")}>
               Explore Everywhere
@@ -569,19 +613,19 @@ export default function Index() {
             </button>
           </div>
 
-          {/* Subtitle below button */}
           <div style={{ ...fi(.70), marginTop:20 }}>
-            <p style={{ fontSize:12, letterSpacing:".10em", textTransform:"uppercase",
-              color:"rgba(255,255,255,.38)", fontWeight:400, textAlign:"center" }}>
+            <p style={{ fontSize:11, letterSpacing:".12em", textTransform:"uppercase",
+              color:"rgba(255,255,255,.36)", fontWeight:400, textAlign:"center" }}>
               Composed Intelligence for Thought Leaders
             </p>
           </div>
         </div>
 
-        {/* Bottom wordmark */}
-        <div style={{ display:"flex", justifyContent:"center", paddingBottom:28, ...fi(1.0) }}>
-          <span style={{ fontSize:11, letterSpacing:".12em",
-            color:"rgba(255,255,255,.28)", fontWeight:300 }}>
+        {/* Bottom */}
+        <div style={{ display:"flex", justifyContent:"center",
+          paddingBottom:26, ...fi(1.0) }}>
+          <span style={{ fontSize:10, letterSpacing:".12em",
+            color:"rgba(255,255,255,.26)", fontWeight:300 }}>
             EVERYWHERE STUDIO™ &nbsp;·&nbsp; Ideas to Impact
           </span>
         </div>
