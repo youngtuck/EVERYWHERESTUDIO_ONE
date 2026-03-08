@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ─── WebGL Shader ──────────────────────────────────────────────────────────────
 const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LIQUID MERCURY ORB
+// Technique: environment-mapped iridescent sphere with thin-film interference,
+// flowing caustic light pools, and soft silhouette dissolution.
+// No geometry ridges. No plastic surface. Pure light behavior.
+// ─────────────────────────────────────────────────────────────────────────────
 const FRAG = `
 precision highp float;
 uniform float u_t;
@@ -13,191 +18,210 @@ uniform vec2  u_rotXY;
 #define PI  3.14159265359
 #define TAU 6.28318530718
 
-vec3 rotX(vec3 p, float a){float c=cos(a),s=sin(a);return vec3(p.x,c*p.y-s*p.z,s*p.y+c*p.z);}
-vec3 rotY(vec3 p, float a){float c=cos(a),s=sin(a);return vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);}
-float hash(float n){return fract(sin(n)*43758.5453);}
+// ── Rotation helpers ─────────────────────────────────────────────────────────
+mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
+vec3 rotX(vec3 p,float a){ p.yz=rot2(a)*p.yz; return p; }
+vec3 rotY(vec3 p,float a){ p.xz=rot2(a)*p.xz; return p; }
 
-// Ribbed sphere SDF — gentle, smooth ribs like Telefónica
-float orbSDF(vec3 p, float rx, float ry, float t) {
-  // Rotate point into sphere's local frame (this is how 3D rotation works)
-  vec3 lp = rotX(rotY(p, -ry), -rx);
-  float r = length(lp);
+// ── Hash / noise ──────────────────────────────────────────────────────────────
+float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+float hash(float n){ return fract(sin(n)*43758.5453); }
 
-  // Polar coordinates on sphere surface
-  float cosT = clamp(lp.y / max(r, 0.0001), -1., 1.);
-  float theta = acos(cosT);   // 0 = north pole, PI = south pole
-  float phi   = atan(lp.z, lp.x);
-
-  // 7 smooth horizontal ribs scrolling slowly downward
-  float scroll = t * 0.20;
-  float ribPhase = theta * 7.0 - scroll;
-
-  // Pole pinch: ribs naturally narrow at poles (sin^2 envelope)
-  float sinT = sin(theta);
-  float pole  = sinT * sinT;
-
-  // Rib wave: smooth sine — gentle displacement
-  float rib = sin(ribPhase);
-
-  // Very subtle organic wobble per-band (stops looking CG)
-  float bandIdx = floor(theta * 7.0 / PI);
-  float wobble  = sin(phi * (2.0 + hash(bandIdx)) + t * 0.12 + bandIdx) * 0.008;
-
-  // Slow breathing morph
-  float breath = sin(t * 0.25) * 0.006;
-
-  // KEY: keep displacement SMALL — 0.028 max, scaled by pole pinch
-  float disp = rib * 0.028 * pole + wobble * pole + breath;
-
-  return r - (0.72 + disp);
+float smoothNoise(vec2 p){
+  vec2 i=floor(p), f=fract(p);
+  f=f*f*(3.-2.*f);
+  return mix(
+    mix(hash(i),           hash(i+vec2(1,0)),f.x),
+    mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)),f.x),
+  f.y);
+}
+float fbm(vec2 p){
+  float v=0.,a=.5;
+  for(int i=0;i<5;i++){ v+=a*smoothNoise(p); p=p*2.1+vec2(3.1,1.7); a*=.5; }
+  return v;
 }
 
-vec3 calcNormal(vec3 p, float rx, float ry, float t) {
-  const float e = 0.001;
-  const vec2 k = vec2(1., -1.);
-  return normalize(
-    k.xyy * orbSDF(p + k.xyy*e, rx, ry, t) +
-    k.yyx * orbSDF(p + k.yyx*e, rx, ry, t) +
-    k.yxy * orbSDF(p + k.yxy*e, rx, ry, t) +
-    k.xxx * orbSDF(p + k.xxx*e, rx, ry, t)
-  );
+// ── Sphere SDF — barely any displacement, almost perfect sphere ───────────────
+float sdf(vec3 p, float t){
+  // Extremely subtle surface tension warp — NOT geometry ribs
+  float n = fbm(vec2(atan(p.z,p.x)*0.8+t*0.04, acos(clamp(p.y/length(p),-1.,1.))*0.8+t*0.03));
+  float warp = (n - 0.5) * 0.018; // max 0.9% of radius — just alive enough
+  return length(p) - (0.72 + warp);
 }
 
-vec3 iridescent(float phase) {
-  return vec3(
-    0.5 + 0.5*cos(TAU*(phase + 0.00)),
-    0.5 + 0.5*cos(TAU*(phase + 0.33)),
-    0.5 + 0.5*cos(TAU*(phase + 0.67))
-  );
+vec3 normal(vec3 p, float t){
+  const float e=0.0012;
+  return normalize(vec3(
+    sdf(p+vec3(e,0,0),t)-sdf(p-vec3(e,0,0),t),
+    sdf(p+vec3(0,e,0),t)-sdf(p-vec3(0,e,0),t),
+    sdf(p+vec3(0,0,e),t)-sdf(p-vec3(0,0,e),t)
+  ));
 }
 
-void main() {
-  vec2 uv = (gl_FragCoord.xy / u_res) * 2.0 - 1.0;
-  float ar = u_res.x / u_res.y;
+// ── Procedural HDR environment ────────────────────────────────────────────────
+// This is what makes mercury look like mercury — it mirrors a rich world.
+vec3 env(vec3 dir, float t){
+  // Normalize to lat/lon
+  float phi   = atan(dir.z, dir.x);
+  float theta = acos(clamp(dir.y, -1., 1.));
+
+  // Base sky: top=bright ice, bottom=deep indigo
+  vec3 sky  = mix(vec3(0.06,0.10,0.55), vec3(0.85,0.92,1.00), smoothstep(.5,-.2,dir.y));
+  // Bright "window" — off-top-left, warm white with slight gold
+  float win = exp(-max(dot(dir, normalize(vec3(-0.5,0.8,0.4)))-0.0,0.)*12.);
+  sky += vec3(1.0,0.97,0.88) * win * 1.8;
+  // Secondary fill light — right side, cool blue-white  
+  float fill= exp(-max(dot(dir, normalize(vec3(0.7,0.1,0.6)))-0.0,0.)*18.);
+  sky += vec3(0.70,0.82,1.00) * fill * 0.6;
+  // Floor bounce — warm gold-violet from below
+  float floor_= smoothstep(-.1,.6,-dir.y);
+  sky += mix(vec3(0.10,0.08,0.40), vec3(0.42,0.28,0.06), floor_*0.7) * floor_*0.5;
+  // Flowing caustic bands in the environment (move with time)
+  float causticEnv = fbm(vec2(phi*0.8+t*0.025, theta*1.1-t*0.018))*0.5+0.5;
+  sky += vec3(0.80,0.90,1.00)*pow(causticEnv,3.)*0.35;
+
+  return sky;
+}
+
+// ── Thin-film iridescence ─────────────────────────────────────────────────────
+// Simulates soap-bubble / oilslick color shift based on viewing angle
+vec3 thinFilm(float cosA, float thickness){
+  // Optical path difference
+  float opd = 2.0 * thickness * sqrt(max(0., 1.0 - (1.0/1.45)*(1.0/1.45)*(1.0-cosA*cosA)));
+  // Phase per wavelength (R=650nm, G=550nm, B=450nm, normalized)
+  vec3 phase = TAU * opd / vec3(0.650, 0.550, 0.450);
+  // Reflectance via interference
+  return vec3(0.5) + vec3(0.5)*cos(phase);
+}
+
+void main(){
+  vec2 uv = (gl_FragCoord.xy/u_res)*2.-1.;
+  float ar = u_res.x/u_res.y;
   uv.x *= ar;
 
+  // Spring-physics rotation comes in as u_rotXY
   float rx = u_rotXY.x;
   float ry = u_rotXY.y;
   float t  = u_t;
 
-  // Camera
-  vec3 ro = vec3(0., 0., 2.2);
-  vec3 rd = normalize(vec3(uv, -1.65));
+  // Camera — orthographic-ish, slightly converging
+  vec3 ro = vec3(0.,0.,2.3);
+  vec3 rd = normalize(vec3(uv,-1.7));
 
-  // Ray march
-  float dist = 0.; bool hit = false; vec3 p;
-  for (int i = 0; i < 96; i++) {
-    p = ro + rd * dist;
-    float d = orbSDF(p, rx, ry, t);
-    if (d < 0.0004) { hit = true; break; }
-    if (dist > 5.) break;
-    dist += d * 0.85;
+  // ── Ray march ──────────────────────────────────────────────────────────────
+  float dist=0.; bool hit=false; vec3 p;
+  for(int i=0;i<88;i++){
+    p = ro+rd*dist;
+    float d=sdf(p,t);
+    if(d<0.0005){hit=true;break;}
+    if(dist>5.) break;
+    dist+=d*0.9;
   }
-  if (!hit) { gl_FragColor = vec4(0.); return; }
 
-  vec3 N = calcNormal(p, rx, ry, t);
+  if(!hit){gl_FragColor=vec4(0.);return;}
+
+  // ── Surface ────────────────────────────────────────────────────────────────
+  vec3 N = normal(p, t);
   vec3 V = -rd;
 
-  // Local coords for rib coloring
-  vec3  lp    = rotX(rotY(p, -ry), -rx);
-  float cosT  = clamp(lp.y / max(length(lp), 0.0001), -1., 1.);
-  float theta = acos(cosT);
-  float phi   = atan(lp.z, lp.x);
+  // Apply spring rotation to the NORMAL SPACE for env sampling
+  // (this makes the reflections slide as user tilts — key for mercury feel)
+  vec3 Nr = rotX(rotY(N, ry), rx);
+  vec3 Vr = rotX(rotY(V, ry), rx);
 
-  // Rib shading: which part of the rib are we on?
-  float scroll   = t * 0.20;
-  float ribPhase = fract(theta * 7.0 / PI - scroll / TAU);
-  // 0 = valley, 1 = ridge top
-  float ridge  = 0.5 + 0.5 * cos(ribPhase * TAU);
-  float ridgeS = ridge * ridge * (3. - 2.*ridge); // smoothstep
+  float NoV   = max(dot(N, V), 0.0);
+  float NoV_r = max(dot(Nr, Vr), 0.0);
 
-  // Under-rib shadow (bottom face of each rib catches no light)
-  vec3  localN  = rotX(rotY(N, -ry), -rx);
-  float underSh = max(0., -localN.y) * (1. - ridgeS) * 0.6;
+  // ── Perfect mirror reflection direction ───────────────────────────────────
+  vec3 R  = reflect(-V, N);
+  vec3 Rr = rotX(rotY(R, ry), rx); // rotate into env space
 
-  // ── Lighting ──
-  vec3 L1 = normalize(vec3(-0.4, 0.7, 0.9));
-  vec3 L2 = normalize(vec3( 0.6,-0.3, 0.7));
-  vec3 L3 = normalize(vec3( 0.0, 1.0, 0.2));
-  float ndl1 = max(dot(N, L1), 0.);
-  float ndl2 = max(dot(N, L2), 0.) * 0.28;
-  float ndl3 = max(dot(N, L3), 0.) * 0.18;
+  // ── Environment sample ────────────────────────────────────────────────────
+  vec3 envRefl = env(Rr, t);
 
-  vec3  H1   = normalize(L1 + V);
-  float spec1 = pow(max(dot(N,H1),0.), 60.) * 1.1;
-  float spec2 = pow(max(dot(N,H1),0.), 320.) * 0.8;
+  // ── Thin-film interference ────────────────────────────────────────────────
+  // Film thickness varies slowly across surface + time drift
+  vec3 lp = rotX(rotY(p,-ry),-rx); // local point
+  float phi_s  = atan(lp.z,lp.x);
+  float theta_s= acos(clamp(lp.y/max(length(lp),0.001),-1.,1.));
+  // Thickness field: slow flowing noise on sphere surface
+  float thickNoise = fbm(vec2(phi_s*0.7+t*0.028, theta_s*1.2-t*0.019));
+  float thickness = 0.28 + thickNoise * 0.55; // range ~0.28–0.83
+  vec3 film = thinFilm(NoV, thickness);
 
-  float NoV    = max(dot(N, V), 0.);
-  float fresnel = pow(1. - NoV, 3.5);
+  // ── Caustic light pools ────────────────────────────────────────────────────
+  // Flowing bright patches — like sunlight through water on the surface
+  float c1 = pow(max(0., fbm(vec2(phi_s*1.1+t*0.045, theta_s*1.8+t*0.032))-0.4)*1.66, 2.2);
+  float c2 = pow(max(0., fbm(vec2(phi_s*0.9-t*0.038, theta_s*1.4-t*0.027))-0.45)*1.82, 2.5);
+  vec3 caustics = (vec3(0.88,0.94,1.00)*c1 + vec3(1.00,0.96,0.80)*c2) * 0.55;
 
-  // ── Colors: pearl ridge, soft blue valley ──
-  vec3 ridgeCol  = mix(vec3(0.91, 0.94, 1.00), vec3(1.,1.,1.), ndl1*0.4);
-  vec3 valleyCol = vec3(0.60, 0.69, 0.95);
-  vec3 shadowCol = vec3(0.44, 0.53, 0.88);
+  // ── Fresnel ────────────────────────────────────────────────────────────────
+  // Mercury has very high Fresnel — almost fully reflective at grazing angles
+  float F0     = 0.62; // base reflectivity of mercury (vs glass ~0.04)
+  float fresnel= F0 + (1.-F0)*pow(1.-NoV, 4.5);
 
-  vec3 base = mix(valleyCol, ridgeCol, ridgeS);
-  base = mix(base, shadowCol, underSh);
-  // Slight background-color bleed at edges (glass feel)
-  base = mix(base, vec3(0.28, 0.38, 0.88), fresnel * 0.04);
+  // ── Compose surface ────────────────────────────────────────────────────────
+  // Dark interior where not reflecting — deep mirror-black like actual mercury
+  vec3 mirrorBase = mix(vec3(0.02,0.03,0.12), vec3(0.08,0.10,0.25), NoV*0.6);
 
-  // ── Iridescent caustics on rib edges ──
-  float iriPhase = ribPhase * 3.0 + phi * 0.12 + t * 0.06;
-  vec3  iriCol   = iridescent(iriPhase);
-  float edgeMask = smoothstep(0.25, 0.5, ribPhase) * smoothstep(0.75, 0.5, ribPhase);
-  float cauStr   = edgeMask * 0.18;
+  vec3 col = mirrorBase;
 
-  // ── Traveling energy sparks ──
-  float energy = 0.;
-  for (int i = 0; i < 4; i++) {
-    float fi = float(i);
-    float sT = fract(fi * 0.25 + t * (0.07 + fi*0.018)) * PI;
-    float sP = fi * 1.57 + t * (0.13 + fi*0.06);
-    float dT = abs(theta - sT);
-    float dP = abs(phi - sP); dP = min(dP, TAU - dP);
-    energy += exp(-sqrt(dT*dT + dP*dP*0.25) * 11.) * (0.10 + sin(t*(1.1+fi*0.28))*0.05);
-  }
+  // Layer 1: environment reflection — this IS mercury
+  col = mix(col, envRefl, fresnel * 0.95);
 
-  float breathe = 0.97 + sin(t*0.30)*0.03 + sin(t*0.68)*0.01;
+  // Layer 2: thin-film iridescence on top of reflection
+  // Blend strength varies: stronger at mid-angles, fades at grazing/normal
+  float filmStr = sin(NoV*PI)*0.72; // peaks at 90° viewing angle
+  col = mix(col, col * (0.4 + film*1.4), filmStr * 0.65);
 
-  // ── Assemble ──
-  vec3 col = base;
-  // Generous ambient so it never goes grey
-  col *= (ndl1 * 0.50 + ndl2 + ndl3 + 0.56) * breathe;
-  col += iriCol * cauStr * 1.4;
-  col += vec3(0.88, 0.94, 1.0) * energy * 1.2;
-  col += vec3(1., .99, .97) * spec1;
-  col += vec3(.94, .97, 1.) * spec2;
-  // Fresnel rim glow
-  col += mix(vec3(.70,.80,1.), vec3(.96,.98,1.), fresnel) * fresnel * 0.75;
+  // Layer 3: caustics — bright light pools on surface
+  col += caustics * (0.5 + fresnel*0.5);
 
-  // Edge chromatic aberration
-  float edgeDist = length(uv / vec2(ar, 1.));
-  col.r += smoothstep(.62,.84,edgeDist) * fresnel * 0.06;
-  col.b += smoothstep(.62,.84,edgeDist) * fresnel * 0.14;
+  // Layer 4: specular hotspot — sharp bright reflection of "window"
+  vec3 L_key = normalize(vec3(-0.5,0.8,0.4)); // matches env window direction
+  vec3 H     = normalize(L_key + V);
+  float spec = pow(max(dot(N,H),0.), 180.) * 1.4;
+  col += vec3(1.00,0.98,0.92) * spec;
+  // Secondary soft spec
+  vec3 L2 = normalize(vec3(0.7,0.1,0.6));
+  vec3 H2 = normalize(L2+V);
+  col += vec3(0.75,0.88,1.00) * pow(max(dot(N,H2),0.),60.) * 0.45;
 
-  // Tonemap
-  col = pow(col, vec3(0.86));
-  col = col / (col + 0.28) * 1.20;
-  col = clamp(col, 0., 1.);
+  // ── Rim / edge treatment — soft dissolution, no hard circle ───────────────
+  float edgeDist = length(uv/vec2(ar,1.));
+  // Chromatic aberration at rim (real glass/mercury effect)
+  float rimR = smoothstep(0.68, 0.82, edgeDist);
+  float rimB = smoothstep(0.72, 0.86, edgeDist);
+  col.r += rimR * 0.08;
+  col.b += rimB * 0.15;
+  // Soft atmospheric bleed — sphere color bleeds into bg at edge
+  vec3 bgBleed = vec3(0.26,0.34,0.88);
+  col = mix(col, bgBleed, smoothstep(0.62,0.80,edgeDist)*fresnel*0.4);
 
-  float alpha = (0.92 + fresnel * 0.08) * (1. - smoothstep(0.73, 0.87, edgeDist));
+  // ── Tone mapping ──────────────────────────────────────────────────────────
+  col = max(col, vec3(0.));
+  // ACES-ish filmic — preserves the bright specular without blowing out
+  col = (col*(2.51*col+0.03))/(col*(2.43*col+0.59)+0.14);
+  col = clamp(col,0.,1.);
+
+  // ── Alpha — feathered edge, no hard cutoff ───────────────────────────────
+  float alpha = (0.88 + fresnel*0.12) * (1.-smoothstep(0.70,0.87,edgeDist));
+
   gl_FragColor = vec4(col, alpha);
 }
 `;
 
-// ── Spring physics ──────────────────────────────────────────────────────────
+// ── Spring physics ────────────────────────────────────────────────────────────
 class Spring {
   x=0; y=0; vx=0; vy=0; tx=0; ty=0;
-  k=0.072; d=0.82;
-  set(tx:number,ty:number){this.tx=tx;this.ty=ty;}
   step(){
-    this.vx+=(this.tx-this.x)*this.k; this.vy+=(this.ty-this.y)*this.k;
-    this.vx*=this.d; this.vy*=this.d;
+    this.vx+=(this.tx-this.x)*0.068; this.vy+=(this.ty-this.y)*0.068;
+    this.vx*=0.84; this.vy*=0.84;
     this.x+=this.vx; this.y+=this.vy;
   }
 }
 
-// ── WebGL Orb ───────────────────────────────────────────────────────────────
+// ── WebGL Orb ─────────────────────────────────────────────────────────────────
 function OrbCanvas({ size }: { size: number }) {
   const ref    = useRef<HTMLCanvasElement>(null);
   const spring = useRef(new Spring());
@@ -209,35 +233,35 @@ function OrbCanvas({ size }: { size: number }) {
     canvas.width  = size * dpr;
     canvas.height = size * dpr;
 
-    const gl = canvas.getContext("webgl", { alpha:true, premultipliedAlpha:false, antialias:true })!;
-    if (!gl) return;
+    const gl = canvas.getContext("webgl",{alpha:true,premultipliedAlpha:false,antialias:true})!;
+    if(!gl) return;
 
-    const mkS = (t:number, src:string) => {
-      const s = gl.createShader(t)!;
+    const mkS=(t:number,src:string)=>{
+      const s=gl.createShader(t)!;
       gl.shaderSource(s,src); gl.compileShader(s);
-      const log=gl.getShaderInfoLog(s); if(log?.trim()) console.error(log);
+      const log=gl.getShaderInfoLog(s); if(log?.trim()) console.error("Shader err:",log);
       return s;
     };
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, mkS(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(prog, mkS(gl.FRAGMENT_SHADER, FRAG));
+    const prog=gl.createProgram()!;
+    gl.attachShader(prog,mkS(gl.VERTEX_SHADER,VERT));
+    gl.attachShader(prog,mkS(gl.FRAGMENT_SHADER,FRAG));
     gl.linkProgram(prog); gl.useProgram(prog);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
     const al=gl.getAttribLocation(prog,"a");
     gl.enableVertexAttribArray(al); gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
 
-    const uT=gl.getUniformLocation(prog,"u_t");
-    const uR=gl.getUniformLocation(prog,"u_res");
+    const uT  =gl.getUniformLocation(prog,"u_t");
+    const uR  =gl.getUniformLocation(prog,"u_res");
     const uRot=gl.getUniformLocation(prog,"u_rotXY");
 
-    // Mouse drives rotation: x→ry (spin), y→rx (tilt)
     const onMove=(e:MouseEvent)=>{
       const nx=(e.clientX/window.innerWidth -.5)*2;
       const ny=(e.clientY/window.innerHeight-.5)*2;
-      spring.current.set(ny*0.48, nx*0.48);
+      spring.current.tx= ny*0.52;
+      spring.current.ty= nx*0.52;
     };
     window.addEventListener("mousemove",onMove);
 
@@ -247,8 +271,8 @@ function OrbCanvas({ size }: { size: number }) {
       gl.viewport(0,0,canvas.width,canvas.height);
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform1f(uT, ts*0.001);
-      gl.uniform2f(uR, canvas.width, canvas.height);
-      gl.uniform2f(uRot, rx, ry);
+      gl.uniform2f(uR, canvas.width,canvas.height);
+      gl.uniform2f(uRot,rx,ry);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
       raf.current=requestAnimationFrame(draw);
     };
@@ -259,20 +283,21 @@ function OrbCanvas({ size }: { size: number }) {
   return (
     <canvas ref={ref} style={{
       width:size, height:size, display:"block",
+      // Glow that feels like the orb is emitting light, not just sitting there
       filter:[
-        "drop-shadow(0 0 65px rgba(160,200,255,0.68))",
-        "drop-shadow(0 0 140px rgba(100,150,255,0.35))",
-        "drop-shadow(0 18px 50px rgba(28,44,180,0.48))",
+        "drop-shadow(0 0 55px rgba(140,180,255,0.55))",
+        "drop-shadow(0 0 120px rgba(80,120,255,0.28))",
+        "drop-shadow(0 20px 60px rgba(20,40,160,0.45))",
       ].join(" "),
     }}/>
   );
 }
 
-// ── Background canvas ────────────────────────────────────────────────────────
+// ── Background ────────────────────────────────────────────────────────────────
 function SceneCanvas() {
   const ref    = useRef<HTMLCanvasElement>(null);
   const raf    = useRef(0);
-  const angles = useRef([0,1.3,2.7,4.0,5.4,0.7,3.5]);
+  const angles = useRef(Array.from({length:7},(_,i)=>i*0.9));
 
   useEffect(()=>{
     const canvas=ref.current!;
@@ -286,26 +311,25 @@ function SceneCanvas() {
     resize(); window.addEventListener("resize",resize);
 
     const blobs=[
-      {oR:.52,spd:.00040,r:.100,c:"rgba(130,155,255",a:.48},
-      {oR:.42,spd:-.00028,r:.065,c:"rgba(110,140,250",a:.38},
-      {oR:.60,spd:.00022,r:.130,c:"rgba(145,165,255",a:.30},
-      {oR:.48,spd:-.00035,r:.048,c:"rgba(120,150,255",a:.26},
-      {oR:.68,spd:.00018,r:.085,c:"rgba(100,130,240",a:.20},
-      {oR:.38,spd:-.00050,r:.036,c:"rgba(160,175,255",a:.25},
-      {oR:.76,spd:.00014,r:.058,c:"rgba(110,145,248",a:.16},
+      {oR:.50,spd:.00038,r:.095,c:"rgba(120,148,255",a:.44},
+      {oR:.40,spd:-.00026,r:.062,c:"rgba(100,132,248",a:.36},
+      {oR:.58,spd:.00020,r:.125,c:"rgba(138,158,255",a:.28},
+      {oR:.46,spd:-.00033,r:.045,c:"rgba(115,145,255",a:.24},
+      {oR:.66,spd:.00016,r:.080,c:"rgba(95,125,238",a:.18},
+      {oR:.36,spd:-.00048,r:.034,c:"rgba(155,168,255",a:.22},
+      {oR:.74,spd:.00013,r:.055,c:"rgba(105,140,245",a:.15},
     ];
     const rings=[
-      {r:.30,dots:50, dotR:1.4,a:.24},
-      {r:.40,dots:68, dotR:1.1,a:.17},
-      {r:.50,dots:86, dotR:.85,a:.11},
-      {r:.62,dots:108,dotR:.65,a:.07},
+      {r:.28,dots:48, dotR:1.3,a:.22},
+      {r:.38,dots:64, dotR:1.0,a:.15},
+      {r:.48,dots:82, dotR:.80,a:.10},
+      {r:.60,dots:104,dotR:.60,a:.06},
     ];
-    // Floating particles
-    const pts=Array.from({length:55},()=>({
+    const pts=Array.from({length:50},()=>({
       x:Math.random(),y:Math.random(),
-      r:.4+Math.random()*1.3,
-      vy:-.00004-Math.random()*.00007,
-      a:.05+Math.random()*.20,
+      r:.3+Math.random()*1.2,
+      vy:-.000035-Math.random()*.000065,
+      a:.04+Math.random()*.18,
       ph:Math.random()*Math.PI*2,
     }));
 
@@ -316,36 +340,36 @@ function SceneCanvas() {
       const base=Math.min(W,H)*.30;
       ctx.clearRect(0,0,W,H);
 
-      // Background: bright indigo center → deep navy edge
-      const bg=ctx.createRadialGradient(cx,cy*.9,0,cx,cy,Math.max(W,H)*.85);
-      bg.addColorStop(0,  "#4a5fd4");
-      bg.addColorStop(.30,"#3a4ec8");
-      bg.addColorStop(.60,"#2b3db5");
-      bg.addColorStop(.85,"#1c2c9e");
-      bg.addColorStop(1,  "#111f88");
+      // Rich indigo bg
+      const bg=ctx.createRadialGradient(cx,cy*.88,0,cx,cy,Math.max(W,H)*.88);
+      bg.addColorStop(0,  "#4858d0");
+      bg.addColorStop(.28,"#3848c4");
+      bg.addColorStop(.58,"#2a38b0");
+      bg.addColorStop(.82,"#1c2898");
+      bg.addColorStop(1,  "#101880");
       ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
-      // Orb halo: soft light emanating from center
-      const pulse=.94+Math.sin(t*.32)*.06;
-      const halo=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.3*pulse);
-      halo.addColorStop(0,  "rgba(130,170,255,0.16)");
-      halo.addColorStop(.45,"rgba(90,135,240,0.07)");
-      halo.addColorStop(1,  "rgba(60,100,220,0)");
+      // Soft orb glow on bg
+      const pulse=.93+Math.sin(t*.28)*.07;
+      const halo=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.35*pulse);
+      halo.addColorStop(0,  "rgba(120,160,255,0.14)");
+      halo.addColorStop(.42,"rgba(80,120,240,0.06)");
+      halo.addColorStop(1,  "rgba(50,90,210,0)");
       ctx.fillStyle=halo; ctx.fillRect(0,0,W,H);
 
-      // Edge vignette
-      const vig=ctx.createRadialGradient(cx,cy,base*.25,cx,cy,Math.max(W,H)*.70);
-      vig.addColorStop(0,"rgba(0,0,30,0)");
-      vig.addColorStop(1,"rgba(5,8,48,0.45)");
+      // Vignette
+      const vig=ctx.createRadialGradient(cx,cy,base*.22,cx,cy,Math.max(W,H)*.70);
+      vig.addColorStop(0,"rgba(0,0,28,0)");
+      vig.addColorStop(1,"rgba(4,6,44,0.42)");
       ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
 
       // Orbit rings
       rings.forEach(ring=>{
-        const rPx=base*(ring.r/.30),rY=rPx*.27;
+        const rPx=base*(ring.r/.30),rY=rPx*.26;
         for(let i=0;i<ring.dots;i++){
-          const a=(i/ring.dots)*Math.PI*2+t*.065;
+          const a=(i/ring.dots)*Math.PI*2+t*.060;
           ctx.globalAlpha=ring.a*((Math.sin(a)+1.5)/2.5);
-          ctx.fillStyle="#c0ccff";
+          ctx.fillStyle="#b8c6ff";
           ctx.beginPath(); ctx.arc(cx+Math.cos(a)*rPx,cy+Math.sin(a)*rY,ring.dotR,0,Math.PI*2); ctx.fill();
         }
       });
@@ -354,21 +378,21 @@ function SceneCanvas() {
       blobs.forEach((b,i)=>{
         angles.current[i]+=b.spd;
         const a=angles.current[i];
-        const rPx=base*(b.oR/.30),rY=rPx*.27;
+        const rPx=base*(b.oR/.30),rY=rPx*.26;
         const bx=cx+Math.cos(a)*rPx,by=cy+Math.sin(a)*rY;
         const bR=base*b.r;
-        const depth=(Math.sin(a)+1.0)*.5;
+        const depth=(Math.sin(a)+1.)*.5;
         const gr=ctx.createRadialGradient(bx-bR*.2,by-bR*.2,0,bx,by,bR*1.3);
-        gr.addColorStop(0,`${b.c},.88)`); gr.addColorStop(.45,`${b.c},.50)`); gr.addColorStop(1,`${b.c},0)`);
-        ctx.globalAlpha=b.a*(.44+depth*.56);
+        gr.addColorStop(0,`${b.c},.86)`); gr.addColorStop(.44,`${b.c},.48)`); gr.addColorStop(1,`${b.c},0)`);
+        ctx.globalAlpha=b.a*(.42+depth*.58);
         ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(bx,by,bR,0,Math.PI*2); ctx.fill();
       });
 
-      // Floating particles
+      // Particles
       pts.forEach(p=>{
         p.y+=p.vy; if(p.y<-.02){p.y=1.02;p.x=Math.random();}
-        ctx.globalAlpha=p.a*(.72+.28*Math.sin(t*1.8+p.ph));
-        ctx.fillStyle="#c8d8ff";
+        ctx.globalAlpha=p.a*(.70+.30*Math.sin(t*1.75+p.ph));
+        ctx.fillStyle="#c0d0ff";
         ctx.beginPath(); ctx.arc(p.x*W,p.y*H,p.r,0,Math.PI*2); ctx.fill();
       });
 
@@ -382,15 +406,15 @@ function SceneCanvas() {
   return <canvas ref={ref} style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none"}}/>;
 }
 
-// ── Main Page ────────────────────────────────────────────────────────────────
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Index() {
   const navigate  = useNavigate();
   const [ready,  setReady]   = useState(false);
-  const [orbSize,setOrbSize] = useState(500);
+  const [orbSize,setOrbSize] = useState(520);
 
   useEffect(()=>{
     const calc=()=>setOrbSize(Math.min(
-      window.innerWidth * 0.60,
+      window.innerWidth  * 0.60,
       window.innerHeight * 0.76,
       640,
     ));
@@ -413,40 +437,38 @@ export default function Index() {
         @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
         ::selection{background:rgba(255,220,80,.28);color:#fff;}
-
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
+        @keyframes shimmer{
+          0%  {background-position:-200% center;}
+          100%{background-position: 200% center;}
         }
-
-        .cta-pill {
-          display:inline-flex; align-items:center; gap:10px;
-          background: rgba(255,255,255,.93);
-          border: none; color: #2535b4;
-          font-family: 'Afacad Flux', sans-serif;
-          font-size: 16px; font-weight: 600; letter-spacing: .01em;
-          padding: 15px 44px; border-radius: 100px; cursor: pointer;
-          box-shadow: 0 6px 30px rgba(15,28,140,.32), 0 2px 8px rgba(255,255,255,.15);
-          transition: background .22s, transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s;
+        .cta-pill{
+          display:inline-flex;align-items:center;gap:10px;
+          background:rgba(255,255,255,.92);
+          border:none;color:#2535b4;
+          font-family:'Afacad Flux',sans-serif;
+          font-size:16px;font-weight:600;letter-spacing:.01em;
+          padding:15px 44px;border-radius:100px;cursor:pointer;
+          box-shadow:0 6px 30px rgba(15,28,140,.32),0 2px 8px rgba(255,255,255,.15);
+          transition:background .22s,transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s;
         }
-        .cta-pill:hover {
-          background: #fff;
-          transform: translateY(-3px) scale(1.015);
-          box-shadow: 0 14px 50px rgba(15,28,140,.42), 0 0 40px rgba(140,180,255,.20);
+        .cta-pill:hover{
+          background:#fff;
+          transform:translateY(-3px) scale(1.015);
+          box-shadow:0 14px 50px rgba(15,28,140,.42),0 0 40px rgba(140,180,255,.22);
         }
-        .arr { font-size: 18px; display:inline-block; transition: transform .4s cubic-bezier(.16,1,.3,1); }
-        .cta-pill:hover .arr { transform: translateX(5px); }
+        .arr{font-size:18px;display:inline-block;transition:transform .4s cubic-bezier(.16,1,.3,1);}
+        .cta-pill:hover .arr{transform:translateX(5px);}
       `}</style>
 
-      <SceneCanvas />
+      <SceneCanvas/>
 
-      {/* Orb — centered behind text */}
+      {/* Orb */}
       <div style={{position:"fixed",inset:0,zIndex:2,pointerEvents:"none",
         display:"flex",alignItems:"center",justifyContent:"center"}}>
         <OrbCanvas size={orbSize}/>
       </div>
 
-      {/* Text + UI — above orb */}
+      {/* UI */}
       <div style={{position:"fixed",inset:0,zIndex:10,pointerEvents:"none",
         display:"flex",flexDirection:"column"}}>
 
@@ -454,21 +476,21 @@ export default function Index() {
         <div style={{display:"flex",justifyContent:"center",paddingTop:28,...fi(.08)}}>
           <div style={{display:"flex",alignItems:"baseline"}}>
             <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.01em",color:"rgba(255,255,255,.95)"}}>EVERY</span>
-            <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.01em",color:"rgba(255,255,255,.48)"}}>WHERE</span>
+            <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.01em",color:"rgba(255,255,255,.45)"}}>WHERE</span>
             <span style={{fontSize:10,fontWeight:600,letterSpacing:".18em",
-              color:"rgba(255,255,255,.42)",marginLeft:6,alignSelf:"center",textTransform:"uppercase"}}>Studio™</span>
+              color:"rgba(255,255,255,.40)",marginLeft:6,alignSelf:"center",textTransform:"uppercase"}}>Studio™</span>
           </div>
         </div>
 
-        {/* Center: headline ON the orb + button below */}
+        {/* Headline */}
         <div style={{flex:1,display:"flex",flexDirection:"column",
           alignItems:"center",justifyContent:"center"}}>
 
           <h1 style={{
             ...fi(.25),
             fontSize:"clamp(52px,8.5vw,118px)",
-            fontWeight:700, lineHeight:.95, letterSpacing:"-.035em",
-            color:"#fff", textAlign:"center",
+            fontWeight:700,lineHeight:.95,letterSpacing:"-.035em",
+            color:"#fff",textAlign:"center",
             textShadow:"0 2px 32px rgba(20,40,140,.40)",
             marginBottom:0,
           }}>Your thinking.</h1>
@@ -476,12 +498,11 @@ export default function Index() {
           <h1 style={{
             ...fi(.38),
             fontSize:"clamp(52px,8.5vw,118px)",
-            fontWeight:700, lineHeight:.95, letterSpacing:"-.035em",
-            textAlign:"center", marginBottom:50,
-            // Warm gold sweep — the sheen Tucker liked
-            background:"linear-gradient(110deg, #ffe47a 0%, #fff 38%, #c8e0ff 80%)",
+            fontWeight:700,lineHeight:.95,letterSpacing:"-.035em",
+            textAlign:"center",marginBottom:50,
+            background:"linear-gradient(110deg,#ffe47a 0%,#fff 38%,#c8e0ff 80%)",
             backgroundSize:"200% auto",
-            WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+            WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
             animation:"shimmer 5s linear infinite",
           }}>Everywhere.</h1>
 
@@ -496,7 +517,7 @@ export default function Index() {
         {/* Bottom */}
         <div style={{display:"flex",justifyContent:"center",paddingBottom:26,...fi(.95)}}>
           <span style={{fontSize:11,letterSpacing:".12em",
-            color:"rgba(255,255,255,.38)",fontWeight:400}}>
+            color:"rgba(255,255,255,.35)",fontWeight:400}}>
             EVERYWHERE STUDIO™ &nbsp;·&nbsp; Ideas to Impact
           </span>
         </div>
