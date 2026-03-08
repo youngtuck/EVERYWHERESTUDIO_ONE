@@ -224,24 +224,164 @@ function ThemeToggle({ lc }:{lc:string}) {
       : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path stroke={lc} strokeWidth="2" strokeLinecap="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Dark</>}
   </button>;
 }
-// ─── Room Orb panels — full-height sticky with SiriOrb centered ────────────────
-function RoomPanel({ name, subtitle, palette, accent, bg, energy, dark, children }: {
-  name:string; subtitle:string; palette:OrbPalette; accent:string; bg:string; energy:number; dark:boolean; children:React.ReactNode;
+// ─── Continuous Rooms Section — single sticky left, stacked right panels ──────
+function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
+  dark: boolean;
+  T: Record<string,string>;
+  lc: string; bc: string;
+  orbSection: string; orbEnergy: number;
 }) {
-  const glow = dark ? palette.glow : palette.glowLight;
-  const lc = dark ? "#E8E8E6" : "#1a1a1a";
-  const num = name === "WATCH" ? "Room One" : name === "WORK" ? "Room Two" : "Room Three";
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scrollPct, setScrollPct] = useState(0); // 0→1 across all three rooms
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = wrapperRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // pct: 0 when top of wrapper hits viewport top, 1 when bottom exits
+      const totalScroll = el.offsetHeight - vh;
+      const scrolled = Math.max(0, -rect.top);
+      setScrollPct(totalScroll > 0 ? Math.min(1, scrolled / totalScroll) : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Interpolate bg color across three zones: 0–0.33 (watch), 0.33–0.66 (work), 0.66–1 (wrap)
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.max(0, Math.min(1, t));
+  const eased = scrollPct < 0.5 ? 2 * scrollPct * scrollPct : 1 - Math.pow(-2 * scrollPct + 2, 2) / 2;
+
+  // Dark mode colors per zone
+  const ZONES_DARK = [
+    { bg: [4,12,26],   accent: [74,144,245],  glow: "rgba(74,144,245,0.35)"  }, // watch blue
+    { bg: [3,14,16],   accent: [13,140,158],  glow: "rgba(13,140,158,0.35)"  }, // work teal
+    { bg: [8,4,18],    accent: [160,128,245], glow: "rgba(160,128,245,0.35)" }, // wrap violet
+  ];
+  const ZONES_LIGHT = [
+    { bg: [228,235,250], accent: [74,144,245],  glow: "rgba(74,144,245,0.20)"  },
+    { bg: [216,239,242], accent: [13,140,158],  glow: "rgba(13,140,158,0.20)"  },
+    { bg: [232,226,250], accent: [160,128,245], glow: "rgba(160,128,245,0.20)" },
+  ];
+  const ZONES = dark ? ZONES_DARK : ZONES_LIGHT;
+
+  // Which zone and how far through it
+  const zoneCount = ZONES.length;
+  const rawZone = eased * (zoneCount - 1);
+  const zoneIdx = Math.min(Math.floor(rawZone), zoneCount - 2);
+  const zonePct = rawZone - zoneIdx;
+  const zA = ZONES[zoneIdx], zB = ZONES[zoneIdx + 1];
+
+  const bgR = Math.round(lerp(zA.bg[0], zB.bg[0], zonePct));
+  const bgG = Math.round(lerp(zA.bg[1], zB.bg[1], zonePct));
+  const bgB = Math.round(lerp(zA.bg[2], zB.bg[2], zonePct));
+  const acR = Math.round(lerp(zA.accent[0], zB.accent[0], zonePct));
+  const acG = Math.round(lerp(zA.accent[1], zB.accent[1], zonePct));
+  const acB = Math.round(lerp(zA.accent[2], zB.accent[2], zonePct));
+
+  const leftBg = `rgb(${bgR},${bgG},${bgB})`;
+  const accentColor = `rgb(${acR},${acG},${acB})`;
+  const glowColor = `rgba(${acR},${acG},${acB},${dark ? 0.38 : 0.22})`;
+
+  // Current room label + name based on scroll position
+  const roomIdx = scrollPct < 0.38 ? 0 : scrollPct < 0.72 ? 1 : 2;
+  const roomNames  = ["WATCH", "WORK", "WRAP"];
+  const roomNums   = ["Room One", "Room Two", "Room Three"];
+  const roomSubs   = ["The Signal Room", "The Engine Room", "The Distribution Room"];
+  const roomPals   = [PALETTES.watch, PALETTES.work, PALETTES.wrap];
+
+  // For orb — smoothly blend palette based on scroll
+  const currentPal = roomPals[roomIdx];
+  const textColor = dark ? "#E8E8E6" : "#1a1a1a";
+
   return (
-    <div style={{position:"sticky",top:0,height:"100vh",width:420,flexShrink:0,overflow:"hidden",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0}}>
-      {children}
-      <div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",gap:0}}>
-        <div style={{fontSize:9,letterSpacing:".22em",color:accent,textTransform:"uppercase",marginBottom:14,fontWeight:700,opacity:.65}}>{num}</div>
-        <div style={{filter:`drop-shadow(0 0 56px ${glow})`,marginBottom:16}}>
-          <SiriOrb size={200} energy={energy} palette={palette} dark={dark} />
+    <div ref={wrapperRef} style={{ display: "flex", position: "relative" }}>
+      {/* ── Single sticky left column ── */}
+      <div style={{
+        position: "sticky", top: 0, height: "100vh", width: 420, flexShrink: 0,
+        background: leftBg, transition: "background 0.05s linear",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        overflow: "hidden", zIndex: 2,
+      }}>
+        {/* Ambient radial glow */}
+        <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 65% 65% at 50% 50%, ${glowColor} 0%, transparent 70%)`, pointerEvents: "none", transition: "background 0.4s ease" }} />
+
+        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 14, fontWeight: 700, opacity: .7, transition: "color 0.4s ease" }}>
+            {roomNums[roomIdx]}
+          </div>
+          <div style={{ filter: `drop-shadow(0 0 52px ${glowColor})`, marginBottom: 16, transition: "filter 0.4s ease" }}>
+            <SiriOrb size={200} energy={orbSection === "watch" || orbSection === "work" || orbSection === "wrap" ? orbEnergy : 0.1} palette={currentPal} dark={dark} />
+          </div>
+          <div style={{ fontSize: "clamp(52px,6.5vw,84px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .88, color: textColor, textAlign: "center", transition: "opacity 0.3s" }}>
+            {roomNames[roomIdx]}
+          </div>
+          <div style={{ fontSize: 9, letterSpacing: ".14em", color: textColor, opacity: .20, textTransform: "uppercase", marginTop: 10, fontWeight: 500 }}>
+            {roomSubs[roomIdx]}
+          </div>
+          <div style={{ width: 28, height: 1, background: `linear-gradient(90deg,transparent,${accentColor},transparent)`, marginTop: 18, transition: "background 0.4s ease" }} />
         </div>
-        <div style={{fontSize:"clamp(52px,6.5vw,84px)",fontWeight:800,letterSpacing:"-.05em",lineHeight:.88,color:lc,textAlign:"center"}}>{name}</div>
-        <div style={{fontSize:9,letterSpacing:".14em",color:lc,opacity:.22,textTransform:"uppercase",marginTop:10,fontWeight:500}}>{subtitle}</div>
-        <div style={{width:28,height:1,background:`linear-gradient(90deg,transparent,${accent},transparent)`,marginTop:18}} />
+      </div>
+
+      {/* ── Right panels — stacked, normal flow ── */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+
+        {/* WATCH right */}
+        <div ref={null} style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, borderLeft: `1px solid rgba(74,144,245,0.10)` }}>
+          <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
+          <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <FeatureLine num="01" title="What's Moving" desc="Developments shaping your category right now" accent={T.watchA} delay={0} lc={lc} bc={bc} />
+            <FeatureLine num="02" title="Threats" desc="Items requiring defensive positioning or response" accent={T.watchA} delay={.06} lc={lc} bc={bc} />
+            <FeatureLine num="03" title="Opportunities" desc="Scored by effort-to-impact ratio, highest leverage first" accent={T.watchA} delay={.12} lc={lc} bc={bc} />
+            <FeatureLine num="04" title="Content Triggers" desc="Angles ready to hand directly to the production engine" accent={T.watchA} delay={.18} lc={lc} bc={bc} />
+            <FeatureLine num="05" title="Event Radar" desc="Upcoming events filtered by proximity and relevance" accent={T.watchA} delay={.24} lc={lc} bc={bc} />
+          </div>
+          <FadeUp delay={0.12}>
+            <div style={{ borderLeft: `2px solid ${T.watchA}45`, paddingLeft: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: textColor, marginBottom: 5, letterSpacing: ".02em" }}>Source Verification</div>
+              <p style={{ fontSize: 12, color: T.textSub, lineHeight: 1.74 }}>Every claim requires two or more independent, credible sources. Unverified intelligence never ships. This is a protocol, not a preference.</p>
+            </div>
+          </FadeUp>
+        </div>
+
+        {/* WORK right */}
+        <div style={{ minHeight: "145vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, borderLeft: `1px solid rgba(13,140,158,0.10)` }}>
+          <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
+          <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
+          <FadeUp delay={0.12}>
+            <div>
+              <div style={{ fontSize: 9, letterSpacing: ".18em", color: T.textFaint, textTransform: "uppercase", marginBottom: 10, fontWeight: 500 }}>Output formats</div>
+              <Ticker lc={lc} />
+            </div>
+          </FadeUp>
+          <FadeUp delay={0.18}>
+            <div style={{ borderTop: `1px solid ${bc}`, paddingTop: 28 }}>
+              <div style={{ fontSize: 9, letterSpacing: ".2em", color: T.workA, textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>Voice DNA</div>
+              <div style={{ marginBottom: 20 }}><WordReveal text="Every output sounds exactly like you." size={18} weight={700} color={textColor} lh={1.2} /></div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+                {[["Vocabulary and Syntax", 88], ["Tonal Register", 94], ["Rhythm and Cadence", 91], ["Metaphor Patterns", 87], ["Structural Habits", 96]].map(([l, s], i) => (
+                  <DnaBar key={i} label={l as string} score={s as number} delay={i * .06} accent={T.workA} lc={lc} />
+                ))}
+              </div>
+            </div>
+          </FadeUp>
+        </div>
+
+        {/* WRAP right */}
+        <div style={{ minHeight: "120vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, borderLeft: `1px solid rgba(160,128,245,0.10)` }}>
+          <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
+          <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            <FeatureLine num="01" title="Content Calendar" desc="Visual scheduling across all channels from a single canvas." accent={T.wrapA} delay={0} lc={lc} bc={bc} />
+            <FeatureLine num="02" title="One-Click Deploy" desc="Publish to LinkedIn, newsletter, Substack, social simultaneously." accent={T.wrapA} delay={.06} lc={lc} bc={bc} />
+            <FeatureLine num="03" title="Performance Loop" desc="Engagement data flows back to sharpen your next strategy." accent={T.wrapA} delay={.12} lc={lc} bc={bc} />
+            <FeatureLine num="04" title="The Flywheel" desc="Every post makes the next one better. Ideas compound over time." accent={T.wrapA} delay={.18} lc={lc} bc={bc} />
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -252,46 +392,12 @@ export default function ExplorePage() {
   const nav = useNavigate();
   const [dark, setDark] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [orbSection, setOrbSection] = useState<"hero"|"watch"|"work"|"wrap">("hero");
-  const [orbEnergy, setOrbEnergy] = useState(0.10);
-  const [scrollY, setScrollY] = useState(0);
-
-  const watchRef = useRef<HTMLDivElement>(null);
-  const workRef  = useRef<HTMLDivElement>(null);
-  const wrapRef  = useRef<HTMLDivElement>(null);
+  const [orbSection] = useState<"watch">("watch"); // kept for RoomsSection compat
+  const [orbEnergy] = useState(0.35);
 
   const toggle = () => setDark(d => !d);
   useEffect(()=>{ const t=setTimeout(()=>setMounted(true),80); return()=>clearTimeout(t); },[]);
-  
-  // Tell GlobalCursor what theme we're on
   useEffect(()=>{ document.body.setAttribute("data-explore-theme", dark ? "dark" : "light"); },[dark]);
-
-  useEffect(()=>{
-    const onScroll=()=>{
-      const sy=window.scrollY; setScrollY(sy);
-      const vh=window.innerHeight;
-      const getT=(el:HTMLElement|null)=>el?.getBoundingClientRect().top??null;
-      const getB=(el:HTMLElement|null)=>el?.getBoundingClientRect().bottom??null;
-      const getH=(el:HTMLElement|null)=>el?.getBoundingClientRect().height??null;
-      const wT=getT(wrapRef.current),wB=getB(wrapRef.current),wH=getH(wrapRef.current);
-      const kT=getT(workRef.current),kB=getB(workRef.current),kH=getH(workRef.current);
-      const aT=getT(watchRef.current),aB=getB(watchRef.current),aH=getH(watchRef.current);
-      if(wT!=null&&wT<vh*.7&&wB!=null&&wB>0&&wH!=null){
-        const p=Math.max(0,Math.min(1,-wT/(wH-vh)));
-        setOrbSection("wrap");setOrbEnergy(Math.min(1,p*1.0+.15));
-      } else if(kT!=null&&kT<vh*.7&&kB!=null&&kB>0&&kH!=null){
-        const p=Math.max(0,Math.min(1,-kT/(kH-vh)));
-        setOrbSection("work");setOrbEnergy(Math.min(1,p*1.0+.15));
-      } else if(aT!=null&&aT<vh*.7&&aB!=null&&aB>0&&aH!=null){
-        const p=Math.max(0,Math.min(1,-aT/(aH-vh)));
-        setOrbSection("watch");setOrbEnergy(Math.min(1,p*1.0+.15));
-      } else {
-        setOrbSection("hero");setOrbEnergy(.10);
-      }
-    };
-    window.addEventListener("scroll",onScroll,{passive:true});
-    return()=>window.removeEventListener("scroll",onScroll);
-  },[]);
 
   // Theme tokens
   const T = {
@@ -422,84 +528,8 @@ export default function ExplorePage() {
           </div>
         </section>
 
-        {/* ══ ROOMS WRAPPER — one continuous scroll, left strip stays colored ═══ */}
-        <div style={{position:"relative"}}>
-          {/* Continuous left color strip — spans all three rooms, gradient flows blue→teal→violet */}
-          <div style={{position:"absolute",top:0,bottom:0,left:0,width:420,zIndex:0,
-            background: dark
-              ? "linear-gradient(180deg, #040c1a 0%, #030d0f 33%, #080412 66%, #07090f 100%)"
-              : "linear-gradient(180deg, #E4EBF8 0%, #D8EFF2 33%, #E8E2F8 66%, #F4F2ED 100%)"
-          }} />
-
-        {/* ══ WATCH ════════════════════════════════════════════════════════════ */}
-        <div ref={watchRef} style={{display:"flex",minHeight:"130vh",background:T.bg,position:"relative",zIndex:1}}>
-          <RoomPanel name="WATCH" subtitle="The Signal Room" palette={PALETTES.watch} accent={T.watchA} bg={T.watchBg} energy={orbSection==="watch"?orbEnergy:.10} dark={dark}>
-            <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.watchA}12 0%, transparent 70%)`,pointerEvents:"none"}} />
-          </RoomPanel>
-          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.watchA}12`,background:T.bg}}>
-            <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
-            <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
-            <div style={{display:"flex",flexDirection:"column",gap:0}}>
-              <FeatureLine num="01" title="What's Moving" desc="Developments shaping your category right now" accent={T.watchA} delay={0} lc={lc} bc={bc} />
-              <FeatureLine num="02" title="Threats" desc="Items requiring defensive positioning or response" accent={T.watchA} delay={.06} lc={lc} bc={bc} />
-              <FeatureLine num="03" title="Opportunities" desc="Scored by effort-to-impact ratio, highest leverage first" accent={T.watchA} delay={.12} lc={lc} bc={bc} />
-              <FeatureLine num="04" title="Content Triggers" desc="Angles ready to hand directly to the production engine" accent={T.watchA} delay={.18} lc={lc} bc={bc} />
-              <FeatureLine num="05" title="Event Radar" desc="Upcoming events filtered by proximity and relevance" accent={T.watchA} delay={.24} lc={lc} bc={bc} />
-            </div>
-            <FadeUp delay={0.12}>
-              <div style={{borderLeft:`2px solid ${T.watchA}45`,paddingLeft:18}}>
-                <div style={{fontSize:11,fontWeight:700,color:T.text,marginBottom:5,letterSpacing:".02em"}}>Source Verification</div>
-                <p style={{fontSize:12,color:T.textSub,lineHeight:1.74}}>Every claim requires two or more independent, credible sources. Unverified intelligence never ships. This is a protocol, not a preference.</p>
-              </div>
-            </FadeUp>
-          </div>
-        </div>
-
-        {/* ══ WORK ═════════════════════════════════════════════════════════════ */}
-        <div ref={workRef} style={{display:"flex",minHeight:"145vh",background:T.bg,position:"relative",zIndex:1}}>
-          <RoomPanel name="WORK" subtitle="The Engine Room" palette={PALETTES.work} accent={T.workA} bg={T.workBg} energy={orbSection==="work"?orbEnergy:.10} dark={dark}>
-            <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.workA}10 0%, transparent 70%)`,pointerEvents:"none"}} />
-          </RoomPanel>
-          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.workA}12`,background:T.bg}}>
-            <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
-            <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
-            <FadeUp delay={0.12}>
-              <div>
-                <div style={{fontSize:9,letterSpacing:".18em",color:T.textFaint,textTransform:"uppercase",marginBottom:10,fontWeight:500}}>Output formats</div>
-                <Ticker lc={lc} />
-              </div>
-            </FadeUp>
-            <FadeUp delay={0.18}>
-              <div style={{borderTop:`1px solid ${bc}`,paddingTop:28}}>
-                <div style={{fontSize:9,letterSpacing:".2em",color:T.workA,textTransform:"uppercase",marginBottom:14,fontWeight:700}}>Voice DNA</div>
-                <div style={{marginBottom:20}}><WordReveal text="Every output sounds exactly like you." size={18} weight={700} color={T.text} lh={1.2} /></div>
-                <div style={{display:"flex",flexDirection:"column",gap:13}}>
-                  {[["Vocabulary and Syntax",88],["Tonal Register",94],["Rhythm and Cadence",91],["Metaphor Patterns",87],["Structural Habits",96]].map(([l,s],i)=>(
-                    <DnaBar key={i} label={l as string} score={s as number} delay={i*.06} accent={T.workA} lc={lc} />
-                  ))}
-                </div>
-              </div>
-            </FadeUp>
-          </div>
-        </div>
-
-        {/* ══ WRAP ═════════════════════════════════════════════════════════════ */}
-        <div ref={wrapRef} style={{display:"flex",minHeight:"120vh",background:T.bg,position:"relative",zIndex:1}}>
-          <RoomPanel name="WRAP" subtitle="The Distribution Room" palette={PALETTES.wrap} accent={T.wrapA} bg={T.wrapBg} energy={orbSection==="wrap"?orbEnergy:.10} dark={dark}>
-            <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.wrapA}10 0%, transparent 70%)`,pointerEvents:"none"}} />
-          </RoomPanel>
-          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.wrapA}12`,background:T.bg}}>
-            <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
-            <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
-            <div style={{display:"flex",flexDirection:"column",gap:0}}>
-              <FeatureLine num="01" title="Content Calendar" desc="Visual scheduling across all channels from a single canvas." accent={T.wrapA} delay={0} lc={lc} bc={bc} />
-              <FeatureLine num="02" title="One-Click Deploy" desc="Publish to LinkedIn, newsletter, Substack, social simultaneously." accent={T.wrapA} delay={.06} lc={lc} bc={bc} />
-              <FeatureLine num="03" title="Performance Loop" desc="Engagement data flows back to sharpen your next strategy." accent={T.wrapA} delay={.12} lc={lc} bc={bc} />
-              <FeatureLine num="04" title="The Flywheel" desc="Every post makes the next one better. Ideas compound over time." accent={T.wrapA} delay={.18} lc={lc} bc={bc} />
-            </div>
-          </div>
-        </div>
-        </div>{/* end rooms wrapper */}
+        {/* ══ ROOMS — single continuous left column ════════════════════════════ */}
+        <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} />
 
         {/* ══ QUALITY GATES ════════════════════════════════════════════════════ */}
         <section style={{padding:"80px 48px 88px",background:dark?"linear-gradient(180deg,#080311 0%,#07090f 100%)":"linear-gradient(180deg,#E9E4F5 0%,#F4F2ED 100%)",borderTop:`1px solid ${bc}`}}>
