@@ -1,199 +1,110 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronRight, Download, Filter } from "lucide-react";
 
-type OutputType = "Essay"|"LinkedIn Post"|"Newsletter"|"Podcast Script"|"Sunday Story"|"Twitter Thread"|"Short Video"|"Talk Outline";
-type StatusType = "published"|"draft"|"in-review";
-
-interface Output {
-  id: number; type: OutputType; title: string; score: number;
-  status: StatusType; date: string; words: number; project: string;
-}
-
-const TYPE_COLOR: Record<OutputType, string> = {
-  "Essay":"#4A90D9", "LinkedIn Post":"#0A66C2", "Newsletter":"#F5C642",
-  "Podcast Script":"#9B7ECC", "Sunday Story":"#188FA7", "Twitter Thread":"#1DA1F2",
-  "Short Video":"#DC4444", "Talk Outline":"#E8A820",
-};
-
-const OUTPUTS: Output[] = [
-  { id:1,  type:"Essay",          title:"Leadership habits of quiet operators",           score:912, status:"published", date:"Mar 4",  words:2840, project:"Thought Leadership" },
-  { id:2,  type:"LinkedIn Post",  title:"The CEO who reads everything",                   score:871, status:"published", date:"Mar 1",  words:320,  project:"Thought Leadership" },
-  { id:3,  type:"Newsletter",     title:"February round-up: signal vs noise",             score:847, status:"published", date:"Feb 28", words:1200, project:"Thought Leadership" },
-  { id:4,  type:"Essay",          title:"Why slow thinking wins in fast markets",          score:763, status:"draft",     date:"Feb 25", words:1640, project:"Thought Leadership" },
-  { id:5,  type:"Podcast Script", title:"The Quiet Leader podcast — EP 12",               score:891, status:"published", date:"Feb 20", words:3100, project:"Podcast" },
-  { id:6,  type:"Sunday Story",   title:"What the tide taught me about patience",         score:923, status:"published", date:"Feb 16", words:1800, project:"Sunday Story" },
-  { id:7,  type:"Twitter Thread", title:"8 leadership principles I had to unlearn",       score:856, status:"published", date:"Feb 12", words:480,  project:"Thought Leadership" },
-  { id:8,  type:"Talk Outline",   title:"TEDx Santa Barbara 2026 — draft outline",        score:734, status:"in-review", date:"Feb 10", words:2200, project:"Speaking" },
-  { id:9,  type:"LinkedIn Post",  title:"The delegation myth",                            score:888, status:"published", date:"Feb 8",  words:290,  project:"Thought Leadership" },
-  { id:10, type:"Newsletter",     title:"January: Three things I got wrong",              score:812, status:"published", date:"Jan 31", words:1100, project:"Thought Leadership" },
-  { id:11, type:"Short Video",    title:"60-second: Why 'move fast' is bad advice",       score:867, status:"published", date:"Jan 28", words:180,  project:"Video" },
-  { id:12, type:"Essay",          title:"The operator mindset vs the visionary mindset",  score:844, status:"published", date:"Jan 22", words:2600, project:"Thought Leadership" },
+const OUTPUTS = [
+  { id:"1", title:"Why most advice is wrong about delegation",       type:"essay",        score:847, date:"Mar 8",  status:"published" },
+  { id:"2", title:"The interview before the essay",                 type:"newsletter",   score:912, date:"Mar 7",  status:"published" },
+  { id:"3", title:"TEDx talk outline: composed intelligence",       type:"presentation", score:788, date:"Mar 6",  status:"draft" },
+  { id:"4", title:"LinkedIn thread: AI tells to eliminate",         type:"social",       score:861, date:"Mar 5",  status:"published" },
+  { id:"5", title:"Podcast episode 14: the authenticity gap",       type:"podcast",      score:893, date:"Mar 4",  status:"published" },
+  { id:"6", title:"Sunday Story: the conversation I almost avoided",type:"sunday_story", score:924, date:"Mar 2",  status:"published" },
+  { id:"7", title:"What I know about slow thinking",               type:"essay",        score:835, date:"Feb 28", status:"draft" },
+  { id:"8", title:"Video script: one thing most consultants miss",  type:"video",        score:802, date:"Feb 27", status:"draft" },
 ];
 
-const STATUS_COLOR: Record<StatusType, string> = {
-  published:"#188FA7", draft:"var(--text-muted)", "in-review":"#F5C642",
+const TYPE_COLORS: Record<string, string> = {
+  essay:"#4A90D9", newsletter:"#50c8a0", presentation:"#F5A623",
+  social:"#a080f5", podcast:"#F5C642", video:"#e85d75",
+  sunday_story:"#F5C642", freestyle:"#4A90D9",
 };
 
-function ScoreBar({ score }: { score: number }) {
-  const c = score >= 800 ? "#F5C642" : score >= 600 ? "#188FA7" : "#999";
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-      <div style={{ width:52, height:2, background:"var(--bg-tertiary)", borderRadius:1, overflow:"hidden" }}>
-        <div style={{ height:"100%", width:`${(score/1000)*100}%`, background:c, borderRadius:1 }} />
-      </div>
-      <span style={{ fontSize:13, fontWeight:700, color:c, fontFamily:"'Afacad Flux',sans-serif",
-        letterSpacing:"-.02em", minWidth:28 }}>{score}</span>
-    </div>
-  );
-}
+const TYPE_LABELS: Record<string, string> = {
+  essay:"Essay", newsletter:"Newsletter", presentation:"Presentation",
+  social:"Social", podcast:"Podcast", video:"Video",
+  sunday_story:"Sunday Story", freestyle:"Freestyle",
+};
 
 export default function OutputLibrary() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<OutputType|"All">("All");
-  const [statusFilter, setStatusFilter] = useState<StatusType|"All">("All");
-  const [sortBy, setSortBy] = useState<"date"|"score">("date");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
 
-  const allTypes: (OutputType|"All")[] = ["All","Essay","LinkedIn Post","Newsletter","Podcast Script","Sunday Story","Twitter Thread","Short Video","Talk Outline"];
+  const filtered = OUTPUTS.filter(o => {
+    const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === "all" || o.type === filter;
+    return matchSearch && matchFilter;
+  });
 
-  let results = OUTPUTS
-    .filter(o => !query || o.title.toLowerCase().includes(query.toLowerCase()) || o.type.toLowerCase().includes(query.toLowerCase()))
-    .filter(o => typeFilter === "All" || o.type === typeFilter)
-    .filter(o => statusFilter === "All" || o.status === statusFilter);
-
-  if (sortBy === "score") results = [...results].sort((a,b) => b.score - a.score);
-
-  const published = OUTPUTS.filter(o => o.status==="published").length;
-  const avgScore = Math.round(OUTPUTS.reduce((a,o) => a+o.score, 0) / OUTPUTS.length);
+  const scoreColor = (s: number) => s >= 900 ? "#50c8a0" : s >= 800 ? "#4A90D9" : "#F5C642";
 
   return (
-    <div style={{ padding:"44px 40px 80px", maxWidth:1040, margin:"0 auto" }}>
-
-      {/* Header */}
-      <div style={{ marginBottom:36 }}>
-        <h1 style={{ fontSize:"clamp(24px,3vw,36px)", fontWeight:800, color:"var(--text-primary)",
-          letterSpacing:"-.04em", fontFamily:"'Afacad Flux',sans-serif", marginBottom:6 }}>
-          Output Library
-        </h1>
-        <p style={{ fontSize:13, color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>
-          {OUTPUTS.length} total outputs · {published} published · avg Betterish {avgScore}
-        </p>
-      </div>
-
-      {/* Controls */}
-      <div style={{ display:"flex", gap:12, marginBottom:24, flexWrap:"wrap", alignItems:"center" }}>
-        {/* Search */}
-        <div style={{ position:"relative", flex:1, minWidth:200 }}>
-          <Search size={13} style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)",
-            color:"var(--text-muted)" }} />
-          <input value={query} onChange={e=>setQuery(e.target.value)}
-            placeholder="Search outputs..."
-            style={{ width:"100%", padding:"9px 12px 9px 34px", background:"var(--bg-secondary)",
-              border:"1px solid var(--border)", borderRadius:8, fontSize:13,
-              color:"var(--text-primary)", fontFamily:"'Afacad Flux',sans-serif", outline:"none" }} />
+    <div style={{ padding: "32px", maxWidth: 900, margin: "0 auto", fontFamily: "var(--font)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-.03em", marginBottom: 4 }}>Outputs</h1>
+          <p style={{ fontSize: 13, color: "var(--fg-3)", fontWeight: 300 }}>{OUTPUTS.length} pieces produced</p>
         </div>
-
-        {/* Status filter */}
-        <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value as StatusType|"All")}
-          style={{ padding:"9px 12px", background:"var(--bg-secondary)", border:"1px solid var(--border)",
-            borderRadius:8, fontSize:13, color:"var(--text-primary)",
-            fontFamily:"'Afacad Flux',sans-serif", outline:"none", cursor:"pointer" }}>
-          <option value="All">All status</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-          <option value="in-review">In Review</option>
-        </select>
-
-        {/* Sort */}
-        <select value={sortBy} onChange={e=>setSortBy(e.target.value as "date"|"score")}
-          style={{ padding:"9px 12px", background:"var(--bg-secondary)", border:"1px solid var(--border)",
-            borderRadius:8, fontSize:13, color:"var(--text-primary)",
-            fontFamily:"'Afacad Flux',sans-serif", outline:"none", cursor:"pointer" }}>
-          <option value="date">Sort: newest</option>
-          <option value="score">Sort: score</option>
-        </select>
+        <button onClick={() => navigate("/studio/work/new")} style={{
+          background: "var(--fg)", border: "none", borderRadius: 8, padding: "9px 18px",
+          cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--bg)",
+          fontFamily: "var(--font)", transition: "opacity .15s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.opacity = ".82"}
+          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+        >New Session</button>
       </div>
 
-      {/* Type filter pills */}
-      <div style={{ display:"flex", gap:7, flexWrap:"wrap", marginBottom:24, paddingBottom:20,
-        borderBottom:"1px solid var(--border)" }}>
-        {allTypes.map(t => (
-          <button key={t} onClick={() => setTypeFilter(t as OutputType|"All")}
-            style={{ padding:"5px 12px", borderRadius:100, border:"1px solid",
-              borderColor:typeFilter===t?(t==="All"?"var(--border-strong)":TYPE_COLOR[t as OutputType]):"var(--border)",
-              background:typeFilter===t?"var(--bg-secondary)":"transparent",
-              color:typeFilter===t?(t==="All"?"var(--text-primary)":TYPE_COLOR[t as OutputType]):"var(--text-muted)",
-              cursor:"pointer", fontSize:11, fontWeight:500,
-              fontFamily:"'Afacad Flux',sans-serif", transition:"all .15s" }}>
-            {t}
-          </button>
-        ))}
+      {/* Search + filter */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: .4 }} width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.3"/>
+            <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search outputs..."
+            style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "8px 12px 8px 30px", fontSize: 13, color: "var(--fg)", fontFamily: "var(--font)", outline: "none", transition: "border-color .15s", boxSizing: "border-box" }}
+            onFocus={e => e.target.style.borderColor = "var(--blue)"}
+            onBlur={e => e.target.style.borderColor = "var(--line)"}
+          />
+        </div>
+        <select value={filter} onChange={e => setFilter(e.target.value)} style={{
+          background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8,
+          padding: "8px 12px", fontSize: 13, color: "var(--fg)", fontFamily: "var(--font)", outline: "none",
+        }}>
+          <option value="all">All types</option>
+          {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
       </div>
 
       {/* Table */}
-      <div style={{ background:"var(--bg-secondary)", border:"1px solid var(--border)", borderRadius:10, overflow:"hidden" }}>
-        {/* Table header */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 100px 90px 80px 36px",
-          padding:"10px 20px", borderBottom:"1px solid var(--border)",
-          gap:12, alignItems:"center" }}>
-          {["Output","Type","Date","Score",""].map(h => (
-            <span key={h} style={{ fontSize:9, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase",
-              color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>{h}</span>
-          ))}
-        </div>
-
-        {results.length === 0 ? (
-          <div style={{ padding:"48px 20px", textAlign:"center", color:"var(--text-muted)",
-            fontFamily:"'Afacad Flux',sans-serif", fontSize:14 }}>
-            No outputs match your filters.
-          </div>
-        ) : results.map((o, i) => (
-          <div key={o.id}
-            onClick={() => navigate(`/studio/outputs/${o.id}`)}
-            style={{ display:"grid", gridTemplateColumns:"1fr 100px 90px 80px 36px",
-              padding:"14px 20px", borderBottom:i<results.length-1?"1px solid var(--border)":"none",
-              gap:12, alignItems:"center", cursor:"pointer", transition:"background .12s" }}
-            onMouseEnter={e=>(e.currentTarget.style.background="var(--bg-tertiary)")}
-            onMouseLeave={e=>(e.currentTarget.style.background="transparent")}>
-
-            {/* Title + status */}
-            <div style={{ minWidth:0 }}>
-              <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:2 }}>
-                <span style={{ fontSize:9, fontWeight:700, letterSpacing:"0.07em",
-                  textTransform:"uppercase", color:STATUS_COLOR[o.status],
-                  fontFamily:"'Afacad Flux',sans-serif" }}>{o.status}</span>
-                {o.words && <span style={{ fontSize:10, color:"var(--text-muted)",
-                  fontFamily:"'Afacad Flux',sans-serif" }}>{o.words.toLocaleString()}w</span>}
-              </div>
-              <p style={{ fontSize:14, fontWeight:600, color:"var(--text-primary)",
-                fontFamily:"'Afacad Flux',sans-serif", letterSpacing:"-.02em",
-                whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{o.title}</p>
-            </div>
-
-            {/* Type badge */}
-            <span style={{ fontSize:10, fontWeight:600, color:TYPE_COLOR[o.type],
-              fontFamily:"'Afacad Flux',sans-serif", letterSpacing:".02em",
-              whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{o.type}</span>
-
-            {/* Date */}
-            <span style={{ fontSize:12, color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif" }}>{o.date}</span>
-
-            {/* Score */}
-            <ScoreBar score={o.score} />
-
-            {/* Arrow */}
-            <ChevronRight size={13} style={{ color:"var(--text-muted)" }} />
-          </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {filtered.map(o => (
+          <button key={o.id} onClick={() => navigate(`/studio/outputs/${o.id}`)} style={{
+            display: "flex", alignItems: "center", gap: 14,
+            background: "none", border: "none", borderRadius: 8, padding: "11px 12px",
+            cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", width: "100%",
+            transition: "background .12s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = "var(--bg-2)"}
+            onMouseLeave={e => e.currentTarget.style.background = "none"}
+          >
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[o.type] || "#4A90D9", flexShrink: 0 }} />
+            <span style={{ flex: 1, fontSize: 14, color: "var(--fg)", fontWeight: 400, letterSpacing: "-.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.title}</span>
+            <span style={{ fontSize: 11, color: "var(--fg-3)", width: 90, flexShrink: 0 }}>{TYPE_LABELS[o.type] || o.type}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(o.score), width: 42, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
+            <span style={{
+              fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
+              background: o.status === "published" ? "rgba(80,200,160,.1)" : "rgba(255,255,255,.06)",
+              color: o.status === "published" ? "#50c8a0" : "var(--fg-3)",
+              border: `1px solid ${o.status === "published" ? "rgba(80,200,160,.2)" : "var(--line)"}`,
+            }}>{o.status}</span>
+            <span style={{ fontSize: 11, color: "var(--fg-3)", width: 48, textAlign: "right", flexShrink: 0 }}>{o.date}</span>
+          </button>
         ))}
+        {filtered.length === 0 && (
+          <div style={{ padding: "48px", textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>No outputs match your search.</div>
+        )}
       </div>
-
-      {results.length > 0 && (
-        <p style={{ fontSize:11, color:"var(--text-muted)", fontFamily:"'Afacad Flux',sans-serif",
-          marginTop:12, textAlign:"right" }}>
-          Showing {results.length} of {OUTPUTS.length} outputs
-        </p>
-      )}
     </div>
   );
 }
