@@ -4,17 +4,11 @@ import { useNavigate } from "react-router-dom";
 const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// THE EVERYWHERE ORB
+// THE EVERYWHERE ORB — v6 "Entity in the Void"
 //
-// A living energy entity: translucent iridescent shell containing flowing
-// interior light. Like a thought made visible. Like signal made physical.
-//
-// Technique:
-//  · Two-pass ray march: shell surface + interior volumetric glow
-//  · Shell: thin-film iridescence (soap bubble) + soft alpha dissolution
-//  · Interior: flowing FBM light ribbons in brand colors (indigo/blue/gold)
-//  · Subpixel alpha antialiasing on the silhouette edge
-//  · Spring-physics mouse reactivity tilts the whole entity
+// Philosophy: deep midnight background, orb as the only light source.
+// Iridescent shell + flowing interior energy, perfectly smooth edge,
+// glow baked into shader (no CSS filter artifacts).
 // ─────────────────────────────────────────────────────────────────────────────
 const FRAG = `
 precision highp float;
@@ -29,62 +23,51 @@ mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
 vec3 rotX(vec3 p,float a){ p.yz=rot2(a)*p.yz; return p; }
 vec3 rotY(vec3 p,float a){ p.xz=rot2(a)*p.xz; return p; }
 
-// ── Noise ──────────────────────────────────────────────────────────────────
 float hash21(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
-float hash11(float n){ return fract(sin(n)*43758.5453); }
-
 float noise(vec2 p){
   vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
   return mix(mix(hash21(i),hash21(i+vec2(1,0)),f.x),
              mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),f.x),f.y);
 }
-float fbm3(vec2 p){
-  return noise(p)*.5 + noise(p*2.1+vec2(1.7,9.2))*.25 + noise(p*4.3+vec2(8.3,2.8))*.125;
+float fbm(vec2 p){
+  return noise(p)*.50 + noise(p*2.1+vec2(1.7,9.2))*.25 + noise(p*4.3+vec2(8.3,2.8))*.125;
 }
 
-// ── Thin-film interference ─────────────────────────────────────────────────
+// Thin-film iridescence — soap bubble / oilslick color shift
 vec3 thinFilm(float cosA, float thick){
   float opd = 2.*thick*sqrt(max(0.,1.-(1./1.45/1.45)*(1.-cosA*cosA)));
   vec3 phase = TAU*opd/vec3(.650,.550,.450);
   return .5+.5*cos(phase);
 }
 
-// ── Interior energy field ──────────────────────────────────────────────────
-// Flowing ribbons of light inside the sphere
-vec3 interiorEnergy(vec3 p, float t){
-  // Normalized position inside unit sphere
-  float r = length(p);
+// Interior energy — flowing light ribbons in brand palette
+vec3 interior(vec3 lp, float t){
+  float r = length(lp);
+  float phi   = atan(lp.z,lp.x);
+  float theta = acos(clamp(lp.y/max(r,.001),-1.,1.));
 
-  // Flow field — swirling FBM in 3D projected to 2D slices
-  float phi   = atan(p.z, p.x);
-  float theta = acos(clamp(p.y/max(r,.001),-1.,1.));
+  float f1 = fbm(vec2(phi*1.1 + t*.07,   theta*1.6 + t*.045));
+  float f2 = fbm(vec2(phi*.8  - t*.055,  theta*1.2 - t*.038) + vec2(3.1,7.4));
+  float f3 = fbm(vec2(phi*1.8 + t*.09,   theta*2.2 + t*.06)  + vec2(5.9,2.2));
 
-  // Multiple flow layers at different speeds and scales
-  float flow1 = fbm3(vec2(phi*1.2 + t*.08,  theta*1.8 + t*.05));
-  float flow2 = fbm3(vec2(phi*.7  - t*.06,  theta*1.3 - t*.04) + vec2(3.1,7.4));
-  float flow3 = fbm3(vec2(phi*2.1 + t*.11,  theta*2.5 + t*.07) + vec2(5.9,2.2));
+  // Soft ribbon thresholding
+  float r1 = pow(max(0., 1.-abs(f1-.54)*5.5), 2.0);
+  float r2 = pow(max(0., 1.-abs(f2-.47)*6.5), 2.3);
+  float r3 = pow(max(0., 1.-abs(f3-.51)*5.0), 1.8);
 
-  // Ribbon-like structure: threshold the flow to get bands
-  float ribbon1 = pow(max(0., 1. - abs(flow1 - .55)*6.), 2.2);
-  float ribbon2 = pow(max(0., 1. - abs(flow2 - .48)*7.), 2.5);
-  float ribbon3 = pow(max(0., 1. - abs(flow3 - .52)*5.), 1.8);
+  // Brand palette: electric blue, violet, warm gold
+  vec3 c1 = vec3(.20,.52,1.00)*r1*1.6;   // electric blue
+  vec3 c2 = vec3(.52,.18,.88)*r2*1.3;   // violet
+  vec3 c3 = vec3(.95,.70,.15)*r3*.85;   // gold
 
-  // Brand color palette for ribbons:
-  // Primary: electric indigo-blue
-  // Secondary: deep violet
-  // Accent: warm gold
-  vec3 col1 = vec3(0.25, 0.55, 1.00) * ribbon1 * 1.8;  // electric blue
-  vec3 col2 = vec3(0.55, 0.22, 0.90) * ribbon2 * 1.4;  // violet
-  vec3 col3 = vec3(1.00, 0.75, 0.20) * ribbon3 * 1.0;  // gold accent
+  // Core: deep indigo glow, breathing
+  float core = exp(-r*r*2.5)*(.45+.55*sin(t*.38+.8));
+  vec3 coreCol = vec3(.08,.14,.60)*core*2.2;
 
-  // Soft core glow — deep indigo, brighter at center
-  float coreGlow = exp(-r*r*2.8) * (.5 + .5*sin(t*.4));
-  vec3 core = vec3(0.12, 0.20, 0.65) * coreGlow * 2.0;
+  // Dark base — midnight interior
+  vec3 base = vec3(.02,.03,.14)*(.4+.6*(1.-r));
 
-  // Ambient fill — the dark base color (deep midnight blue)
-  vec3 ambient = vec3(0.04, 0.06, 0.22) * (.3 + .7*(1.-r));
-
-  return ambient + core + col1 + col2 + col3;
+  return base + coreCol + c1 + c2 + c3;
 }
 
 void main(){
@@ -96,130 +79,104 @@ void main(){
   float ry = u_rotXY.y;
   float t  = u_t;
 
-  // ── Ray setup ─────────────────────────────────────────────────────────────
-  vec3 ro = vec3(0.,0.,2.3);
-  vec3 rd = normalize(vec3(uv,-1.65));
+  // Analytic sphere intersection — exact, no stepping, perfect silhouette
+  float R  = 0.72;
+  vec3 ro  = vec3(0.,0.,2.3);
+  vec3 rd  = normalize(vec3(uv,-1.65));
+  float b  = dot(ro,rd);
+  float c  = dot(ro,ro)-R*R;
+  float disc = b*b-c;
 
-  // ── Analytically intersect sphere (no ray marching needed for perfect sphere) ──
-  // This is the key to crisp, antialiased edges — analytic intersection = exact
-  float R  = 0.720;  // sphere radius
-  float b  = dot(ro, rd);
-  float c  = dot(ro, ro) - R*R;
-  float disc = b*b - c;
+  // ── Background glow — baked into shader, no CSS filter needed ────────────
+  // Soft bloom from orb center, even outside the sphere
+  float distToCenter = length(uv/vec2(ar,1.));
+  float bgGlow = exp(-distToCenter*distToCenter*1.8)*0.55;
+  // Pulsing halo ring
+  float haloR = .78 + sin(t*.22)*.04;
+  float halo  = exp(-abs(distToCenter-haloR)*12.)*.18;
+  // Color the glow: deep indigo-violet
+  vec3 bgCol = vec3(.10,.15,.55)*bgGlow + vec3(.18,.10,.48)*halo;
+  // Subtle bloom in brand blue
+  bgCol += vec3(.08,.18,.65)*exp(-distToCenter*distToCenter*3.8)*.35;
 
   if(disc < 0.0){
-    gl_FragColor = vec4(0.);
+    // Outside sphere — just the bg glow
+    // Feather at silhouette edge for smooth blending
+    float edgeFade = smoothstep(-.002, .012, -disc);
+    gl_FragColor = vec4(bgCol, edgeFade*0.95 + (1.-edgeFade)*min(bgGlow*1.4+halo*1.2,1.));
     return;
   }
 
-  float sqrtDisc = sqrt(disc);
-  float t1 = -b - sqrtDisc; // front hit
-  float t2 = -b + sqrtDisc; // back hit
+  float sqrtD = sqrt(disc);
+  float t1    = max(-b-sqrtD, 0.);
+  float t2    = -b+sqrtD;
+  if(t2<0.){ gl_FragColor=vec4(bgCol,min(bgGlow+halo,1.)); return; }
 
-  // Subpixel antialias: fade alpha at silhouette
-  // disc approaches 0 at the silhouette edge
-  // Use sqrt(disc) as a soft distance to edge
-  float edgeAA = smoothstep(0., 0.0035, sqrtDisc);  // 2-3 subpixel feather
+  // Subpixel silhouette AA — disc → 0 at edge
+  float edgeAA = smoothstep(0., .004, sqrtD);
 
-  if(t2 < 0.0){ gl_FragColor = vec4(0.); return; }
-  t1 = max(t1, 0.0);
+  vec3 pF = ro+rd*t1;
+  vec3 N  = normalize(pF);
+  vec3 V  = -rd;
+  float NoV = max(dot(N,V),0.);
 
-  vec3 pFront = ro + rd*t1;
-  vec3 pBack  = ro + rd*t2;
-
-  // ── Surface normal (front hit) ────────────────────────────────────────────
-  vec3 N = normalize(pFront);
-  vec3 V = -rd;
-
-  // Apply spring rotation to normal for env reflection
-  vec3 Nr = rotX(rotY(N, ry), rx);
-  vec3 Vr = rotX(rotY(V, ry), rx);
-
-  float NoV = max(dot(N,V), 0.);
-
-  // ── Thin-film shell ───────────────────────────────────────────────────────
-  // Film thickness varies by position + time (slow drift)
-  // Rotate local point for the thickness field
-  vec3 lp = rotX(rotY(pFront,-ry),-rx);
+  // Rotate local space for spring-physics reactivity
+  vec3 lp  = rotX(rotY(pF,-ry),-rx);
   float phi_s   = atan(lp.z,lp.x);
   float theta_s = acos(clamp(lp.y/max(length(lp),.001),-1.,1.));
 
-  float thickFlow = fbm3(vec2(phi_s*.65 + t*.022, theta_s*1.1 - t*.016));
-  float thick = .30 + thickFlow * .60;
+  // ── Thin-film shell ───────────────────────────────────────────────────────
+  float thickN = fbm(vec2(phi_s*.6+t*.020, theta_s*1.0-t*.015));
+  float thick  = .28+thickN*.65;
+  vec3  film   = thinFilm(NoV, thick);
 
-  vec3 film = thinFilm(NoV, thick);
+  // Fresnel — glassy, high at rim
+  float F0      = .06;
+  float fresnel = F0+(1.-F0)*pow(1.-NoV,4.0);
+  float rim     = pow(1.-NoV,5.5)*1.1;
+  fresnel       = min(fresnel+rim,.98);
 
-  // Shell Fresnel — high base reflectivity like glass/soap
-  float F0      = 0.055;
-  float fresnel = F0 + (1.-F0)*pow(1.-NoV, 4.2);
-  // Boost at silhouette for that glowing edge
-  float rimBump = pow(1.-NoV, 6.0) * 1.2;
-  fresnel = min(fresnel + rimBump, 1.0);
+  // Shell color: iridescent film over deep base
+  vec3 shellBase = mix(vec3(.06,.10,.42), vec3(.55,.68,.96), NoV*.6);
+  vec3 shellCol  = mix(shellBase, film*vec3(.95,1.,.98), .82);
 
-  // Shell iridescent color — film modulates a base indigo
-  vec3 shellBase = mix(vec3(.15,.22,.72), vec3(.80,.88,1.), NoV*.5);
-  vec3 shellCol  = mix(shellBase, film * vec3(.90,.95,1.05), .78);
+  // Key specular — bright white point (the "sun" in the glass)
+  vec3 Lk = normalize(vec3(-.42,.78,.48));
+  vec3 H  = normalize(Lk+V);
+  shellCol += vec3(1.,1.,1.)*pow(max(dot(N,H),0.),180.)*1.3;
+  // Soft secondary
+  shellCol += vec3(.65,.80,1.)*pow(max(dot(N,normalize(vec3(.70,.12,.52)+V)),0.),55.)*.4;
 
-  // Sharp specular hotspot
-  vec3 L_key = normalize(vec3(-.45,.80,.45));
-  vec3 H     = normalize(L_key+V);
-  float spec = pow(max(dot(N,H),0.), 160.) * 1.2;
-  shellCol += vec3(1.,1.,1.) * spec;
-
-  // ── Interior volume ───────────────────────────────────────────────────────
-  // Sample interior energy at multiple depths along the ray
-  // Simple 4-sample integration through the sphere volume
-  vec3 intColor = vec3(0.);
-  float intDepth = t2 - t1;
-
-  // Rotate the ray direction for interior (spring physics affects interior too)
+  // ── Interior energy ───────────────────────────────────────────────────────
+  vec3 intCol = vec3(0.);
+  float span  = t2-t1;
   for(int i=0;i<6;i++){
     float fi = float(i)/5.;
-    vec3 sampleP = ro + rd*(t1 + intDepth*(fi*.85+.08));
-    // Rotate sample point into local spring-physics space
-    vec3 localP = rotX(rotY(sampleP,-ry),-rx);
-    vec3 energy = interiorEnergy(localP, t);
-    // Weight by distance from center (more energy near center)
-    float w = 1. - fi*.4;
-    intColor += energy * w;
+    vec3 sp  = ro+rd*(t1+span*(fi*.82+.09));
+    vec3 slp = rotX(rotY(sp,-ry),-rx);
+    intCol  += interior(slp,t)*(1.-fi*.35);
   }
-  intColor /= 4.5; // normalize
+  intCol /= 4.2;
 
-  // ── Shell transparency ────────────────────────────────────────────────────
-  // Shell is semi-transparent — interior shows through, more at center
-  // At grazing angles (rim), shell is more opaque/reflective
-  // At center (normal incidence), shell is more transparent
-  float shellOpacity = mix(0.18, 0.72, fresnel);
+  // ── Shell opacity: transparent at center, opaque at rim ──────────────────
+  float shellOp = mix(.14, .80, fresnel);
+  vec3  col     = mix(intCol, shellCol, shellOp);
 
-  // Composite: interior + shell overlay
-  vec3 col = intColor;
+  // Rim glow — electric indigo-violet bleeding outward
+  vec3 rimGlow = mix(vec3(.22,.40,1.0),vec3(.55,.18,.88),sin(t*.25)*.5+.5);
+  col += rimGlow*rim*.60;
 
-  // Add shell as an overlay — iridescent film over the energy
-  col = mix(col, shellCol, shellOpacity);
-
-  // Extra rim glow — bright electric edge blending into background
-  vec3 rimGlow = mix(vec3(.28,.45,1.0), vec3(.60,.40,.95), sin(t*.3)*.5+.5);
-  col += rimGlow * (rimBump * .55);
-
-  // ── Tone mapping ──────────────────────────────────────────────────────────
-  // Filmic — keeps the bright ribbons vivid without blowing out
-  col = max(col, vec3(0.));
+  // ── Tone map ──────────────────────────────────────────────────────────────
+  col = max(col,vec3(0.));
   col = (col*(2.51*col+.03))/(col*(2.43*col+.59)+.14);
-  col = clamp(col, 0., 1.);
+  col = clamp(col,0.,1.);
 
-  // ── Alpha — analytic AA, soft edge ───────────────────────────────────────
-  // Core alpha: fully opaque sphere coverage
-  // Edge feather: subpixel smooth from analytic disc
-  float alpha = edgeAA;
-
-  // Additional soft vignette at rim: shell dissolves into background
-  float rimFade = smoothstep(.68, .84, length(uv/vec2(ar,1.)));
-  // Don't cut alpha — let the interior show as glow bleeding into bg
-  alpha = alpha * (1. - rimFade*.35);
-
-  // Breathing pulse on alpha (very subtle — just alive)
-  float breathe = .97 + sin(t*.28)*.03 + sin(t*.71)*.01;
-  alpha *= breathe;
+  // ── Alpha — smooth, no hard edge ─────────────────────────────────────────
+  float alpha = edgeAA*(.90+fresnel*.10);
+  // Blend bg glow into the alpha edge so it dissolves cleanly
+  float blendZone = 1.-smoothstep(.0,.015,sqrtD);
+  col  = mix(col,  bgCol, blendZone*.6);
+  alpha = max(alpha, bgGlow*.7+halo*.5)*edgeAA + (1.-edgeAA)*(bgGlow*.8+halo*.6);
 
   gl_FragColor = vec4(col*alpha, alpha);
 }
@@ -227,25 +184,25 @@ void main(){
 
 // ── Spring physics ────────────────────────────────────────────────────────────
 class Spring {
-  x=0; y=0; vx=0; vy=0; tx=0; ty=0;
+  x=0;y=0;vx=0;vy=0;tx=0;ty=0;
   step(){
-    this.vx+=(this.tx-this.x)*.065; this.vy+=(this.ty-this.y)*.065;
-    this.vx*=.85; this.vy*=.85;
+    this.vx+=(this.tx-this.x)*.062; this.vy+=(this.ty-this.y)*.062;
+    this.vx*=.86; this.vy*=.86;
     this.x+=this.vx; this.y+=this.vy;
   }
 }
 
-// ── WebGL Orb ─────────────────────────────────────────────────────────────────
+// ── WebGL Orb — NO CSS filter, glow is inside shader ─────────────────────────
 function OrbCanvas({ size }: { size: number }) {
   const ref    = useRef<HTMLCanvasElement>(null);
   const spring = useRef(new Spring());
   const raf    = useRef(0);
 
-  useEffect(() => {
+  useEffect(()=>{
     const canvas = ref.current!;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width  = Math.round(size * dpr);
-    canvas.height = Math.round(size * dpr);
+    const dpr = window.devicePixelRatio||1;
+    canvas.width  = Math.round(size*dpr);
+    canvas.height = Math.round(size*dpr);
 
     const gl = canvas.getContext("webgl",{alpha:true,premultipliedAlpha:false,antialias:true})!;
     if(!gl) return;
@@ -274,8 +231,8 @@ function OrbCanvas({ size }: { size: number }) {
     const onMove=(e:MouseEvent)=>{
       const nx=(e.clientX/window.innerWidth -.5)*2;
       const ny=(e.clientY/window.innerHeight-.5)*2;
-      spring.current.tx= ny*0.55;
-      spring.current.ty= nx*0.55;
+      spring.current.tx=ny*.55;
+      spring.current.ty=nx*.55;
     };
     window.addEventListener("mousemove",onMove);
 
@@ -284,8 +241,8 @@ function OrbCanvas({ size }: { size: number }) {
       const {x:rx,y:ry}=spring.current;
       gl.viewport(0,0,canvas.width,canvas.height);
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform1f(uT, ts*.001);
-      gl.uniform2f(uR, canvas.width,canvas.height);
+      gl.uniform1f(uT,ts*.001);
+      gl.uniform2f(uR,canvas.width,canvas.height);
       gl.uniform2f(uRot,rx,ry);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
       raf.current=requestAnimationFrame(draw);
@@ -294,24 +251,15 @@ function OrbCanvas({ size }: { size: number }) {
     return()=>{cancelAnimationFrame(raf.current);window.removeEventListener("mousemove",onMove);};
   },[size]);
 
-  return (
-    <canvas ref={ref} style={{
-      width:size, height:size, display:"block",
-      // Glow: the orb radiates outward into the background — entity feel
-      filter:[
-        "drop-shadow(0 0 40px rgba(80,120,255,0.60))",
-        "drop-shadow(0 0 100px rgba(60,90,255,0.30))",
-        "drop-shadow(0 0 200px rgba(40,70,220,0.15))",
-      ].join(" "),
-    }}/>
-  );
+  // NO CSS filter — perfectly clean edge
+  return <canvas ref={ref} style={{width:size,height:size,display:"block"}}/>;
 }
 
-// ── Background ────────────────────────────────────────────────────────────────
+// ── Background — deep midnight void, orb is the light source ─────────────────
 function SceneCanvas() {
   const ref    = useRef<HTMLCanvasElement>(null);
   const raf    = useRef(0);
-  const angles = useRef(Array.from({length:7},(_,i)=>i*0.9));
+  const angles = useRef(Array.from({length:6},(_,i)=>i*1.05));
 
   useEffect(()=>{
     const canvas=ref.current!;
@@ -324,26 +272,20 @@ function SceneCanvas() {
     };
     resize(); window.addEventListener("resize",resize);
 
+    // Minimal satellite blobs — barely visible, deep in the void
     const blobs=[
-      {oR:.50,spd:.00036,r:.095,c:"rgba(100,128,245",a:.40},
-      {oR:.40,spd:-.00024,r:.060,c:"rgba( 85,112,238",a:.32},
-      {oR:.58,spd:.00019,r:.118,c:"rgba(118,140,252",a:.26},
-      {oR:.46,spd:-.00031,r:.044,c:"rgba(100,125,248",a:.22},
-      {oR:.66,spd:.00015,r:.078,c:"rgba( 80,108,232",a:.17},
-      {oR:.36,spd:-.00046,r:.032,c:"rgba(140,155,255",a:.20},
-      {oR:.74,spd:.00012,r:.052,c:"rgba( 90,122,240",a:.13},
+      {oR:.46,spd:.00028,r:.070,c:"rgba(60,80,200",  a:.18},
+      {oR:.36,spd:-.00020,r:.045,c:"rgba(50,65,185",  a:.14},
+      {oR:.55,spd:.00015,r:.090,c:"rgba(70,90,210",  a:.12},
+      {oR:.42,spd:-.00024,r:.034,c:"rgba(55,72,195",  a:.10},
+      {oR:.62,spd:.00012,r:.058,c:"rgba(45,62,178",  a:.09},
+      {oR:.32,spd:-.00035,r:.026,c:"rgba(80,95,220",  a:.10},
     ];
-    const rings=[
-      {r:.28,dots:46, dotR:1.2,a:.20},
-      {r:.38,dots:62, dotR:.95,a:.13},
-      {r:.48,dots:80, dotR:.75,a:.08},
-      {r:.60,dots:102,dotR:.58,a:.05},
-    ];
-    const pts=Array.from({length:48},()=>({
+    // Sparse distant stars
+    const stars=Array.from({length:80},()=>({
       x:Math.random(),y:Math.random(),
-      r:.3+Math.random()*1.1,
-      vy:-.00003-Math.random()*.00006,
-      a:.04+Math.random()*.16,
+      r:.2+Math.random()*.7,
+      a:.04+Math.random()*.12,
       ph:Math.random()*Math.PI*2,
     }));
 
@@ -354,61 +296,55 @@ function SceneCanvas() {
       const base=Math.min(W,H)*.30;
       ctx.clearRect(0,0,W,H);
 
-      // Deep rich indigo — darker than before so orb pops
-      const bg=ctx.createRadialGradient(cx,cy*.88,0,cx,cy,Math.max(W,H)*.88);
-      bg.addColorStop(0,  "#3d4ec8");
-      bg.addColorStop(.28,"#2e3eb8");
-      bg.addColorStop(.58,"#2030a8");
-      bg.addColorStop(.82,"#152290");
-      bg.addColorStop(1,  "#0d1678");
+      // ── Deep midnight void — matches explore page darkness ────────────────
+      const bg=ctx.createRadialGradient(cx,cy*.9,0,cx,cy,Math.max(W,H)*.9);
+      bg.addColorStop(0,  "#111428");  // slightly lighter center — orb light spill
+      bg.addColorStop(.25,"#0c0f1e");
+      bg.addColorStop(.55,"#080b18");
+      bg.addColorStop(.85,"#050710");
+      bg.addColorStop(1,  "#030508");
       ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
-      // Orb glow — diffuse light emanating from center (entity presence)
-      const pulse=.92+Math.sin(t*.26)*.08;
-      const halo=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.45*pulse);
-      halo.addColorStop(0,  "rgba(80,130,255,0.22)");
-      halo.addColorStop(.35,"rgba(60,100,240,0.10)");
-      halo.addColorStop(.70,"rgba(40, 70,200,0.04)");
-      halo.addColorStop(1,  "rgba(20, 40,160,0)");
-      ctx.fillStyle=halo; ctx.fillRect(0,0,W,H);
+      // Orb's light bleeding into scene — diffuse indigo from center
+      const pulse=.90+Math.sin(t*.24)*.10;
+      const orbLight=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.6*pulse);
+      orbLight.addColorStop(0,  "rgba(55,80,200,0.18)");
+      orbLight.addColorStop(.3, "rgba(40,60,170,0.08)");
+      orbLight.addColorStop(.65,"rgba(25,38,130,0.03)");
+      orbLight.addColorStop(1,  "rgba(10,15,80,0)");
+      ctx.fillStyle=orbLight; ctx.fillRect(0,0,W,H);
 
-      // Vignette
-      const vig=ctx.createRadialGradient(cx,cy,base*.2,cx,cy,Math.max(W,H)*.68);
-      vig.addColorStop(0,"rgba(0,0,24,0)");
-      vig.addColorStop(1,"rgba(3,5,40,0.50)");
-      ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
+      // Ground shadow — very subtle ellipse below orb, grounds it in space
+      ctx.save();
+      ctx.translate(cx, cy + base*.72);
+      ctx.scale(1, .22);
+      const shadow=ctx.createRadialGradient(0,0,0,0,0,base*.58);
+      shadow.addColorStop(0,  "rgba(30,50,180,0.22)");
+      shadow.addColorStop(.5, "rgba(20,35,140,0.08)");
+      shadow.addColorStop(1,  "rgba(10,18,90,0)");
+      ctx.fillStyle=shadow;
+      ctx.beginPath(); ctx.arc(0,0,base*.58,0,Math.PI*2); ctx.fill();
+      ctx.restore();
 
-      // Orbit rings
-      rings.forEach(ring=>{
-        const rPx=base*(ring.r/.30),rY=rPx*.26;
-        for(let i=0;i<ring.dots;i++){
-          const a=(i/ring.dots)*Math.PI*2+t*.058;
-          ctx.globalAlpha=ring.a*((Math.sin(a)+1.5)/2.5);
-          ctx.fillStyle="#a8b8f8";
-          ctx.beginPath(); ctx.arc(cx+Math.cos(a)*rPx,cy+Math.sin(a)*rY,ring.dotR,0,Math.PI*2); ctx.fill();
-        }
-      });
-
-      // Satellite blobs
+      // Subtle satellite blobs — ghost-like, barely there
       blobs.forEach((b,i)=>{
         angles.current[i]+=b.spd;
         const a=angles.current[i];
-        const rPx=base*(b.oR/.30),rY=rPx*.26;
+        const rPx=base*(b.oR/.30),rY=rPx*.24;
         const bx=cx+Math.cos(a)*rPx,by=cy+Math.sin(a)*rY;
         const bR=base*b.r;
         const depth=(Math.sin(a)+1.)*.5;
-        const gr=ctx.createRadialGradient(bx-bR*.2,by-bR*.2,0,bx,by,bR*1.3);
-        gr.addColorStop(0,`${b.c},.84)`); gr.addColorStop(.44,`${b.c},.46)`); gr.addColorStop(1,`${b.c},0)`);
-        ctx.globalAlpha=b.a*(.44+depth*.56);
+        const gr=ctx.createRadialGradient(bx,by,0,bx,by,bR*1.2);
+        gr.addColorStop(0,`${b.c},.70)`); gr.addColorStop(.5,`${b.c},.30)`); gr.addColorStop(1,`${b.c},0)`);
+        ctx.globalAlpha=b.a*(.40+depth*.60);
         ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(bx,by,bR,0,Math.PI*2); ctx.fill();
       });
 
-      // Particles
-      pts.forEach(p=>{
-        p.y+=p.vy; if(p.y<-.02){p.y=1.02;p.x=Math.random();}
-        ctx.globalAlpha=p.a*(.68+.32*Math.sin(t*1.7+p.ph));
-        ctx.fillStyle="#b0c4ff";
-        ctx.beginPath(); ctx.arc(p.x*W,p.y*H,p.r,0,Math.PI*2); ctx.fill();
+      // Distant stars — sparse and dim
+      stars.forEach(s=>{
+        ctx.globalAlpha=s.a*(.55+.45*Math.sin(t*1.2+s.ph));
+        ctx.fillStyle="#8090cc";
+        ctx.beginPath(); ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2); ctx.fill();
       });
 
       ctx.globalAlpha=1;
@@ -424,13 +360,13 @@ function SceneCanvas() {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Index() {
   const navigate  = useNavigate();
-  const [ready,  setReady]   = useState(false);
-  const [orbSize,setOrbSize] = useState(520);
+  const [ready,   setReady]   = useState(false);
+  const [orbSize, setOrbSize] = useState(520);
 
   useEffect(()=>{
     const calc=()=>setOrbSize(Math.min(
       window.innerWidth  * 0.58,
-      window.innerHeight * 0.74,
+      window.innerHeight * 0.76,
       620,
     ));
     calc(); window.addEventListener("resize",calc);
@@ -439,14 +375,15 @@ export default function Index() {
   },[]);
 
   const fi=(d:number)=>({
-    opacity:    ready?1:0,
-    transform:  ready?"translateY(0)":"translateY(14px)",
-    transition: `opacity .9s ${d}s cubic-bezier(.16,1,.3,1), transform .9s ${d}s cubic-bezier(.16,1,.3,1)`,
+    opacity:   ready?1:0,
+    transform: ready?"translateY(0)":"translateY(14px)",
+    transition:`opacity .9s ${d}s cubic-bezier(.16,1,.3,1),transform .9s ${d}s cubic-bezier(.16,1,.3,1)`,
   });
 
   return (
     <div style={{width:"100vw",height:"100vh",overflow:"hidden",
-      position:"relative",fontFamily:"'Afacad Flux',sans-serif"}}>
+      position:"relative",fontFamily:"'Afacad Flux',sans-serif",
+      background:"#060810"}}>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
@@ -458,18 +395,20 @@ export default function Index() {
         }
         .cta-pill{
           display:inline-flex;align-items:center;gap:10px;
-          background:rgba(255,255,255,.92);
-          border:none;color:#1e2da0;
+          background:rgba(255,255,255,.10);
+          border:1px solid rgba(255,255,255,.28);
+          color:rgba(255,255,255,.92);
           font-family:'Afacad Flux',sans-serif;
-          font-size:16px;font-weight:600;letter-spacing:.01em;
-          padding:15px 44px;border-radius:100px;cursor:pointer;
-          box-shadow:0 6px 30px rgba(10,20,130,.35),0 2px 8px rgba(255,255,255,.15);
-          transition:background .22s,transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s;
+          font-size:16px;font-weight:500;letter-spacing:.04em;
+          padding:14px 42px;border-radius:100px;cursor:pointer;
+          backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+          transition:background .25s,border-color .25s,transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s;
         }
         .cta-pill:hover{
-          background:#fff;
-          transform:translateY(-3px) scale(1.015);
-          box-shadow:0 14px 50px rgba(10,20,130,.45),0 0 40px rgba(100,150,255,.25);
+          background:rgba(255,255,255,.18);
+          border-color:rgba(255,255,255,.55);
+          transform:translateY(-3px);
+          box-shadow:0 12px 48px rgba(60,100,255,.28),0 4px 20px rgba(255,255,255,.08);
         }
         .arr{font-size:18px;display:inline-block;transition:transform .4s cubic-bezier(.16,1,.3,1);}
         .cta-pill:hover .arr{transform:translateX(5px);}
@@ -477,7 +416,7 @@ export default function Index() {
 
       <SceneCanvas/>
 
-      {/* Orb */}
+      {/* Orb — centered */}
       <div style={{position:"fixed",inset:0,zIndex:2,pointerEvents:"none",
         display:"flex",alignItems:"center",justifyContent:"center"}}>
         <OrbCanvas size={orbSize}/>
@@ -490,10 +429,10 @@ export default function Index() {
         {/* Logo */}
         <div style={{display:"flex",justifyContent:"center",paddingTop:28,...fi(.08)}}>
           <div style={{display:"flex",alignItems:"baseline"}}>
-            <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.01em",color:"rgba(255,255,255,.95)"}}>EVERY</span>
-            <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.01em",color:"rgba(255,255,255,.42)"}}>WHERE</span>
+            <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.01em",color:"rgba(255,255,255,.90)"}}>EVERY</span>
+            <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.01em",color:"rgba(255,255,255,.35)"}}>WHERE</span>
             <span style={{fontSize:10,fontWeight:600,letterSpacing:".18em",
-              color:"rgba(255,255,255,.38)",marginLeft:6,alignSelf:"center",textTransform:"uppercase"}}>Studio™</span>
+              color:"rgba(255,255,255,.28)",marginLeft:6,alignSelf:"center",textTransform:"uppercase"}}>Studio™</span>
           </div>
         </div>
 
@@ -503,19 +442,20 @@ export default function Index() {
 
           <h1 style={{
             ...fi(.25),
-            fontSize:"clamp(52px,8.5vw,118px)",
+            fontSize:"clamp(48px,8vw,112px)",
             fontWeight:700,lineHeight:.95,letterSpacing:"-.035em",
             color:"#fff",textAlign:"center",
-            textShadow:"0 2px 32px rgba(10,20,120,.50)",
+            textShadow:"0 2px 40px rgba(80,120,255,.35)",
             marginBottom:0,
           }}>Your thinking.</h1>
 
           <h1 style={{
             ...fi(.38),
-            fontSize:"clamp(52px,8.5vw,118px)",
+            fontSize:"clamp(48px,8vw,112px)",
             fontWeight:700,lineHeight:.95,letterSpacing:"-.035em",
-            textAlign:"center",marginBottom:50,
-            background:"linear-gradient(110deg,#ffe47a 0%,#fff 38%,#c8e0ff 80%)",
+            textAlign:"center",marginBottom:52,
+            // Gold shimmer — warm sweep, consistent with brand gold
+            background:"linear-gradient(110deg,#ffe066 0%,#fff 40%,#d4e8ff 82%)",
             backgroundSize:"200% auto",
             WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
             animation:"shimmer 5s linear infinite",
@@ -532,7 +472,7 @@ export default function Index() {
         {/* Bottom */}
         <div style={{display:"flex",justifyContent:"center",paddingBottom:26,...fi(.95)}}>
           <span style={{fontSize:11,letterSpacing:".12em",
-            color:"rgba(255,255,255,.32)",fontWeight:400}}>
+            color:"rgba(255,255,255,.22)",fontWeight:400}}>
             EVERYWHERE STUDIO™ &nbsp;·&nbsp; Ideas to Impact
           </span>
         </div>
