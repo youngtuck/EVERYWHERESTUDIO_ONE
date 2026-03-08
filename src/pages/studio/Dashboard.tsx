@@ -1,51 +1,67 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ── Stagger reveal ──────────────────────────────────────────────────────────
-function Reveal({ children, delay = 0, style = {} }: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
-  const [vis, setVis] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setVis(true), delay); return () => clearTimeout(t); }, [delay]);
+// ── Score chip ─────────────────────────────────────────────────────────────
+function ScoreChip({ score }: { score: number }) {
+  const label =
+    score >= 900 ? "Exceptional"
+    : score >= 800 ? "Ready"
+    : score >= 700 ? "Solid"
+    : score >= 500 ? "Getting There"
+    : "Needs Work";
+  const color =
+    score >= 900 ? "#10b981"
+    : score >= 800 ? "#3A7BD5"
+    : score >= 700 ? "#C8961A"
+    : score >= 500 ? "#9ca3af"
+    : "#ef4444";
   return (
-    <div style={{
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ width: 32, height: 3, borderRadius: 2, background: "var(--bg-3)", overflow: "hidden" }}>
+        <div style={{ height: "100%", borderRadius: 2, width: `${score / 10}%`, background: color, transition: "width 0.8s cubic-bezier(0.16,1,0.3,1)" }} />
+      </div>
+      <span style={{ fontSize: 11, fontWeight: 600, color, letterSpacing: "-0.01em" }}>{score}</span>
+    </div>
+  );
+}
+
+// ── Fade-in card ───────────────────────────────────────────────────────────
+function FadeCard({ children, delay = 0, style = {} }: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [vis, setVis] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVis(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  return (
+    <div ref={ref} style={{
       opacity: vis ? 1 : 0,
-      transform: vis ? "translateY(0)" : "translateY(14px)",
-      transition: `opacity 0.55s cubic-bezier(0.16,1,0.3,1), transform 0.55s cubic-bezier(0.16,1,0.3,1)`,
-      transitionDelay: `${delay}ms`,
+      transform: vis ? "translateY(0)" : "translateY(10px)",
+      transition: `opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1)`,
       ...style,
     }}>{children}</div>
   );
 }
 
-// ── Score label (no chip, just ruled bar + number) ─────────────────────────
-function ScoreLabel({ score }: { score: number }) {
-  const color = score >= 900 ? "#10b981" : score >= 800 ? "#3A7BD5" : score >= 700 ? "#C8961A" : score >= 500 ? "#9ca3af" : "#ef4444";
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ width: 40, height: 2, background: "var(--bg-3)", overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${score / 10}%`, background: color, transition: "width 1s cubic-bezier(0.16,1,0.3,1)" }} />
-      </div>
-      <span style={{ fontSize: 12, fontWeight: 700, color, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em", minWidth: 28 }}>{score}</span>
-    </div>
-  );
-}
-
 export default function Dashboard() {
   const nav = useNavigate();
-  const [hoverRow, setHoverRow] = useState<number | null>(null);
-  const [hoverSignal, setHoverSignal] = useState<number | null>(null);
-  const [hoverFormat, setHoverFormat] = useState<number | null>(null);
 
   const stats = [
-    { label: "Voice Fidelity", value: "94.7", sub: "+2.1 this week" },
-    { label: "Outputs Created", value: "47", sub: "12 this month" },
-    { label: "Avg Betterish", value: "812", sub: "Ready to Publish" },
-    { label: "Signals", value: "11", sub: "3 high priority" },
+    { label: "Voice Fidelity", value: "94.7", unit: "", sub: "+2.1 this week", color: "#3A7BD5" },
+    { label: "Outputs Created", value: "47", unit: "", sub: "12 this month", color: "#C8961A" },
+    { label: "Avg Betterish", value: "812", unit: "", sub: "Ready to Publish", color: "#10b981" },
+    { label: "Signals", value: "11", unit: "", sub: "3 high priority", color: "#e85d75" },
   ];
 
-  const formats = [
-    "LinkedIn Post", "Newsletter", "Sunday Story", "Podcast Script",
-    "Twitter Thread", "Essay", "Short Video", "Talk Outline",
-    "Email Campaign", "Blog Post", "Executive Brief", "Substack Note",
+  const startTypes = [
+    { abbr: "LI", label: "LinkedIn", color: "#3A7BD5" },
+    { abbr: "NL", label: "Newsletter", color: "#0D8C9E" },
+    { abbr: "SS", label: "Sunday Story", color: "#C8961A" },
+    { abbr: "PC", label: "Podcast Script", color: "#6b4dd4" },
+    { abbr: "TT", label: "Thread", color: "#10b981" },
+    { abbr: "ES", label: "Essay", color: "#e85d75" },
+    { abbr: "VD", label: "Short Video", color: "#f5a623" },
+    { abbr: "TB", label: "Talk Brief", color: "#4ab8f5" },
   ];
 
   const sessions = [
@@ -56,199 +72,259 @@ export default function Dashboard() {
   ];
 
   const signals = [
-    { label: "AI tools replacing writers", tag: "Watchlist", strength: 92, color: "#e85d75" },
-    { label: "LinkedIn algorithm favors long-form", tag: "Trend", strength: 87, color: "#3A7BD5" },
-    { label: "Newsletter open rates declining", tag: "Intel", strength: 74, color: "#C8961A" },
-    { label: "Authenticity gap widens in B2B", tag: "Trend", strength: 68, color: "#3A7BD5" },
+    { label: "AI tools replacing writers", category: "WT", color: "#e85d75", strength: 92 },
+    { label: "LinkedIn algorithm favors long-form", category: "TR", color: "#3A7BD5", strength: 87 },
+    { label: "Newsletter open rates declining", category: "IN", color: "#C8961A", strength: 74 },
   ];
 
   return (
-    <div style={{ padding: "36px 40px", maxWidth: 1160, minHeight: "100vh", fontFamily: "var(--font)" }}>
+    <div data-theme="light" style={{ padding: "28px 32px", maxWidth: 1200, minHeight: "100vh" }}>
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <Reveal delay={0}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 48, paddingBottom: 24, borderBottom: "1px solid var(--line)" }}>
+      {/* ── Top bar ─────────────────────────────────────────────── */}
+      <FadeCard delay={0}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
           <div>
-            <p style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 10 }}>
-              Sunday, March 8, 2026
-            </p>
-            <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-0.045em", color: "var(--fg)", lineHeight: 1 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.035em", color: "var(--fg)", marginBottom: 4 }}>
               Good morning, Mark.
             </h1>
+            <p style={{ fontSize: 14, color: "var(--fg-3)" }}>
+              You have 11 new signals and 2 drafts ready to review.
+            </p>
           </div>
-          <div style={{ display: "flex", gap: 10, paddingBottom: 2 }}>
-            <button onClick={() => nav("/studio/watch")} className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px" }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => nav("/studio/watch")}
+              className="btn-ghost"
+              style={{ fontSize: 13, padding: "9px 18px" }}
+            >
               View Signals
             </button>
-            <button onClick={() => nav("/studio/work")} className="btn-primary" style={{ fontSize: 13, padding: "9px 18px" }}>
-              New Session
+            <button
+              onClick={() => nav("/studio/work")}
+              className="btn-primary"
+              style={{ fontSize: 13, padding: "9px 18px" }}
+            >
+              + New Session
             </button>
           </div>
         </div>
-      </Reveal>
+      </FadeCard>
 
-      {/* ── Stats — ruled columns, no cards ───────────────────────────── */}
-      <Reveal delay={80}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", marginBottom: 52 }}>
-          {stats.map(({ label, value, sub }, i) => (
+      {/* ── Stats row ────────────────────────────────────────────── */}
+      <FadeCard delay={60}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
+          {stats.map(({ label, value, sub, color }, i) => (
             <div key={i} style={{
-              padding: "0 28px",
-              borderLeft: i > 0 ? "1px solid var(--line)" : "none",
-              ...(i === 0 ? { paddingLeft: 0 } : {}),
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: 12,
+              padding: "18px 20px",
+              position: "relative",
+              overflow: "hidden",
             }}>
-              <p style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 10 }}>{label}</p>
-              <p style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-0.05em", color: "var(--fg)", lineHeight: 1, marginBottom: 6, fontVariantNumeric: "tabular-nums" }}>{value}</p>
-              <p style={{ fontSize: 12, color: "var(--fg-3)" }}>{sub}</p>
+              {/* Accent bar */}
+              <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 2, background: color, opacity: 0.7 }} />
+              <div style={{ fontSize: 11, color: "var(--fg-3)", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+              <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--fg)", lineHeight: 1, marginBottom: 6 }}>{value}</div>
+              <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{sub}</div>
             </div>
           ))}
         </div>
-      </Reveal>
+      </FadeCard>
 
-      {/* ── Two column ─────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 56, alignItems: "start" }}>
+      {/* ── Two-column ───────────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20 }}>
 
-        {/* Left */}
-        <div>
+        {/* Left column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-          {/* Start Something */}
-          <Reveal delay={120}>
-            <div style={{ marginBottom: 48 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
-                <p style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--fg-3)" }}>Start Something</p>
-                <p style={{ fontSize: 11, color: "var(--fg-3)" }}>12 formats</p>
+          {/* Start something */}
+          <FadeCard delay={120}>
+            <div style={{
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: 14,
+              padding: "20px 22px",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.015em" }}>Start Something</h2>
+                <span style={{ fontSize: 11, color: "var(--fg-3)" }}>12 formats</span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-                {formats.map((label, i) => {
-                  const isLastRow = i >= formats.length - 2;
-                  const isLeft = i % 2 === 0;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => nav("/studio/work")}
-                      onMouseEnter={() => setHoverFormat(i)}
-                      onMouseLeave={() => setHoverFormat(null)}
-                      style={{
-                        background: "none", border: "none",
-                        borderBottom: isLastRow ? "none" : "1px solid var(--line)",
-                        borderRight: isLeft ? "1px solid var(--line)" : "none",
-                        padding: "13px 0",
-                        paddingRight: isLeft ? 20 : 0,
-                        paddingLeft: isLeft ? 0 : 20,
-                        textAlign: "left",
-                        cursor: "pointer",
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                      }}
-                    >
-                      <span style={{
-                        fontSize: 13, fontWeight: 500,
-                        color: hoverFormat === i ? "var(--fg)" : "var(--fg-2)",
-                        letterSpacing: "-0.01em",
-                        transition: "color 0.15s",
-                      }}>{label}</span>
-                      <span style={{
-                        fontSize: 14, color: "var(--fg-3)",
-                        opacity: hoverFormat === i ? 1 : 0,
-                        transform: hoverFormat === i ? "translateX(0)" : "translateX(-4px)",
-                        transition: "opacity 0.15s, transform 0.15s",
-                      }}>+</span>
-                    </button>
-                  );
-                })}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                {startTypes.map(({ abbr, label, color }) => (
+                  <button
+                    key={abbr}
+                    onClick={() => nav("/studio/work")}
+                    style={{
+                      background: "var(--bg-2)",
+                      border: "1px solid var(--line)",
+                      borderRadius: 10,
+                      padding: "12px 8px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 6,
+                      transition: "border-color 0.15s, transform 0.15s, box-shadow 0.15s",
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = color;
+                      (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+                      (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 4px 16px ${color}22`;
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--line)";
+                      (e.currentTarget as HTMLButtonElement).style.transform = "";
+                      (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
+                    }}
+                  >
+                    <span style={{
+                      fontSize: 11, fontWeight: 800, letterSpacing: "0.04em",
+                      color, fontFamily: "var(--font)",
+                    }}>{abbr}</span>
+                    <span style={{ fontSize: 10, color: "var(--fg-3)", letterSpacing: "0.01em" }}>{label}</span>
+                  </button>
+                ))}
               </div>
             </div>
-          </Reveal>
+          </FadeCard>
 
-          {/* Recent Sessions */}
-          <Reveal delay={200}>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
-                <p style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--fg-3)" }}>Recent Sessions</p>
-                <button onClick={() => nav("/studio/outputs")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--fg-3)", padding: 0 }}>
-                  View all
-                </button>
+          {/* Recent sessions */}
+          <FadeCard delay={180}>
+            <div style={{
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: 14,
+              overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "16px 22px",
+                borderBottom: "1px solid var(--line)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.015em" }}>Recent Sessions</h2>
+                <button onClick={() => nav("/studio/outputs")} style={{
+                  background: "none", border: "none",
+                  fontSize: 12, color: "var(--fg-3)",
+                }}>View all</button>
               </div>
               <div>
                 {sessions.map(({ title, type, score, time }, i) => (
                   <button
                     key={i}
                     onClick={() => nav("/studio/work/1")}
-                    onMouseEnter={() => setHoverRow(i)}
-                    onMouseLeave={() => setHoverRow(null)}
                     style={{
                       width: "100%",
-                      display: "flex", alignItems: "center", gap: 16,
-                      padding: "15px 0",
+                      display: "flex", alignItems: "center", gap: 14,
+                      padding: "13px 22px",
                       borderBottom: i < sessions.length - 1 ? "1px solid var(--line)" : "none",
                       background: "none", border: "none",
-                      borderBottom: i < sessions.length - 1 ? "1px solid var(--line)" : "none",
-                      textAlign: "left", cursor: "pointer",
+                      textAlign: "left",
+                      transition: "background 0.1s",
                     }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "none"}
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{
-                        fontSize: 14, fontWeight: 500,
-                        color: hoverRow === i ? "var(--fg)" : "var(--fg-2)",
-                        letterSpacing: "-0.015em",
-                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                        marginBottom: 3, transition: "color 0.15s",
-                      }}>{title}</p>
-                      <p style={{ fontSize: 11, color: "var(--fg-3)" }}>{type} · {time}</p>
+                    {/* Type indicator */}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 8,
+                      background: "var(--bg-2)",
+                      border: "1px solid var(--line)",
+                      flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 10, fontWeight: 700, color: "var(--fg-2)",
+                      letterSpacing: "0.04em",
+                    }}>
+                      {type.slice(0, 2).toUpperCase()}
                     </div>
-                    <ScoreLabel score={score} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: 13, fontWeight: 500, color: "var(--fg)",
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        marginBottom: 3,
+                      }}>{title}</div>
+                      <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{type} · {time}</div>
+                    </div>
+                    <ScoreChip score={score} />
                   </button>
                 ))}
               </div>
             </div>
-          </Reveal>
+          </FadeCard>
         </div>
 
-        {/* Right — Sentinel */}
-        <Reveal delay={100}>
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
-              <p style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--fg-3)" }}>Sentinel</p>
-              <p style={{ fontSize: 11, color: "var(--fg-3)" }}>11 signals</p>
+        {/* Right column — Sentinel */}
+        <FadeCard delay={150}>
+          <div style={{
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
+            borderRadius: 14,
+            overflow: "hidden",
+            height: "fit-content",
+          }}>
+            <div style={{
+              padding: "16px 18px",
+              borderBottom: "1px solid var(--line)",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+            }}>
+              <div>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.015em", marginBottom: 2 }}>Sentinel</h2>
+                <div style={{ fontSize: 11, color: "var(--fg-3)" }}>11 signals today</div>
+              </div>
+              <span style={{
+                fontSize: 10, fontWeight: 600,
+                background: "rgba(232,93,117,0.1)",
+                color: "#e85d75",
+                border: "1px solid rgba(232,93,117,0.2)",
+                borderRadius: 100, padding: "3px 8px",
+              }}>3 High</span>
             </div>
-            <p style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20 }}>3 high priority today</p>
 
-            <div>
-              {signals.map(({ label, tag, strength, color }, i) => (
+            <div style={{ padding: "6px 0" }}>
+              {signals.map(({ label, category, color, strength }, i) => (
                 <button
                   key={i}
-                  onMouseEnter={() => setHoverSignal(i)}
-                  onMouseLeave={() => setHoverSignal(null)}
                   style={{
                     width: "100%", background: "none", border: "none",
+                    padding: "12px 18px", textAlign: "left",
                     borderBottom: i < signals.length - 1 ? "1px solid var(--line)" : "none",
-                    padding: "14px 0", textAlign: "left", cursor: "pointer",
+                    transition: "background 0.1s",
                   }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "none"}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                    <p style={{
-                      fontSize: 13, fontWeight: 500,
-                      color: hoverSignal === i ? "var(--fg)" : "var(--fg-2)",
-                      lineHeight: 1.4, flex: 1, paddingRight: 12,
-                      transition: "color 0.15s",
-                    }}>{label}</p>
-                    <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--fg-3)", flexShrink: 0, paddingTop: 2 }}>{tag}</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500, flex: 1, lineHeight: 1.4 }}>{label}</span>
+                    <span style={{
+                      fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
+                      background: `${color}18`, color,
+                      border: `1px solid ${color}30`,
+                      borderRadius: 4, padding: "2px 6px", flexShrink: 0, marginLeft: 8,
+                    }}>{category}</span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ flex: 1, height: 1, background: "var(--line)" }}>
-                      <div style={{ height: "100%", width: `${strength}%`, background: color, transition: "width 0.8s cubic-bezier(0.16,1,0.3,1)" }} />
+                  {/* Signal strength */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ flex: 1, height: 2, background: "var(--bg-3)", borderRadius: 1, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${strength}%`, background: color, borderRadius: 1 }} />
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--fg-3)", fontVariantNumeric: "tabular-nums" }}>{strength}</span>
+                    <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 600, width: 22, textAlign: "right" }}>{strength}</span>
                   </div>
                 </button>
               ))}
             </div>
 
-            <div style={{ paddingTop: 20 }}>
-              <button onClick={() => nav("/studio/watch")} className="btn-ghost" style={{ width: "100%", fontSize: 12, padding: "10px" }}>
+            <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)" }}>
+              <button
+                onClick={() => nav("/studio/watch")}
+                className="btn-ghost"
+                style={{ width: "100%", fontSize: 12, padding: "9px" }}
+              >
                 View All Signals
               </button>
             </div>
           </div>
-        </Reveal>
+        </FadeCard>
       </div>
     </div>
   );

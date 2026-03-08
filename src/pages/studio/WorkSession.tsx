@@ -14,12 +14,13 @@ precision highp float;
 uniform float u_t;
 uniform float u_energy;
 uniform vec2  u_res;
-uniform vec2  u_mouse;
+uniform vec2  u_mouse; // normalized -1..1
 #define PI  3.14159265358979
 #define TAU 6.28318530718
 
 mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
 
+// Smooth noise
 float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float snoise(vec2 p){
   vec2 i=floor(p), f=fract(p);
@@ -28,6 +29,7 @@ float snoise(vec2 p){
              mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);
 }
 
+// Lobe: a soft glowing blob in 3D
 float lobe(vec3 p, vec3 center, float radius){
   float d = length(p - center);
   return exp(-d*d / (radius*radius));
@@ -37,9 +39,11 @@ void main(){
   vec2 uv = (gl_FragCoord.xy / u_res) * 2.0 - 1.0;
   uv.x *= u_res.x / u_res.y;
 
+  // Ray
   vec3 ro = vec3(0., 0., 2.4);
   vec3 rd = normalize(vec3(uv, -1.7));
 
+  // Sphere intersection (radius 0.78)
   float R = 0.78;
   float b = dot(ro, rd);
   float c = dot(ro, ro) - R*R;
@@ -47,7 +51,7 @@ void main(){
   if(disc < 0.0){ gl_FragColor = vec4(0.); return; }
 
   float sqD = sqrt(disc);
-  float edgeAA = smoothstep(0., 0.008, sqD);
+  float edgeAA = smoothstep(0., 0.005, sqD);
   float t1 = max(-b - sqD, 0.0);
   float t2 = -b + sqD;
   if(t2 < 0.0){ gl_FragColor = vec4(0.); return; }
@@ -57,74 +61,97 @@ void main(){
   vec3 V = -rd;
   float NoV = max(dot(N, V), 0.0);
 
+  // Mouse-driven gentle rotation of interior
   float rx = u_mouse.y * 0.9;
   float ry = u_mouse.x * 0.9;
 
   float spd = 1.0 + u_energy * 2.8;
   float t = u_t * spd;
 
-  // Richer, more saturated lobe centers
-  vec3 c1 = vec3(sin(t*0.41+0.0)*0.40, cos(t*0.37+1.1)*0.37, sin(t*0.29+2.3)*0.32);
-  vec3 c2 = vec3(sin(t*0.53+3.5)*0.44, cos(t*0.44+0.7)*0.40, sin(t*0.35+1.8)*0.34);
-  vec3 c3 = vec3(cos(t*0.38+2.1)*0.38, sin(t*0.61+4.2)*0.32, cos(t*0.47+0.4)*0.36);
-  vec3 c4 = vec3(cos(t*0.28+5.1)*0.42, sin(t*0.33+2.8)*0.38, cos(t*0.52+3.3)*0.30);
+  // Animated lobe centers — orbit around interior
+  vec3 c1 = vec3(
+    sin(t * 0.41 + 0.0) * 0.38,
+    cos(t * 0.37 + 1.1) * 0.35,
+    sin(t * 0.29 + 2.3) * 0.30
+  );
+  vec3 c2 = vec3(
+    sin(t * 0.53 + 3.5) * 0.42,
+    cos(t * 0.44 + 0.7) * 0.38,
+    sin(t * 0.35 + 1.8) * 0.32
+  );
+  vec3 c3 = vec3(
+    cos(t * 0.38 + 2.1) * 0.36,
+    sin(t * 0.61 + 4.2) * 0.30,
+    cos(t * 0.47 + 0.4) * 0.34
+  );
+  vec3 c4 = vec3(
+    cos(t * 0.28 + 5.1) * 0.40,
+    sin(t * 0.33 + 2.8) * 0.36,
+    cos(t * 0.52 + 3.3) * 0.28
+  );
 
-  // Deep saturated palette
-  vec3 col1 = vec3(1.00, 0.12, 0.30); // vivid crimson
-  vec3 col2 = vec3(0.00, 0.90, 0.95); // electric cyan
-  vec3 col3 = vec3(0.62, 0.20, 1.00); // deep violet
-  vec3 col4 = vec3(0.08, 0.55, 1.00); // royal blue
+  // Lobe colors — Siri palette: crimson, cyan, violet, white
+  vec3 col1 = vec3(0.95, 0.18, 0.32); // rose/crimson
+  vec3 col2 = vec3(0.10, 0.85, 0.90); // cyan/teal
+  vec3 col3 = vec3(0.55, 0.28, 1.00); // violet
+  vec3 col4 = vec3(0.20, 0.60, 1.00); // bright blue
 
+  // March through sphere interior to accumulate lobe light
   float span = t2 - t1;
   vec3 interior = vec3(0.);
-  for(int i = 0; i < 16; i++){
-    float fi = float(i) / 15.0;
-    vec3 p = ro + rd * (t1 + span * (fi * 0.90 + 0.05));
+  float totalW = 0.0;
+  int STEPS = 12;
+  for(int i = 0; i < 12; i++){
+    float fi = float(i) / 11.0;
+    vec3 p = ro + rd * (t1 + span * (fi * 0.88 + 0.06));
+    // Apply mouse rotation to sample point
     p.yz = rot2(rx) * p.yz;
     p.xz = rot2(ry) * p.xz;
-    float l1 = lobe(p, c1, 0.34);
-    float l2 = lobe(p, c2, 0.38);
-    float l3 = lobe(p, c3, 0.31);
-    float l4 = lobe(p, c4, 0.36);
-    float depth = 1.0 - fi * 0.45;
-    interior += (col1*l1*2.4 + col2*l2*2.0 + col3*l3*1.9 + col4*l4*1.8) * depth;
+    float l1 = lobe(p, c1, 0.36);
+    float l2 = lobe(p, c2, 0.40);
+    float l3 = lobe(p, c3, 0.33);
+    float l4 = lobe(p, c4, 0.38);
+    float depth = 1.0 - fi * 0.5;
+    interior += (col1 * l1 * 1.8 + col2 * l2 * 1.6 + col3 * l3 * 1.5 + col4 * l4 * 1.4) * depth;
+    totalW += (l1 + l2 + l3 + l4) * depth;
   }
-  interior /= 16.0;
+  interior /= float(STEPS);
 
-  // Thinking boost
-  interior *= 1.0 + u_energy * 1.1;
+  // Boost brightness when thinking
+  interior *= 1.0 + u_energy * 0.9;
 
-  // Thin-film glass shell with iridescent edge
-  float fresnel = pow(1.0 - NoV, 2.8);
-  // Iridescent shift based on fresnel
-  vec3 iridA = vec3(0.55, 0.78, 1.00);
-  vec3 iridB = vec3(0.95, 0.92, 1.00);
-  vec3 shellTint = mix(iridA, iridB, fresnel);
+  // Glass shell — translucent, iridescent edge
+  float fresnel = pow(1.0 - NoV, 3.5);
+  vec3 shellTint = mix(
+    vec3(0.60, 0.75, 1.00),  // face tint: pale blue
+    vec3(0.90, 0.95, 1.00),  // edge tint: white-blue
+    fresnel
+  );
 
-  // Two specular highlights for a caustic star
-  vec3 L1 = normalize(vec3(-0.6, 1.0, 0.7));
+  // Specular caustic — bright star highlight
+  vec3 L1 = normalize(vec3(-0.5, 0.9, 0.6));
   vec3 H1 = normalize(L1 + V);
-  float spec1 = pow(max(dot(N, H1), 0.0), 280.0) * 3.0;
-  vec3 L2 = normalize(vec3(0.8, 0.3, 0.9));
+  float spec1 = pow(max(dot(N, H1), 0.0), 220.0) * 2.2;
+  vec3 L2 = normalize(vec3(0.7, 0.2, 0.8));
   vec3 H2 = normalize(L2 + V);
-  float spec2 = pow(max(dot(N, H2), 0.0), 90.0) * 0.6;
+  float spec2 = pow(max(dot(N, H2), 0.0), 80.0) * 0.5;
 
-  // Glass transmission
-  float glassAlpha = 0.14 + fresnel * 0.72;
-  vec3 transmitted = interior * (1.0 - glassAlpha * 0.55);
-  vec3 reflected    = shellTint * glassAlpha * 0.9;
+  // Glass transmission — interior shines through
+  float glassAlpha = 0.18 + fresnel * 0.68;
+  vec3 transmitted = interior * (1.0 - glassAlpha * 0.6);
+  vec3 reflected    = shellTint * glassAlpha;
   vec3 col = transmitted + reflected;
-  col += vec3(1.0, 0.97, 0.94) * (spec1 + spec2);
+  col += vec3(1.0, 0.98, 0.95) * (spec1 + spec2);
 
-  // Center glow
-  float centerGlow = exp(-dot(uv, uv) * 3.2) * 0.28 * (1.0 + u_energy * 0.7);
-  col += vec3(0.5, 0.7, 1.0) * centerGlow;
+  // Subtle inner glow at center
+  float centerGlow = exp(-dot(uv, uv) * 2.8) * 0.35 * (1.0 + u_energy * 0.6);
+  col += vec3(0.6, 0.8, 1.0) * centerGlow;
 
-  // Richer tone map
-  col = col / (col + 0.7);
-  col = pow(max(col, 0.0), vec3(0.82));
+  // Tone map
+  col = col / (col + 0.9);
+  col = pow(max(col, 0.0), vec3(0.88));
 
-  float alpha = edgeAA * (0.88 + fresnel * 0.12);
+  float alpha = edgeAA * (0.82 + fresnel * 0.18);
   gl_FragColor = vec4(col * alpha, alpha);
 }
 `;
