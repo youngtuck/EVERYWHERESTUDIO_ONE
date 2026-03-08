@@ -232,7 +232,7 @@ function OutputTypePill({
 
       {open && (
         <div style={{
-          position: "absolute", bottom: "calc(100% + 8px)", left: 0,
+          position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)",
           background: "var(--surface)", border: "1px solid var(--line)",
           borderRadius: 12, padding: 6, minWidth: 200,
           boxShadow: "var(--shadow-md)", zIndex: 50,
@@ -358,7 +358,7 @@ export default function WorkSession() {
         height: 52, display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 16px", borderBottom: "1px solid var(--line)",
         background: "var(--topbar)", backdropFilter: "blur(12px)",
-        flexShrink: 0,
+        flexShrink: 0, overflow: "visible", position: "relative", zIndex: 50,
       }}>
         {/* Left: back + title */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

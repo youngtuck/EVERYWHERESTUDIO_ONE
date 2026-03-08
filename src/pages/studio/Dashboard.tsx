@@ -78,7 +78,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1200, minHeight: "100vh" }}>
+    <div data-theme="light" style={{ padding: "28px 32px", maxWidth: 1200, minHeight: "100vh" }}>
 
       {/* ── Top bar ─────────────────────────────────────────────── */}
       <FadeCard delay={0}>
