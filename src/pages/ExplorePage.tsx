@@ -422,13 +422,21 @@ export default function ExplorePage() {
           </div>
         </section>
 
+        {/* ══ ROOMS WRAPPER — one continuous scroll, left strip stays colored ═══ */}
+        <div style={{position:"relative"}}>
+          {/* Continuous left color strip — spans all three rooms, gradient flows blue→teal→violet */}
+          <div style={{position:"absolute",top:0,bottom:0,left:0,width:420,zIndex:0,
+            background: dark
+              ? "linear-gradient(180deg, #040c1a 0%, #030d0f 33%, #080412 66%, #07090f 100%)"
+              : "linear-gradient(180deg, #E4EBF8 0%, #D8EFF2 33%, #E8E2F8 66%, #F4F2ED 100%)"
+          }} />
+
         {/* ══ WATCH ════════════════════════════════════════════════════════════ */}
-        <div ref={watchRef} style={{display:"flex",minHeight:"130vh"}}>
+        <div ref={watchRef} style={{display:"flex",minHeight:"130vh",background:T.bg,position:"relative",zIndex:1}}>
           <RoomPanel name="WATCH" subtitle="The Signal Room" palette={PALETTES.watch} accent={T.watchA} bg={T.watchBg} energy={orbSection==="watch"?orbEnergy:.10} dark={dark}>
-            {/* subtle radial ambient */}
             <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.watchA}12 0%, transparent 70%)`,pointerEvents:"none"}} />
           </RoomPanel>
-          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.watchA}12`}}>
+          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.watchA}12`,background:T.bg}}>
             <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
             <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
             <div style={{display:"flex",flexDirection:"column",gap:0}}>
@@ -448,11 +456,11 @@ export default function ExplorePage() {
         </div>
 
         {/* ══ WORK ═════════════════════════════════════════════════════════════ */}
-        <div ref={workRef} style={{display:"flex",minHeight:"145vh"}}>
+        <div ref={workRef} style={{display:"flex",minHeight:"145vh",background:T.bg,position:"relative",zIndex:1}}>
           <RoomPanel name="WORK" subtitle="The Engine Room" palette={PALETTES.work} accent={T.workA} bg={T.workBg} energy={orbSection==="work"?orbEnergy:.10} dark={dark}>
             <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.workA}10 0%, transparent 70%)`,pointerEvents:"none"}} />
           </RoomPanel>
-          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.workA}12`}}>
+          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.workA}12`,background:T.bg}}>
             <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
             <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
             <FadeUp delay={0.12}>
@@ -476,11 +484,11 @@ export default function ExplorePage() {
         </div>
 
         {/* ══ WRAP ═════════════════════════════════════════════════════════════ */}
-        <div ref={wrapRef} style={{display:"flex",minHeight:"120vh"}}>
+        <div ref={wrapRef} style={{display:"flex",minHeight:"120vh",background:T.bg,position:"relative",zIndex:1}}>
           <RoomPanel name="WRAP" subtitle="The Distribution Room" palette={PALETTES.wrap} accent={T.wrapA} bg={T.wrapBg} energy={orbSection==="wrap"?orbEnergy:.10} dark={dark}>
             <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 60% 60% at 50% 50%, ${T.wrapA}10 0%, transparent 70%)`,pointerEvents:"none"}} />
           </RoomPanel>
-          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.wrapA}12`}}>
+          <div style={{flex:1,minWidth:0,overflow:"hidden",padding:"64px 52px 64px 52px",display:"flex",flexDirection:"column",gap:32,justifyContent:"center",borderLeft:`1px solid ${T.wrapA}12`,background:T.bg}}>
             <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={T.text} />
             <FadeUp delay={0.08}><p style={{fontSize:13,lineHeight:1.82,color:T.textSub}}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
             <div style={{display:"flex",flexDirection:"column",gap:0}}>
@@ -491,6 +499,7 @@ export default function ExplorePage() {
             </div>
           </div>
         </div>
+        </div>{/* end rooms wrapper */}
 
         {/* ══ QUALITY GATES ════════════════════════════════════════════════════ */}
         <section style={{padding:"80px 48px 88px",background:dark?"linear-gradient(180deg,#080311 0%,#07090f 100%)":"linear-gradient(180deg,#E9E4F5 0%,#F4F2ED 100%)",borderTop:`1px solid ${bc}`}}>
