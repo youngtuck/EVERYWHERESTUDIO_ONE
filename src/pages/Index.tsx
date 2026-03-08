@@ -55,10 +55,10 @@ vec3 interior(vec3 lp, float t){
   float r2 = pow(max(0., 1.-abs(f2-.47)*6.5), 2.3);
   float r3 = pow(max(0., 1.-abs(f3-.51)*5.0), 1.8);
 
-  // Brand palette: electric blue, violet, warm gold
-  vec3 c1 = vec3(.20,.52,1.00)*r1*1.6;   // electric blue
-  vec3 c2 = vec3(.52,.18,.88)*r2*1.3;   // violet
-  vec3 c3 = vec3(.95,.70,.15)*r3*.85;   // gold
+  // Brand palette: electric blue, deeper blue, cool ice blue
+  vec3 c1 = vec3(.20,.55,1.00)*r1*1.6;   // electric blue
+  vec3 c2 = vec3(.10,.30,.95)*r2*1.3;   // deep blue
+  vec3 c3 = vec3(.55,.80,1.00)*r3*.85;   // ice blue
 
   // Core: deep indigo glow, breathing
   float core = exp(-r*r*2.5)*(.45+.55*sin(t*.38+.8));
@@ -94,10 +94,10 @@ void main(){
   // Pulsing halo ring
   float haloR = .78 + sin(t*.22)*.04;
   float halo  = exp(-abs(distToCenter-haloR)*12.)*.18;
-  // Color the glow: deep indigo-violet
-  vec3 bgCol = vec3(.10,.15,.55)*bgGlow + vec3(.18,.10,.48)*halo;
+  // Color the glow: bright indigo
+  vec3 bgCol = vec3(.22,.32,.88)*bgGlow + vec3(.18,.26,.78)*halo;
   // Subtle bloom in brand blue
-  bgCol += vec3(.08,.18,.65)*exp(-distToCenter*distToCenter*3.8)*.35;
+  bgCol += vec3(.15,.28,.80)*exp(-distToCenter*distToCenter*3.8)*.25;
 
   if(disc < 0.0){
     // Outside sphere — just the bg glow
@@ -158,12 +158,12 @@ void main(){
   }
   intCol /= 4.2;
 
-  // ── Shell opacity: transparent at center, opaque at rim ──────────────────
-  float shellOp = mix(.14, .80, fresnel);
+  // ── Shell opacity: more opaque overall, less crystal/glass ─────────────────
+  float shellOp = mix(.50, .92, fresnel);
   vec3  col     = mix(intCol, shellCol, shellOp);
 
-  // Rim glow — electric indigo-violet bleeding outward
-  vec3 rimGlow = mix(vec3(.22,.40,1.0),vec3(.55,.18,.88),sin(t*.25)*.5+.5);
+  // Rim glow — electric blue only
+  vec3 rimGlow = vec3(.25,.50,1.0);
   col += rimGlow*rim*.60;
 
   // ── Tone map ──────────────────────────────────────────────────────────────
@@ -297,12 +297,13 @@ function SceneCanvas() {
       ctx.clearRect(0,0,W,H);
 
       // ── Deep midnight void — matches explore page darkness ────────────────
-      const bg=ctx.createRadialGradient(cx,cy*.9,0,cx,cy,Math.max(W,H)*.9);
-      bg.addColorStop(0,  "#111428");  // slightly lighter center — orb light spill
-      bg.addColorStop(.25,"#0c0f1e");
-      bg.addColorStop(.55,"#080b18");
-      bg.addColorStop(.85,"#050710");
-      bg.addColorStop(1,  "#030508");
+      // Bright indigo bg
+      const bg=ctx.createRadialGradient(cx,cy*.88,0,cx,cy,Math.max(W,H)*.88);
+      bg.addColorStop(0,  "#4a5fd4");
+      bg.addColorStop(.28,"#3a4ec8");
+      bg.addColorStop(.58,"#2b3db5");
+      bg.addColorStop(.82,"#1c2c9e");
+      bg.addColorStop(1,  "#111f88");
       ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
       // Orb's light bleeding into scene — diffuse indigo from center
