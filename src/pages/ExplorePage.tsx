@@ -454,7 +454,7 @@ export default function ExplorePage() {
         transition: "all .4s ease",
       }}>
         <button onClick={() => nav("/")} style={{ background: "none", border: "none", display: "flex", alignItems: "baseline", gap: 0, cursor: "pointer" }}>
-          <span style={{ fontSize: 16, fontWeight: 800, color: fg, letterSpacing: "-.01em" }}>EVERY</span>
+          <span style={{ fontSize: 16, fontWeight: 800, color: fg, letterSpacing: ".04em", fontKerning: "none" }}>EVERY</span>
           <WordmarkRotator color={fg2} />
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -486,15 +486,15 @@ export default function ExplorePage() {
             </div>
           </FadeIn>
 
-          {/* Headline: clip reveals for cinematic feel */}
-          <div style={{ marginBottom: 6 }}>
+          {/* Headline: clip reveals — tight, no gap */}
+          <div style={{ marginBottom: 6, lineHeight: 1 }}>
             <ClipReveal delay={0.05}>
-              <div style={{ fontSize: "clamp(58px,9.5vw,120px)", fontWeight: 800, lineHeight: .88, color: fg, letterSpacing: "-.04em" }}>One idea.</div>
+              <div style={{ fontSize: "clamp(58px,9.5vw,120px)", fontWeight: 800, lineHeight: .9, color: fg, letterSpacing: "-.03em", fontKerning: "none" }}>One idea.</div>
+            </ClipReveal>
+            <ClipReveal delay={0.18}>
+              <div style={{ fontSize: "clamp(58px,9.5vw,120px)", fontWeight: 800, lineHeight: .9, letterSpacing: "-.03em", fontKerning: "none", marginBottom: 44, color: dark ? "rgba(232,232,230,0.20)" : "rgba(17,17,16,0.16)" }}>Everywhere.</div>
             </ClipReveal>
           </div>
-          <ClipReveal delay={0.18}>
-            <div style={{ fontSize: "clamp(58px,9.5vw,120px)", fontWeight: 800, lineHeight: .88, letterSpacing: "-.04em", marginBottom: 44, color: dark ? "rgba(232,232,230,0.20)" : "rgba(17,17,16,0.16)" }}>Everywhere.</div>
-          </ClipReveal>
 
           {/* Subtext */}
           <div style={{ marginBottom: 52 }}>
