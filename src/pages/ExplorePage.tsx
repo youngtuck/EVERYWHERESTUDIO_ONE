@@ -7,195 +7,132 @@ import { useNavigate } from "react-router-dom";
 // Three acts: Watch / Work / Wrap. Composed Intelligence.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function WatchCanvas({ dark }: { dark: boolean }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const raf = useRef(0);
-  useEffect(() => {
-    const c = ref.current!;
-    const dpr = window.devicePixelRatio || 1;
-    const W = 420, H = 420;
-    c.width = W * dpr; c.height = H * dpr;
-    const ctx = c.getContext("2d")!;
-    ctx.scale(dpr, dpr);
-    const rings = 5;
-    let angle = 0;
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-      const cx = W / 2, cy = H / 2;
-      const maxR = W * 0.42;
-      const fg  = dark ? "rgba(74,144,245," : "rgba(58,123,213,";
-      const dim = dark ? "rgba(74,144,245,0.08)" : "rgba(58,123,213,0.06)";
-      ctx.beginPath(); ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
-      ctx.fillStyle = dark ? "rgba(74,144,245,0.04)" : "rgba(58,123,213,0.03)"; ctx.fill();
-      for (let i = 1; i <= rings; i++) {
-        ctx.beginPath(); ctx.arc(cx, cy, (maxR * i) / rings, 0, Math.PI * 2);
-        ctx.strokeStyle = dim; ctx.lineWidth = 1; ctx.stroke();
-      }
-      ctx.strokeStyle = dim; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(cx - maxR, cy); ctx.lineTo(cx + maxR, cy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx, cy - maxR); ctx.lineTo(cx, cy + maxR); ctx.stroke();
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
-      g.addColorStop(0, dark ? "rgba(74,144,245,0.18)" : "rgba(58,123,213,0.14)");
-      g.addColorStop(1, "transparent");
-      ctx.save(); ctx.beginPath(); ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, maxR, angle - 1.1, angle); ctx.closePath();
-      ctx.fillStyle = g; ctx.fill(); ctx.restore();
-      const signals = [
-        { r: maxR * 0.28, a: 0.8,  size: 3.5, pulse: 1.4 },
-        { r: maxR * 0.58, a: 2.3,  size: 2.5, pulse: 1.0 },
-        { r: maxR * 0.71, a: 4.1,  size: 4.0, pulse: 1.8 },
-        { r: maxR * 0.44, a: 5.0,  size: 2.0, pulse: 0.8 },
-        { r: maxR * 0.85, a: 1.5,  size: 3.0, pulse: 1.2 },
-        { r: maxR * 0.35, a: 3.6,  size: 2.2, pulse: 1.1 },
-      ];
-      const t = Date.now() * 0.001;
-      signals.forEach(({ r, a, size, pulse }) => {
-        const x = cx + r * Math.cos(a); const y = cy + r * Math.sin(a);
-        const pulsed = size + Math.sin(t * pulse + a) * 1.2;
-        const glow = ctx.createRadialGradient(x, y, 0, x, y, pulsed * 3.5);
-        glow.addColorStop(0, dark ? "rgba(74,144,245,0.6)" : "rgba(58,123,213,0.5)");
-        glow.addColorStop(1, "transparent");
-        ctx.beginPath(); ctx.arc(x, y, pulsed * 3.5, 0, Math.PI * 2); ctx.fillStyle = glow; ctx.fill();
-        ctx.beginPath(); ctx.arc(x, y, pulsed, 0, Math.PI * 2);
-        ctx.fillStyle = dark ? `${fg}0.9)` : `${fg}0.85)`; ctx.fill();
-      });
-      ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-      ctx.fillStyle = dark ? `${fg}0.9)` : `${fg}0.85)`; ctx.fill();
-      angle += 0.012;
-      raf.current = requestAnimationFrame(draw);
-    };
-    raf.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf.current);
-  }, [dark]);
-  return <canvas ref={ref} style={{ width: 420, height: 420, maxWidth: "100%" }} />;
+// WATCH visual: scrolling signal feed — editorial, no canvas
+function WatchFeed({ dark }: { dark: boolean }) {
+  const signals = [
+    { cat: "INDUSTRY", headline: "OpenAI releases operator mode for enterprise clients", score: 9.1 },
+    { cat: "AUDIENCE", headline: "Thought leaders: LinkedIn dwell time up 18% this quarter", score: 8.4 },
+    { cat: "COMPETITOR", headline: "Substack adds AI-assisted formatting for newsletters", score: 7.7 },
+    { cat: "TREND", headline: "Voice-to-content workflows gain traction among creators", score: 9.4 },
+    { cat: "SIGNAL", headline: "Peak engagement window shifts to 7–9am across platforms", score: 8.1 },
+    { cat: "INDUSTRY", headline: "Andreessen Horowitz backs three AI content startups", score: 7.2 },
+    { cat: "AUDIENCE", headline: "Executive audiences respond 3x more to short-form video", score: 8.8 },
+    { cat: "TREND", headline: "Newsletter open rates highest in 4 years for thought leaders", score: 9.0 },
+    { cat: "SIGNAL", headline: "Twitter/X algorithm rewards original analysis over curation", score: 7.6 },
+    { cat: "COMPETITOR", headline: "Jasper pivots to 'brand voice' positioning in new campaign", score: 6.9 },
+    { cat: "INDUSTRY", headline: "OpenAI releases operator mode for enterprise clients", score: 9.1 },
+    { cat: "AUDIENCE", headline: "Thought leaders: LinkedIn dwell time up 18% this quarter", score: 8.4 },
+  ];
+  const accent = "#3A7BD5";
+  const fg = dark ? "rgba(232,232,230,0.80)" : "#111110";
+  const fg2 = dark ? "rgba(232,232,230,0.35)" : "#8B8B88";
+  const border = dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.055)";
+  const catColor: Record<string, string> = {
+    INDUSTRY: "#3A7BD5", AUDIENCE: "#0D8C9E", TREND: "#C8961A", SIGNAL: "#10b981", COMPETITOR: "#e85d75"
+  };
+  return (
+    <div style={{ width: "100%", height: 340, overflow: "hidden", position: "relative" }}>
+      <style>{`
+        @keyframes watch-scroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+        .watch-feed { animation: watch-scroll 22s linear infinite; }
+        .watch-feed:hover { animation-play-state: paused; }
+      `}</style>
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 48, zIndex: 2,
+        background: dark ? "linear-gradient(180deg, #0a0e1a 0%, transparent 100%)" : "linear-gradient(180deg, #F0F5FF 0%, transparent 100%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0, height: 80, zIndex: 2,
+        background: dark ? "linear-gradient(0deg, #0a0e1a 0%, transparent 100%)" : "linear-gradient(0deg, #F0F5FF 0%, transparent 100%)",
+        pointerEvents: "none",
+      }} />
+      <div className="watch-feed">
+        {signals.map((s, i) => (
+          <div key={i} style={{
+            display: "grid", gridTemplateColumns: "56px 1fr 36px",
+            gap: "0 14px", padding: "11px 0", alignItems: "center",
+            borderBottom: `1px solid ${border}`,
+          }}>
+            <span style={{
+              fontSize: 8, fontWeight: 700, letterSpacing: ".08em",
+              color: catColor[s.cat] || accent, opacity: 0.75,
+            }}>{s.cat}</span>
+            <span style={{ fontSize: 12.5, color: fg, lineHeight: 1.4, fontWeight: 400 }}>{s.headline}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: accent, textAlign: "right", opacity: 0.7 }}>{s.score}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function WorkCanvas({ dark }: { dark: boolean }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const raf = useRef(0);
-  useEffect(() => {
-    const c = ref.current!;
-    const dpr = window.devicePixelRatio || 1;
-    const W = 420, H = 420;
-    c.width = W * dpr; c.height = H * dpr;
-    const ctx = c.getContext("2d")!;
-    ctx.scale(dpr, dpr);
-    const layers = [
-      [{ x: 0, y: 0, r: 7, label: "You" }],
-      [
-        { x: -80, y: -70, r: 5, label: "NL" }, { x:  80, y: -80, r: 5, label: "ES" },
-        { x: 110, y:  30, r: 5, label: "SS" }, { x:  30, y: 105, r: 5, label: "LI" },
-        { x: -90, y:  70, r: 5, label: "PC" }, { x: -35, y:-110, r: 5, label: "VD" },
-      ],
-      [
-        { x:-155, y: -50, r: 3.5, label: "" }, { x:-110, y:-140, r: 3.5, label: "" },
-        { x:  30, y:-165, r: 3.5, label: "" }, { x: 165, y: -85, r: 3.5, label: "" },
-        { x: 175, y:  65, r: 3.5, label: "" }, { x:  80, y: 165, r: 3.5, label: "" },
-        { x: -80, y: 160, r: 3.5, label: "" }, { x:-165, y:  90, r: 3.5, label: "" },
-      ],
-    ];
-    const cx = W / 2, cy = H / 2;
-    const allNodes = ([] as typeof layers[0]).concat(...layers).map(n => ({ ...n, x: cx + n.x, y: cy + n.y }));
-    const connections: [number, number][] = [];
-    layers[1].forEach((_, i) => connections.push([0, 1 + i]));
-    const l1start = 1, l2start = 1 + layers[1].length;
-    layers[2].forEach((_, i) => connections.push([l1start + (i % layers[1].length), l2start + i]));
-    connections.push([l1start, l1start + 2], [l1start + 1, l1start + 3], [l1start + 4, l1start + 5]);
-    const teal = dark ? "rgba(13,140,158," : "rgba(13,140,158,";
-    let t = 0;
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H); t += 0.008;
-      connections.forEach(([a, b]) => {
-        const na = allNodes[a], nb = allNodes[b];
-        const pulse = 0.5 + 0.5 * Math.sin(t * 2 + a * 0.7 + b * 0.5);
-        ctx.beginPath(); ctx.moveTo(na.x, na.y); ctx.lineTo(nb.x, nb.y);
-        ctx.strokeStyle = dark ? `rgba(13,140,158,${0.08 + pulse * 0.14})` : `rgba(13,140,158,${0.07 + pulse * 0.12})`;
-        ctx.lineWidth = 0.8 + pulse * 0.6; ctx.stroke();
-      });
-      allNodes.forEach((n, i) => {
-        const pulse = 0.5 + 0.5 * Math.sin(t * 1.5 + i * 0.9);
-        const rPulse = n.r * (1 + pulse * 0.25);
-        const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, rPulse * 4);
-        g.addColorStop(0, `${teal}${0.4 + pulse * 0.25})`); g.addColorStop(1, "transparent");
-        ctx.beginPath(); ctx.arc(n.x, n.y, rPulse * 4, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
-        ctx.beginPath(); ctx.arc(n.x, n.y, rPulse, 0, Math.PI * 2);
-        ctx.fillStyle = dark ? `${teal}0.85)` : `${teal}0.80)`; ctx.fill();
-        if (n.label && n.r >= 4) {
-          ctx.font = `${n.r === 7 ? "600" : "500"} ${n.r === 7 ? 11 : 9}px 'DM Sans', sans-serif`;
-          ctx.fillStyle = dark ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.92)";
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText(n.label, n.x, n.y);
-        }
-      });
-      raf.current = requestAnimationFrame(draw);
-    };
-    raf.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf.current);
-  }, [dark]);
-  return <canvas ref={ref} style={{ width: 420, height: 420, maxWidth: "100%" }} />;
-}
-
-function WrapCanvas({ dark }: { dark: boolean }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const raf = useRef(0);
-  useEffect(() => {
-    const c = ref.current!;
-    const dpr = window.devicePixelRatio || 1;
-    const W = 420, H = 420;
-    c.width = W * dpr; c.height = H * dpr;
-    const ctx = c.getContext("2d")!;
-    ctx.scale(dpr, dpr);
-    const cx = W / 2, cy = H / 2;
-    const violet = dark ? "rgba(160,128,245," : "rgba(120,80,220,";
-    const rings: { born: number; maxR: number; speed: number }[] = [
-      { born: 0, maxR: 170, speed: 0.6 }, { born: 0.8, maxR: 170, speed: 0.6 },
-      { born: 1.6, maxR: 170, speed: 0.6 }, { born: 2.4, maxR: 170, speed: 0.6 },
-    ];
-    const platforms = [
-      { a: -0.5, label: "LI" }, { a:  0.4, label: "NL" }, { a:  1.3, label: "YT" },
-      { a:  2.1, label: "TW" }, { a:  3.0, label: "SC" }, { a:  4.0, label: "SB" }, { a:  4.9, label: "IG" },
-    ];
-    let t = 0; const period = 3.2;
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H); t += 0.016;
-      rings.forEach(({ born, maxR, speed }) => {
-        const phase = ((t + born) % period) / period;
-        const r = Math.min(phase * maxR * speed * (period / speed), maxR);
-        const alpha = Math.max(0, 1 - r / maxR);
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = dark ? `${violet}${alpha * 0.55})` : `${violet}${alpha * 0.45})`;
-        ctx.lineWidth = 1.5; ctx.stroke();
-      });
-      const innerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 38);
-      innerGlow.addColorStop(0, dark ? `${violet}0.35)` : `${violet}0.28)`); innerGlow.addColorStop(1, "transparent");
-      ctx.beginPath(); ctx.arc(cx, cy, 38, 0, Math.PI * 2); ctx.fillStyle = innerGlow; ctx.fill();
-      ctx.beginPath(); ctx.arc(cx, cy, 16, 0, Math.PI * 2);
-      ctx.fillStyle = dark ? `${violet}0.85)` : `${violet}0.80)`; ctx.fill();
-      ctx.font = "600 10px 'DM Sans', sans-serif";
-      ctx.fillStyle = dark ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.92)";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("EW", cx, cy);
-      platforms.forEach(({ a, label }) => {
-        const r = 148, x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
-        const pulse = 0.5 + 0.5 * Math.sin(t * 1.2 + a);
-        const linePhase = ((t + a * 0.3) % period) / period;
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y);
-        ctx.strokeStyle = dark ? `${violet}${0.05 + linePhase * 0.2})` : `${violet}${0.04 + linePhase * 0.16})`;
-        ctx.lineWidth = 0.7; ctx.stroke();
-        const g = ctx.createRadialGradient(x, y, 0, x, y, 16);
-        g.addColorStop(0, `${violet}${0.3 + pulse * 0.2})`); g.addColorStop(1, "transparent");
-        ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
-        ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2);
-        ctx.fillStyle = dark ? `${violet}0.78)` : `${violet}0.72)`; ctx.fill();
-        ctx.font = "500 7.5px 'DM Sans', sans-serif";
-        ctx.fillStyle = dark ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.90)";
-        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(label, x, y);
-      });
-      raf.current = requestAnimationFrame(draw);
-    };
-    raf.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf.current);
-  }, [dark]);
-  return <canvas ref={ref} style={{ width: 420, height: 420, maxWidth: "100%" }} />;
+// WRAP visual: platform deployment feed — content going out everywhere
+function WrapFeed({ dark }: { dark: boolean }) {
+  const deployments = [
+    { platform: "LINKEDIN", title: "The attention economy is broken. Here's what I did about it.", format: "Essay", status: "LIVE", time: "9:02am" },
+    { platform: "SUBSTACK", title: "Sunday Story: What three years of public writing taught me", format: "Newsletter", status: "LIVE", time: "7:00am" },
+    { platform: "TWITTER/X", title: "Thread: Why most thought leaders confuse audience with community", format: "Thread", status: "SCHEDULED", time: "11:30am" },
+    { platform: "YOUTUBE", title: "I let AI manage my content for 30 days. Here's what happened.", format: "Script", status: "DRAFT", time: "Today" },
+    { platform: "PODCAST", title: "Ep 42: The compounding returns of consistent thinking", format: "Audio", status: "LIVE", time: "Mon 8am" },
+    { platform: "EMAIL", title: "3 signals from this week you shouldn't miss", format: "Campaign", status: "SENT", time: "Fri 6am" },
+    { platform: "LINKEDIN", title: "The attention economy is broken. Here's what I did about it.", format: "Essay", status: "LIVE", time: "9:02am" },
+    { platform: "SUBSTACK", title: "Sunday Story: What three years of public writing taught me", format: "Newsletter", status: "LIVE", time: "7:00am" },
+    { platform: "TWITTER/X", title: "Thread: Why most thought leaders confuse audience with community", format: "Thread", status: "SCHEDULED", time: "11:30am" },
+    { platform: "YOUTUBE", title: "I let AI manage my content for 30 days. Here's what happened.", format: "Script", status: "DRAFT", time: "Today" },
+    { platform: "PODCAST", title: "Ep 42: The compounding returns of consistent thinking", format: "Audio", status: "LIVE", time: "Mon 8am" },
+    { platform: "EMAIL", title: "3 signals from this week you shouldn't miss", format: "Campaign", status: "SENT", time: "Fri 6am" },
+  ];
+  const accent = "#7850DC";
+  const fg = dark ? "rgba(232,232,230,0.80)" : "#111110";
+  const fg2 = dark ? "rgba(232,232,230,0.32)" : "#9B9B98";
+  const border = dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+  const statusColor: Record<string, string> = {
+    LIVE: "#10b981", SCHEDULED: "#C8961A", DRAFT: "#6B6B68", SENT: "#3A7BD5"
+  };
+  const platColor: Record<string, string> = {
+    LINKEDIN: "#0D8C9E", "TWITTER/X": "#3A7BD5", SUBSTACK: "#e85d75",
+    YOUTUBE: "#e85d75", PODCAST: "#C8961A", EMAIL: "#7850DC"
+  };
+  return (
+    <div style={{ width: "100%", height: 340, overflow: "hidden", position: "relative" }}>
+      <style>{`
+        @keyframes wrap-scroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+        .wrap-feed { animation: wrap-scroll 26s linear infinite; animation-direction: reverse; }
+        .wrap-feed:hover { animation-play-state: paused; }
+      `}</style>
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 48, zIndex: 2,
+        background: dark ? "linear-gradient(180deg, #100a22 0%, transparent 100%)" : "linear-gradient(180deg, #F5F0FF 0%, transparent 100%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0, height: 80, zIndex: 2,
+        background: dark ? "linear-gradient(0deg, #100a22 0%, transparent 100%)" : "linear-gradient(0deg, #F5F0FF 0%, transparent 100%)",
+        pointerEvents: "none",
+      }} />
+      <div className="wrap-feed">
+        {deployments.map((d, i) => (
+          <div key={i} style={{
+            display: "grid", gridTemplateColumns: "70px 1fr 60px 44px",
+            gap: "0 12px", padding: "12px 0", alignItems: "center",
+            borderBottom: `1px solid ${border}`,
+          }}>
+            <span style={{
+              fontSize: 8, fontWeight: 700, letterSpacing: ".07em",
+              color: platColor[d.platform] || accent, opacity: 0.75,
+            }}>{d.platform}</span>
+            <span style={{ fontSize: 12, color: fg, lineHeight: 1.35, fontWeight: 400 }}>{d.title}</span>
+            <span style={{
+              fontSize: 8, fontWeight: 700, letterSpacing: ".06em",
+              color: statusColor[d.status] || fg2, opacity: 0.85, textAlign: "right",
+            }}>{d.status}</span>
+            <span style={{ fontSize: 10, color: fg2, textAlign: "right" }}>{d.time}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ── Scroll reveal: word by word ────────────────────────────────────────────
@@ -475,13 +412,13 @@ export default function ExplorePage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "130px 48px 100px", position: "relative", overflow: "hidden" }}>
+      <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "100px 48px 80px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: dark ? "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(58,123,213,0.12) 0%, transparent 70%)" : "radial-gradient(ellipse 70% 55% at 50% 40%, rgba(58,123,213,0.07) 0%, transparent 70%)" }} />
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 920 }}>
 
           {/* Eyebrow — pure text, no container */}
           <FadeIn delay={0}>
-            <div style={{ fontSize: 11, letterSpacing: ".2em", color: dark ? "rgba(232,232,230,0.30)" : "rgba(0,0,0,0.32)", textTransform: "uppercase", marginBottom: 40, fontWeight: 500 }}>
+            <div style={{ fontSize: 11, letterSpacing: ".2em", color: dark ? "rgba(232,232,230,0.30)" : "rgba(0,0,0,0.32)", textTransform: "uppercase", marginBottom: 18, fontWeight: 500 }}>
               Composed Intelligence
             </div>
           </FadeIn>
@@ -545,12 +482,15 @@ export default function ExplorePage() {
       <section id="watch-section" style={{ padding: "0 48px 140px", background: secBg1, transition: "background .3s" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px 96px", alignItems: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
-              <WatchCanvas dark={dark} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
                 <div style={{ fontSize: 9, letterSpacing: ".22em", color: "#3A7BD5", textTransform: "uppercase", marginBottom: 4, fontWeight: 600 }}>Room One</div>
                 <div style={{ fontSize: 44, fontWeight: 800, color: fg, letterSpacing: "-.04em", lineHeight: 1 }}>WATCH</div>
                 <div style={{ fontSize: 11, color: fg3, marginTop: 6, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 500 }}>The Signal Room</div>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 9, letterSpacing: ".14em", color: fg3, textTransform: "uppercase", marginBottom: 8, fontWeight: 500 }}>Live signal feed</div>
+                <WatchFeed dark={dark} />
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
@@ -626,12 +566,15 @@ export default function ExplorePage() {
       <section style={{ padding: "140px 48px", background: secBg3, transition: "background .3s" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "64px 96px", alignItems: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
-              <WrapCanvas dark={dark} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
                 <div style={{ fontSize: 9, letterSpacing: ".22em", color: "#7850DC", textTransform: "uppercase", marginBottom: 4, fontWeight: 600 }}>Room Three</div>
                 <div style={{ fontSize: 44, fontWeight: 800, color: fg, letterSpacing: "-.04em", lineHeight: 1 }}>WRAP</div>
                 <div style={{ fontSize: 11, color: fg3, marginTop: 6, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 500 }}>The Distribution Room</div>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 9, letterSpacing: ".14em", color: fg3, textTransform: "uppercase", marginBottom: 8, fontWeight: 500 }}>Content in the world</div>
+                <WrapFeed dark={dark} />
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
