@@ -1,42 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THE EVERYWHERE SIGNAL FIELD
-// Full-screen cursor-reactive displacement field. Thousands of contour lines
-// warp around the cursor like a gravitational lens. The orb sits at center,
-// field lines curving around it. Pure sensation. No objects, no boxes.
-// ─────────────────────────────────────────────────────────────────────────────
-
 const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
 
-// The orb shader — same iridescent blue as before, no black box
 const ORB_FRAG = `
 precision highp float;
 uniform float u_t;
 uniform vec2  u_res;
 uniform vec2  u_rotXY;
-
-#define PI  3.14159265359
 #define TAU 6.28318530718
-
 mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
 vec3 rotX(vec3 p,float a){ p.yz=rot2(a)*p.yz; return p; }
 vec3 rotY(vec3 p,float a){ p.xz=rot2(a)*p.xz; return p; }
-
 float hash21(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float noise(vec2 p){
   vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
-  return mix(mix(hash21(i),hash21(i+vec2(1,0)),f.x),
-             mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),f.x),f.y);
+  return mix(mix(hash21(i),hash21(i+vec2(1,0)),f.x),mix(hash21(i+vec2(0,1)),hash21(i+vec2(1,1)),f.x),f.y);
 }
-float fbm(vec2 p){
-  return noise(p)*.5+noise(p*2.1+vec2(1.7,9.2))*.25+noise(p*4.3+vec2(8.3,2.8))*.125;
-}
+float fbm(vec2 p){ return noise(p)*.5+noise(p*2.1+vec2(1.7,9.2))*.25+noise(p*4.3+vec2(8.3,2.8))*.125; }
 vec3 thinFilm(float cosA,float thick){
   float opd=2.*thick*sqrt(max(0.,1.-(1./1.45/1.45)*(1.-cosA*cosA)));
-  vec3 phase=TAU*opd/vec3(.650,.550,.450);
-  return .5+.5*cos(phase);
+  return .5+.5*cos(TAU*opd/vec3(.650,.550,.450));
 }
 vec3 interior(vec3 lp,float t){
   float r=length(lp);
@@ -51,63 +35,48 @@ vec3 interior(vec3 lp,float t){
   vec3 c2=vec3(.10,.30,.95)*r2*1.3;
   vec3 c3=vec3(.55,.80,1.00)*r3*.85;
   float core=exp(-r*r*2.5)*(.45+.55*sin(t*.38+.8));
-  vec3 coreCol=vec3(.08,.14,.60)*core*2.2;
-  vec3 base=vec3(.02,.03,.14)*(.4+.6*(1.-r));
-  return base+coreCol+c1+c2+c3;
+  return vec3(.02,.03,.14)*(.4+.6*(1.-r))+vec3(.08,.14,.60)*core*2.2+c1+c2+c3;
 }
 void main(){
   vec2 uv=(gl_FragCoord.xy/u_res)*2.-1.;
   float ar=u_res.x/u_res.y; uv.x*=ar;
   float rx=u_rotXY.x, ry=u_rotXY.y, t=u_t;
-  float R=0.72;
   vec3 ro=vec3(0.,0.,2.3), rd=normalize(vec3(uv,-1.65));
-  float b=dot(ro,rd), c=dot(ro,ro)-R*R, disc=b*b-c;
+  float b=dot(ro,rd), c=dot(ro,ro)-.72*.72, disc=b*b-c;
   if(disc<0.0){gl_FragColor=vec4(0.);return;}
-  float sqrtD=sqrt(disc);
-  float edgeAA=smoothstep(0.,.004,sqrtD);
-  float t1=max(-b-sqrtD,0.), t2=-b+sqrtD;
+  float sqD=sqrt(disc);
+  float edgeAA=smoothstep(0.,.004,sqD);
+  float t1=max(-b-sqD,0.), t2=-b+sqD;
   if(t2<0.){gl_FragColor=vec4(0.);return;}
   vec3 pF=ro+rd*t1, N=normalize(pF), V=-rd;
   float NoV=max(dot(N,V),0.);
   vec3 lp=rotX(rotY(pF,-ry),-rx);
-  float phi_s=atan(lp.z,lp.x), theta_s=acos(clamp(lp.y/max(length(lp),.001),-1.,1.));
-  float thickN=fbm(vec2(phi_s*.6+t*.020,theta_s*1.0-t*.015));
-  float thick=.28+thickN*.65;
-  vec3 film=thinFilm(NoV,thick);
-  float F0=.06, fresnel=F0+(1.-F0)*pow(1.-NoV,4.0);
-  float rim=pow(1.-NoV,5.5)*1.1; fresnel=min(fresnel+rim,.98);
-  vec3 shellBase=mix(vec3(.06,.10,.42),vec3(.55,.68,.96),NoV*.6);
-  vec3 shellCol=mix(shellBase,film*vec3(.95,1.,.98),.82);
+  float ps=atan(lp.z,lp.x), ts=acos(clamp(lp.y/max(length(lp),.001),-1.,1.));
+  vec3 film=thinFilm(NoV,.28+fbm(vec2(ps*.6+t*.020,ts-.015*t))*.65);
+  float fresnel=min(.06+(1.-.06)*pow(1.-NoV,4.0)+pow(1.-NoV,5.5)*1.1,.98);
+  vec3 shellCol=mix(mix(vec3(.06,.10,.42),vec3(.55,.68,.96),NoV*.6),film*.98,.82);
   vec3 Lk=normalize(vec3(-.42,.78,.48)), H=normalize(Lk+V);
-  shellCol+=vec3(1.,1.,1.)*pow(max(dot(N,H),0.),180.)*1.3;
-  shellCol+=vec3(.65,.80,1.)*pow(max(dot(N,normalize(vec3(.70,.12,.52)+V)),0.),55.)*.4;
+  shellCol+=pow(max(dot(N,H),0.),180.)*1.3+vec3(.65,.80,1.)*pow(max(dot(N,normalize(vec3(.70,.12,.52)+V)),0.),55.)*.4;
   vec3 intCol=vec3(0.);
   float span=t2-t1;
   for(int i=0;i<6;i++){
     float fi=float(i)/5.;
-    vec3 sp=ro+rd*(t1+span*(fi*.82+.09));
-    vec3 slp=rotX(rotY(sp,-ry),-rx);
-    intCol+=interior(slp,t)*(1.-fi*.35);
+    intCol+=interior(rotX(rotY(ro+rd*(t1+span*(fi*.82+.09)),-ry),-rx),t)*(1.-fi*.35);
   }
   intCol/=4.2;
-  float shellOp=mix(.50,.92,fresnel);
-  vec3 col=mix(intCol,shellCol,shellOp);
-  col+=vec3(.25,.50,1.0)*rim*.60;
+  vec3 col=mix(intCol,shellCol,mix(.50,.92,fresnel));
+  col+=vec3(.25,.50,1.0)*pow(1.-NoV,5.5)*1.1*.60;
   col=max(col,vec3(0.));
   col=(col*(2.51*col+.03))/(col*(2.43*col+.59)+.14);
-  col=clamp(col,0.,1.);
-  float alpha=edgeAA*(.90+fresnel*.10);
-  gl_FragColor=vec4(col*alpha,alpha);
+  gl_FragColor=vec4(clamp(col,0.,1.)*edgeAA*(.90+fresnel*.10),edgeAA*(.90+fresnel*.10));
 }
 `;
 
-// Spring physics
 class Spring {
   x=0;y=0;vx=0;vy=0;tx=0;ty=0;
   step(){ this.vx+=(this.tx-this.x)*.062; this.vy+=(this.ty-this.y)*.062; this.vx*=.86; this.vy*=.86; this.x+=this.vx; this.y+=this.vy; }
 }
 
-// The orb WebGL canvas — transparent bg, no box
 function OrbCanvas({ size }: { size: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const spring = useRef(new Spring());
@@ -119,10 +88,7 @@ function OrbCanvas({ size }: { size: number }) {
     canvas.height = Math.round(size * dpr);
     const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true })!;
     if (!gl) return;
-    const mkS = (type: number, src: string) => {
-      const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s);
-      const log = gl.getShaderInfoLog(s); if (log?.trim()) console.error(log); return s;
-    };
+    const mkS = (type: number, src: string) => { const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s); return s; };
     const prog = gl.createProgram()!;
     gl.attachShader(prog, mkS(gl.VERTEX_SHADER, VERT));
     gl.attachShader(prog, mkS(gl.FRAGMENT_SHADER, ORB_FRAG));
@@ -161,19 +127,22 @@ function OrbCanvas({ size }: { size: number }) {
   );
 }
 
-// ── THE SIGNAL FIELD ─────────────────────────────────────────────────────────
-// Canvas of cursor-reactive contour lines. The orb sits at center.
-// Lines curve around the cursor (gravity lens) and around the orb (field source).
+// ── SIGNAL FIELD with fluid cursor physics ─────────────────────────────────
 function SignalField() {
   const ref = useRef<HTMLCanvasElement>(null);
-  const mouse = useRef({ x: 0.5, y: 0.5 });
+  // Use a smoother spring for the field lines - higher inertia = more fluid
+  const mx = useRef(0.5);
+  const my = useRef(0.5);
+  const tvx = useRef(0.5);
+  const tvy = useRef(0.5);
+  const vx = useRef(0);
+  const vy = useRef(0);
   const raf = useRef(0);
 
   useEffect(() => {
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d")!;
     const dpr = Math.min(window.devicePixelRatio, 2);
-
     const resize = () => {
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
@@ -183,12 +152,9 @@ function SignalField() {
     };
     resize();
     window.addEventListener("resize", resize);
-
-    // Smooth mouse tracking
-    const targetMouse = { x: 0.5, y: 0.5 };
     const onMove = (e: MouseEvent) => {
-      targetMouse.x = e.clientX / window.innerWidth;
-      targetMouse.y = e.clientY / window.innerHeight;
+      tvx.current = e.clientX / window.innerWidth;
+      tvy.current = e.clientY / window.innerHeight;
     };
     window.addEventListener("mousemove", onMove);
 
@@ -197,14 +163,19 @@ function SignalField() {
       const W = window.innerWidth, H = window.innerHeight;
       ctx.clearRect(0, 0, W, H);
 
-      // Smooth mouse lerp
-      mouse.current.x += (targetMouse.x - mouse.current.x) * 0.06;
-      mouse.current.y += (targetMouse.y - mouse.current.y) * 0.06;
+      // Very soft spring - stiffness 0.028, damping 0.88
+      // This gives the lines a heavy, fluid, mercury-like follow
+      vx.current += (tvx.current - mx.current) * 0.028;
+      vy.current += (tvy.current - my.current) * 0.028;
+      vx.current *= 0.88;
+      vy.current *= 0.88;
+      mx.current += vx.current;
+      my.current += vy.current;
 
-      const mx = mouse.current.x * W;
-      const my = mouse.current.y * H;
+      const cmx = mx.current * W;
+      const cmy = my.current * H;
 
-      // Draw the background gradient
+      // Background gradient
       const bg = ctx.createRadialGradient(W * .5, H * .45, 0, W * .5, H * .5, Math.max(W, H) * .75);
       bg.addColorStop(0,   "#4a5fd4");
       bg.addColorStop(.30, "#3a4ec8");
@@ -214,100 +185,79 @@ function SignalField() {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
-      // ── SIGNAL FIELD LINES ─────────────────────────────────────────────────
-      // Horizontal contour lines that warp based on:
-      // 1. Cursor position (gravity lens effect)
-      // 2. Orb at center (field source — lines curve around it)
-      // 3. Slow time drift (alive feel)
-
       const orbX = W * 0.5;
       const orbY = H * 0.5;
-      const orbR = Math.min(W, H) * 0.22; // orb's visual radius in field space
+      const orbR = Math.min(W, H) * 0.22;
 
-      const LINES = 52;        // number of contour lines
-      const STEPS = 220;       // points per line (resolution)
+      // Cursor influence radius - wider = more fluid sweep
+      const lensR = W * 0.38;
+
+      const LINES = 56;
+      const STEPS = 280;
       const LINE_SPACING = H / (LINES + 1);
 
       for (let li = 0; li < LINES; li++) {
         const baseY = (li + 1) * LINE_SPACING;
-        // Distance from center line (0 = middle line)
         const centerDist = Math.abs(li - LINES / 2) / (LINES / 2);
-
-        // Line brightness: brighter near center, dimmer at edges
-        const alpha = 0.08 + (1 - centerDist) * 0.22;
+        const alpha = 0.07 + (1 - centerDist) * 0.24;
 
         ctx.beginPath();
-        let started = false;
+        let drawing = false;
 
         for (let si = 0; si <= STEPS; si++) {
           const px = (si / STEPS) * W;
           let py = baseY;
 
-          // ── Cursor displacement ──────────────────────────────────────────
-          // Gaussian lens: lines bend toward/away from cursor
-          const dxM = px - mx, dyM = py - my;
+          // Cursor lens displacement - larger radius, softer falloff
+          const dxM = px - cmx, dyM = py - cmy;
           const distM = Math.sqrt(dxM * dxM + dyM * dyM);
-          const lensR = W * 0.28;
-          const lensFalloff = Math.exp(-(distM * distM) / (lensR * lensR * 0.5));
-          // Push lines away from cursor (repulsion)
-          const cursorPush = lensFalloff * (baseY - my) * 0.35;
+          const lensFalloff = Math.exp(-(distM * distM) / (lensR * lensR * 0.6));
+          const cursorPush = lensFalloff * (baseY - cmy) * 0.42;
 
-          // ── Orb field displacement ───────────────────────────────────────
-          // Lines bulge around the orb (field source)
+          // Orb field
           const dxO = px - orbX, dyO = py - orbY;
           const distO = Math.sqrt(dxO * dxO + dyO * dyO);
-          // Smooth falloff around orb — lines curve around it
           const orbField = Math.exp(-(distO * distO) / (orbR * orbR * 1.8));
-          // Vertical push away from orb center
-          const orbPush = orbField * (baseY - orbY) * 1.2;
-          // Horizontal push (barrel distortion around orb)
+          const orbPushY = orbField * (baseY - orbY) * 1.2;
           const orbPushX = orbField * dxO * 0.15;
 
-          // ── Time-based organic drift ──────────────────────────────────────
-          const wave1 = Math.sin(px * 0.003 + t * 0.4 + li * 0.12) * 4.5;
-          const wave2 = Math.sin(px * 0.007 - t * 0.28 + li * 0.08) * 2.0;
-          const wave3 = Math.sin(px * 0.012 + t * 0.55 + li * 0.20) * 1.2;
+          // Organic time drift
+          const wave1 = Math.sin(px * 0.0028 + t * 0.35 + li * 0.11) * 5.0;
+          const wave2 = Math.sin(px * 0.0065 - t * 0.25 + li * 0.07) * 2.2;
+          const wave3 = Math.sin(px * 0.011  + t * 0.50 + li * 0.18) * 1.1;
 
-          py += cursorPush + orbPush + wave1 + wave2 + wave3;
-          const adjustedX = px + orbPushX;
+          py += cursorPush + orbPushY + wave1 + wave2 + wave3;
+          const ax = px + orbPushX;
 
-          // ── Skip drawing inside the orb ──────────────────────────────────
-          const dxSkip = adjustedX - orbX, dySkip = py - orbY;
-          const distSkip = Math.sqrt(dxSkip * dxSkip + dySkip * dySkip);
-          if (distSkip < orbR * 0.82) {
-            started = false;
-            ctx.stroke();
-            ctx.beginPath();
+          // Gap around orb
+          const dxS = ax - orbX, dyS = py - orbY;
+          if (Math.sqrt(dxS * dxS + dyS * dyS) < orbR * 0.83) {
+            if (drawing) { ctx.stroke(); ctx.beginPath(); drawing = false; }
             continue;
           }
 
-          if (!started) {
-            ctx.moveTo(adjustedX, py);
-            started = true;
-          } else {
-            ctx.lineTo(adjustedX, py);
-          }
+          if (!drawing) { ctx.moveTo(ax, py); drawing = true; }
+          else ctx.lineTo(ax, py);
         }
 
-        // Line color: bright electric blue, varies slightly by position
-        const hue = 220 + centerDist * 20;
-        const lightness = 55 + (1 - centerDist) * 25;
-        ctx.strokeStyle = `hsla(${hue}, 85%, ${lightness}%, ${alpha})`;
-        ctx.lineWidth = 0.65 + (1 - centerDist) * 0.5;
+        const hue = 220 + centerDist * 18;
+        const light = 58 + (1 - centerDist) * 22;
+        ctx.strokeStyle = `hsla(${hue},85%,${light}%,${alpha})`;
+        ctx.lineWidth = 0.6 + (1 - centerDist) * 0.55;
         ctx.stroke();
       }
 
-      // ── Orb glow in the field gap ──────────────────────────────────────────
-      const orbGlow = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, orbR * 2.2);
+      // Orb glow
       const breathe = 0.92 + Math.sin(t * 0.28) * 0.08;
+      const orbGlow = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, orbR * 2.4);
       orbGlow.addColorStop(0,   `rgba(80,130,255,${0.18 * breathe})`);
       orbGlow.addColorStop(0.4, `rgba(60,100,240,${0.08 * breathe})`);
       orbGlow.addColorStop(1,   "rgba(40,70,200,0)");
       ctx.fillStyle = orbGlow;
       ctx.fillRect(0, 0, W, H);
 
-      // ── Edge vignette ──────────────────────────────────────────────────────
-      const vig = ctx.createRadialGradient(W * .5, H * .5, W * .28, W * .5, H * .5, Math.max(W, H) * .72);
+      // Vignette
+      const vig = ctx.createRadialGradient(W*.5, H*.5, W*.28, W*.5, H*.5, Math.max(W,H)*.72);
       vig.addColorStop(0, "rgba(0,0,20,0)");
       vig.addColorStop(1, "rgba(5,8,40,0.48)");
       ctx.fillStyle = vig;
@@ -326,18 +276,88 @@ function SignalField() {
   return <canvas ref={ref} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }} />;
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── CUSTOM CURSOR ─────────────────────────────────────────────────────────────
+function CustomCursor() {
+  const dotRef  = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const pos     = useRef({ x: -100, y: -100 });
+  const ring    = useRef({ x: -100, y: -100 });
+  const raf     = useRef(0);
+  const isHover = useRef(false);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      pos.current = { x: e.clientX, y: e.clientY };
+      // Check if over interactive element
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      isHover.current = !!(el?.closest("button, a, [role=button]"));
+    };
+    window.addEventListener("mousemove", onMove);
+
+    const tick = () => {
+      const dot  = dotRef.current;
+      const ring = ringRef.current;
+      if (!dot || !ring) { raf.current = requestAnimationFrame(tick); return; }
+
+      // Dot: snappy - follows cursor directly
+      dot.style.transform = `translate(${pos.current.x - 4}px, ${pos.current.y - 4}px)`;
+
+      // Ring: lazy spring follow
+      const rx = parseFloat(ring.dataset.x || String(pos.current.x));
+      const ry = parseFloat(ring.dataset.y || String(pos.current.y));
+      const nx = rx + (pos.current.x - rx) * 0.10;
+      const ny = ry + (pos.current.y - ry) * 0.10;
+      ring.dataset.x = String(nx);
+      ring.dataset.y = String(ny);
+
+      const scale = isHover.current ? 1.8 : 1;
+      ring.style.transform = `translate(${nx - 18}px, ${ny - 18}px) scale(${scale})`;
+      ring.style.opacity   = isHover.current ? "0.55" : "0.35";
+      ring.style.borderColor = isHover.current ? "rgba(180,210,255,0.8)" : "rgba(140,180,255,0.6)";
+
+      raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(raf.current);
+    };
+  }, []);
+
+  return (
+    <>
+      {/* Dot - sharp, instant */}
+      <div ref={dotRef} style={{
+        position: "fixed", top: 0, left: 0,
+        width: 8, height: 8, borderRadius: "50%",
+        background: "rgba(200,220,255,0.95)",
+        pointerEvents: "none", zIndex: 9999,
+        transition: "width .2s, height .2s",
+        boxShadow: "0 0 8px rgba(120,170,255,0.8)",
+        willChange: "transform",
+      }} />
+      {/* Ring - lagging, atmospheric */}
+      <div ref={ringRef} style={{
+        position: "fixed", top: 0, left: 0,
+        width: 36, height: 36, borderRadius: "50%",
+        border: "1px solid rgba(140,180,255,0.6)",
+        pointerEvents: "none", zIndex: 9998,
+        transition: "border-color .3s, opacity .3s, transform .08s linear",
+        willChange: "transform",
+      }} />
+    </>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function Index() {
   const navigate = useNavigate();
-  const [ready, setReady] = useState(false);
+  const [ready, setReady]     = useState(false);
   const [orbSize, setOrbSize] = useState(480);
 
   useEffect(() => {
-    const calc = () => setOrbSize(Math.min(
-      window.innerWidth * 0.52,
-      window.innerHeight * 0.70,
-      580,
-    ));
+    const calc = () => setOrbSize(Math.min(window.innerWidth * 0.52, window.innerHeight * 0.70, 580));
     calc();
     window.addEventListener("resize", calc);
     const t = setTimeout(() => setReady(true), 100);
@@ -354,25 +374,23 @@ export default function Index() {
     <div style={{
       width: "100vw", height: "100vh", overflow: "hidden",
       position: "relative", fontFamily: "'Afacad Flux', sans-serif",
+      cursor: "none", // hide default cursor
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        * { cursor: none !important; }
         ::selection { background: rgba(255,220,80,.28); color: #fff; }
         @keyframes shimmer {
           0%   { background-position: -200% center; }
           100% { background-position:  200% center; }
-        }
-        @keyframes pulse-ring {
-          0%   { transform: scale(1);   opacity: 0.6; }
-          100% { transform: scale(1.6); opacity: 0; }
         }
         .cta-pill {
           display: inline-flex; align-items: center; gap: 10px;
           background: rgba(255,255,255,.92); border: none; color: #1e2da0;
           font-family: 'Afacad Flux', sans-serif;
           font-size: 16px; font-weight: 600; letter-spacing: .01em;
-          padding: 15px 44px; border-radius: 100px; cursor: pointer;
+          padding: 15px 44px; border-radius: 100px;
           box-shadow: 0 6px 30px rgba(10,20,130,.35), 0 2px 8px rgba(255,255,255,.15);
           transition: background .22s, transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s;
         }
@@ -385,10 +403,10 @@ export default function Index() {
         .cta-pill:hover .arr { transform: translateX(5px); }
       `}</style>
 
-      {/* Signal field — full screen, interactive */}
+      <CustomCursor />
       <SignalField />
 
-      {/* Orb — dead center, transparent canvas on the field */}
+      {/* Orb */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 2, pointerEvents: "none",
         display: "flex", alignItems: "center", justifyContent: "center",
@@ -396,7 +414,7 @@ export default function Index() {
         <OrbCanvas size={orbSize} />
       </div>
 
-      {/* UI layer */}
+      {/* UI */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 10, pointerEvents: "none",
         display: "flex", flexDirection: "column",
@@ -406,11 +424,11 @@ export default function Index() {
           <div style={{ display: "flex", alignItems: "baseline" }}>
             <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-.01em", color: "rgba(255,255,255,.95)" }}>EVERY</span>
             <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-.01em", color: "rgba(255,255,255,.42)" }}>WHERE</span>
-            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".18em", color: "rgba(255,255,255,.38)", marginLeft: 6, alignSelf: "center", textTransform: "uppercase" }}>Studio™</span>
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".18em", color: "rgba(255,255,255,.38)", marginLeft: 6, alignSelf: "center", textTransform: "uppercase" }}>Studio</span>
           </div>
         </div>
 
-        {/* Center: headline + CTA */}
+        {/* Headline + CTA */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           <h1 style={{
             ...fi(.25),
@@ -435,15 +453,15 @@ export default function Index() {
           <div style={{ ...fi(.55), pointerEvents: "auto" }}>
             <button className="cta-pill" onClick={() => navigate("/explore")}>
               Explore Everywhere
-              <span className="arr">→</span>
+              <span className="arr">-&gt;</span>
             </button>
           </div>
         </div>
 
-        {/* Bottom wordmark */}
+        {/* Bottom label */}
         <div style={{ display: "flex", justifyContent: "center", paddingBottom: 26, ...fi(.95) }}>
           <span style={{ fontSize: 11, letterSpacing: ".12em", color: "rgba(255,255,255,.30)", fontWeight: 400 }}>
-            EVERYWHERE STUDIO™ &nbsp;·&nbsp; Ideas to Impact
+            EVERYWHERE STUDIO &nbsp;·&nbsp; Ideas to Impact
           </span>
         </div>
       </div>
