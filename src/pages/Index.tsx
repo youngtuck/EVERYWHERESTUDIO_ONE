@@ -138,7 +138,7 @@ function OrbCanvas({ size }: { size: number }) {
 }
 
 // ── SIGNAL FIELD with fluid cursor physics ─────────────────────────────────
-function SignalField() {
+function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
   const ref = useRef<HTMLCanvasElement>(null);
   // Use a smoother spring for the field lines - higher inertia = more fluid
   const mx = useRef(0.5);
@@ -171,7 +171,16 @@ function SignalField() {
     const draw = (ts: number) => {
       const t = ts * 0.001;
       const W = window.innerWidth, H = window.innerHeight;
+      const zoom = zoomRef?.current ?? 0;
+      const scale = 1 + zoom * 3.2;
       ctx.clearRect(0, 0, W, H);
+
+      if (zoom > 0) {
+        ctx.save();
+        ctx.translate(W * 0.5, H * 0.5);
+        ctx.scale(scale, scale);
+        ctx.translate(-W * 0.5, -H * 0.5);
+      }
 
       // Very soft spring - stiffness 0.028, damping 0.88
       // This gives the lines a heavy, fluid, mercury-like follow
@@ -273,6 +282,14 @@ function SignalField() {
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, W, H);
 
+      if (zoom > 0) {
+        ctx.restore();
+        // Fade to white as we zoom in (last 50% of zoom)
+        const fade = Math.max(0, (zoom - 0.5) / 0.5);
+        ctx.fillStyle = `rgba(255,255,255,${fade * 0.98})`;
+        ctx.fillRect(0, 0, W, H);
+      }
+
       raf.current = requestAnimationFrame(draw);
     };
     raf.current = requestAnimationFrame(draw);
@@ -365,6 +382,11 @@ export default function Index() {
   const navigate = useNavigate();
   const [ready, setReady]     = useState(false);
   const [orbSize, setOrbSize] = useState(480);
+  const zoomRef = useRef(0);
+  const [zoomingToExplore, setZoomingToExplore] = useState(false);
+  const orbWrapperRef = useRef<HTMLDivElement>(null);
+  const uiRef = useRef<HTMLDivElement>(null);
+  const zoomRaf = useRef(0);
 
   useEffect(() => {
     const calc = () => setOrbSize(Math.min(window.innerWidth * 0.52, window.innerHeight * 0.70, 580));
@@ -373,6 +395,43 @@ export default function Index() {
     const t = setTimeout(() => setReady(true), 100);
     return () => { window.removeEventListener("resize", calc); clearTimeout(t); };
   }, []);
+
+  // Zoom-in transition when "Explore Everywhere" is clicked
+  useEffect(() => {
+    if (!zoomingToExplore) return;
+    const duration = 1650;
+    const startTime = performance.now();
+    const easeIn = (t: number) => t * t * t;
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const raw = Math.min(elapsed / duration, 1);
+      const progress = easeIn(raw);
+      zoomRef.current = progress;
+
+      const orbEl = orbWrapperRef.current;
+      const uiEl = uiRef.current;
+      if (orbEl) {
+        orbEl.style.animation = "none"; // stop breathe so our scale owns the transform
+        orbEl.style.transform = `scale(${1 + progress * 2.4})`;
+        orbEl.style.opacity = String(Math.max(0, 1 - progress * 1.1));
+        orbEl.style.transition = "none";
+      }
+      if (uiEl) {
+        uiEl.style.opacity = String(Math.max(0, 1 - progress * 1.8));
+        uiEl.style.transition = "none";
+      }
+
+      if (raw >= 1) {
+        zoomRef.current = 1;
+        navigate("/explore");
+        return;
+      }
+      zoomRaf.current = requestAnimationFrame(tick);
+    };
+    zoomRaf.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(zoomRaf.current);
+  }, [zoomingToExplore, navigate]);
 
   const fi = (d: number) => ({
     opacity: ready ? 1 : 0,
@@ -421,10 +480,13 @@ export default function Index() {
       `}</style>
 
       <CustomCursor />
-      <SignalField />
+      <SignalField zoomRef={zoomRef} />
 
       {/* Orb */}
-      <div className="orb-wrap" style={{
+      <div
+        ref={orbWrapperRef}
+        className="orb-wrap"
+        style={{
         position: "fixed", inset: 0, zIndex: 2, pointerEvents: "none",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
@@ -432,7 +494,9 @@ export default function Index() {
       </div>
 
       {/* UI */}
-      <div style={{
+      <div
+        ref={uiRef}
+        style={{
         position: "fixed", inset: 0, zIndex: 10, pointerEvents: "none",
         display: "flex", flexDirection: "column",
       }}>
@@ -467,8 +531,13 @@ export default function Index() {
             animation: "shimmer 5s linear infinite",
           }}>Everywhere.</h1>
 
-          <div style={{ ...fi(.55), pointerEvents: "auto" }}>
-            <button className="cta-pill" onClick={() => navigate("/explore")}>
+          <div style={{ ...fi(.55), pointerEvents: zoomingToExplore ? "none" : "auto" }}>
+            <button
+              className="cta-pill"
+              onClick={() => setZoomingToExplore(true)}
+              disabled={zoomingToExplore}
+              aria-busy={zoomingToExplore}
+            >
               Explore Everywhere
               <span className="arr">-&gt;</span>
             </button>
