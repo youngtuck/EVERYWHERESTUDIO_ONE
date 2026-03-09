@@ -84,7 +84,21 @@ If the API returns a **model not found** error, edit `server/index.js` and chang
 
 ---
 
-## Deploying later (e.g. Vercel)
+## Deploying on Vercel (frontend + API on same domain)
+
+The repo includes **Vercel serverless API routes** in the `api/` folder (`api/chat.js`, `api/generate.js`, `api/health.js`). When you deploy to Vercel, the frontend and these endpoints are on the same domain, so no proxy or separate backend URL is needed.
+
+1. **Deploy** the project to Vercel (connect the repo and deploy as usual).
+2. **Environment variables** (Vercel Dashboard → Project → Settings → Environment Variables):
+   - **`ANTHROPIC_API_KEY`** — Your Anthropic API key (e.g. `sk-ant-...`). Required for Watson and content generation.
+   - **`VITE_API_BASE`** — Set to **empty string** `""` (or leave unset). The frontend will use relative URLs like `/api/chat`, which resolve to the same Vercel deployment.
+3. **Redeploy** after adding or changing environment variables so the build picks them up.
+
+Local development is unchanged: use `npm run dev` + `npm run server` (or `npm run dev:all`). The Express server in `server/index.js` is kept for local dev; Vercel uses the `api/*` serverless functions in production.
+
+---
+
+## Deploying later (other hosts)
 
 - The **frontend** can be deployed as a static site (Vite build) as you do now.
 - The **backend** must run somewhere that can hold `ANTHROPIC_API_KEY` securely (e.g. Vercel serverless functions, a small Node host, or Supabase Edge Functions). Set `ANTHROPIC_API_KEY` in that environment’s config (e.g. Vercel → Project → Settings → Environment Variables), and point the frontend’s API base URL to that backend. We can wire that when you’re ready to deploy.

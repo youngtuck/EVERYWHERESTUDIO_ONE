@@ -1,0 +1,117 @@
+/**
+ * Vercel serverless: POST /api/chat — Watson (First Listener) conversation.
+ * Same logic as server/index.js; keep in sync for local dev.
+ */
+import Anthropic from "@anthropic-ai/sdk";
+
+const READY_MARKER = "READY_TO_GENERATE";
+
+const WATSON_SYSTEM = `You are Dr. John Watson, the First Listener for EVERYWHERE Studio. Your role is to capture the user's ideas, not to write for them.
+
+RULES:
+- Ask ONE question per response. Never ask multiple questions at once.
+- Listen first. Draw out what they mean, not just what they say.
+- Reflect back: "So what you're saying is..." to catch misunderstandings early.
+- Use their words and rhythm when you summarize. You capture from them; you don't create for them.
+- When you have enough to produce the requested output (clear idea, format, audience, and any key specifics), end your message with a brief confirmation, then on a new line write exactly: ${READY_MARKER}
+- Be patient, curious, and ego-free. Signature phrases: "Tell me more about that.", "What happened next?", "Help me understand what you mean by..."
+
+OUTPUT TYPES (for context): essay, newsletter, presentation, social, podcast, video, sunday_story, freestyle.`;
+
+function buildWatsonSystem(outputType) {
+  return `${WATSON_SYSTEM}
+
+Current output type for this session: ${outputType || "freestyle"}. Ask questions that clarify the idea, the audience, and any specifics needed to create it.`;
+}
+
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1200;
+
+function isRetryable(err) {
+  const status = err?.status ?? err?.httpStatus;
+  if (status === 429) return true;
+  if (status >= 500 && status <= 599) return true;
+  if (err?.message?.includes("ECONNRESET") || err?.message?.includes("ETIMEDOUT")) return true;
+  return false;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetry(fn) {
+  let lastErr;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < MAX_RETRIES && isRetryable(err)) {
+        await sleep(RETRY_DELAY_MS * (attempt + 1));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
+function setCors(res, req) {
+  const origin = req.headers?.origin;
+  if (origin) res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+export default async function handler(req, res) {
+  setCors(res, req);
+  if (req.method === "OPTIONS") return res.status(204).end();
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: "ANTHROPIC_API_KEY not set. Add it in Vercel Project Settings → Environment Variables." });
+  }
+
+  const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
+  const { messages = [], outputType = "freestyle" } = body;
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: "messages array required with at least one message." });
+  }
+
+  try {
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const system = buildWatsonSystem(outputType);
+    const claudeMessages = messages.map((m) => ({
+      role: m.role === "watson" ? "assistant" : "user",
+      content: typeof m.content === "string" ? m.content : m.content,
+    }));
+
+    const response = await withRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system,
+        messages: claudeMessages,
+      })
+    );
+
+    const block = response.content?.[0];
+    const text = block?.type === "text" ? block.text : "";
+    const readyToGenerate = text.includes(READY_MARKER);
+    const reply = text.replace(READY_MARKER, "").replace(/\n+$/, "").trim();
+
+    return res.status(200).json({ reply, readyToGenerate });
+  } catch (err) {
+    console.error("[api/chat]", err);
+    const status = err.status === 401 ? 401 : 502;
+    const message = err.message || "Something went wrong on our end.";
+    return res.status(status).json({
+      error: status === 401 ? "Invalid API key. Check Vercel environment variables." : message,
+      retryable: isRetryable(err),
+    });
+  }
+}
