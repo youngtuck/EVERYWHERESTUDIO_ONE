@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, createContext, useContext } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, createContext, useContext, Children } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 
@@ -210,6 +210,48 @@ function WordReveal({ text, size, weight=700, color, lh=1.1, delay=0, center=fal
       <span key={i} style={{display:"inline-block",marginRight:"0.24em",opacity:vis?1:0,transform:vis?"none":"translateY(10px)",transition:`opacity .48s ${delay+i*.025}s ease, transform .48s ${delay+i*.025}s cubic-bezier(.16,1,.3,1)`,fontSize:size,fontWeight:weight,color,lineHeight:lh}}>{w}</span>
     ))}
   </div>;
+}
+
+function FadeInSection({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const items = Children.toArray(children);
+
+  return (
+    <div ref={ref} style={style}>
+      {items.map((child, index) => (
+        <div
+          key={index}
+          style={{
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(30px)",
+            transition:
+              "opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1)",
+            transitionDelay: visible ? `${index * 0.1}s` : "0s",
+          }}
+        >
+          {child}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function Counter({ target, suffix="", label, accent }:{target:number;suffix?:string;label:string;accent:string}) {
