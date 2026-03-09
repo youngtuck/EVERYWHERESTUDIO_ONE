@@ -14,6 +14,7 @@ import OutputDetail from "./pages/studio/OutputDetail";
 import Projects from "./pages/studio/Projects";
 import Resources from "./pages/studio/Resources";
 import Settings from "./pages/studio/Settings";
+import VoiceDnaSettings from "./pages/studio/VoiceDnaSettings";
 import TheLot from "./pages/studio/TheLot";
 
 const App = () => (
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="projects/:id" element={<Projects />} />
           <Route path="resources" element={<Resources />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="settings/voice" element={<VoiceDnaSettings />} />
           <Route path="lot" element={<TheLot />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

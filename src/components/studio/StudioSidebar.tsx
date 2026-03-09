@@ -12,7 +12,7 @@ const NAV = [
 ];
 const NAV_BOTTOM = [
   { path: "/studio/resources", label: "Resources", icon: Folder },
-  { path: "/studio/settings",   label: "Settings",  icon: Settings },
+  { path: "/studio/settings/voice",   label: "Settings",  icon: Settings },
 ];
 
 export default function StudioSidebar() {
@@ -23,7 +23,9 @@ export default function StudioSidebar() {
   const isActive = (p: string) =>
     p === "/studio/work"
       ? loc.pathname === p || loc.pathname.startsWith("/studio/work/")
-      : loc.pathname === p;
+      : p === "/studio/settings/voice"
+        ? loc.pathname === p || loc.pathname.startsWith("/studio/settings")
+        : loc.pathname === p;
 
   return (
     <aside style={{
