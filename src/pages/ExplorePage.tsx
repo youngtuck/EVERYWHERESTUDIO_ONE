@@ -745,12 +745,33 @@ export default function ExplorePage() {
   const [navScrolled, setNavScrolled] = useState(false);
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [scrollPct, setScrollPct] = useState(0);
+  const [roomsVisible, setRoomsVisible] = useState(false);
+  const roomsSentinelRef = useRef<HTMLDivElement | null>(null);
 
   const toggle = () => setDark(d => !d);
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 80);
     return () => clearTimeout(t);
   }, []);
+
+  // Lazy-load RoomsSection when its sentinel approaches the viewport
+  useEffect(() => {
+    if (roomsVisible) return;
+    const el = roomsSentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        const entry = entries[0];
+        if (entry.isIntersecting) {
+          setRoomsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { root: null, rootMargin: "500px", threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [roomsVisible]);
   useEffect(() => {
     document.body.setAttribute("data-explore-theme", dark ? "dark" : "light");
   }, [dark]);
@@ -1109,8 +1130,14 @@ export default function ExplorePage() {
           </div>
         </section>
 
-        {/* ══ ROOMS: single continuous left column ════════════════════════════ */}
-        <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} />
+        {/* ══ ROOMS: single continuous left column (lazy-loaded) ═══════════════ */}
+        <div ref={roomsSentinelRef}>
+          {roomsVisible ? (
+            <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} />
+          ) : (
+            <div style={{ minHeight: "300vh", background: "#07090f" }} />
+          )}
+        </div>
 
         <SectionDivider />
 
