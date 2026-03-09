@@ -488,6 +488,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       style={{
         display: "flex",
         position: "relative",
+        overflowX: "clip",
         opacity: easedReveal,
         transform: `translateY(${(1 - easedReveal) * 36}px) scale(${0.987 + 0.013 * easedReveal})`,
         transformOrigin: "center top",
@@ -501,8 +502,17 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
           inset: 0,
           zIndex: 0,
           pointerEvents: "none",
-          background: `radial-gradient(ellipse 70% 90% at 15% 50%, ${glowColor} 0%, rgba(${acR},${acG},${acB},${dark ? 0.12 : 0.06}) 35%, transparent 58%), linear-gradient(to right, ${leftBg} 0%, ${leftBg} 22%, rgba(${bgR},${bgG},${bgB},0.9) 38%, rgba(${bgR},${bgG},${bgB},0.5) 55%, ${T.bg} 100%)`,
-          transition: "background 0.35s ease",
+          background: `
+            radial-gradient(
+              ellipse 70% 60% at 28% 50%,
+              ${glowColor.replace("0.38", "0.08").replace("0.22", "0.08")} 0%,
+              rgba(${acR},${acG},${acB},${dark ? 0.03 : 0.02}) 35%,
+              transparent 70%
+            ),
+            linear-gradient(180deg, rgb(${bgR},${bgG},${bgB}) 0%, ${T.bg} 100%)
+          `,
+          boxShadow: "inset 0 80px 60px -40px rgba(7,9,15,0.6), inset 0 -80px 60px -40px rgba(7,9,15,0.6)",
+          transition: "background 0.35s ease, box-shadow 0.35s ease",
         }}
       />
       {/* Sticky left column on desktop; hidden on mobile */}
@@ -510,7 +520,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         position: "sticky",
         top: 0,
         height: "100vh",
-        width: isMobile ? "100%" : "38vw",
+        width: isMobile ? "100%" : "32vw",
         flexShrink: 0,
         display: isMobile ? "none" : "flex",
         flexDirection: "column",
@@ -544,7 +554,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
             ) : (
               <div className="orb-breathe-rooms">
                 <SiriOrb
-                  size={200}
+                  size={isMobile ? 160 : 240}
                   energy={
                     orbSection === "watch" ||
                     orbSection === "work" ||
@@ -558,21 +568,21 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
               </div>
             )}
           </div>
-          <div style={{ fontSize: "clamp(52px,6.5vw,84px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .88, color: textColor, textAlign: "center", transition: "opacity 0.3s" }}>
+          <div style={{ fontSize: "clamp(52px,6.5vw,84px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .88, color: textColor, textAlign: "center", transition: "opacity 0.3s", marginTop: 24 }}>
             {roomNames[roomIdx]}
           </div>
-          <div style={{ fontSize: 9, letterSpacing: ".14em", color: textColor, opacity: .20, textTransform: "uppercase", marginTop: 10, fontWeight: 500 }}>
+          <div style={{ fontSize: 9, letterSpacing: ".15em", color: textColor, opacity: .20, textTransform: "uppercase", marginTop: 8, fontWeight: 500 }}>
             {roomSubs[roomIdx]}
           </div>
           <div style={{ width: 28, height: 1, background: `linear-gradient(90deg,transparent,${accentColor},transparent)`, marginTop: 18, transition: "background 0.4s ease" }} />
         </div>
       </div>
 
-      {/* ── Right panels: stacked, normal flow; subtle stagger so copy follows orb ── */}
+        {/* ── Right panels: stacked, normal flow; subtle stagger so copy follows orb ── */}
       <div
         style={{
-          flex: isMobile ? 1 : "0 0 62vw",
-          width: isMobile ? "100%" : "62vw",
+          flex: isMobile ? 1 : "0 0 68vw",
+          width: isMobile ? "100%" : "68vw",
           minWidth: 0,
           position: "relative",
           zIndex: 1,
@@ -592,6 +602,8 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
           position: "relative",
           maxWidth: isMobile ? "100%" : 680,
           margin: "0 auto",
+          background: "transparent",
+          overflow: "hidden",
         }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
@@ -617,7 +629,6 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
               </div>
             </div>
           )}
-          <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(74,144,245,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -646,6 +657,8 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
           position: "relative",
           maxWidth: isMobile ? "100%" : 680,
           margin: "0 auto",
+          background: "transparent",
+          overflow: "hidden",
         }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
@@ -671,7 +684,6 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
               </div>
             </div>
           )}
-          <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(13,140,158,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
           <FadeUp delay={0.12}>
@@ -704,6 +716,8 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
           position: "relative",
           maxWidth: isMobile ? "100%" : 680,
           margin: "0 auto",
+          background: "transparent",
+          overflow: "hidden",
         }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
@@ -729,7 +743,6 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
               </div>
             </div>
           )}
-          <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(160,128,245,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
