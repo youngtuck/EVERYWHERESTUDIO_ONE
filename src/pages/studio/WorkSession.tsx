@@ -879,7 +879,7 @@ export default function WorkSession() {
             gap: 24, padding: 40,
           }}>
             <div style={{ animation: "orbPulse 2s ease-in-out infinite" }}>
-              <WatsonOrb size={180} thinking={true} />
+              <WatsonOrb size={180} />
             </div>
             <p style={{ fontSize: 15, fontWeight: 500, color: "var(--fg-2)", letterSpacing: "-0.01em" }}>
               Watson is working...
