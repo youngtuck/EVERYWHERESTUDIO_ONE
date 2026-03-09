@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PenLine, Mic, Globe, Mail, FileText, Eye, ChevronRight, Plus, FolderOpen, Clock } from "lucide-react";
+import OnboardingModal, { isOnboardingComplete } from "../components/studio/OnboardingModal";
 
 // ── Time-based greeting ────────────────────────────────────────────────────
 function getGreeting() {
@@ -70,6 +71,7 @@ const QUICK_START = [
 
 export default function Dashboard() {
   const nav = useNavigate();
+  const [showOnboarding, setShowOnboarding] = useState(() => !isOnboardingComplete());
 
   const stats = [
     { label: "Voice Fidelity", value: "94.7", unit: "", sub: "+2.1 this week", color: "#3A7BD5" },
@@ -94,6 +96,9 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: "var(--font)" }}>
+      {showOnboarding && (
+        <OnboardingModal onComplete={() => setShowOnboarding(false)} />
+      )}
 
       {/* ── Hero strip (reference style): date, greeting, one CTA ───────────── */}
       <FadeCard delay={0}>
