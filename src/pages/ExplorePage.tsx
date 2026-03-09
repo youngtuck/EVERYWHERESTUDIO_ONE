@@ -348,29 +348,30 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
 
   return (
     <div ref={wrapperRef} style={{ display: "flex", position: "relative" }}>
-      {/* ── Single sticky left column ── */}
+      {/* ── Single sticky left column: background fades into right so no bounding box ── */}
       <div style={{
         position: "sticky", top: 0, height: "100vh", width: 420, flexShrink: 0,
-        background: leftBg, transition: "background 0.05s linear",
+        background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,${dark ? 0.04 : 0.02}) 100%), linear-gradient(to right, ${leftBg} 0%, ${leftBg} 38%, ${leftBg} 48%, ${T.bg} 100%)`,
+        transition: "background 0.2s ease",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         overflow: "hidden", zIndex: 2,
       }}>
-        {/* Ambient radial glow — larger ellipse, soft falloff so aura feathers at edges */}
+        {/* Inner glow layer — orb aura, soft falloff */}
         <div style={{
           position: "absolute",
-          inset: "-20%",
-          background: `radial-gradient(ellipse 85% 85% at 50% 50%, ${glowColor} 0%, ${glowColor} 25%, rgba(${acR},${acG},${acB},${dark ? 0.12 : 0.08}) 50%, transparent 72%)`,
+          inset: "-15%",
+          background: `radial-gradient(ellipse 75% 75% at 50% 50%, ${glowColor} 0%, ${glowColor} 22%, rgba(${acR},${acG},${acB},${dark ? 0.14 : 0.06}) 45%, transparent 68%)`,
           pointerEvents: "none",
           transition: "background 0.4s ease",
         }} />
-        {/* Right-edge feather: blend left panel into right content so no hard bounding box */}
+        {/* Wide right-edge feather: multi-stop so no visible line, blends aura into content */}
         <div style={{
           position: "absolute",
           top: 0,
           right: 0,
           bottom: 0,
-          width: 80,
-          background: `linear-gradient(to right, transparent 0%, ${T.bg} 100%)`,
+          width: "55%",
+          background: `linear-gradient(to right, transparent 0%, transparent 18%, rgba(${acR},${acG},${acB},${dark ? 0.06 : 0.04}) 35%, ${T.bg} 72%, ${T.bg} 100%)`,
           pointerEvents: "none",
           zIndex: 1,
         }} />
@@ -397,7 +398,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* WATCH right */}
-        <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, borderLeft: `1px solid rgba(74,144,245,0.10)` }}>
+        <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg }}>
           <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -416,7 +417,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
 
         {/* WORK right */}
-        <div style={{ minHeight: "145vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, borderLeft: `1px solid rgba(13,140,158,0.10)` }}>
+        <div style={{ minHeight: "145vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg }}>
           <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
           <FadeUp delay={0.12}>
@@ -439,7 +440,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
 
         {/* WRAP right */}
-        <div style={{ minHeight: "120vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, borderLeft: `1px solid rgba(160,128,245,0.10)` }}>
+        <div style={{ minHeight: "120vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg }}>
           <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
