@@ -358,11 +358,11 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
   const textColor = dark ? "#E8E8E6" : "#1a1a1a";
 
   return (
-    <div ref={wrapperRef} style={{ display: "flex", position: "relative", background: T.bg }}>
-      {/* ── Single sticky left column: background fades to transparent so no hard edge ── */}
+    <div ref={wrapperRef} style={{ display: "flex", position: "relative" }}>
+      {/* ── Single sticky left column: radial gradient dissolves to transparent ── */}
       <div style={{
         position: "sticky", top: 0, height: "100vh", width: 420, flexShrink: 0,
-        background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,${dark ? 0.04 : 0.02}) 100%), linear-gradient(to right, ${leftBg} 0%, ${leftBg} 35%, rgba(${bgR},${bgG},${bgB},0.85) 55%, rgba(${bgR},${bgG},${bgB},0.3) 75%, transparent 100%)`,
+        background: `radial-gradient(ellipse 120% 80% at 20% 50%, ${leftBg} 0%, ${leftBg} 30%, rgba(${bgR},${bgG},${bgB},0.7) 55%, rgba(${bgR},${bgG},${bgB},0.0) 100%)`,
         transition: "background 0.2s ease",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         overflow: "hidden", zIndex: 2,
@@ -374,17 +374,6 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
           background: `radial-gradient(ellipse 75% 75% at 50% 50%, ${glowColor} 0%, ${glowColor} 22%, rgba(${acR},${acG},${acB},${dark ? 0.14 : 0.06}) 45%, transparent 68%)`,
           pointerEvents: "none",
           transition: "background 0.4s ease",
-        }} />
-        {/* Wide right-edge feather: dissolve to transparent so no seam; parent has T.bg */}
-        <div style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "70%",
-          background: `linear-gradient(to right, transparent 0%, transparent 10%, rgba(${acR},${acG},${acB},${dark ? 0.04 : 0.03}) 28%, transparent 65%, transparent 100%)`,
-          pointerEvents: "none",
-          zIndex: 1,
         }} />
         <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 14, fontWeight: 700, opacity: .7, transition: "color 0.4s ease" }}>
@@ -409,7 +398,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* WATCH right */}
-        <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, position: "relative" }}>
+        <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(74,144,245,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
@@ -429,7 +418,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
 
         {/* WORK right */}
-        <div style={{ minHeight: "145vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, position: "relative" }}>
+        <div style={{ minHeight: "145vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(13,140,158,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
@@ -453,7 +442,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
 
         {/* WRAP right */}
-        <div style={{ minHeight: "120vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, position: "relative" }}>
+        <div style={{ minHeight: "120vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(160,128,245,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
