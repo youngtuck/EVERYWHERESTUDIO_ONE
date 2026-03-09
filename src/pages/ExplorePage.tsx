@@ -212,6 +212,20 @@ function WordReveal({ text, size, weight=700, color, lh=1.1, delay=0, center=fal
   </div>;
 }
 
+// Simple centered divider between major sections
+const SectionDivider = () => (
+  <div style={{
+    maxWidth: 1200,
+    margin: "0 auto",
+    padding: "0 48px",
+  }}>
+    <div style={{
+      height: 1,
+      background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)",
+    }} />
+  </div>
+);
+
 function FadeInSection({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
