@@ -294,6 +294,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scrollPct, setScrollPct] = useState(0); // 0→1 across all three rooms
+  const [revealProgress, setRevealProgress] = useState(0); // 0→1 as section enters viewport
 
   useEffect(() => {
     const onScroll = () => {
@@ -305,6 +306,10 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       const totalScroll = el.offsetHeight - vh;
       const scrolled = Math.max(0, -rect.top);
       setScrollPct(totalScroll > 0 ? Math.min(1, scrolled / totalScroll) : 0);
+      // Reveal: section slowly appears as it enters from below (Apple-style scroll-linked)
+      // 0 when section top is at 85% of viewport, 1 when section top is at 25%
+      const rawReveal = (rect.top <= vh * 0.85) ? (vh * 0.85 - rect.top) / (vh * 0.6) : 0;
+      setRevealProgress(Math.max(0, Math.min(1, rawReveal)));
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
@@ -357,8 +362,24 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
   const currentPal = roomPals[roomIdx];
   const textColor = dark ? "#E8E8E6" : "#1a1a1a";
 
+  // Apple-style ease-out for scroll reveal (smooth, refined)
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+  const easedReveal = easeOutCubic(revealProgress);
+  // Slight stagger: orb side leads, copy side follows (adds depth)
+  const revealRight = easeOutCubic(Math.max(0, (revealProgress - 0.08) / 0.92));
+
   return (
-    <div ref={wrapperRef} style={{ display: "flex", position: "relative" }}>
+    <div
+      ref={wrapperRef}
+      style={{
+        display: "flex",
+        position: "relative",
+        opacity: easedReveal,
+        transform: `translateY(${(1 - easedReveal) * 36}px) scale(${0.987 + 0.013 * easedReveal})`,
+        transformOrigin: "center top",
+        willChange: revealProgress < 1 ? "opacity, transform" : "auto",
+      }}
+    >
       {/* Full-width gradient canvas: one background for the whole section, shifts with scroll — no container */}
       <div
         style={{
@@ -403,8 +424,17 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
       </div>
 
-      {/* ── Right panels — stacked, normal flow ── */}
-      <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
+      {/* ── Right panels — stacked, normal flow; subtle stagger so copy follows orb ── */}
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          position: "relative",
+          zIndex: 1,
+          transform: `translateY(${(1 - revealRight) * 18}px)`,
+          willChange: revealProgress < 1 ? "transform" : "auto",
+        }}
+      >
 
         {/* WATCH right */}
         <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
