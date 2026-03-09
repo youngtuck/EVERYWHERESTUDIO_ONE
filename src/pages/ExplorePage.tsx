@@ -743,7 +743,7 @@ export default function ExplorePage() {
         opacity: fromLandingZoom ? (entranceDone ? 1 : 0) : 1,
       }}>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&family=DM+Sans:wght@400;500;600&display=swap');
           *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
           html{scroll-behavior:smooth;}
           ::selection{background:${T.gold}40;}
@@ -1098,13 +1098,63 @@ export default function ExplorePage() {
         </section>
 
         {/* FOOTER */}
-        <footer style={{padding:"20px 36px",borderTop:`1px solid ${bc}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
-          <div style={{display:"flex",alignItems:"baseline",gap:0}}>
-            <span style={{fontSize:12,fontWeight:800,color:T.text,opacity:.45}}>EVERY</span>
-            <span style={{fontSize:12,fontWeight:800,color:T.text,opacity:.16}}>WHERE</span>
-            <span style={{fontSize:8,fontWeight:600,letterSpacing:".16em",color:T.textFaint,marginLeft:5,textTransform:"uppercase"}}>Studio</span>
+        <footer
+          style={{
+            background:"#07090f",
+            borderTop:"1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <div
+            style={{
+              maxWidth:1200,
+              margin:"0 auto",
+              padding:"48px 64px",
+              display:"flex",
+              flexDirection:"column",
+              gap:24,
+              fontFamily:"'DM Sans', sans-serif",
+            }}
+          >
+            <div
+              style={{
+                display:"flex",
+                justifyContent:"space-between",
+                alignItems:"center",
+                flexWrap:"wrap",
+                rowGap:12,
+              }}
+            >
+              <div style={{ display:"flex", alignItems:"baseline", gap:0 }}>
+                <span style={{ fontSize:14, fontWeight:700, letterSpacing:"0.16em", textTransform:"uppercase", color:"#ffffff" }}>EVERY</span>
+                <span style={{ fontSize:14, fontWeight:700, letterSpacing:"0.16em", textTransform:"uppercase", color:"rgba(255,255,255,0.42)" }}>WHERE</span>
+                <span style={{ fontSize:9, fontWeight:600, letterSpacing:"0.18em", color:"rgba(255,255,255,0.4)", marginLeft:8, textTransform:"uppercase" }}>Studio</span>
+              </div>
+              <div style={{ fontSize:12, fontWeight:500, letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.7)" }}>
+                Composed Intelligence
+              </div>
+            </div>
+
+            <div
+              style={{
+                height:1,
+                borderTop:"1px solid rgba(255,255,255,0.04)",
+                margin:"24px 0",
+              }}
+            />
+
+            <div
+              style={{
+                display:"flex",
+                justifyContent:"space-between",
+                alignItems:"center",
+                flexWrap:"wrap",
+                rowGap:8,
+              }}
+            >
+              <span style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>2026 Mixed Grill LLC</span>
+              <span style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>Santa Barbara, CA</span>
+            </div>
           </div>
-          <span style={{fontSize:10,color:T.textFaint,letterSpacing:".04em"}}>2026 Mixed Grill LLC · Composed Intelligence</span>
         </footer>
       </div>
     </ThemeCtx.Provider>
