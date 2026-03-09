@@ -359,19 +359,28 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
 
   return (
     <div ref={wrapperRef} style={{ display: "flex", position: "relative" }}>
-      {/* ── Single sticky left column: radial gradient dissolves to transparent ── */}
+      {/* Full-width gradient canvas: one background for the whole section, shifts with scroll — no container */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: "none",
+          background: `radial-gradient(ellipse 70% 90% at 15% 50%, ${glowColor} 0%, rgba(${acR},${acG},${acB},${dark ? 0.12 : 0.06}) 35%, transparent 58%), linear-gradient(to right, ${leftBg} 0%, ${leftBg} 22%, rgba(${bgR},${bgG},${bgB},0.9) 38%, rgba(${bgR},${bgG},${bgB},0.5) 55%, ${T.bg} 100%)`,
+          transition: "background 0.35s ease",
+        }}
+      />
+      {/* Sticky left column: no background — orb and label float on the gradient canvas */}
       <div style={{
         position: "sticky", top: 0, height: "100vh", width: 420, flexShrink: 0,
-        background: `radial-gradient(ellipse 100% 70% at 15% 50%, ${leftBg} 0%, ${leftBg} 25%, rgba(${bgR},${bgG},${bgB},0.85) 45%, rgba(${bgR},${bgG},${bgB},0.4) 62%, rgba(${bgR},${bgG},${bgB},0.0) 100%)`,
-        transition: "background 0.2s ease",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        overflow: "hidden", zIndex: 2,
+        zIndex: 2,
       }}>
-        {/* Inner glow layer — orb aura, soft falloff */}
+        {/* Inner glow layer — orb aura only (soft halo around orb) */}
         <div style={{
           position: "absolute",
           inset: "-15%",
-          background: `radial-gradient(ellipse 75% 75% at 50% 50%, ${glowColor} 0%, ${glowColor} 22%, rgba(${acR},${acG},${acB},${dark ? 0.14 : 0.06}) 45%, transparent 68%)`,
+          background: `radial-gradient(ellipse 75% 75% at 50% 50%, ${glowColor} 0%, ${glowColor} 18%, rgba(${acR},${acG},${acB},${dark ? 0.1 : 0.05}) 40%, transparent 62%)`,
           pointerEvents: "none",
           transition: "background 0.4s ease",
         }} />
@@ -395,7 +404,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       </div>
 
       {/* ── Right panels — stacked, normal flow ── */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
 
         {/* WATCH right */}
         <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
