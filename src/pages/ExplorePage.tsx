@@ -689,7 +689,7 @@ export default function ExplorePage() {
         <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:200,height:54,padding:"0 36px",display:"flex",alignItems:"center",justifyContent:"space-between",background:T.navBg,backdropFilter:"blur(22px)",borderBottom:`1px solid ${bc}`,transition:"background .45s"}}>
           <button onClick={()=>nav("/")} style={{background:"none",border:"none",display:"flex",alignItems:"baseline",cursor:"pointer",gap:0}}>
             <span style={{fontSize:15,fontWeight:800,color:T.text,letterSpacing:".04em"}}>EVERY</span>
-            <span style={{fontSize:15,fontWeight:800,color:T.text,letterSpacing:".04em",marginLeft:2}}>WHERE</span>
+            <span style={{fontSize:15,fontWeight:800,color:T.text,letterSpacing:".04em"}}>WHERE</span>
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".16em",color:T.textFaint,marginLeft:6,textTransform:"uppercase",alignSelf:"center"}}>Studio</span>
           </button>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
