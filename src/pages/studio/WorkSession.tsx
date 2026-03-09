@@ -384,15 +384,9 @@ function WatsonThinking() {
       alignItems: "center",
       gap: 10,
     }}>
-      <div style={{
-        width: 28,
-        height: 28,
-        borderRadius: "50%",
-        background: "radial-gradient(circle at 35% 30%, rgba(255,180,50,0.95), rgba(120,60,220,0.8) 55%, rgba(180,40,120,0.6))",
-        flexShrink: 0,
-        boxShadow: "0 0 12px rgba(100,120,255,0.4)",
-        animation: "watsonPulse 2s ease-in-out infinite",
-      }} />
+      <div style={{ flexShrink: 0 }}>
+        <WatsonOrb size={28} thinking />
+      </div>
       <div style={{
         display: "flex",
         alignItems: "center",
