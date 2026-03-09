@@ -14,6 +14,7 @@ uniform float u_t;
 uniform float u_energy;
 uniform vec2  u_res;
 uniform vec2  u_mouse;
+uniform vec2  u_idle;
 uniform vec3  u_c1;
 uniform vec3  u_c2;
 uniform vec3  u_c3;
@@ -37,14 +38,15 @@ void main(){
   if(t2<0.0){ gl_FragColor=vec4(0.); return; }
   vec3 N=normalize(ro+rd*t1),V=-rd;
   float NoV=max(dot(N,V),0.0);
-  float breath=0.82+0.18*sin(u_t*1.1+.4)*sin(u_t*.7);
-  float spd=(0.55+u_energy*1.9)*breath;
+  float breath=0.82+0.22*sin(u_t*1.1+.4)*sin(u_t*.7);
+  float spd=(0.72+u_energy*2.2)*breath;
   float t=u_t*spd;
-  vec3 p1=vec3(sin(t*.41+0.)*0.38,cos(t*.37+1.1)*0.35,sin(t*.29+2.3)*.30);
-  vec3 p2=vec3(sin(t*.53+3.5)*0.42,cos(t*.44+.7)*0.38,sin(t*.35+1.8)*.32);
-  vec3 p3=vec3(cos(t*.38+2.1)*0.36,sin(t*.61+4.2)*0.30,cos(t*.47+.4)*.34);
-  vec3 p4=vec3(cos(t*.28+5.1)*0.40,sin(t*.33+2.8)*0.36,cos(t*.52+3.3)*.28);
-  float rx=u_mouse.y*.9,ry=u_mouse.x*.9;
+  vec3 p1=vec3(sin(t*.52+0.)*0.38,cos(t*.48+1.1)*0.35,sin(t*.38+2.3)*.30);
+  vec3 p2=vec3(sin(t*.64+3.5)*0.42,cos(t*.55+.7)*0.38,sin(t*.44+1.8)*.32);
+  vec3 p3=vec3(cos(t*.48+2.1)*0.36,sin(t*.72+4.2)*0.30,cos(t*.58+.4)*.34);
+  vec3 p4=vec3(cos(t*.36+5.1)*0.40,sin(t*.42+2.8)*0.36,cos(t*.62+3.3)*.28);
+  float rx=u_mouse.y*.9+u_idle.x;
+  float ry=u_mouse.x*.9+u_idle.y;
   float span=t2-t1;
   vec3 col=vec3(0.);
   for(int i=0;i<16;i++){
@@ -57,7 +59,6 @@ void main(){
   }
   col/=16.0; col*=(1.0+u_energy*.8)*breath;
   float fresnel=pow(1.0-NoV,3.2);
-  // Light mode: much lighter shell with cool white
   vec3 shellDark=mix(mix(vec3(.55,.72,.95),u_c1,.2),vec3(.9,.94,1.),fresnel);
   vec3 shellLight=mix(mix(vec3(.88,.92,1.),u_c1,.12),vec3(1.,1.,1.),fresnel);
   vec3 shell=mix(shellDark,shellLight,u_light);
@@ -69,8 +70,7 @@ void main(){
   col=col*(1.-ga*.5)+shell*ga;
   col+=vec3(1.,.98,.95)*(s1+s2);
   float glow_r=exp(-dot(uv,uv)*2.6);
-  col+=mix(u_c1,vec3(.5,.75,1.),.35)*glow_r*.38*(1.+u_energy*.5);
-  // Light mode: slightly brighter overall
+  col+=mix(u_c1,vec3(.5,.75,1.),.35)*glow_r*.42*(1.+u_energy*.5)*breath;
   col=mix(col, col*1.15, u_light);
   col=col/(col+0.85);
   col=pow(max(col,0.),vec3(.88));
@@ -82,9 +82,9 @@ type OrbPalette = { c1:[number,number,number]; c2:[number,number,number]; c3:[nu
 
 const PALETTES: Record<string, OrbPalette> = {
   hero:  { c1:[.98,.68,.08], c2:[1.0,.42,.04], c3:[.88,.58,.00], c4:[1.0,.82,.28], glow:"rgba(200,150,26,0.38)", glowLight:"rgba(180,120,10,0.28)" },
-  watch: { c1:[.18,.55,1.0], c2:[.08,.74,.96], c3:[.32,.38,1.0], c4:[.48,.78,1.0], glow:"rgba(74,144,245,0.40)", glowLight:"rgba(50,100,220,0.22)" },
-  work:  { c1:[.04,.80,.86], c2:[.10,.58,1.0], c3:[.00,.88,.62], c4:[.28,.72,.94], glow:"rgba(13,140,158,0.40)", glowLight:"rgba(8,110,125,0.22)" },
-  wrap:  { c1:[.60,.26,1.0], c2:[.78,.18,.88], c3:[.38,.18,1.0], c4:[.84,.48,1.0], glow:"rgba(160,128,245,0.40)", glowLight:"rgba(120,90,220,0.22)" },
+  watch: { c1:[74/255,144/255,245/255], c2:[.12,.58,.98], c3:[.35,.45,1.0], c4:[.50,.72,1.0], glow:"rgba(74,144,245,0.40)", glowLight:"rgba(50,100,220,0.22)" },
+  work:  { c1:[13/255,140/255,158/255], c2:[.08,.62,.92], c3:[.00,.78,.70], c4:[.22,.72,.96], glow:"rgba(13,140,158,0.40)", glowLight:"rgba(8,110,125,0.22)" },
+  wrap:  { c1:[160/255,128/255,245/255], c2:[.72,.22,.92], c3:[.42,.22,1.0], c4:[.82,.52,1.0], glow:"rgba(160,128,245,0.40)", glowLight:"rgba(120,90,220,0.22)" },
 };
 
 class Spring { x=0;y=0;vx=0;vy=0;tx=0;ty=0;
@@ -114,6 +114,7 @@ function SiriOrb({ size, energy, palette, dark }: { size:number; energy:number; 
     gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
     const uT=gl.getUniformLocation(prog,"u_t"),uR=gl.getUniformLocation(prog,"u_res"),
       uM=gl.getUniformLocation(prog,"u_mouse"),uE=gl.getUniformLocation(prog,"u_energy"),
+      uIdle=gl.getUniformLocation(prog,"u_idle"),
       uC1=gl.getUniformLocation(prog,"u_c1"),uC2=gl.getUniformLocation(prog,"u_c2"),
       uC3=gl.getUniformLocation(prog,"u_c3"),uC4=gl.getUniformLocation(prog,"u_c4"),
       uL=gl.getUniformLocation(prog,"u_light");
@@ -122,9 +123,13 @@ function SiriOrb({ size, energy, palette, dark }: { size:number; energy:number; 
     const start=performance.now();
     const loop=()=>{
       spring.current.tx=mouseRef.current.x*.32; spring.current.ty=mouseRef.current.y*.32; spring.current.step();
+      const t=(performance.now()-start)*.001;
+      const idleX=Math.sin(t*0.42)*0.16;
+      const idleY=Math.cos(t*0.38)*0.16;
       gl.viewport(0,0,canvas.width,canvas.height); gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform1f(uT,(performance.now()-start)*.001); gl.uniform1f(uE,eRef.current); gl.uniform1f(uL,lRef.current);
+      gl.uniform1f(uT,t); gl.uniform1f(uE,eRef.current); gl.uniform1f(uL,lRef.current);
       gl.uniform2f(uR,canvas.width,canvas.height); gl.uniform2f(uM,spring.current.x,spring.current.y);
+      gl.uniform2f(uIdle!,idleX,idleY);
       const p=pRef.current; gl.uniform3f(uC1,...p.c1);gl.uniform3f(uC2,...p.c2);gl.uniform3f(uC3,...p.c3);gl.uniform3f(uC4,...p.c4);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4); raf.current=requestAnimationFrame(loop);
     };
@@ -313,7 +318,9 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
             {roomNums[roomIdx]}
           </div>
           <div style={{ filter: `drop-shadow(0 0 52px ${glowColor})`, marginBottom: 16, transition: "filter 0.4s ease" }}>
-            <SiriOrb size={200} energy={orbSection === "watch" || orbSection === "work" || orbSection === "wrap" ? orbEnergy : 0.1} palette={currentPal} dark={dark} />
+            <div className="orb-breathe-rooms">
+              <SiriOrb size={200} energy={orbSection === "watch" || orbSection === "work" || orbSection === "wrap" ? orbEnergy : 0.1} palette={currentPal} dark={dark} />
+            </div>
           </div>
           <div style={{ fontSize: "clamp(52px,6.5vw,84px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .88, color: textColor, textAlign: "center", transition: "opacity 0.3s" }}>
             {roomNames[roomIdx]}
@@ -434,6 +441,11 @@ export default function ExplorePage() {
           html{scroll-behavior:smooth;}
           ::selection{background:${T.gold}40;}
           ${!dark ? "*, *::before, *::after { cursor: auto !important; } a, button, [role='button'], [style*='cursor:pointer'], [style*='cursor: pointer'] { cursor: pointer !important; }" : ""}
+          @keyframes orbBreatheRooms {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.04); }
+          }
+          .orb-breathe-rooms { display: inline-block; animation: orbBreatheRooms 2.6s ease-in-out infinite; }
         `}</style>
 
         {/* NAV */}
