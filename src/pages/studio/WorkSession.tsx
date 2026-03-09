@@ -530,12 +530,28 @@ function OutputTypePill({
 type Phase = "input" | "generating" | "complete";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+const IS_DEV = import.meta.env.DEV;
 
 const FETCH_TIMEOUT_MS = 90000;  // 90s for chat/generate
 const FRONTEND_RETRIES = 2;      // retry 404/502/503/504/429
 const RETRY_BACKOFF_MS = 800;
 
 function friendlyMessage(status: number, bodyError?: string): string {
+  // Production: never show developer instructions. Keep it short and actionable for end users.
+  if (!IS_DEV) {
+    if (status === 404 || status === 502 || status === 503 || status === 504)
+      return "We're having trouble connecting. Please try again in a moment.";
+    if (status === 401)
+      return "Something went wrong on our end. Please try again later.";
+    if (status === 429)
+      return "We're a bit busy. Please wait a moment and try again.";
+    if (status >= 500)
+      return "We hit a snag. Please try again in a moment.";
+    if (bodyError && !bodyError.includes("npm") && !bodyError.includes("backend"))
+      return bodyError.length > 100 ? bodyError.slice(0, 100) + "…" : bodyError;
+    return "Something went wrong. Please try again.";
+  }
+  // Development: helpful for you while building
   if (status === 404)
     return "Connection issue. Make sure the backend is running (npm run server or npm run dev:all).";
   if (status === 401)
@@ -574,7 +590,8 @@ async function requestWithRetry(
       await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS * (attempt + 1)));
     } catch (err) {
       lastErr = err instanceof Error ? err : new Error(String(err));
-      if (lastErr.name === "AbortError") throw new Error("Request took too long. Try again.");
+      if (lastErr.name === "AbortError")
+        throw new Error(IS_DEV ? "Request took too long. Try again." : "That took too long. Please try again.");
       if (attempt >= FRONTEND_RETRIES) throw lastErr;
       await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS * (attempt + 1)));
     }
