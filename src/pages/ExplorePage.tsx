@@ -485,6 +485,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
   return (
     <div
       ref={wrapperRef}
+      className="rooms-wrapper"
       style={{
         display: "flex",
         position: "relative",
@@ -918,6 +919,28 @@ export default function ExplorePage() {
             background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
             background-repeat:repeat;
           }
+          .rooms-wrapper::before{
+            content:"";
+            position:absolute;
+            top:0;
+            left:0;
+            width:100%;
+            height:120px;
+            pointer-events:none;
+            z-index:1;
+            background:linear-gradient(180deg,#07090f 0%,transparent 100%);
+          }
+          .rooms-wrapper::after{
+            content:"";
+            position:absolute;
+            bottom:0;
+            left:0;
+            width:100%;
+            height:120px;
+            pointer-events:none;
+            z-index:1;
+            background:linear-gradient(0deg,#07090f 0%,transparent 100%);
+          }
           @keyframes orbBreatheRooms {
             0%, 100% { transform: scale(1); }
             50%      { transform: scale(1.04); }
@@ -1144,6 +1167,7 @@ export default function ExplorePage() {
           id="fw"
           style={{
             padding: isMobile ? "80px 24px 80px" : "160px 48px 160px",
+            background: "#07090f",
           }}
         >
           <div style={{maxWidth:920,margin:"0 auto"}}>
@@ -1179,7 +1203,7 @@ export default function ExplorePage() {
         <section
           style={{
             padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
-            background:dark?"linear-gradient(180deg,#080311 0%,#07090f 100%)":"linear-gradient(180deg,#E9E4F5 0%,#F4F2ED 100%)",
+            background:"#07090f",
           }}
         >
           <div style={{maxWidth:800,margin:"0 auto"}}>
