@@ -284,6 +284,14 @@ const OUTPUT_TYPE_KEYS = [
   "short_video", "substack_note", "talk_outline", "email_campaign", "blog_post", "executive_brief",
 ] as const;
 
+// Map frontend output type keys to API output types (Watson/generate)
+const OUTPUT_TYPE_TO_API: Record<string, string> = {
+  linkedin_post: "social", newsletter: "newsletter", sunday_story: "sunday_story",
+  podcast_script: "podcast", twitter_thread: "social", essay: "essay",
+  short_video: "video", substack_note: "newsletter", talk_outline: "presentation",
+  email_campaign: "newsletter", blog_post: "essay", executive_brief: "freestyle",
+};
+
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -521,6 +529,38 @@ function OutputTypePill({
 // ── Main Work Session ─────────────────────────────────────────────────────────
 type Phase = "input" | "generating" | "complete";
 
+async function chatWithWatson(messages: { role: string; content: string }[], outputTypeApi: string): Promise<{ reply: string; readyToGenerate: boolean }> {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: messages.map((m) => ({
+        role: m.role === "assistant" ? "watson" : "user",
+        content: m.content,
+      })),
+      outputType: outputTypeApi,
+    }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Request failed ${res.status}`);
+  }
+  return res.json();
+}
+
+async function generateOutput(conversationSummary: string, outputTypeApi: string): Promise<{ content: string; score: number }> {
+  const res = await fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ conversationSummary, outputType: outputTypeApi }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Request failed ${res.status}`);
+  }
+  return res.json();
+}
+
 export default function WorkSession() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -531,17 +571,17 @@ export default function WorkSession() {
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>("input");
   const [sessionTitle, setSessionTitle] = useState("New Session");
+  const [generatedContent, setGeneratedContent] = useState("");
+  const [generatedScore, setGeneratedScore] = useState(0);
+  const [apiError, setApiError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const generatingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
+  const outputTypeApi = OUTPUT_TYPE_TO_API[outputType] || "freestyle";
 
   useEffect(() => {
-    return () => {
-      if (generatingTimerRef.current) clearTimeout(generatingTimerRef.current);
-    };
-  }, []);
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  // Watson opening message — set when id is new or output type changes
   useEffect(() => {
     if (id === "new" || !id) {
       setMessages([{
@@ -554,15 +594,11 @@ export default function WorkSession() {
     }
   }, [id, outputType, type.watson]);
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput("");
+    setApiError(null);
 
     if (messages.filter(m => m.role === "user").length === 0) {
       setSessionTitle(userMsg.slice(0, 40) + (userMsg.length > 40 ? "..." : ""));
@@ -571,17 +607,50 @@ export default function WorkSession() {
     const userMessage: Message = { id: Date.now().toString(), role: "user", content: userMsg, ts: Date.now() };
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
-    setPhase("generating");
 
-    generatingTimerRef.current = setTimeout(() => {
-      generatingTimerRef.current = null;
+    const chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
+
+    try {
+      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi);
+      setMessages(prev => [...prev, {
+        id: "w-" + Date.now(),
+        role: "assistant",
+        content: reply,
+        ts: Date.now(),
+      }]);
+      if (readyToGenerate) {
+        // Optional: could auto-show "Make the thing" or auto-trigger generate
+      }
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMakeTheThing = async () => {
+    setApiError(null);
+    setPhase("generating");
+    const conversationSummary = messages
+      .map(m => (m.role === "user" ? "User: " : "Watson: ") + m.content)
+      .join("\n\n");
+
+    try {
+      const { content, score } = await generateOutput(conversationSummary, outputTypeApi);
+      setGeneratedContent(content);
+      setGeneratedScore(score);
       setPhase("complete");
-    }, 3000);
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Generation failed.");
+      setPhase("input");
+    }
   };
 
   const startOver = () => {
     setPhase("input");
+    setGeneratedContent("");
+    setGeneratedScore(0);
+    setApiError(null);
     setMessages([{
       id: "w0",
       role: "assistant",
@@ -709,9 +778,9 @@ export default function WorkSession() {
               </h2>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 32, height: 3, borderRadius: 2, background: "var(--bg-3)", overflow: "hidden" }}>
-                  <div style={{ height: "100%", borderRadius: 2, width: "84.7%", background: "#3A7BD5" }} />
+                  <div style={{ height: "100%", borderRadius: 2, width: `${Math.min(100, generatedScore / 10)}%`, background: generatedScore >= 800 ? "#10b981" : generatedScore >= 700 ? "#3A7BD5" : "#C8961A" }} />
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#3A7BD5", fontVariantNumeric: "tabular-nums" }}>847</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: generatedScore >= 800 ? "#10b981" : generatedScore >= 700 ? "#3A7BD5" : "#C8961A", fontVariantNumeric: "tabular-nums" }}>{generatedScore}</span>
               </div>
               <div style={{ display: "flex", gap: 10, width: "100%", flexDirection: "column" }}>
                 <button
@@ -776,12 +845,24 @@ export default function WorkSession() {
             disabled={loading}
           />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            {/* Left: hints */}
-            <span style={{ fontSize: 11, color: "var(--fg-3)", letterSpacing: ".01em" }}>
-              Enter to send &nbsp;·&nbsp; Shift+Enter for new line
+            {/* Left: hints or error */}
+            <span style={{ fontSize: 11, color: apiError ? "var(--error, #e85d75)" : "var(--fg-3)", letterSpacing: ".01em" }}>
+              {apiError || "Enter to send · Shift+Enter for new line"}
             </span>
-            {/* Right: send button */}
-            <button
+            {/* Right: Make the thing (when we have user messages) + send */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {messages.some(m => m.role === "user") && (
+                <button
+                  type="button"
+                  onClick={handleMakeTheThing}
+                  disabled={loading}
+                  className="btn-primary"
+                  style={{ fontSize: 12, padding: "6px 14px" }}
+                >
+                  Make the thing
+                </button>
+              )}
+              <button
               onClick={sendMessage}
               disabled={!input.trim() || loading}
               style={{
@@ -797,6 +878,7 @@ export default function WorkSession() {
                 <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke={input.trim() && !loading ? "var(--bg)" : "var(--fg-3)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
+            </div>
           </div>
         </div>
         <p style={{ textAlign: "center", fontSize: 11, color: "var(--fg-3)", marginTop: 10, letterSpacing: ".01em" }}>
