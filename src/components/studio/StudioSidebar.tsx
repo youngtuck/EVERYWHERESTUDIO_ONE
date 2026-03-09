@@ -1,17 +1,18 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
+import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown } from "lucide-react";
 
-// ── Nav items ───────────────────────────────────────────────────────────────
+// ── Nav items (with icons, reference style) ─────────────────────────────────
 const NAV = [
-  { path: "/studio/dashboard", abbr: "DS", label: "Dashboard" },
-  { path: "/studio/work",      abbr: "WK", label: "Work" },
-  { path: "/studio/watch",     abbr: "WT", label: "Watch",    badge: "11" },
-  { path: "/studio/outputs",   abbr: "OP", label: "Outputs" },
-  { path: "/studio/projects",  abbr: "PJ", label: "Projects" },
+  { path: "/studio/dashboard", label: "My Studio", icon: LayoutDashboard },
+  { path: "/studio/work",      label: "Work",      icon: PenLine },
+  { path: "/studio/watch",     label: "Watch",     icon: Eye,    badge: "11" },
+  { path: "/studio/outputs",   label: "Outputs",   icon: FileText },
+  { path: "/studio/projects",  label: "Projects",  icon: FolderOpen },
 ];
 const NAV_BOTTOM = [
-  { path: "/studio/resources", abbr: "RS", label: "Resources" },
-  { path: "/studio/settings",  abbr: "ST", label: "Settings" },
+  { path: "/studio/resources", label: "Resources", icon: Folder },
+  { path: "/studio/settings",   label: "Settings",  icon: Settings },
 ];
 
 export default function StudioSidebar() {
@@ -80,7 +81,7 @@ export default function StudioSidebar() {
         </button>
       </div>
 
-      {/* ── Project ──────────────────────────────────────────────── */}
+      {/* ── Project (reference: "My Studio" with dropdown) ────────────────── */}
       <div style={{ padding: "14px 14px 0" }}>
         <button style={{
           width: "100%",
@@ -95,12 +96,9 @@ export default function StudioSidebar() {
           fontFamily: "var(--font)",
         }}>
           <div style={{ textAlign: "left", minWidth: 0 }}>
-            <div style={{ fontSize: 10, color: "var(--fg-3)", letterSpacing: "0.05em", marginBottom: 2 }}>Project</div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Thought Leadership</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>My Studio</div>
           </div>
-          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, opacity: 0.5 }}>
-            <path d="M3 5.5L7 9L11 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <ChevronDown size={14} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
         </button>
       </div>
 
@@ -133,11 +131,10 @@ export default function StudioSidebar() {
         </button>
       </div>
 
-      {/* ── Main nav ─────────────────────────────────────────────── */}
+      {/* ── Main nav (with icons) ─────────────────────────────────────────── */}
       <nav style={{ flex: 1, padding: "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">
         <div style={{ paddingBottom: 4 }}>
-          <div className="nav-section-label">Studio</div>
-          {NAV.map(({ path, abbr, label, badge }) => {
+          {NAV.map(({ path, label, icon: Icon, badge }) => {
             const active = isActive(path);
             return (
               <button
@@ -149,15 +146,15 @@ export default function StudioSidebar() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{
                     width: 24, height: 22, display: "flex", alignItems: "center",
-                    justifyContent: "center", fontSize: 10, fontWeight: 600,
-                    letterSpacing: "0.05em", borderRadius: 6,
+                    justifyContent: "center", borderRadius: 6,
                     background: active ? "var(--bg)" : "transparent",
                     color: active ? "var(--fg)" : "var(--fg-3)",
                     flexShrink: 0,
                     border: active ? "1px solid var(--line-2)" : "1px solid var(--line)",
-                    fontFamily: "var(--font)",
                     transition: "background 0.15s, color 0.15s, border-color 0.15s",
-                  }}>{abbr}</span>
+                  }}>
+                    <Icon size={12} strokeWidth={2} />
+                  </span>
                   <span>{label}</span>
                 </div>
                 {badge && (
@@ -174,9 +171,22 @@ export default function StudioSidebar() {
           })}
         </div>
 
+        {/* Conversations (reference: CONVERSATIONS + New conversation) ───────── */}
+        <div style={{ paddingTop: 8, paddingBottom: 4 }}>
+          <div className="nav-section-label">Conversations</div>
+          <button
+            onClick={() => nav("/studio/work")}
+            className="nav-item"
+            style={{ gap: 10 }}
+          >
+            <Plus size={12} strokeWidth={2} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
+            <span>New conversation</span>
+          </button>
+        </div>
+
         <div>
           <div className="nav-section-label">More</div>
-          {NAV_BOTTOM.map(({ path, abbr, label }) => {
+          {NAV_BOTTOM.map(({ path, label, icon: Icon }) => {
             const active = isActive(path);
             return (
               <button
@@ -186,14 +196,15 @@ export default function StudioSidebar() {
               >
                 <span style={{
                   width: 24, height: 22, display: "flex", alignItems: "center",
-                  justifyContent: "center", fontSize: 10, fontWeight: 600,
-                  letterSpacing: "0.05em", borderRadius: 6,
+                  justifyContent: "center", borderRadius: 6,
                   background: active ? "var(--bg)" : "transparent",
                   color: active ? "var(--fg)" : "var(--fg-3)",
                   flexShrink: 0,
                   border: active ? "1px solid var(--line-2)" : "1px solid var(--line)",
-                  fontFamily: "var(--font)",
-                }}>{abbr}</span>
+                  transition: "background 0.15s, color 0.15s, border-color 0.15s",
+                }}>
+                  <Icon size={12} strokeWidth={2} />
+                </span>
                 <span>{label}</span>
               </button>
             );
