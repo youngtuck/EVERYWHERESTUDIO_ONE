@@ -545,7 +545,14 @@ export default function Dashboard() {
             <div
               key={i}
               className="card"
-              style={{ padding: "18px 20px", position: "relative", overflow: "hidden", transition: "box-shadow 0.2s ease" }}
+              style={{
+                padding: "16px 0",
+                position: "relative",
+                overflow: "hidden",
+                transition: "box-shadow 0.2s ease",
+                background: "transparent",
+                border: "none",
+              }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
             >
@@ -582,14 +589,19 @@ export default function Dashboard() {
               onClick={() => nav("/studio/projects")}
               className="card"
               style={{
-                padding: "18px 20px",
+                padding: "18px 0",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 cursor: "pointer",
                 textAlign: "left",
-                border: "1px solid var(--line)",
+                border: "none",
+                borderBottom: "1px solid var(--line)",
+                background: "transparent",
+                transition: "background 0.2s ease",
               }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{
@@ -628,7 +640,7 @@ export default function Dashboard() {
             >
               Recent Outputs
             </SectionLabel>
-            <div className="card" style={{ overflow: "hidden", minHeight: 200 }}>
+            <div className="card" style={{ overflow: "hidden", minHeight: 200, background: "transparent", border: "none" }}>
               {outputsLoading ? (
                 <div
                   style={{
@@ -669,7 +681,7 @@ export default function Dashboard() {
                       style={{
                         width: "100%",
                         display: "flex", alignItems: "center", gap: 14,
-                        padding: "13px 22px",
+                        padding: "13px 0",
                         borderBottom: i < recentOutputs.length - 1 ? "1px solid var(--line)" : "none",
                         background: "none", border: "none",
                         textAlign: "left",
@@ -713,7 +725,7 @@ export default function Dashboard() {
 
         {/* Right column: Sentinel (ours: live signals) ─────────────────────── */}
         <FadeCard delay={150}>
-          <div className="card" style={{ overflow: "hidden", height: "fit-content" }}>
+        <div className="card" style={{ overflow: "hidden", height: "fit-content", background: "transparent", border: "none" }}>
             <div style={{
               padding: "16px 18px",
               borderBottom: "1px solid var(--line)",
