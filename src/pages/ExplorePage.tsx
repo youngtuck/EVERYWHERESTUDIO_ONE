@@ -362,7 +362,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       {/* ── Single sticky left column: background fades into right so no bounding box ── */}
       <div style={{
         position: "sticky", top: 0, height: "100vh", width: 420, flexShrink: 0,
-        background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,${dark ? 0.04 : 0.02}) 100%), linear-gradient(to right, ${leftBg} 0%, ${leftBg} 40%, ${leftBg} 54%, ${T.bg} 100%)`,
+        background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,${dark ? 0.04 : 0.02}) 100%), linear-gradient(to right, ${leftBg} 0%, ${leftBg} 42%, ${T.bg} 100%)`,
         transition: "background 0.2s ease",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         overflow: "hidden", zIndex: 2,
@@ -375,14 +375,14 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
           pointerEvents: "none",
           transition: "background 0.4s ease",
         }} />
-        {/* Wide right-edge feather: multi-stop so no visible line, color reaches further right */}
+        {/* Wide right-edge feather: seamless fade into content, no dark band — transparent to T.bg only */}
         <div style={{
           position: "absolute",
           top: 0,
           right: 0,
           bottom: 0,
           width: "58%",
-          background: `linear-gradient(to right, transparent 0%, transparent 22%, rgba(${acR},${acG},${acB},${dark ? 0.08 : 0.05}) 40%, rgba(${acR},${acG},${acB},${dark ? 0.04 : 0.02}) 62%, ${T.bg} 82%, ${T.bg} 100%)`,
+          background: `linear-gradient(to right, transparent 0%, transparent 12%, ${T.bg} 52%, ${T.bg} 100%)`,
           pointerEvents: "none",
           zIndex: 1,
         }} />
