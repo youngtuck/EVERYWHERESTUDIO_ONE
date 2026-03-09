@@ -3,6 +3,8 @@ import { Outlet, useLocation } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
 import { useMobile } from "../../hooks/useMobile";
 
+/** Studio layout: sidebar + main outlet; full-bleed for work session, fade transition for tab switches. */
+
 // ── Page transition wrapper ────────────────────────────────────────────────
 // Opacity-only fade on route change (no movement, no transition: all).
 function PageSlide({ children, routeKey }: { children: ReactNode; routeKey: string }) {

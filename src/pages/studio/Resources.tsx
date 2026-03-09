@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode, type ComponentType, type CSSProperties } from "react";
 import { Mic, Globe, BookOpen, Layers, ChevronDown, ChevronRight, Upload, CheckCircle } from "lucide-react";
 
 const VOICE_LAYERS = [
@@ -14,7 +14,14 @@ const PUBLICATIONS = [
   { name:"Podcast Script", status:"configured", standard:"SSML-ready, 12-18 minute target" },
 ];
 
-const Section = ({ icon: Icon, title, children, color = "var(--gold)" }: any) => {
+interface SectionProps {
+  icon: ComponentType<{ size?: number; style?: CSSProperties }>;
+  title: string;
+  children: ReactNode;
+  color?: string;
+}
+
+const Section = ({ icon: Icon, title, children, color = "var(--gold)" }: SectionProps) => {
   const [open, setOpen] = useState(true);
   return (
     <div className="card" style={{ marginBottom: 16, overflow: "hidden" }}>

@@ -296,8 +296,9 @@ export default function Dashboard() {
       .then(({ data, count }) => {
         setTotalOutputs(count || 0);
         if (data && data.length > 0) {
+          const rows = data as { id: string; score: number }[];
           const avg = Math.round(
-            data.reduce((sum, o: any) => sum + (o.score || 0), 0) / data.length
+            rows.reduce((sum, o) => sum + (o.score || 0), 0) / rows.length
           );
           setAvgScore(avg);
         }
@@ -305,8 +306,9 @@ export default function Dashboard() {
   }, [user]);
 
   const streak = calculateStreak(recentOutputs);
+  const meta = user?.user_metadata as Record<string, unknown> | undefined;
   const rawName =
-    ((user as any)?.user_metadata?.full_name as string | undefined) ||
+    (meta?.full_name as string | undefined) ||
     (user?.email ? user.email.split("@")[0] : undefined) ||
     "";
   const firstName = titleCase(rawName.split(" ")[0] || "there");
@@ -342,8 +344,8 @@ export default function Dashboard() {
     },
     {
       label: "Voice Fidelity",
-      value: (user as any)?.user_metadata?.voice_profile ? "Active" : "–",
-      sub: (user as any)?.user_metadata?.voice_profile
+      value: meta?.voice_profile ? "Active" : "–",
+      sub: meta?.voice_profile
         ? "Voice DNA captured"
         : "Complete onboarding",
       color: "#3A7BD5",

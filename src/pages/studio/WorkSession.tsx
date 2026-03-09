@@ -776,7 +776,7 @@ export default function WorkSession() {
         .single();
 
       if (saveError) {
-        console.error("Failed to save output:", saveError);
+        // Save failed; output not persisted (user can retry or copy content)
       }
 
       const outputId = savedOutput?.id ?? "new";

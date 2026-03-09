@@ -1,5 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 
+/** Catches React tree errors and shows a fallback UI instead of a blank screen. */
+
 interface Props {
   children: ReactNode;
 }
@@ -16,8 +18,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("App error:", error, errorInfo);
+  componentDidCatch(_error: Error, _errorInfo: ErrorInfo) {
+    // Error captured in state; UI shows fallback. Omit console in production.
   }
 
   render() {
