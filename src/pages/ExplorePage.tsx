@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, createContext, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // ─── Theme context ─────────────────────────────────────────────────────────────
 const ThemeCtx = createContext<{ dark: boolean; toggle: () => void }>({ dark: true, toggle: () => {} });
@@ -442,14 +442,24 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
 // ─── Main Page ──────────────────────────────────────────────────────────────────
 export default function ExplorePage() {
   const nav = useNavigate();
+  const location = useLocation();
   const [dark, setDark] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [orbSection] = useState<"watch">("watch"); // kept for RoomsSection compat
   const [orbEnergy] = useState(0.35);
+  const fromLandingZoom = location.state?.fromLandingZoom === true;
+  const [entranceDone, setEntranceDone] = useState(false);
 
   const toggle = () => setDark(d => !d);
   useEffect(()=>{ const t=setTimeout(()=>setMounted(true),80); return()=>clearTimeout(t); },[]);
   useEffect(()=>{ document.body.setAttribute("data-explore-theme", dark ? "dark" : "light"); },[dark]);
+
+  // Fade in from dark when arriving from landing zoom transition
+  useEffect(() => {
+    if (!fromLandingZoom) return;
+    const t = setTimeout(() => setEntranceDone(true), 50);
+    return () => clearTimeout(t);
+  }, [fromLandingZoom]);
 
   // Theme tokens
   const T = {
@@ -479,7 +489,14 @@ export default function ExplorePage() {
 
   return (
     <ThemeCtx.Provider value={{ dark, toggle }}>
-      <div style={{fontFamily:"'Afacad Flux',sans-serif",background:T.bg,color:T.text,overflowX:"clip",transition:"background .45s ease, color .3s ease"}}>
+      <div style={{
+        fontFamily:"'Afacad Flux',sans-serif",
+        background:T.bg,
+        color:T.text,
+        overflowX:"clip",
+        transition:"background .45s ease, color .3s ease" + (fromLandingZoom ? ", opacity 0.7s ease" : ""),
+        opacity: fromLandingZoom ? (entranceDone ? 1 : 0) : 1,
+      }}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
           *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}

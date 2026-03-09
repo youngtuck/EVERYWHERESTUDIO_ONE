@@ -284,9 +284,9 @@ function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
 
       if (zoom > 0) {
         ctx.restore();
-        // Fade to white as we zoom in (last 50% of zoom)
+        // Fade to dark as we zoom in (last 50% of zoom) so next page can emerge from dark
         const fade = Math.max(0, (zoom - 0.5) / 0.5);
-        ctx.fillStyle = `rgba(255,255,255,${fade * 0.98})`;
+        ctx.fillStyle = `rgba(8,10,28,${fade * 0.98})`;
         ctx.fillRect(0, 0, W, H);
       }
 
@@ -424,7 +424,7 @@ export default function Index() {
 
       if (raw >= 1) {
         zoomRef.current = 1;
-        navigate("/explore");
+        navigate("/explore", { state: { fromLandingZoom: true } });
         return;
       }
       zoomRaf.current = requestAnimationFrame(tick);
