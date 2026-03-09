@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PenLine, Mic, Globe, Mail, FileText, Eye, ChevronRight, Plus, FolderOpen, Clock } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
@@ -73,6 +73,162 @@ function FadeCard({ children, delay = 0, style = {} }: { children: React.ReactNo
       transition: `opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1)`,
       ...style,
     }}>{children}</div>
+  );
+}
+
+// ── Dashboard Wave: subtle cursor-reactive header band ─────────────────────
+function DashboardWave({ isMobile }: { isMobile: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    if (isMobile) return;
+    const canvas = canvasRef.current;
+    if (!canvas || typeof window === "undefined") return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let width = 0;
+    let height = 0;
+    const mx = { current: 0.5 };
+    const my = { current: 0.5 };
+    const tx = { current: 0.5 };
+    const ty = { current: 0.5 };
+    const vx = { current: 0 };
+    const vy = { current: 0 };
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const resize = () => {
+      width = canvas.clientWidth || canvas.parentElement?.clientWidth || window.innerWidth;
+      height = 140;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    const onMove = (e: MouseEvent) => {
+      tx.current = e.clientX / window.innerWidth;
+      ty.current = e.clientY / window.innerHeight;
+    };
+    window.addEventListener("mousemove", onMove);
+
+    const draw = (ts: number) => {
+      const t = ts * 0.001;
+
+      // Soft spring toward cursor
+      vx.current += (tx.current - mx.current) * 0.04;
+      vy.current += (ty.current - my.current) * 0.04;
+      vx.current *= 0.86;
+      vy.current *= 0.86;
+      mx.current += vx.current;
+      my.current += vy.current;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Background gradient
+      const bg = ctx.createLinearGradient(0, 0, width, height);
+      bg.addColorStop(0, "rgba(7,10,26,1)");
+      bg.addColorStop(0.5, "rgba(10,14,32,1)");
+      bg.addColorStop(1, "rgba(4,8,24,1)");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, width, height);
+
+      const centerX = mx.current * width;
+      const centerY = my.current * height;
+      const lensR = width * 0.4;
+
+      const lines = 40;
+      const steps = 200;
+      const spacing = height / (lines + 1);
+
+      for (let li = 0; li < lines; li++) {
+        const baseY = (li + 1) * spacing;
+        const band = (li / (lines - 1)) - 0.5;
+        const alpha = 0.08 + (1 - Math.abs(band * 1.4)) * 0.32;
+        const weight = 0.5 + (1 - Math.abs(band)) * 0.7;
+
+        ctx.beginPath();
+        let started = false;
+
+        for (let si = 0; si <= steps; si++) {
+          const u = si / steps;
+          const x = u * width;
+          let y = baseY;
+
+          const nx = u - 0.5;
+
+          // Time-based waves
+          const w1 = Math.sin(nx * 5.0 + t * 0.9 + li * 0.12) * 10;
+          const w2 = Math.sin(nx * 11.0 - t * 1.3 + li * 0.18) * 3.6;
+
+          // Cursor lens influence
+          const dx = x - centerX;
+          const dy = y - centerY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const falloff = Math.exp(-(dist * dist) / (lensR * lensR * 0.65));
+          const push = falloff * (baseY - centerY) * 0.45;
+
+          y += (w1 + w2) * (0.6 + Math.abs(band) * 0.4) + push;
+
+          if (!started) {
+            ctx.moveTo(x, y);
+            started = true;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+
+        const hue = 215 + band * 18;
+        const sat = 70;
+        const light = 45 + (1 - Math.abs(band)) * 15;
+        ctx.strokeStyle = `hsla(${hue},${sat}%,${light}%,${alpha})`;
+        ctx.lineWidth = weight;
+        ctx.stroke();
+      }
+
+      // Subtle vignette
+      const vg = ctx.createLinearGradient(0, 0, 0, height);
+      vg.addColorStop(0, "rgba(0,0,0,0.35)");
+      vg.addColorStop(0.3, "rgba(0,0,0,0.0)");
+      vg.addColorStop(1, "rgba(0,0,0,0.55)");
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, width, height);
+
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    rafRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onMove);
+    };
+  }, [isMobile]);
+
+  return (
+    <div
+      style={{
+        marginBottom: "var(--studio-gap-lg)",
+        borderRadius: "var(--studio-radius-lg)",
+        overflow: "hidden",
+        background: "var(--bg-2)",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: "100%",
+          height: 140,
+          display: isMobile ? "none" : "block",
+        }}
+      />
+    </div>
   );
 }
 
@@ -191,6 +347,9 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: "var(--font)" }}>
+      {/* Subtle cursor-reactive waveform header */}
+      <DashboardWave isMobile={isMobile} />
+
       {/* ── Hero strip (reference style): date, greeting, one CTA ───────────── */}
       <FadeCard delay={0}>
         <div style={{
