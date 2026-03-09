@@ -443,6 +443,53 @@ function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string
   );
 }
 
+function WatsonThinking() {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+    }}>
+      <div style={{
+        width: 28,
+        height: 28,
+        borderRadius: "50%",
+        background: "radial-gradient(circle at 35% 35%, rgba(100,160,255,0.9), rgba(80,60,200,0.7) 60%, rgba(180,60,255,0.5))",
+        flexShrink: 0,
+        boxShadow: "0 0 12px rgba(100,120,255,0.4)",
+        animation: "watsonPulse 2s ease-in-out infinite",
+      }} />
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        background: "var(--surface)",
+        border: "1px solid var(--line)",
+        borderRadius: 20,
+        padding: "8px 14px",
+      }}>
+        <span style={{
+          fontSize: 12,
+          fontWeight: 500,
+          color: "var(--fg-3)",
+          letterSpacing: "0.01em",
+        }}>Watson is thinking</span>
+        <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: "var(--fg-3)",
+              animation: `watsonDot 1.4s ${i * 0.16}s ease-in-out infinite`,
+            }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Output type selector pill — dropdown with all 12 types
 function OutputTypePill({
   value, onChange,
