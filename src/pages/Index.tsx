@@ -71,12 +71,15 @@ function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
-      const orbX = W * 0.5;
-      const orbY = H * 0.5;
-      const orbR = Math.min(W, H) * 0.22;
-
       // Cursor influence radius - wider = more fluid sweep
       const lensR = W * 0.38;
+
+      // Traveling waveform band — a soft ridge that sweeps across the field.
+      const bandSpeed = 0.035; // normalized units per second
+      const bandPhase = (t * bandSpeed) % 2; // ping‑pong 0→1→0
+      const bandCenterNorm = bandPhase <= 1 ? bandPhase : 2 - bandPhase;
+      const bandCenterX = bandCenterNorm * W;
+      const bandWidth = W * 0.40;
 
       const LINES = 56;
       const STEPS = 280;
@@ -86,6 +89,7 @@ function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
         const baseY = (li + 1) * LINE_SPACING;
         const centerDist = Math.abs(li - LINES / 2) / (LINES / 2);
         const alpha = 0.07 + (1 - centerDist) * 0.24;
+        const lineEnvelope = 0.65 + (1 - centerDist) * 0.55;
 
         ctx.beginPath();
         let drawing = false;
@@ -100,27 +104,20 @@ function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
           const lensFalloff = Math.exp(-(distM * distM) / (lensR * lensR * 0.6));
           const cursorPush = lensFalloff * (baseY - cmy) * 0.42;
 
-          // Orb field
-          const dxO = px - orbX, dyO = py - orbY;
-          const distO = Math.sqrt(dxO * dxO + dyO * dyO);
-          const orbField = Math.exp(-(distO * distO) / (orbR * orbR * 1.8));
-          const orbPushY = orbField * (baseY - orbY) * 1.2;
-          const orbPushX = orbField * dxO * 0.15;
+          // Traveling waveform band — strongest where px is near bandCenterX
+          const dxBand = px - bandCenterX;
+          const bandFalloff = Math.exp(-(dxBand * dxBand) / (bandWidth * bandWidth));
 
-          // Organic time drift
-          const wave1 = Math.sin(px * 0.0028 + t * 0.35 + li * 0.11) * 5.0;
-          const wave2 = Math.sin(px * 0.0065 - t * 0.25 + li * 0.07) * 2.2;
-          const wave3 = Math.sin(px * 0.011  + t * 0.50 + li * 0.18) * 1.1;
+          // Organic time drift: layered sin waves at different spatial frequencies.
+          const nx = px / W;
+          const wave1 = Math.sin(nx * 3.2 + t * 0.55 + li * 0.12) * 10;
+          const wave2 = Math.sin(nx * 9.0 - t * 0.8 + li * 0.35) * 3.4;
 
-          py += cursorPush + orbPushY + wave1 + wave2 + wave3;
-          const ax = px + orbPushX;
+          // Traveling crest: a higher‑amplitude packet that rides across the lines.
+          const crest = Math.sin(nx * 5.4 + t * 1.8) * 20 * bandFalloff;
 
-          // Gap around orb
-          const dxS = ax - orbX, dyS = py - orbY;
-          if (Math.sqrt(dxS * dxS + dyS * dyS) < orbR * 0.83) {
-            if (drawing) { ctx.stroke(); ctx.beginPath(); drawing = false; }
-            continue;
-          }
+          py += lineEnvelope * (wave1 + wave2 + crest) + cursorPush;
+          const ax = px;
 
           if (!drawing) { ctx.moveTo(ax, py); drawing = true; }
           else ctx.lineTo(ax, py);
@@ -132,15 +129,6 @@ function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
         ctx.lineWidth = 0.6 + (1 - centerDist) * 0.55;
         ctx.stroke();
       }
-
-      // Orb glow
-      const breathe = 0.92 + Math.sin(t * 0.28) * 0.08;
-      const orbGlow = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, orbR * 2.4);
-      orbGlow.addColorStop(0,   `rgba(80,130,255,${0.18 * breathe})`);
-      orbGlow.addColorStop(0.4, `rgba(60,100,240,${0.08 * breathe})`);
-      orbGlow.addColorStop(1,   "rgba(40,70,200,0)");
-      ctx.fillStyle = orbGlow;
-      ctx.fillRect(0, 0, W, H);
 
       // Vignette
       const vig = ctx.createRadialGradient(W*.5, H*.5, W*.28, W*.5, H*.5, Math.max(W,H)*.72);
