@@ -241,7 +241,7 @@ export default function Index() {
           transform: translateY(-3px) scale(1.015);
           box-shadow: 0 14px 50px rgba(10,20,130,.45), 0 0 40px rgba(100,150,255,.25);
         }
-        .arr { font-size: 18px; display: inline-block; transition: transform .4s cubic-bezier(.16,1,.3,1); }
+        .arr { display: inline-block; transition: transform .4s cubic-bezier(.16,1,.3,1); }
         .cta-pill:hover .arr { transform: translateX(5px); }
       `}</style>
 
@@ -293,7 +293,24 @@ export default function Index() {
               aria-busy={zoomingToExplore}
             >
               Explore Everywhere
-              <span className="arr">-&gt;</span>
+              <span className="arr">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ display: "inline-block", verticalAlign: "middle" }}
+                >
+                  <path
+                    d="M6 3L11 8L6 13"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
             </button>
           </div>
         </div>
