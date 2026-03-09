@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
-import GlobalCursor from "./components/GlobalCursor";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { lazy, Suspense, ReactNode } from "react";
 
@@ -41,7 +40,6 @@ const App = () => (
   <AuthProvider>
     <ThemeProvider>
       <BrowserRouter>
-        <GlobalCursor />
         <style>{`
           @keyframes pageEnter {
             from { opacity: 0; transform: translateY(8px); }
