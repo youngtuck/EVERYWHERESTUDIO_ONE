@@ -852,10 +852,14 @@ export default function ExplorePage() {
             <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
             <FadeUp delay={0.26}>
               <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-                <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"opacity .2s"}}
+                <button
+                  onClick={()=>{ window.location.href = "mailto:mark@everywhereStudio.com"; }}
+                  style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"opacity .2s"}}
                   onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".82"}
                   onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>Let's Talk</button>
-                <button onClick={()=>nav("/studio/dashboard")} style={{background:"transparent",border:`1px solid ${T.text}18`,borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:500,color:T.textSub,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"all .2s"}}
+                <button
+                  onClick={()=>nav("/auth")}
+                  style={{background:"transparent",border:`1px solid ${T.text}18`,borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:500,color:T.textSub,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"all .2s"}}
                   onMouseEnter={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}35`; (e.currentTarget as HTMLElement).style.color=T.text; }}
                   onMouseLeave={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}18`; (e.currentTarget as HTMLElement).style.color=T.textSub; }}>Open Studio</button>
               </div>
