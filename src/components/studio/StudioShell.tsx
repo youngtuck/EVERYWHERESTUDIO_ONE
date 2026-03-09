@@ -1,16 +1,12 @@
-import { useEffect, useRef, useState, ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
-
-// Pages where sidebar chrome is hidden (full-screen chat)
-const FULL_SCREEN = ["/studio/work/", "/studio/work"];
 
 // ── Page transition wrapper ────────────────────────────────────────────────
 // Slides in fresh content with a 280ms ease on every route change.
 function PageSlide({ children, routeKey }: { children: ReactNode; routeKey: string }) {
   const [visible, setVisible] = useState(false);
   const [key, setKey] = useState(routeKey);
-  const [nextKey, setNextKey] = useState(routeKey);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -18,16 +14,14 @@ function PageSlide({ children, routeKey }: { children: ReactNode; routeKey: stri
       setVisible(true);
       return;
     }
-    // Fade out old
     setVisible(false);
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setKey(routeKey);
-      setNextKey(routeKey);
       setVisible(true);
     }, 120);
     return () => clearTimeout(timerRef.current);
-  }, [routeKey]);
+  }, [routeKey, key]);
 
   return (
     <div
