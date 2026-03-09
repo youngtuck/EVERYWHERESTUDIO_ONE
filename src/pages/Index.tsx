@@ -227,6 +227,14 @@ export default function Index() {
           0%   { background-position: -200% center; }
           100% { background-position:  200% center; }
         }
+        @keyframes glow-pulse {
+          0%, 100% {
+            box-shadow: 0 6px 30px rgba(10,20,130,.35), 0 2px 8px rgba(255,255,255,.15), 0 0 0 0 rgba(255,255,255,0);
+          }
+          50% {
+            box-shadow: 0 6px 30px rgba(10,20,130,.35), 0 2px 8px rgba(255,255,255,.15), 0 0 20px 4px rgba(255,255,255,0.15);
+          }
+        }
         .cta-pill {
           display: inline-flex; align-items: center; gap: 10px;
           background: rgba(255,255,255,.92); border: none; color: #1e2da0;
@@ -235,8 +243,10 @@ export default function Index() {
           padding: 15px 44px; border-radius: 100px;
           box-shadow: 0 6px 30px rgba(10,20,130,.35), 0 2px 8px rgba(255,255,255,.15);
           transition: background .22s, transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s;
+          animation: glow-pulse 3s ease-in-out 3s infinite;
         }
         .cta-pill:hover {
+          animation: none;
           background: #fff;
           transform: translateY(-3px) scale(1.015);
           box-shadow: 0 14px 50px rgba(10,20,130,.45), 0 0 40px rgba(100,150,255,.25);
