@@ -1,9 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import GlobalCursor from "./components/GlobalCursor";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, ReactNode } from "react";
 
 import Index from "./pages/Index";
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
@@ -22,62 +22,85 @@ const VoiceDnaSettings = lazy(() => import("./pages/studio/VoiceDnaSettings"));
 const Onboarding = lazy(() => import("./pages/studio/Onboarding"));
 const TheLot = lazy(() => import("./pages/studio/TheLot"));
 
+function PageTransition({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const topLevel = location.pathname.split("/")[1] || "/";
+  return (
+    <div
+      key={topLevel}
+      style={{
+        animation: "pageEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 const App = () => (
   <AuthProvider>
     <ThemeProvider>
-    <BrowserRouter>
-      <GlobalCursor />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route
-          path="/explore"
-          element={
-            <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
-              <ExplorePage />
-            </Suspense>
+      <BrowserRouter>
+        <GlobalCursor />
+        <style>{`
+          @keyframes pageEnter {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
           }
-        />
-        <Route
-          path="/auth"
-          element={
-            <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
-              <AuthPage />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/onboarding"
-          element={
-            <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
-              <ProtectedRoute><Onboarding /></ProtectedRoute>
-            </Suspense>
-          }
-        />
-        <Route
-          path="/studio"
-          element={
-            <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
-              <ProtectedRoute><StudioShell /></ProtectedRoute>
-            </Suspense>
-          }
-        >
-          <Route index element={<Navigate to="/studio/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="work" element={<WorkSession />} />
-          <Route path="work/:id" element={<WorkSession />} />
-          <Route path="watch" element={<Watch />} />
-          <Route path="outputs" element={<OutputLibrary />} />
-          <Route path="outputs/:id" element={<OutputDetail />} />
-          <Route path="projects" element={<Projects />} />
-          <Route path="projects/:id" element={<ProjectDetail />} />
-          <Route path="resources" element={<Resources />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="settings/voice" element={<VoiceDnaSettings />} />
-          <Route path="lot" element={<TheLot />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+        `}</style>
+        <PageTransition>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route
+              path="/explore"
+              element={
+                <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+                  <ExplorePage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/auth"
+              element={
+                <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+                  <AuthPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/onboarding"
+              element={
+                <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+                  <ProtectedRoute><Onboarding /></ProtectedRoute>
+                </Suspense>
+              }
+            />
+            <Route
+              path="/studio"
+              element={
+                <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+                  <ProtectedRoute><StudioShell /></ProtectedRoute>
+                </Suspense>
+              }
+            >
+              <Route index element={<Navigate to="/studio/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="work" element={<WorkSession />} />
+              <Route path="work/:id" element={<WorkSession />} />
+              <Route path="watch" element={<Watch />} />
+              <Route path="outputs" element={<OutputLibrary />} />
+              <Route path="outputs/:id" element={<OutputDetail />} />
+              <Route path="projects" element={<Projects />} />
+              <Route path="projects/:id" element={<ProjectDetail />} />
+              <Route path="resources" element={<Resources />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="settings/voice" element={<VoiceDnaSettings />} />
+              <Route path="lot" element={<TheLot />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </PageTransition>
+      </BrowserRouter>
     </ThemeProvider>
   </AuthProvider>
 );
