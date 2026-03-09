@@ -355,9 +355,25 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         overflow: "hidden", zIndex: 2,
       }}>
-        {/* Ambient radial glow */}
-        <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 65% 65% at 50% 50%, ${glowColor} 0%, transparent 70%)`, pointerEvents: "none", transition: "background 0.4s ease" }} />
-
+        {/* Ambient radial glow — larger ellipse, soft falloff so aura feathers at edges */}
+        <div style={{
+          position: "absolute",
+          inset: "-20%",
+          background: `radial-gradient(ellipse 85% 85% at 50% 50%, ${glowColor} 0%, ${glowColor} 25%, rgba(${acR},${acG},${acB},${dark ? 0.12 : 0.08}) 50%, transparent 72%)`,
+          pointerEvents: "none",
+          transition: "background 0.4s ease",
+        }} />
+        {/* Right-edge feather: blend left panel into right content so no hard bounding box */}
+        <div style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 80,
+          background: `linear-gradient(to right, transparent 0%, ${T.bg} 100%)`,
+          pointerEvents: "none",
+          zIndex: 1,
+        }} />
         <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 14, fontWeight: 700, opacity: .7, transition: "color 0.4s ease" }}>
             {roomNums[roomIdx]}
