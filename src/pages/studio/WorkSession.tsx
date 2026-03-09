@@ -161,22 +161,19 @@ void main(){
 `;
 
 class OrbSpring {
-  x=0;y=0;vx=0;vy=0;tx=0;ty=0;
-  step(stiffness=0.062, damping=0.86){
-    this.vx+=(this.tx-this.x)*stiffness; this.vy+=(this.ty-this.y)*stiffness;
-    this.vx*=damping; this.vy*=damping;
-    this.x+=this.vx; this.y+=this.vy;
+  x = 0; y = 0; vx = 0; vy = 0; tx = 0; ty = 0;
+  step(stiffness = 0.062, damping = 0.86) {
+    this.vx += (this.tx - this.x) * stiffness; this.vy += (this.ty - this.y) * stiffness;
+    this.vx *= damping; this.vy *= damping;
+    this.x += this.vx; this.y += this.vy;
   }
 }
 
-function WatsonOrb({ size, thinking }: { size: number; thinking: boolean }) {
+function WatsonOrb({ size }: { size: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const spring = useRef(new OrbSpring());
   const raf = useRef(0);
-  const thinkingRef = useRef(thinking);
   const energyRef = useRef(0);
-
-  useEffect(() => { thinkingRef.current = thinking; }, [thinking]);
 
   useEffect(() => {
     const canvas = ref.current!;
@@ -206,25 +203,14 @@ function WatsonOrb({ size, thinking }: { size: number; thinking: boolean }) {
     const uEnergy = gl.getUniformLocation(prog, "u_energy");
 
     const onMove = (e: MouseEvent) => {
-      if (!thinkingRef.current) {
-        spring.current.tx = (e.clientX / window.innerWidth  - 0.5) * 2.2;
-        spring.current.ty = (e.clientY / window.innerHeight - 0.5) * 2.2;
-      }
+      spring.current.tx = (e.clientX / window.innerWidth  - 0.5) * 2.2;
+      spring.current.ty = (e.clientY / window.innerHeight - 0.5) * 2.2;
     };
     window.addEventListener("mousemove", onMove);
 
     const draw = (ts: number) => {
-      const isThinking = thinkingRef.current;
-      energyRef.current += ((isThinking ? 1.0 : 0.0) - energyRef.current) * 0.035;
-
-      if (isThinking) {
-        const tSec = ts * 0.001;
-        spring.current.tx = Math.sin(tSec * 0.5) * 1.1;
-        spring.current.ty = Math.cos(tSec * 0.38) * 0.9;
-        spring.current.step(0.022, 0.95);
-      } else {
-        spring.current.step(0.058, 0.88);
-      }
+      energyRef.current += (0 - energyRef.current) * 0.035;
+      spring.current.step(0.058, 0.88);
 
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
@@ -239,8 +225,7 @@ function WatsonOrb({ size, thinking }: { size: number; thinking: boolean }) {
     return () => { cancelAnimationFrame(raf.current); window.removeEventListener("mousemove", onMove); };
   }, [size]);
 
-  // Multi-layer glow that pulses when thinking
-  const glowSize = thinking ? size * 0.7 : size * 0.3;
+  const glowSize = size * 0.3;
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       {/* Outer atmosphere */}
@@ -248,13 +233,11 @@ function WatsonOrb({ size, thinking }: { size: number; thinking: boolean }) {
         position: "absolute",
         inset: -glowSize * 0.5,
         borderRadius: "50%",
-        background: thinking
-          ? `radial-gradient(circle, rgba(140,60,255,0.18) 0%, rgba(20,160,255,0.12) 40%, transparent 70%)`
-          : `radial-gradient(circle, rgba(80,140,255,0.10) 0%, transparent 65%)`,
-        animation: thinking ? "orbAtmos 2.2s ease-in-out infinite" : "none",
+        background: `radial-gradient(circle, rgba(80,140,255,0.10) 0%, transparent 65%)`,
+        animation: "none",
         pointerEvents: "none",
         transition: "all 0.8s ease",
-        filter: `blur(${thinking ? size * 0.08 : size * 0.04}px)`,
+        filter: `blur(${size * 0.04}px)`,
       }} />
       <canvas ref={ref} style={{ width: size, height: size, borderRadius: "50%", display: "block", position: "relative", zIndex: 1 }} />
     </div>
@@ -305,25 +288,28 @@ interface Message {
 
 // Auto-resize textarea
 function AutoTextarea({
-  value, onChange, onSubmit, placeholder, disabled,
+  value, onChange, onSubmit, placeholder, disabled, inputRef,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   placeholder: string;
   disabled?: boolean;
+  inputRef?: React.RefObject<HTMLTextAreaElement>;
 }) {
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const localRef = useRef<HTMLTextAreaElement>(null);
+  const refToUse = inputRef ?? localRef;
+
   useEffect(() => {
-    const el = ref.current;
+    const el = refToUse.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 200) + "px";
-  }, [value]);
+  }, [value, refToUse]);
 
   return (
     <textarea
-      ref={ref}
+      ref={refToUse}
       value={value}
       onChange={e => onChange(e.target.value)}
       onKeyDown={e => {
@@ -361,7 +347,7 @@ function TypingIndicator() {
 }
 
 // Message bubble
-function MessageBubble({ msg, thinking, isMobile }: { msg: Message; thinking?: boolean; isMobile: boolean }) {
+function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
   const isUser = msg.role === "user";
   return (
     <div style={{
@@ -373,7 +359,7 @@ function MessageBubble({ msg, thinking, isMobile }: { msg: Message; thinking?: b
       {/* Watson orb avatar */}
       {!isUser && (
         <div style={{ flexShrink: 0, marginBottom: 2 }}>
-          <WatsonOrb size={36} thinking={!!thinking} />
+          <WatsonOrb size={36} />
         </div>
       )}
 
@@ -426,7 +412,7 @@ function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string
       padding: "60px 40px", gap: 32, textAlign: "center",
     }}>
       {/* Watson orb — live WebGL, reactive */}
-      <WatsonOrb size={120} thinking={false} />
+      <WatsonOrb size={120} />
 
       <div style={{ maxWidth: 460 }}>
         <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--fg)", marginBottom: 10, letterSpacing: "-.02em" }}>
@@ -663,6 +649,7 @@ export default function WorkSession() {
   const [voiceProfile, setVoiceProfile] = useState<object | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
   const outputTypeApi = OUTPUT_TYPE_TO_API[outputType] || "freestyle";
 
@@ -678,7 +665,7 @@ export default function WorkSession() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
   useEffect(() => {
     if (id === "new" || !id) {
@@ -692,11 +679,22 @@ export default function WorkSession() {
     }
   }, [id, outputType, type.watson]);
 
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [loading]);
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput("");
     setApiError(null);
+    setTimeout(() => inputRef.current?.focus(), 0);
 
     if (messages.filter(m => m.role === "user").length === 0) {
       setSessionTitle(userMsg.slice(0, 40) + (userMsg.length > 40 ? "..." : ""));
@@ -801,6 +799,14 @@ export default function WorkSession() {
         @keyframes orbPulse {
           0%, 100% { transform: scale(1); opacity: 0.9; }
           50%      { transform: scale(1.05); opacity: 1; }
+        }
+        @keyframes watsonDot {
+          0%, 80%, 100% { transform: translateY(0); opacity: .4; }
+          40%          { transform: translateY(-3px); opacity: 1; }
+        }
+        @keyframes watsonPulse {
+          0%, 100% { box-shadow: 0 0 10px rgba(100,120,255,0.3); }
+          50%      { box-shadow: 0 0 20px rgba(100,120,255,0.6), 0 0 40px rgba(80,60,200,0.2); }
         }
       `}</style>
 
@@ -928,13 +934,23 @@ export default function WorkSession() {
         )}
 
         {phase === "input" && (messages.length <= 1 ? (
-          <EmptyState outputType={outputType} onSuggestion={(s) => { setInput(s); }} isMobile={isMobile} />
+          <EmptyState
+            outputType={outputType}
+            onSuggestion={(s) => {
+              setInput(s);
+              setTimeout(() => inputRef.current?.focus(), 0);
+            }}
+            isMobile={isMobile}
+          />
         ) : (
           <div style={{
             maxWidth: 760, width: "100%", margin: "0 auto",
             padding: "32px 24px 8px", display: "flex", flexDirection: "column", gap: 20,
           }}>
-            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} thinking={msg.typing && loading} isMobile={isMobile} />)}
+            {messages.map(msg => (
+              <MessageBubble key={msg.id} msg={msg} isMobile={isMobile} />
+            ))}
+            {loading && <WatsonThinking />}
             <div ref={bottomRef} />
           </div>
         ))}
@@ -966,6 +982,7 @@ export default function WorkSession() {
             onSubmit={sendMessage}
             placeholder={`Tell Watson about your ${type.label.toLowerCase()}...`}
             disabled={loading}
+            inputRef={inputRef}
           />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             {/* Left: hints or error + Retry when there's an error */}
