@@ -284,9 +284,13 @@ button { font-family: var(--font); }
 body.cursor-on-dark #ew-cursor-dot  { background: #ffffff; }
 body.cursor-on-dark #ew-cursor-ring { border-color: rgba(255,255,255,0.45); }
 
-/* Light pages (studio) — charcoal cursor */
-body.cursor-on-light #ew-cursor-dot  { background: #1a1a18; }
-body.cursor-on-light #ew-cursor-ring { border-color: rgba(20,20,18,0.28); }
+/* Light pages (studio, etc.) — dark cursor for visibility */
+body.cursor-on-light #ew-cursor-dot  { background: #0f0f0e; }
+body.cursor-on-light #ew-cursor-ring { border-color: rgba(15,15,14,0.52); }
+
+/* Default: no class = light page (e.g. Studio) — same dark cursor so it's always visible */
+body:not(.cursor-on-dark) #ew-cursor-dot  { background: #0f0f0e; }
+body:not(.cursor-on-dark) #ew-cursor-ring { border-color: rgba(15,15,14,0.52); }
 
 /* Hover state — expand ring, gold accent */
 body.cursor-hover #ew-cursor-ring {
