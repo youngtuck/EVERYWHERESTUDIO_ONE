@@ -25,7 +25,12 @@ function titleCase(str: string) {
     .join(" ");
 }
 
-export default function StudioSidebar() {
+interface SidebarProps {
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
+}
+
+export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: SidebarProps) {
   const nav = useNavigate();
   const loc = useLocation();
   const { theme } = useTheme();
@@ -45,7 +50,7 @@ export default function StudioSidebar() {
 
   return (
     <aside style={{
-      width: "var(--studio-sidebar-width)",
+      width: collapsed ? 68 : "var(--studio-sidebar-width)",
       flexShrink: 0,
       height: "100vh",
       background: "var(--sidebar)",
@@ -57,17 +62,25 @@ export default function StudioSidebar() {
       top: 0,
     }}>
 
-      {/* ── Logo ─────────────────────────────────────────────────── */}
+      {/* ── Logo + collapse toggle ────────────────────────────────── */}
       <div style={{
-        padding: "20px 16px 18px",
+        padding: "16px 12px 14px",
         borderBottom: "1px solid var(--line)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: collapsed ? "center" : "space-between",
+        gap: 8,
       }}>
         <button
           onClick={() => nav("/")}
           style={{
-            background: "none", border: "none",
-            display: "flex", alignItems: "center", gap: 10,
-            width: "100%", cursor: "pointer",
+            background: "none",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            cursor: "pointer",
+            padding: 0,
           }}
           aria-label="Back to home"
         >
@@ -83,20 +96,59 @@ export default function StudioSidebar() {
               background: "rgba(255,255,255,0.92)",
             }} />
           </div>
-          <div style={{ textAlign: "left", minWidth: 0 }}>
-            <div style={{
-              fontSize: 13, fontWeight: 600, letterSpacing: "-0.02em",
-              color: "var(--fg)", lineHeight: 1.2,
-            }}>
-              <span>EVERY</span>
-              <span style={{ color: "var(--fg-3)" }}>WHERE</span>
+          {!collapsed && (
+            <div style={{ textAlign: "left", minWidth: 0 }}>
+              <div style={{
+                fontSize: 13, fontWeight: 600, letterSpacing: "-0.02em",
+                color: "var(--fg)", lineHeight: 1.2,
+              }}>
+                <span>EVERY</span>
+                <span style={{ color: "var(--fg-3)" }}>WHERE</span>
+              </div>
+              <div style={{
+                fontSize: 9, fontWeight: 500, letterSpacing: "0.14em",
+                color: "var(--fg-3)", textTransform: "uppercase",
+              }}>Studio</div>
             </div>
-            <div style={{
-              fontSize: 9, fontWeight: 500, letterSpacing: "0.14em",
-              color: "var(--fg-3)", textTransform: "uppercase",
-            }}>Studio</div>
-          </div>
+          )}
         </button>
+        {!collapsed && onToggleCollapsed && (
+          <button
+            onClick={onToggleCollapsed}
+            style={{
+              background: "none",
+              border: "1px solid var(--line)",
+              borderRadius: 999,
+              padding: "4px 8px",
+              cursor: "pointer",
+              fontSize: 10,
+              color: "var(--fg-3)",
+            }}
+            aria-label="Collapse sidebar"
+          >
+            ◀
+          </button>
+        )}
+        {collapsed && onToggleCollapsed && (
+          <button
+            onClick={onToggleCollapsed}
+            style={{
+              position: "absolute",
+              right: 8,
+              top: 12,
+              background: "none",
+              border: "1px solid var(--line)",
+              borderRadius: 999,
+              padding: "2px 4px",
+              cursor: "pointer",
+              fontSize: 10,
+              color: "var(--fg-3)",
+            }}
+            aria-label="Expand sidebar"
+          >
+            ▶
+          </button>
+        )}
       </div>
 
       {/* ── Project (reference: "My Studio" with dropdown) ────────────────── */}
@@ -113,10 +165,19 @@ export default function StudioSidebar() {
           cursor: "pointer",
           fontFamily: "var(--font)",
         }}>
-          <div style={{ textAlign: "left", minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>My Studio</div>
-          </div>
-          <ChevronDown size={14} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
+          {!collapsed && (
+            <>
+              <div style={{ textAlign: "left", minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>My Studio</div>
+              </div>
+              <ChevronDown size={14} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
+            </>
+          )}
+          {collapsed && (
+            <div style={{ width: "100%", textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--fg-3)" }}>
+              My
+            </div>
+          )}
         </button>
       </div>
 
@@ -203,7 +264,9 @@ export default function StudioSidebar() {
                   }}>
                     <Icon size={12} strokeWidth={2} />
                   </span>
-                  <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
+                  {!collapsed && (
+                    <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
+                  )}
                 </div>
                 {badge && (
                   <span style={{
@@ -221,7 +284,7 @@ export default function StudioSidebar() {
 
         {/* Conversations (reference: CONVERSATIONS + New conversation) ───────── */}
         <div style={{ paddingTop: 8, paddingBottom: 4 }}>
-          <div className="nav-section-label">Conversations</div>
+          {!collapsed && <div className="nav-section-label">Conversations</div>}
           <button
             onClick={() => nav("/studio/work")}
             className="nav-item"
@@ -235,7 +298,7 @@ export default function StudioSidebar() {
         </div>
 
         <div>
-          <div className="nav-section-label">More</div>
+          {!collapsed && <div className="nav-section-label">More</div>}
           {NAV_BOTTOM.map(({ path, label, icon: Icon }) => {
             const active = isActive(path);
             return (
@@ -317,13 +380,13 @@ export default function StudioSidebar() {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {user?.user_metadata?.full_name
+              {!collapsed && (user?.user_metadata?.full_name
                 ? titleCase(user.user_metadata.full_name as string)
                 : user?.email
                   ? titleCase(user.email.split("@")[0])
-                  : "Signed in"}
+                  : "Signed in")}
             </div>
-            <div style={{ fontSize: 10, color: "var(--fg-3)" }}>{user?.email || ""}</div>
+            {!collapsed && <div style={{ fontSize: 10, color: "var(--fg-3)" }}>{user?.email || ""}</div>}
           </div>
           <button
             onClick={handleSignOut}

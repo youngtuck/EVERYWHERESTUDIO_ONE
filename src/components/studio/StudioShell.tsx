@@ -25,6 +25,7 @@ export default function StudioShell() {
   const location = useLocation();
   const isMobile = useMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     setSidebarOpen(!isMobile);
@@ -76,7 +77,10 @@ export default function StudioShell() {
               }
         }
       >
-        <StudioSidebar />
+        <StudioSidebar
+          collapsed={!isMobile && sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed(c => !c)}
+        />
       </div>
       <main style={{ flex: 1, overflowY: "auto", minHeight: "100vh", position: "relative", zIndex: 1 }}>
         {isMobile && (
