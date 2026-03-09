@@ -362,7 +362,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       {/* ── Single sticky left column: radial gradient dissolves to transparent ── */}
       <div style={{
         position: "sticky", top: 0, height: "100vh", width: 420, flexShrink: 0,
-        background: `radial-gradient(ellipse 120% 80% at 20% 50%, ${leftBg} 0%, ${leftBg} 30%, rgba(${bgR},${bgG},${bgB},0.7) 55%, rgba(${bgR},${bgG},${bgB},0.0) 100%)`,
+        background: `radial-gradient(ellipse 100% 70% at 15% 50%, ${leftBg} 0%, ${leftBg} 25%, rgba(${bgR},${bgG},${bgB},0.85) 45%, rgba(${bgR},${bgG},${bgB},0.4) 62%, rgba(${bgR},${bgG},${bgB},0.0) 100%)`,
         transition: "background 0.2s ease",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         overflow: "hidden", zIndex: 2,
