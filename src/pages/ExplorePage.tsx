@@ -496,7 +496,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         position: "sticky",
         top: 0,
         height: "100vh",
-        width: 420,
+        width: isMobile ? "100%" : "38vw",
         flexShrink: 0,
         display: isMobile ? "none" : "flex",
         flexDirection: "column",
@@ -557,7 +557,8 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       {/* ── Right panels: stacked, normal flow; subtle stagger so copy follows orb ── */}
       <div
         style={{
-          flex: 1,
+          flex: isMobile ? 1 : "0 0 62vw",
+          width: isMobile ? "100%" : "62vw",
           minWidth: 0,
           position: "relative",
           zIndex: 1,
@@ -567,7 +568,17 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       >
 
         {/* WATCH right */}
-        <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
+        <div style={{
+          minHeight: "130vh",
+          padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 32,
+          justifyContent: "center",
+          position: "relative",
+          maxWidth: isMobile ? "100%" : 680,
+          margin: "0 auto",
+        }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
@@ -611,7 +622,17 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
 
         {/* WORK right */}
-        <div style={{ minHeight: "145vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
+        <div style={{
+          minHeight: "145vh",
+          padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 32,
+          justifyContent: "center",
+          position: "relative",
+          maxWidth: isMobile ? "100%" : 680,
+          margin: "0 auto",
+        }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
@@ -659,7 +680,17 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
 
         {/* WRAP right */}
-        <div style={{ minHeight: "120vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
+        <div style={{
+          minHeight: "120vh",
+          padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 32,
+          justifyContent: "center",
+          position: "relative",
+          maxWidth: isMobile ? "100%" : 680,
+          margin: "0 auto",
+        }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
