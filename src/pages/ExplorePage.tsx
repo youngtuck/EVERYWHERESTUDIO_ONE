@@ -329,7 +329,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* WATCH right */}
-        <div ref={null} style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, borderLeft: `1px solid rgba(74,144,245,0.10)` }}>
+        <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", background: T.bg, borderLeft: `1px solid rgba(74,144,245,0.10)` }}>
           <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -427,7 +427,7 @@ export default function ExplorePage() {
 
   return (
     <ThemeCtx.Provider value={{ dark, toggle }}>
-      <div style={{fontFamily:"'Afacad Flux',sans-serif",background:T.bg,color:T.text,overflowX:"hidden",transition:"background .45s ease, color .3s ease"}}>
+      <div style={{fontFamily:"'Afacad Flux',sans-serif",background:T.bg,color:T.text,overflowX:"clip",transition:"background .45s ease, color .3s ease"}}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
           *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
