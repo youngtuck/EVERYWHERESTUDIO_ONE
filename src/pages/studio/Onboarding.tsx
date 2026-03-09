@@ -79,7 +79,9 @@ export default function Onboarding() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "var(--bg, #07090f)",
+      // Force a dark, high-contrast canvas for onboarding regardless of global theme.
+      // This keeps light text and buttons readable even when the app theme is light.
+      background: "#07090f",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
