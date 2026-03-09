@@ -320,13 +320,69 @@ function Wordmark({ lc }:{lc:string}) {
 
 function ThemeToggle({ lc }:{lc:string}) {
   const { dark, toggle } = useTheme();
-  return <button onClick={toggle} title={dark?"Switch to light mode":"Switch to dark mode"} style={{background:"none",border:`1px solid ${lc}20`,borderRadius:100,cursor:"pointer",padding:"5px 12px",display:"flex",alignItems:"center",gap:7,fontSize:11,fontWeight:500,color:lc,opacity:.60,transition:"all .2s",fontFamily:"'Afacad Flux',sans-serif"}}
-    onMouseEnter={e=>{ (e.currentTarget as HTMLElement).style.opacity="1"; (e.currentTarget as HTMLElement).style.borderColor=`${lc}40`; }}
-    onMouseLeave={e=>{ (e.currentTarget as HTMLElement).style.opacity=".60"; (e.currentTarget as HTMLElement).style.borderColor=`${lc}20`; }}>
-    {dark
-      ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke={lc} strokeWidth="2"/><path stroke={lc} strokeWidth="2" strokeLinecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>Light</>
-      : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path stroke={lc} strokeWidth="2" strokeLinecap="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Dark</>}
-  </button>;
+  const baseBg = "rgba(255,255,255,0.06)";
+  const hoverBg = "rgba(255,255,255,0.12)";
+  const baseColor = "rgba(255,255,255,0.3)";
+  const hoverColor = "rgba(255,255,255,0.9)";
+  return (
+    <button
+      onClick={toggle}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      style={{
+        position: "fixed",
+        bottom: 16,
+        left: 16,
+        zIndex: 50,
+        width: 32,
+        height: 32,
+        borderRadius: "50%",
+        background: baseBg,
+        border: "none",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: baseColor,
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        transition: "background 0.2s ease, color 0.2s ease, transform 0.18s ease",
+      }}
+      onMouseEnter={e => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = hoverBg;
+        el.style.color = hoverColor;
+        el.style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = baseBg;
+        el.style.color = baseColor;
+        el.style.transform = "translateY(0)";
+      }}
+    >
+      {dark ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="4" stroke={lc} strokeWidth="2" />
+          <path
+            stroke={lc}
+            strokeWidth="2"
+            strokeLinecap="round"
+            d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+          />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path
+            stroke={lc}
+            strokeWidth="2"
+            strokeLinecap="round"
+            d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+          />
+        </svg>
+      )}
+    </button>
+  );
 }
 // ─── Continuous Rooms Section: single sticky left, stacked right panels ──────
 function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
@@ -804,7 +860,6 @@ export default function ExplorePage() {
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".16em",color:T.textFaint,marginLeft:6,textTransform:"uppercase",alignSelf:"center"}}>Studio</span>
           </button>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <ThemeToggle lc={T.text} />
             <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"7px 22px",color:T.ctaText,fontSize:12,fontWeight:600,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"opacity .2s"}}
               onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".80"}
               onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>
@@ -1204,6 +1259,9 @@ export default function ExplorePage() {
             </div>
           </div>
         </footer>
+
+        {/* Subtle global theme toggle: bottom-left icon-only */}
+        <ThemeToggle lc={T.text} />
       </div>
     </ThemeCtx.Provider>
   );
