@@ -419,9 +419,32 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
             {roomNums[roomIdx]}
           </div>
           <div style={{ filter: `drop-shadow(0 0 52px ${glowColor})`, marginBottom: 16, transition: "filter 0.4s ease" }}>
-            <div className="orb-breathe-rooms">
-              <SiriOrb size={200} energy={orbSection === "watch" || orbSection === "work" || orbSection === "wrap" ? orbEnergy : 0.1} palette={currentPal} dark={dark} />
-            </div>
+            {isMobile ? (
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  borderRadius: "50%",
+                  background:
+                    "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
+                }}
+              />
+            ) : (
+              <div className="orb-breathe-rooms">
+                <SiriOrb
+                  size={200}
+                  energy={
+                    orbSection === "watch" ||
+                    orbSection === "work" ||
+                    orbSection === "wrap"
+                      ? orbEnergy
+                      : 0.1
+                  }
+                  palette={currentPal}
+                  dark={dark}
+                />
+              </div>
+            )}
           </div>
           <div style={{ fontSize: "clamp(52px,6.5vw,84px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .88, color: textColor, textAlign: "center", transition: "opacity 0.3s" }}>
             {roomNames[roomIdx]}
@@ -453,7 +476,15 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
                 Room One
               </div>
               <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
-                <SiriOrb size={160} energy={orbEnergy} palette={PALETTES.watch} dark={dark} />
+                <div
+                  style={{
+                    width: 160,
+                    height: 160,
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
+                  }}
+                />
               </div>
               <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
                 WATCH
@@ -489,7 +520,15 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
                 Room Two
               </div>
               <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
-                <SiriOrb size={160} energy={orbEnergy} palette={PALETTES.work} dark={dark} />
+                <div
+                  style={{
+                    width: 160,
+                    height: 160,
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
+                  }}
+                />
               </div>
               <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
                 WORK
@@ -529,7 +568,15 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
                 Room Three
               </div>
               <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
-                <SiriOrb size={160} energy={orbEnergy} palette={PALETTES.wrap} dark={dark} />
+                <div
+                  style={{
+                    width: 160,
+                    height: 160,
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
+                  }}
+                />
               </div>
               <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
                 WRAP

@@ -3,23 +3,24 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import GlobalCursor from "./components/GlobalCursor";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { lazy, Suspense } from "react";
 
 import Index from "./pages/Index";
-import ExplorePage from "./pages/ExplorePage";
-import AuthPage from "./pages/AuthPage";
-import StudioShell from "./components/studio/StudioShell";
-import Dashboard from "./pages/studio/Dashboard";
-import WorkSession from "./pages/studio/WorkSession";
-import Watch from "./pages/studio/Watch";
-import OutputLibrary from "./pages/studio/OutputLibrary";
-import OutputDetail from "./pages/studio/OutputDetail";
-import Projects from "./pages/studio/Projects";
-import ProjectDetail from "./pages/studio/ProjectDetail";
-import Resources from "./pages/studio/Resources";
-import Settings from "./pages/studio/Settings";
-import VoiceDnaSettings from "./pages/studio/VoiceDnaSettings";
-import Onboarding from "./pages/studio/Onboarding";
-import TheLot from "./pages/studio/TheLot";
+const ExplorePage = lazy(() => import("./pages/ExplorePage"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const StudioShell = lazy(() => import("./components/studio/StudioShell"));
+const Dashboard = lazy(() => import("./pages/studio/Dashboard"));
+const WorkSession = lazy(() => import("./pages/studio/WorkSession"));
+const Watch = lazy(() => import("./pages/studio/Watch"));
+const OutputLibrary = lazy(() => import("./pages/studio/OutputLibrary"));
+const OutputDetail = lazy(() => import("./pages/studio/OutputDetail"));
+const Projects = lazy(() => import("./pages/studio/Projects"));
+const ProjectDetail = lazy(() => import("./pages/studio/ProjectDetail"));
+const Resources = lazy(() => import("./pages/studio/Resources"));
+const Settings = lazy(() => import("./pages/studio/Settings"));
+const VoiceDnaSettings = lazy(() => import("./pages/studio/VoiceDnaSettings"));
+const Onboarding = lazy(() => import("./pages/studio/Onboarding"));
+const TheLot = lazy(() => import("./pages/studio/TheLot"));
 
 const App = () => (
   <AuthProvider>
@@ -28,10 +29,38 @@ const App = () => (
       <GlobalCursor />
       <Routes>
         <Route path="/" element={<Index />} />
-        <Route path="/explore" element={<ExplorePage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-        <Route path="/studio" element={<ProtectedRoute><StudioShell /></ProtectedRoute>}>
+        <Route
+          path="/explore"
+          element={
+            <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+              <ExplorePage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/auth"
+          element={
+            <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+              <AuthPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+              <ProtectedRoute><Onboarding /></ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="/studio"
+          element={
+            <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+              <ProtectedRoute><StudioShell /></ProtectedRoute>
+            </Suspense>
+          }
+        >
           <Route index element={<Navigate to="/studio/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="work" element={<WorkSession />} />

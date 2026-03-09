@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMobile } from "../hooks/useMobile";
 
 const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
 
@@ -382,6 +383,7 @@ function CustomCursor() {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Index() {
   const navigate = useNavigate();
+  const isMobile = useMobile();
   const [ready, setReady]     = useState(false);
   const [orbSize, setOrbSize] = useState(480);
   const zoomRef = useRef(0);
@@ -487,7 +489,7 @@ export default function Index() {
       `}</style>
 
       <CustomCursor />
-      <SignalField zoomRef={zoomRef} />
+      {!isMobile && <SignalField zoomRef={zoomRef} />}
 
       {/* Orb */}
       <div
@@ -497,7 +499,19 @@ export default function Index() {
         position: "fixed", inset: 0, zIndex: 2, pointerEvents: "none",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <OrbCanvas size={orbSize} />
+        {isMobile ? (
+          <div
+            style={{
+              width: orbSize,
+              height: orbSize,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
+            }}
+          />
+        ) : (
+          <OrbCanvas size={orbSize} />
+        )}
       </div>
 
       {/* UI */}
