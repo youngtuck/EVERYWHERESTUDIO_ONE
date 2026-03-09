@@ -509,6 +509,28 @@ function OutputTypePill({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.length !== 1) return;
+      const ch = e.key.toLowerCase();
+      if (!/[a-z]/.test(ch)) return;
+      // Avoid stealing focus from form fields
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true")) {
+        return;
+      }
+      const match = OUTPUT_TYPE_KEYS.find(k => OUTPUT_TYPES[k].label.charAt(0).toLowerCase() === ch);
+      if (match) {
+        e.preventDefault();
+        onChange(match);
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onChange]);
+
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button type="button" onClick={() => setOpen(o => !o)} style={{
@@ -538,6 +560,7 @@ function OutputTypePill({
           {OUTPUT_TYPE_KEYS.map(t => {
             const ot = OUTPUT_TYPES[t];
             const active = t === value;
+            const shortcut = ot.label.charAt(0).toUpperCase();
             return (
               <button key={t} type="button" onClick={() => { onChange(t); setOpen(false); }} style={{
                 display: "flex", alignItems: "center", gap: 8, width: "100%",
@@ -551,9 +574,25 @@ function OutputTypePill({
               >
                 <span style={{ width: 7, height: 7, borderRadius: "50%", background: ot.color, flexShrink: 0 }} />
                 <span style={{ fontSize: 13, color: active ? "var(--fg)" : "var(--fg-2)", fontWeight: active ? 500 : 400 }}>{ot.label}</span>
-                {active && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginLeft: "auto" }}>
-                  <path d="M2 6L5 9L10 3" stroke={ot.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>}
+                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: "var(--fg-3)",
+                      background: "var(--bg-3)",
+                      borderRadius: 4,
+                      padding: "1px 5px",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {shortcut}
+                  </span>
+                  {active && (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6L5 9L10 3" stroke={ot.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
               </button>
             );
           })}
