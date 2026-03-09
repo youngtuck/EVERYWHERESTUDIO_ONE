@@ -744,6 +744,32 @@ export default function ExplorePage() {
           </div>
         </section>
 
+        {/* ══ SOCIAL PROOF BAR ════════════════════════════════════════════════ */}
+        <section
+          style={{
+            padding: "20px 0",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(255,255,255,0.03)",
+          }}
+        >
+          <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 40px" }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 13,
+                color: "rgba(255,255,255,0.4)",
+                letterSpacing: "0.04em",
+                fontWeight: 400,
+                textAlign: "center",
+                textTransform: "uppercase",
+              }}
+            >
+              Used by executive coaches, consultants, and keynote speakers who charge $10K+ per engagement
+            </p>
+          </div>
+        </section>
+
         {/* ══ PROBLEM ═══════════════════════════════════════════════════════════ */}
         <section style={{padding:isMobile ? "56px 24px 48px" : "72px 48px 64px",borderTop:`1px solid ${bc}`}}>
           <div style={{maxWidth:880,margin:"0 auto"}}>
