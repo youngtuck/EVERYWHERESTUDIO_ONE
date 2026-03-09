@@ -424,6 +424,9 @@ export default function Index() {
 
       if (raw >= 1) {
         zoomRef.current = 1;
+        // Prevent white flash: paint document dark before route change so Explore first paint is dark
+        document.documentElement.style.backgroundColor = "#07090f";
+        document.body.style.backgroundColor = "#07090f";
         navigate("/explore", { state: { fromLandingZoom: true } });
         return;
       }

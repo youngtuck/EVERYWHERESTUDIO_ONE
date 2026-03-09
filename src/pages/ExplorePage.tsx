@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, createContext, useContext } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, createContext, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 // ─── Theme context ─────────────────────────────────────────────────────────────
@@ -453,6 +453,17 @@ export default function ExplorePage() {
   const toggle = () => setDark(d => !d);
   useEffect(()=>{ const t=setTimeout(()=>setMounted(true),80); return()=>clearTimeout(t); },[]);
   useEffect(()=>{ document.body.setAttribute("data-explore-theme", dark ? "dark" : "light"); },[dark]);
+
+  // Keep document background in sync with theme — useLayoutEffect so first paint is never white
+  useLayoutEffect(() => {
+    const bg = dark ? "#07090f" : "#F4F2ED";
+    document.documentElement.style.backgroundColor = bg;
+    document.body.style.backgroundColor = bg;
+    return () => {
+      document.documentElement.style.backgroundColor = "";
+      document.body.style.backgroundColor = "";
+    };
+  }, [dark]);
 
   // Fade in from dark when arriving from landing zoom transition
   useEffect(() => {
