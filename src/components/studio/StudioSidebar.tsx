@@ -26,7 +26,7 @@ export default function StudioSidebar() {
 
   return (
     <aside style={{
-      width: 220,
+      width: "var(--studio-sidebar-width)",
       flexShrink: 0,
       height: "100vh",
       background: "var(--sidebar)",
@@ -40,7 +40,7 @@ export default function StudioSidebar() {
 
       {/* ── Logo ─────────────────────────────────────────────────── */}
       <div style={{
-        padding: "20px 18px 16px",
+        padding: "20px 16px 18px",
         borderBottom: "1px solid var(--line)",
       }}>
         <button
@@ -48,62 +48,64 @@ export default function StudioSidebar() {
           style={{
             background: "none", border: "none",
             display: "flex", alignItems: "center", gap: 10,
-            width: "100%",
+            width: "100%", cursor: "pointer",
           }}
+          aria-label="Back to home"
         >
-          {/* Orb indicator */}
           <div style={{
-            width: 26, height: 26, borderRadius: "50%",
+            width: 24, height: 24, borderRadius: "50%",
             background: "linear-gradient(135deg, #4a90f5 0%, #6b4dd4 100%)",
             flexShrink: 0,
-            boxShadow: "0 2px 8px rgba(74,144,245,0.35)",
+            boxShadow: "0 1px 6px rgba(74,144,245,0.28)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <div style={{
-              width: 8, height: 8, borderRadius: "50%",
-              background: "rgba(255,255,255,0.90)",
+              width: 6, height: 6, borderRadius: "50%",
+              background: "rgba(255,255,255,0.92)",
             }} />
           </div>
-          <div style={{ textAlign: "left" }}>
+          <div style={{ textAlign: "left", minWidth: 0 }}>
             <div style={{
-              fontSize: 13, fontWeight: 700, letterSpacing: "-0.02em",
-              color: "var(--fg)", lineHeight: 1.1,
+              fontSize: 13, fontWeight: 600, letterSpacing: "-0.02em",
+              color: "var(--fg)", lineHeight: 1.2,
             }}>
               <span>EVERY</span>
               <span style={{ color: "var(--fg-3)" }}>WHERE</span>
             </div>
             <div style={{
-              fontSize: 9, fontWeight: 500, letterSpacing: "0.16em",
+              fontSize: 9, fontWeight: 500, letterSpacing: "0.14em",
               color: "var(--fg-3)", textTransform: "uppercase",
-            }}>Studio™</div>
+            }}>Studio</div>
           </div>
         </button>
       </div>
 
-      {/* ── Project switcher ─────────────────────────────────────── */}
-      <div style={{ padding: "12px 14px 0" }}>
+      {/* ── Project ──────────────────────────────────────────────── */}
+      <div style={{ padding: "14px 14px 0" }}>
         <button style={{
           width: "100%",
           background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: 8,
-          padding: "9px 12px",
+          border: "1px solid var(--line)",
+          borderRadius: "var(--studio-radius)",
+          padding: "10px 12px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          cursor: "pointer",
+          fontFamily: "var(--font)",
         }}>
-          <div style={{ textAlign: "left" }}>
-            <div style={{ fontSize: 11, color: "var(--fg-3)", letterSpacing: "0.04em", marginBottom: 2 }}>Project</div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)" }}>Thought Leadership</div>
+          <div style={{ textAlign: "left", minWidth: 0 }}>
+            <div style={{ fontSize: 10, color: "var(--fg-3)", letterSpacing: "0.05em", marginBottom: 2 }}>Project</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Thought Leadership</div>
           </div>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 5.5L7 9L11 5.5" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, opacity: 0.5 }}>
+            <path d="M3 5.5L7 9L11 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
       </div>
 
-      {/* ── New session ──────────────────────────────────────────── */}
-      <div style={{ padding: "12px 14px 8px" }}>
+      {/* ── New Session ──────────────────────────────────────────── */}
+      <div style={{ padding: "12px 14px 10px" }}>
         <button
           onClick={() => nav("/studio/work")}
           style={{
@@ -111,14 +113,17 @@ export default function StudioSidebar() {
             background: "var(--fg)",
             color: "var(--bg)",
             border: "none",
-            borderRadius: 8,
-            padding: "9px 14px",
+            borderRadius: "var(--studio-radius)",
+            padding: "10px 14px",
             fontSize: 13,
             fontWeight: 600,
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: 8,
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.02em",
+            cursor: "pointer",
+            fontFamily: "var(--font)",
           }}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -129,9 +134,9 @@ export default function StudioSidebar() {
       </div>
 
       {/* ── Main nav ─────────────────────────────────────────────── */}
-      <div style={{ flex: 1, padding: "4px 10px", overflowY: "auto" }}>
+      <nav style={{ flex: 1, padding: "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">
         <div style={{ paddingBottom: 4 }}>
-          <div className="nav-section-label" style={{ paddingTop: 10 }}>Studio</div>
+          <div className="nav-section-label">Studio</div>
           {NAV.map(({ path, abbr, label, badge }) => {
             const active = isActive(path);
             return (
@@ -141,17 +146,17 @@ export default function StudioSidebar() {
                 className={`nav-item ${active ? "active" : ""}`}
                 style={{ justifyContent: "space-between" }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{
-                    width: 26, height: 22, display: "flex", alignItems: "center",
-                    justifyContent: "center", fontSize: 10, fontWeight: 700,
-                    letterSpacing: "0.06em", borderRadius: 5,
-                    background: active ? "var(--bg)" : "var(--bg-3)",
+                    width: 24, height: 22, display: "flex", alignItems: "center",
+                    justifyContent: "center", fontSize: 10, fontWeight: 600,
+                    letterSpacing: "0.05em", borderRadius: 6,
+                    background: active ? "var(--bg)" : "transparent",
                     color: active ? "var(--fg)" : "var(--fg-3)",
                     flexShrink: 0,
-                    border: active ? "1px solid var(--line-2)" : "1px solid transparent",
+                    border: active ? "1px solid var(--line-2)" : "1px solid var(--line)",
                     fontFamily: "var(--font)",
-                    transition: "background 0.15s, color 0.15s",
+                    transition: "background 0.15s, color 0.15s, border-color 0.15s",
                   }}>{abbr}</span>
                   <span>{label}</span>
                 </div>
@@ -160,8 +165,8 @@ export default function StudioSidebar() {
                     fontSize: 10, fontWeight: 600,
                     background: "rgba(200,150,26,0.12)",
                     color: "var(--gold)",
-                    border: "1px solid rgba(200,150,26,0.22)",
-                    borderRadius: 100, padding: "1px 7px",
+                    border: "1px solid rgba(200,150,26,0.2)",
+                    borderRadius: 100, padding: "2px 6px",
                   }}>{badge}</span>
                 )}
               </button>
@@ -180,13 +185,13 @@ export default function StudioSidebar() {
                 className={`nav-item ${active ? "active" : ""}`}
               >
                 <span style={{
-                  width: 26, height: 22, display: "flex", alignItems: "center",
-                  justifyContent: "center", fontSize: 10, fontWeight: 700,
-                  letterSpacing: "0.06em", borderRadius: 5,
-                  background: active ? "var(--bg)" : "var(--bg-3)",
+                  width: 24, height: 22, display: "flex", alignItems: "center",
+                  justifyContent: "center", fontSize: 10, fontWeight: 600,
+                  letterSpacing: "0.05em", borderRadius: 6,
+                  background: active ? "var(--bg)" : "transparent",
                   color: active ? "var(--fg)" : "var(--fg-3)",
                   flexShrink: 0,
-                  border: active ? "1px solid var(--line-2)" : "1px solid transparent",
+                  border: active ? "1px solid var(--line-2)" : "1px solid var(--line)",
                   fontFamily: "var(--font)",
                 }}>{abbr}</span>
                 <span>{label}</span>
@@ -194,55 +199,55 @@ export default function StudioSidebar() {
             );
           })}
         </div>
-      </div>
+      </nav>
 
       {/* ── Bottom: theme + user ─────────────────────────────────── */}
       <div style={{
         borderTop: "1px solid var(--line)",
-        padding: "12px 14px",
+        padding: "14px 14px",
         display: "flex",
         flexDirection: "column",
         gap: 10,
       }}>
-        {/* Theme toggle */}
         <button
           onClick={toggleTheme}
           style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             background: "var(--bg-2)", border: "1px solid var(--line)",
-            borderRadius: 8, padding: "8px 12px", width: "100%",
+            borderRadius: "var(--studio-radius)", padding: "9px 12px", width: "100%",
+            cursor: "pointer", fontFamily: "var(--font)",
           }}
+          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
         >
           <span style={{ fontSize: 12, color: "var(--fg-2)" }}>
-            {theme === "light" ? "Light Mode" : "Dark Mode"}
+            {theme === "light" ? "Light" : "Dark"}
           </span>
           <div style={{
-            width: 30, height: 16, borderRadius: 100,
+            width: 28, height: 16, borderRadius: 100,
             background: theme === "dark" ? "var(--fg)" : "var(--bg-3)",
             border: "1px solid var(--line-2)",
             position: "relative", transition: "background 0.2s",
           }}>
             <div style={{
               position: "absolute", top: 2,
-              left: theme === "dark" ? 14 : 2,
-              width: 10, height: 10, borderRadius: "50%",
+              left: theme === "dark" ? 12 : 2,
+              width: 12, height: 12, borderRadius: "50%",
               background: theme === "dark" ? "var(--bg)" : "var(--fg-3)",
               transition: "left 0.2s cubic-bezier(0.16,1,0.3,1)",
             }} />
           </div>
         </button>
 
-        {/* User pill */}
         <div style={{
-          display: "flex", alignItems: "center", gap: 9,
-          padding: "6px 4px",
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "8px 4px",
         }}>
           <div style={{
             width: 28, height: 28, borderRadius: "50%",
             background: "linear-gradient(135deg, #C8961A, #F0B429)",
             flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 700, color: "#0A0A0A",
+            fontSize: 11, fontWeight: 600, color: "#0A0A0A",
           }}>M</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Mark Sylvester</div>

@@ -38,39 +38,31 @@ export default function OutputLibrary() {
   const scoreColor = (s: number) => s >= 900 ? "#50c8a0" : s >= 800 ? "#4A90D9" : "#F5C642";
 
   return (
-    <div style={{ padding: "32px", maxWidth: 900, margin: "0 auto", fontFamily: "var(--font)" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
+    <div style={{ padding: "0", maxWidth: "var(--studio-content-max)", margin: "0 auto", fontFamily: "var(--font)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "var(--studio-gap)" }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-.03em", marginBottom: 4 }}>Outputs</h1>
-          <p style={{ fontSize: 13, color: "var(--fg-3)", fontWeight: 300 }}>{OUTPUTS.length} pieces produced</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 4 }}>Outputs</h1>
+          <p style={{ fontSize: 13, color: "var(--fg-3)", fontWeight: 400 }}>{OUTPUTS.length} pieces produced</p>
         </div>
-        <button onClick={() => navigate("/studio/work/new")} style={{
-          background: "var(--fg)", border: "none", borderRadius: 8, padding: "9px 18px",
-          cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--bg)",
-          fontFamily: "var(--font)", transition: "opacity .15s",
-        }}
+        <button onClick={() => navigate("/studio/work/new")} className="btn-primary" style={{ padding: "9px 18px" }}
           onMouseEnter={e => e.currentTarget.style.opacity = ".82"}
           onMouseLeave={e => e.currentTarget.style.opacity = "1"}
         >New Session</button>
       </div>
 
       {/* Search + filter */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: "var(--studio-gap-sm)", marginBottom: "var(--studio-gap)" }}>
         <div style={{ flex: 1, position: "relative" }}>
-          <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: .4 }} width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: .4 }} width="14" height="14" viewBox="0 0 14 14" fill="none">
             <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.3"/>
             <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
           </svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search outputs..."
-            style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "8px 12px 8px 30px", fontSize: 13, color: "var(--fg)", fontFamily: "var(--font)", outline: "none", transition: "border-color .15s", boxSizing: "border-box" }}
-            onFocus={e => e.target.style.borderColor = "var(--blue)"}
-            onBlur={e => e.target.style.borderColor = "var(--line)"}
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search outputs…"
+            className="input-field"
+            style={{ paddingLeft: 32 }}
           />
         </div>
-        <select value={filter} onChange={e => setFilter(e.target.value)} style={{
-          background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8,
-          padding: "8px 12px", fontSize: 13, color: "var(--fg)", fontFamily: "var(--font)", outline: "none",
-        }}>
+        <select value={filter} onChange={e => setFilter(e.target.value)} className="input-field" style={{ minWidth: 120 }}>
           <option value="all">All types</option>
           {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
@@ -81,7 +73,7 @@ export default function OutputLibrary() {
         {filtered.map(o => (
           <button key={o.id} onClick={() => navigate(`/studio/outputs/${o.id}`)} style={{
             display: "flex", alignItems: "center", gap: 14,
-            background: "none", border: "none", borderRadius: 8, padding: "11px 12px",
+            background: "none", border: "none", borderRadius: "var(--studio-radius)", padding: "12px 12px",
             cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", width: "100%",
             transition: "background .12s",
           }}

@@ -206,13 +206,13 @@ export default function Watch() {
     <div style={{ padding: "0 0 80px", fontFamily: "var(--font)" }}>
       {/* Page header */}
       <div style={{
-        padding: "28px 32px 20px",
+        padding: "var(--studio-gap-lg) 0 20px",
         borderBottom: "1px solid var(--line)",
         background: "var(--bg)",
         position: "sticky", top: 0, zIndex: 10,
         backdropFilter: "blur(12px)",
       }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ maxWidth: "var(--studio-content-max)", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-.03em", marginBottom: 4 }}>Sentinel</h1>
@@ -255,7 +255,7 @@ export default function Watch() {
       </div>
 
       {/* Signals grid */}
-      <div style={{ maxWidth: 900, margin: "28px auto 0", padding: "0 32px" }}>
+      <div style={{ maxWidth: "var(--studio-content-max)", margin: "28px auto 0", padding: 0 }}>
         {/* Category groups */}
         {filter === "all" ? (
           Object.entries(CATEGORY_META).map(([cat, meta]) => {

@@ -64,9 +64,11 @@ export default function StudioShell() {
     <div style={{ display: "flex", height: "100vh", background: "var(--bg)", fontFamily: "var(--font)" }}>
       <StudioSidebar />
       <main style={{ flex: 1, overflowY: "auto", minHeight: "100vh" }}>
-        <PageSlide routeKey={location.pathname}>
-          <Outlet />
-        </PageSlide>
+        <div className="studio-main-inner">
+          <PageSlide routeKey={location.pathname}>
+            <Outlet />
+          </PageSlide>
+        </div>
       </main>
     </div>
   );

@@ -78,20 +78,20 @@ export default function Dashboard() {
   ];
 
   return (
-    <div data-theme="light" style={{ padding: "28px 32px", maxWidth: 1200, minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", fontFamily: "var(--font)" }}>
 
-      {/* ── Top bar ─────────────────────────────────────────────── */}
+      {/* Page header */}
       <FadeCard delay={0}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "var(--studio-gap-lg)" }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.035em", color: "var(--fg)", marginBottom: 4 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", color: "var(--fg)", marginBottom: 4 }}>
               Good morning, Mark.
             </h1>
-            <p style={{ fontSize: 14, color: "var(--fg-3)" }}>
+            <p style={{ fontSize: 13, color: "var(--fg-3)", fontWeight: 400 }}>
               You have 11 new signals and 2 drafts ready to review.
             </p>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: "var(--studio-gap-sm)" }}>
             <button
               onClick={() => nav("/studio/watch")}
               className="btn-ghost"
@@ -110,47 +110,38 @@ export default function Dashboard() {
         </div>
       </FadeCard>
 
-      {/* ── Stats row ────────────────────────────────────────────── */}
+      {/* Stats row */}
       <FadeCard delay={60}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
           {stats.map(({ label, value, sub, color }, i) => (
-            <div key={i} style={{
-              background: "var(--surface)",
-              border: "1px solid var(--line)",
-              borderRadius: 12,
+            <div key={i} className="card" style={{
               padding: "18px 20px",
               position: "relative",
               overflow: "hidden",
             }}>
-              {/* Accent bar */}
               <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 2, background: color, opacity: 0.7 }} />
-              <div style={{ fontSize: 11, color: "var(--fg-3)", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
-              <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--fg)", lineHeight: 1, marginBottom: 6 }}>{value}</div>
+              <div style={{ fontSize: 10, color: "var(--fg-3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+              <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.04em", color: "var(--fg)", lineHeight: 1.1, marginBottom: 4 }}>{value}</div>
               <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{sub}</div>
             </div>
           ))}
         </div>
       </FadeCard>
 
-      {/* ── Two-column ───────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20 }}>
+      {/* Two-column */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "var(--studio-gap)" }}>
 
         {/* Left column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
           {/* Start something */}
           <FadeCard delay={120}>
-            <div style={{
-              background: "var(--surface)",
-              border: "1px solid var(--line)",
-              borderRadius: 14,
-              padding: "20px 22px",
-            }}>
+            <div className="card" style={{ padding: "20px 22px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.015em" }}>Start Something</h2>
-                <span style={{ fontSize: 11, color: "var(--fg-3)" }}>12 formats</span>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.02em" }}>Start Something</h2>
+                <span style={{ fontSize: 10, color: "var(--fg-3)", letterSpacing: "0.05em" }}>12 formats</span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--studio-gap-sm)" }}>
                 {startTypes.map(({ abbr, label, color }) => (
                   <button
                     key={abbr}
@@ -158,7 +149,7 @@ export default function Dashboard() {
                     style={{
                       background: "var(--bg-2)",
                       border: "1px solid var(--line)",
-                      borderRadius: 10,
+                      borderRadius: "var(--studio-radius)",
                       padding: "12px 8px",
                       display: "flex",
                       flexDirection: "column",
@@ -190,12 +181,7 @@ export default function Dashboard() {
 
           {/* Recent sessions */}
           <FadeCard delay={180}>
-            <div style={{
-              background: "var(--surface)",
-              border: "1px solid var(--line)",
-              borderRadius: 14,
-              overflow: "hidden",
-            }}>
+            <div className="card" style={{ overflow: "hidden" }}>
               <div style={{
                 padding: "16px 22px",
                 borderBottom: "1px solid var(--line)",
@@ -203,10 +189,10 @@ export default function Dashboard() {
                 justifyContent: "space-between",
                 alignItems: "center",
               }}>
-                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.015em" }}>Recent Sessions</h2>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.02em" }}>Recent Sessions</h2>
                 <button onClick={() => nav("/studio/outputs")} style={{
-                  background: "none", border: "none",
-                  fontSize: 12, color: "var(--fg-3)",
+                  background: "none", border: "none", cursor: "pointer",
+                  fontSize: 12, color: "var(--fg-3)", fontFamily: "var(--font)",
                 }}>View all</button>
               </div>
               <div>
@@ -228,12 +214,12 @@ export default function Dashboard() {
                   >
                     {/* Type indicator */}
                     <div style={{
-                      width: 36, height: 36, borderRadius: 8,
+                      width: 36, height: 36, borderRadius: "var(--studio-radius)",
                       background: "var(--bg-2)",
                       border: "1px solid var(--line)",
                       flexShrink: 0,
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 10, fontWeight: 700, color: "var(--fg-2)",
+                      fontSize: 10, fontWeight: 600, color: "var(--fg-2)",
                       letterSpacing: "0.04em",
                     }}>
                       {type.slice(0, 2).toUpperCase()}
@@ -256,20 +242,14 @@ export default function Dashboard() {
 
         {/* Right column — Sentinel */}
         <FadeCard delay={150}>
-          <div style={{
-            background: "var(--surface)",
-            border: "1px solid var(--line)",
-            borderRadius: 14,
-            overflow: "hidden",
-            height: "fit-content",
-          }}>
+          <div className="card" style={{ overflow: "hidden", height: "fit-content" }}>
             <div style={{
               padding: "16px 18px",
               borderBottom: "1px solid var(--line)",
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <div>
-                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.015em", marginBottom: 2 }}>Sentinel</h2>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.02em", marginBottom: 2 }}>Sentinel</h2>
                 <div style={{ fontSize: 11, color: "var(--fg-3)" }}>11 signals today</div>
               </div>
               <span style={{

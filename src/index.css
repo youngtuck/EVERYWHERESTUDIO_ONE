@@ -122,6 +122,12 @@ button { font-family: var(--font); }
 }
 .studio-sidebar.collapsed { width: 52px; }
 .studio-main { flex: 1; overflow-y: auto; background: var(--bg); }
+.studio-main-inner {
+  max-width: var(--studio-content-max);
+  margin: 0 auto;
+  padding: var(--studio-page-pad);
+  min-height: 100%;
+}
 .studio-topbar {
   height: 50px;
   background: var(--topbar);
@@ -133,11 +139,23 @@ button { font-family: var(--font); }
   position: sticky; top: 0; z-index: 10;
 }
 
+/* ─── STUDIO DESIGN TOKENS ───────────────────────────────────── */
+:root {
+  --studio-content-max: 1000px;
+  --studio-page-pad: 28px 32px;
+  --studio-gap-sm: 12px;
+  --studio-gap: 20px;
+  --studio-gap-lg: 28px;
+  --studio-radius: 10px;
+  --studio-radius-lg: 14px;
+  --studio-sidebar-width: 220px;
+}
+
 /* ─── NAV ────────────────────────────────────────────────────── */
 .nav-item {
-  display: flex; align-items: center; gap: 9px;
-  padding: 7px 12px; border-radius: 6px; cursor: pointer;
-  transition: background 0.1s ease, color 0.1s ease;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
   color: var(--fg-3); font-size: 13px; font-weight: 400;
   white-space: nowrap; overflow: hidden;
   font-family: var(--font); border: none; background: none;
@@ -149,12 +167,13 @@ button { font-family: var(--font); }
 .nav-item.active::before {
   content: '';
   position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-  width: 2px; height: 13px; background: var(--gold); border-radius: 1px;
+  width: 2px; height: 14px; background: var(--gold); border-radius: 1px;
 }
+.nav-item:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .nav-section-label {
-  font-size: 9px; font-weight: 600; letter-spacing: 2px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--fg-3);
-  padding: 18px 12px 5px; font-family: var(--font);
+  padding: 20px 12px 6px; font-family: var(--font);
 }
 
 /* ─── CHAT ───────────────────────────────────────────────────── */
@@ -171,9 +190,20 @@ button { font-family: var(--font); }
 /* ─── CARDS ──────────────────────────────────────────────────── */
 .card {
   background: var(--surface); border: 1px solid var(--line);
-  border-radius: 10px; transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  border-radius: var(--studio-radius-lg); transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .card:hover { border-color: var(--line-2); box-shadow: var(--shadow-sm); }
+
+/* ─── INPUTS (Studio) ────────────────────────────────────────── */
+.input-field {
+  font-family: var(--font); font-size: 13px; color: var(--fg);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--studio-radius); padding: 8px 12px;
+  outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input-field::placeholder { color: var(--fg-3); }
+.input-field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(58,123,213,0.08); }
+.input-field:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
 /* ─── BUTTONS ────────────────────────────────────────────────── */
 .btn-primary {
@@ -181,19 +211,21 @@ button { font-family: var(--font); }
   border: none; cursor: pointer;
   font-size: 13px; font-weight: 500;
   letter-spacing: -0.01em; padding: 11px 24px;
-  border-radius: 8px; font-family: var(--font);
+  border-radius: var(--studio-radius); font-family: var(--font);
   transition: opacity 0.15s ease;
 }
 .btn-primary:hover { opacity: 0.82; }
+.btn-primary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .btn-ghost {
   background: transparent; border: 1px solid var(--line-2);
   color: var(--fg-2); cursor: pointer;
   font-size: 13px; font-weight: 400;
-  padding: 10px 22px; border-radius: 8px;
+  padding: 10px 22px; border-radius: var(--studio-radius);
   font-family: var(--font);
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 .btn-ghost:hover { border-color: var(--fg-3); color: var(--fg); }
+.btn-ghost:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .btn-gold {
   background: var(--gold-l); color: #0A0A0A;
   border: none; cursor: pointer;
