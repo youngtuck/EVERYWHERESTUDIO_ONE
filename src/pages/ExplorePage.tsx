@@ -757,6 +757,10 @@ export default function ExplorePage() {
   // Lazy-load RoomsSection when its sentinel approaches the viewport
   useEffect(() => {
     if (roomsVisible) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setRoomsVisible(true);
+      return;
+    }
     const el = roomsSentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
