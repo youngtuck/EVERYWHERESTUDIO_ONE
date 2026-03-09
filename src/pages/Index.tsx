@@ -91,7 +91,7 @@ function OrbCanvas({ size }: { size: number }) {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(size * dpr);
     canvas.height = Math.round(size * dpr);
-    const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true })!;
+    const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true });
     if (!gl) return;
     const mkS = (type: number, src: string) => { const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s); return s; };
     const prog = gl.createProgram()!;
@@ -151,7 +151,9 @@ function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
 
   useEffect(() => {
     const canvas = ref.current!;
-    const ctx = canvas.getContext("2d")!;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     const dpr = Math.min(window.devicePixelRatio, 2);
     const resize = () => {
       canvas.width = window.innerWidth * dpr;
@@ -446,7 +448,9 @@ export default function Index() {
     <div style={{
       width: "100vw", height: "100vh", overflow: "hidden",
       position: "relative", fontFamily: "'Afacad Flux', sans-serif",
-      cursor: "none", // hide default cursor
+      cursor: "none",
+      /* Fallback if canvas fails to paint — prevents white screen */
+      background: "linear-gradient(180deg, #1c2c9e 0%, #111f88 50%, #0d1a70 100%)",
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
