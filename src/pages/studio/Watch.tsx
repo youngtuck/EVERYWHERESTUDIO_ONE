@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SENTINEL - WATCH PAGE
@@ -97,6 +98,66 @@ const CATEGORY_META: Record<string, { label: string; color: string; bg: string; 
 
 const FILTERS = ["all", "moving", "threat", "opportunity", "trigger", "event"] as const;
 
+// ── Pill tag input (add via Enter or comma, remove via X) ─────────────────────
+function PillSection({
+  label,
+  pills,
+  onAdd,
+  onRemove,
+  placeholder,
+}: {
+  label: string;
+  pills: string[];
+  onAdd: (v: string) => void;
+  onRemove: (i: number) => void;
+  placeholder: string;
+}) {
+  const [input, setInput] = useState("");
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const v = input.trim();
+      if (v) { onAdd(v); setInput(""); }
+    }
+  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value.replace(/,/g, ""));
+  const submitInput = () => {
+    const v = input.trim();
+    if (v) { onAdd(v); setInput(""); }
+  };
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>{label}</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        {pills.map((p, i) => (
+          <span key={i} style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            background: "var(--bg-2)", border: "1px solid var(--line)", borderRadius: 20,
+            padding: "5px 10px 5px 12px", fontSize: 12, color: "var(--fg)",
+          }}>
+            {p}
+            <button type="button" onClick={() => onRemove(i)} aria-label={`Remove ${p}`} style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 16, height: 16, borderRadius: "50%", border: "none", background: "var(--bg-3)",
+              cursor: "pointer", color: "var(--fg-3)", padding: 0,
+            }}><X size={10} strokeWidth={2.5} /></button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={input}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onBlur={submitInput}
+          placeholder={placeholder}
+          className="input-field"
+          style={{ width: 140, padding: "6px 10px", fontSize: 12 }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function FishScore({ score }: { score: number }) {
   const color = score >= 8 ? "#50c8a0" : score >= 6 ? "#F5C642" : "#e85d75";
   return (
@@ -190,6 +251,11 @@ function SignalCard({ signal, onWrite }: { signal: Signal; onWrite: (s: Signal) 
 export default function Watch() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<typeof FILTERS[number]>("all");
+  const [configOpen, setConfigOpen] = useState(false);
+  const [industries, setIndustries] = useState(["AI & Technology", "Content Strategy"]);
+  const [topics, setTopics] = useState(["thought leadership", "AI content", "newsletter growth"]);
+  const [people, setPeople] = useState(["Ann Handley", "Lenny Rachitsky"]);
+  const [delivery, setDelivery] = useState<"daily" | "weekly" | "notable">("daily");
 
   const filtered = filter === "all" ? MOCK_BRIEFING : MOCK_BRIEFING.filter(s => s.category === filter);
 
@@ -204,6 +270,92 @@ export default function Watch() {
 
   return (
     <div style={{ padding: "0 0 80px", fontFamily: "var(--font)" }}>
+      {/* Configure slide-over */}
+      {configOpen && (
+        <>
+          <div
+            role="presentation"
+            onClick={() => setConfigOpen(false)}
+            style={{
+              position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100,
+              animation: "fadeIn 0.2s ease",
+            }}
+          />
+          <div
+            style={{
+              position: "fixed", top: 0, right: 0, bottom: 0, width: 420, maxWidth: "100vw",
+              background: "var(--bg)", borderLeft: "1px solid var(--line)", zIndex: 101,
+              boxShadow: "-8px 0 24px rgba(0,0,0,0.12)", overflowY: "auto",
+              display: "flex", flexDirection: "column",
+            }}
+          >
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em", margin: 0 }}>Sentinel configuration</h2>
+              <button type="button" onClick={() => setConfigOpen(false)} aria-label="Close" style={{
+                display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36,
+                borderRadius: "var(--studio-radius)", border: "none", background: "var(--bg-2)", cursor: "pointer", color: "var(--fg-2)",
+              }}><X size={18} strokeWidth={2} /></button>
+            </div>
+            <div style={{ padding: "24px", flex: 1 }}>
+              <PillSection
+                label="Industries"
+                pills={industries}
+                onAdd={v => setIndustries(prev => [...prev, v])}
+                onRemove={i => setIndustries(prev => prev.filter((_, j) => j !== i))}
+                placeholder="Add industry…"
+              />
+              <PillSection
+                label="Topics & Keywords"
+                pills={topics}
+                onAdd={v => setTopics(prev => [...prev, v])}
+                onRemove={i => setTopics(prev => prev.filter((_, j) => j !== i))}
+                placeholder="Add topic or keyword…"
+              />
+              <PillSection
+                label="People to Watch"
+                pills={people}
+                onAdd={v => setPeople(prev => [...prev, v])}
+                onRemove={i => setPeople(prev => prev.filter((_, j) => j !== i))}
+                placeholder="Add person…"
+              />
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>Delivery</div>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {(["daily", "weekly", "notable"] as const).map(opt => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setDelivery(opt)}
+                      style={{
+                        flex: 1, padding: "10px 12px", fontSize: 12, fontWeight: 500,
+                        fontFamily: "var(--font)", border: "1px solid",
+                        borderRadius: "var(--studio-radius)", cursor: "pointer",
+                        background: delivery === opt ? "var(--fg)" : "var(--bg-2)",
+                        color: delivery === opt ? "var(--bg)" : "var(--fg-2)",
+                        borderColor: delivery === opt ? "var(--fg)" : "var(--line)",
+                      }}
+                    >
+                      {opt === "daily" ? "Daily" : opt === "weekly" ? "Weekly" : "When Notable"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: "20px 24px", borderTop: "1px solid var(--line)" }}>
+              <button
+                type="button"
+                className="btn-primary"
+                style={{ width: "100%", padding: "12px" }}
+                onClick={() => setConfigOpen(false)}
+              >
+                Save Configuration
+              </button>
+            </div>
+          </div>
+          <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
+        </>
+      )}
+
       {/* Page header */}
       <div style={{
         padding: "var(--studio-gap-lg) 0 20px",
@@ -222,6 +374,14 @@ export default function Watch() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 11, color: "var(--fg-3)" }}>Next briefing Tuesday</span>
+              <button
+                type="button"
+                onClick={() => setConfigOpen(true)}
+                className="btn-ghost"
+                style={{ fontSize: 12, padding: "6px 14px" }}
+              >
+                Configure
+              </button>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#50c8a0", boxShadow: "0 0 6px rgba(80,200,160,.5)" }} />
             </div>
           </div>
