@@ -7,275 +7,174 @@ import { useMobile } from "../../hooks/useMobile";
 import { useTheme } from "../../context/ThemeContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WATSON ORB - volumetric plasma field inside a glass shell.
-// thinking=false: calm, slow internal motion.
-// thinking=true:  plasma filaments brighten and accelerate.
+// WATSON ORB - minimal 2D system glyph
+// thinking=false: calm, slow inner waveform.
+// thinking=true:  slightly brighter, more active wave + glow.
 // ─────────────────────────────────────────────────────────────────────────────
-const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
-
-const ORB_FRAG = `
-precision highp float;
-uniform float u_t;
-uniform float u_energy;
-uniform vec2 u_res;
-uniform vec2 u_mouse;
-
-#define PI 3.14159265358979
-#define TAU 6.28318530718
-
-// Hash and noise
-float hash(vec2 p) {
-  p = fract(p * vec2(127.1, 311.7));
-  p += dot(p, p + 19.19);
-  return fract(p.x * p.y);
-}
-float hash3(vec3 p) {
-  p = fract(p * vec3(127.1, 311.7, 74.7));
-  p += dot(p, p + 19.19);
-  return fract(p.x * p.y * p.z);
-}
-float noise(vec2 p) {
-  vec2 i = floor(p), f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  return mix(
-    mix(hash(i), hash(i + vec2(1,0)), f.x),
-    mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), f.x), f.y);
-}
-float fbm(vec2 p) {
-  float v = 0.0, a = 0.5;
-  for (int i = 0; i < 5; i++) {
-    v += a * noise(p);
-    p = p * 2.1 + vec2(1.7, 9.2);
-    a *= 0.5;
-  }
-  return v;
-}
-
-// Rotation matrices
-mat3 rotX(float a) { float c=cos(a),s=sin(a); return mat3(1,0,0, 0,c,-s, 0,s,c); }
-mat3 rotY(float a) { float c=cos(a),s=sin(a); return mat3(c,0,s, 0,1,0, -s,0,c); }
-mat3 rotZ(float a) { float c=cos(a),s=sin(a); return mat3(c,-s,0, s,c,0, 0,0,1); }
-
-void main() {
-  vec2 uv = (gl_FragCoord.xy / u_res) * 2.0 - 1.0;
-  uv.x *= u_res.x / u_res.y;
-
-  float spd = 1.0 + u_energy * 3.0;
-  float T = u_t * spd;
-
-  // Ray setup
-  vec3 ro = vec3(u_mouse * 0.3, 2.5);
-  vec3 rd = normalize(vec3(uv, -1.8));
-
-  // Sphere intersection R=0.82
-  float R = 0.82;
-  float b = dot(ro, rd);
-  float c = dot(ro, ro) - R * R;
-  float disc = b*b - c;
-  if (disc < 0.0) { gl_FragColor = vec4(0.0); return; }
-
-  float sqD = sqrt(disc);
-  float tNear = -b - sqD;
-  float tFar  = -b + sqD;
-  if (tFar < 0.0) { gl_FragColor = vec4(0.0); return; }
-
-  // Edge softness
-  float edgeAA = smoothstep(0.0, 0.012, disc);
-
-  vec3 hitN = normalize(ro + rd * max(tNear, 0.0));
-  float NoV = max(dot(hitN, -rd), 0.0);
-  float fresnel = pow(1.0 - NoV, 4.0);
-
-  // ── INTERIOR VOLUMETRIC MARCH ──────────────────────────────────────────
-  // We march 20 steps through the sphere and accumulate plasma + filaments
-  float span = tFar - max(tNear, 0.0);
-  float tStart = max(tNear, 0.0);
-
-  vec3 plasma = vec3(0.0);
-  float alpha_acc = 0.0;
-
-  for (int i = 0; i < 20; i++) {
-    float fi = (float(i) + 0.5) / 20.0;
-    vec3 p = ro + rd * (tStart + span * fi);
-
-    // Rotate sample point over time for swirling
-    p = rotY(T * 0.18) * rotX(T * 0.11) * p;
-
-    float r = length(p);
-    vec3 n = p / r;
-
-    // Spherical coords for surface patterns
-    float theta = acos(clamp(n.y, -1.0, 1.0));
-    float phi   = atan(n.z, n.x);
-
-    // ── Plasma filaments: fbm layered on sphere surface
-    vec2 sph = vec2(phi / TAU + 0.5, theta / PI);
-    float f1 = fbm(sph * 4.0 + vec2(T * 0.12, T * 0.07));
-    float f2 = fbm(sph * 7.0 - vec2(T * 0.09, T * 0.15) + f1);
-    float f3 = fbm(sph * 12.0 + vec2(T * 0.06) + f2 * 0.5);
-
-    // Ribbon mask - sharp bright streaks
-    float ribbon = pow(abs(sin(f2 * PI * 3.0 + T * 0.4)), 8.0);
-    ribbon += pow(abs(sin(f3 * PI * 5.0 - T * 0.3)), 12.0) * 0.5;
-
-    // Core glow - hot center
-    float core = exp(-r * r * 3.5) * (1.0 + u_energy * 2.0);
-
-    // ── Color palette (IMAGE REFERENCE: gold/white core, blue/violet ribbons) ──
-    // Deep interior: gold and white heat
-    vec3 coreColor = mix(
-      vec3(1.0, 0.65, 0.1),   // gold
-      vec3(1.0, 0.95, 0.85),  // white hot
-      core
-    );
-    // Ribbon color: electric blue → violet → rose
-    float hue = fract(f1 * 0.5 + T * 0.04);
-    vec3 ribbonColor = mix(
-      mix(vec3(0.1, 0.5, 1.0), vec3(0.6, 0.2, 1.0), hue),        // blue→violet
-      mix(vec3(0.6, 0.2, 1.0), vec3(1.0, 0.2, 0.5), hue * 2.0 - 1.0), // violet→rose
-      step(0.5, hue)
-    );
-
-    // Depth fade - brighter toward front
-    float depth = (1.0 - fi) * 0.6 + 0.4;
-
-    // Accumulate
-    vec3 contrib = (ribbonColor * ribbon * 2.5 + coreColor * core * 4.0) * depth;
-
-    // When thinking: add turbulent energy bursts
-    float burst = u_energy * pow(abs(sin(f3 * PI * 8.0 + T * 1.2)), 6.0) * 3.0;
-    contrib += vec3(0.8, 0.4, 1.0) * burst * depth;
-
-    plasma += contrib / 20.0;
-    alpha_acc += (ribbon * 0.15 + core * 0.3 + burst * 0.1) / 20.0;
-  }
-
-  // ── GLASS SHELL ─────────────────────────────────────────────────────────
-  // Thin iridescent shell that refracts the interior
-  vec3 shellColor = mix(
-    vec3(0.3, 0.5, 1.0),   // inner: cool blue
-    vec3(0.9, 0.7, 1.0),   // edge: pale violet
-    fresnel
-  );
-
-  // Specular highlights - two sharp caustic points
-  vec3 L1 = normalize(vec3(-0.6, 0.8, 0.5));
-  float spec1 = pow(max(dot(hitN, normalize(L1 - rd)), 0.0), 280.0) * 3.0;
-  vec3 L2 = normalize(vec3(0.5, -0.3, 0.8));
-  float spec2 = pow(max(dot(hitN, normalize(L2 - rd)), 0.0), 120.0) * 1.2;
-
-  // Rim glow - backlit halo
-  float rim = pow(fresnel, 1.5) * 0.8;
-  vec3 rimColor = mix(vec3(0.2, 0.4, 1.0), vec3(0.8, 0.3, 1.0), sin(T * 0.3) * 0.5 + 0.5);
-
-  // ── COMPOSITE ───────────────────────────────────────────────────────────
-  vec3 col = plasma * 1.4;
-  col += shellColor * (fresnel * 0.3 + rim);
-  col += vec3(1.0, 0.97, 0.9) * (spec1 + spec2);
-
-  // Tone map with filmic curve
-  col = col / (col + vec3(0.7));
-  col = pow(max(col, 0.0), vec3(0.85));
-
-  // Alpha: glass shell edge + interior density
-  float alpha = edgeAA * clamp(
-    fresnel * 0.6 + alpha_acc * 2.5 + spec1 * 0.3,
-    0.0, 1.0
-  );
-
-  gl_FragColor = vec4(col * alpha, alpha);
-}
-`;
-
-class OrbSpring {
-  x = 0; y = 0; vx = 0; vy = 0; tx = 0; ty = 0;
-  step(stiffness = 0.062, damping = 0.86) {
-    this.vx += (this.tx - this.x) * stiffness; this.vy += (this.ty - this.y) * stiffness;
-    this.vx *= damping; this.vy *= damping;
-    this.x += this.vx; this.y += this.vy;
-  }
-}
 
 function WatsonOrb({ size, thinking }: { size: number; thinking?: boolean }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const spring = useRef(new OrbSpring());
-  const raf = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef(0);
   const energyRef = useRef(0);
   const thinkingRef = useRef(!!thinking);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const isMobile = useMobile();
 
   useEffect(() => {
     thinkingRef.current = !!thinking;
   }, [thinking]);
 
   useEffect(() => {
-    const canvas = ref.current!;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(size * dpr);
-    canvas.height = Math.round(size * dpr);
-    const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true });
-    if (!gl) return;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const mkS = (type: number, src: string) => {
-      const s = gl.createShader(type)!;
-      gl.shaderSource(s, src); gl.compileShader(s); return s;
+    const r = size / 2;
+    const cx = r;
+    const cy = r;
+
+    const drawFrame = (ts: number) => {
+      // Ease energy toward target based on thinking
+      const target = thinkingRef.current ? 1 : 0;
+      energyRef.current += (target - energyRef.current) * 0.06;
+      const energy = energyRef.current;
+
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      // Clip to circle
+      ctx.beginPath();
+      ctx.arc(0, 0, r - 1, 0, Math.PI * 2);
+      ctx.clip();
+
+      // Background disc
+      const bgGrad = ctx.createRadialGradient(0, -r * 0.3, r * 0.1, 0, 0, r);
+      if (isDark) {
+        bgGrad.addColorStop(0, "rgba(12,16,40,1)");
+        bgGrad.addColorStop(1, "rgba(4,6,20,1)");
+      } else {
+        bgGrad.addColorStop(0, "rgba(246,246,244,1)");
+        bgGrad.addColorStop(1, "rgba(225,225,220,1)");
+      }
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(-r, -r, size, size);
+
+      // Subtle concentric ring
+      ctx.beginPath();
+      ctx.arc(0, 0, r - 3, 0, Math.PI * 2);
+      ctx.strokeStyle = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Waveform path (inside circle, horizontal)
+      const waveHeight = r * (0.20 + energy * 0.10);
+      const waveY = 0;
+      const baseFreq = 2.2;
+      const t = ts * 0.001 * (isMobile ? 0.5 : 1);
+
+      ctx.beginPath();
+      const steps = 80;
+      for (let i = 0; i <= steps; i++) {
+        const u = i / steps;
+        const x = (u - 0.5) * (r * 1.7);
+        const env = Math.cos(u * Math.PI); // center emphasis
+        const y =
+          waveY +
+          Math.sin(u * baseFreq * Math.PI * 2 + t * 1.2) * waveHeight * env * 0.8 +
+          Math.sin(u * (baseFreq * 0.6) * Math.PI * 2 - t * 0.8) * waveHeight * env * 0.35;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+
+      const waveGrad = ctx.createLinearGradient(-r, 0, r, 0);
+      if (isDark) {
+        waveGrad.addColorStop(0, "rgba(74,144,245,0.0)");
+        waveGrad.addColorStop(0.25, "rgba(74,144,245,0.55)");
+        waveGrad.addColorStop(0.5, "rgba(200,150,26,0.9)");
+        waveGrad.addColorStop(0.75, "rgba(160,128,245,0.65)");
+        waveGrad.addColorStop(1, "rgba(160,128,245,0.0)");
+      } else {
+        waveGrad.addColorStop(0, "rgba(74,144,245,0.15)");
+        waveGrad.addColorStop(0.5, "rgba(200,150,26,0.6)");
+        waveGrad.addColorStop(1, "rgba(160,128,245,0.15)");
+      }
+      ctx.strokeStyle = waveGrad;
+      ctx.lineWidth = isMobile ? 1.1 : 1.4;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      // Small center dot
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = isDark ? "rgba(232,232,230,0.85)" : "rgba(12,12,10,0.9)";
+      ctx.fill();
+
+      ctx.restore();
+
+      if (!isMobile) {
+        rafRef.current = requestAnimationFrame(drawFrame);
+      }
     };
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, mkS(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(prog, mkS(gl.FRAGMENT_SHADER, ORB_FRAG));
-    gl.linkProgram(prog); gl.useProgram(prog);
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
-    const al = gl.getAttribLocation(prog, "a");
-    gl.enableVertexAttribArray(al); gl.vertexAttribPointer(al, 2, gl.FLOAT, false, 0, 0);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    const uT      = gl.getUniformLocation(prog, "u_t");
-    const uR      = gl.getUniformLocation(prog, "u_res");
-    const uMouse  = gl.getUniformLocation(prog, "u_mouse");
-    const uEnergy = gl.getUniformLocation(prog, "u_energy");
+    // Initial static frame
+    drawFrame(performance.now());
+    if (!isMobile) {
+      rafRef.current = requestAnimationFrame(drawFrame);
+    }
 
-    const onMove = (e: MouseEvent) => {
-      spring.current.tx = (e.clientX / window.innerWidth  - 0.5) * 2.2;
-      spring.current.ty = (e.clientY / window.innerHeight - 0.5) * 2.2;
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-    window.addEventListener("mousemove", onMove);
+  }, [size, isDark, isMobile]);
 
-    const draw = (ts: number) => {
-      const targetEnergy = thinkingRef.current ? 1 : 0;
-      energyRef.current += (targetEnergy - energyRef.current) * 0.035;
-      spring.current.step(0.058, 0.88);
+  const glowSize = size * (thinking ? 1.5 : 1.3);
+  const glowOpacity = thinking ? 0.5 : 0.28;
 
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform1f(uT, ts * 0.001);
-      gl.uniform1f(uEnergy, energyRef.current);
-      gl.uniform2f(uR, canvas.width, canvas.height);
-      gl.uniform2f(uMouse, spring.current.x, spring.current.y);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      raf.current = requestAnimationFrame(draw);
-    };
-    raf.current = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(raf.current); window.removeEventListener("mousemove", onMove); };
-  }, [size]);
-  const glowInset = thinking ? -size * 0.6 : -size * 0.25;
-  const glowBlur = size * (thinking ? 0.12 : 0.05);
-  const glowBg = thinking
-    ? "radial-gradient(circle, rgba(200,140,20,0.3) 0%, rgba(100,60,255,0.2) 40%, transparent 70%)"
-    : "radial-gradient(circle, rgba(100,80,255,0.15) 0%, rgba(200,140,20,0.08) 50%, transparent 70%)";
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
-      {/* Outer atmosphere */}
-      <div style={{
-        position: "absolute",
-        inset: glowInset,
-        borderRadius: "50%",
-        background: glowBg,
-        animation: "none",
-        pointerEvents: "none",
-        transition: "all 0.8s ease",
-        filter: `blur(${glowBlur}px)`,
-      }} />
-      <canvas ref={ref} style={{ width: size, height: size, borderRadius: "50%", display: "block", position: "relative", zIndex: 1 }} />
+      {/* Soft outer glow */}
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: glowSize,
+          height: glowSize,
+          marginLeft: -glowSize / 2,
+          marginTop: -glowSize / 2,
+          borderRadius: "50%",
+          background: isDark
+            ? "radial-gradient(circle at 50% 35%, rgba(200,150,26,0.35), transparent 70%)"
+            : "radial-gradient(circle at 50% 35%, rgba(200,150,26,0.25), transparent 70%)",
+          opacity: glowOpacity,
+          filter: "blur(16px)",
+          pointerEvents: "none",
+          transition: "opacity 0.4s ease, transform 0.4s ease",
+          transform: thinking ? "scale(1.02)" : "scale(1)",
+        }}
+      />
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: size,
+          height: size,
+          display: "block",
+          borderRadius: "50%",
+          position: "relative",
+          zIndex: 1,
+          boxShadow: isDark
+            ? "0 14px 40px rgba(0,0,0,0.65)"
+            : "0 10px 30px rgba(0,0,0,0.18)",
+        }}
+      />
     </div>
   );
 }
