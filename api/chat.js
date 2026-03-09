@@ -15,8 +15,13 @@ RULES:
 
 OUTPUT TYPES: essay, newsletter, presentation, social, podcast, video, sunday_story, freestyle.`;
 
-function buildWatsonSystem(outputType) {
-  return `${WATSON_SYSTEM}\n\nCurrent output type for this session: ${outputType || "freestyle"}. Ask questions that clarify the idea, the audience, and any specifics needed to create it.`;
+function buildWatsonSystem(outputType, voiceProfile) {
+  let system = WATSON_SYSTEM;
+  if (voiceProfile) {
+    system += `\n\nUSER VOICE PROFILE:\n- Role: ${voiceProfile.role}\n- Audience: ${voiceProfile.audience}\n- Tone: ${voiceProfile.tone}\n- Writing sample: "${voiceProfile.writing_sample?.slice(0, 400)}"\n\nMatch this person's voice exactly when summarizing their ideas.`;
+  }
+  system += `\n\nCurrent output type: ${outputType || "freestyle"}.`;
+  return system;
 }
 
 export default async function handler(req, res) {
@@ -30,7 +35,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured." });
 
-  const { messages = [], outputType = "freestyle" } = req.body;
+  const { messages = [], outputType = "freestyle", voiceProfile = null } = req.body;
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array required." });
   }
@@ -45,7 +50,7 @@ export default async function handler(req, res) {
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: buildWatsonSystem(outputType),
+      system: buildWatsonSystem(outputType, voiceProfile),
       messages: claudeMessages,
     });
 

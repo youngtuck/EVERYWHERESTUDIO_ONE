@@ -48,7 +48,19 @@ const AuthPage = () => {
         setSubmitError("Check your email to confirm your account.");
         return;
       }
-      navigate("/studio/dashboard");
+      // After successful sign-in, route based on onboarding completion
+      const { data: authed } = await supabase.auth.getUser();
+      const authedUser = authed.user;
+      if (!authedUser) { navigate("/auth"); return; }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_complete")
+        .eq("id", authedUser.id)
+        .single();
+
+      if (!profile?.onboarding_complete) navigate("/onboarding");
+      else navigate("/studio/dashboard");
     } catch (err) {
       setSubmitError("Something went wrong. Please try again.");
     }

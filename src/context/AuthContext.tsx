@@ -28,10 +28,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      if (event === "SIGNED_IN" && session?.user) {
+        (async () => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("onboarding_complete")
+            .eq("id", session.user.id)
+            .single();
+
+          const path = window.location.pathname;
+          if (!profile?.onboarding_complete) {
+            if (path !== "/onboarding") window.location.href = "/onboarding";
+          } else {
+            if (path === "/auth" || path === "/onboarding") window.location.href = "/studio/dashboard";
+          }
+        })();
+      }
     });
 
     return () => subscription.unsubscribe();

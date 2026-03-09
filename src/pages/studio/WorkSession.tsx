@@ -605,7 +605,11 @@ async function requestWithRetry(
   throw lastErr || new Error("Something went wrong. Try again.");
 }
 
-async function chatWithWatson(messages: { role: string; content: string }[], outputTypeApi: string): Promise<{ reply: string; readyToGenerate: boolean }> {
+async function chatWithWatson(
+  messages: { role: string; content: string }[],
+  outputTypeApi: string,
+  voiceProfile: object | null
+): Promise<{ reply: string; readyToGenerate: boolean }> {
   const url = `${API_BASE}/api/chat`;
   const res = await requestWithRetry(
     url,
@@ -618,6 +622,7 @@ async function chatWithWatson(messages: { role: string; content: string }[], out
           content: m.content,
         })),
         outputType: outputTypeApi,
+        voiceProfile,
       }),
     },
     FETCH_TIMEOUT_MS
@@ -625,14 +630,14 @@ async function chatWithWatson(messages: { role: string; content: string }[], out
   return res.json();
 }
 
-async function generateOutput(conversationSummary: string, outputTypeApi: string): Promise<{ content: string; score: number }> {
+async function generateOutput(conversationSummary: string, outputTypeApi: string, voiceProfile: object | null): Promise<{ content: string; score: number }> {
   const url = `${API_BASE}/api/generate`;
   const res = await requestWithRetry(
     url,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ conversationSummary, outputType: outputTypeApi }),
+      body: JSON.stringify({ conversationSummary, outputType: outputTypeApi, voiceProfile }),
     },
     FETCH_TIMEOUT_MS
   );
@@ -653,10 +658,21 @@ export default function WorkSession() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedScore, setGeneratedScore] = useState(0);
   const [generatedOutputId, setGeneratedOutputId] = useState<string>("new");
+  const [voiceProfile, setVoiceProfile] = useState<object | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
   const outputTypeApi = OUTPUT_TYPE_TO_API[outputType] || "freestyle";
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("voice_profile")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => setVoiceProfile(data?.voice_profile || null));
+  }, [user]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -691,7 +707,7 @@ export default function WorkSession() {
     const chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi);
+      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile);
       setMessages(prev => [...prev, {
         id: "w-" + Date.now(),
         role: "assistant",
@@ -716,7 +732,7 @@ export default function WorkSession() {
       .join("\n\n");
 
     try {
-      const { content, score } = await generateOutput(conversationSummary, outputTypeApi);
+      const { content, score } = await generateOutput(conversationSummary, outputTypeApi, voiceProfile);
       setGeneratedContent(content);
       setGeneratedScore(score);
 

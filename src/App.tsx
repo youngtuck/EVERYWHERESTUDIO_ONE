@@ -18,6 +18,7 @@ import ProjectDetail from "./pages/studio/ProjectDetail";
 import Resources from "./pages/studio/Resources";
 import Settings from "./pages/studio/Settings";
 import VoiceDnaSettings from "./pages/studio/VoiceDnaSettings";
+import Onboarding from "./pages/studio/Onboarding";
 import TheLot from "./pages/studio/TheLot";
 
 const App = () => (
@@ -29,6 +30,7 @@ const App = () => (
         <Route path="/" element={<Index />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/studio" element={<ProtectedRoute><StudioShell /></ProtectedRoute>}>
           <Route index element={<Navigate to="/studio/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
