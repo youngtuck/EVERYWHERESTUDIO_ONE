@@ -12,6 +12,7 @@ import Watch from "./pages/studio/Watch";
 import OutputLibrary from "./pages/studio/OutputLibrary";
 import OutputDetail from "./pages/studio/OutputDetail";
 import Projects from "./pages/studio/Projects";
+import ProjectDetail from "./pages/studio/ProjectDetail";
 import Resources from "./pages/studio/Resources";
 import Settings from "./pages/studio/Settings";
 import VoiceDnaSettings from "./pages/studio/VoiceDnaSettings";
@@ -34,7 +35,7 @@ const App = () => (
           <Route path="outputs" element={<OutputLibrary />} />
           <Route path="outputs/:id" element={<OutputDetail />} />
           <Route path="projects" element={<Projects />} />
-          <Route path="projects/:id" element={<Projects />} />
+          <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="resources" element={<Resources />} />
           <Route path="settings" element={<Settings />} />
           <Route path="settings/voice" element={<VoiceDnaSettings />} />
