@@ -934,9 +934,23 @@ export default function ExplorePage() {
           {/* Warm brand halo behind headline */}
           <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:0,background:"radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,150,26,0.03) 0%, transparent 70%)"}} />
 
-          {/* Eyebrow */}
-          <div style={{position:"relative",zIndex:2,fontSize:10,letterSpacing:".22em",color:T.textFaint,textTransform:"uppercase",marginBottom:18,fontWeight:500,opacity:mounted?1:0,transition:"opacity .8s .3s ease"}}>
-            Composed Intelligence
+          {/* Eyebrow: primary category label */}
+          <div
+            style={{
+              position:"relative",
+              zIndex:2,
+              fontSize:13,
+              letterSpacing:".25em",
+              color:"#C8961A",
+              textTransform:"uppercase",
+              marginBottom:18,
+              fontWeight:600,
+              opacity:mounted?1:0,
+              transform:mounted?"none":"translateY(4px)",
+              transition:"opacity .8s .3s ease, transform .8s .3s cubic-bezier(.16,1,.3,1)",
+            }}
+          >
+            COMPOSED INTELLIGENCE
           </div>
 
           {/* Headline */}
@@ -1080,7 +1094,7 @@ export default function ExplorePage() {
           <div style={{maxWidth:920,margin:"0 auto"}}>
             <FadeInSection>
               <div style={{textAlign:"center",marginBottom:16}}>
-                <div style={{fontSize:9,letterSpacing:".22em",color:T.textFaint,textTransform:"uppercase",marginBottom:18,fontWeight:500}}>The Framework</div>
+                <div style={{fontSize:11,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:18,fontWeight:500}}>The Framework</div>
                 <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.text,marginBottom:4}}>One idea in.</div>
                 <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.gold,marginBottom:20}}>Communications out.</div>
                 <p style={{fontSize:14,color:T.textSub,maxWidth:420,margin:"0 auto",lineHeight:1.72}}>EVERYWHERE Studio bridges what you know and what the world sees.</p>
@@ -1112,7 +1126,7 @@ export default function ExplorePage() {
               <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:"36px 60px",alignItems:"end",marginBottom:44}}>
                 <div>
                   <FadeUp>
-                    <div style={{display:"inline-flex",alignItems:"center",fontSize:9,letterSpacing:".2em",color:T.wrapA,textTransform:"uppercase",marginBottom:14,fontWeight:700,borderLeft:"2px solid #C8961A",paddingLeft:12}}>
+                    <div style={{display:"inline-flex",alignItems:"center",fontSize:11,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:14,fontWeight:500,borderLeft:"2px solid #C8961A",paddingLeft:12}}>
                       Quality Gates
                     </div>
                   </FadeUp>
@@ -1197,7 +1211,7 @@ export default function ExplorePage() {
         >
           <div style={{maxWidth:540,margin:"0 auto"}}>
             <FadeInSection>
-              <div style={{fontSize:9,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:24,fontWeight:500}}>Let's Talk</div>
+              <div style={{fontSize:11,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:24,fontWeight:500}}>Let's Talk</div>
               <WordReveal text="Your ideas deserve a system built to carry them." size="clamp(28px,4vw,52px)" weight={700} lh={1.02} color={T.text} center />
               <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
               <FadeUp delay={0.26}>
