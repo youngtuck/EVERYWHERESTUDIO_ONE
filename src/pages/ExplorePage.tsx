@@ -47,8 +47,10 @@ void main(){
   float phi=atan(Nrot.z,Nrot.x);
   float theta=acos(clamp(Nrot.y,-1.0,1.0));
 
-  float breath=0.88+0.12*sin(u_t*1.2)*sin(u_t*0.8);
+  float breath = 0.86 + 0.10*sin(u_t*1.1)*sin(u_t*0.73) + 0.04*sin(u_t*2.3 + 0.8);
   float spd=1.0+u_energy*2.2;
+  float orbRot = u_t * 0.055;
+  float crr = cos(orbRot), srr = sin(orbRot);
   float t=u_t*spd*breath;
 
   float span=t2-t1;
@@ -59,6 +61,7 @@ void main(){
     float fi=float(i)/float(steps-1);
     float ti=t1+span*(fi*0.88+0.06);
     vec3 p=ro+rd*ti;
+    p.xz = vec2(crr*p.x - srr*p.z, srr*p.x + crr*p.z);
     p.yz=rot2(rx)*p.yz;
     p.xz=rot2(ry)*p.xz;
     float r=length(p)/R;
@@ -69,6 +72,9 @@ void main(){
     float flowA=sin(phiP*2.5+t*1.1)*cos(thetaP*2.0-t*0.7)*0.5+0.5;
     float flowB=cos(phiP*3.5-t*0.9)*sin(thetaP*3.0+t*1.0)*0.5+0.5;
     float band=sin(phiP*5.0+thetaP*4.0+t*0.8)*0.5+0.5;
+    float thread1 = sin(phiP*8.0 + thetaP*5.0 + u_t*1.8)*0.5 + 0.5;
+    float thread2 = cos(phiP*6.0 - thetaP*7.0 - u_t*1.3)*0.5 + 0.5;
+    float threads = thread1 * thread2 * smoothstep(0.3, 0.7, r) * smoothstep(1.0, 0.55, r);
     float layer2=(0.4+0.4*flowA)*(0.5+0.4*flowB)*smoothstep(0.2,0.85,r);
     float layer3=(0.35+0.35*band)*smoothstep(0.0,0.6,r)*smoothstep(1.0,0.5,r);
 
@@ -77,6 +83,10 @@ void main(){
     vec3 outerCol=mix(u_c4,u_c1,band*0.5+0.5);
 
     vec3 layerCol=coreCol*core+midCol*layer2*0.85+outerCol*layer3*0.6;
+    float deepPulse = sin(r*4.0 - u_t*0.35 + phiP*1.5)*0.5 + 0.5;
+    float deepGlow = exp(-r*r*1.8)*deepPulse*(0.5 + 0.3*sin(u_t*0.22));
+    layerCol += u_c2 * deepGlow * 0.7;
+    layerCol += mix(u_c3, u_c4, thread1) * threads * 0.45;
     float density=(core*1.2+layer2+layer3*0.7)*(1.0-fi*0.35)*(1.0+u_energy*0.4)*0.065;
     energyAcc+=layerCol*density;
     denAcc+=density;
@@ -100,7 +110,7 @@ void main(){
   vec3 shellDark=mix(vec3(0.38,0.52,0.82),u_c1,0.35);
   vec3 shellLight=mix(vec3(0.85,0.90,0.98),u_c1,0.15);
   vec3 shell=mix(shellDark,shellLight,u_light);
-  vec3 glassRim=shell*fresnel*1.35+u_c1*rim*0.85;
+  vec3 glassRim = shell*fresnel*1.65 + u_c1*rim*1.2 + u_c2*pow(1.0-NoV,6.0)*0.5;
 
   vec3 L1=normalize(vec3(-.5,.9,.6)),H1=normalize(L1+V);
   float s1=pow(max(dot(N,H1),0.0),240.)*1.6;
@@ -111,7 +121,8 @@ void main(){
   float interiorMix=0.72*(1.0-fresnel*0.5)+0.15*NoV;
   vec3 col=energyAcc*interiorMix+surfaceGlow+glassRim+spec;
   float centerGlow=exp(-dot(uv,uv)*2.0)*breath*(0.45+u_energy*0.35);
-  col+=mix(u_c1,vec3(0.55,0.72,0.95),0.4)*centerGlow;
+  col += mix(u_c1, u_c2, 0.5) * centerGlow * 1.6;
+  col += u_c1 * exp(-dot(uv,uv)*5.5) * breath * 0.35;
 
   col=mix(col,col*1.08,u_light);
   col=col/(col+0.88);
