@@ -4,35 +4,15 @@ import StudioSidebar from "./StudioSidebar";
 import { useMobile } from "../../hooks/useMobile";
 
 // ── Page transition wrapper ────────────────────────────────────────────────
-// Slides in fresh content with a 280ms ease on every route change.
+// Light, single-direction enter animation on route change (no fade-to-empty).
 function PageSlide({ children, routeKey }: { children: ReactNode; routeKey: string }) {
-  const [visible, setVisible] = useState(false);
-  const [key, setKey] = useState(routeKey);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => {
-    if (routeKey === key) {
-      setVisible(true);
-      return;
-    }
-    setVisible(false);
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setKey(routeKey);
-      setVisible(true);
-    }, 120);
-    return () => clearTimeout(timerRef.current);
-  }, [routeKey, key]);
-
   return (
     <div
-      key={key}
+      key={routeKey}
       style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(8px)",
-        transition: visible
-          ? "opacity 0.28s cubic-bezier(0.16,1,0.3,1), transform 0.28s cubic-bezier(0.16,1,0.3,1)"
-          : "opacity 0.10s ease, transform 0.10s ease",
+        opacity: 1,
+        transform: "translateY(0)",
+        animation: "studioPageEnter 0.24s cubic-bezier(0.16,1,0.3,1)",
         height: "100%",
       }}
     >
