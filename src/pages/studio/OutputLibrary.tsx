@@ -97,34 +97,100 @@ export default function OutputLibrary() {
           Loading outputs…
         </div>
       ) : (
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {filtered.map(o => (
-          <button key={o.id} onClick={() => navigate(`/studio/outputs/${o.id}`)} style={{
-            display: "flex", alignItems: "center", gap: 14,
-            background: "none", border: "none", borderRadius: "var(--studio-radius)", padding: "12px 12px",
-            cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", width: "100%",
-            transition: "background .12s",
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--bg-2)"}
-            onMouseLeave={e => e.currentTarget.style.background = "none"}
-          >
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[o.output_type] || "#4A90D9", flexShrink: 0 }} />
-            <span style={{ flex: 1, fontSize: 14, color: "var(--fg)", fontWeight: 400, letterSpacing: "-.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.title}</span>
-            <span style={{ fontSize: 11, color: "var(--fg-3)", width: 90, flexShrink: 0 }}>{TYPE_LABELS[o.output_type] || o.output_type}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(o.score), width: 42, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
-            <span style={{
-              fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
-              background: "rgba(80,200,160,.1)",
-              color: "#50c8a0",
-              border: "1px solid rgba(80,200,160,.2)",
-            }}>saved</span>
-            <span style={{ fontSize: 11, color: "var(--fg-3)", width: 48, textAlign: "right", flexShrink: 0 }}>{formatDate(o.created_at)}</span>
-          </button>
-        ))}
-        {filtered.length === 0 && (
-          <div style={{ padding: "48px", textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>No outputs match your search.</div>
+      <>
+        {outputs.length === 0 ? (
+          <div style={{ padding: 48, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 260 }}>
+            <div
+              className="card"
+              style={{
+                maxWidth: 420,
+                width: "100%",
+                padding: "32px 28px 28px",
+                position: "relative",
+                overflow: "hidden",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  opacity: 0.35,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 72,
+                    fontWeight: 800,
+                    color: "rgba(255,255,255,0.06)",
+                    letterSpacing: "-0.08em",
+                  }}
+                >
+                  0
+                </span>
+              </div>
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>
+                  Nothing here yet
+                </div>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "var(--fg-3)",
+                    lineHeight: 1.6,
+                    maxWidth: 320,
+                    margin: "0 auto 20px",
+                  }}
+                >
+                  Every output you create with Watson will appear here, scored and ready to use.
+                </p>
+                <button
+                  onClick={() => navigate("/studio/work/new")}
+                  className="btn-primary"
+                  style={{ padding: "12px 24px" }}
+                >
+                  Start your first session
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {filtered.map(o => (
+              <button key={o.id} onClick={() => navigate(`/studio/outputs/${o.id}`)} style={{
+                display: "flex", alignItems: "center", gap: 14,
+                background: "none", border: "none", borderRadius: "var(--studio-radius)", padding: "12px 12px",
+                cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", width: "100%",
+                transition: "background .12s",
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-2)"}
+                onMouseLeave={e => e.currentTarget.style.background = "none"}
+              >
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[o.output_type] || "#4A90D9", flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 14, color: "var(--fg)", fontWeight: 400, letterSpacing: "-.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.title}</span>
+                <span style={{ fontSize: 11, color: "var(--fg-3)", width: 90, flexShrink: 0 }}>{TYPE_LABELS[o.output_type] || o.output_type}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(o.score), width: 42, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
+                <span style={{
+                  fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
+                  background: "rgba(80,200,160,.1)",
+                  color: "#50c8a0",
+                  border: "1px solid rgba(80,200,160,.2)",
+                }}>saved</span>
+                <span style={{ fontSize: 11, color: "var(--fg-3)", width: 48, textAlign: "right", flexShrink: 0 }}>{formatDate(o.created_at)}</span>
+              </button>
+            ))}
+            {filtered.length === 0 && outputs.length > 0 && (
+              <div style={{ padding: "48px", textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>
+                No outputs match your search.
+              </div>
+            )}
+          </div>
         )}
-      </div>
+      </>
       )}
     </div>
   );
