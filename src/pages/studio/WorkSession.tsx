@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { FileText } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB — Siri-inspired volumetric orb.
@@ -264,21 +265,24 @@ function WatsonOrb({ size, thinking }: { size: number; thinking: boolean }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: string }> = {
-  essay:        { label: "Essay",           color: "#4A90D9", watson: "What's the central argument you want to make? Give me the rough idea and I'll ask the questions that pull it into focus." },
-  podcast:      { label: "Podcast",         color: "#F5C642", watson: "What's this episode about? Tell me the topic and who you're talking to, and we'll shape the conversation from there." },
-  newsletter:   { label: "Newsletter",      color: "#50c8a0", watson: "What's the story this week? What happened, what did you observe, what shifted? Start wherever feels natural." },
-  social:       { label: "Social Media",    color: "#a080f5", watson: "What's the idea you want to put out there? Give me the raw thought and we'll find the right angle and format." },
-  video:        { label: "Video Script",    color: "#e85d75", watson: "What's the video about? What's the one thing you want the viewer to walk away knowing or feeling?" },
-  presentation: { label: "Presentation",   color: "#F5A623", watson: "What's the presentation for? Tell me the audience, the occasion, and the outcome you're driving toward." },
-  sunday_story: { label: "Sunday Story",   color: "#F5C642", watson: "What's the story this week? The experience, the insight, the moment that's worth sharing. Start anywhere." },
-  freestyle:    { label: "Freestyle",       color: "#4A90D9", watson: "What are we making? Describe it in your own words, any format, any length. I'll build it." },
+  linkedin_post:   { label: "LinkedIn Post",   color: "#4A90D9", watson: "What's the idea you want to put out there? Give me the raw thought and we'll find the right angle." },
+  newsletter:      { label: "Newsletter",      color: "#50c8a0", watson: "What's the story this week? What happened, what did you observe, what shifted? Start wherever feels natural." },
+  sunday_story:    { label: "Sunday Story",   color: "#F5C642", watson: "What's the story this week? The experience, the insight, the moment that's worth sharing. Start anywhere." },
+  podcast_script:  { label: "Podcast Script",  color: "#F5C642", watson: "What's this episode about? Tell me the topic and who you're talking to, and we'll shape the conversation from there." },
+  twitter_thread:  { label: "Twitter Thread",  color: "#a080f5", watson: "What's the thread about? Give me the core idea and the hook — we'll break it into beats." },
+  essay:           { label: "Essay",          color: "#4A90D9", watson: "What's the central argument you want to make? Give me the rough idea and I'll ask the questions that pull it into focus." },
+  short_video:     { label: "Short Video",    color: "#e85d75", watson: "What's the video about? What's the one thing you want the viewer to walk away knowing or feeling?" },
+  substack_note:   { label: "Substack Note",  color: "#50c8a0", watson: "What's the note? A take, a link, a short reflection — tell me what's on your mind." },
+  talk_outline:    { label: "Talk Outline",   color: "#F5A623", watson: "What's the talk for? Tell me the audience, the occasion, and the outcome you're driving toward." },
+  email_campaign:  { label: "Email Campaign",  color: "#0D8C9E", watson: "What's the campaign goal? Who's it for, what's the sequence, and what's the one action you want them to take?" },
+  blog_post:       { label: "Blog Post",      color: "#4A90D9", watson: "What's the post about? Give me the topic and the angle — we'll structure it for the web." },
+  executive_brief: { label: "Executive Brief", color: "#6b4dd4", watson: "What's the brief for? Audience, key points, and the decision or outcome you're supporting." },
 };
 
-const OUTPUT_TYPE_GROUPS = [
-  { label: "Long Form",  types: ["essay", "podcast", "newsletter"] },
-  { label: "Short Form", types: ["social", "video"] },
-  { label: "Structured", types: ["presentation", "sunday_story", "freestyle"] },
-];
+const OUTPUT_TYPE_KEYS = [
+  "linkedin_post", "newsletter", "sunday_story", "podcast_script", "twitter_thread", "essay",
+  "short_video", "substack_note", "talk_outline", "email_campaign", "blog_post", "executive_brief",
+] as const;
 
 interface Message {
   id: string;
@@ -385,21 +389,24 @@ function MessageBubble({ msg, thinking }: { msg: Message; thinking?: boolean }) 
   );
 }
 
-// Empty state - shown when no messages
+// Empty state - shown when no messages (or only Watson opening)
 function EmptyState({ outputType, onSuggestion }: { outputType: string; onSuggestion: (s: string) => void }) {
-  const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.freestyle;
+  const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
   const suggestions: Record<string, string[]> = {
-    essay:        ["I want to write about the future of remote work", "Help me make the case for slow thinking in a fast world", "I have a contrarian take on productivity culture"],
-    podcast:      ["Solo episode on what I learned from a bad hire", "Interview prep for a conversation about AI and creativity", "Topic breakdown for my next 3 episodes"],
-    newsletter:   ["This week I had a revelation about how I was wasting mornings", "I want to share what happened at our team offsite", "Thoughts on a book I just finished"],
-    social:       ["LinkedIn post about why most advice is wrong", "Twitter thread on my creative process", "Short video script about a mistake I made"],
-    video:        ["60-second take on why execution beats ideas", "Explainer video on my consulting framework", "Behind-the-scenes look at how I actually work"],
-    presentation: ["Keynote for a leadership summit, 45 minutes", "Sales deck for a new service offering", "Team strategy presentation for Q2"],
-    sunday_story: ["This week was about a conversation I almost avoided", "Story about a failure that turned into a framework", "Reflection on year three of running my business"],
-    freestyle:    ["I need a bio for a conference website", "Write an executive summary of my thesis", "Create a one-page overview of my methodology"],
+    linkedin_post:   ["I want to write about the future of remote work", "Why most advice about delegation is wrong", "What I learned from 500 conversations"],
+    newsletter:      ["This week I had a revelation about how I was wasting mornings", "I want to share what happened at our team offsite", "Thoughts on a book I just finished"],
+    sunday_story:    ["This week was about a conversation I almost avoided", "Story about a failure that turned into a framework", "Reflection on year three of running my business"],
+    podcast_script:  ["Solo episode on what I learned from a bad hire", "Interview prep for a conversation about AI and creativity", "Topic breakdown for my next 3 episodes"],
+    twitter_thread:  ["Thread on my creative process", "Why execution beats ideas", "The one thing most consultants miss"],
+    essay:           ["I want to write about the future of remote work", "Help me make the case for slow thinking in a fast world", "I have a contrarian take on productivity culture"],
+    short_video:     ["60-second take on why execution beats ideas", "Explainer video on my consulting framework", "Behind-the-scenes look at how I actually work"],
+    substack_note:   ["A take on the latest AI news", "Link to a piece that changed my mind", "Short reflection on this week"],
+    talk_outline:    ["Keynote for a leadership summit, 45 minutes", "Sales deck for a new service offering", "Team strategy presentation for Q2"],
+    email_campaign:  ["Launch sequence for a new product", "Re-engagement series for dormant subscribers", "Nurture sequence for leads"],
+    blog_post:       ["How we built our content system", "Lessons from 10 years of thought leadership", "Why most thought leaders sound the same"],
+    executive_brief: ["Board update on Q2 strategy", "Investment memo for a new initiative", "Summary for the leadership team"],
   };
-
-  const typeSuggestions = suggestions[outputType] || suggestions.freestyle;
+  const typeSuggestions = suggestions[outputType] || suggestions.essay;
 
   return (
     <div style={{
@@ -438,7 +445,7 @@ function EmptyState({ outputType, onSuggestion }: { outputType: string; onSugges
   );
 }
 
-// Output type selector pill
+// Output type selector pill — dropdown with all 12 types
 function OutputTypePill({
   value, onChange,
 }: {
@@ -446,7 +453,7 @@ function OutputTypePill({
   onChange: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const type = OUTPUT_TYPES[value] || OUTPUT_TYPES.freestyle;
+  const type = OUTPUT_TYPES[value] || OUTPUT_TYPES.essay;
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -459,7 +466,7 @@ function OutputTypePill({
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button onClick={() => setOpen(o => !o)} style={{
+      <button type="button" onClick={() => setOpen(o => !o)} style={{
         display: "flex", alignItems: "center", gap: 6,
         background: "var(--bg-2)", border: "1px solid var(--line)",
         borderRadius: 20, padding: "5px 12px 5px 10px",
@@ -480,36 +487,31 @@ function OutputTypePill({
         <div style={{
           position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)",
           background: "var(--surface)", border: "1px solid var(--line)",
-          borderRadius: 12, padding: 6, minWidth: 200,
+          borderRadius: 12, padding: 6, minWidth: 220, maxHeight: 320, overflowY: "auto",
           boxShadow: "var(--shadow-md)", zIndex: 50,
         }}>
-          {OUTPUT_TYPE_GROUPS.map(grp => (
-            <div key={grp.label} style={{ marginBottom: 4 }}>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--fg-3)", padding: "4px 10px 6px" }}>{grp.label}</div>
-              {grp.types.map(t => {
-                const ot = OUTPUT_TYPES[t];
-                const active = t === value;
-                return (
-                  <button key={t} onClick={() => { onChange(t); setOpen(false); }} style={{
-                    display: "flex", alignItems: "center", gap: 8, width: "100%",
-                    background: active ? "var(--bg-2)" : "transparent",
-                    border: "none", borderRadius: 8, padding: "8px 10px",
-                    cursor: "pointer", fontFamily: "var(--font)",
-                    transition: "background .12s",
-                  }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg-2)"; }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
-                  >
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: ot.color, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: active ? "var(--fg)" : "var(--fg-2)", fontWeight: active ? 500 : 400 }}>{ot.label}</span>
-                    {active && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginLeft: "auto" }}>
-                      <path d="M2 6L5 9L10 3" stroke={ot.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+          {OUTPUT_TYPE_KEYS.map(t => {
+            const ot = OUTPUT_TYPES[t];
+            const active = t === value;
+            return (
+              <button key={t} type="button" onClick={() => { onChange(t); setOpen(false); }} style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%",
+                background: active ? "var(--bg-2)" : "transparent",
+                border: "none", borderRadius: 8, padding: "8px 10px",
+                cursor: "pointer", fontFamily: "var(--font)",
+                transition: "background .12s",
+              }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg-2)"; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: ot.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: active ? "var(--fg)" : "var(--fg-2)", fontWeight: active ? 500 : 400 }}>{ot.label}</span>
+                {active && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginLeft: "auto" }}>
+                  <path d="M2 6L5 9L10 3" stroke={ot.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -517,6 +519,8 @@ function OutputTypePill({
 }
 
 // ── Main Work Session ─────────────────────────────────────────────────────────
+type Phase = "input" | "generating" | "complete";
+
 export default function WorkSession() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -525,13 +529,21 @@ export default function WorkSession() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<Phase>("input");
   const [sessionTitle, setSessionTitle] = useState("New Session");
   const bottomRef = useRef<HTMLDivElement>(null);
-  const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.freestyle;
+  const generatingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
 
-  // Watson opening message
   useEffect(() => {
-    if (id === "new") {
+    return () => {
+      if (generatingTimerRef.current) clearTimeout(generatingTimerRef.current);
+    };
+  }, []);
+
+  // Watson opening message — set when id is new or output type changes
+  useEffect(() => {
+    if (id === "new" || !id) {
       setMessages([{
         id: "w0",
         role: "assistant",
@@ -540,51 +552,44 @@ export default function WorkSession() {
       }]);
       setSessionTitle("New Session");
     }
-  }, [id, outputType]);
+  }, [id, outputType, type.watson]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const simulateWatson = (userMsg: string): string => {
-    const responses = [
-      "Good. That's the seed. Tell me more about what changed for you, specifically -- what was the moment you realized this?",
-      "I like where this is going. Who is the person who most needs to hear this? What's their situation right now?",
-      "Strong angle. What's the contrarian element here -- the thing that would make someone stop scrolling?",
-      "Let's go deeper on that. What do you know about this that most people don't?",
-      "Perfect. Now give me the uncomfortable truth that lives inside that observation.",
-      "Got it. What's the one sentence that captures the whole thing -- the thesis, if you had to compress it?",
-    ];
-    return responses[messages.filter(m => m.role === "assistant").length % responses.length];
-  };
-
-  const sendMessage = async () => {
+  const sendMessage = () => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput("");
 
-    // Generate title from first user message
     if (messages.filter(m => m.role === "user").length === 0) {
       setSessionTitle(userMsg.slice(0, 40) + (userMsg.length > 40 ? "..." : ""));
     }
 
     const userMessage: Message = { id: Date.now().toString(), role: "user", content: userMsg, ts: Date.now() };
-    const typingId = (Date.now() + 1).toString();
-    const typingMsg: Message = { id: typingId, role: "assistant", content: "", ts: Date.now(), typing: true };
-
-    setMessages(prev => [...prev, userMessage, typingMsg]);
+    setMessages(prev => [...prev, userMessage]);
     setLoading(true);
+    setPhase("generating");
 
-    // Simulate Watson response
-    await new Promise(r => setTimeout(r, 900 + Math.random() * 600));
-    const response = simulateWatson(userMsg);
+    generatingTimerRef.current = setTimeout(() => {
+      generatingTimerRef.current = null;
+      setLoading(false);
+      setPhase("complete");
+    }, 3000);
+  };
 
-    setMessages(prev => [
-      ...prev.filter(m => m.id !== typingId),
-      { id: typingId, role: "assistant", content: response, ts: Date.now() },
-    ]);
-    setLoading(false);
+  const startOver = () => {
+    setPhase("input");
+    setMessages([{
+      id: "w0",
+      role: "assistant",
+      content: type.watson,
+      ts: Date.now(),
+    }]);
+    setInput("");
+    setSessionTitle("New Session");
   };
 
   return (
@@ -600,6 +605,10 @@ export default function WorkSession() {
         @keyframes orbAtmos {
           0%, 100% { opacity: 0.7; transform: scale(1); }
           50%       { opacity: 1.0; transform: scale(1.08); }
+        }
+        @keyframes orbPulse {
+          0%, 100% { transform: scale(1); opacity: 0.9; }
+          50%      { transform: scale(1.05); opacity: 1; }
         }
       `}</style>
 
@@ -666,7 +675,67 @@ export default function WorkSession() {
         flex: 1, overflowY: "auto", padding: "0 0 8px",
         display: "flex", flexDirection: "column",
       }}>
-        {messages.length <= 1 ? (
+        {phase === "generating" && (
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: 24, padding: 40,
+          }}>
+            <div style={{ animation: "orbPulse 2s ease-in-out infinite" }}>
+              <WatsonOrb size={180} thinking={true} />
+            </div>
+            <p style={{ fontSize: 15, fontWeight: 500, color: "var(--fg-2)", letterSpacing: "-0.01em" }}>
+              Watson is working...
+            </p>
+          </div>
+        )}
+
+        {phase === "complete" && (
+          <div style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40,
+          }}>
+            <div className="card" style={{
+              maxWidth: 400, width: "100%", padding: "var(--studio-gap-lg)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 20, textAlign: "center",
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: "var(--studio-radius)",
+                background: "var(--bg-2)", border: "1px solid var(--line)",
+                display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fg-2)",
+              }}>
+                <FileText size={28} strokeWidth={1.5} />
+              </div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)", margin: 0, letterSpacing: "-0.02em" }}>
+                Your {type.label} is ready
+              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 32, height: 3, borderRadius: 2, background: "var(--bg-3)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", borderRadius: 2, width: "84.7%", background: "#3A7BD5" }} />
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#3A7BD5", fontVariantNumeric: "tabular-nums" }}>847</span>
+              </div>
+              <div style={{ display: "flex", gap: 10, width: "100%", flexDirection: "column" }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ width: "100%", padding: "12px" }}
+                  onClick={() => navigate("/studio/outputs/1")}
+                >
+                  View Output
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ width: "100%", padding: "12px" }}
+                  onClick={startOver}
+                >
+                  Start Over
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {phase === "input" && (messages.length <= 1 ? (
           <EmptyState outputType={outputType} onSuggestion={(s) => { setInput(s); }} />
         ) : (
           <div style={{
@@ -676,10 +745,11 @@ export default function WorkSession() {
             {messages.map(msg => <MessageBubble key={msg.id} msg={msg} thinking={msg.typing && loading} />)}
             <div ref={bottomRef} />
           </div>
-        )}
+        ))}
       </div>
 
-      {/* ── Input bar ────────────────────────────────────────────────── */}
+      {/* ── Input bar (only when phase is input) ────────────────────────────── */}
+      {phase === "input" && (
       <div style={{
         flexShrink: 0, padding: "12px 24px 20px",
         background: "var(--bg)",
@@ -733,6 +803,7 @@ export default function WorkSession() {
           Watson is your First Listener. Say anything. It will ask the right questions.
         </p>
       </div>
+      )}
     </div>
   );
 }
