@@ -613,6 +613,7 @@ export default function ExplorePage() {
   const fromLandingZoom = location.state?.fromLandingZoom === true;
   const [entranceDone, setEntranceDone] = useState(false);
   const isMobile = useMobile();
+  const [navScrolled, setNavScrolled] = useState(false);
   const [scrollPct, setScrollPct] = useState(0);
 
   const toggle = () => setDark(d => !d);
@@ -629,6 +630,15 @@ export default function ExplorePage() {
       document.body.style.backgroundColor = "";
     };
   }, [dark]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setNavScrolled(window.scrollY > 20);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const handler = () => {
@@ -724,7 +734,22 @@ export default function ExplorePage() {
         </div>
 
         {/* NAV */}
-        <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:200,height:54,padding:"0 36px",display:"flex",alignItems:"center",justifyContent:"space-between",background:T.navBg,backdropFilter:"blur(22px)",borderBottom:`1px solid ${bc}`,transition:"background .45s"}}>
+        <nav style={{
+          position:"fixed",
+          top:0,
+          left:0,
+          right:0,
+          zIndex:100,
+          height:54,
+          padding:"0 36px",
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"space-between",
+          background: navScrolled ? "rgba(7,9,15,0.8)" : "transparent",
+          backdropFilter: navScrolled ? "blur(20px)" : "none",
+          borderBottom: navScrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
+          transition:"background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
+        }}>
           <button onClick={()=>nav("/")} style={{background:"none",border:"none",display:"flex",alignItems:"baseline",cursor:"pointer",gap:0}}>
             <span style={{fontSize:15,fontWeight:800,color:T.text,letterSpacing:".04em"}}>EVERY</span>
             <span style={{fontSize:15,fontWeight:800,color:T.text,letterSpacing:".04em"}}>WHERE</span>
