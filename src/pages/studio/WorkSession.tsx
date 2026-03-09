@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { FileText } from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useMobile } from "../../hooks/useMobile";
+import { useTheme } from "../../context/ThemeContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB — Siri-inspired volumetric orb.
@@ -637,6 +638,7 @@ export default function WorkSession() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const isMobile = useMobile();
+  const { theme } = useTheme();
   const [outputType, setOutputType] = useState(searchParams.get("type") || "essay");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -652,6 +654,7 @@ export default function WorkSession() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
   const outputTypeApi = OUTPUT_TYPE_TO_API[outputType] || "freestyle";
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -678,6 +681,11 @@ export default function WorkSession() {
       setSessionTitle("New Session");
     }
   }, [id, outputType, type.watson]);
+
+  useEffect(() => {
+    const userMessages = messages.filter(m => m.role === "user").length;
+    setIsReady(userMessages >= 3);
+  }, [messages]);
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -807,6 +815,10 @@ export default function WorkSession() {
         @keyframes watsonPulse {
           0%, 100% { box-shadow: 0 0 10px rgba(100,120,255,0.3); }
           50%      { box-shadow: 0 0 20px rgba(100,120,255,0.6), 0 0 40px rgba(80,60,200,0.2); }
+        }
+        @keyframes makeThingPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(200,150,26,0); }
+          50%      { box-shadow: 0 0 0 6px rgba(200,150,26,0.2); }
         }
       `}</style>
 
@@ -976,6 +988,33 @@ export default function WorkSession() {
           onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--blue)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 3px rgba(58,123,213,0.08)"; }}
           onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--line-2)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(0,0,0,0.04)"; }}
         >
+          {isReady && (
+            <button
+              type="button"
+              onClick={handleMakeTheThing}
+              disabled={loading}
+              style={{
+                width: "100%",
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "14px",
+                fontSize: 14,
+                fontWeight: 700,
+                borderRadius: 10,
+                border: "none",
+                cursor: loading ? "default" : "pointer",
+                background: theme === "light" ? "#996A00" : "#C8961A",
+                color: "#0A0A0A",
+                animation: "makeThingPulse 2.5s ease-in-out infinite",
+              }}
+            >
+              <Sparkles size={15} />
+              Make the thing
+            </button>
+          )}
           <AutoTextarea
             value={input}
             onChange={setInput}
@@ -1003,7 +1042,7 @@ export default function WorkSession() {
             </span>
             {/* Right: Make the thing (when we have user messages) + send */}
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {messages.some(m => m.role === "user") && (
+              {messages.some(m => m.role === "user") && !isReady && (
                 <button
                   type="button"
                   onClick={handleMakeTheThing}
