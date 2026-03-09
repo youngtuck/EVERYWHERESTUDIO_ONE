@@ -17,10 +17,18 @@ const NAV_BOTTOM = [
   { path: "/studio/settings/voice",   label: "Settings",  icon: Settings },
 ];
 
+function titleCase(str: string) {
+  if (!str) return "";
+  return str
+    .split(" ")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export default function StudioSidebar() {
   const nav = useNavigate();
   const loc = useLocation();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
@@ -217,7 +225,9 @@ export default function StudioSidebar() {
           <button
             onClick={() => nav("/studio/work")}
             className="nav-item"
-            style={{ gap: 10 }}
+            style={{ gap: 10, cursor: "pointer", transition: "color 0.15s ease" }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "var(--fg)"; }}
           >
             <Plus size={12} strokeWidth={2} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
             <span>New conversation</span>
@@ -284,7 +294,7 @@ export default function StudioSidebar() {
         </div>
       </nav>
 
-      {/* ── Bottom: theme + user ─────────────────────────────────── */}
+      {/* ── Bottom: user profile ─────────────────────────────────── */}
       <div style={{
         borderTop: "1px solid var(--line)",
         padding: "14px 14px",
@@ -292,35 +302,6 @@ export default function StudioSidebar() {
         flexDirection: "column",
         gap: 10,
       }}>
-        <button
-          onClick={toggleTheme}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            background: "var(--bg-2)", border: "1px solid var(--line)",
-            borderRadius: "var(--studio-radius)", padding: "9px 12px", width: "100%",
-            cursor: "pointer", fontFamily: "var(--font)",
-          }}
-          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-        >
-          <span style={{ fontSize: 12, color: "var(--fg-2)" }}>
-            {theme === "light" ? "Light" : "Dark"}
-          </span>
-          <div style={{
-            width: 28, height: 16, borderRadius: 100,
-            background: theme === "dark" ? "var(--fg)" : "var(--bg-3)",
-            border: "1px solid var(--line-2)",
-            position: "relative", transition: "background 0.2s",
-          }}>
-            <div style={{
-              position: "absolute", top: 2,
-              left: theme === "dark" ? 12 : 2,
-              width: 12, height: 12, borderRadius: "50%",
-              background: theme === "dark" ? "var(--bg)" : "var(--fg-3)",
-              transition: "left 0.2s cubic-bezier(0.16,1,0.3,1)",
-            }} />
-          </div>
-        </button>
-
         <div style={{
           display: "flex", alignItems: "center", gap: 10,
           padding: "8px 4px",
@@ -336,7 +317,11 @@ export default function StudioSidebar() {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {user?.user_metadata?.full_name || user?.email || "Signed in"}
+              {user?.user_metadata?.full_name
+                ? titleCase(user.user_metadata.full_name as string)
+                : user?.email
+                  ? titleCase(user.email.split("@")[0])
+                  : "Signed in"}
             </div>
             <div style={{ fontSize: 10, color: "var(--fg-3)" }}>{user?.email || ""}</div>
           </div>

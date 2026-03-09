@@ -207,7 +207,7 @@ function WordReveal({ text, size, weight=700, color, lh=1.1, delay=0, center=fal
   useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.06}); ob.observe(el);return()=>ob.disconnect(); },[]);
   return <div ref={ref} style={{textAlign:center?"center":"left",overflowWrap:"break-word",wordBreak:"break-word"}}>
     {text.split(" ").map((w,i)=>(
-      <span key={i} style={{display:"inline-block",marginRight:"0.24em",opacity:vis?1:0,transform:vis?"none":"translateY(10px)",transition:`opacity .48s ${delay+i*.025}s ease, transform .48s ${delay+i*.025}s cubic-bezier(.16,1,.3,1)`,fontSize:size,fontWeight:weight,color,lineHeight:lh}}>{w}</span>
+      <span key={i} style={{display:"inline-block",marginRight:"0.24em",opacity:vis?1:0,transform:vis?"none":"translateY(10px)",transition:`opacity .48s ${delay+i*.05}s ease, transform .48s ${delay+i*.05}s cubic-bezier(.16,1,.3,1)`,fontSize:size,fontWeight:weight,color,lineHeight:lh}}>{w}</span>
     ))}
   </div>;
 }
@@ -875,7 +875,7 @@ export default function ExplorePage() {
   return (
     <ThemeCtx.Provider value={{ dark, toggle }}>
       <div
-        className="explore-root"
+        className="noise-overlay"
         style={{
           background:"#07090f",
           fontFamily:"'Afacad Flux',sans-serif",
@@ -892,15 +892,18 @@ export default function ExplorePage() {
           html{scroll-behavior:smooth;}
           ::selection{background:${T.gold}40;}
           ${!dark ? "*, *::before, *::after { cursor: auto !important; } a, button, [role='button'], [style*='cursor:pointer'], [style*='cursor: pointer'] { cursor: pointer !important; }" : ""}
-          .explore-root::before{
+          .noise-overlay::before{
             content:"";
             position:fixed;
-            inset:0;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
             pointer-events:none;
-            z-index:1;
-            opacity:0.015;
-            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            mix-blend-mode:normal;
+            z-index:2;
+            opacity:0.018;
+            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            background-repeat:repeat;
           }
           @keyframes orbBreatheRooms {
             0%, 100% { transform: scale(1); }
@@ -940,14 +943,14 @@ export default function ExplorePage() {
           position:"fixed",
           top:0,
           left:0,
-          right:0,
+          width:"100%",
           zIndex:100,
           height:54,
           padding:"0 36px",
           display:"flex",
           alignItems:"center",
           justifyContent:"space-between",
-          background: navScrolled ? "rgba(7,9,15,0.8)" : "transparent",
+          background: navScrolled ? "rgba(7,9,15,0.85)" : "transparent",
           backdropFilter: navScrolled ? "blur(20px)" : "none",
           borderBottom: navScrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
           transition:"background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
@@ -1016,18 +1019,18 @@ export default function ExplorePage() {
               onClick={()=>document.getElementById("fw")?.scrollIntoView({behavior:"smooth"})}
               style={{
                 background:"transparent",
-                border:"1px solid rgba(255,255,255,0.25)",
+                border:"1px solid rgba(255,255,255,0.2)",
                 borderRadius:100,
-                padding:"12px 38px",
+                padding:"16px 36px",
                 fontSize:13,
                 fontWeight:500,
-                color:"rgba(255,255,255,0.7)",
+                color:"rgba(255,255,255,0.75)",
                 fontFamily:"'Afacad Flux',sans-serif",
                 cursor:"pointer",
                 transition:"all 0.25s ease",
               }}
-              onMouseEnter={e=>{ const el = e.currentTarget as HTMLElement; el.style.borderColor="rgba(255,255,255,0.45)"; el.style.color="rgba(255,255,255,0.95)"; el.style.background="rgba(255,255,255,0.05)"; }}
-              onMouseLeave={e=>{ const el = e.currentTarget as HTMLElement; el.style.borderColor="rgba(255,255,255,0.25)"; el.style.color="rgba(255,255,255,0.7)"; el.style.background="transparent"; }}>
+              onMouseEnter={e=>{ const el = e.currentTarget as HTMLElement; el.style.borderColor="rgba(255,255,255,0.4)"; el.style.color="rgba(255,255,255,0.95)"; el.style.background="rgba(255,255,255,0.06)"; }}
+              onMouseLeave={e=>{ const el = e.currentTarget as HTMLElement; el.style.borderColor="rgba(255,255,255,0.2)"; el.style.color="rgba(255,255,255,0.75)"; el.style.background="transparent"; }}>
               See How It Works
             </button>
           </div>
@@ -1195,7 +1198,7 @@ export default function ExplorePage() {
         {/* ══ COMPOUND ═════════════════════════════════════════════════════════ */}
         <section
           style={{
-            padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
+            padding: isMobile ? "80px 24px 80px" : "140px 48px 80px",
           }}
         >
           <div style={{maxWidth:680,margin:"0 auto"}}>
@@ -1211,21 +1214,22 @@ export default function ExplorePage() {
                   <div
                     style={{
                       height:1,
-                      maxWidth:600,
-                      margin:"0 auto 48px auto",
-                      background:"linear-gradient(90deg, transparent, rgba(200,150,26,0.3), transparent)",
+                      maxWidth:500,
+                      margin:"40px auto",
+                      background:"linear-gradient(90deg, transparent, rgba(200,150,26,0.25), transparent)",
                     }}
                   />
                   <div
                     style={{
-                      maxWidth:800,
-                      margin:"0 auto",
-                      fontSize:"clamp(24px,3vw,36px)",
+                      maxWidth:700,
+                      margin:"64px auto 0 auto",
+                      fontSize:"clamp(24px,3vw,32px)",
                       fontFamily:"'Cormorant Garamond', serif",
                       fontStyle:"italic",
                       color:"#C8961A",
                       lineHeight:1.5,
                       letterSpacing:"0.01em",
+                      textAlign:"center",
                     }}
                   >
                     Competitors can copy the output format. They cannot copy the system underneath it.
@@ -1233,9 +1237,9 @@ export default function ExplorePage() {
                   <div
                     style={{
                       height:1,
-                      maxWidth:600,
-                      margin:"48px auto 0 auto",
-                      background:"linear-gradient(90deg, transparent, rgba(200,150,26,0.3), transparent)",
+                      maxWidth:500,
+                      margin:"40px auto",
+                      background:"linear-gradient(90deg, transparent, rgba(200,150,26,0.25), transparent)",
                     }}
                   />
                 </div>
@@ -1260,7 +1264,7 @@ export default function ExplorePage() {
               <WordReveal text="Your ideas deserve a system built to carry them." size="clamp(28px,4vw,52px)" weight={700} lh={1.02} color={T.text} center />
               <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
               <FadeUp delay={0.26}>
-                <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+                <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:48,flexWrap:"wrap"}}>
                   <button
                     onClick={()=>{ window.location.href = "mailto:mark@everywhereStudio.com"; }}
                     style={{
@@ -1291,7 +1295,7 @@ export default function ExplorePage() {
                     Let's Talk
                   </button>
                   <button
-                    onClick={()=>nav("/auth")}
+                    onClick={()=>nav("/studio/dashboard")}
                     style={{
                       background:"transparent",
                       border:"1px solid rgba(255,255,255,0.2)",

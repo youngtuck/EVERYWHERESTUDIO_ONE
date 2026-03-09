@@ -6,6 +6,13 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 
 // ── Time-based greeting ────────────────────────────────────────────────────
+function titleCase(str: string) {
+  if (!str) return "";
+  return str
+    .split(" ")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -213,11 +220,10 @@ function DashboardWave({ isMobile }: { isMobile: boolean }) {
   return (
     <div
       style={{
-        marginBottom: "var(--studio-gap-lg)",
         borderRadius: "var(--studio-radius-lg)",
         overflow: "hidden",
-        background: "var(--bg-2)",
-        boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+        background: "transparent",
+        marginBottom: 18,
       }}
     >
       <canvas
@@ -299,6 +305,11 @@ export default function Dashboard() {
   }, [user]);
 
   const streak = calculateStreak(recentOutputs);
+  const rawName =
+    ((user as any)?.user_metadata?.full_name as string | undefined) ||
+    (user?.email ? user.email.split("@")[0] : undefined) ||
+    "";
+  const firstName = titleCase(rawName.split(" ")[0] || "there");
   const subline =
     totalOutputs === 0
       ? "Your studio is ready. Create your first output below."
@@ -347,33 +358,33 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: "var(--font)" }}>
-      {/* Subtle cursor-reactive waveform header */}
-      <DashboardWave isMobile={isMobile} />
-
-      {/* ── Hero strip (reference style): date, greeting, one CTA ───────────── */}
+      {/* ── Hero strip: greeting + subtle waveform background ───────────── */}
       <FadeCard delay={0}>
         <div style={{
           background: "var(--fg)",
           color: "var(--bg)",
           borderRadius: "var(--studio-radius-lg)",
-          padding: "24px 28px",
+          padding: "22px 24px 24px",
           marginBottom: "var(--studio-gap-lg)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexWrap: "wrap",
-          gap: 16,
+          gap: 18,
+          position: "relative",
+          overflow: "hidden",
         }}>
-          <div>
+          {!isMobile && (
+            <div style={{ position: "absolute", inset: 0, opacity: 0.16, pointerEvents: "none" }}>
+              <DashboardWave isMobile={false} />
+            </div>
+          )}
+          <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", opacity: 0.7, marginBottom: 6 }}>
               {getDateLabel()}
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>
-              {getGreeting()},{" "}
-              {((user as any)?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ||
-                user?.email?.split("@")[0] ||
-                "there"}
-              .
+              {getGreeting()}, {firstName}.
             </h1>
             {streak >= 2 && (
               <div
@@ -414,6 +425,8 @@ export default function Dashboard() {
               cursor: "pointer",
               fontFamily: "var(--font)",
               letterSpacing: "-0.01em",
+              position: "relative",
+              zIndex: 1,
             }}
           >
             <Plus size={16} strokeWidth={2.5} />
@@ -437,6 +450,17 @@ export default function Dashboard() {
             cursor: "pointer",
             textAlign: "left",
             border: "1px solid var(--line)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={e => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)";
+            el.style.borderColor = "rgba(0,0,0,0.1)";
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.boxShadow = "none";
+            el.style.borderColor = "var(--line)";
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -453,7 +477,11 @@ export default function Dashboard() {
               <div style={{ fontSize: 12, color: "var(--fg-3)" }}>Coming soon: intelligence monitoring</div>
             </div>
           </div>
-          <ChevronRight size={18} style={{ color: "var(--fg-3)" }} />
+          <ChevronRight
+            size={18}
+            style={{ color: "var(--fg-3)", transition: "transform 0.2s ease" }}
+            className="sentinel-chevron"
+          />
         </button>
       </FadeCard>
 
@@ -480,6 +508,19 @@ export default function Dashboard() {
                 cursor: "pointer",
                 textAlign: "center",
                 border: "1px solid var(--line)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = "rgba(0,0,0,0.12)";
+                el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
+                el.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = "var(--line)";
+                el.style.boxShadow = "none";
+                el.style.transform = "translateY(0)";
               }}
             >
               <div style={{
@@ -501,7 +542,13 @@ export default function Dashboard() {
       <FadeCard delay={60}>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(4, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
           {stats.map(({ label, value, sub, color }, i) => (
-            <div key={i} className="card" style={{ padding: "18px 20px", position: "relative", overflow: "hidden" }}>
+            <div
+              key={i}
+              className="card"
+              style={{ padding: "18px 20px", position: "relative", overflow: "hidden", transition: "box-shadow 0.2s ease" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+            >
               <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 2, background: color, opacity: 0.7 }} />
               <div style={{ fontSize: 10, color: "var(--fg-3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
               <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.04em", color: "var(--fg)", lineHeight: 1.1, marginBottom: 4 }}>{value}</div>
@@ -517,7 +564,18 @@ export default function Dashboard() {
 
           {/* Projects (reference: section + one card, "+ New") ───────────────── */}
           <FadeCard delay={140}>
-            <SectionLabel action={<button onClick={() => nav("/studio/projects")} style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-2)", background: "none", border: "none", cursor: "pointer" }}>+ New</button>}>
+            <SectionLabel
+              action={
+                <button
+                  onClick={() => nav("/studio/projects")}
+                  style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-2)", background: "none", border: "none", cursor: "pointer", transition: "color 0.15s ease" }}
+                  onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-2)"; }}
+                >
+                  + New
+                </button>
+              }
+            >
               Projects
             </SectionLabel>
             <button
@@ -556,7 +614,18 @@ export default function Dashboard() {
 
           {/* Recent Outputs (reference: section label + empty state or list) ─── */}
           <FadeCard delay={180}>
-            <SectionLabel action={<button onClick={() => nav("/studio/outputs")} style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-2)", background: "none", border: "none", cursor: "pointer" }}>View all</button>}>
+            <SectionLabel
+              action={
+                <button
+                  onClick={() => nav("/studio/outputs")}
+                  style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-2)", background: "none", border: "none", cursor: "pointer", transition: "color 0.15s ease" }}
+                  onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-2)"; }}
+                >
+                  View all
+                </button>
+              }
+            >
               Recent Outputs
             </SectionLabel>
             <div className="card" style={{ overflow: "hidden", minHeight: 200 }}>
@@ -605,9 +674,9 @@ export default function Dashboard() {
                         background: "none", border: "none",
                         textAlign: "left",
                         cursor: "pointer",
-                        transition: "background 0.1s",
+                        transition: "background 0.15s ease",
                       }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)"}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "none"}
                     >
                       <div style={{
