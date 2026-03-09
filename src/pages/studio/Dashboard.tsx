@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PenLine, Mic, Globe, Mail, FileText, Eye, ChevronRight, Plus, FolderOpen, Clock } from "lucide-react";
-import OnboardingModal, { isOnboardingComplete } from "../components/studio/OnboardingModal";
+import OnboardingModal, { isOnboardingComplete } from "../../components/studio/OnboardingModal";
 
 // ── Time-based greeting ────────────────────────────────────────────────────
 function getGreeting() {
