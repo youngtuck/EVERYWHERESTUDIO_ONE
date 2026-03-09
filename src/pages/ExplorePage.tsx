@@ -656,6 +656,7 @@ export default function ExplorePage() {
   const [entranceDone, setEntranceDone] = useState(false);
   const isMobile = useMobile();
   const [navScrolled, setNavScrolled] = useState(false);
+  const [showScrollHint, setShowScrollHint] = useState(true);
   const [scrollPct, setScrollPct] = useState(0);
 
   const toggle = () => setDark(d => !d);
@@ -676,6 +677,7 @@ export default function ExplorePage() {
   useEffect(() => {
     const handleScroll = () => {
       setNavScrolled(window.scrollY > 20);
+       setShowScrollHint(window.scrollY <= 100);
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -751,6 +753,10 @@ export default function ExplorePage() {
             50%      { transform: scale(1.04); }
           }
           .orb-breathe-rooms { display: inline-block; animation: orbBreatheRooms 2.6s ease-in-out infinite; }
+          @keyframes float {
+            0%, 100% { transform: translateY(0); opacity: 0.4; }
+            50%      { transform: translateY(6px); opacity: 0.6; }
+          }
         `}</style>
 
         {/* Scroll progress indicator */}
@@ -844,9 +850,45 @@ export default function ExplorePage() {
           </div>
 
           {/* Scroll cue */}
-          <div style={{position:"absolute",bottom:28,left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:7,opacity:.18}}>
-            <svg width="14" height="20" viewBox="0 0 16 22" fill="none"><rect x="1" y="1" width="14" height="20" rx="7" stroke={T.text} strokeWidth="1.2"/><circle cx="8" cy="7" r="2" fill={T.text}/></svg>
-          </div>
+          <button
+            type="button"
+            onClick={() => document.getElementById("problem")?.scrollIntoView({ behavior: "smooth" })}
+            style={{
+              position: "absolute",
+              bottom: 32,
+              left: "50%",
+              transform: "translateX(-50%)",
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              opacity: showScrollHint ? 1 : 0,
+              transition: "opacity 0.4s ease",
+            }}
+            aria-label="Scroll down"
+          >
+            <svg
+              width="20"
+              height="12"
+              viewBox="0 0 20 12"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{
+                display: "block",
+                animation: "float 2.5s ease-in-out infinite",
+                stroke: "rgba(255,255,255,0.4)",
+              }}
+              onMouseEnter={e => { (e.currentTarget as SVGElement).style.stroke = "rgba(255,255,255,0.8)"; }}
+              onMouseLeave={e => { (e.currentTarget as SVGElement).style.stroke = "rgba(255,255,255,0.4)"; }}
+            >
+              <path
+                d="M3 3L10 9L17 3"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </section>
 
         {/* ══ SOCIAL PROOF BAR ════════════════════════════════════════════════ */}
@@ -876,7 +918,7 @@ export default function ExplorePage() {
         </section>
 
         {/* ══ PROBLEM ═══════════════════════════════════════════════════════════ */}
-        <section style={{padding:isMobile ? "56px 24px 48px" : "72px 48px 64px",borderTop:`1px solid ${bc}`}}>
+        <section id="problem" style={{padding:isMobile ? "56px 24px 48px" : "72px 48px 64px",borderTop:`1px solid ${bc}`}}>
           <div style={{maxWidth:880,margin:"0 auto"}}>
             <WordReveal text="You already know what to say." size="clamp(32px,4.5vw,54px)" weight={700} lh={1.04} color={T.text} />
             <div style={{marginTop:10,marginBottom:36}}>
