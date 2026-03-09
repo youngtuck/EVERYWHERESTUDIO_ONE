@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Copy, ArrowLeft, Check } from "lucide-react";
+import { useMobile } from "../../hooks/useMobile";
 
 interface Output {
   id: string;
@@ -15,6 +16,7 @@ interface Output {
 export default function OutputDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isMobile = useMobile();
   const [output, setOutput] = useState<Output | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -58,7 +60,7 @@ export default function OutputDetail() {
   const scoreColor = output!.score >= 800 ? "#10b981" : output!.score >= 700 ? "#3A7BD5" : "#C8961A";
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 32px", fontFamily: "var(--font)" }}>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: isMobile ? "24px 16px" : "40px 32px", fontFamily: "var(--font)" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
         <button onClick={() => navigate("/studio/outputs")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fg-3)", display: "flex", alignItems: "center", gap: 6, fontSize: 13, padding: 0 }}>
@@ -87,8 +89,8 @@ export default function OutputDetail() {
       </div>
 
       {/* Content */}
-      <div className="card" style={{ padding: "32px 36px" }}>
-        <pre style={{ fontFamily: "var(--font)", fontSize: 15, lineHeight: 1.8, color: "var(--fg)", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
+      <div className="card" style={{ padding: isMobile ? "20px 16px" : "32px 36px" }}>
+        <pre style={{ fontFamily: "var(--font)", fontSize: isMobile ? 14 : 15, lineHeight: 1.8, color: "var(--fg)", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
           {output!.content}
         </pre>
       </div>

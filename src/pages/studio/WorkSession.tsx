@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { useMobile } from "../../hooks/useMobile";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB — Siri-inspired volumetric orb.
@@ -360,7 +361,7 @@ function TypingIndicator() {
 }
 
 // Message bubble
-function MessageBubble({ msg, thinking }: { msg: Message; thinking?: boolean }) {
+function MessageBubble({ msg, thinking, isMobile }: { msg: Message; thinking?: boolean; isMobile: boolean }) {
   const isUser = msg.role === "user";
   return (
     <div style={{
@@ -377,7 +378,7 @@ function MessageBubble({ msg, thinking }: { msg: Message; thinking?: boolean }) 
       )}
 
       <div style={{
-        maxWidth: isUser ? "78%" : "85%",
+        maxWidth: isMobile ? "95%" : isUser ? "78%" : "85%",
         background: isUser ? "var(--fg)" : "var(--surface)",
         border: isUser ? "none" : "1px solid var(--line)",
         borderRadius: isUser ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
@@ -400,7 +401,7 @@ function MessageBubble({ msg, thinking }: { msg: Message; thinking?: boolean }) 
 }
 
 // Empty state - shown when no messages (or only Watson opening)
-function EmptyState({ outputType, onSuggestion }: { outputType: string; onSuggestion: (s: string) => void }) {
+function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
   const suggestions: Record<string, string[]> = {
     linkedin_post:   ["I want to write about the future of remote work", "Why most advice about delegation is wrong", "What I learned from 500 conversations"],
@@ -437,7 +438,7 @@ function EmptyState({ outputType, onSuggestion }: { outputType: string; onSugges
       </div>
 
       {/* Suggestions */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 480 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: isMobile ? "100%" : 480 }}>
         {typeSuggestions.map((s, i) => (
           <button key={i} onClick={() => onSuggestion(s)} style={{
             background: "var(--surface)", border: "1px solid var(--line)",
@@ -649,6 +650,7 @@ export default function WorkSession() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const isMobile = useMobile();
   const [outputType, setOutputType] = useState(searchParams.get("type") || "essay");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -823,7 +825,7 @@ export default function WorkSession() {
               <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--fg)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--fg)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: isMobile ? "none" : "inline-block" }}>
             {sessionTitle}
           </span>
         </div>
@@ -925,13 +927,13 @@ export default function WorkSession() {
         )}
 
         {phase === "input" && (messages.length <= 1 ? (
-          <EmptyState outputType={outputType} onSuggestion={(s) => { setInput(s); }} />
+          <EmptyState outputType={outputType} onSuggestion={(s) => { setInput(s); }} isMobile={isMobile} />
         ) : (
           <div style={{
             maxWidth: 760, width: "100%", margin: "0 auto",
             padding: "32px 24px 8px", display: "flex", flexDirection: "column", gap: 20,
           }}>
-            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} thinking={msg.typing && loading} />)}
+            {messages.map(msg => <MessageBubble key={msg.id} msg={msg} thinking={msg.typing && loading} isMobile={isMobile} />)}
             <div ref={bottomRef} />
           </div>
         ))}
@@ -940,7 +942,7 @@ export default function WorkSession() {
       {/* ── Input bar (only when phase is input) ────────────────────────────── */}
       {phase === "input" && (
       <div style={{
-        flexShrink: 0, padding: "12px 24px 20px",
+        flexShrink: 0, padding: isMobile ? "8px 12px 16px" : "12px 24px 20px",
         background: "var(--bg)",
         borderTop: messages.length > 1 ? "1px solid var(--line)" : "none",
       }}>

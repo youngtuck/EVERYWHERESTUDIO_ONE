@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PenLine, Mic, Globe, Mail, FileText, Eye, ChevronRight, Plus, FolderOpen, Clock } from "lucide-react";
+import { useMobile } from "../../hooks/useMobile";
 
 // ── Time-based greeting ────────────────────────────────────────────────────
 function getGreeting() {
@@ -70,6 +71,7 @@ const QUICK_START = [
 
 export default function Dashboard() {
   const nav = useNavigate();
+  const isMobile = useMobile();
 
   const stats = [
     { label: "Voice Fidelity", value: "94.7", unit: "", sub: "+2.1 this week", color: "#3A7BD5" },
@@ -183,7 +185,7 @@ export default function Dashboard() {
         <SectionLabel>Quick Start</SectionLabel>
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+          gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fill, minmax(140px, 1fr))",
           gap: "var(--studio-gap-sm)",
           marginBottom: "var(--studio-gap-lg)",
         }}>
@@ -220,7 +222,7 @@ export default function Dashboard() {
 
       {/* ── Stats row (ours: keep for power users) ──────────────────────────── */}
       <FadeCard delay={60}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(4, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
           {stats.map(({ label, value, sub, color }, i) => (
             <div key={i} className="card" style={{ padding: "18px 20px", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 2, background: color, opacity: 0.7 }} />
@@ -233,7 +235,7 @@ export default function Dashboard() {
       </FadeCard>
 
       {/* ── Two-column: Projects + Recent Outputs (left) | Sentinel signals (right) ─ */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "var(--studio-gap)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap: "var(--studio-gap)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--studio-gap-lg)" }}>
 
           {/* Projects (reference: section + one card, "+ New") ───────────────── */}

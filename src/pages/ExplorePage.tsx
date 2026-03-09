@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, createContext, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useMobile } from "../hooks/useMobile";
 
 // ─── Theme context ─────────────────────────────────────────────────────────────
 const ThemeCtx = createContext<{ dark: boolean; toggle: () => void }>({ dark: true, toggle: () => {} });
@@ -295,6 +296,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scrollPct, setScrollPct] = useState(0); // 0→1 across all three rooms
   const [revealProgress, setRevealProgress] = useState(0); // 0→1 as section enters viewport
+  const isMobile = useMobile();
 
   useEffect(() => {
     const onScroll = () => {
@@ -391,10 +393,17 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
           transition: "background 0.35s ease",
         }}
       />
-      {/* Sticky left column: no background — orb and label float on the gradient canvas */}
+      {/* Sticky left column on desktop; hidden on mobile */}
       <div style={{
-        position: "sticky", top: 0, height: "100vh", width: 420, flexShrink: 0,
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        position: "sticky",
+        top: 0,
+        height: "100vh",
+        width: 420,
+        flexShrink: 0,
+        display: isMobile ? "none" : "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
         zIndex: 2,
       }}>
         {/* Inner glow layer — orb aura only (soft halo around orb) */}
@@ -438,6 +447,22 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
 
         {/* WATCH right */}
         <div style={{ minHeight: "130vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
+          {isMobile && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
+                Room One
+              </div>
+              <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
+                <SiriOrb size={160} energy={orbEnergy} palette={PALETTES.watch} dark={dark} />
+              </div>
+              <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
+                WATCH
+              </div>
+              <div style={{ fontSize: 10, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
+                The Signal Room
+              </div>
+            </div>
+          )}
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(74,144,245,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
@@ -458,6 +483,22 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
 
         {/* WORK right */}
         <div style={{ minHeight: "145vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
+          {isMobile && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
+                Room Two
+              </div>
+              <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
+                <SiriOrb size={160} energy={orbEnergy} palette={PALETTES.work} dark={dark} />
+              </div>
+              <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
+                WORK
+              </div>
+              <div style={{ fontSize: 10, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
+                The Engine Room
+              </div>
+            </div>
+          )}
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(13,140,158,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
@@ -482,6 +523,22 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
 
         {/* WRAP right */}
         <div style={{ minHeight: "120vh", padding: "64px 52px", display: "flex", flexDirection: "column", gap: 32, justifyContent: "center", position: "relative" }}>
+          {isMobile && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
+                Room Three
+              </div>
+              <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
+                <SiriOrb size={160} energy={orbEnergy} palette={PALETTES.wrap} dark={dark} />
+              </div>
+              <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
+                WRAP
+              </div>
+              <div style={{ fontSize: 10, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
+                The Distribution Room
+              </div>
+            </div>
+          )}
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 140, background: `linear-gradient(to right, rgba(160,128,245,${dark ? 0.09 : 0.06}) 0%, transparent 100%)`, pointerEvents: "none" }} />
           <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
@@ -508,6 +565,7 @@ export default function ExplorePage() {
   const [orbEnergy] = useState(0.35);
   const fromLandingZoom = location.state?.fromLandingZoom === true;
   const [entranceDone, setEntranceDone] = useState(false);
+  const isMobile = useMobile();
 
   const toggle = () => setDark(d => !d);
   useEffect(()=>{ const t=setTimeout(()=>setMounted(true),80); return()=>clearTimeout(t); },[]);
@@ -639,13 +697,13 @@ export default function ExplorePage() {
         </section>
 
         {/* ══ PROBLEM ═══════════════════════════════════════════════════════════ */}
-        <section style={{padding:"72px 48px 64px",borderTop:`1px solid ${bc}`}}>
+        <section style={{padding:isMobile ? "56px 24px 48px" : "72px 48px 64px",borderTop:`1px solid ${bc}`}}>
           <div style={{maxWidth:880,margin:"0 auto"}}>
             <WordReveal text="You already know what to say." size="clamp(32px,4.5vw,54px)" weight={700} lh={1.04} color={T.text} />
             <div style={{marginTop:10,marginBottom:36}}>
               <WordReveal text="The hard part is everything after that." size="clamp(15px,1.7vw,20px)" weight={400} color={T.textSub} lh={1.4} delay={0.08} />
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 64px",maxWidth:800}}>
+            <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:isMobile ? "24px" : "0 64px",maxWidth:800}}>
               <FadeUp delay={0.04}><p style={{fontSize:14,lineHeight:1.8,color:T.textSub}}>Every thought leader faces the same bottleneck. You have insights worth sharing, but turning them into polished, multi-format content takes a team you don't have and time you can't spare.</p></FadeUp>
               <FadeUp delay={0.10}><p style={{fontSize:14,lineHeight:1.8,color:T.textSub}}>AI tools move fast but flatten your voice into something generic. Ghostwriters get tone right but cost thousands a month and still need you to do half the work.</p></FadeUp>
             </div>
@@ -653,7 +711,7 @@ export default function ExplorePage() {
         </section>
 
         {/* ══ FRAMEWORK ════════════════════════════════════════════════════════ */}
-        <section id="fw" style={{padding:"64px 48px 56px",borderTop:`1px solid ${bc}`}}>
+        <section id="fw" style={{padding:isMobile ? "56px 24px 48px" : "64px 48px 56px",borderTop:`1px solid ${bc}`}}>
           <div style={{maxWidth:920,margin:"0 auto"}}>
             <FadeUp>
               <div style={{textAlign:"center",marginBottom:16}}>
@@ -665,9 +723,9 @@ export default function ExplorePage() {
             </FadeUp>
             {/* Counters */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",marginTop:48,borderTop:`1px solid ${bc}`}}>
-              <div style={{padding:"36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={40} suffix="+" label="AI Specialists" accent={T.watchA} /></div>
-              <div style={{padding:"36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={12} label="Output Formats" accent={T.workA} /></div>
-              <div style={{padding:"36px 28px"}}><Counter target={7} label="Quality Gates" accent={T.wrapA} /></div>
+              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={40} suffix="+" label="AI Specialists" accent={T.watchA} /></div>
+              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={12} label="Output Formats" accent={T.workA} /></div>
+              <div style={{padding:isMobile ? "24px 16px" : "36px 28px"}}><Counter target={7} label="Quality Gates" accent={T.wrapA} /></div>
             </div>
           </div>
         </section>
@@ -676,9 +734,9 @@ export default function ExplorePage() {
         <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} />
 
         {/* ══ QUALITY GATES ════════════════════════════════════════════════════ */}
-        <section style={{padding:"80px 48px 88px",background:dark?"linear-gradient(180deg,#080311 0%,#07090f 100%)":"linear-gradient(180deg,#E9E4F5 0%,#F4F2ED 100%)",borderTop:`1px solid ${bc}`}}>
+        <section style={{padding:isMobile ? "64px 24px 72px" : "80px 48px 88px",background:dark?"linear-gradient(180deg,#080311 0%,#07090f 100%)":"linear-gradient(180deg,#E9E4F5 0%,#F4F2ED 100%)",borderTop:`1px solid ${bc}`}}>
           <div style={{maxWidth:800,margin:"0 auto"}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"36px 60px",alignItems:"end",marginBottom:44}}>
+            <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:"36px 60px",alignItems:"end",marginBottom:44}}>
               <div>
                 <FadeUp><div style={{fontSize:9,letterSpacing:".2em",color:T.wrapA,textTransform:"uppercase",marginBottom:14,fontWeight:700}}>Quality Gates</div></FadeUp>
                 <WordReveal text="Nothing ships without passing the gates." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
