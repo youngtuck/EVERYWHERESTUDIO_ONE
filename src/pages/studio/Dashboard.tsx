@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PenLine, Mic, Globe, Mail, FileText, Eye, ChevronRight, Plus, FolderOpen, Clock } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../context/AuthContext";
 
 // ── Time-based greeting ────────────────────────────────────────────────────
 function getGreeting() {
@@ -12,6 +14,17 @@ function getGreeting() {
 }
 function getDateLabel() {
   return new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }).toUpperCase();
+}
+
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days === 1) return "Yesterday";
+  return `${days}d ago`;
 }
 
 // ── Score chip ─────────────────────────────────────────────────────────────
@@ -72,26 +85,84 @@ const QUICK_START = [
 export default function Dashboard() {
   const nav = useNavigate();
   const isMobile = useMobile();
+  const { user } = useAuth();
+
+  const [recentOutputs, setRecentOutputs] = useState<Array<{
+    id: string;
+    title: string;
+    output_type: string;
+    score: number;
+    created_at: string;
+  }>>([]);
+  const [outputsLoading, setOutputsLoading] = useState(true);
+  const [totalOutputs, setTotalOutputs] = useState(0);
+  const [avgScore, setAvgScore] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    setOutputsLoading(true);
+    supabase
+      .from("outputs")
+      .select("id, title, output_type, score, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        setRecentOutputs(data || []);
+        setOutputsLoading(false);
+      });
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("outputs")
+      .select("id, score", { count: "exact" })
+      .then(({ data, count }) => {
+        setTotalOutputs(count || 0);
+        if (data && data.length > 0) {
+          const avg = Math.round(
+            data.reduce((sum, o: any) => sum + (o.score || 0), 0) / data.length
+          );
+          setAvgScore(avg);
+        }
+      });
+  }, [user]);
 
   const stats = [
-    { label: "Voice Fidelity", value: "94.7", unit: "", sub: "+2.1 this week", color: "#3A7BD5" },
-    { label: "Outputs Created", value: "47", unit: "", sub: "12 this month", color: "#C8961A" },
-    { label: "Avg Betterish", value: "812", unit: "", sub: "Ready to Publish", color: "#10b981" },
-    { label: "Signals", value: "11", unit: "", sub: "3 high priority", color: "#e85d75" },
-  ];
-
-  const sessions = [
-    { title: "The compound effect of daily writing", type: "LinkedIn", score: 847, time: "2h ago" },
-    { title: "Why most thought leaders sound the same", type: "Newsletter", score: 792, time: "Yesterday" },
-    { title: "What I learned from 500 conversations", type: "Essay", score: 921, time: "2d ago" },
-    { title: "The future of personal branding", type: "Sunday Story", score: 681, time: "3d ago" },
-  ];
-  const hasSessions = sessions.length > 0;
-
-  const signals = [
-    { label: "AI tools replacing writers", category: "WT", color: "#e85d75", strength: 92 },
-    { label: "LinkedIn algorithm favors long-form", category: "TR", color: "#3A7BD5", strength: 87 },
-    { label: "Newsletter open rates declining", category: "IN", color: "#C8961A", strength: 74 },
+    {
+      label: "Outputs Created",
+      value: totalOutputs.toString(),
+      sub:
+        totalOutputs === 0
+          ? "Create your first"
+          : `${recentOutputs.length} recent`,
+      color: "#C8961A",
+    },
+    {
+      label: "Avg Betterish",
+      value: avgScore > 0 ? avgScore.toString() : "—",
+      sub:
+        avgScore >= 800
+          ? "Ready to Publish"
+          : avgScore > 0
+            ? "Room to improve"
+            : "No outputs yet",
+      color: "#10b981",
+    },
+    {
+      label: "Voice Fidelity",
+      value: (user as any)?.user_metadata?.voice_profile ? "Active" : "—",
+      sub: (user as any)?.user_metadata?.voice_profile
+        ? "Voice DNA captured"
+        : "Complete onboarding",
+      color: "#3A7BD5",
+    },
+    {
+      label: "Signals",
+      value: "—",
+      sub: "Coming soon",
+      color: "#e85d75",
+    },
   ];
 
   return (
@@ -115,10 +186,18 @@ export default function Dashboard() {
               {getDateLabel()}
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>
-              {getGreeting()}, Mark.
+              {getGreeting()},{" "}
+              {((user as any)?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ||
+                user?.email?.split("@")[0] ||
+                "there"}
+              .
             </h1>
             <p style={{ fontSize: 13, opacity: 0.85, fontWeight: 400 }}>
-              Your studio is ready. Start your first output below.
+              {recentOutputs.length > 0
+                ? `You have ${recentOutputs.length} output${
+                    recentOutputs.length > 1 ? "s" : ""
+                  } in your studio.`
+                : "Your studio is ready. Create your first output below."}
             </p>
           </div>
           <button
@@ -192,7 +271,7 @@ export default function Dashboard() {
           {QUICK_START.map(({ key, label, desc, icon: Icon, color }) => (
             <button
               key={key}
-              onClick={() => nav("/studio/work")}
+              onClick={() => nav(`/studio/work/new?type=${key}`)}
               className="card"
               style={{
                 padding: "18px 14px",
@@ -283,17 +362,48 @@ export default function Dashboard() {
               Recent Outputs
             </SectionLabel>
             <div className="card" style={{ overflow: "hidden", minHeight: 200 }}>
-              {hasSessions ? (
+              {outputsLoading ? (
+                <div
+                  style={{
+                    padding: "48px 28px",
+                    textAlign: "center",
+                    color: "var(--fg-3)",
+                    fontSize: 13,
+                    lineHeight: 1.6,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: "50%",
+                      border: "2px solid var(--fg-3)",
+                      borderTopColor: "transparent",
+                      animation: "spin 0.8s linear infinite",
+                    }}
+                  />
+                  <span>Loading outputs…</span>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              ) : recentOutputs.length > 0 ? (
                 <div>
-                  {sessions.map(({ title, type, score, time }, i) => (
+                  {recentOutputs.map((o, i) => {
+                    const typeLabel = o.output_type.replace(/_/g, " ");
+                    const prettyType =
+                      typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1);
+                    return (
                     <button
-                      key={i}
-                      onClick={() => nav("/studio/work/1")}
+                      key={o.id}
+                      onClick={() => nav(`/studio/outputs/${o.id}`)}
                       style={{
                         width: "100%",
                         display: "flex", alignItems: "center", gap: 14,
                         padding: "13px 22px",
-                        borderBottom: i < sessions.length - 1 ? "1px solid var(--line)" : "none",
+                        borderBottom: i < recentOutputs.length - 1 ? "1px solid var(--line)" : "none",
                         background: "none", border: "none",
                         textAlign: "left",
                         cursor: "pointer",
@@ -307,14 +417,17 @@ export default function Dashboard() {
                         background: "var(--bg-2)", border: "1px solid var(--line)",
                         flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 10, fontWeight: 600, color: "var(--fg-2)", letterSpacing: "0.04em",
-                      }}>{type.slice(0, 2).toUpperCase()}</div>
+                      }}>{prettyType.slice(0, 2).toUpperCase()}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>{title}</div>
-                        <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{type} · {time}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>{o.title}</div>
+                        <div style={{ fontSize: 11, color: "var(--fg-3)" }}>
+                          {prettyType} · {relativeTime(o.created_at)}
+                        </div>
                       </div>
-                      <ScoreChip score={score} />
+                      <ScoreChip score={o.score} />
                     </button>
-                  ))}
+                  );
+                  })}
                 </div>
               ) : (
                 <div style={{
@@ -341,45 +454,11 @@ export default function Dashboard() {
             }}>
               <div>
                 <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.02em", marginBottom: 2 }}>Sentinel</h2>
-                <div style={{ fontSize: 11, color: "var(--fg-3)" }}>11 signals today</div>
+                <div style={{ fontSize: 11, color: "var(--fg-3)" }}>Intelligence monitoring</div>
               </div>
-              <span style={{
-                fontSize: 10, fontWeight: 600,
-                background: "rgba(232,93,117,0.1)", color: "#e85d75",
-                border: "1px solid rgba(232,93,117,0.2)",
-                borderRadius: 100, padding: "3px 8px",
-              }}>3 High</span>
             </div>
-            <div style={{ padding: "6px 0" }}>
-              {signals.map(({ label, category, color, strength }, i) => (
-                <button
-                  key={i}
-                  style={{
-                    width: "100%", background: "none", border: "none",
-                    padding: "12px 18px", textAlign: "left",
-                    borderBottom: i < signals.length - 1 ? "1px solid var(--line)" : "none",
-                    cursor: "pointer",
-                    transition: "background 0.1s",
-                  }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "none"}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500, flex: 1, lineHeight: 1.4 }}>{label}</span>
-                    <span style={{
-                      fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
-                      background: `${color}18`, color, border: `1px solid ${color}30`,
-                      borderRadius: 4, padding: "2px 6px", flexShrink: 0, marginLeft: 8,
-                    }}>{category}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ flex: 1, height: 2, background: "var(--bg-3)", borderRadius: 1, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${strength}%`, background: color, borderRadius: 1 }} />
-                    </div>
-                    <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 600, width: 22, textAlign: "right" }}>{strength}</span>
-                  </div>
-                </button>
-              ))}
+            <div style={{ padding: "32px 18px", textAlign: "center", color: "var(--fg-3)", fontSize: 12 }}>
+              Intelligence monitoring coming soon.
             </div>
             <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)" }}>
               <button onClick={() => nav("/studio/watch")} className="btn-ghost" style={{ width: "100%", fontSize: 12, padding: "9px" }}>
