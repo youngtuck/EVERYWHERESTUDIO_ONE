@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, createContext, useContext, Children } from "react";
+import { useEffect, useRef, useState, createContext, useContext, Children } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 
@@ -716,18 +716,12 @@ export default function ExplorePage() {
   const [scrollPct, setScrollPct] = useState(0);
 
   const toggle = () => setDark(d => !d);
-  useEffect(()=>{ const t=setTimeout(()=>setMounted(true),80); return()=>clearTimeout(t); },[]);
-  useEffect(()=>{ document.body.setAttribute("data-explore-theme", dark ? "dark" : "light"); },[dark]);
-
-  // Keep document background in sync with theme; useLayoutEffect so first paint is never white
-  useLayoutEffect(() => {
-    const bg = dark ? "#07090f" : "#F4F2ED";
-    document.documentElement.style.backgroundColor = bg;
-    document.body.style.backgroundColor = bg;
-    return () => {
-      document.documentElement.style.backgroundColor = "";
-      document.body.style.backgroundColor = "";
-    };
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    document.body.setAttribute("data-explore-theme", dark ? "dark" : "light");
   }, [dark]);
 
   useEffect(() => {
@@ -757,10 +751,30 @@ export default function ExplorePage() {
 
   // Fade in from dark when arriving from landing zoom transition
   useEffect(() => {
-    if (!fromLandingZoom) return;
-    const t = setTimeout(() => setEntranceDone(true), 50);
-    return () => clearTimeout(t);
+    if (!fromLandingZoom) {
+      setEntranceDone(true);
+      return;
+    }
+    setEntranceDone(false);
+    let frameId = 0;
+    let timeoutId: number | undefined;
+    frameId = requestAnimationFrame(() => {
+      timeoutId = window.setTimeout(() => {
+        setEntranceDone(true);
+      }, 50);
+    });
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
   }, [fromLandingZoom]);
+
+  // After the landing zoom fade-in completes, release any temporary document background
+  useEffect(() => {
+    if (!fromLandingZoom || !entranceDone) return;
+    document.documentElement.style.backgroundColor = "";
+    document.body.style.backgroundColor = "";
+  }, [fromLandingZoom, entranceDone]);
 
   // Theme tokens
   const T = {
@@ -791,11 +805,12 @@ export default function ExplorePage() {
   return (
     <ThemeCtx.Provider value={{ dark, toggle }}>
       <div style={{
+        background:"#07090f",
         fontFamily:"'Afacad Flux',sans-serif",
-        background:T.bg,
         color:T.text,
+        backgroundColor:T.bg,
         overflowX:"clip",
-        transition:"background .45s ease, color .3s ease" + (fromLandingZoom ? ", opacity 0.7s ease" : ""),
+        transition:"background .45s ease, color .3s ease" + (fromLandingZoom ? ", opacity 0.6s ease-out" : ""),
         opacity: fromLandingZoom ? (entranceDone ? 1 : 0) : 1,
       }}>
         <style>{`

@@ -196,6 +196,7 @@ export default function Index() {
         zoomRef.current = 1;
         // Prevent white flash: paint document dark before route change so Explore first paint is dark
         document.documentElement.style.backgroundColor = "#07090f";
+        document.documentElement.style.transition = "none";
         document.body.style.backgroundColor = "#07090f";
         navigate("/explore", { state: { fromLandingZoom: true } });
         return;
