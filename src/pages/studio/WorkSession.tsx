@@ -631,7 +631,7 @@ async function chatWithWatson(
   return res.json();
 }
 
-async function generateOutput(conversationSummary: string, outputTypeApi: string, voiceProfile: object | null): Promise<{ content: string; score: number }> {
+async function generateOutput(conversationSummary: string, outputTypeApi: string, voiceProfile: object | null): Promise<{ content: string; score: number; gates?: unknown }> {
   const url = `${API_BASE}/api/generate`;
   const res = await requestWithRetry(
     url,
@@ -734,7 +734,7 @@ export default function WorkSession() {
       .join("\n\n");
 
     try {
-      const { content, score } = await generateOutput(conversationSummary, outputTypeApi, voiceProfile);
+      const { content, score, gates } = await generateOutput(conversationSummary, outputTypeApi, voiceProfile);
       setGeneratedContent(content);
       setGeneratedScore(score);
 
@@ -750,6 +750,7 @@ export default function WorkSession() {
           output_type: outputType,
           score,
           conversation_summary: conversationSummary,
+          gates,
         })
         .select()
         .single();

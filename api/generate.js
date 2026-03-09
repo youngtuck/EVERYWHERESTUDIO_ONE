@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { scoreContent } from "./_score.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -31,9 +32,20 @@ export default async function handler(req, res) {
     });
 
     const content = response.content?.[0]?.type === "text" ? response.content[0].text : "";
-    const score = 800 + Math.floor(Math.random() * 150);
 
-    return res.json({ content, score });
+    let gates = null;
+    let score = 820;
+    try {
+      const scores = await scoreContent({ apiKey, content, outputType, voiceProfile });
+      gates = scores;
+      if (typeof scores?.total === "number") {
+        score = scores.total;
+      }
+    } catch (err) {
+      console.error("[api/generate][score]", err);
+    }
+
+    return res.json({ content, score, gates });
   } catch (err) {
     console.error("[api/generate]", err);
     const status = err.status === 401 ? 401 : 502;

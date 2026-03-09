@@ -11,6 +11,18 @@ interface Output {
   output_type: string;
   score: number;
   created_at: string;
+  gates?: {
+    strategy?: number;
+    voice?: number;
+    accuracy?: number;
+    ai_tells?: number;
+    audience?: number;
+    platform?: number;
+    impact?: number;
+    total?: number;
+    summary?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 export default function OutputDetail() {
@@ -58,6 +70,23 @@ export default function OutputDetail() {
   );
 
   const scoreColor = output!.score >= 800 ? "#10b981" : output!.score >= 700 ? "#3A7BD5" : "#C8961A";
+  const gates = output!.gates && typeof output!.gates === "object" ? output!.gates : null;
+
+  const gateEntries = gates ? [
+    { key: "strategy", label: "Strategy", value: gates.strategy as number | undefined },
+    { key: "voice", label: "Voice", value: gates.voice as number | undefined },
+    { key: "accuracy", label: "Accuracy", value: gates.accuracy as number | undefined },
+    { key: "ai_tells", label: "AI Tells", value: gates.ai_tells as number | undefined },
+    { key: "audience", label: "Audience", value: gates.audience as number | undefined },
+    { key: "platform", label: "Platform", value: gates.platform as number | undefined },
+    { key: "impact", label: "Impact", value: gates.impact as number | undefined },
+  ].filter((g) => typeof g.value === "number") : [];
+
+  const gateBarColor = (v: number) => {
+    if (v >= 80) return "#10b981";
+    if (v >= 65) return "#3A7BD5";
+    return "#C8961A";
+  };
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: isMobile ? "24px 16px" : "40px 32px", fontFamily: "var(--font)" }}>
@@ -94,6 +123,40 @@ export default function OutputDetail() {
           {output!.content}
         </pre>
       </div>
+      {gateEntries.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          {gates?.summary && (
+            <p style={{ fontSize: 13, color: "var(--fg-2)", marginBottom: 14 }}>
+              {gates.summary}
+            </p>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {gateEntries.map(({ key, label, value }) => {
+              const v = value as number;
+              const cl = gateBarColor(v);
+              return (
+                <div key={key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ width: 90, fontSize: 12, color: "var(--fg-3)" }}>{label}</span>
+                  <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--bg-3)", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${Math.max(0, Math.min(100, v))}%`,
+                        background: cl,
+                        borderRadius: 3,
+                        transition: "width 0.4s ease",
+                      }}
+                    />
+                  </div>
+                  <span style={{ width: 40, textAlign: "right", fontSize: 12, fontVariantNumeric: "tabular-nums", color: cl }}>
+                    {v}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
