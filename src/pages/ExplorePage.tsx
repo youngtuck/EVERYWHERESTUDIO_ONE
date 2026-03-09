@@ -918,99 +918,142 @@ export default function ExplorePage() {
         </section>
 
         {/* ══ PROBLEM ═══════════════════════════════════════════════════════════ */}
-        <section id="problem" style={{padding:isMobile ? "56px 24px 48px" : "72px 48px 64px",borderTop:`1px solid ${bc}`}}>
+        <section
+          id="problem"
+          style={{
+            padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
+          }}
+        >
           <div style={{maxWidth:880,margin:"0 auto"}}>
-            <WordReveal text="You already know what to say." size="clamp(32px,4.5vw,54px)" weight={700} lh={1.04} color={T.text} />
-            <div style={{marginTop:10,marginBottom:36}}>
-              <WordReveal text="The hard part is everything after that." size="clamp(15px,1.7vw,20px)" weight={400} color={T.textSub} lh={1.4} delay={0.08} />
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:isMobile ? "24px" : "0 64px",maxWidth:800}}>
-              <FadeUp delay={0.04}><p style={{fontSize:14,lineHeight:1.8,color:T.textSub}}>Every thought leader faces the same bottleneck. You have insights worth sharing, but turning them into polished, multi-format content takes a team you don't have and time you can't spare.</p></FadeUp>
-              <FadeUp delay={0.10}><p style={{fontSize:14,lineHeight:1.8,color:T.textSub}}>AI tools move fast but flatten your voice into something generic. Ghostwriters get tone right but cost thousands a month and still need you to do half the work.</p></FadeUp>
-            </div>
+            <FadeInSection>
+              <WordReveal text="You already know what to say." size="clamp(32px,4.5vw,54px)" weight={700} lh={1.04} color={T.text} />
+              <div style={{marginTop:10,marginBottom:36}}>
+                <WordReveal text="The hard part is everything after that." size="clamp(15px,1.7vw,20px)" weight={400} color={T.textSub} lh={1.4} delay={0.08} />
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:isMobile ? "24px" : "0 64px",maxWidth:800}}>
+                <FadeUp delay={0.04}><p style={{fontSize:14,lineHeight:1.8,color:T.textSub}}>Every thought leader faces the same bottleneck. You have insights worth sharing, but turning them into polished, multi-format content takes a team you don't have and time you can't spare.</p></FadeUp>
+                <FadeUp delay={0.10}><p style={{fontSize:14,lineHeight:1.8,color:T.textSub}}>AI tools move fast but flatten your voice into something generic. Ghostwriters get tone right but cost thousands a month and still need you to do half the work.</p></FadeUp>
+              </div>
+            </FadeInSection>
           </div>
         </section>
 
+        <SectionDivider />
+
         {/* ══ FRAMEWORK ════════════════════════════════════════════════════════ */}
-        <section id="fw" style={{padding:isMobile ? "56px 24px 48px" : "64px 48px 56px",borderTop:`1px solid ${bc}`}}>
+        <section
+          id="fw"
+          style={{
+            padding: isMobile ? "80px 24px 80px" : "160px 48px 160px",
+          }}
+        >
           <div style={{maxWidth:920,margin:"0 auto"}}>
-            <FadeUp>
+            <FadeInSection>
               <div style={{textAlign:"center",marginBottom:16}}>
                 <div style={{fontSize:9,letterSpacing:".22em",color:T.textFaint,textTransform:"uppercase",marginBottom:18,fontWeight:500}}>The Framework</div>
                 <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.text,marginBottom:4}}>One idea in.</div>
                 <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.gold,marginBottom:20}}>Communications out.</div>
                 <p style={{fontSize:14,color:T.textSub,maxWidth:420,margin:"0 auto",lineHeight:1.72}}>EVERYWHERE Studio bridges what you know and what the world sees.</p>
               </div>
-            </FadeUp>
+            </FadeInSection>
             {/* Counters */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",marginTop:48,borderTop:`1px solid ${bc}`}}>
+            <FadeInSection style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",marginTop:48,borderTop:`1px solid ${bc}`}}>
               <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={40} suffix="+" label="AI Specialists" accent={T.watchA} /></div>
               <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={12} label="Output Formats" accent={T.workA} /></div>
               <div style={{padding:isMobile ? "24px 16px" : "36px 28px"}}><Counter target={7} label="Quality Gates" accent={T.wrapA} /></div>
-            </div>
+            </FadeInSection>
           </div>
         </section>
 
         {/* ══ ROOMS: single continuous left column ════════════════════════════ */}
         <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} />
 
+        <SectionDivider />
+
         {/* ══ QUALITY GATES ════════════════════════════════════════════════════ */}
-        <section style={{padding:isMobile ? "64px 24px 72px" : "80px 48px 88px",background:dark?"linear-gradient(180deg,#080311 0%,#07090f 100%)":"linear-gradient(180deg,#E9E4F5 0%,#F4F2ED 100%)",borderTop:`1px solid ${bc}`}}>
+        <section
+          style={{
+            padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
+            background:dark?"linear-gradient(180deg,#080311 0%,#07090f 100%)":"linear-gradient(180deg,#E9E4F5 0%,#F4F2ED 100%)",
+          }}
+        >
           <div style={{maxWidth:800,margin:"0 auto"}}>
-            <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:"36px 60px",alignItems:"end",marginBottom:44}}>
-              <div>
-                <FadeUp><div style={{fontSize:9,letterSpacing:".2em",color:T.wrapA,textTransform:"uppercase",marginBottom:14,fontWeight:700}}>Quality Gates</div></FadeUp>
-                <WordReveal text="Nothing ships without passing the gates." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
+            <FadeInSection>
+              <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:"36px 60px",alignItems:"end",marginBottom:44}}>
+                <div>
+                  <FadeUp><div style={{fontSize:9,letterSpacing:".2em",color:T.wrapA,textTransform:"uppercase",marginBottom:14,fontWeight:700}}>Quality Gates</div></FadeUp>
+                  <WordReveal text="Nothing ships without passing the gates." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
+                </div>
+                <FadeUp delay={0.1}><p style={{fontSize:13,lineHeight:1.75,color:T.textSub}}>7 checks before anything reaches your audience. No AI tells. No off-brand moments. No weak writing.</p></FadeUp>
               </div>
-              <FadeUp delay={0.1}><p style={{fontSize:13,lineHeight:1.75,color:T.textSub}}>7 checks before anything reaches your audience. No AI tells. No off-brand moments. No weak writing.</p></FadeUp>
-            </div>
+            </FadeInSection>
             <div style={{borderTop:`1px solid ${bc}`}}>
-              {[["01","Strategy","Does this serve your goals?","#3A7BD5"],["02","Voice","Does this sound like you?","#0D8C9E"],["03","Accuracy","Are the facts verified?","#C8961A"],["04","AI Tells","Could anyone spot the AI?","#e8506a"],["05","Audience","Will this resonate?","#A080F5"],["06","Platform","Is this native to the channel?","#4ab8f5"],["07","Impact","Will this move people to action?","#10b981"]].map(([num,name,desc,color],i)=>(
-                <GateRow key={i} num={num} name={name} desc={desc} color={color} delay={0.03+i*.05} lc={lc} bc={bc} />
-              ))}
+              <FadeInSection>
+                {[["01","Strategy","Does this serve your goals?","#3A7BD5"],["02","Voice","Does this sound like you?","#0D8C9E"],["03","Accuracy","Are the facts verified?","#C8961A"],["04","AI Tells","Could anyone spot the AI?","#e8506a"],["05","Audience","Will this resonate?","#A080F5"],["06","Platform","Is this native to the channel?","#4ab8f5"],["07","Impact","Will this move people to action?","#10b981"]].map(([num,name,desc,color],i)=>(
+                  <GateRow key={i} num={num} name={name} desc={desc} color={color} delay={0.03+i*.05} lc={lc} bc={bc} />
+                ))}
+              </FadeInSection>
             </div>
           </div>
         </section>
+
+        <SectionDivider />
 
         {/* ══ COMPOUND ═════════════════════════════════════════════════════════ */}
-        <section style={{padding:"80px 48px 72px",borderTop:`1px solid ${bc}`}}>
+        <section
+          style={{
+            padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
+          }}
+        >
           <div style={{maxWidth:680,margin:"0 auto"}}>
-            <FadeUp><div style={{fontSize:9,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:16,fontWeight:500}}>Compound Advantage</div></FadeUp>
-            <WordReveal text="Why It Compounds" size="clamp(34px,4.5vw,58px)" weight={700} lh={1.0} color={T.text} />
-            <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:32}}>
-              <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. EVERYWHERE Studio makes it better, and the difference grows with every piece you publish.</p></FadeUp>
-              <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality gates calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
-            </div>
-            <FadeUp delay={0.24}>
-              <div style={{marginTop:44,padding:"28px 0",borderTop:`1px solid ${bc}`,borderBottom:`1px solid ${bc}`,textAlign:"center"}}>
-                <div style={{fontSize:"clamp(15px,1.8vw,22px)",fontWeight:600,lineHeight:1.45,color:T.gold,fontStyle:"italic"}}>
-                  "Competitors can copy the output format. They cannot copy the system underneath it."
-                </div>
+            <FadeInSection>
+              <div style={{fontSize:9,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:16,fontWeight:500}}>Compound Advantage</div>
+              <WordReveal text="Why It Compounds" size="clamp(34px,4.5vw,58px)" weight={700} lh={1.0} color={T.text} />
+              <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:32}}>
+                <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. EVERYWHERE Studio makes it better, and the difference grows with every piece you publish.</p></FadeUp>
+                <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality gates calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
               </div>
-            </FadeUp>
+              <FadeUp delay={0.24}>
+                <div style={{marginTop:44,padding:"28px 0",borderTop:`1px solid ${bc}`,borderBottom:`1px solid ${bc}`,textAlign:"center"}}>
+                  <div style={{fontSize:"clamp(15px,1.8vw,22px)",fontWeight:600,lineHeight:1.45,color:T.gold,fontStyle:"italic"}}>
+                    "Competitors can copy the output format. They cannot copy the system underneath it."
+                  </div>
+                </div>
+              </FadeUp>
+            </FadeInSection>
           </div>
         </section>
 
+        <SectionDivider />
+
         {/* ══ CTA ══════════════════════════════════════════════════════════════ */}
-        <section style={{padding:"100px 48px 88px",textAlign:"center",borderTop:`1px solid ${bc}`,background:dark?"linear-gradient(180deg,#07090f 0%,#08102a 100%)":"linear-gradient(180deg,#F4F2ED 0%,#E8ECF8 100%)"}}>
+        <section
+          style={{
+            padding: isMobile ? "100px 24px 80px" : "180px 48px 120px",
+            textAlign:"center",
+            background:dark?"linear-gradient(180deg,#07090f 0%,#08102a 100%)":"linear-gradient(180deg,#F4F2ED 0%,#E8ECF8 100%)",
+          }}
+        >
           <div style={{maxWidth:540,margin:"0 auto"}}>
-            <FadeUp><div style={{fontSize:9,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:24,fontWeight:500}}>Let's Talk</div></FadeUp>
-            <WordReveal text="Your ideas deserve a system built to carry them." size="clamp(28px,4vw,52px)" weight={700} lh={1.02} color={T.text} center />
-            <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
-            <FadeUp delay={0.26}>
-              <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
-                <button
-                  onClick={()=>{ window.location.href = "mailto:mark@everywhereStudio.com"; }}
-                  style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"opacity .2s"}}
-                  onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".82"}
-                  onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>Let's Talk</button>
-                <button
-                  onClick={()=>nav("/auth")}
-                  style={{background:"transparent",border:`1px solid ${T.text}18`,borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:500,color:T.textSub,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"all .2s"}}
-                  onMouseEnter={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}35`; (e.currentTarget as HTMLElement).style.color=T.text; }}
-                  onMouseLeave={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}18`; (e.currentTarget as HTMLElement).style.color=T.textSub; }}>Open Studio</button>
-              </div>
-            </FadeUp>
+            <FadeInSection>
+              <div style={{fontSize:9,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:24,fontWeight:500}}>Let's Talk</div>
+              <WordReveal text="Your ideas deserve a system built to carry them." size="clamp(28px,4vw,52px)" weight={700} lh={1.02} color={T.text} center />
+              <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
+              <FadeUp delay={0.26}>
+                <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+                  <button
+                    onClick={()=>{ window.location.href = "mailto:mark@everywhereStudio.com"; }}
+                    style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"opacity .2s"}}
+                    onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".82"}
+                    onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>Let's Talk</button>
+                  <button
+                    onClick={()=>nav("/auth")}
+                    style={{background:"transparent",border:`1px solid ${T.text}18`,borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:500,color:T.textSub,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"all .2s"}}
+                    onMouseEnter={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}35`; (e.currentTarget as HTMLElement).style.color=T.text; }}
+                    onMouseLeave={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}18`; (e.currentTarget as HTMLElement).style.color=T.textSub; }}>Open Studio</button>
+                </div>
+              </FadeUp>
+            </FadeInSection>
           </div>
         </section>
 
