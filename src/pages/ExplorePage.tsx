@@ -613,6 +613,7 @@ export default function ExplorePage() {
   const fromLandingZoom = location.state?.fromLandingZoom === true;
   const [entranceDone, setEntranceDone] = useState(false);
   const isMobile = useMobile();
+  const [scrollPct, setScrollPct] = useState(0);
 
   const toggle = () => setDark(d => !d);
   useEffect(()=>{ const t=setTimeout(()=>setMounted(true),80); return()=>clearTimeout(t); },[]);
@@ -628,6 +629,21 @@ export default function ExplorePage() {
       document.body.style.backgroundColor = "";
     };
   }, [dark]);
+
+  useEffect(() => {
+    const handler = () => {
+      const el = document.documentElement;
+      const denom = el.scrollHeight - el.clientHeight;
+      if (denom <= 0) {
+        setScrollPct(0);
+        return;
+      }
+      setScrollPct(el.scrollTop / denom);
+    };
+    window.addEventListener("scroll", handler, { passive: true });
+    handler();
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
 
   // Fade in from dark when arriving from landing zoom transition
   useEffect(() => {
@@ -684,6 +700,28 @@ export default function ExplorePage() {
           }
           .orb-breathe-rooms { display: inline-block; animation: orbBreatheRooms 2.6s ease-in-out infinite; }
         `}</style>
+
+        {/* Scroll progress indicator */}
+        <div
+          style={{
+            position: "fixed",
+            right: 0,
+            top: 0,
+            width: 2,
+            height: "100vh",
+            zIndex: 100,
+            background: "rgba(255,255,255,0.06)",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              height: `${scrollPct * 100}%`,
+              background: "linear-gradient(to bottom, #4A90F5, #0D8C9E, #a080f5)",
+              transition: "height 0.1s linear",
+            }}
+          />
+        </div>
 
         {/* NAV */}
         <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:200,height:54,padding:"0 36px",display:"flex",alignItems:"center",justifyContent:"space-between",background:T.navBg,backdropFilter:"blur(22px)",borderBottom:`1px solid ${bc}`,transition:"background .45s"}}>
