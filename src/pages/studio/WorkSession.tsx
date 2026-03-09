@@ -7,156 +7,182 @@ import { useMobile } from "../../hooks/useMobile";
 import { useTheme } from "../../context/ThemeContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WATSON ORB — Siri-inspired volumetric orb.
-// Translucent glass shell with flowing colored light lobes inside.
-// thinking=false: calm slow drift, cursor-reactive.
-// thinking=true:  lobes speed up and bloom, breathing glow.
+// WATSON ORB — volumetric plasma field inside a glass shell.
+// thinking=false: calm, slow internal motion.
+// thinking=true:  plasma filaments brighten and accelerate.
 // ─────────────────────────────────────────────────────────────────────────────
 const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
 
-const SIRI_FRAG = `
+const ORB_FRAG = `
 precision highp float;
 uniform float u_t;
 uniform float u_energy;
-uniform vec2  u_res;
-uniform vec2  u_mouse; // normalized -1..1
-#define PI  3.14159265358979
+uniform vec2 u_res;
+uniform vec2 u_mouse;
+
+#define PI 3.14159265358979
 #define TAU 6.28318530718
 
-mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
-
-// Smooth noise
-float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
-float snoise(vec2 p){
-  vec2 i=floor(p), f=fract(p);
-  f=f*f*(3.-2.*f);
-  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),
-             mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);
+// Hash and noise
+float hash(vec2 p) {
+  p = fract(p * vec2(127.1, 311.7));
+  p += dot(p, p + 19.19);
+  return fract(p.x * p.y);
+}
+float hash3(vec3 p) {
+  p = fract(p * vec3(127.1, 311.7, 74.7));
+  p += dot(p, p + 19.19);
+  return fract(p.x * p.y * p.z);
+}
+float noise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash(i), hash(i + vec2(1,0)), f.x),
+    mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), f.x), f.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 5; i++) {
+    v += a * noise(p);
+    p = p * 2.1 + vec2(1.7, 9.2);
+    a *= 0.5;
+  }
+  return v;
 }
 
-// Lobe: a soft glowing blob in 3D
-float lobe(vec3 p, vec3 center, float radius){
-  float d = length(p - center);
-  return exp(-d*d / (radius*radius));
-}
+// Rotation matrices
+mat3 rotX(float a) { float c=cos(a),s=sin(a); return mat3(1,0,0, 0,c,-s, 0,s,c); }
+mat3 rotY(float a) { float c=cos(a),s=sin(a); return mat3(c,0,s, 0,1,0, -s,0,c); }
+mat3 rotZ(float a) { float c=cos(a),s=sin(a); return mat3(c,-s,0, s,c,0, 0,0,1); }
 
-void main(){
+void main() {
   vec2 uv = (gl_FragCoord.xy / u_res) * 2.0 - 1.0;
   uv.x *= u_res.x / u_res.y;
 
-  // Ray
-  vec3 ro = vec3(0., 0., 2.4);
-  vec3 rd = normalize(vec3(uv, -1.7));
+  float spd = 1.0 + u_energy * 3.0;
+  float T = u_t * spd;
 
-  // Sphere intersection (radius 0.78)
-  float R = 0.78;
+  // Ray setup
+  vec3 ro = vec3(u_mouse * 0.3, 2.5);
+  vec3 rd = normalize(vec3(uv, -1.8));
+
+  // Sphere intersection R=0.82
+  float R = 0.82;
   float b = dot(ro, rd);
-  float c = dot(ro, ro) - R*R;
+  float c = dot(ro, ro) - R * R;
   float disc = b*b - c;
-  if(disc < 0.0){ gl_FragColor = vec4(0.); return; }
+  if (disc < 0.0) { gl_FragColor = vec4(0.0); return; }
 
   float sqD = sqrt(disc);
-  float edgeAA = smoothstep(0., 0.005, sqD);
-  float t1 = max(-b - sqD, 0.0);
-  float t2 = -b + sqD;
-  if(t2 < 0.0){ gl_FragColor = vec4(0.); return; }
+  float tNear = -b - sqD;
+  float tFar  = -b + sqD;
+  if (tFar < 0.0) { gl_FragColor = vec4(0.0); return; }
 
-  vec3 hitFront = ro + rd * t1;
-  vec3 N = normalize(hitFront);
-  vec3 V = -rd;
-  float NoV = max(dot(N, V), 0.0);
+  // Edge softness
+  float edgeAA = smoothstep(0.0, 0.012, disc);
 
-  // Mouse-driven gentle rotation of interior
-  float rx = u_mouse.y * 0.9;
-  float ry = u_mouse.x * 0.9;
+  vec3 hitN = normalize(ro + rd * max(tNear, 0.0));
+  float NoV = max(dot(hitN, -rd), 0.0);
+  float fresnel = pow(1.0 - NoV, 4.0);
 
-  float spd = 1.0 + u_energy * 2.8;
-  float t = u_t * spd;
+  // ── INTERIOR VOLUMETRIC MARCH ──────────────────────────────────────────
+  // We march 20 steps through the sphere and accumulate plasma + filaments
+  float span = tFar - max(tNear, 0.0);
+  float tStart = max(tNear, 0.0);
 
-  // Animated lobe centers — orbit around interior
-  vec3 c1 = vec3(
-    sin(t * 0.41 + 0.0) * 0.38,
-    cos(t * 0.37 + 1.1) * 0.35,
-    sin(t * 0.29 + 2.3) * 0.30
-  );
-  vec3 c2 = vec3(
-    sin(t * 0.53 + 3.5) * 0.42,
-    cos(t * 0.44 + 0.7) * 0.38,
-    sin(t * 0.35 + 1.8) * 0.32
-  );
-  vec3 c3 = vec3(
-    cos(t * 0.38 + 2.1) * 0.36,
-    sin(t * 0.61 + 4.2) * 0.30,
-    cos(t * 0.47 + 0.4) * 0.34
-  );
-  vec3 c4 = vec3(
-    cos(t * 0.28 + 5.1) * 0.40,
-    sin(t * 0.33 + 2.8) * 0.36,
-    cos(t * 0.52 + 3.3) * 0.28
-  );
+  vec3 plasma = vec3(0.0);
+  float alpha_acc = 0.0;
 
-  // Lobe colors — Siri palette: crimson, cyan, violet, white
-  vec3 col1 = vec3(0.95, 0.18, 0.32); // rose/crimson
-  vec3 col2 = vec3(0.10, 0.85, 0.90); // cyan/teal
-  vec3 col3 = vec3(0.55, 0.28, 1.00); // violet
-  vec3 col4 = vec3(0.20, 0.60, 1.00); // bright blue
+  for (int i = 0; i < 20; i++) {
+    float fi = (float(i) + 0.5) / 20.0;
+    vec3 p = ro + rd * (tStart + span * fi);
 
-  // March through sphere interior to accumulate lobe light
-  float span = t2 - t1;
-  vec3 interior = vec3(0.);
-  float totalW = 0.0;
-  int STEPS = 12;
-  for(int i = 0; i < 12; i++){
-    float fi = float(i) / 11.0;
-    vec3 p = ro + rd * (t1 + span * (fi * 0.88 + 0.06));
-    // Apply mouse rotation to sample point
-    p.yz = rot2(rx) * p.yz;
-    p.xz = rot2(ry) * p.xz;
-    float l1 = lobe(p, c1, 0.36);
-    float l2 = lobe(p, c2, 0.40);
-    float l3 = lobe(p, c3, 0.33);
-    float l4 = lobe(p, c4, 0.38);
-    float depth = 1.0 - fi * 0.5;
-    interior += (col1 * l1 * 1.8 + col2 * l2 * 1.6 + col3 * l3 * 1.5 + col4 * l4 * 1.4) * depth;
-    totalW += (l1 + l2 + l3 + l4) * depth;
+    // Rotate sample point over time for swirling
+    p = rotY(T * 0.18) * rotX(T * 0.11) * p;
+
+    float r = length(p);
+    vec3 n = p / r;
+
+    // Spherical coords for surface patterns
+    float theta = acos(clamp(n.y, -1.0, 1.0));
+    float phi   = atan(n.z, n.x);
+
+    // ── Plasma filaments: fbm layered on sphere surface
+    vec2 sph = vec2(phi / TAU + 0.5, theta / PI);
+    float f1 = fbm(sph * 4.0 + vec2(T * 0.12, T * 0.07));
+    float f2 = fbm(sph * 7.0 - vec2(T * 0.09, T * 0.15) + f1);
+    float f3 = fbm(sph * 12.0 + vec2(T * 0.06) + f2 * 0.5);
+
+    // Ribbon mask — sharp bright streaks
+    float ribbon = pow(abs(sin(f2 * PI * 3.0 + T * 0.4)), 8.0);
+    ribbon += pow(abs(sin(f3 * PI * 5.0 - T * 0.3)), 12.0) * 0.5;
+
+    // Core glow — hot center
+    float core = exp(-r * r * 3.5) * (1.0 + u_energy * 2.0);
+
+    // ── Color palette (IMAGE REFERENCE: gold/white core, blue/violet ribbons) ──
+    // Deep interior: gold and white heat
+    vec3 coreColor = mix(
+      vec3(1.0, 0.65, 0.1),   // gold
+      vec3(1.0, 0.95, 0.85),  // white hot
+      core
+    );
+    // Ribbon color: electric blue → violet → rose
+    float hue = fract(f1 * 0.5 + T * 0.04);
+    vec3 ribbonColor = mix(
+      mix(vec3(0.1, 0.5, 1.0), vec3(0.6, 0.2, 1.0), hue),        // blue→violet
+      mix(vec3(0.6, 0.2, 1.0), vec3(1.0, 0.2, 0.5), hue * 2.0 - 1.0), // violet→rose
+      step(0.5, hue)
+    );
+
+    // Depth fade — brighter toward front
+    float depth = (1.0 - fi) * 0.6 + 0.4;
+
+    // Accumulate
+    vec3 contrib = (ribbonColor * ribbon * 2.5 + coreColor * core * 4.0) * depth;
+
+    // When thinking: add turbulent energy bursts
+    float burst = u_energy * pow(abs(sin(f3 * PI * 8.0 + T * 1.2)), 6.0) * 3.0;
+    contrib += vec3(0.8, 0.4, 1.0) * burst * depth;
+
+    plasma += contrib / 20.0;
+    alpha_acc += (ribbon * 0.15 + core * 0.3 + burst * 0.1) / 20.0;
   }
-  interior /= float(STEPS);
 
-  // Boost brightness when thinking
-  interior *= 1.0 + u_energy * 0.9;
-
-  // Glass shell — translucent, iridescent edge
-  float fresnel = pow(1.0 - NoV, 3.5);
-  vec3 shellTint = mix(
-    vec3(0.60, 0.75, 1.00),  // face tint: pale blue
-    vec3(0.90, 0.95, 1.00),  // edge tint: white-blue
+  // ── GLASS SHELL ─────────────────────────────────────────────────────────
+  // Thin iridescent shell that refracts the interior
+  vec3 shellColor = mix(
+    vec3(0.3, 0.5, 1.0),   // inner: cool blue
+    vec3(0.9, 0.7, 1.0),   // edge: pale violet
     fresnel
   );
 
-  // Specular caustic — bright star highlight
-  vec3 L1 = normalize(vec3(-0.5, 0.9, 0.6));
-  vec3 H1 = normalize(L1 + V);
-  float spec1 = pow(max(dot(N, H1), 0.0), 220.0) * 2.2;
-  vec3 L2 = normalize(vec3(0.7, 0.2, 0.8));
-  vec3 H2 = normalize(L2 + V);
-  float spec2 = pow(max(dot(N, H2), 0.0), 80.0) * 0.5;
+  // Specular highlights — two sharp caustic points
+  vec3 L1 = normalize(vec3(-0.6, 0.8, 0.5));
+  float spec1 = pow(max(dot(hitN, normalize(L1 - rd)), 0.0), 280.0) * 3.0;
+  vec3 L2 = normalize(vec3(0.5, -0.3, 0.8));
+  float spec2 = pow(max(dot(hitN, normalize(L2 - rd)), 0.0), 120.0) * 1.2;
 
-  // Glass transmission — interior shines through
-  float glassAlpha = 0.18 + fresnel * 0.68;
-  vec3 transmitted = interior * (1.0 - glassAlpha * 0.6);
-  vec3 reflected    = shellTint * glassAlpha;
-  vec3 col = transmitted + reflected;
-  col += vec3(1.0, 0.98, 0.95) * (spec1 + spec2);
+  // Rim glow — backlit halo
+  float rim = pow(fresnel, 1.5) * 0.8;
+  vec3 rimColor = mix(vec3(0.2, 0.4, 1.0), vec3(0.8, 0.3, 1.0), sin(T * 0.3) * 0.5 + 0.5);
 
-  // Subtle inner glow at center
-  float centerGlow = exp(-dot(uv, uv) * 2.8) * 0.35 * (1.0 + u_energy * 0.6);
-  col += vec3(0.6, 0.8, 1.0) * centerGlow;
+  // ── COMPOSITE ───────────────────────────────────────────────────────────
+  vec3 col = plasma * 1.4;
+  col += shellColor * (fresnel * 0.3 + rim);
+  col += vec3(1.0, 0.97, 0.9) * (spec1 + spec2);
 
-  // Tone map
-  col = col / (col + 0.9);
-  col = pow(max(col, 0.0), vec3(0.88));
+  // Tone map with filmic curve
+  col = col / (col + vec3(0.7));
+  col = pow(max(col, 0.0), vec3(0.85));
 
-  float alpha = edgeAA * (0.82 + fresnel * 0.18);
+  // Alpha: glass shell edge + interior density
+  float alpha = edgeAA * clamp(
+    fresnel * 0.6 + alpha_acc * 2.5 + spec1 * 0.3,
+    0.0, 1.0
+  );
+
   gl_FragColor = vec4(col * alpha, alpha);
 }
 `;
@@ -170,11 +196,16 @@ class OrbSpring {
   }
 }
 
-function WatsonOrb({ size }: { size: number }) {
+function WatsonOrb({ size, thinking }: { size: number; thinking?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const spring = useRef(new OrbSpring());
   const raf = useRef(0);
   const energyRef = useRef(0);
+  const thinkingRef = useRef(!!thinking);
+
+  useEffect(() => {
+    thinkingRef.current = !!thinking;
+  }, [thinking]);
 
   useEffect(() => {
     const canvas = ref.current!;
@@ -190,7 +221,7 @@ function WatsonOrb({ size }: { size: number }) {
     };
     const prog = gl.createProgram()!;
     gl.attachShader(prog, mkS(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(prog, mkS(gl.FRAGMENT_SHADER, SIRI_FRAG));
+    gl.attachShader(prog, mkS(gl.FRAGMENT_SHADER, ORB_FRAG));
     gl.linkProgram(prog); gl.useProgram(prog);
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
@@ -210,7 +241,8 @@ function WatsonOrb({ size }: { size: number }) {
     window.addEventListener("mousemove", onMove);
 
     const draw = (ts: number) => {
-      energyRef.current += (0 - energyRef.current) * 0.035;
+      const targetEnergy = thinkingRef.current ? 1 : 0;
+      energyRef.current += (targetEnergy - energyRef.current) * 0.035;
       spring.current.step(0.058, 0.88);
 
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -225,20 +257,23 @@ function WatsonOrb({ size }: { size: number }) {
     raf.current = requestAnimationFrame(draw);
     return () => { cancelAnimationFrame(raf.current); window.removeEventListener("mousemove", onMove); };
   }, [size]);
-
-  const glowSize = size * 0.3;
+  const glowInset = thinking ? -size * 0.6 : -size * 0.25;
+  const glowBlur = size * (thinking ? 0.12 : 0.05);
+  const glowBg = thinking
+    ? "radial-gradient(circle, rgba(200,140,20,0.3) 0%, rgba(100,60,255,0.2) 40%, transparent 70%)"
+    : "radial-gradient(circle, rgba(100,80,255,0.15) 0%, rgba(200,140,20,0.08) 50%, transparent 70%)";
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       {/* Outer atmosphere */}
       <div style={{
         position: "absolute",
-        inset: -glowSize * 0.5,
+        inset: glowInset,
         borderRadius: "50%",
-        background: `radial-gradient(circle, rgba(80,140,255,0.10) 0%, transparent 65%)`,
+        background: glowBg,
         animation: "none",
         pointerEvents: "none",
         transition: "all 0.8s ease",
-        filter: `blur(${size * 0.04}px)`,
+        filter: `blur(${glowBlur}px)`,
       }} />
       <canvas ref={ref} style={{ width: size, height: size, borderRadius: "50%", display: "block", position: "relative", zIndex: 1 }} />
     </div>
@@ -413,7 +448,7 @@ function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string
       padding: "60px 40px", gap: 32, textAlign: "center",
     }}>
       {/* Watson orb — live WebGL, reactive */}
-      <WatsonOrb size={120} />
+      <WatsonOrb size={160} />
 
       <div style={{ maxWidth: 460 }}>
         <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--fg)", marginBottom: 10, letterSpacing: "-.02em" }}>
@@ -454,7 +489,7 @@ function WatsonThinking() {
         width: 28,
         height: 28,
         borderRadius: "50%",
-        background: "radial-gradient(circle at 35% 35%, rgba(100,160,255,0.9), rgba(80,60,200,0.7) 60%, rgba(180,60,255,0.5))",
+        background: "radial-gradient(circle at 35% 30%, rgba(255,180,50,0.95), rgba(120,60,220,0.8) 55%, rgba(180,40,120,0.6))",
         flexShrink: 0,
         boxShadow: "0 0 12px rgba(100,120,255,0.4)",
         animation: "watsonPulse 2s ease-in-out infinite",
@@ -977,7 +1012,7 @@ export default function WorkSession() {
             gap: 24, padding: 40,
           }}>
             <div style={{ animation: "orbPulse 2s ease-in-out infinite" }}>
-              <WatsonOrb size={180} />
+              <WatsonOrb size={180} thinking />
             </div>
             <p style={{ fontSize: 15, fontWeight: 500, color: "var(--fg-2)", letterSpacing: "-0.01em" }}>
               Watson is working...
