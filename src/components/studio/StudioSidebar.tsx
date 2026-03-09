@@ -151,13 +151,43 @@ export default function StudioSidebar() {
                 key={path}
                 onClick={() => nav(path)}
                 className={`nav-item ${active ? "active" : ""}`}
-                style={{ justifyContent: "space-between" }}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "8px 12px",
+                  paddingLeft: active ? "12px" : "14px",
+                  marginBottom: 2,
+                  border: "none",
+                  borderRadius: "var(--studio-radius)",
+                  borderLeft: active ? "2px solid #C8961A" : "2px solid transparent",
+                  background: active ? "rgba(200,150,26,0.08)" : "transparent",
+                  cursor: "pointer",
+                  fontFamily: "var(--font)",
+                  fontSize: 12,
+                  textAlign: "left",
+                  opacity: active ? 1 : 0.5,
+                  transition: "background 0.15s, color 0.15s, opacity 0.15s, border-color 0.15s",
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = "var(--bg-2)";
+                    e.currentTarget.style.opacity = "0.8";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.opacity = "0.5";
+                  }
+                }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{
                     width: 24, height: 22, display: "flex", alignItems: "center",
                     justifyContent: "center", borderRadius: 6,
-                    background: active ? "var(--bg)" : "transparent",
+                    background: active ? "rgba(200,150,26,0.12)" : "transparent",
                     color: active ? "var(--fg)" : "var(--fg-3)",
                     flexShrink: 0,
                     border: active ? "1px solid var(--line-2)" : "1px solid var(--line)",
@@ -165,7 +195,7 @@ export default function StudioSidebar() {
                   }}>
                     <Icon size={12} strokeWidth={2} />
                   </span>
-                  <span>{label}</span>
+                  <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
                 </div>
                 {badge && (
                   <span style={{
@@ -203,11 +233,43 @@ export default function StudioSidebar() {
                 key={path}
                 onClick={() => nav(path)}
                 className={`nav-item ${active ? "active" : ""}`}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 10,
+                  padding: "8px 12px",
+                  paddingLeft: active ? "12px" : "14px",
+                  marginBottom: 2,
+                  border: "none",
+                  borderRadius: "var(--studio-radius)",
+                  borderLeft: active ? "2px solid #C8961A" : "2px solid transparent",
+                  background: active ? "rgba(200,150,26,0.08)" : "transparent",
+                  cursor: "pointer",
+                  fontFamily: "var(--font)",
+                  fontSize: 12,
+                  textAlign: "left",
+                  opacity: active ? 1 : 0.5,
+                  transition: "background 0.15s, color 0.15s, opacity 0.15s, border-color 0.15s",
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = "var(--bg-2)";
+                    e.currentTarget.style.opacity = "0.8";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.opacity = "0.5";
+                  }
+                }}
               >
                 <span style={{
                   width: 24, height: 22, display: "flex", alignItems: "center",
                   justifyContent: "center", borderRadius: 6,
-                  background: active ? "var(--bg)" : "transparent",
+                  background: active ? "rgba(200,150,26,0.12)" : "transparent",
                   color: active ? "var(--fg)" : "var(--fg-3)",
                   flexShrink: 0,
                   border: active ? "1px solid var(--line-2)" : "1px solid var(--line)",
@@ -215,7 +277,7 @@ export default function StudioSidebar() {
                 }}>
                   <Icon size={12} strokeWidth={2} />
                 </span>
-                <span>{label}</span>
+                <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
               </button>
             );
           })}
