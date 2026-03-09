@@ -358,11 +358,11 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
   const textColor = dark ? "#E8E8E6" : "#1a1a1a";
 
   return (
-    <div ref={wrapperRef} style={{ display: "flex", position: "relative" }}>
-      {/* ── Single sticky left column: background fades into right so no bounding box ── */}
+    <div ref={wrapperRef} style={{ display: "flex", position: "relative", background: T.bg }}>
+      {/* ── Single sticky left column: background fades to transparent so no hard edge ── */}
       <div style={{
         position: "sticky", top: 0, height: "100vh", width: 420, flexShrink: 0,
-        background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,${dark ? 0.04 : 0.02}) 100%), linear-gradient(to right, ${leftBg} 0%, ${leftBg} 42%, ${T.bg} 100%)`,
+        background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,${dark ? 0.04 : 0.02}) 100%), linear-gradient(to right, ${leftBg} 0%, ${leftBg} 35%, rgba(${bgR},${bgG},${bgB},0.85) 55%, rgba(${bgR},${bgG},${bgB},0.3) 75%, transparent 100%)`,
         transition: "background 0.2s ease",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         overflow: "hidden", zIndex: 2,
@@ -375,14 +375,14 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
           pointerEvents: "none",
           transition: "background 0.4s ease",
         }} />
-        {/* Wide right-edge feather: seamless fade into content, no dark band — transparent to T.bg only */}
+        {/* Wide right-edge feather: dissolve to transparent so no seam; parent has T.bg */}
         <div style={{
           position: "absolute",
           top: 0,
           right: 0,
           bottom: 0,
-          width: "58%",
-          background: `linear-gradient(to right, transparent 0%, transparent 12%, ${T.bg} 52%, ${T.bg} 100%)`,
+          width: "70%",
+          background: `linear-gradient(to right, transparent 0%, transparent 10%, rgba(${acR},${acG},${acB},${dark ? 0.04 : 0.03}) 28%, transparent 65%, transparent 100%)`,
           pointerEvents: "none",
           zIndex: 1,
         }} />
