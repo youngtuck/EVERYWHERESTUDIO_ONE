@@ -835,21 +835,34 @@ export default function ExplorePage() {
 
   return (
     <ThemeCtx.Provider value={{ dark, toggle }}>
-      <div style={{
-        background:"#07090f",
-        fontFamily:"'Afacad Flux',sans-serif",
-        color:T.text,
-        backgroundColor:T.bg,
-        overflowX:"clip",
-        transition:"background .45s ease, color .3s ease" + (fromLandingZoom ? ", opacity 0.6s ease-out" : ""),
-        opacity: fromLandingZoom ? (entranceDone ? 1 : 0) : 1,
-      }}>
+      <div
+        className="explore-root"
+        style={{
+          background:"#07090f",
+          fontFamily:"'Afacad Flux',sans-serif",
+          color:T.text,
+          backgroundColor:T.bg,
+          overflowX:"clip",
+          transition:"background .45s ease, color .3s ease" + (fromLandingZoom ? ", opacity 0.6s ease-out" : ""),
+          opacity: fromLandingZoom ? (entranceDone ? 1 : 0) : 1,
+        }}
+      >
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&family=DM+Sans:wght@400;500;600&display=swap');
           *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
           html{scroll-behavior:smooth;}
           ::selection{background:${T.gold}40;}
           ${!dark ? "*, *::before, *::after { cursor: auto !important; } a, button, [role='button'], [style*='cursor:pointer'], [style*='cursor: pointer'] { cursor: pointer !important; }" : ""}
+          .explore-root::before{
+            content:"";
+            position:fixed;
+            inset:0;
+            pointer-events:none;
+            z-index:1;
+            opacity:0.015;
+            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            mix-blend-mode:normal;
+          }
           @keyframes orbBreatheRooms {
             0%, 100% { transform: scale(1); }
             50%      { transform: scale(1.04); }
@@ -916,28 +929,31 @@ export default function ExplorePage() {
 
         {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
         <section style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"110px 40px 72px",position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",inset:0,pointerEvents:"none",background:dark?"radial-gradient(ellipse 70% 50% at 50% 52%, rgba(58,123,213,0.10) 0%, transparent 68%)":"radial-gradient(ellipse 70% 50% at 50% 52%, rgba(120,160,240,0.07) 0%, transparent 68%)"}} />
+          {/* Cool blue ambient glow */}
+          <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:0,background:dark?"radial-gradient(ellipse 70% 50% at 50% 52%, rgba(58,123,213,0.10) 0%, transparent 68%)":"radial-gradient(ellipse 70% 50% at 50% 52%, rgba(120,160,240,0.07) 0%, transparent 68%)"}} />
+          {/* Warm brand halo behind headline */}
+          <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:0,background:"radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,150,26,0.03) 0%, transparent 70%)"}} />
 
           {/* Eyebrow */}
-          <div style={{fontSize:10,letterSpacing:".22em",color:T.textFaint,textTransform:"uppercase",marginBottom:18,fontWeight:500,opacity:mounted?1:0,transition:"opacity .8s .3s ease"}}>
+          <div style={{position:"relative",zIndex:2,fontSize:10,letterSpacing:".22em",color:T.textFaint,textTransform:"uppercase",marginBottom:18,fontWeight:500,opacity:mounted?1:0,transition:"opacity .8s .3s ease"}}>
             Composed Intelligence
           </div>
 
           {/* Headline */}
-          <div style={{textAlign:"center",opacity:mounted?1:0,transform:mounted?"none":"translateY(14px)",transition:"opacity .8s .35s ease, transform .8s .35s cubic-bezier(.16,1,.3,1)"}}>
+          <div style={{position:"relative",zIndex:2,textAlign:"center",opacity:mounted?1:0,transform:mounted?"none":"translateY(14px)",transition:"opacity .8s .35s ease, transform .8s .35s cubic-bezier(.16,1,.3,1)"}}>
             <div style={{fontSize:"clamp(48px,8vw,106px)",fontWeight:800,letterSpacing:"-.045em",lineHeight:.92,color:T.text,marginBottom:4}}>Your thinking.</div>
             <div style={{fontSize:"clamp(48px,8vw,106px)",fontWeight:800,letterSpacing:"-.045em",lineHeight:.92,color:T.gold,marginBottom:32}}>Composed.</div>
           </div>
 
           {/* Subhead */}
-          <div style={{maxWidth:500,textAlign:"center",marginBottom:38,opacity:mounted?1:0,transition:"opacity .8s .52s ease"}}>
+          <div style={{position:"relative",zIndex:2,maxWidth:500,textAlign:"center",marginBottom:38,opacity:mounted?1:0,transition:"opacity .8s .52s ease"}}>
             <p style={{fontSize:"clamp(14px,1.5vw,17px)",lineHeight:1.74,color:T.textSub,fontWeight:400}}>
               You have the ideas, the expertise, and the point of view. What you don't have is the system to turn all of that into content that actually lands.
             </p>
           </div>
 
           {/* CTAs */}
-          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",opacity:mounted?1:0,transition:"opacity .8s .68s ease"}}>
+          <div style={{position:"relative",zIndex:2,display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",opacity:mounted?1:0,transition:"opacity .8s .68s ease"}}>
             <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"12px 38px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"opacity .2s"}}
               onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".82"}
               onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>
