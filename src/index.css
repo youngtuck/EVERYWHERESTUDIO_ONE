@@ -280,17 +280,13 @@ button { font-family: var(--font); }
   transition: border-color 0.15s, width 0.2s, height 0.2s;
 }
 
-/* Dark pages (explore) — white cursor */
-body.cursor-on-dark #ew-cursor-dot  { background: #ffffff; }
-body.cursor-on-dark #ew-cursor-ring { border-color: rgba(255,255,255,0.45); }
+/* Dark mode — light cursor (visible on dark backgrounds) */
+body.cursor-on-dark #ew-cursor-dot  { background: #f5f5f4; }
+body.cursor-on-dark #ew-cursor-ring { border-color: rgba(255,255,255,0.55); }
 
-/* Light pages (studio, etc.) — dark cursor for visibility */
+/* Light mode — dark cursor (visible on light backgrounds) */
 body.cursor-on-light #ew-cursor-dot  { background: #0f0f0e; }
 body.cursor-on-light #ew-cursor-ring { border-color: rgba(15,15,14,0.52); }
-
-/* Default: no class = light page (e.g. Studio) — same dark cursor so it's always visible */
-body:not(.cursor-on-dark) #ew-cursor-dot  { background: #0f0f0e; }
-body:not(.cursor-on-dark) #ew-cursor-ring { border-color: rgba(15,15,14,0.52); }
 
 /* Hover state — expand ring, gold accent */
 body.cursor-hover #ew-cursor-ring {

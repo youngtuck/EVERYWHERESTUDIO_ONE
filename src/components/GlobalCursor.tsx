@@ -72,18 +72,25 @@ export default function GlobalCursor() {
     };
   }, []);
 
-  // Update body class for cursor color — read from data-theme set by ExplorePage
+  // Update body class for cursor color — dark = light cursor, light = dark cursor
+  // Explore: uses data-explore-theme. All other pages (Studio, auth): use data-theme on <html> from ThemeContext.
   useEffect(() => {
     const update = () => {
-      const isExplore = location.pathname === "/explore";
-      if (!isExplore) return;
-      const isDark = document.body.getAttribute("data-explore-theme") !== "light";
-      document.body.classList.toggle("cursor-on-dark",  isDark);
+      if (location.pathname === "/") return;
+
+      let isDark: boolean;
+      if (location.pathname === "/explore") {
+        isDark = document.body.getAttribute("data-explore-theme") !== "light";
+      } else {
+        isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      }
+      document.body.classList.toggle("cursor-on-dark", isDark);
       document.body.classList.toggle("cursor-on-light", !isDark);
     };
     update();
     const observer = new MutationObserver(update);
     observer.observe(document.body, { attributes: true, attributeFilter: ["data-explore-theme"] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     return () => observer.disconnect();
   }, [location.pathname]);
 
