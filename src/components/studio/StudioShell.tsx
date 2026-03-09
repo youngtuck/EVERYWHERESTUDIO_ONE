@@ -1,18 +1,16 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
 import { useMobile } from "../../hooks/useMobile";
 
 // ── Page transition wrapper ────────────────────────────────────────────────
-// Light, single-direction enter animation on route change (no fade-to-empty).
+// Opacity-only fade on route change (no movement, no transition: all).
 function PageSlide({ children, routeKey }: { children: ReactNode; routeKey: string }) {
   return (
     <div
       key={routeKey}
       style={{
-        opacity: 1,
-        transform: "translateY(0)",
-        animation: "studioPageEnter 0.24s cubic-bezier(0.16,1,0.3,1)",
+        animation: "studioFadeIn 0.15s ease-out",
         height: "100%",
       }}
     >
@@ -31,6 +29,12 @@ export default function StudioShell() {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
+  // Clean up any dark backgrounds from marketing pages (Explore/Index zoom)
+  useEffect(() => {
+    document.documentElement.style.backgroundColor = "";
+    document.body.style.backgroundColor = "";
+  }, []);
+
   const isFullScreen =
     location.pathname === "/studio/work" ||
     location.pathname.startsWith("/studio/work/");
@@ -44,7 +48,7 @@ export default function StudioShell() {
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "var(--bg)", fontFamily: "var(--font)", position: "relative" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#F4F2ED", fontFamily: "var(--font)", position: "relative" }}>
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -82,7 +86,7 @@ export default function StudioShell() {
           onToggleCollapsed={() => setSidebarCollapsed(c => !c)}
         />
       </div>
-      <main style={{ flex: 1, overflowY: "auto", minHeight: "100vh", position: "relative", zIndex: 1 }}>
+      <main style={{ flex: 1, overflowY: "auto", minHeight: "100vh", position: "relative", zIndex: 1, background: "#F4F2ED" }}>
         {isMobile && (
           <div
             style={{
@@ -94,7 +98,7 @@ export default function StudioShell() {
               position: "sticky",
               top: 0,
               zIndex: 20,
-              background: "var(--bg)",
+              background: "#F4F2ED",
             }}
           >
             <button
