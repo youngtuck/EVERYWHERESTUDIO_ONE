@@ -27,6 +27,20 @@ function relativeTime(dateStr: string): string {
   return `${days}d ago`;
 }
 
+function calculateStreak(outputs: Array<{ created_at: string }>): number {
+  if (!outputs.length) return 0;
+  const days = new Set(outputs.map(o => new Date(o.created_at).toDateString()));
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    if (days.has(d.toDateString())) streak++;
+    else break;
+  }
+  return streak;
+}
+
 // ── Score chip ─────────────────────────────────────────────────────────────
 function ScoreChip({ score }: { score: number }) {
   const color =
@@ -128,6 +142,16 @@ export default function Dashboard() {
       });
   }, [user]);
 
+  const streak = calculateStreak(recentOutputs);
+  const subline =
+    totalOutputs === 0
+      ? "Your studio is ready. Create your first output below."
+      : recentOutputs.length > 0 && recentOutputs[0]
+      ? `Last output: "${recentOutputs[0].title.slice(0, 45)}${
+          recentOutputs[0].title.length > 45 ? "…" : ""
+        }" — ${relativeTime(recentOutputs[0].created_at)}`
+      : `${totalOutputs} output${totalOutputs !== 1 ? "s" : ""} in your studio.`;
+
   const stats = [
     {
       label: "Outputs Created",
@@ -192,12 +216,27 @@ export default function Dashboard() {
                 "there"}
               .
             </h1>
+            {streak >= 2 && (
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 6,
+                  background: "rgba(200,150,26,0.12)",
+                  border: "1px solid rgba(200,150,26,0.25)",
+                  color: "#C8961A",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  borderRadius: 100,
+                  padding: "3px 10px",
+                }}
+              >
+                <span>🔥 {streak} day streak</span>
+              </div>
+            )}
             <p style={{ fontSize: 13, opacity: 0.85, fontWeight: 400 }}>
-              {recentOutputs.length > 0
-                ? `You have ${recentOutputs.length} output${
-                    recentOutputs.length > 1 ? "s" : ""
-                  } in your studio.`
-                : "Your studio is ready. Create your first output below."}
+              {subline}
             </p>
           </div>
           <button
