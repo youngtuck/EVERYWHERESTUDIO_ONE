@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider } from "./context/AuthContext";
 import GlobalCursor from "./components/GlobalCursor";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Index from "./pages/Index";
 import ExplorePage from "./pages/ExplorePage";
@@ -19,14 +21,15 @@ import VoiceDnaSettings from "./pages/studio/VoiceDnaSettings";
 import TheLot from "./pages/studio/TheLot";
 
 const App = () => (
-  <ThemeProvider>
+  <AuthProvider>
+    <ThemeProvider>
     <BrowserRouter>
       <GlobalCursor />
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/explore" element={<ExplorePage />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/studio" element={<StudioShell />}>
+        <Route path="/studio" element={<ProtectedRoute><StudioShell /></ProtectedRoute>}>
           <Route index element={<Navigate to="/studio/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="work" element={<WorkSession />} />
@@ -44,6 +47,7 @@ const App = () => (
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
-  </ThemeProvider>
+    </ThemeProvider>
+  </AuthProvider>
 );
 export default App;

@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
-import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut } from "lucide-react";
 
 // ── Nav items (with icons, reference style) ─────────────────────────────────
 const NAV = [
@@ -20,6 +21,12 @@ export default function StudioSidebar() {
   const nav = useNavigate();
   const loc = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    nav("/");
+  };
 
   const isActive = (p: string) =>
     p === "/studio/work"
@@ -262,11 +269,25 @@ export default function StudioSidebar() {
             flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 600, color: "#0A0A0A",
-          }}>M</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Mark Sylvester</div>
-            <div style={{ fontSize: 10, color: "var(--fg-3)" }}>Founding Member</div>
+          }}>
+            {(user?.user_metadata?.full_name || user?.email || "?")[0].toUpperCase()}
           </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {user?.user_metadata?.full_name || user?.email || "Signed in"}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--fg-3)" }}>{user?.email || ""}</div>
+          </div>
+          <button
+            onClick={handleSignOut}
+            style={{
+              background: "none", border: "none", cursor: "pointer", padding: 6,
+              color: "var(--fg-3)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+            aria-label="Sign out"
+          >
+            <LogOut size={14} />
+          </button>
         </div>
       </div>
     </aside>
