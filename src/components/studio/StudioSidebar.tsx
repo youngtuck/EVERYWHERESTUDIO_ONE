@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
-import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown } from "lucide-react";
+import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark } from "lucide-react";
 
 // ── Nav items (with icons, reference style) ─────────────────────────────────
 const NAV = [
@@ -9,6 +9,7 @@ const NAV = [
   { path: "/studio/watch",     label: "Watch",     icon: Eye,    badge: "11" },
   { path: "/studio/outputs",   label: "Outputs",   icon: FileText },
   { path: "/studio/projects",  label: "Projects",  icon: FolderOpen },
+  { path: "/studio/lot",       label: "The Lot",   icon: Bookmark },
 ];
 const NAV_BOTTOM = [
   { path: "/studio/resources", label: "Resources", icon: Folder },
