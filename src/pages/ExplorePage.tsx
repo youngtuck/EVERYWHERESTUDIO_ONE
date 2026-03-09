@@ -1083,14 +1083,62 @@ export default function ExplorePage() {
                 <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
                   <button
                     onClick={()=>{ window.location.href = "mailto:mark@everywhereStudio.com"; }}
-                    style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"opacity .2s"}}
-                    onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".82"}
-                    onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>Let's Talk</button>
+                    style={{
+                      background:"#C8961A",
+                      border:"none",
+                      borderRadius:100,
+                      padding:"16px 40px",
+                      fontSize:15,
+                      fontWeight:600,
+                      color:"#07090f",
+                      fontFamily:"'DM Sans', sans-serif",
+                      cursor:"pointer",
+                      transition:"all 0.25s ease",
+                    }}
+                    onMouseEnter={e=>{
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.background = "#d4a52e";
+                      el.style.transform = "translateY(-2px)";
+                      el.style.boxShadow = "0 8px 30px rgba(200,150,26,0.3)";
+                    }}
+                    onMouseLeave={e=>{
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.background = "#C8961A";
+                      el.style.transform = "translateY(0)";
+                      el.style.boxShadow = "none";
+                    }}
+                  >
+                    Let's Talk
+                  </button>
                   <button
                     onClick={()=>nav("/auth")}
-                    style={{background:"transparent",border:`1px solid ${T.text}18`,borderRadius:100,padding:"14px 46px",fontSize:13,fontWeight:500,color:T.textSub,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"all .2s"}}
-                    onMouseEnter={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}35`; (e.currentTarget as HTMLElement).style.color=T.text; }}
-                    onMouseLeave={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}18`; (e.currentTarget as HTMLElement).style.color=T.textSub; }}>Open Studio</button>
+                    style={{
+                      background:"transparent",
+                      border:"1px solid rgba(255,255,255,0.2)",
+                      borderRadius:100,
+                      padding:"16px 40px",
+                      fontSize:15,
+                      fontWeight:500,
+                      color:"rgba(255,255,255,0.7)",
+                      fontFamily:"'DM Sans', sans-serif",
+                      cursor:"pointer",
+                      transition:"all 0.25s ease",
+                    }}
+                    onMouseEnter={e=>{
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.borderColor = "rgba(255,255,255,0.4)";
+                      el.style.color = "#ffffff";
+                      el.style.background = "rgba(255,255,255,0.05)";
+                    }}
+                    onMouseLeave={e=>{
+                      const el = e.currentTarget as HTMLElement;
+                      el.style.borderColor = "rgba(255,255,255,0.2)";
+                      el.style.color = "rgba(255,255,255,0.7)";
+                      el.style.background = "transparent";
+                    }}
+                  >
+                    Open Studio
+                  </button>
                 </div>
               </FadeUp>
             </FadeInSection>
