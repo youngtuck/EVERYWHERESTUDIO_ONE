@@ -842,9 +842,22 @@ export default function ExplorePage() {
               onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>
               Get Early Access
             </button>
-            <button onClick={()=>document.getElementById("fw")?.scrollIntoView({behavior:"smooth"})} style={{background:"transparent",border:`1px solid ${T.text}18`,borderRadius:100,padding:"12px 38px",fontSize:13,fontWeight:500,color:T.textSub,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"all .2s"}}
-              onMouseEnter={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}35`; (e.currentTarget as HTMLElement).style.color=T.text; }}
-              onMouseLeave={e=>{ (e.currentTarget as HTMLElement).style.borderColor=`${T.text}18`; (e.currentTarget as HTMLElement).style.color=T.textSub; }}>
+            <button
+              onClick={()=>document.getElementById("fw")?.scrollIntoView({behavior:"smooth"})}
+              style={{
+                background:"transparent",
+                border:"1px solid rgba(255,255,255,0.25)",
+                borderRadius:100,
+                padding:"12px 38px",
+                fontSize:13,
+                fontWeight:500,
+                color:"rgba(255,255,255,0.7)",
+                fontFamily:"'Afacad Flux',sans-serif",
+                cursor:"pointer",
+                transition:"all 0.25s ease",
+              }}
+              onMouseEnter={e=>{ const el = e.currentTarget as HTMLElement; el.style.borderColor="rgba(255,255,255,0.45)"; el.style.color="rgba(255,255,255,0.95)"; el.style.background="rgba(255,255,255,0.05)"; }}
+              onMouseLeave={e=>{ const el = e.currentTarget as HTMLElement; el.style.borderColor="rgba(255,255,255,0.25)"; el.style.color="rgba(255,255,255,0.7)"; el.style.background="transparent"; }}>
               See How It Works
             </button>
           </div>
@@ -1014,10 +1027,37 @@ export default function ExplorePage() {
                 <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality gates calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
               </div>
               <FadeUp delay={0.24}>
-                <div style={{marginTop:44,padding:"28px 0",borderTop:`1px solid ${bc}`,borderBottom:`1px solid ${bc}`,textAlign:"center"}}>
-                  <div style={{fontSize:"clamp(15px,1.8vw,22px)",fontWeight:600,lineHeight:1.45,color:T.gold,fontStyle:"italic"}}>
-                    "Competitors can copy the output format. They cannot copy the system underneath it."
+                <div style={{marginTop:44, textAlign:"center"}}>
+                  <div
+                    style={{
+                      height:1,
+                      maxWidth:600,
+                      margin:"0 auto 48px auto",
+                      background:"linear-gradient(90deg, transparent, rgba(200,150,26,0.3), transparent)",
+                    }}
+                  />
+                  <div
+                    style={{
+                      maxWidth:800,
+                      margin:"0 auto",
+                      fontSize:"clamp(24px,3vw,36px)",
+                      fontFamily:"'Cormorant Garamond', serif",
+                      fontStyle:"italic",
+                      color:"#C8961A",
+                      lineHeight:1.5,
+                      letterSpacing:"0.01em",
+                    }}
+                  >
+                    Competitors can copy the output format. They cannot copy the system underneath it.
                   </div>
+                  <div
+                    style={{
+                      height:1,
+                      maxWidth:600,
+                      margin:"48px auto 0 auto",
+                      background:"linear-gradient(90deg, transparent, rgba(200,150,26,0.3), transparent)",
+                    }}
+                  />
                 </div>
               </FadeUp>
             </FadeInSection>
