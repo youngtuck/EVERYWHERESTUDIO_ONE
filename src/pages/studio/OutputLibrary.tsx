@@ -1,37 +1,58 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
 
-const OUTPUTS = [
-  { id:"1", title:"Why most advice is wrong about delegation",       type:"essay",        score:847, date:"Mar 8",  status:"published" },
-  { id:"2", title:"The interview before the essay",                 type:"newsletter",   score:912, date:"Mar 7",  status:"published" },
-  { id:"3", title:"TEDx talk outline: composed intelligence",       type:"presentation", score:788, date:"Mar 6",  status:"draft" },
-  { id:"4", title:"LinkedIn thread: AI tells to eliminate",         type:"social",       score:861, date:"Mar 5",  status:"published" },
-  { id:"5", title:"Podcast episode 14: the authenticity gap",       type:"podcast",      score:893, date:"Mar 4",  status:"published" },
-  { id:"6", title:"Sunday Story: the conversation I almost avoided",type:"sunday_story", score:924, date:"Mar 2",  status:"published" },
-  { id:"7", title:"What I know about slow thinking",               type:"essay",        score:835, date:"Feb 28", status:"draft" },
-  { id:"8", title:"Video script: one thing most consultants miss",  type:"video",        score:802, date:"Feb 27", status:"draft" },
-];
+interface Output {
+  id: string;
+  title: string;
+  output_type: string;
+  score: number;
+  created_at: string;
+}
 
 const TYPE_COLORS: Record<string, string> = {
-  essay:"#4A90D9", newsletter:"#50c8a0", presentation:"#F5A623",
-  social:"#a080f5", podcast:"#F5C642", video:"#e85d75",
-  sunday_story:"#F5C642", freestyle:"#4A90D9",
+  essay: "#4A90D9", newsletter: "#50c8a0", presentation: "#F5A623",
+  social: "#a080f5", podcast: "#F5C642", video: "#e85d75",
+  sunday_story: "#F5C642", freestyle: "#4A90D9",
+  linkedin_post: "#4A90D9", podcast_script: "#F5C642", twitter_thread: "#a080f5",
+  substack_note: "#50c8a0", talk_outline: "#F5A623", email_campaign: "#0D8C9E",
+  blog_post: "#4A90D9", executive_brief: "#6b4dd4", short_video: "#e85d75",
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  essay:"Essay", newsletter:"Newsletter", presentation:"Presentation",
-  social:"Social", podcast:"Podcast", video:"Video",
-  sunday_story:"Sunday Story", freestyle:"Freestyle",
+  essay: "Essay", newsletter: "Newsletter", presentation: "Presentation",
+  social: "Social", podcast: "Podcast", video: "Video",
+  sunday_story: "Sunday Story", freestyle: "Freestyle",
+  linkedin_post: "LinkedIn Post", podcast_script: "Podcast Script", twitter_thread: "Twitter Thread",
+  substack_note: "Substack Note", talk_outline: "Talk Outline", email_campaign: "Email Campaign",
+  blog_post: "Blog Post", executive_brief: "Executive Brief", short_video: "Short Video",
 };
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export default function OutputLibrary() {
   const navigate = useNavigate();
+  const [outputs, setOutputs] = useState<Output[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const filtered = OUTPUTS.filter(o => {
+  useEffect(() => {
+    supabase
+      .from("outputs")
+      .select("id, title, output_type, score, created_at")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setOutputs(data ?? []);
+        setLoading(false);
+      });
+  }, []);
+
+  const filtered = outputs.filter(o => {
     const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === "all" || o.type === filter;
+    const matchFilter = filter === "all" || o.output_type === filter;
     return matchSearch && matchFilter;
   });
 
@@ -42,7 +63,7 @@ export default function OutputLibrary() {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "var(--studio-gap)" }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 4 }}>Outputs</h1>
-          <p style={{ fontSize: 13, color: "var(--fg-3)", fontWeight: 400 }}>{OUTPUTS.length} pieces produced</p>
+          <p style={{ fontSize: 13, color: "var(--fg-3)", fontWeight: 400 }}>{outputs.length} pieces produced</p>
         </div>
         <button onClick={() => navigate("/studio/work/new")} className="btn-primary" style={{ padding: "9px 18px" }}
           onMouseEnter={e => e.currentTarget.style.opacity = ".82"}
@@ -69,6 +90,13 @@ export default function OutputLibrary() {
       </div>
 
       {/* Table */}
+      {loading ? (
+        <div style={{ padding: 48, textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>
+          <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid var(--gold, #C8961A)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          Loading outputs…
+        </div>
+      ) : (
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {filtered.map(o => (
           <button key={o.id} onClick={() => navigate(`/studio/outputs/${o.id}`)} style={{
@@ -80,23 +108,24 @@ export default function OutputLibrary() {
             onMouseEnter={e => e.currentTarget.style.background = "var(--bg-2)"}
             onMouseLeave={e => e.currentTarget.style.background = "none"}
           >
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[o.type] || "#4A90D9", flexShrink: 0 }} />
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[o.output_type] || "#4A90D9", flexShrink: 0 }} />
             <span style={{ flex: 1, fontSize: 14, color: "var(--fg)", fontWeight: 400, letterSpacing: "-.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.title}</span>
-            <span style={{ fontSize: 11, color: "var(--fg-3)", width: 90, flexShrink: 0 }}>{TYPE_LABELS[o.type] || o.type}</span>
+            <span style={{ fontSize: 11, color: "var(--fg-3)", width: 90, flexShrink: 0 }}>{TYPE_LABELS[o.output_type] || o.output_type}</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(o.score), width: 42, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
             <span style={{
               fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
-              background: o.status === "published" ? "rgba(80,200,160,.1)" : "rgba(255,255,255,.06)",
-              color: o.status === "published" ? "#50c8a0" : "var(--fg-3)",
-              border: `1px solid ${o.status === "published" ? "rgba(80,200,160,.2)" : "var(--line)"}`,
-            }}>{o.status}</span>
-            <span style={{ fontSize: 11, color: "var(--fg-3)", width: 48, textAlign: "right", flexShrink: 0 }}>{o.date}</span>
+              background: "rgba(80,200,160,.1)",
+              color: "#50c8a0",
+              border: "1px solid rgba(80,200,160,.2)",
+            }}>saved</span>
+            <span style={{ fontSize: 11, color: "var(--fg-3)", width: 48, textAlign: "right", flexShrink: 0 }}>{formatDate(o.created_at)}</span>
           </button>
         ))}
         {filtered.length === 0 && (
           <div style={{ padding: "48px", textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>No outputs match your search.</div>
         )}
       </div>
+      )}
     </div>
   );
 }

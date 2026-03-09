@@ -1,167 +1,96 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { supabase } from "../../lib/supabase";
+import { Copy, ArrowLeft, Check } from "lucide-react";
 
-// Match OutputLibrary ids; add body + project for detail view
-const OUTPUTS: Record<string, { title: string; type: string; score: number; date: string; status: "draft" | "published"; project: string }> = {
-  "1": { title: "Why most advice is wrong about delegation", type: "essay", score: 847, date: "Mar 8", status: "published", project: "Thought Leadership" },
-  "2": { title: "The interview before the essay", type: "newsletter", score: 912, date: "Mar 7", status: "published", project: "My Studio" },
-  "3": { title: "TEDx talk outline: composed intelligence", type: "presentation", score: 788, date: "Mar 6", status: "draft", project: "My Studio" },
-  "4": { title: "LinkedIn thread: AI tells to eliminate", type: "social", score: 861, date: "Mar 5", status: "published", project: "Thought Leadership" },
-  "5": { title: "Podcast episode 14: the authenticity gap", type: "podcast", score: 893, date: "Mar 4", status: "published", project: "My Studio" },
-  "6": { title: "Sunday Story: the conversation I almost avoided", type: "sunday_story", score: 924, date: "Mar 2", status: "published", project: "Thought Leadership" },
-  "7": { title: "What I know about slow thinking", type: "essay", score: 835, date: "Feb 28", status: "draft", project: "My Studio" },
-  "8": { title: "Video script: one thing most consultants miss", type: "video", score: 802, date: "Feb 27", status: "draft", project: "My Studio" },
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  essay: "Essay", newsletter: "Newsletter", presentation: "Presentation",
-  social: "Social", podcast: "Podcast", video: "Video",
-  sunday_story: "Sunday Story", freestyle: "Freestyle",
-};
-
-const LOREM_BODY = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-Curabitur pretium tincidunt lacus. Nulla facilisi. Ut convallis, sem sit amet interdum consectetuer, odio augue aliquam leo, nec molestie tortor nibh sit amet orci. Maecenas tempus tellus eget condimentum rhoncus. Aenean vel massa quis mauris vehicula lacinia.`;
-
-function scoreColor(score: number) {
-  return score >= 900 ? "#10b981" : score >= 800 ? "#3A7BD5" : score >= 700 ? "#C8961A" : score >= 500 ? "#9ca3af" : "#ef4444";
-}
-
-function ScoreBadge({ score }: { score: number }) {
-  const color = scoreColor(score);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <div style={{ width: 32, height: 3, borderRadius: 2, background: "var(--bg-3)", overflow: "hidden" }}>
-        <div style={{ height: "100%", borderRadius: 2, width: `${score / 10}%`, background: color }} />
-      </div>
-      <span style={{ fontSize: 12, fontWeight: 700, color, letterSpacing: "-0.01em", fontVariantNumeric: "tabular-nums" }}>{score}</span>
-    </div>
-  );
+interface Output {
+  id: string;
+  title: string;
+  content: string;
+  output_type: string;
+  score: number;
+  created_at: string;
 }
 
 export default function OutputDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [output, setOutput] = useState<Output | null>(null);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
-  const output = id ? OUTPUTS[id] : null;
-  const body = LOREM_BODY;
-  const wordCount = body.split(/\s+/).filter(Boolean).length;
+  useEffect(() => {
+    if (!id || id === "new") { setLoading(false); setNotFound(true); return; }
+    supabase
+      .from("outputs")
+      .select("*")
+      .eq("id", id)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) setNotFound(true);
+        else setOutput(data);
+        setLoading(false);
+      });
+  }, [id]);
 
-  const copyToClipboard = () => {
-    const text = `${output?.title ?? "Output"}\n\n${body}`;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+  const copy = async () => {
+    if (!output) return;
+    await navigator.clipboard.writeText(output.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!output) {
-    return (
-      <div style={{ padding: "var(--studio-page-pad)", fontFamily: "var(--font)" }}>
-        <button onClick={() => navigate("/studio/outputs")} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-          <ArrowLeft size={16} /> Back to Outputs
-        </button>
-        <p style={{ color: "var(--fg-3)", fontSize: 15 }}>Output not found.</p>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+      <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid var(--gold, #C8961A)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
-  const typeLabel = TYPE_LABELS[output.type] ?? output.type;
+  if (notFound) return (
+    <div style={{ padding: 48, textAlign: "center" }}>
+      <p style={{ color: "var(--fg-3)", marginBottom: 16 }}>Output not found.</p>
+      <button className="btn-ghost" onClick={() => navigate("/studio/outputs")}>Back to Outputs</button>
+    </div>
+  );
+
+  const scoreColor = output!.score >= 800 ? "#10b981" : output!.score >= 700 ? "#3A7BD5" : "#C8961A";
 
   return (
-    <div style={{ minHeight: "100%", fontFamily: "var(--font)", display: "flex", flexDirection: "column" }}>
-      {/* Header bar: back, title, score badge, status pill, Publish */}
-      <header style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        padding: "14px 0 20px",
-        borderBottom: "1px solid var(--line)",
-        marginBottom: "var(--studio-gap)",
-        flexWrap: "wrap",
-      }}>
-        <button
-          onClick={() => navigate("/studio/outputs")}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: 36, height: 36, borderRadius: "var(--studio-radius)",
-            background: "var(--bg-2)", border: "1px solid var(--line)",
-            cursor: "pointer", color: "var(--fg-2)",
-          }}
-          aria-label="Back to outputs"
-        >
-          <ArrowLeft size={18} strokeWidth={2} />
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 32px", fontFamily: "var(--font)" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
+        <button onClick={() => navigate("/studio/outputs")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fg-3)", display: "flex", alignItems: "center", gap: 6, fontSize: 13, padding: 0 }}>
+          <ArrowLeft size={16} /> Outputs
         </button>
-        <h1 style={{
-          flex: 1, minWidth: 0, fontSize: 18, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em",
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        }}>
-          {output.title}
-        </h1>
-        <ScoreBadge score={output.score} />
-        <span style={{
-          fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100,
-          background: output.status === "published" ? "rgba(16,185,129,0.12)" : "var(--bg-2)",
-          color: output.status === "published" ? "#10b981" : "var(--fg-3)",
-          border: `1px solid ${output.status === "published" ? "rgba(16,185,129,0.25)" : "var(--line)"}`,
-        }}>
-          {output.status}
-        </span>
-        <button
-          className="btn-primary"
-          style={{ padding: "8px 18px", fontSize: 13, fontWeight: 600 }}
-          onClick={() => {}}
-          disabled={output.status === "published"}
-        >
-          {output.status === "published" ? "Published" : "Publish"}
+      </div>
+
+      {/* Title + meta */}
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 8 }}>{output!.title}</h1>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 12, color: "var(--fg-3)" }}>
+          <span style={{ textTransform: "capitalize" }}>{output!.output_type.replace("_", " ")}</span>
+          <span>{new Date(output!.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+          <span style={{ fontWeight: 700, color: scoreColor }}>Score: {output!.score}</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 32 }}>
+        <button onClick={copy} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 20px", fontSize: 13 }}>
+          {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Content</>}
         </button>
-      </header>
+        <button onClick={() => navigate(`/studio/work/new?type=${output!.output_type}`)} className="btn-ghost" style={{ padding: "9px 20px", fontSize: 13 }}>
+          New Session
+        </button>
+      </div>
 
-      {/* Main + sidebar layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: "var(--studio-gap-lg)", alignItems: "start" }}>
-        {/* Full-width document view */}
-        <article className="card" style={{ padding: "var(--studio-gap-lg)", border: "1px solid var(--line)", overflow: "hidden" }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 20, lineHeight: 1.2 }}>
-            {output.title}
-          </h2>
-          <div style={{ fontSize: 15, lineHeight: 1.75, color: "var(--fg-2)", whiteSpace: "pre-wrap" }}>
-            {body}
-          </div>
-        </article>
-
-        {/* Right sidebar 280px */}
-        <aside className="card" style={{ padding: "var(--studio-gap)", border: "1px solid var(--line)", position: "sticky", top: "var(--studio-gap)" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 4 }}>Type</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{typeLabel}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 4 }}>Word count</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", fontVariantNumeric: "tabular-nums" }}>{wordCount}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 4 }}>Date created</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{output.date}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 4 }}>Project</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{output.project}</div>
-            </div>
-            <button
-              onClick={copyToClipboard}
-              className="btn-ghost"
-              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 14px", fontSize: 13, marginTop: 8 }}
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-              {copied ? "Copied!" : "Copy to clipboard"}
-            </button>
-          </div>
-        </aside>
+      {/* Content */}
+      <div className="card" style={{ padding: "32px 36px" }}>
+        <pre style={{ fontFamily: "var(--font)", fontSize: 15, lineHeight: 1.8, color: "var(--fg)", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
+          {output!.content}
+        </pre>
       </div>
     </div>
   );

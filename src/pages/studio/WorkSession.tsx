@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { FileText } from "lucide-react";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../context/AuthContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB — Siri-inspired volumetric orb.
@@ -641,6 +643,7 @@ export default function WorkSession() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [outputType, setOutputType] = useState(searchParams.get("type") || "essay");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -649,6 +652,7 @@ export default function WorkSession() {
   const [sessionTitle, setSessionTitle] = useState("New Session");
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedScore, setGeneratedScore] = useState(0);
+  const [generatedOutputId, setGeneratedOutputId] = useState<string>("new");
   const [apiError, setApiError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
@@ -715,6 +719,30 @@ export default function WorkSession() {
       const { content, score } = await generateOutput(conversationSummary, outputTypeApi);
       setGeneratedContent(content);
       setGeneratedScore(score);
+
+      // Save to Supabase
+      const title = sessionTitle !== "New Session" ? sessionTitle : `${type.label} — ${new Date().toLocaleDateString()}`;
+
+      const { data: savedOutput, error: saveError } = await supabase
+        .from("outputs")
+        .insert({
+          user_id: user!.id,
+          title,
+          content,
+          output_type: outputType,
+          score,
+          conversation_summary: conversationSummary,
+        })
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error("Failed to save output:", saveError);
+      }
+
+      const outputId = savedOutput?.id ?? "new";
+      setGeneratedOutputId(outputId);
+
       setPhase("complete");
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Generation failed.");
@@ -863,7 +891,7 @@ export default function WorkSession() {
                   type="button"
                   className="btn-primary"
                   style={{ width: "100%", padding: "12px" }}
-                  onClick={() => navigate("/studio/outputs/1")}
+                  onClick={() => navigate(`/studio/outputs/${generatedOutputId}`)}
                 >
                   View Output
                 </button>
