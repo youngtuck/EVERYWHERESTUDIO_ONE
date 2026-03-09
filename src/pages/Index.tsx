@@ -8,6 +8,7 @@ precision highp float;
 uniform float u_t;
 uniform vec2  u_res;
 uniform vec2  u_rotXY;
+uniform float u_breath;
 #define TAU 6.28318530718
 mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
 vec3 rotX(vec3 p,float a){ p.yz=rot2(a)*p.yz; return p; }
@@ -25,9 +26,9 @@ vec3 thinFilm(float cosA,float thick){
 vec3 interior(vec3 lp,float t){
   float r=length(lp);
   float phi=atan(lp.z,lp.x), theta=acos(clamp(lp.y/max(r,.001),-1.,1.));
-  float f1=fbm(vec2(phi*1.1+t*.07,theta*1.6+t*.045));
-  float f2=fbm(vec2(phi*.8-t*.055,theta*1.2-t*.038)+vec2(3.1,7.4));
-  float f3=fbm(vec2(phi*1.8+t*.09,theta*2.2+t*.06)+vec2(5.9,2.2));
+  float f1=fbm(vec2(phi*1.1+t*.14,theta*1.6+t*.09));
+  float f2=fbm(vec2(phi*.8-t*.11,theta*1.2-t*.07)+vec2(3.1,7.4));
+  float f3=fbm(vec2(phi*1.8+t*.18,theta*2.2+t*.12)+vec2(5.9,2.2));
   float r1=pow(max(0.,1.-abs(f1-.54)*5.5),2.0);
   float r2=pow(max(0.,1.-abs(f2-.47)*6.5),2.3);
   float r3=pow(max(0.,1.-abs(f3-.51)*5.0),1.8);
@@ -35,14 +36,16 @@ vec3 interior(vec3 lp,float t){
   vec3 c2=vec3(.10,.30,.95)*r2*1.3;
   vec3 c3=vec3(.55,.80,1.00)*r3*.85;
   float core=exp(-r*r*2.5)*(.45+.55*sin(t*.38+.8));
-  return vec3(.02,.03,.14)*(.4+.6*(1.-r))+vec3(.08,.14,.60)*core*2.2+c1+c2+c3;
+  float core2=exp(-r*r*1.8)*(.25+.35*sin(t*.72+.2));
+  return vec3(.02,.03,.14)*(.4+.6*(1.-r))+vec3(.08,.14,.60)*core*2.2+vec3(.12,.20,.70)*core2*1.4+c1+c2+c3;
 }
 void main(){
   vec2 uv=(gl_FragCoord.xy/u_res)*2.-1.;
   float ar=u_res.x/u_res.y; uv.x*=ar;
   float rx=u_rotXY.x, ry=u_rotXY.y, t=u_t;
+  float breath=0.96+u_breath*0.08;
   vec3 ro=vec3(0.,0.,2.3), rd=normalize(vec3(uv,-1.65));
-  float b=dot(ro,rd), c=dot(ro,ro)-.72*.72, disc=b*b-c;
+  float b=dot(ro,rd), c=dot(ro,ro)-.72*.72*breath*breath, disc=b*b-c;
   if(disc<0.0){gl_FragColor=vec4(0.);return;}
   float sqD=sqrt(disc);
   float edgeAA=smoothstep(0.,.004,sqD);
@@ -52,9 +55,10 @@ void main(){
   float NoV=max(dot(N,V),0.);
   vec3 lp=rotX(rotY(pF,-ry),-rx);
   float ps=atan(lp.z,lp.x), ts=acos(clamp(lp.y/max(length(lp),.001),-1.,1.));
-  vec3 film=thinFilm(NoV,.28+fbm(vec2(ps*.6+t*.020,ts-.015*t))*.65);
+  vec3 film=thinFilm(NoV,.28+fbm(vec2(ps*.6+t*.042,ts-.032*t))*.65);
   float fresnel=min(.06+(1.-.06)*pow(1.-NoV,4.0)+pow(1.-NoV,5.5)*1.1,.98);
   vec3 shellCol=mix(mix(vec3(.06,.10,.42),vec3(.55,.68,.96),NoV*.6),film*.98,.82);
+  shellCol*=breath;
   vec3 Lk=normalize(vec3(-.42,.78,.48)), H=normalize(Lk+V);
   shellCol+=pow(max(dot(N,H),0.),180.)*1.3+vec3(.65,.80,1.)*pow(max(dot(N,normalize(vec3(.70,.12,.52)+V)),0.),55.)*.4;
   vec3 intCol=vec3(0.);
@@ -64,8 +68,9 @@ void main(){
     intCol+=interior(rotX(rotY(ro+rd*(t1+span*(fi*.82+.09)),-ry),-rx),t)*(1.-fi*.35);
   }
   intCol/=4.2;
+  intCol*=breath;
   vec3 col=mix(intCol,shellCol,mix(.50,.92,fresnel));
-  col+=vec3(.25,.50,1.0)*pow(1.-NoV,5.5)*1.1*.60;
+  col+=vec3(.25,.50,1.0)*pow(1.-NoV,5.5)*1.1*.60*breath;
   col=max(col,vec3(0.));
   col=(col*(2.51*col+.03))/(col*(2.43*col+.59)+.14);
   gl_FragColor=vec4(clamp(col,0.,1.)*edgeAA*(.90+fresnel*.10),edgeAA*(.90+fresnel*.10));
@@ -101,6 +106,7 @@ function OrbCanvas({ size }: { size: number }) {
     const uT = gl.getUniformLocation(prog, "u_t");
     const uR = gl.getUniformLocation(prog, "u_res");
     const uRot = gl.getUniformLocation(prog, "u_rotXY");
+    const uBreath = gl.getUniformLocation(prog, "u_breath");
     const onMove = (e: MouseEvent) => {
       spring.current.tx = (e.clientY / window.innerHeight - .5) * 2 * .55;
       spring.current.ty = (e.clientX / window.innerWidth - .5) * 2 * .55;
@@ -108,11 +114,16 @@ function OrbCanvas({ size }: { size: number }) {
     window.addEventListener("mousemove", onMove);
     const draw = (ts: number) => {
       spring.current.step();
+      const t = ts * 0.001;
+      const breath = Math.sin(t * 0.75) * 0.5 + 0.5;
+      const idleX = Math.sin(t * 0.42) * 0.14;
+      const idleY = Math.cos(t * 0.38) * 0.14;
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform1f(uT, ts * .001);
       gl.uniform2f(uR, canvas.width, canvas.height);
-      gl.uniform2f(uRot, spring.current.x, spring.current.y);
+      gl.uniform2f(uRot, spring.current.x + idleX, spring.current.y + idleY);
+      gl.uniform1f(uBreath!, breath);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       raf.current = requestAnimationFrame(draw);
     };
@@ -122,7 +133,6 @@ function OrbCanvas({ size }: { size: number }) {
   return (
     <canvas ref={ref} style={{
       width: size, height: size, display: "block",
-      filter: "drop-shadow(0 0 55px rgba(80,130,255,0.65)) drop-shadow(0 0 130px rgba(50,90,255,0.30))",
     }} />
   );
 }
@@ -401,13 +411,20 @@ export default function Index() {
         }
         .arr { font-size: 18px; display: inline-block; transition: transform .4s cubic-bezier(.16,1,.3,1); }
         .cta-pill:hover .arr { transform: translateX(5px); }
+        @keyframes orbBreathe {
+          0%, 100% { filter: drop-shadow(0 0 55px rgba(80,130,255,0.65)) drop-shadow(0 0 130px rgba(50,90,255,0.30)); transform: scale(1); }
+          50%      { filter: drop-shadow(0 0 70px rgba(90,150,255,0.75)) drop-shadow(0 0 160px rgba(60,100,255,0.38)); transform: scale(1.02); }
+        }
+        .orb-wrap {
+          animation: orbBreathe 2.8s ease-in-out infinite;
+        }
       `}</style>
 
       <CustomCursor />
       <SignalField />
 
       {/* Orb */}
-      <div style={{
+      <div className="orb-wrap" style={{
         position: "fixed", inset: 0, zIndex: 2, pointerEvents: "none",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
