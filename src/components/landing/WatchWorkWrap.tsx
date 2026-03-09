@@ -4,22 +4,22 @@ const DATA = [
   {
     num:"01", id:"watch", label:"Watch", accent:"#0D8C9E",
     heading:"Signal, not noise.",
-    body:"Before a word gets written, EVERYWHERE Studio does the intelligence work. Sentinel monitors your category overnight — surfacing what's moving, what's forming, what has your name on it.",
+    body:"Before a word gets written, EVERYWHERE Studio does the intelligence work. Sentinel monitors your category overnight, surfacing what's moving, what's forming, what has your name on it.",
     detail:"You wake up to a briefing. Content triggers with angles. Competitor moves. Trend signals. Everything organized and scannable. Tap what resonates.",
     items:["Overnight category monitoring","Content triggers with ready angles","Competitor intelligence","Event radar with local scope","Trend signal detection"],
   },
   {
     num:"02", id:"work", label:"Work", accent:"#C8961A",
     heading:"The interview before the essay.",
-    body:"Watson, your First Listener, interviews you. Not a form. Not a prompt. A conversation. Watson asks the questions that pull the real story out — the one that was stuck in your head.",
+    body:"Watson, your First Listener, interviews you. Not a form. Not a prompt. A conversation. Watson asks the questions that pull the real story out, the one that was stuck in your head.",
     detail:"What emerges sounds like you because it came from you. Voice DNA captures your rhythm, your vocabulary, your argumentative structure. It sharpens with every session.",
-    items:["Watson conversation-first production","Voice DNA — 3 layers","7 Quality Gates in sequence","Betterish Score 0–1000","12 output formats"],
+    items:["Watson conversation-first production","Voice DNA: 3 layers","7 Quality Gates in sequence","Betterish Score 0–1000","12 output formats"],
   },
   {
     num:"03", id:"wrap", label:"Wrap", accent:"#3A7BD5",
     heading:"Every audience it deserves.",
-    body:"Real publishing means every piece of thinking reaches every audience it deserves, in the format that audience actually uses — with nothing left on the table.",
-    detail:"A single idea becomes a complete publishing event. LinkedIn post, newsletter, podcast script, video brief — all from one conversation.",
+    body:"Real publishing means every piece of thinking reaches every audience it deserves, in the format that audience actually uses, with nothing left on the table.",
+    detail:"A single idea becomes a complete publishing event. LinkedIn post, newsletter, podcast script, video brief: all from one conversation.",
     items:["12 format outputs from one session","Platform-native formatting","One-click export","Impact tracking","Scheduling (coming)"],
   },
 ];

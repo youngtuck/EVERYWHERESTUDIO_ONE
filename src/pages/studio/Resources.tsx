@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Mic, Globe, BookOpen, Layers, ChevronDown, ChevronRight, Upload, CheckCircle } from "lucide-react";
 
 const VOICE_LAYERS = [
-  { name:"Voice Layer", desc:"How you speak — rhythm, sentence length, vocabulary, punctuation patterns", strength:97, detail:"Direct, declarative. Short sentences that land. No hedging. Occasional single-sentence paragraphs for emphasis." },
-  { name:"Value Layer", desc:"What you stand for — core beliefs, professional principles, ethical lines", strength:94, detail:"Clarity over complexity. Depth over volume. Long-game thinking. Authentic > polished." },
-  { name:"Personality Layer", desc:"How you show up — humor, warmth, edge, the texture of your presence", strength:91, detail:"Wry, not sarcastic. Self-aware. Willing to take a position. Dislikes corporate speak." },
+  { name:"Voice Layer", desc:"How you speak: rhythm, sentence length, vocabulary, punctuation patterns", strength:97, detail:"Direct, declarative. Short sentences that land. No hedging. Occasional single-sentence paragraphs for emphasis." },
+  { name:"Value Layer", desc:"What you stand for: core beliefs, professional principles, ethical lines", strength:94, detail:"Clarity over complexity. Depth over volume. Long-game thinking. Authentic > polished." },
+  { name:"Personality Layer", desc:"How you show up: humor, warmth, edge, the texture of your presence", strength:91, detail:"Wry, not sarcastic. Self-aware. Willing to take a position. Dislikes corporate speak." },
 ];
 
 const PUBLICATIONS = [
@@ -33,7 +33,7 @@ const Resources = () => (
     <div style={{ marginBottom: "var(--studio-gap-lg)" }}>
       <p className="eyebrow" style={{ marginBottom: 8 }}>Studio</p>
       <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 4 }}>Resources</h1>
-      <p style={{ fontSize: 13, color: "var(--fg-2)", marginTop: 4 }}>Your Voice DNA, Brand Guide, and Publication Standards. Set once — runs in every session.</p>
+      <p style={{ fontSize: 13, color: "var(--fg-2)", marginTop: 4 }}>Your Voice DNA, Brand Guide, and Publication Standards. Set once and it runs in every session.</p>
     </div>
 
     <Section icon={Mic} title="Voice DNA" color="var(--gold)">
@@ -61,7 +61,7 @@ const Resources = () => (
     <Section icon={Globe} title="Brand DNA" color="var(--blue)">
       <div style={{ padding: "14px 16px", background: "var(--bg-2)", border: "1px solid var(--line)", borderRadius: "var(--studio-radius)", marginBottom: 14 }}>
         <p style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 3 }}>Source URL</p>
-        <p style={{ fontSize: 12, color: "var(--fg-3)" }}>mixedgrill.net — Last analyzed Feb 10, 2026</p>
+        <p style={{ fontSize: 12, color: "var(--fg-3)" }}>mixedgrill.net · Last analyzed Feb 10, 2026</p>
       </div>
       {[
         ["Positioning", "Orchestrated Intelligence for Thought Leaders"],

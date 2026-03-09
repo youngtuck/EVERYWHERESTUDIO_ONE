@@ -11,7 +11,7 @@ export default function AboutMark() {
             <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:"clamp(22px,2.5vw,34px)", fontWeight:400, color:"var(--fg)", marginBottom:20, letterSpacing:"-0.3px" }}>Mark Sylvester</h2>
             <blockquote style={{ borderLeft:"2px solid var(--gold-l)", paddingLeft:24, marginBottom:20 }}>
               <p style={{ fontSize:17, lineHeight:1.82, color:"var(--fg)", fontFamily:"'DM Serif Display',Georgia,serif", fontWeight:400, fontStyle:"italic" }}>
-                "I spent years helping others find and share their voice. EVERYWHERE Studio is what I wish I'd had. It doesn't replace the thinking — it removes every obstacle between the thinking and the audience."
+                "I spent years helping others find and share their voice. EVERYWHERE Studio is what I wish I'd had. It doesn't replace the thinking; it removes every obstacle between the thinking and the audience."
               </p>
             </blockquote>
             <p style={{ fontSize:14, lineHeight:1.78, color:"var(--fg-3)", fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>

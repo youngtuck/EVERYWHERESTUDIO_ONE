@@ -184,7 +184,7 @@ export default function TheLot() {
               <textarea
                 value={newIdeaText}
                 onChange={(e) => setNewIdeaText(e.target.value)}
-                placeholder="A few words or a paragraph — you can refine it later."
+                placeholder="A few words or a paragraph; you can refine it later."
                 rows={4}
                 className="input-field"
                 style={{ width: "100%", resize: "vertical", minHeight: 100, fontFamily: "var(--font)" }}

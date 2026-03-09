@@ -23,7 +23,7 @@ const STEPS = [
   {
     id: "tone",
     title: "How would your best clients describe your communication style?",
-    subtitle: "3-5 words or a sentence — whatever feels right.",
+    subtitle: "3-5 words or a sentence, whatever feels right.",
     type: "text",
     placeholder: "Direct but warm. Story-driven. No corporate speak...",
     field: "tone",

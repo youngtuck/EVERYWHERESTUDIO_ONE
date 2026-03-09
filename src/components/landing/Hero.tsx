@@ -79,14 +79,14 @@ export default function Hero() {
             <span style={{ fontSize:11, fontWeight:400, letterSpacing:"0.3px", color:dark?"rgba(255,255,255,0.45)":"rgba(0,0,0,0.42)", fontFamily:"'DM Sans',sans-serif" }}>Composed Intelligence Platform</span>
           </div>
 
-          {/* Headline — very large, serif */}
+          {/* Headline: very large, serif */}
           <h1 style={{ fontFamily:"'DM Serif Display', Georgia, serif", fontSize:"clamp(48px,5.8vw,82px)", fontWeight:400, lineHeight:1.0, letterSpacing:"-1px", color:headC, marginBottom:28 }}>
             Your thinking,<br />
             <em style={{ fontStyle:"italic", color:"var(--gold-l)" }}>composed.</em>
           </h1>
 
           <p style={{ fontSize:"clamp(15px,1.4vw,17px)", lineHeight:1.82, color:bodyC, maxWidth:420, marginBottom:40, fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>
-            There is a mountain between the spark and the audience. EVERYWHERE Studio carries it — one idea, twelve formats, everywhere it belongs.
+            There is a mountain between the spark and the audience. EVERYWHERE Studio carries it: one idea, twelve formats, everywhere it belongs.
           </p>
 
           <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:24 }}>

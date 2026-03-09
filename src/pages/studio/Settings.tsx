@@ -95,8 +95,8 @@ const Settings = () => {
             <input type="range" min={600} max={950} step={10} value={threshold} onChange={e => setThreshold(+e.target.value)}
               style={{ width: "100%", accentColor: "var(--gold)" }} />
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 10, color: "var(--fg-3)" }}>600 — lenient</span>
-              <span style={{ fontSize: 10, color: "var(--fg-3)" }}>950 — strict</span>
+              <span style={{ fontSize: 10, color: "var(--fg-3)" }}>600 · lenient</span>
+              <span style={{ fontSize: 10, color: "var(--fg-3)" }}>950 · strict</span>
             </div>
           </div>
         </div>

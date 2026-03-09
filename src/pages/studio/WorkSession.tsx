@@ -7,7 +7,7 @@ import { useMobile } from "../../hooks/useMobile";
 import { useTheme } from "../../context/ThemeContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WATSON ORB — volumetric plasma field inside a glass shell.
+// WATSON ORB - volumetric plasma field inside a glass shell.
 // thinking=false: calm, slow internal motion.
 // thinking=true:  plasma filaments brighten and accelerate.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -114,11 +114,11 @@ void main() {
     float f2 = fbm(sph * 7.0 - vec2(T * 0.09, T * 0.15) + f1);
     float f3 = fbm(sph * 12.0 + vec2(T * 0.06) + f2 * 0.5);
 
-    // Ribbon mask — sharp bright streaks
+    // Ribbon mask - sharp bright streaks
     float ribbon = pow(abs(sin(f2 * PI * 3.0 + T * 0.4)), 8.0);
     ribbon += pow(abs(sin(f3 * PI * 5.0 - T * 0.3)), 12.0) * 0.5;
 
-    // Core glow — hot center
+    // Core glow - hot center
     float core = exp(-r * r * 3.5) * (1.0 + u_energy * 2.0);
 
     // ── Color palette (IMAGE REFERENCE: gold/white core, blue/violet ribbons) ──
@@ -136,7 +136,7 @@ void main() {
       step(0.5, hue)
     );
 
-    // Depth fade — brighter toward front
+    // Depth fade - brighter toward front
     float depth = (1.0 - fi) * 0.6 + 0.4;
 
     // Accumulate
@@ -158,13 +158,13 @@ void main() {
     fresnel
   );
 
-  // Specular highlights — two sharp caustic points
+  // Specular highlights - two sharp caustic points
   vec3 L1 = normalize(vec3(-0.6, 0.8, 0.5));
   float spec1 = pow(max(dot(hitN, normalize(L1 - rd)), 0.0), 280.0) * 3.0;
   vec3 L2 = normalize(vec3(0.5, -0.3, 0.8));
   float spec2 = pow(max(dot(hitN, normalize(L2 - rd)), 0.0), 120.0) * 1.2;
 
-  // Rim glow — backlit halo
+  // Rim glow - backlit halo
   float rim = pow(fresnel, 1.5) * 0.8;
   vec3 rimColor = mix(vec3(0.2, 0.4, 1.0), vec3(0.8, 0.3, 1.0), sin(T * 0.3) * 0.5 + 0.5);
 
@@ -291,13 +291,13 @@ const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: strin
   newsletter:      { label: "Newsletter",      color: "#50c8a0", watson: "What's the story this week? What happened, what did you observe, what shifted? Start wherever feels natural." },
   sunday_story:    { label: "Sunday Story",   color: "#F5C642", watson: "What's the story this week? The experience, the insight, the moment that's worth sharing. Start anywhere." },
   podcast_script:  { label: "Podcast Script",  color: "#F5C642", watson: "What's this episode about? Tell me the topic and who you're talking to, and we'll shape the conversation from there." },
-  twitter_thread:  { label: "Twitter Thread",  color: "#a080f5", watson: "What's the thread about? Give me the core idea and the hook — we'll break it into beats." },
+  twitter_thread:  { label: "Twitter Thread",  color: "#a080f5", watson: "What's the thread about? Give me the core idea and the hook, and we'll break it into beats." },
   essay:           { label: "Essay",          color: "#4A90D9", watson: "What's the central argument you want to make? Give me the rough idea and I'll ask the questions that pull it into focus." },
   short_video:     { label: "Short Video",    color: "#e85d75", watson: "What's the video about? What's the one thing you want the viewer to walk away knowing or feeling?" },
-  substack_note:   { label: "Substack Note",  color: "#50c8a0", watson: "What's the note? A take, a link, a short reflection — tell me what's on your mind." },
+  substack_note:   { label: "Substack Note",  color: "#50c8a0", watson: "What's the note? A take, a link, or a short reflection; tell me what's on your mind." },
   talk_outline:    { label: "Talk Outline",   color: "#F5A623", watson: "What's the talk for? Tell me the audience, the occasion, and the outcome you're driving toward." },
   email_campaign:  { label: "Email Campaign",  color: "#0D8C9E", watson: "What's the campaign goal? Who's it for, what's the sequence, and what's the one action you want them to take?" },
-  blog_post:       { label: "Blog Post",      color: "#4A90D9", watson: "What's the post about? Give me the topic and the angle — we'll structure it for the web." },
+  blog_post:       { label: "Blog Post",      color: "#4A90D9", watson: "What's the post about? Give me the topic and the angle, and we'll structure it for the web." },
   executive_brief: { label: "Executive Brief", color: "#6b4dd4", watson: "What's the brief for? Audience, key points, and the decision or outcome you're supporting." },
 };
 
@@ -447,7 +447,7 @@ function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string
       alignItems: "center", justifyContent: "center",
       padding: "60px 40px", gap: 32, textAlign: "center",
     }}>
-      {/* Watson orb — live WebGL, reactive */}
+      {/* Watson orb - live WebGL, reactive */}
       <WatsonOrb size={160} />
 
       <div style={{ maxWidth: 460 }}>
@@ -525,7 +525,7 @@ function WatsonThinking() {
   );
 }
 
-// Output type selector pill — dropdown with all 12 types
+// Output type selector pill - dropdown with all 12 types
 function OutputTypePill({
   value, onChange,
 }: {
@@ -866,7 +866,7 @@ export default function WorkSession() {
       setGeneratedScore(score);
 
       // Save to Supabase
-      const title = sessionTitle !== "New Session" ? sessionTitle : `${type.label} — ${new Date().toLocaleDateString()}`;
+      const title = sessionTitle !== "New Session" ? sessionTitle : `${type.label} - ${new Date().toLocaleDateString()}`;
 
       const { data: savedOutput, error: saveError } = await supabase
         .from("outputs")

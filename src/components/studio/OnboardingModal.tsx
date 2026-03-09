@@ -126,7 +126,7 @@ export default function OnboardingModal({ onComplete }: { onComplete: () => void
             <textarea
               value={voiceSample}
               onChange={(e) => setVoiceSample(e.target.value)}
-              placeholder="Paste a few paragraphs you've written — a post, an email, anything. Watson will do the rest."
+              placeholder="Paste a few paragraphs you've written: a post, an email, anything. Watson will do the rest."
               rows={6}
               className="input-field"
               style={{

@@ -1,5 +1,5 @@
 /**
- * EVERYWHERE STUDIO™ — Official wordmark component
+ * EVERYWHERE STUDIO™ - Official wordmark component
  * Spec: Mixed Grill, LLC · v2.0 · March 8, 2026
  * Use this component for the approved "EVERYWHERE STUDIO™" lockup site-wide.
  * See docs/WORDMARK.md for full reference.

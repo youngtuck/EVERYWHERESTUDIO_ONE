@@ -149,7 +149,7 @@ export default function Dashboard() {
       : recentOutputs.length > 0 && recentOutputs[0]
       ? `Last output: "${recentOutputs[0].title.slice(0, 45)}${
           recentOutputs[0].title.length > 45 ? "…" : ""
-        }" — ${relativeTime(recentOutputs[0].created_at)}`
+        }" · ${relativeTime(recentOutputs[0].created_at)}`
       : `${totalOutputs} output${totalOutputs !== 1 ? "s" : ""} in your studio.`;
 
   const stats = [
@@ -164,7 +164,7 @@ export default function Dashboard() {
     },
     {
       label: "Avg Betterish",
-      value: avgScore > 0 ? avgScore.toString() : "—",
+      value: avgScore > 0 ? avgScore.toString() : "–",
       sub:
         avgScore >= 800
           ? "Ready to Publish"
@@ -175,7 +175,7 @@ export default function Dashboard() {
     },
     {
       label: "Voice Fidelity",
-      value: (user as any)?.user_metadata?.voice_profile ? "Active" : "—",
+      value: (user as any)?.user_metadata?.voice_profile ? "Active" : "–",
       sub: (user as any)?.user_metadata?.voice_profile
         ? "Voice DNA captured"
         : "Complete onboarding",
@@ -183,7 +183,7 @@ export default function Dashboard() {
     },
     {
       label: "Signals",
-      value: "—",
+      value: "–",
       sub: "Coming soon",
       color: "#e85d75",
     },
@@ -291,7 +291,7 @@ export default function Dashboard() {
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 2 }}>Sentinel Briefing</div>
-              <div style={{ fontSize: 12, color: "var(--fg-3)" }}>Coming soon — intelligence monitoring</div>
+              <div style={{ fontSize: 12, color: "var(--fg-3)" }}>Coming soon: intelligence monitoring</div>
             </div>
           </div>
           <ChevronRight size={18} style={{ color: "var(--fg-3)" }} />
@@ -483,7 +483,7 @@ export default function Dashboard() {
           </FadeCard>
         </div>
 
-        {/* Right column — Sentinel (ours: live signals) ─────────────────────── */}
+        {/* Right column: Sentinel (ours: live signals) ─────────────────────── */}
         <FadeCard delay={150}>
           <div className="card" style={{ overflow: "hidden", height: "fit-content" }}>
             <div style={{

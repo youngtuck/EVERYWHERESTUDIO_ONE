@@ -74,7 +74,7 @@ function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
       // Cursor influence radius - wider = more fluid sweep
       const lensR = W * 0.38;
 
-      // Traveling waveform band — a soft ridge that sweeps across the field.
+      // Traveling waveform band - a soft ridge that sweeps across the field.
       const bandSpeed = 0.035; // normalized units per second
       const bandPhase = (t * bandSpeed) % 2; // ping‑pong 0→1→0
       const bandCenterNorm = bandPhase <= 1 ? bandPhase : 2 - bandPhase;
@@ -104,7 +104,7 @@ function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
           const lensFalloff = Math.exp(-(distM * distM) / (lensR * lensR * 0.6));
           const cursorPush = lensFalloff * (baseY - cmy) * 0.42;
 
-          // Traveling waveform band — strongest where px is near bandCenterX
+          // Traveling waveform band - strongest where px is near bandCenterX
           const dxBand = px - bandCenterX;
           const bandFalloff = Math.exp(-(dxBand * dxBand) / (bandWidth * bandWidth));
 
@@ -216,7 +216,7 @@ export default function Index() {
     <div style={{
       width: "100vw", height: "100vh", overflow: "hidden",
       position: "relative", fontFamily: "'Afacad Flux', sans-serif",
-      /* Fallback if canvas fails to paint — prevents white screen */
+      /* Fallback if canvas fails to paint - prevents white screen */
       background: "linear-gradient(180deg, #1c2c9e 0%, #111f88 50%, #0d1a70 100%)",
     }}>
       <style>{`

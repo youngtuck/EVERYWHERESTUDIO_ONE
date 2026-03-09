@@ -129,7 +129,7 @@ export default function ProjectDetail() {
         <div className="card" style={{ padding: "18px 20px" }}>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6 }}>Avg Betterish score</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: avgScore > 0 ? scoreColor(avgScore) : "var(--fg-3)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>
-            {avgScore > 0 ? avgScore : "—"}
+            {avgScore > 0 ? avgScore : "–"}
           </div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>

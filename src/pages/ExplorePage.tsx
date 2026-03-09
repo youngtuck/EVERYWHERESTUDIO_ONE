@@ -6,7 +6,7 @@ import { useMobile } from "../hooks/useMobile";
 const ThemeCtx = createContext<{ dark: boolean; toggle: () => void }>({ dark: true, toggle: () => {} });
 const useTheme = () => useContext(ThemeCtx);
 
-// ─── WebGL Siri Orb — glass sphere + interior energy field (Apple-level) ───────
+// ─── WebGL Siri Orb - glass sphere + interior energy field (Apple-level) ───────
 const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
 
 const ORB_FRAG = `
@@ -286,7 +286,7 @@ function ThemeToggle({ lc }:{lc:string}) {
       : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path stroke={lc} strokeWidth="2" strokeLinecap="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Dark</>}
   </button>;
 }
-// ─── Continuous Rooms Section — single sticky left, stacked right panels ──────
+// ─── Continuous Rooms Section: single sticky left, stacked right panels ──────
 function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
   dark: boolean;
   T: Record<string,string>;
@@ -360,7 +360,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
   const roomSubs   = ["The Signal Room", "The Engine Room", "The Distribution Room"];
   const roomPals   = [PALETTES.watch, PALETTES.work, PALETTES.wrap];
 
-  // For orb — smoothly blend palette based on scroll
+  // For orb - smoothly blend palette based on scroll
   const currentPal = roomPals[roomIdx];
   const textColor = dark ? "#E8E8E6" : "#1a1a1a";
 
@@ -382,7 +382,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         willChange: revealProgress < 1 ? "opacity, transform" : "auto",
       }}
     >
-      {/* Full-width gradient canvas: one background for the whole section, shifts with scroll — no container */}
+      {/* Full-width gradient canvas: one background for the whole section, shifts with scroll (no container) */}
       <div
         style={{
           position: "absolute",
@@ -406,7 +406,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         justifyContent: "center",
         zIndex: 2,
       }}>
-        {/* Inner glow layer — orb aura only (soft halo around orb) */}
+        {/* Inner glow layer - orb aura only (soft halo around orb) */}
         <div style={{
           position: "absolute",
           inset: "-15%",
@@ -456,7 +456,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
       </div>
 
-      {/* ── Right panels — stacked, normal flow; subtle stagger so copy follows orb ── */}
+      {/* ── Right panels: stacked, normal flow; subtle stagger so copy follows orb ── */}
       <div
         style={{
           flex: 1,
@@ -619,7 +619,7 @@ export default function ExplorePage() {
   useEffect(()=>{ const t=setTimeout(()=>setMounted(true),80); return()=>clearTimeout(t); },[]);
   useEffect(()=>{ document.body.setAttribute("data-explore-theme", dark ? "dark" : "light"); },[dark]);
 
-  // Keep document background in sync with theme — useLayoutEffect so first paint is never white
+  // Keep document background in sync with theme; useLayoutEffect so first paint is never white
   useLayoutEffect(() => {
     const bg = dark ? "#07090f" : "#F4F2ED";
     document.documentElement.style.backgroundColor = bg;
@@ -842,7 +842,7 @@ export default function ExplorePage() {
           </div>
         </section>
 
-        {/* ══ ROOMS — single continuous left column ════════════════════════════ */}
+        {/* ══ ROOMS: single continuous left column ════════════════════════════ */}
         <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} />
 
         {/* ══ QUALITY GATES ════════════════════════════════════════════════════ */}
@@ -869,7 +869,7 @@ export default function ExplorePage() {
             <FadeUp><div style={{fontSize:9,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:16,fontWeight:500}}>Compound Advantage</div></FadeUp>
             <WordReveal text="Why It Compounds" size="clamp(34px,4.5vw,58px)" weight={700} lh={1.0} color={T.text} />
             <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:32}}>
-              <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. EVERYWHERE Studio makes it better — and the difference grows with every piece you publish.</p></FadeUp>
+              <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. EVERYWHERE Studio makes it better, and the difference grows with every piece you publish.</p></FadeUp>
               <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality gates calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
             </div>
             <FadeUp delay={0.24}>
