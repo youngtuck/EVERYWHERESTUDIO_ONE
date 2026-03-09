@@ -2,22 +2,13 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 // ── Global Custom Cursor ───────────────────────────────────────────────────
-// Handles cursor on all pages EXCEPT "/" (Index.tsx owns the landing cursor).
+// Handles cursor on all pages, including landing.
 // Zero delay dot (snaps instantly to mouse), ring has slight trail.
 // Small profile: 4px dot, 18px ring.
 
 export default function GlobalCursor() {
   const location = useLocation();
-  const isLanding = location.pathname === "/";
   const isDarkPage = location.pathname === "/explore";
-
-  // Show/hide GlobalCursor based on route — hide on landing
-  useEffect(() => {
-    const dot  = document.getElementById("ew-cursor-dot");
-    const ring = document.getElementById("ew-cursor-ring");
-    if (dot)  dot.style.opacity  = isLanding ? "0" : "1";
-    if (ring) ring.style.opacity = isLanding ? "0" : "1";
-  }, [isLanding]);
 
   useEffect(() => {
     // Create cursor elements once
