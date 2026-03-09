@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const ThemeCtx = createContext<{ dark: boolean; toggle: () => void }>({ dark: true, toggle: () => {} });
 const useTheme = () => useContext(ThemeCtx);
 
-// ─── WebGL Siri Orb — glass sphere + fluid waves (Siri-style) ─────────────────
+// ─── WebGL Siri Orb — glass sphere + interior energy field (Apple-level) ───────
 const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
 
 const ORB_FRAG = `
@@ -48,8 +48,42 @@ void main(){
   float theta=acos(clamp(Nrot.y,-1.0,1.0));
 
   float breath=0.88+0.12*sin(u_t*1.2)*sin(u_t*0.8);
-  float spd=1.0+u_energy*2.5;
+  float spd=1.0+u_energy*2.2;
   float t=u_t*spd*breath;
+
+  float span=t2-t1;
+  vec3 energyAcc=vec3(0.);
+  float denAcc=0.0;
+  const int steps=12;
+  for(int i=0;i<steps;i++){
+    float fi=float(i)/float(steps-1);
+    float ti=t1+span*(fi*0.88+0.06);
+    vec3 p=ro+rd*ti;
+    p.yz=rot2(rx)*p.yz;
+    p.xz=rot2(ry)*p.xz;
+    float r=length(p)/R;
+    float phiP=atan(p.z,p.x);
+    float thetaP=acos(clamp(p.y/(length(p)+1e-4),-1.0,1.0));
+
+    float core=exp(-r*r*3.2)*(0.7+0.3*sin(t*0.9+1.2));
+    float flowA=sin(phiP*2.5+t*1.1)*cos(thetaP*2.0-t*0.7)*0.5+0.5;
+    float flowB=cos(phiP*3.5-t*0.9)*sin(thetaP*3.0+t*1.0)*0.5+0.5;
+    float band=sin(phiP*5.0+thetaP*4.0+t*0.8)*0.5+0.5;
+    float layer2=(0.4+0.4*flowA)*(0.5+0.4*flowB)*smoothstep(0.2,0.85,r);
+    float layer3=(0.35+0.35*band)*smoothstep(0.0,0.6,r)*smoothstep(1.0,0.5,r);
+
+    vec3 coreCol=u_c1*1.2;
+    vec3 midCol=mix(u_c2,u_c3,flowA);
+    vec3 outerCol=mix(u_c4,u_c1,band*0.5+0.5);
+
+    vec3 layerCol=coreCol*core+midCol*layer2*0.85+outerCol*layer3*0.6;
+    float density=(core*1.2+layer2+layer3*0.7)*(1.0-fi*0.35)*(1.0+u_energy*0.4)*0.065;
+    energyAcc+=layerCol*density;
+    denAcc+=density;
+  }
+  energyAcc/=max(denAcc,0.001);
+  energyAcc*=breath;
+  energyAcc=pow(max(energyAcc,0.0),vec3(0.95));
 
   float wave1=sin(phi*3.0+t*1.4)*cos(theta*2.0-t*0.9);
   float wave2=sin(phi*5.0-t*1.1)*sin(theta*3.0+t*0.7);
@@ -58,33 +92,34 @@ void main(){
   float flow=sin(phi*4.0+t*1.6)*0.5+0.5;
   float band=sin(theta*6.0+phi*2.0+t*1.0)*0.5+0.5;
 
-  vec3 waveTint=mix(u_c1,u_c2,flow)*0.7+mix(u_c3,u_c4,band)*0.3;
-  vec3 innerGlow=waveTint*(0.15+wave*0.25)*(1.0+u_energy*0.6)*breath;
+  vec3 waveTint=mix(u_c1,u_c2,flow)*0.6+mix(u_c3,u_c4,band)*0.4;
+  vec3 surfaceGlow=waveTint*(0.12+wave*0.18)*(1.0+u_energy*0.5)*breath;
 
-  float fresnel=pow(1.0-NoV,2.8);
-  float rim=pow(1.0-NoV,4.0);
-  vec3 shellDark=mix(vec3(0.4,0.55,0.85),u_c1,0.4);
-  vec3 shellLight=mix(vec3(0.88,0.92,1.0),u_c1,0.2);
+  float fresnel=pow(1.0-NoV,2.6);
+  float rim=pow(1.0-NoV,4.2);
+  vec3 shellDark=mix(vec3(0.38,0.52,0.82),u_c1,0.35);
+  vec3 shellLight=mix(vec3(0.85,0.90,0.98),u_c1,0.15);
   vec3 shell=mix(shellDark,shellLight,u_light);
-  vec3 glassRim=shell*fresnel*1.4+u_c1*rim*0.9;
+  vec3 glassRim=shell*fresnel*1.35+u_c1*rim*0.85;
 
   vec3 L1=normalize(vec3(-.5,.9,.6)),H1=normalize(L1+V);
-  float s1=pow(max(dot(N,H1),0.0),220.)*1.8;
+  float s1=pow(max(dot(N,H1),0.0),240.)*1.6;
   vec3 L2=normalize(vec3(.6,.3,.85)),H2=normalize(L2+V);
-  float s2=pow(max(dot(N,H2),0.0),80.)*0.5;
+  float s2=pow(max(dot(N,H2),0.0),90.)*0.45;
   vec3 spec=vec3(1.,0.98,0.96)*(s1+s2);
 
-  vec3 col=innerGlow+glassRim+spec;
-  float centerGlow=exp(-dot(uv,uv)*2.2)*breath*(0.5+u_energy*0.4);
-  col+=mix(u_c1,vec3(0.6,0.78,1.0),0.3)*centerGlow;
+  float interiorMix=0.72*(1.0-fresnel*0.5)+0.15*NoV;
+  vec3 col=energyAcc*interiorMix+surfaceGlow+glassRim+spec;
+  float centerGlow=exp(-dot(uv,uv)*2.0)*breath*(0.45+u_energy*0.35);
+  col+=mix(u_c1,vec3(0.55,0.72,0.95),0.4)*centerGlow;
 
-  col=mix(col,col*1.12,u_light);
-  col=col/(col+0.9);
-  col=pow(max(col,0.0),vec3(0.92));
+  col=mix(col,col*1.08,u_light);
+  col=col/(col+0.88);
+  col=pow(max(col,0.0),vec3(0.94));
 
-  float edgeSoft=smoothstep(0.0,0.012,sqD);
-  float alpha=(0.42+fresnel*0.38+rim*0.2+wave*0.08)*(1.0+u_energy*0.15);
-  alpha=clamp(alpha*edgeSoft,0.0,0.92);
+  float edgeSoft=smoothstep(0.0,0.014,sqD);
+  float alpha=(0.48+fresnel*0.35+rim*0.18+min(denAcc*4.0,0.12))*(1.0+u_energy*0.12);
+  alpha=clamp(alpha*edgeSoft,0.0,0.94);
   gl_FragColor=vec4(col,alpha);
 }`;
 
