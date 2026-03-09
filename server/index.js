@@ -7,6 +7,17 @@ import express from "express";
 import Anthropic from "@anthropic-ai/sdk";
 
 const app = express();
+
+// CORS so the frontend (e.g. localhost:5173) can call the API even without proxy
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
 app.use(express.json());
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -30,6 +41,44 @@ function buildWatsonSystem(outputType) {
 Current output type for this session: ${outputType || "freestyle"}. Ask questions that clarify the idea, the audience, and any specifics needed to create it.`;
 }
 
+// Retry transient failures (network, rate limit, 5xx) so the Work section rarely shows errors
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1200;
+
+function isRetryable(err) {
+  const status = err?.status ?? err?.httpStatus;
+  if (status === 429) return true; // rate limit
+  if (status >= 500 && status <= 599) return true; // server error
+  if (err?.message?.includes("ECONNRESET") || err?.message?.includes("ETIMEDOUT")) return true;
+  return false;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetry(fn) {
+  let lastErr;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < MAX_RETRIES && isRetryable(err)) {
+        await sleep(RETRY_DELAY_MS * (attempt + 1));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
+// Health check so the frontend can verify the backend is reachable
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, message: "EVERYWHERE Studio API" });
+});
+
 app.post("/api/chat", async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
     return res.status(503).json({ error: "ANTHROPIC_API_KEY not set. Add it to .env — see SETUP.md." });
@@ -49,12 +98,14 @@ app.post("/api/chat", async (req, res) => {
       content: typeof m.content === "string" ? m.content : m.content,
     }));
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system,
-      messages: claudeMessages,
-    });
+    const response = await withRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system,
+        messages: claudeMessages,
+      })
+    );
 
     const block = response.content?.[0];
     const text = block?.type === "text" ? block.text : "";
@@ -65,8 +116,10 @@ app.post("/api/chat", async (req, res) => {
   } catch (err) {
     console.error("[/api/chat]", err);
     const status = err.status === 401 ? 401 : 502;
+    const message = err.message || "Something went wrong on our end.";
     res.status(status).json({
-      error: err.message || "Claude request failed. Check your API key and SETUP.md.",
+      error: status === 401 ? "Invalid API key. Check your .env and SETUP.md." : message,
+      retryable: isRetryable(err),
     });
   }
 });
@@ -85,12 +138,14 @@ app.post("/api/generate", async (req, res) => {
       ? `Conversation summary:\n${conversationSummary}\n\nProduce the ${outputType} now.`
       : `Context:\n${context}\n\nProduce the ${outputType} now.`;
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system,
-      messages: [{ role: "user", content: userContent }],
-    });
+    const response = await withRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system,
+        messages: [{ role: "user", content: userContent }],
+      })
+    );
 
     const block = response.content?.[0];
     const content = block?.type === "text" ? block.text : "";
@@ -102,10 +157,19 @@ app.post("/api/generate", async (req, res) => {
   } catch (err) {
     console.error("[/api/generate]", err);
     const status = err.status === 401 ? 401 : 502;
+    const message = err.message || "Something went wrong on our end.";
     res.status(status).json({
-      error: err.message || "Generation failed. Check your API key and SETUP.md.",
+      error: status === 401 ? "Invalid API key. Check your .env and SETUP.md." : message,
+      retryable: isRetryable(err),
     });
   }
+});
+
+// 404 for unknown /api routes (so frontend gets JSON, not HTML)
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    error: "Not found. Use POST /api/chat or POST /api/generate. Is the backend running? Run: npm run server",
+  });
 });
 
 const PORT = process.env.PORT || 3001;

@@ -529,35 +529,94 @@ function OutputTypePill({
 // ── Main Work Session ─────────────────────────────────────────────────────────
 type Phase = "input" | "generating" | "complete";
 
-async function chatWithWatson(messages: { role: string; content: string }[], outputTypeApi: string): Promise<{ reply: string; readyToGenerate: boolean }> {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: messages.map((m) => ({
-        role: m.role === "assistant" ? "watson" : "user",
-        content: m.content,
-      })),
-      outputType: outputTypeApi,
-    }),
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Request failed ${res.status}`);
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+
+const FETCH_TIMEOUT_MS = 90000;  // 90s for chat/generate
+const FRONTEND_RETRIES = 2;      // retry 404/502/503/504/429
+const RETRY_BACKOFF_MS = 800;
+
+function friendlyMessage(status: number, bodyError?: string): string {
+  if (status === 404)
+    return "Connection issue. Make sure the backend is running (npm run server or npm run dev:all).";
+  if (status === 401)
+    return "API key issue. Check SETUP.md and your .env file.";
+  if (status === 429)
+    return "Too many requests. Please wait a moment and try again.";
+  if (status >= 500)
+    return "Temporary glitch on our side. Try again in a moment.";
+  if (bodyError)
+    return bodyError.length > 120 ? bodyError.slice(0, 120) + "…" : bodyError;
+  return "Something went wrong. Try again.";
+}
+
+function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: ctrl.signal }).finally(() => clearTimeout(to));
+}
+
+async function requestWithRetry(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number = FETCH_TIMEOUT_MS
+): Promise<Response> {
+  let lastRes: Response | null = null;
+  let lastErr: Error | null = null;
+  for (let attempt = 0; attempt <= FRONTEND_RETRIES; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, options, timeoutMs);
+      lastRes = res;
+      const retryable = res.status === 404 || res.status === 502 || res.status === 503 || res.status === 504 || res.status === 429;
+      const data = res.ok ? null : await res.json().catch(() => ({}));
+      const canRetry = retryable && attempt < FRONTEND_RETRIES && (data?.retryable !== false);
+      if (res.ok) return res;
+      if (!canRetry) throw new Error(friendlyMessage(res.status, data?.error));
+      await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS * (attempt + 1)));
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
+      if (lastErr.name === "AbortError") throw new Error("Request took too long. Try again.");
+      if (attempt >= FRONTEND_RETRIES) throw lastErr;
+      await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS * (attempt + 1)));
+    }
   }
+  if (lastRes && !lastRes.ok) {
+    const data = await lastRes.json().catch(() => ({}));
+    throw new Error(friendlyMessage(lastRes.status, data?.error));
+  }
+  throw lastErr || new Error("Something went wrong. Try again.");
+}
+
+async function chatWithWatson(messages: { role: string; content: string }[], outputTypeApi: string): Promise<{ reply: string; readyToGenerate: boolean }> {
+  const url = `${API_BASE}/api/chat`;
+  const res = await requestWithRetry(
+    url,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: messages.map((m) => ({
+          role: m.role === "assistant" ? "watson" : "user",
+          content: m.content,
+        })),
+        outputType: outputTypeApi,
+      }),
+    },
+    FETCH_TIMEOUT_MS
+  );
   return res.json();
 }
 
 async function generateOutput(conversationSummary: string, outputTypeApi: string): Promise<{ content: string; score: number }> {
-  const res = await fetch("/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ conversationSummary, outputType: outputTypeApi }),
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Request failed ${res.status}`);
-  }
+  const url = `${API_BASE}/api/generate`;
+  const res = await requestWithRetry(
+    url,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conversationSummary, outputType: outputTypeApi }),
+    },
+    FETCH_TIMEOUT_MS
+  );
   return res.json();
 }
 
@@ -845,9 +904,21 @@ export default function WorkSession() {
             disabled={loading}
           />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            {/* Left: hints or error */}
-            <span style={{ fontSize: 11, color: apiError ? "var(--error, #e85d75)" : "var(--fg-3)", letterSpacing: ".01em" }}>
-              {apiError || "Enter to send · Shift+Enter for new line"}
+            {/* Left: hints or error + Retry when there's an error */}
+            <span style={{ fontSize: 11, color: apiError ? "var(--error, #e85d75)" : "var(--fg-3)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
+              {apiError}
+              {apiError && (
+                <button
+                  type="button"
+                  onClick={() => { setApiError(null); }}
+                  style={{
+                    fontSize: 10, fontWeight: 600, color: "var(--fg)", background: "var(--bg-3)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap",
+                  }}
+                >
+                  Try again
+                </button>
+              )}
+              {!apiError && "Enter to send · Shift+Enter for new line"}
             </span>
             {/* Right: Make the thing (when we have user messages) + send */}
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

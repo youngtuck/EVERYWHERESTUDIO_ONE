@@ -55,6 +55,8 @@ npm run server
 
 Leave both terminals running while you use the app. The Work section will call the backend, which uses your API key to talk to Claude.
 
+**If you get a 404 or "API not found" in the Work section:** the frontend is not reaching the backend. Make sure **both** are running: `npm run dev` (frontend) and `npm run server` (backend). Or use `npm run dev:all` to start both. The frontend proxies `/api/*` to the backend; if the backend isn’t running, you’ll see 404 or connection errors.
+
 ---
 
 ## 4. Optional: run frontend and backend with one command
