@@ -1,25 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
 import { useMobile } from "../../hooks/useMobile";
 
-/** Studio layout: sidebar + main outlet; full-bleed for work session, fade transition for tab switches. */
-
-// ── Page transition wrapper ────────────────────────────────────────────────
-// Opacity-only fade on route change (no movement, no transition on background).
-function PageSlide({ children, routeKey }: { children: ReactNode; routeKey: string }) {
-  return (
-    <div
-      key={routeKey}
-      style={{
-        animation: "studioFadeIn 0.12s ease-out",
-        height: "100%",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
+/** Studio layout: sidebar + main outlet; full-bleed for work session. No transition on tab switch to avoid flash. */
 
 export default function StudioShell() {
   const location = useLocation();
@@ -33,7 +17,7 @@ export default function StudioShell() {
 
   // Lock studio background and disable transitions on root/body to prevent black flash on tab switch
   useEffect(() => {
-    // Nuke any lingering landing page styles (gradient set via body.style.background)
+    const root = document.getElementById("root");
     document.body.style.background = "";
     document.body.style.backgroundImage = "none";
     document.body.style.backgroundColor = "#F4F2ED";
@@ -42,6 +26,12 @@ export default function StudioShell() {
     document.documentElement.style.backgroundImage = "none";
     document.documentElement.style.backgroundColor = "#F4F2ED";
     document.documentElement.style.transition = "none";
+    if (root) {
+      root.style.background = "";
+      root.style.backgroundImage = "none";
+      root.style.backgroundColor = "#F4F2ED";
+      root.style.transition = "none";
+    }
     return () => {
       document.body.style.background = "";
       document.body.style.backgroundImage = "";
@@ -51,6 +41,12 @@ export default function StudioShell() {
       document.documentElement.style.backgroundImage = "";
       document.documentElement.style.backgroundColor = "";
       document.documentElement.style.transition = "";
+      if (root) {
+        root.style.background = "";
+        root.style.backgroundImage = "";
+        root.style.backgroundColor = "";
+        root.style.transition = "";
+      }
     };
   }, []);
 
@@ -147,10 +143,8 @@ export default function StudioShell() {
             <span style={{ width: 32 }} />
           </div>
         )}
-        <div className="studio-main-inner">
-          <PageSlide routeKey={location.pathname}>
-            <Outlet />
-          </PageSlide>
+        <div className="studio-main-inner" style={{ background: "#F4F2ED" }}>
+          <Outlet />
         </div>
       </main>
     </div>

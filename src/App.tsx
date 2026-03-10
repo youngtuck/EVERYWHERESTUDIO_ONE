@@ -77,7 +77,7 @@ const App = () => (
             <Route
               path="/studio"
               element={
-                <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
+                <Suspense fallback={<div style={{ background: "#F4F2ED", height: "100vh" }} />}>
                   <ProtectedRoute><StudioShell /></ProtectedRoute>
                 </Suspense>
               }
