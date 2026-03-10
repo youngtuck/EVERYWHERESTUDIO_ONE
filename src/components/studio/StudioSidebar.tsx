@@ -1,7 +1,8 @@
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut } from "lucide-react";
+import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut, Monitor, Check, X } from "lucide-react";
 
 // ── Nav items (with icons, reference style) ─────────────────────────────────
 const NAV = [
@@ -35,6 +36,69 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
   const loc = useLocation();
   const { theme } = useTheme();
   const { user, signOut } = useAuth();
+
+  const [installState, setInstallState] = useState<"hidden" | "prompt" | "installed">("hidden");
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showSafariHint, setShowSafariHint] = useState(false);
+  const installPromptFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("everywhere-install-card-dismissed") === "true") {
+      setInstallState("hidden");
+      return;
+    }
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+    if (isStandalone) {
+      setInstallState("hidden");
+      return;
+    }
+    if (localStorage.getItem("everywhere-installed") === "true") {
+      setInstallState("installed");
+      return;
+    }
+    const handler = (e: Event) => {
+      e.preventDefault();
+      installPromptFiredRef.current = true;
+      setDeferredPrompt(e);
+      setInstallState("prompt");
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    const timeout = setTimeout(() => {
+      if (!installPromptFiredRef.current) {
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if ((isSafari || isIOS) && localStorage.getItem("everywhere-install-card-dismissed") !== "true") {
+          setInstallState("prompt");
+        }
+      }
+    }, 3000);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        localStorage.setItem("everywhere-installed", "true");
+        setInstallState("installed");
+      }
+      setDeferredPrompt(null);
+    } else {
+      setShowSafariHint(true);
+    }
+  };
+
+  const dismissInstallCard = () => {
+    localStorage.setItem("everywhere-install-card-dismissed", "true");
+    setInstallState("hidden");
+    setShowSafariHint(false);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -281,6 +345,101 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
             );
           })}
         </div>
+
+        {/* Install app card — between nav and Conversations */}
+        {!collapsed && installState === "prompt" && (
+          <div style={{ margin: "0 12px 16px 12px", position: "relative" }}>
+            <button
+              type="button"
+              onClick={handleInstall}
+              style={{
+                width: "100%",
+                background: "rgba(200, 150, 26, 0.06)",
+                border: "1px solid rgba(200, 150, 26, 0.12)",
+                borderRadius: 10,
+                padding: "12px 14px",
+                cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+                textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(200, 150, 26, 0.25)";
+                e.currentTarget.style.boxShadow = "0 2px 8px rgba(200, 150, 26, 0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(200, 150, 26, 0.12)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <Monitor size={16} style={{ color: "#C8961A", flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#1a1a1a" }}>Get the app</div>
+                  <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", marginTop: 2 }}>Install for the full experience</div>
+                </div>
+              </div>
+            </button>
+            {showSafariHint && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  right: 12,
+                  top: "100%",
+                  marginTop: 6,
+                  background: "#1a1a1a",
+                  color: "#fff",
+                  fontSize: 11,
+                  fontFamily: "'DM Sans', sans-serif",
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  zIndex: 10,
+                }}
+              >
+                Tap the Share button, then &quot;Add to Home Screen&quot;
+              </div>
+            )}
+          </div>
+        )}
+        {!collapsed && installState === "installed" && (
+          <div
+            style={{
+              margin: "0 12px 16px 12px",
+              background: "rgba(0,0,0,0.02)",
+              border: "1px solid rgba(0,0,0,0.04)",
+              borderRadius: 10,
+              padding: "12px 14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 8,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Check size={14} style={{ color: "rgba(0,0,0,0.25)", flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: "rgba(0,0,0,0.3)", fontFamily: "'DM Sans', sans-serif" }}>App installed</span>
+            </div>
+            <button
+              type="button"
+              onClick={dismissInstallCard}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 4,
+                cursor: "pointer",
+                color: "rgba(0,0,0,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              aria-label="Dismiss"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
         {/* Conversations (reference: CONVERSATIONS + New conversation) ───────── */}
         <div style={{ paddingTop: 8, paddingBottom: 4 }}>
