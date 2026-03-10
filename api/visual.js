@@ -2,7 +2,9 @@
  * Visual Intelligence — Gemini image generation proxy.
  * POST body: { content, title, author, context, vibe, brandColors, voiceStyle }
  * Returns: { success: true, image: base64, mimeType } or { success: false, error }
- * Set GEMINI_API_KEY in Vercel env. For long runs, set maxDuration to 60s for this function in Vercel.
+ * Env: GEMINI_API_KEY (required). Optional: GEMINI_MODEL (default: gemini-2.5-flash-image).
+ * If your key has access to an image-generation model, set GEMINI_MODEL to its ID (e.g. from AI Studio).
+ * For long runs, set maxDuration to 60s for this function in Vercel.
  */
 
 const VIBES = {
@@ -55,7 +57,7 @@ function buildPrompt(content, vibe, title, author, context, brandColors, voiceSt
   return prompt;
 }
 
-const GEMINI_MODEL = "gemini-2.0-flash-preview-image-generation";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-image";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -84,7 +86,7 @@ export default async function handler(req, res) {
 
   const prompt = buildPrompt(content, vibe, title, author, context, brandColors, voiceStyle);
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
 
   try {
     const controller = new AbortController();
