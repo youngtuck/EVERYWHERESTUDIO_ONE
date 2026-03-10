@@ -1,0 +1,58 @@
+{
+  "name": "EVERYWHERE Studio",
+  "short_name": "EVERYWHERE",
+  "description": "Your thinking. Composed. AI-powered content operating system for thought leaders.",
+  "start_url": "/studio/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F4F2ED",
+  "theme_color": "#C8961A",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "shortcuts": [
+    {
+      "name": "New Session",
+      "short_name": "New",
+      "url": "/studio/work",
+      "description": "Start a new content session with Watson"
+    },
+    {
+      "name": "Outputs",
+      "short_name": "Outputs",
+      "url": "/studio/outputs",
+      "description": "View your content library"
+    },
+    {
+      "name": "Visual Intelligence",
+      "short_name": "Visual",
+      "url": "/studio/outputs",
+      "description": "Transform content into visuals"
+    }
+  ]
+}

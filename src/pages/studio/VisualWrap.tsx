@@ -124,6 +124,8 @@ export default function VisualWrap() {
       timerRef.current = null;
     };
   }, [generating, generatingAll]);
+
+  useEffect(() => {
     if (!outputId || outputId === "new") {
       setLoading(false);
       setNotFound(true);

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import InstallPrompt from "./components/InstallPrompt";
 import { lazy, Suspense, ReactNode } from "react";
 
 import Index from "./pages/Index";
@@ -100,6 +101,7 @@ const App = () => (
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </PageTransition>
+        <InstallPrompt />
       </BrowserRouter>
     </ThemeProvider>
   </AuthProvider>
