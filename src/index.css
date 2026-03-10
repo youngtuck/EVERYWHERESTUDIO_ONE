@@ -90,6 +90,11 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  background-color: #F4F2ED;
+  transition: none !important;
+}
+body, #root {
+  transition: none !important;
 }
 body {
   font-family: var(--font);
@@ -98,7 +103,6 @@ body {
   font-size: 16px;
   line-height: 1.6;
   overflow-x: hidden;
-  transition: background 0.2s ease, color 0.2s ease;
   font-feature-settings: "ss01","ss02","cv01";
 }
 a { text-decoration: none; color: inherit; }
@@ -329,7 +333,7 @@ button { font-family: var(--font); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes studioFadeIn {
-  from { opacity: 0.6; }
+  from { opacity: 0.85; }
   to   { opacity: 1; }
 }
 .page-enter {

@@ -17,8 +17,11 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
     <!-- Windows PWA -->
     <meta name="msapplication-TileColor" content="#C8961A" />
-    <!-- Prevent white flash on load -->
-    <style>html{background-color:#F4F2ED}</style>
+    <!-- Prevent white flash on load; lock out transitions on root to prevent black flash on studio tab switch -->
+    <style>
+      html { background-color: #F4F2ED; }
+      html, body, #root { transition: none !important; }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap" rel="stylesheet">

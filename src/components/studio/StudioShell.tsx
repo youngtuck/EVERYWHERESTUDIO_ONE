@@ -6,13 +6,13 @@ import { useMobile } from "../../hooks/useMobile";
 /** Studio layout: sidebar + main outlet; full-bleed for work session, fade transition for tab switches. */
 
 // ── Page transition wrapper ────────────────────────────────────────────────
-// Opacity-only fade on route change (no movement, no transition: all).
+// Opacity-only fade on route change (no movement, no transition on background).
 function PageSlide({ children, routeKey }: { children: ReactNode; routeKey: string }) {
   return (
     <div
       key={routeKey}
       style={{
-        animation: "studioFadeIn 0.15s ease-out",
+        animation: "studioFadeIn 0.12s ease-out",
         height: "100%",
       }}
     >
@@ -31,10 +31,18 @@ export default function StudioShell() {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
-  // Clean up any dark backgrounds from marketing pages (Explore/Index zoom)
+  // Lock studio background and disable transitions on root/body to prevent black flash on tab switch
   useEffect(() => {
-    document.documentElement.style.backgroundColor = "";
-    document.body.style.backgroundColor = "";
+    document.documentElement.style.backgroundColor = "#F4F2ED";
+    document.documentElement.style.transition = "none";
+    document.body.style.backgroundColor = "#F4F2ED";
+    document.body.style.transition = "none";
+    return () => {
+      document.documentElement.style.backgroundColor = "";
+      document.documentElement.style.transition = "";
+      document.body.style.backgroundColor = "";
+      document.body.style.transition = "";
+    };
   }, []);
 
   const isFullScreen =
@@ -43,14 +51,14 @@ export default function StudioShell() {
 
   if (isFullScreen) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", transition: "none" }}>
         <Outlet />
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -89,7 +97,7 @@ export default function StudioShell() {
           onToggleCollapsed={() => setSidebarCollapsed(c => !c)}
         />
       </div>
-      <main style={{ flex: 1, minHeight: "100vh", background: "#F4F2ED", overflowY: "auto", position: "relative", zIndex: 1, padding: 0 }}>
+      <main style={{ flex: 1, minHeight: "100vh", background: "#F4F2ED", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none" }}>
         {isMobile && (
           <div
             style={{
