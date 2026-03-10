@@ -93,7 +93,37 @@ export default function VisualWrap() {
   const [contextText, setContextText] = useState("");
   const [lightbox, setLightbox] = useState<{ image: string; vibe: string } | null>(null);
 
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [resultRevealPhase, setResultRevealPhase] = useState<null | "revealing" | "complete">(null);
+  const [resultActionsVisible, setResultActionsVisible] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [cardExpanded, setCardExpanded] = useState(false);
+
   useEffect(() => {
+    if (generating && !generatingAll) setCardExpanded(false);
+  }, [generating, generatingAll]);
+
+  useEffect(() => {
+    const show = (generating && !generatingAll) || (result && !generatingAll && (resultRevealPhase === "revealing" || resultRevealPhase === "complete")) || (generateError && !generatingAll);
+    if (!show) return;
+    const id = requestAnimationFrame(() => setCardExpanded(true));
+    return () => cancelAnimationFrame(id);
+  }, [generating, generatingAll, result, resultRevealPhase, generateError]);
+
+  useEffect(() => {
+    if (generating || generatingAll) {
+      setElapsedSeconds(0);
+      setGenerateError(null);
+      timerRef.current = setInterval(() => {
+        setElapsedSeconds((s) => s + 1);
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
+  }, [generating, generatingAll]);
     if (!outputId || outputId === "new") {
       setLoading(false);
       setNotFound(true);
@@ -163,23 +193,35 @@ export default function VisualWrap() {
   const handleGenerateOne = async () => {
     if (!output) return;
     setError(null);
+    setGenerateError(null);
+    setResult(null);
+    setResultRevealPhase(null);
+    setResultActionsVisible(false);
     setGenerating(true);
     try {
       const data = await generateVisual(selectedVibe);
       if (data) {
         setResult({ image: data.image, mimeType: data.mimeType, vibe: selectedVibe });
+        setGenerating(false);
+        setResultRevealPhase("revealing");
         resultRef.current?.scrollIntoView({ behavior: "smooth" });
+        setTimeout(() => setResultRevealPhase("complete"), 800);
+        setTimeout(() => setResultActionsVisible(true), 1800);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
-    } finally {
+      setGenerateError("Generation failed. Try again.");
       setGenerating(false);
+    } finally {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
     }
   };
 
   const handleGenerateAll = async () => {
     if (!output) return;
     setError(null);
+    setGenerateError(null);
     setGeneratingAll(true);
     const initial: Record<string, "loading"> = {};
     VIBE_KEYS.forEach((v) => (initial[v] = "loading"));
@@ -522,15 +564,11 @@ export default function VisualWrap() {
             letterSpacing: "0.08em",
             textTransform: "uppercase",
             cursor: generating || generatingAll ? "not-allowed" : "pointer",
-            opacity: generating || generatingAll ? 0.8 : 1,
+            opacity: generating || generatingAll ? 0.4 : 1,
             fontFamily: "'DM Sans', sans-serif",
           }}
         >
-          {generating ? (
-            <span style={{ animation: "shimmer 1.2s ease-in-out infinite" }}>Generating...</span>
-          ) : (
-            "Generate Visual"
-          )}
+          Generate Visual
         </button>
         <button
           type="button"
@@ -552,11 +590,222 @@ export default function VisualWrap() {
           Generate All 6 Vibes
         </button>
       </div>
-      <style>{`@keyframes shimmer { 0%,100%{ opacity:1 } 50%{ opacity:0.6 } }`}</style>
 
-      {/* Section 5: Result */}
+      {/* Kai rendering card — single generation */}
+      {((generating && !generatingAll) || (result && !generatingAll && (resultRevealPhase === "revealing" || resultRevealPhase === "complete")) || (generateError && !generatingAll)) && (
+        <div
+          style={{
+            maxHeight: cardExpanded ? 1200 : 0,
+            opacity: cardExpanded ? 1 : 0,
+            overflow: "hidden",
+            transition: "max-height 0.4s ease-out, opacity 0.4s ease-out",
+            marginBottom: 40,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              border: "1px solid rgba(0,0,0,0.06)",
+              borderRadius: 16,
+              padding: 48,
+              minHeight: 320,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 4 }}>
+              Kai Morrison
+            </div>
+            <div
+              style={{
+                fontSize: 14,
+                color: resultRevealPhase === "complete" ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.5)",
+                fontStyle: "italic",
+                marginBottom: 24,
+              }}
+            >
+              {generateError ? "Generation failed" : resultRevealPhase === "complete" ? "Complete" : "Rendering your visual..."}
+            </div>
+
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                maxWidth: 500,
+                aspectRatio: "16/9",
+                border: "1px solid rgba(0,0,0,0.06)",
+                borderRadius: 12,
+                background: "#FAFAF8",
+                overflow: "hidden",
+                marginBottom: 16,
+              }}
+            >
+              {generateError ? (
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "rgba(0,0,0,0.4)" }}>
+                  Generation failed. Try again.
+                </div>
+              ) : result && (resultRevealPhase === "revealing" || resultRevealPhase === "complete") ? (
+                <>
+                  <div
+                    className={`render-sweep ${resultRevealPhase === "revealing" || resultRevealPhase === "complete" ? "render-sweep-paused" : ""}`}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      opacity: resultRevealPhase === "revealing" || resultRevealPhase === "complete" ? 0 : 1,
+                      transition: "opacity 0.4s ease-out",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <img
+                    src={result ? `data:${result.mimeType};base64,${result.image}` : ""}
+                    alt=""
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      borderRadius: 12,
+                      opacity: resultRevealPhase === "complete" ? 1 : resultRevealPhase === "revealing" ? 0 : 0,
+                      transition: "opacity 0.8s ease-out 0.2s",
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="render-sweep" style={{ position: "absolute", inset: 0, borderRadius: 12, overflow: "hidden" }} />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {(() => {
+                      const Icon = VIBES[selectedVibe].icon;
+                      return <Icon size={32} style={{ color: "rgba(0,0,0,0.08)", animation: "iconPulse 2s ease-in-out infinite" }} />;
+                    })()}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(0,0,0,0.25)", marginBottom: 4 }}>
+              {generateError ? "" : result ? result.vibe : VIBES[selectedVibe].label}
+            </div>
+            {!generateError && (
+              <div style={{ fontSize: 11, color: "rgba(0,0,0,0.15)", fontVariantNumeric: "tabular-nums" }}>
+                {elapsedSeconds}s
+              </div>
+            )}
+
+            {result && resultRevealPhase === "complete" && resultActionsVisible && (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 10,
+                  justifyContent: "center",
+                  marginTop: 24,
+                  animation: "kaiActionsFadeIn 0.3s ease-out",
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => result && downloadPng(result.image, result.mimeType, `${output.title}-${result.vibe}`)}
+                >
+                  <Download size={14} /> Download PNG
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => result && copyToClipboard(result.image, result.mimeType)}
+                >
+                  <Copy size={14} /> Copy to Clipboard
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => vibeRef.current?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  Try Another Vibe
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes shimmer { 0%,100%{ opacity:1 } 50%{ opacity:0.6 } }
+        @keyframes paintSweep {
+          0% { left: -60%; }
+          100% { left: 100%; }
+        }
+        @keyframes paintSweepVertical {
+          0% { top: -40%; }
+          100% { top: 100%; }
+        }
+        @keyframes iconPulse {
+          0%, 100% { opacity: 0.08; transform: scale(1); }
+          50% { opacity: 0.15; transform: scale(1.05); }
+        }
+        @keyframes kaiActionsFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .render-sweep::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 60%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(200, 150, 26, 0.04) 30%,
+            rgba(200, 150, 26, 0.08) 50%,
+            rgba(200, 150, 26, 0.04) 70%,
+            transparent 100%
+          );
+          animation: paintSweep 3s ease-in-out infinite;
+        }
+        .render-sweep::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: -100%;
+          width: 100%;
+          height: 40%;
+          background: linear-gradient(
+            180deg,
+            transparent 0%,
+            rgba(200, 150, 26, 0.03) 40%,
+            rgba(200, 150, 26, 0.06) 50%,
+            rgba(200, 150, 26, 0.03) 60%,
+            transparent 100%
+          );
+          animation: paintSweepVertical 4.5s ease-in-out infinite;
+        }
+        .render-sweep-paused::before,
+        .render-sweep-paused::after {
+          animation-play-state: paused;
+        }
+      `}</style>
+
+      {/* Section 5: Result (single — only when not shown in card) */}
       <div ref={resultRef}>
-        {result && (
+        {result && !(resultRevealPhase === "complete" && resultActionsVisible) && (
           <div style={{ marginBottom: 32 }}>
             <img
               src={`data:${result.mimeType};base64,${result.image}`}
@@ -597,7 +846,7 @@ export default function VisualWrap() {
           </div>
         )}
 
-        {/* Gallery (all 6) */}
+        {/* Gallery (all 6) — Kai mini rendering cards */}
         {generatingAll || Object.keys(gallery).length > 0 ? (
           <div style={{ marginTop: 24 }}>
             <div
@@ -612,80 +861,122 @@ export default function VisualWrap() {
                 const isLoading = entry === "loading";
                 const isError = entry === "error";
                 const data = entry && entry !== "loading" && entry !== "error" ? entry : null;
+                const Icon = VIBES[vibe].icon;
                 return (
                   <div
                     key={vibe}
                     style={{
                       background: "#fff",
                       border: "1px solid rgba(0,0,0,0.06)",
-                      borderRadius: 12,
+                      borderRadius: 16,
                       overflow: "hidden",
-                      minHeight: 160,
+                      minHeight: 200,
+                      padding: 16,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
                     }}
                   >
-                    {isLoading && (
-                      <div
-                        style={{
-                          height: 160,
-                          background: "linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%)",
-                          backgroundSize: "200% 100%",
-                          animation: "shimmer 1.2s ease-in-out infinite",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          color: "var(--fg-3)",
-                        }}
-                      >
-                        {VIBES[vibe].label}...
-                      </div>
-                    )}
-                    {isError && (
-                      <div
-                        style={{
-                          height: 160,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          color: "var(--fg-3)",
-                        }}
-                      >
-                        Failed
-                      </div>
-                    )}
-                    {data && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setLightbox({ image: data.image, vibe })}
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(0,0,0,0.3)", marginBottom: 8 }}>
+                      {VIBES[vibe].label}
+                    </div>
+                    <div
+                      style={{
+                        position: "relative",
+                        width: "100%",
+                        aspectRatio: "16/9",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                        borderRadius: 12,
+                        background: "#FAFAF8",
+                        overflow: "hidden",
+                        flex: 1,
+                        minHeight: 100,
+                      }}
+                    >
+                      {isLoading && (
+                        <>
+                          <div className="render-sweep" style={{ position: "absolute", inset: 0, borderRadius: 12, overflow: "hidden" }} />
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              pointerEvents: "none",
+                            }}
+                          >
+                            <Icon size={28} style={{ color: "rgba(0,0,0,0.08)", animation: "iconPulse 2s ease-in-out infinite" }} />
+                          </div>
+                        </>
+                      )}
+                      {isError && (
+                        <div
                           style={{
-                            width: "100%",
-                            padding: 0,
-                            border: "none",
-                            background: "none",
-                            cursor: "pointer",
-                            display: "block",
+                            position: "absolute",
+                            inset: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 12,
+                            color: "rgba(0,0,0,0.4)",
                           }}
                         >
-                          <img
-                            src={`data:${data.mimeType};base64,${data.image}`}
-                            alt={vibe}
-                            style={{ width: "100%", display: "block", verticalAlign: "top" }}
+                          Generation failed. Try again.
+                        </div>
+                      )}
+                      {data && (
+                        <>
+                          <div
+                            className="render-sweep"
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              opacity: 0,
+                              transition: "opacity 0.4s ease-out",
+                              pointerEvents: "none",
+                            }}
                           />
-                        </button>
-                        <div style={{ padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: 12, fontWeight: 600 }}>{VIBES[vibe].label}</span>
                           <button
                             type="button"
-                            className="btn-ghost"
-                            style={{ fontSize: 11, padding: "4px 8px" }}
-                            onClick={() => downloadPng(data.image, data.mimeType, `${output.title}-${vibe}`)}
+                            onClick={() => setLightbox({ image: data.image, vibe })}
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              width: "100%",
+                              height: "100%",
+                              padding: 0,
+                              border: "none",
+                              background: "none",
+                              cursor: "pointer",
+                              display: "block",
+                            }}
                           >
-                            Download
+                            <img
+                              src={`data:${data.mimeType};base64,${data.image}`}
+                              alt={vibe}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                borderRadius: 12,
+                                opacity: 1,
+                                transition: "opacity 0.8s ease-out 0.2s",
+                              }}
+                            />
                           </button>
-                        </div>
-                      </>
+                        </>
+                      )}
+                    </div>
+                    {data && (
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        style={{ fontSize: 11, padding: "6px 10px", marginTop: 8 }}
+                        onClick={() => downloadPng(data.image, data.mimeType, `${output.title}-${vibe}`)}
+                      >
+                        Download
+                      </button>
                     )}
                   </div>
                 );
