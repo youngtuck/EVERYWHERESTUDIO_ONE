@@ -500,44 +500,51 @@ export default function Dashboard() {
           className="card"
           style={{
             width: "100%",
+            maxWidth: "none",
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "18px 22px",
+            gap: 16,
+            padding: "20px 24px",
             marginBottom: 32,
             cursor: "pointer",
             textAlign: "left",
-            border: "1px solid var(--line)",
+            background: "#fff",
+            border: "1px solid rgba(0,0,0,0.06)",
+            borderRadius: 12,
             transition: "all 0.2s ease",
           }}
           onMouseEnter={e => {
             const el = e.currentTarget as HTMLElement;
-            el.style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)";
+            el.style.boxShadow = "0 2px 12px rgba(0,0,0,0.05)";
             el.style.borderColor = "rgba(0,0,0,0.1)";
           }}
           onMouseLeave={e => {
             const el = e.currentTarget as HTMLElement;
             el.style.boxShadow = "none";
-            el.style.borderColor = "var(--line)";
+            el.style.borderColor = "rgba(0,0,0,0.06)";
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: "var(--studio-radius)",
-              background: "var(--bg-2)",
-              border: "1px solid var(--line)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <Eye size={18} style={{ color: "var(--fg-2)" }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 2 }}>Sentinel Briefing</div>
-              <div style={{ fontSize: 12, color: "var(--fg-3)" }}>Coming soon: intelligence monitoring</div>
-            </div>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: "rgba(74, 144, 245, 0.06)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Eye size={20} style={{ color: "var(--fg-2)" }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", marginBottom: 2 }}>Sentinel Briefing</div>
+            <div style={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }}>Coming soon: intelligence monitoring</div>
           </div>
           <ChevronRight
-            size={18}
-            style={{ color: "var(--fg-3)", transition: "transform 0.2s ease" }}
+            size={20}
+            style={{ color: "rgba(0,0,0,0.15)", flexShrink: 0, transition: "transform 0.2s ease" }}
             className="sentinel-chevron"
           />
         </button>

@@ -50,7 +50,7 @@ export default function StudioShell() {
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#F4F2ED", fontFamily: "var(--font)", position: "relative" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F4F2ED", fontFamily: "var(--font)", position: "relative", overflow: "hidden" }}>
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -70,7 +70,7 @@ export default function StudioShell() {
                 top: 0,
                 left: 0,
                 height: "100vh",
-                width: 260,
+                width: 240,
                 transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
                 transition: "transform 0.3s cubic-bezier(.16,1,.3,1)",
                 zIndex: 40,
@@ -78,6 +78,7 @@ export default function StudioShell() {
             : {
                 position: "relative",
                 height: "100vh",
+                width: 240,
                 flexShrink: 0,
                 zIndex: 1,
               }
@@ -88,7 +89,7 @@ export default function StudioShell() {
           onToggleCollapsed={() => setSidebarCollapsed(c => !c)}
         />
       </div>
-      <main style={{ flex: 1, overflowY: "auto", minHeight: "100vh", position: "relative", zIndex: 1, background: "#F4F2ED" }}>
+      <main style={{ flex: 1, minHeight: "100vh", background: "#F4F2ED", overflowY: "auto", position: "relative", zIndex: 1, padding: 0 }}>
         {isMobile && (
           <div
             style={{

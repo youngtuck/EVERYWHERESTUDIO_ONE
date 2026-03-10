@@ -123,8 +123,6 @@ button { font-family: var(--font); }
 .studio-sidebar.collapsed { width: 52px; }
 .studio-main { flex: 1; overflow-y: auto; background: var(--bg); }
 .studio-main-inner {
-  max-width: var(--studio-content-max);
-  margin: 0 auto;
   padding: var(--studio-page-pad);
   min-height: 100%;
 }
@@ -160,7 +158,7 @@ button { font-family: var(--font); }
   --studio-gap-lg: 28px;
   --studio-radius: 10px;
   --studio-radius-lg: 14px;
-  --studio-sidebar-width: 220px;
+  --studio-sidebar-width: 240px;
 }
 
 /* ─── NAV ────────────────────────────────────────────────────── */
