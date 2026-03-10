@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FileText, Search } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../context/AuthContext";
+import { timeAgo } from "../../utils/timeAgo";
+import { getScoreColor } from "../../utils/scoreColor";
+import "./shared.css";
 
 interface Output {
   id: string;
@@ -10,187 +15,382 @@ interface Output {
   created_at: string;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  essay: "#4A90D9", newsletter: "#50c8a0", presentation: "#F5A623",
-  social: "#a080f5", podcast: "#F5C642", video: "#e85d75",
-  sunday_story: "#F5C642", freestyle: "#4A90D9",
-  linkedin_post: "#4A90D9", podcast_script: "#F5C642", twitter_thread: "#a080f5",
-  substack_note: "#50c8a0", talk_outline: "#F5A623", email_campaign: "#0D8C9E",
-  blog_post: "#4A90D9", executive_brief: "#6b4dd4", short_video: "#e85d75",
-};
-
 const TYPE_LABELS: Record<string, string> = {
-  essay: "Essay", newsletter: "Newsletter", presentation: "Presentation",
-  social: "Social", podcast: "Podcast", video: "Video",
-  sunday_story: "Sunday Story", freestyle: "Freestyle",
-  linkedin_post: "LinkedIn Post", podcast_script: "Podcast Script", twitter_thread: "Twitter Thread",
-  substack_note: "Substack Note", talk_outline: "Talk Outline", email_campaign: "Email Campaign",
-  blog_post: "Blog Post", executive_brief: "Executive Brief", short_video: "Short Video",
+  essay: "Essay",
+  newsletter: "Newsletter",
+  presentation: "Presentation",
+  social: "Social",
+  podcast: "Podcast",
+  podcast_script: "Podcast Script",
+  video: "Video",
+  sunday_story: "Sunday Story",
+  freestyle: "Freestyle",
+  linkedin_post: "LinkedIn Post",
+  twitter_thread: "Twitter Thread",
+  substack_note: "Substack Note",
+  talk_outline: "Talk Outline",
+  email_campaign: "Email Campaign",
+  blog_post: "Blog Post",
+  executive_brief: "Executive Brief",
+  short_video: "Short Video",
 };
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 export default function OutputLibrary() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [outputs, setOutputs] = useState<Output[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    supabase
+    let query = supabase
       .from("outputs")
       .select("id, title, output_type, score, created_at")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setOutputs(data ?? []);
-        setLoading(false);
-      });
-  }, []);
+      .order("created_at", { ascending: false });
+    if (user) query = query.eq("user_id", user.id);
+    query.then(({ data }) => {
+      setOutputs(data ?? []);
+      setLoading(false);
+    });
+  }, [user]);
 
-  const filtered = outputs.filter(o => {
+  const filtered = outputs.filter((o) => {
     const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || o.output_type === filter;
     return matchSearch && matchFilter;
   });
 
-  const scoreColor = (s: number) => s >= 900 ? "#50c8a0" : s >= 800 ? "#4A90D9" : "#F5C642";
+  const transition = "all 0.15s ease";
 
   return (
-    <div style={{ padding: "0", maxWidth: "var(--studio-content-max)", margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "var(--studio-gap)" }}>
+    <div
+      style={{
+        maxWidth: 960,
+        margin: "0 auto",
+        padding: "32px 24px",
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      {/* Page Header */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          marginBottom: 32,
+        }}
+      >
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", marginBottom: 4, fontFamily: "'DM Sans', sans-serif" }}>Outputs</h1>
-          <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontWeight: 400, fontFamily: "'DM Sans', sans-serif" }}>{outputs.length} pieces produced</p>
+          <h1
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: 28,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              margin: 0,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Outputs
+          </h1>
+          <p
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 14,
+              color: "var(--text-secondary)",
+              marginTop: 4,
+              marginBottom: 0,
+            }}
+          >
+            {outputs.length} pieces produced
+          </p>
         </div>
-        <button onClick={() => navigate("/studio/work/new")} className="btn-primary" style={{ padding: "9px 18px" }}
-          onMouseEnter={e => e.currentTarget.style.opacity = ".82"}
-          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-        >New Session</button>
+        <button
+          onClick={() => navigate("/studio/work")}
+          style={{
+            background: "var(--text-primary)",
+            color: "#fff",
+            padding: "10px 20px",
+            borderRadius: 8,
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 14,
+            fontWeight: 500,
+            border: "none",
+            cursor: "pointer",
+            transition,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = "0.88";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = "1";
+          }}
+        >
+          New Session
+        </button>
       </div>
 
-      {/* Search + filter */}
-      <div style={{ display: "flex", gap: "var(--studio-gap-sm)", marginBottom: "var(--studio-gap)" }}>
-        <div style={{ flex: 1, position: "relative" }}>
-          <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: .4 }} width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.3"/>
-            <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search outputs…"
-            className="input-field"
-            style={{ paddingLeft: 32 }}
+      {/* Search and Filter Bar */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          marginBottom: 24,
+          alignItems: "center",
+        }}
+      >
+        <div style={{ flex: 1, maxWidth: 360, position: "relative" }}>
+          <Search
+            size={16}
+            style={{
+              position: "absolute",
+              left: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "var(--text-tertiary)",
+              pointerEvents: "none",
+            }}
+          />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search outputs..."
+            style={{
+              width: "100%",
+              padding: "10px 16px 10px 40px",
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 14,
+              color: "var(--text-primary)",
+              background: "var(--surface-white)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: 8,
+              outline: "none",
+              transition,
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--gold-dark)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--border-subtle)";
+            }}
           />
         </div>
-        <select value={filter} onChange={e => setFilter(e.target.value)} className="input-field" style={{ minWidth: 120 }}>
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          style={{
+            minWidth: 140,
+            padding: "10px 36px 10px 16px",
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 14,
+            color: "var(--text-primary)",
+            background: "var(--surface-white)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 8,
+            appearance: "none",
+            cursor: "pointer",
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4.5L6 8L10 4.5' stroke='%239B9B9B' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'/%3E%3C/svg%3E")`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "right 12px center",
+          }}
+        >
           <option value="all">All types</option>
-          {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          {Object.entries(TYPE_LABELS).map(([v, l]) => (
+            <option key={v} value={v}>
+              {l}
+            </option>
+          ))}
         </select>
       </div>
 
-      {/* Table */}
+      {/* Output List */}
       {loading ? (
-        <div style={{ padding: 48, textAlign: "center", color: "rgba(0,0,0,0.6)", fontSize: 14, lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>
-          <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid var(--gold, #C8961A)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          Loading outputs…
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="studio-skeleton"
+              style={{
+                height: 56,
+                marginBottom: 0,
+                borderBottom: "1px solid var(--border-subtle)",
+                animationDelay: `${i * 50}ms`,
+              }}
+            />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div
+          style={{
+            padding: "80px 0",
+            textAlign: "center",
+          }}
+        >
+          <FileText size={32} style={{ color: "var(--text-tertiary)" }} />
+          <h2
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              marginTop: 16,
+              marginBottom: 0,
+            }}
+          >
+            No outputs yet
+          </h2>
+          <p
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 14,
+              color: "var(--text-secondary)",
+              marginTop: 8,
+              marginBottom: 0,
+            }}
+          >
+            Start a session with Watson to create your first piece.
+          </p>
+          <button
+            onClick={() => navigate("/studio/work")}
+            style={{
+              marginTop: 20,
+              background: "var(--gold-dark)",
+              color: "#fff",
+              padding: "10px 20px",
+              borderRadius: 8,
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 14,
+              fontWeight: 500,
+              border: "none",
+              cursor: "pointer",
+              transition,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--gold-light)";
+              e.currentTarget.style.transform = "scale(1.02)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--gold-dark)";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            Start Session
+          </button>
         </div>
       ) : (
-      <>
-        {outputs.length === 0 ? (
-          <div style={{ padding: 48, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 260 }}>
-            <div
-              className="card"
-              style={{
-                maxWidth: 420,
-                width: "100%",
-                padding: "32px 28px 28px",
-                position: "relative",
-                overflow: "hidden",
-                textAlign: "center",
-              }}
-            >
-              <div
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {filtered.map((o) => {
+            const sc = getScoreColor(o.score);
+            return (
+              <button
+                key={o.id}
+                onClick={() => navigate(`/studio/outputs/${o.id}`)}
                 style={{
-                  position: "absolute",
-                  inset: 0,
+                  padding: "16px 0",
+                  borderBottom: "1px solid var(--border-subtle)",
+                  borderTop: filtered[0]?.id === o.id ? "1px solid var(--border-subtle)" : "none",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  pointerEvents: "none",
-                  opacity: 0.35,
+                  cursor: "pointer",
+                  background: "transparent",
+                  borderLeft: "none",
+                  borderRight: "none",
+                  width: "100%",
+                  textAlign: "left",
+                  fontFamily: "inherit",
+                  transition,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(0,0,0,0.015)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
                 }}
               >
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: sc.fill,
+                    flexShrink: 0,
+                    marginRight: 16,
+                  }}
+                />
                 <span
                   style={{
-                    fontSize: 72,
-                    fontWeight: 800,
-                    color: "rgba(255,255,255,0.06)",
-                    letterSpacing: "-0.08em",
+                    flex: 1,
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: "var(--text-primary)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  0
+                  {o.title}
                 </span>
-              </div>
-              <div style={{ position: "relative", zIndex: 1 }}>
-                <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>
-                  Nothing here yet
-                </div>
-                <p
+                <span
                   style={{
+                    fontFamily: "'DM Sans', sans-serif",
                     fontSize: 13,
-                    color: "var(--fg-3)",
-                    lineHeight: 1.6,
-                    maxWidth: 320,
-                    margin: "0 auto 20px",
+                    color: "var(--text-tertiary)",
+                    width: 120,
+                    textAlign: "right",
+                    flexShrink: 0,
                   }}
                 >
-                  Every output you create with Watson will appear here, scored and ready to use.
-                </p>
-                <button
-                  onClick={() => navigate("/studio/work/new")}
-                  className="btn-primary"
-                  style={{ padding: "12px 24px" }}
+                  {TYPE_LABELS[o.output_type] || o.output_type}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: sc.text,
+                    width: 48,
+                    textAlign: "right",
+                    flexShrink: 0,
+                  }}
                 >
-                  Start your first session
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {filtered.map(o => (
-              <button key={o.id} onClick={() => navigate(`/studio/outputs/${o.id}`)} style={{
-                display: "flex", alignItems: "center", gap: 14,
-                background: "none", border: "none", borderRadius: "var(--studio-radius)", padding: "12px 12px",
-                cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", width: "100%",
-                transition: "background .12s",
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-2)"}
-                onMouseLeave={e => e.currentTarget.style.background = "none"}
-              >
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[o.output_type] || "#4A90D9", flexShrink: 0 }} />
-                <span style={{ flex: 1, fontSize: 14, color: "var(--fg)", fontWeight: 400, letterSpacing: "-.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.title}</span>
-                <span style={{ fontSize: 11, color: "var(--fg-3)", width: 90, flexShrink: 0 }}>{TYPE_LABELS[o.output_type] || o.output_type}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(o.score), width: 42, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
-                <span style={{
-                  fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
-                  background: "rgba(80,200,160,.1)",
-                  color: "#50c8a0",
-                  border: "1px solid rgba(80,200,160,.2)",
-                }}>saved</span>
-                <span style={{ fontSize: 11, color: "var(--fg-3)", width: 48, textAlign: "right", flexShrink: 0 }}>{formatDate(o.created_at)}</span>
+                  {o.score}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 10,
+                    fontWeight: 500,
+                    textTransform: "uppercase",
+                    padding: "3px 10px",
+                    borderRadius: 4,
+                    background: "rgba(58, 154, 92, 0.1)",
+                    color: "#3A9A5C",
+                    width: 56,
+                    textAlign: "center",
+                    flexShrink: 0,
+                    marginLeft: 8,
+                  }}
+                >
+                  saved
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 12,
+                    color: "var(--text-tertiary)",
+                    width: 72,
+                    textAlign: "right",
+                    flexShrink: 0,
+                  }}
+                >
+                  {timeAgo(o.created_at)}
+                </span>
               </button>
-            ))}
-            {filtered.length === 0 && outputs.length > 0 && (
-              <div style={{ padding: "48px", textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>
-                No outputs match your search.
-              </div>
-            )}
-          </div>
-        )}
-      </>
+            );
+          })}
+        </div>
       )}
     </div>
   );

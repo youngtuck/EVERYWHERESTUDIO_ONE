@@ -21,6 +21,12 @@
   --surface-elevated: #FAFAF8;
   --border-subtle:   rgba(0,0,0,0.06);
   --border-default:  rgba(0,0,0,0.1);
+  --bg-light:        #F4F2ED;
+  --text-primary:    #1A1A1A;
+  --text-secondary:  #6B6B6B;
+  --text-tertiary:   #9B9B9B;
+  --danger:          #D64545;
+  --success:         #3A9A5C;
 
   /* Light mode */
   --bg:       #FAFAF8;

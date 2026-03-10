@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import "./shared.css";
 
 const FIDELITY_SCORE = 94.7;
 const TRAITS: { label: string; score: number }[] = [
@@ -10,32 +11,32 @@ const TRAITS: { label: string; score: number }[] = [
   { label: "Structural Habits", score: 96 },
 ];
 
-const GOLD = "#C8961A";
-
 const WRITING_SAMPLES = [
   { title: "CEO who reads everything", wordCount: 412, dateAdded: "Mar 4, 2026" },
   { title: "Interview before the essay", wordCount: 890, dateAdded: "Mar 2, 2026" },
   { title: "Delegation and trust", wordCount: 624, dateAdded: "Feb 28, 2026" },
 ];
 
-function TraitBar({ label, score }: { label: string; score: number }) {
+function TraitBar({ label, score, delay }: { label: string; score: number; delay: number }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      <div style={{ fontSize: 13, color: "var(--fg-2)", width: 160, flexShrink: 0 }}>{label}</div>
-      <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--bg-3)", overflow: "hidden" }}>
-        <div
-          style={{
-            height: "100%",
-            borderRadius: 3,
-            width: `${score}%`,
-            background: `linear-gradient(90deg, ${GOLD}, ${GOLD}99)`,
-            transition: "width 0.6s cubic-bezier(0.16,1,0.3,1)",
-          }}
-        />
+    <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", width: 180, flexShrink: 0 }}>{label}</div>
+      <div style={{ flex: 1, height: 8, borderRadius: 4, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
+        <div style={{ width: `${score}%`, height: "100%", overflow: "hidden", borderRadius: 4 }}>
+          <div
+            style={{
+              height: "100%",
+              width: "100%",
+              borderRadius: 4,
+              background: "var(--gold-dark)",
+              animation: "barFill 0.8s ease forwards",
+              animationDelay: `${delay}ms`,
+              transformOrigin: "left",
+            }}
+          />
+        </div>
       </div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: GOLD, width: 36, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-        {score}%
-      </div>
+      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--gold-dark)", width: 48, textAlign: "right" }}>{score}%</div>
     </div>
   );
 }
@@ -44,67 +45,160 @@ export default function VoiceDnaSettings() {
   const [samples] = useState(WRITING_SAMPLES);
 
   return (
-    <div style={{ maxWidth: "var(--studio-content-max)", margin: "0 auto", fontFamily: "var(--font)", paddingBottom: "var(--studio-gap-lg)" }}>
-      {/* Page header */}
-      <header style={{ marginBottom: "var(--studio-gap-lg)" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 6 }}>
+    <div
+      style={{
+        maxWidth: 720,
+        margin: "0 auto",
+        padding: "32px 24px 80px",
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      <header style={{ marginBottom: 24 }}>
+        <h1
+          style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: 28,
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            margin: 0,
+            letterSpacing: "-0.02em",
+          }}
+        >
           Voice DNA
         </h1>
-        <p style={{ fontSize: 14, color: "var(--fg-3)", fontWeight: 400 }}>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0 }}>
           How the system learns to write like you
         </p>
       </header>
 
-      {/* Fidelity Score */}
-      <section className="card" style={{ padding: "var(--studio-gap-lg)", marginBottom: "var(--studio-gap-lg)", border: "1px solid var(--line)" }}>
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>
-          Voice Fidelity
+      <section
+        style={{
+          background: "var(--surface-white)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: 12,
+          padding: 32,
+          marginBottom: 24,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 11,
+            fontWeight: 500,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: "var(--text-tertiary)",
+            marginBottom: 10,
+          }}
+        >
+          VOICE FIDELITY
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 14 }}>
-          <span style={{ fontSize: 42, fontWeight: 800, color: GOLD, letterSpacing: "-0.03em", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+          <span
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: 48,
+              fontWeight: 700,
+              color: "var(--gold-dark)",
+              letterSpacing: "-0.03em",
+              lineHeight: 1,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
             {FIDELITY_SCORE}
           </span>
-          <span style={{ fontSize: 14, color: "var(--fg-3)", fontWeight: 500 }}>/ 100</span>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, fontWeight: 400, color: "var(--text-tertiary)" }}>/ 100</span>
         </div>
-        <div style={{ height: 4, borderRadius: 2, background: "var(--bg-3)", overflow: "hidden" }}>
+        <div style={{ height: 6, borderRadius: 3, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
           <div
             style={{
               height: "100%",
-              borderRadius: 2,
+              borderRadius: 3,
               width: `${FIDELITY_SCORE}%`,
-              background: GOLD,
-              transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)",
+              background: "var(--gold-dark)",
+              transition: "width 0.6s ease",
             }}
           />
         </div>
       </section>
 
-      {/* Five trait bars */}
-      <section className="card" style={{ padding: "var(--studio-gap-lg)", marginBottom: "var(--studio-gap-lg)", border: "1px solid var(--line)" }}>
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 18 }}>
-          Trait profile
+      <section
+        style={{
+          background: "var(--surface-white)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: 12,
+          padding: 32,
+          marginBottom: 24,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 11,
+            fontWeight: 500,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: "var(--text-tertiary)",
+            marginBottom: 18,
+          }}
+        >
+          TRAIT PROFILE
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {TRAITS.map((t) => (
-            <TraitBar key={t.label} label={t.label} score={t.score} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          {TRAITS.map((t, i) => (
+            <TraitBar key={t.label} label={t.label} score={t.score} delay={i * 100} />
           ))}
         </div>
       </section>
 
-      {/* Writing Samples */}
-      <section className="card" style={{ padding: "var(--studio-gap-lg)", marginBottom: "var(--studio-gap-lg)", border: "1px solid var(--line)" }}>
+      <section
+        style={{
+          background: "var(--surface-white)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: 12,
+          padding: 32,
+        }}
+      >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", color: "var(--fg-3)", textTransform: "uppercase" }}>
-            Writing Samples
+          <div
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: 11,
+              fontWeight: 500,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            WRITING SAMPLES
           </div>
           <button
             type="button"
-            className="btn-ghost"
-            style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, padding: "8px 14px" }}
-            onClick={() => {}}
+            style={{
+              background: "transparent",
+              color: "var(--text-primary)",
+              border: "1px solid var(--border-default)",
+              padding: "10px 20px",
+              borderRadius: 8,
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(0,0,0,0.02)";
+              e.currentTarget.style.borderColor = "var(--text-tertiary)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.borderColor = "var(--border-default)";
+            }}
           >
             <Plus size={16} strokeWidth={2} />
-            Add Sample
+            + Add Sample
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -112,47 +206,22 @@ export default function VoiceDnaSettings() {
             <div
               key={i}
               style={{
+                padding: "14px 0",
+                borderBottom: i < samples.length - 1 ? "1px solid var(--border-subtle)" : "none",
                 display: "flex",
                 alignItems: "center",
-                gap: 16,
-                padding: "14px 0",
-                borderBottom: i < samples.length - 1 ? "1px solid var(--line)" : "none",
+                justifyContent: "space-between",
               }}
             >
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {s.title}
-              </span>
-              <span style={{ fontSize: 12, color: "var(--fg-3)", fontVariantNumeric: "tabular-nums" }}>{s.wordCount} words</span>
-              <span style={{ fontSize: 12, color: "var(--fg-3)" }}>{s.dateAdded}</span>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>{s.wordCount} words</span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text-tertiary)" }}>{s.dateAdded}</span>
+              </div>
             </div>
           ))}
         </div>
       </section>
-
-      {/* Recalibrate Voice */}
-      <div style={{ marginTop: "var(--studio-gap)" }}>
-        <button
-          type="button"
-          style={{
-            background: "var(--fg)",
-            color: "var(--bg)",
-            border: "none",
-            borderRadius: "var(--studio-radius)",
-            padding: "12px 24px",
-            fontSize: 14,
-            fontWeight: 600,
-            fontFamily: "var(--font)",
-            cursor: "pointer",
-            letterSpacing: "-0.01em",
-            transition: "opacity 0.2s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          onClick={() => {}}
-        >
-          Recalibrate Voice
-        </button>
-      </div>
     </div>
   );
 }

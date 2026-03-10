@@ -4,24 +4,10 @@ import { FileText, Mic, Share2, Mail, ChevronRight } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { timeAgo } from "../../utils/timeAgo";
+import { getScoreColor } from "../../utils/scoreColor";
+import "./shared.css";
 import "./dashboard.css";
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function timeAgo(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(mins / 60);
-  const days = Math.floor(hours / 24);
-  const weeks = Math.floor(days / 7);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  if (weeks < 4) return `${weeks}w ago`;
-  return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
@@ -457,18 +443,7 @@ export default function Dashboard() {
           </div>
         ) : (
           recentThree.map((o, i) => {
-            const scoreColor =
-              o.score >= 800
-                ? "#0D8C9E"
-                : o.score >= 600
-                  ? "#C8961A"
-                  : "var(--text-tertiary, var(--fg-3))";
-            const barFill =
-              o.score >= 800
-                ? "#0D8C9E"
-                : o.score >= 600
-                  ? "#C8961A"
-                  : "rgba(0,0,0,0.15)";
+            const scoreStyle = getScoreColor(o.score);
             return (
               <button
                 key={o.id}
@@ -561,21 +536,21 @@ export default function Dashboard() {
                         overflow: "hidden",
                       }}
                     >
-                      <div
-                        style={{
-                          height: "100%",
-                          width: `${(o.score / 1000) * 100}%`,
-                          background: barFill,
-                          borderRadius: 2,
-                        }}
-                      />
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${(o.score / 1000) * 100}%`,
+                        background: scoreStyle.fill,
+                        borderRadius: 2,
+                      }}
+                    />
                     </div>
                     <span
                       style={{
                         fontFamily: "'DM Mono', monospace",
                         fontSize: 13,
                         fontWeight: 500,
-                        color: scoreColor,
+                        color: scoreStyle.text,
                       }}
                     >
                       {o.score}

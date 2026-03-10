@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { FileText, Sparkles } from "lucide-react";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+import { FileText, Sparkles, ArrowLeft } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useMobile } from "../../hooks/useMobile";
 import { useTheme } from "../../context/ThemeContext";
+import { getScoreColor } from "../../utils/scoreColor";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB - minimal 2D system glyph
@@ -291,28 +292,28 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
       gap: 12, alignItems: "flex-end",
       maxWidth: "100%",
     }}>
-      {/* Watson orb avatar */}
       {!isUser && (
         <div style={{ flexShrink: 0, marginBottom: 2 }}>
-          <WatsonOrb size={36} />
+          <WatsonOrb size={28} />
         </div>
       )}
 
       <div style={{
-        maxWidth: isMobile ? "95%" : isUser ? "78%" : "85%",
-        background: isUser ? "var(--fg)" : "var(--surface)",
-        border: isUser ? "none" : "1px solid var(--line)",
-        borderRadius: isUser ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
-        padding: isUser ? "11px 16px" : "14px 18px",
-        boxShadow: isUser ? "none" : "var(--shadow-xs)",
+        maxWidth: isMobile ? "95%" : isUser ? "85%" : "85%",
+        background: isUser ? "var(--text-primary)" : "var(--surface-white)",
+        border: isUser ? "none" : "1px solid var(--border-subtle)",
+        borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+        padding: "14px 18px",
+        boxShadow: isUser ? "none" : "0 1px 2px rgba(0,0,0,0.04)",
       }}>
         {msg.typing ? (
           <TypingIndicator />
         ) : (
           <p style={{
-            fontSize: 15, lineHeight: 1.65,
-            color: isUser ? "var(--bg)" : "var(--fg)",
-            fontWeight: isUser ? 400 : 300,
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 14, lineHeight: 1.6,
+            color: isUser ? "#FFFFFF" : "var(--text-primary)",
+            fontWeight: 400,
             margin: 0, whiteSpace: "pre-wrap",
           }}>{msg.content}</p>
         )}
@@ -322,8 +323,25 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
 }
 
 // Empty state - shown when no messages (or only Watson opening)
+const EMPTY_PROMPTS: Record<string, string> = {
+  essay: "What's the central argument you want to make?",
+  podcast_script: "What topic do you want to explore?",
+  social: "What message do you want to amplify?",
+  newsletter: "What's the through-line for this issue?",
+  linkedin_post: "What's the idea you want to put out there?",
+  twitter_thread: "What's the thread about?",
+  sunday_story: "What's the story this week?",
+  short_video: "What's the video about?",
+  substack_note: "What's the note?",
+  talk_outline: "What's the talk for?",
+  email_campaign: "What's the campaign goal?",
+  blog_post: "What's the post about?",
+  executive_brief: "What's the brief for?",
+};
+
 function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
+  const prompt = EMPTY_PROMPTS[outputType] || EMPTY_PROMPTS.essay;
   const suggestions: Record<string, string[]> = {
     linkedin_post:   ["I want to write about the future of remote work", "Why most advice about delegation is wrong", "What I learned from 500 conversations"],
     newsletter:      ["This week I had a revelation about how I was wasting mornings", "I want to share what happened at our team offsite", "Thoughts on a book I just finished"],
@@ -346,30 +364,28 @@ function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string
       alignItems: "center", justifyContent: "center",
       padding: "60px 40px", gap: 32, textAlign: "center",
     }}>
-      {/* Watson orb - live WebGL, reactive */}
-      <WatsonOrb size={160} />
+      <WatsonOrb size={120} />
 
-      <div style={{ maxWidth: 460 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", marginBottom: 10, letterSpacing: "-0.02em", fontFamily: "'DM Sans', sans-serif" }}>
-          {type.watson.split("?")[0] + "?"}
+      <div style={{ maxWidth: 480 }}>
+        <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 10, letterSpacing: "-0.02em" }}>
+          {prompt}
         </h2>
-        <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontWeight: 400, fontFamily: "'DM Sans', sans-serif" }}>
-          Start with a rough idea. Watson will ask the questions that shape it into a {type.label.toLowerCase()}.
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+          Start with a rough idea. Watson will ask the questions that shape it into {type.label.toLowerCase()}.
         </p>
       </div>
 
-      {/* Suggestions */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: isMobile ? "100%" : 480 }}>
+      {/* Suggestion chips */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: isMobile ? "100%" : 520, marginTop: 24 }}>
         {typeSuggestions.map((s, i) => (
-          <button key={i} onClick={() => onSuggestion(s)} style={{
-            background: "var(--surface)", border: "1px solid var(--line)",
-            borderRadius: 10, padding: "12px 16px", cursor: "pointer",
-            textAlign: "left", fontFamily: "var(--font)", fontSize: 13,
-            color: "var(--fg-2)", lineHeight: 1.5, fontWeight: 300,
-            transition: "all .15s",
+          <button key={i} onClick={() => onSuggestion(s)} type="button" style={{
+            background: "var(--surface-white)", border: "1px solid var(--border-subtle)",
+            borderRadius: 12, padding: "14px 20px", cursor: "pointer",
+            textAlign: "left", fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 400,
+            color: "var(--text-secondary)", lineHeight: 1.5, transition: "all 0.2s",
           }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.transform = "translateY(0)"; }}
           >{s}</button>
         ))}
       </div>
@@ -463,16 +479,16 @@ function OutputTypePill({
     <div ref={ref} style={{ position: "relative" }}>
       <button type="button" onClick={() => setOpen(o => !o)} style={{
         display: "flex", alignItems: "center", gap: 6,
-        background: "var(--bg-2)", border: "1px solid var(--line)",
-        borderRadius: 20, padding: "5px 12px 5px 10px",
-        cursor: "pointer", fontFamily: "var(--font)",
+        background: "var(--surface-white)", border: "1px solid var(--border-subtle)",
+        borderRadius: 20, padding: "6px 16px",
+        cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--text-primary)",
         transition: "all .15s",
       }}
-        onMouseEnter={e => e.currentTarget.style.borderColor = "var(--line-2)"}
-        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--line)"}
+        onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border-default)"}
+        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border-subtle)"}
       >
-        <span style={{ width: 7, height: 7, borderRadius: "50%", background: type.color, flexShrink: 0 }} />
-        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--fg-2)" }}>{type.label}</span>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--work-teal)", flexShrink: 0 }} />
+        <span>{type.label}</span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: .45, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}>
           <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
@@ -648,6 +664,7 @@ async function generateOutput(conversationSummary: string, outputTypeApi: string
 
 export default function WorkSession() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -706,23 +723,30 @@ export default function WorkSession() {
   }, []);
 
   useEffect(() => {
+    const state = location.state as { ideaTitle?: string; ideaDescription?: string } | null;
+    if (state?.ideaTitle) {
+      setInput(state.ideaDescription ? `${state.ideaTitle}\n\n${state.ideaDescription}` : state.ideaTitle);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
     if (!loading) {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [loading]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg = input.trim();
-    setInput("");
+  const sendMessage = async (contentOverride?: string) => {
+    const text = (contentOverride !== undefined ? contentOverride : input).trim();
+    if (!text || loading) return;
+    if (contentOverride === undefined) setInput("");
     setApiError(null);
-    setTimeout(() => inputRef.current?.focus(), 0);
+    if (contentOverride === undefined) setTimeout(() => inputRef.current?.focus(), 0);
 
     if (messages.filter(m => m.role === "user").length === 0) {
-      setSessionTitle(userMsg.slice(0, 40) + (userMsg.length > 40 ? "..." : ""));
+      setSessionTitle(text.slice(0, 40) + (text.length > 40 ? "..." : ""));
     }
 
-    const userMessage: Message = { id: Date.now().toString(), role: "user", content: userMsg, ts: Date.now() };
+    const userMessage: Message = { id: Date.now().toString(), role: "user", content: text, ts: Date.now() };
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
 
@@ -807,7 +831,8 @@ export default function WorkSession() {
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100vh",
-      background: "var(--bg)", overflow: "hidden", fontFamily: "'DM Sans', sans-serif",
+      background: "var(--bg-light)",
+      overflow: "hidden", fontFamily: "'DM Sans', sans-serif",
     }}>
       <style>{`
         @keyframes typingBounce {
@@ -838,58 +863,57 @@ export default function WorkSession() {
 
       {/* ── Top bar ─────────────────────────────────────────────────── */}
       <div style={{
+        position: "sticky", top: 0, zIndex: 50,
         height: 52, display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 16px", borderBottom: "1px solid var(--line)",
-        background: "var(--topbar)", backdropFilter: "blur(12px)",
-        flexShrink: 0, overflow: "visible", position: "relative", zIndex: 50,
+        padding: "12px 24px",
+        borderBottom: "1px solid var(--border-subtle)",
+        background: "rgba(244, 242, 237, 0.85)", backdropFilter: "blur(12px)",
+        flexShrink: 0, overflow: "visible",
       }}>
-        {/* Left: back + title */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button onClick={() => navigate("/studio/dashboard")} style={{
             background: "none", border: "none", cursor: "pointer",
-            padding: "5px 6px", borderRadius: 6, color: "var(--fg-3)",
+            padding: "5px 6px", borderRadius: 6, color: "var(--text-secondary)",
             display: "flex", alignItems: "center", transition: "color .15s",
           }}
             title="Back to Dashboard"
-            onMouseEnter={e => e.currentTarget.style.color = "var(--fg)"}
-            onMouseLeave={e => e.currentTarget.style.color = "var(--fg-3)"}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-secondary)"}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <ArrowLeft size={20} strokeWidth={1.5} />
           </button>
-          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--fg)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: isMobile ? "none" : "inline-block" }}>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: isMobile ? "none" : "inline-block" }}>
             {sessionTitle}
           </span>
         </div>
 
-        {/* Center: output type selector */}
+        {/* Center: output type pill */}
         <OutputTypePill value={outputType} onChange={setOutputType} />
 
         {/* Right: actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button style={{
-            background: "none", border: "1px solid var(--line)",
-            borderRadius: 7, padding: "5px 12px", cursor: "pointer",
-            fontSize: 12, fontWeight: 500, color: "var(--fg-2)",
-            fontFamily: "var(--font)", transition: "all .15s",
+            background: "none", border: "none",
+            borderRadius: 6, padding: "6px 12px", cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--gold-dark)",
+            transition: "all .15s",
           }}
             title="View outputs"
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "none"; }}
             onClick={() => navigate("/studio/outputs")}
           >Outputs</button>
 
           <button style={{
-            background: "var(--fg)", border: "none",
-            borderRadius: 7, padding: "5px 12px", cursor: "pointer",
-            fontSize: 12, fontWeight: 600, color: "var(--bg)",
-            fontFamily: "var(--font)", transition: "opacity .15s",
+            background: "var(--text-primary)", border: "none",
+            borderRadius: 8, padding: "10px 20px", cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff",
+            transition: "opacity .15s",
           }}
             title="Start new session"
-            onMouseEnter={e => e.currentTarget.style.opacity = ".8"}
+            onMouseEnter={e => e.currentTarget.style.opacity = ".88"}
             onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            onClick={() => navigate("/studio/work/new?type=" + outputType)}
+            onClick={() => navigate("/studio/work?type=" + outputType)}
           >New Session</button>
         </div>
       </div>
@@ -932,10 +956,10 @@ export default function WorkSession() {
                 Your {type.label} is ready
               </h2>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 32, height: 3, borderRadius: 2, background: "var(--bg-3)", overflow: "hidden" }}>
-                  <div style={{ height: "100%", borderRadius: 2, width: `${Math.min(100, generatedScore / 10)}%`, background: generatedScore >= 800 ? "#10b981" : generatedScore >= 700 ? "#3A7BD5" : "#C8961A" }} />
+                <div style={{ width: 32, height: 3, borderRadius: 2, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", borderRadius: 2, width: `${Math.min(100, generatedScore / 10)}%`, background: getScoreColor(generatedScore).fill }} />
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: generatedScore >= 800 ? "#10b981" : generatedScore >= 700 ? "#3A7BD5" : "#C8961A", fontVariantNumeric: "tabular-nums" }}>{generatedScore}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: getScoreColor(generatedScore).text, fontVariantNumeric: "tabular-nums" }}>{generatedScore}</span>
               </div>
               <div style={{ display: "flex", gap: 10, width: "100%", flexDirection: "column" }}>
                 <button
@@ -962,10 +986,7 @@ export default function WorkSession() {
         {phase === "input" && (messages.length <= 1 ? (
           <EmptyState
             outputType={outputType}
-            onSuggestion={(s) => {
-              setInput(s);
-              setTimeout(() => inputRef.current?.focus(), 0);
-            }}
+            onSuggestion={(s) => sendMessage(s)}
             isMobile={isMobile}
           />
         ) : (
@@ -985,49 +1006,58 @@ export default function WorkSession() {
       {/* ── Input bar (only when phase is input) ────────────────────────────── */}
       {phase === "input" && (
       <div style={{
-        flexShrink: 0, padding: isMobile ? "8px 12px 16px" : "12px 24px 20px",
-        background: "var(--bg)",
-        borderTop: messages.length > 1 ? "1px solid var(--line)" : "none",
+        flexShrink: 0,
+        position: "sticky", bottom: 0,
+        padding: isMobile ? "8px 12px 16px" : "16px 24px 24px",
+        background: "linear-gradient(transparent, var(--bg-light) 20%)",
       }}>
         <div style={{
-          maxWidth: 760, margin: "0 auto",
-          background: "var(--surface)",
-          border: "1px solid var(--line-2)",
-          borderRadius: 14,
-          padding: "12px 14px",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)",
+          maxWidth: 720, margin: "0 auto",
+          background: "var(--surface-white)",
+          border: "1.5px solid var(--border-default)",
+          borderRadius: 16,
+          padding: "16px 20px",
+          minHeight: 56, maxHeight: 200,
           display: "flex", flexDirection: "column", gap: 10,
-          transition: "border-color .2s, box-shadow .2s",
+          transition: "border-color 0.2s",
         }}
-          onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--blue)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 3px rgba(58,123,213,0.08)"; }}
-          onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--line-2)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(0,0,0,0.04)"; }}
+          onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-dark)"; }}
+          onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)"; }}
         >
           {isReady && (
-            <button
-              type="button"
-              onClick={handleMakeTheThing}
-              disabled={loading}
-              style={{
-                width: "100%",
-                marginBottom: 10,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                padding: "14px",
-                fontSize: 14,
-                fontWeight: 700,
-                borderRadius: 10,
-                border: "none",
-                cursor: loading ? "default" : "pointer",
-                background: theme === "light" ? "#996A00" : "#C8961A",
-                color: "#0A0A0A",
-                animation: "makeThingPulse 2.5s ease-in-out infinite",
-              }}
-            >
-              <Sparkles size={15} />
-              Make the thing
-            </button>
+            <div style={{
+              marginBottom: 16,
+              padding: "16px 24px",
+              background: "linear-gradient(135deg, rgba(200,150,26,0.06), rgba(200,150,26,0.02))",
+              border: "1px solid rgba(200,150,26,0.2)",
+              borderRadius: 12,
+              textAlign: "center",
+            }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", margin: "0 0 12px" }}>
+                Ready to generate your {type.label.toLowerCase()}
+              </p>
+              <button
+                type="button"
+                onClick={handleMakeTheThing}
+                disabled={loading}
+                style={{
+                  background: "var(--gold-dark)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: loading ? "default" : "pointer",
+                  animation: "makeThingPulse 2.5s ease-in-out infinite",
+                }}
+                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--gold-light)"; e.currentTarget.style.transform = "scale(1.02)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gold-dark)"; e.currentTarget.style.transform = "scale(1)"; }}
+              >
+                Generate
+              </button>
+            </div>
           )}
           <AutoTextarea
             value={input}
@@ -1037,56 +1067,33 @@ export default function WorkSession() {
             disabled={loading}
             inputRef={inputRef}
           />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            {/* Left: hints or error + Retry when there's an error */}
-            <span style={{ fontSize: 11, color: apiError ? "var(--error, #e85d75)" : "var(--fg-3)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
               {apiError}
               {apiError && (
-                <button
-                  type="button"
-                  onClick={() => { setApiError(null); }}
-                  style={{
-                    fontSize: 10, fontWeight: 600, color: "var(--fg)", background: "var(--bg-3)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap",
-                  }}
-                >
-                  Try again
-                </button>
+                <button type="button" onClick={() => setApiError(null)} style={{ fontSize: 10, fontWeight: 600, color: "var(--text-primary)", background: "rgba(0,0,0,0.06)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>Try again</button>
               )}
               {!apiError && "Enter to send · Shift+Enter for new line"}
             </span>
-            {/* Right: Make the thing (when we have user messages) + send */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {messages.some(m => m.role === "user") && !isReady && (
-                <button
-                  type="button"
-                  onClick={handleMakeTheThing}
-                  disabled={loading}
-                  className="btn-primary"
-                  style={{ fontSize: 12, padding: "6px 14px" }}
-                >
-                  Make the thing
-                </button>
-              )}
-              <button
-              onClick={sendMessage}
+            <button
+              onClick={() => sendMessage()}
               disabled={!input.trim() || loading}
               style={{
-                width: 32, height: 32, borderRadius: 8, border: "none",
-                background: input.trim() && !loading ? "var(--fg)" : "var(--bg-3)",
+                width: 36, height: 36, borderRadius: "50%", border: "none",
+                background: input.trim() && !loading ? "var(--gold-dark)" : "rgba(0,0,0,0.06)",
                 cursor: input.trim() && !loading ? "pointer" : "default",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "all .15s", flexShrink: 0,
               }}
               title="Send message"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke={input.trim() && !loading ? "var(--bg)" : "var(--fg-3)"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={input.trim() && !loading ? "#fff" : "var(--text-tertiary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </button>
-            </div>
           </div>
         </div>
-        <p style={{ textAlign: "center", fontSize: 11, color: "var(--fg-3)", marginTop: 10, letterSpacing: ".01em" }}>
+        <p style={{ textAlign: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-tertiary)", marginTop: 10, letterSpacing: ".01em" }}>
           Watson is your First Listener. Say anything. It will ask the right questions.
         </p>
       </div>
