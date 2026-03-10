@@ -297,10 +297,6 @@ export default function OutputDetail() {
     showToast("Slide deck export coming soon.");
   }, [showToast]);
 
-  const wrapAsSketchnote = useCallback(() => {
-    showToast("Sketchnote export coming soon.");
-  }, [showToast]);
-
   if (loading)
     return (
       <div
@@ -563,8 +559,8 @@ export default function OutputDetail() {
             <Presentation style={iconStyle} /> Slide Deck
           </button>
           <button
-            onClick={wrapAsSketchnote}
-            style={{ ...pillBase, position: "relative" as const, opacity: 0.5 }}
+            onClick={() => navigate(`/studio/wrap/visual/${output!.id}`)}
+            style={pillBase}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
               e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
@@ -576,20 +572,7 @@ export default function OutputDetail() {
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            <span
-              style={{
-                position: "absolute",
-                top: 4,
-                right: 8,
-                fontSize: 9,
-                fontWeight: 600,
-                color: "rgba(0,0,0,0.4)",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Soon
-            </span>
-            <Pencil style={iconStyle} /> Sketchnote
+            <Pencil style={iconStyle} /> Visual
           </button>
           <button
             onClick={copyText}

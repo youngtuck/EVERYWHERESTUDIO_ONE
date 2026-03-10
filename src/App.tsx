@@ -20,6 +20,7 @@ const Settings = lazy(() => import("./pages/studio/Settings"));
 const VoiceDnaSettings = lazy(() => import("./pages/studio/VoiceDnaSettings"));
 const Onboarding = lazy(() => import("./pages/studio/Onboarding"));
 const TheLot = lazy(() => import("./pages/studio/TheLot"));
+const VisualWrap = lazy(() => import("./pages/studio/VisualWrap"));
 
 function PageTransition({ children }: { children: ReactNode }) {
   const location = useLocation();
@@ -88,6 +89,7 @@ const App = () => (
               <Route path="watch" element={<Watch />} />
               <Route path="outputs" element={<OutputLibrary />} />
               <Route path="outputs/:id" element={<OutputDetail />} />
+              <Route path="wrap/visual/:outputId" element={<VisualWrap />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:id" element={<ProjectDetail />} />
               <Route path="resources" element={<Resources />} />
