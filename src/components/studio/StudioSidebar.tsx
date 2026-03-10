@@ -38,10 +38,11 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
   const { user, signOut } = useAuth();
 
   const [installState, setInstallState] = useState<"hidden" | "prompt" | "installed">("prompt");
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as { standalone?: boolean }).standalone === true;
@@ -59,7 +60,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
     }
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", handler);
     setInstallState("prompt");
@@ -68,13 +69,16 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
 
   const handleInstall = async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        localStorage.setItem("everywhere-installed", "true");
-        setInstallState("installed");
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") {
+          localStorage.setItem("everywhere-installed", "true");
+          setInstallState("installed");
+        }
+      } finally {
+        setDeferredPrompt(null);
       }
-      setDeferredPrompt(null);
     } else {
       setShowInstallModal(true);
     }
