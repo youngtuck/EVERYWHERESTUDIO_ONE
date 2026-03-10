@@ -8,6 +8,8 @@ import { timeAgo } from "../../utils/timeAgo";
 import { getScoreColor } from "../../utils/scoreColor";
 import "./shared.css";
 import "./dashboard.css";
+
+function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
