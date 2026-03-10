@@ -350,10 +350,10 @@ function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string
       <WatsonOrb size={160} />
 
       <div style={{ maxWidth: 460 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--fg)", marginBottom: 10, letterSpacing: "-.02em" }}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", marginBottom: 10, letterSpacing: "-0.02em", fontFamily: "'DM Sans', sans-serif" }}>
           {type.watson.split("?")[0] + "?"}
         </h2>
-        <p style={{ fontSize: 14, color: "var(--fg-3)", lineHeight: 1.65, fontWeight: 300 }}>
+        <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontWeight: 400, fontFamily: "'DM Sans', sans-serif" }}>
           Start with a rough idea. Watson will ask the questions that shape it into a {type.label.toLowerCase()}.
         </p>
       </div>
@@ -807,7 +807,7 @@ export default function WorkSession() {
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100vh",
-      background: "var(--bg)", overflow: "hidden", fontFamily: "var(--font)",
+      background: "var(--bg)", overflow: "hidden", fontFamily: "'DM Sans', sans-serif",
     }}>
       <style>{`
         @keyframes typingBounce {
@@ -928,7 +928,7 @@ export default function WorkSession() {
               }}>
                 <FileText size={28} strokeWidth={1.5} />
               </div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)", margin: 0, letterSpacing: "-0.02em" }}>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", margin: 0, letterSpacing: "-0.02em", fontFamily: "'DM Sans', sans-serif" }}>
                 Your {type.label} is ready
               </h2>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

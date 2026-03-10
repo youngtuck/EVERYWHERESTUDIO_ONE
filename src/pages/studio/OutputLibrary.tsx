@@ -59,11 +59,11 @@ export default function OutputLibrary() {
   const scoreColor = (s: number) => s >= 900 ? "#50c8a0" : s >= 800 ? "#4A90D9" : "#F5C642";
 
   return (
-    <div style={{ padding: "0", maxWidth: "var(--studio-content-max)", margin: "0 auto", fontFamily: "var(--font)" }}>
+    <div style={{ padding: "0", maxWidth: "var(--studio-content-max)", margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "var(--studio-gap)" }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 4 }}>Outputs</h1>
-          <p style={{ fontSize: 13, color: "var(--fg-3)", fontWeight: 400 }}>{outputs.length} pieces produced</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", marginBottom: 4, fontFamily: "'DM Sans', sans-serif" }}>Outputs</h1>
+          <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontWeight: 400, fontFamily: "'DM Sans', sans-serif" }}>{outputs.length} pieces produced</p>
         </div>
         <button onClick={() => navigate("/studio/work/new")} className="btn-primary" style={{ padding: "9px 18px" }}
           onMouseEnter={e => e.currentTarget.style.opacity = ".82"}
@@ -91,7 +91,7 @@ export default function OutputLibrary() {
 
       {/* Table */}
       {loading ? (
-        <div style={{ padding: 48, textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>
+        <div style={{ padding: 48, textAlign: "center", color: "rgba(0,0,0,0.6)", fontSize: 14, lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>
           <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid var(--gold, #C8961A)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           Loading outputs…

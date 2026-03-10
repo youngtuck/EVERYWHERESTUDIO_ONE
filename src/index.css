@@ -159,6 +159,21 @@ button { font-family: var(--font); }
   --studio-radius: 10px;
   --studio-radius-lg: 14px;
   --studio-sidebar-width: 240px;
+  /* Studio typography (premium app) */
+  --studio-font: 'DM Sans', -apple-system, sans-serif;
+  --studio-page-title-size: 24px;
+  --studio-section-label-size: 10px;
+  --studio-section-label-spacing: 0.12em;
+  --studio-body-size: 14px;
+  --studio-body-height: 1.6;
+  --studio-body-color: rgba(0,0,0,0.6);
+  --studio-card-label-size: 10px;
+  --studio-card-label-spacing: 0.08em;
+  --studio-card-label-color: rgba(0,0,0,0.35);
+  --studio-big-number-size: 32px;
+  --studio-interactive-size: 13px;
+  --studio-interactive-color: rgba(0,0,0,0.4);
+  --studio-interactive-hover: #C8961A;
 }
 
 /* ─── NAV ────────────────────────────────────────────────────── */
@@ -181,10 +196,26 @@ button { font-family: var(--font); }
 }
 .nav-item:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .nav-section-label {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--fg-3);
-  padding: 20px 12px 6px; font-family: var(--font);
+  font-size: var(--studio-section-label-size);
+  font-weight: 700;
+  letter-spacing: var(--studio-section-label-spacing);
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.3);
+  padding: 20px 12px 0;
+  margin-bottom: 12px;
+  font-family: var(--studio-font);
 }
+.studio-interactive-link {
+  font-size: var(--studio-interactive-size);
+  font-weight: 500;
+  color: var(--studio-interactive-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  font-family: var(--studio-font);
+}
+.studio-interactive-link:hover { color: var(--studio-interactive-hover); }
 
 /* ─── CHAT ───────────────────────────────────────────────────── */
 .chat-bubble-watson {

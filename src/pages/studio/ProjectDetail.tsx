@@ -98,10 +98,10 @@ export default function ProjectDetail() {
       {/* Header: name, description, settings */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: "var(--studio-gap-lg)" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 6 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>
             {name}
           </h1>
-          <p style={{ fontSize: 14, color: "var(--fg-3)", lineHeight: 1.5, margin: 0 }}>
+          <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, margin: 0, fontFamily: "'DM Sans', sans-serif" }}>
             {desc}
           </p>
         </div>
@@ -123,18 +123,18 @@ export default function ProjectDetail() {
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6 }}>Total outputs</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em" }}>{outputsCount}</div>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Total outputs</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'DM Sans', sans-serif" }}>{outputsCount}</div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6 }}>Avg Betterish score</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: avgScore > 0 ? scoreColor(avgScore) : "var(--fg-3)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Avg Betterish score</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: avgScore > 0 ? scoreColor(avgScore) : "rgba(0,0,0,0.35)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'DM Sans', sans-serif" }}>
             {avgScore > 0 ? avgScore : "–"}
           </div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6 }}>Last active</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em" }}>{lastActive}</div>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Last active</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontFamily: "'DM Sans', sans-serif" }}>{lastActive}</div>
         </div>
       </div>
 

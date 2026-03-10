@@ -386,14 +386,18 @@ export default function OutputDetail() {
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: "var(--fg-3)",
+            color: "rgba(0,0,0,0.4)",
             display: "flex",
             alignItems: "center",
             gap: 6,
             fontSize: 13,
+            fontWeight: 500,
             padding: 0,
             fontFamily: "'DM Sans', sans-serif",
+            transition: "color 0.15s ease",
           }}
+          onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "rgba(0,0,0,0.4)"; }}
         >
           <ArrowLeft size={16} /> Outputs
         </button>
@@ -404,11 +408,15 @@ export default function OutputDetail() {
             background: "transparent",
             padding: "8px 16px",
             fontSize: 13,
+            fontWeight: 500,
             borderRadius: 8,
             cursor: "pointer",
-            color: "var(--fg-2)",
+            color: "rgba(0,0,0,0.4)",
             fontFamily: "'DM Sans', sans-serif",
+            transition: "color 0.15s ease",
           }}
+          onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "rgba(0,0,0,0.4)"; }}
         >
           New Session
         </button>
@@ -418,11 +426,12 @@ export default function OutputDetail() {
       <div style={{ marginBottom: 28 }}>
         <h1
           style={{
-            fontSize: 26,
+            fontSize: 24,
             fontWeight: 700,
-            color: "var(--fg)",
-            letterSpacing: "-0.03em",
+            color: "#1a1a1a",
+            letterSpacing: "-0.02em",
             marginBottom: 8,
+            fontFamily: "'DM Sans', sans-serif",
           }}
         >
           {output!.title}
@@ -432,8 +441,10 @@ export default function OutputDetail() {
             display: "flex",
             alignItems: "center",
             gap: 16,
-            fontSize: 12,
-            color: "var(--fg-3)",
+            fontSize: 14,
+            color: "rgba(0,0,0,0.6)",
+            lineHeight: 1.6,
+            fontFamily: "'DM Sans', sans-serif",
           }}
         >
           <span style={{ textTransform: "capitalize" }}>
@@ -464,9 +475,9 @@ export default function OutputDetail() {
         <div
           style={{
             fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: "0.1em",
-            color: "rgba(0,0,0,0.35)",
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            color: "rgba(0,0,0,0.3)",
             marginBottom: 12,
             textTransform: "uppercase",
             fontFamily: "'DM Sans', sans-serif",

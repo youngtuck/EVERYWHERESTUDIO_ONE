@@ -339,7 +339,7 @@ export default function VisualWrap() {
         >
           <ArrowLeft size={16} /> Back
         </button>
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)", flex: 1 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", flex: 1, fontFamily: "'DM Sans', sans-serif" }}>
           Visual Intelligence
         </h1>
         <span
@@ -617,7 +617,7 @@ export default function VisualWrap() {
               textAlign: "center",
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>
               Kai Morrison
             </div>
             <div

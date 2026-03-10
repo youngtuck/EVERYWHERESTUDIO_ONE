@@ -36,11 +36,11 @@ const Section = ({ icon: Icon, title, children, color = "var(--gold)" }: Section
 };
 
 const Resources = () => (
-  <div style={{ maxWidth: 800, fontFamily: "var(--font)" }}>
+  <div style={{ maxWidth: 800, fontFamily: "'DM Sans', sans-serif" }}>
     <div style={{ marginBottom: "var(--studio-gap-lg)" }}>
-      <p className="eyebrow" style={{ marginBottom: 8 }}>Studio</p>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 4 }}>Resources</h1>
-      <p style={{ fontSize: 13, color: "var(--fg-2)", marginTop: 4 }}>Your Voice DNA, Brand Guide, and Publication Standards. Set once and it runs in every session.</p>
+      <p className="eyebrow" style={{ marginBottom: 8, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "rgba(0,0,0,0.3)", textTransform: "uppercase" }}>Studio</p>
+      <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", marginBottom: 4 }}>Resources</h1>
+      <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, marginTop: 4 }}>Your Voice DNA, Brand Guide, and Publication Standards. Set once and it runs in every session.</p>
     </div>
 
     <Section icon={Mic} title="Voice DNA" color="var(--gold)">

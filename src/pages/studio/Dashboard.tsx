@@ -241,8 +241,8 @@ function DashboardWave({ isMobile }: { isMobile: boolean }) {
 // ── Section label (caps, letter-spacing) ────────────────────────────────────
 function SectionLabel({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", color: "rgba(0,0,0,0.3)", textTransform: "uppercase" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "rgba(0,0,0,0.3)", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>
         {children}
       </span>
       {action}
@@ -367,7 +367,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", fontFamily: "var(--font)" }}>
+    <div style={{ minHeight: "100vh", fontFamily: "'DM Sans', sans-serif" }}>
       {/* Full-width hero banner: flush with content area top, edge-to-edge */}
       <FadeCard delay={0}>
         <div
@@ -539,8 +539,8 @@ export default function Dashboard() {
             <Eye size={20} style={{ color: "var(--fg-2)" }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", marginBottom: 2 }}>Sentinel Briefing</div>
-            <div style={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }}>Coming soon: intelligence monitoring</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", marginBottom: 2, fontFamily: "'DM Sans', sans-serif" }}>Sentinel Briefing</div>
+            <div style={{ fontSize: 13, color: "rgba(0,0,0,0.4)", lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>Coming soon: intelligence monitoring</div>
           </div>
           <ChevronRight
             size={20}
@@ -596,8 +596,8 @@ export default function Dashboard() {
               }}>
                 <Icon size={18} style={{ color }} />
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{label}</div>
-              <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.3 }}>{desc}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", fontFamily: "'DM Sans', sans-serif" }}>{label}</div>
+              <div style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>{desc}</div>
             </button>
           ))}
         </div>
@@ -628,9 +628,9 @@ export default function Dashboard() {
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
             >
               <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 2, background: color, opacity: 0.7 }} />
-              <div style={{ fontSize: 10, color: "var(--fg-3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
-              <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.04em", color: "var(--fg)", lineHeight: 1.1, marginBottom: 4 }}>{value}</div>
-              <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{sub}</div>
+              <div style={{ fontSize: 10, letterSpacing: "0.08em", fontWeight: 600, color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 8, fontFamily: "'DM Sans', sans-serif" }}>{label}</div>
+              <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.02em", color: "#1a1a1a", lineHeight: 1.1, marginBottom: 4, fontVariantNumeric: "tabular-nums", fontFamily: "'DM Sans', sans-serif" }}>{value}</div>
+              <div style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>{sub}</div>
             </div>
           ))}
         </div>
@@ -646,9 +646,9 @@ export default function Dashboard() {
               action={
                 <button
                   onClick={() => nav("/studio/projects")}
-                  style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-2)", background: "none", border: "none", cursor: "pointer", transition: "color 0.15s ease" }}
+                  style={{ fontSize: 13, fontWeight: 500, color: "rgba(0,0,0,0.4)", background: "none", border: "none", cursor: "pointer", transition: "color 0.15s ease", fontFamily: "'DM Sans', sans-serif" }}
                   onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-2)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(0,0,0,0.4)"; }}
                 >
                   + New
                 </button>
@@ -684,8 +684,8 @@ export default function Dashboard() {
                   <FolderOpen size={18} style={{ color: "var(--fg-2)" }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 2 }}>My Studio</div>
-                  <div style={{ fontSize: 12, color: "var(--fg-3)" }}>Your primary workspace</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", marginBottom: 2, fontFamily: "'DM Sans', sans-serif" }}>My Studio</div>
+                  <div style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>Your primary workspace</div>
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--fg-3)" }}>
@@ -702,9 +702,9 @@ export default function Dashboard() {
               action={
                 <button
                   onClick={() => nav("/studio/outputs")}
-                  style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-2)", background: "none", border: "none", cursor: "pointer", transition: "color 0.15s ease" }}
+                  style={{ fontSize: 13, fontWeight: 500, color: "rgba(0,0,0,0.4)", background: "none", border: "none", cursor: "pointer", transition: "color 0.15s ease", fontFamily: "'DM Sans', sans-serif" }}
                   onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-2)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(0,0,0,0.4)"; }}
                 >
                   View all
                 </button>
@@ -718,13 +718,14 @@ export default function Dashboard() {
                   style={{
                     padding: "48px 28px",
                     textAlign: "center",
-                    color: "var(--fg-3)",
-                    fontSize: 13,
+                    color: "rgba(0,0,0,0.6)",
+                    fontSize: 14,
                     lineHeight: 1.6,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     gap: 12,
+                    fontFamily: "'DM Sans', sans-serif",
                   }}
                 >
                   <div
@@ -773,8 +774,8 @@ export default function Dashboard() {
                         fontSize: 10, fontWeight: 600, color: "var(--fg-2)", letterSpacing: "0.04em",
                       }}>{prettyType.slice(0, 2).toUpperCase()}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>{o.title}</div>
-                        <div style={{ fontSize: 11, color: "var(--fg-3)" }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3, fontFamily: "'DM Sans', sans-serif" }}>{o.title}</div>
+                        <div style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>
                           {prettyType} · {relativeTime(o.created_at)}
                         </div>
                       </div>
@@ -787,11 +788,12 @@ export default function Dashboard() {
                 <div style={{
                   padding: "48px 28px",
                   textAlign: "center",
-                  color: "var(--fg-3)",
-                  fontSize: 13,
+                  color: "rgba(0,0,0,0.6)",
+                  fontSize: 14,
                   lineHeight: 1.6,
+                  fontFamily: "'DM Sans', sans-serif",
                 }}>
-                  No outputs yet. Click <strong style={{ color: "var(--fg)" }}>New Output</strong> or use Quick Start above to create your first piece.
+                  No outputs yet. Click <strong style={{ color: "#1a1a1a" }}>New Output</strong> or use Quick Start above to create your first piece.
                 </div>
               )}
             </div>
@@ -807,15 +809,15 @@ export default function Dashboard() {
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <div>
-                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.02em", marginBottom: 2 }}>Sentinel</h2>
-                <div style={{ fontSize: 11, color: "var(--fg-3)" }}>Intelligence monitoring</div>
+                <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", marginBottom: 2, fontFamily: "'DM Sans', sans-serif" }}>Sentinel</h2>
+                <div style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>Intelligence monitoring</div>
               </div>
             </div>
-            <div style={{ padding: "32px 18px", textAlign: "center", color: "var(--fg-3)", fontSize: 12 }}>
+            <div style={{ padding: "32px 18px", textAlign: "center", color: "rgba(0,0,0,0.6)", fontSize: 14, lineHeight: 1.6, fontFamily: "'DM Sans', sans-serif" }}>
               Intelligence monitoring coming soon.
             </div>
             <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)" }}>
-              <button onClick={() => nav("/studio/watch")} className="btn-ghost" style={{ width: "100%", fontSize: 12, padding: "9px" }}>
+              <button onClick={() => nav("/studio/watch")} className="btn-ghost studio-interactive-link" style={{ width: "100%", fontSize: 13, padding: "9px" }}>
                 View All Signals
               </button>
             </div>

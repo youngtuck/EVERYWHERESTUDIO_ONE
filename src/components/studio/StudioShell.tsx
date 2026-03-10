@@ -43,14 +43,14 @@ export default function StudioShell() {
 
   if (isFullScreen) {
     return (
-      <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "var(--font)" }}>
+      <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'DM Sans', sans-serif" }}>
         <Outlet />
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F4F2ED", fontFamily: "var(--font)", position: "relative", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden" }}>
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}

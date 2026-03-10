@@ -186,6 +186,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
       overflow: "hidden",
       position: "sticky",
       top: 0,
+      fontFamily: "'DM Sans', sans-serif",
     }}>
 
       {/* ── Logo + collapse toggle ────────────────────────────────── */}
