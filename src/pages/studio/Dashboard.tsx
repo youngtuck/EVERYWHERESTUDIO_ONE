@@ -633,7 +633,7 @@ export default function Dashboard() {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap: 32 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
 
-          {/* Projects (reference: section + one card, "+ New") ───────────────── */}
+          {/* Projects */}
           <FadeCard delay={140}>
             <SectionLabel
               action={
@@ -649,24 +649,24 @@ export default function Dashboard() {
             >
               Projects
             </SectionLabel>
-            <button
-              onClick={() => nav("/studio/projects")}
-              className="card"
-              style={{
-                padding: "18px 0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                cursor: "pointer",
-                textAlign: "left",
-                border: "none",
-                borderBottom: "1px solid var(--line)",
-                background: "transparent",
-                transition: "background 0.2s ease",
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-            >
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+              <button
+                onClick={() => nav("/studio/projects")}
+                className="card"
+                style={{
+                  padding: "18px 0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  border: "none",
+                  background: "transparent",
+                  transition: "background 0.2s ease",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: "var(--studio-radius)",
@@ -686,9 +686,10 @@ export default function Dashboard() {
                 {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}
               </div>
             </button>
+            </div>
           </FadeCard>
 
-          {/* Recent Outputs (reference: section label + empty state or list) ─── */}
+          {/* Recent Outputs */}
           <FadeCard delay={180}>
             <SectionLabel
               action={
@@ -744,10 +745,13 @@ export default function Dashboard() {
                       onClick={() => nav(`/studio/outputs/${o.id}`)}
                       style={{
                         width: "100%",
-                        display: "flex", alignItems: "center", gap: 14,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
                         padding: "13px 0",
                         borderBottom: i < recentOutputs.length - 1 ? "1px solid var(--line)" : "none",
-                        background: "none", border: "none",
+                        background: "none",
+                        border: "none",
                         textAlign: "left",
                         cursor: "pointer",
                         transition: "background 0.15s ease",
