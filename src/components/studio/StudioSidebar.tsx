@@ -39,6 +39,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
 
   const [installState, setInstallState] = useState<"hidden" | "prompt" | "installed">("prompt");
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
     const isStandalone =
@@ -75,15 +76,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
       }
       setDeferredPrompt(null);
     } else {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isMac = /Macintosh/.test(navigator.userAgent);
-      if (isIOS) {
-        alert("To install: tap the Share button (square with arrow) at the bottom of Safari, then tap \"Add to Home Screen\"");
-      } else if (isMac) {
-        alert("To install: look for the install icon in your browser's address bar (right side), or use the browser menu and select \"Install EVERYWHERE Studio\"");
-      } else {
-        alert("To install: open your browser menu and look for \"Install app\" or \"Add to Home Screen\"");
-      }
+      setShowInstallModal(true);
     }
   };
 
@@ -92,6 +85,9 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
     localStorage.setItem("everywhere-install-dismissed", "true");
     setInstallState("hidden");
   };
+
+  const isChrome = /Chrome|Edg/.test(navigator.userAgent) && !/Safari|FxiOS/.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   const handleSignOut = async () => {
     await signOut();
@@ -106,6 +102,75 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
         : loc.pathname === p;
 
   return (
+    <>
+      {/* Install instructions modal (when browser doesn't give us the native prompt) */}
+      {showInstallModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+          }}
+          onClick={() => setShowInstallModal(false)}
+        >
+          <div
+            style={{
+              background: "#F4F2ED",
+              borderRadius: 16,
+              padding: "24px 28px",
+              maxWidth: 400,
+              boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a", marginBottom: 12 }}>
+              Install EVERYWHERE Studio
+            </div>
+            <p style={{ fontSize: 14, color: "rgba(0,0,0,0.7)", lineHeight: 1.5, margin: "0 0 16px" }}>
+              When your browser offers to install, we’ll show the usual “Do you want to install?” dialog right here. Until then, use one of these:
+            </p>
+            {isIOS ? (
+              <p style={{ fontSize: 14, color: "rgba(0,0,0,0.8)", lineHeight: 1.5 }}>
+                Tap the <strong>Share</strong> button at the bottom of Safari (square with an arrow), then tap <strong>“Add to Home Screen”</strong>.
+              </p>
+            ) : isChrome ? (
+              <p style={{ fontSize: 14, color: "rgba(0,0,0,0.8)", lineHeight: 1.5 }}>
+                Click the <strong>three-dot menu (⋮)</strong> in the top-right of the window, then choose <strong>“Install EVERYWHERE Studio”</strong>. You may also see an install icon in the address bar.
+              </p>
+            ) : (
+              <p style={{ fontSize: 14, color: "rgba(0,0,0,0.8)", lineHeight: 1.5 }}>
+                Open your browser menu and look for <strong>“Install app”</strong> or <strong>“Add to Home Screen”</strong>.
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowInstallModal(false)}
+              style={{
+                marginTop: 20,
+                width: "100%",
+                background: "#C8961A",
+                color: "#1a1a1a",
+                border: "none",
+                borderRadius: 10,
+                padding: "12px 20px",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
     <aside style={{
       width: collapsed ? 68 : "var(--studio-sidebar-width)",
       flexShrink: 0,
@@ -545,5 +610,6 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
         </div>
       </div>
     </aside>
+    </>
   );
 }
