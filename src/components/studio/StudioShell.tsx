@@ -33,15 +33,24 @@ export default function StudioShell() {
 
   // Lock studio background and disable transitions on root/body to prevent black flash on tab switch
   useEffect(() => {
-    document.documentElement.style.backgroundColor = "#F4F2ED";
-    document.documentElement.style.transition = "none";
+    // Nuke any lingering landing page styles (gradient set via body.style.background)
+    document.body.style.background = "";
+    document.body.style.backgroundImage = "none";
     document.body.style.backgroundColor = "#F4F2ED";
     document.body.style.transition = "none";
+    document.documentElement.style.background = "";
+    document.documentElement.style.backgroundImage = "none";
+    document.documentElement.style.backgroundColor = "#F4F2ED";
+    document.documentElement.style.transition = "none";
     return () => {
-      document.documentElement.style.backgroundColor = "";
-      document.documentElement.style.transition = "";
+      document.body.style.background = "";
+      document.body.style.backgroundImage = "";
       document.body.style.backgroundColor = "";
       document.body.style.transition = "";
+      document.documentElement.style.background = "";
+      document.documentElement.style.backgroundImage = "";
+      document.documentElement.style.backgroundColor = "";
+      document.documentElement.style.transition = "";
     };
   }, []);
 

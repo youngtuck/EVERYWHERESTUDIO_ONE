@@ -808,6 +808,22 @@ export default function ExplorePage() {
     document.body.setAttribute("data-explore-theme", dark ? "dark" : "light");
   }, [dark]);
 
+  // Own document background for Explore: use backgroundColor only (never shorthand) and clear gradient. Clean up on unmount so studio/landing get a clean body.
+  useEffect(() => {
+    document.body.style.backgroundImage = "none";
+    document.documentElement.style.backgroundImage = "none";
+    document.body.style.backgroundColor = dark ? "#07090f" : "#F4F2ED";
+    document.documentElement.style.backgroundColor = dark ? "#07090f" : "#F4F2ED";
+    return () => {
+      document.body.style.background = "";
+      document.body.style.backgroundImage = "none";
+      document.body.style.backgroundColor = "#F4F2ED";
+      document.documentElement.style.background = "";
+      document.documentElement.style.backgroundImage = "none";
+      document.documentElement.style.backgroundColor = "#F4F2ED";
+    };
+  }, [dark]);
+
   useEffect(() => {
     const handleScroll = () => {
       setNavScrolled(window.scrollY > 20);
@@ -853,12 +869,16 @@ export default function ExplorePage() {
     };
   }, [fromLandingZoom]);
 
-  // After the landing zoom fade-in completes, release any temporary document background
+  // After the landing zoom fade-in completes, ensure no gradient lingers and document uses backgroundColor only
   useEffect(() => {
     if (!fromLandingZoom || !entranceDone) return;
-    document.documentElement.style.backgroundColor = "";
-    document.body.style.backgroundColor = "";
-  }, [fromLandingZoom, entranceDone]);
+    document.documentElement.style.background = "";
+    document.documentElement.style.backgroundImage = "none";
+    document.documentElement.style.backgroundColor = dark ? "#07090f" : "#F4F2ED";
+    document.body.style.background = "";
+    document.body.style.backgroundImage = "none";
+    document.body.style.backgroundColor = dark ? "#07090f" : "#F4F2ED";
+  }, [fromLandingZoom, entranceDone, dark]);
 
   // Theme tokens
   const T = {
