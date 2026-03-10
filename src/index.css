@@ -128,6 +128,18 @@ button { font-family: var(--font); }
   padding: var(--studio-page-pad);
   min-height: 100%;
 }
+/* Dashboard: fill large screens, center on very wide */
+.studio-main-inner[data-page="dashboard"] {
+  max-width: none;
+  padding: 32px 48px;
+}
+@media (min-width: 1600px) {
+  .studio-main-inner[data-page="dashboard"] {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
 .studio-topbar {
   height: 50px;
   background: var(--topbar);

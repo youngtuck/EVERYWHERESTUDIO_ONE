@@ -241,8 +241,8 @@ function DashboardWave({ isMobile }: { isMobile: boolean }) {
 // ── Section label (caps, letter-spacing) ────────────────────────────────────
 function SectionLabel({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.14em", color: "var(--fg-3)", textTransform: "uppercase" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", color: "rgba(0,0,0,0.3)", textTransform: "uppercase" }}>
         {children}
       </span>
       {action}
@@ -305,6 +305,14 @@ export default function Dashboard() {
       });
   }, [user]);
 
+  useEffect(() => {
+    const el = document.querySelector(".studio-main-inner");
+    if (el) {
+      el.setAttribute("data-page", "dashboard");
+      return () => el.removeAttribute("data-page");
+    }
+  }, []);
+
   const streak = calculateStreak(recentOutputs);
   const meta = user?.user_metadata as Record<string, unknown> | undefined;
   const rawName =
@@ -360,15 +368,15 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: "var(--font)" }}>
-      {/* ── Full-width hero banner (flush top, edge-to-edge) ───────────────── */}
+      {/* Full-width hero banner: flush with content area top, edge-to-edge */}
       <FadeCard delay={0}>
         <div
           style={{
-            marginTop: "-28px",
-            marginLeft: "-32px",
-            marginRight: "-32px",
-            marginBottom: "var(--studio-gap-lg)",
-            width: "calc(100% + 64px)",
+            marginTop: -32,
+            marginLeft: -48,
+            marginRight: -48,
+            marginBottom: 32,
+            width: "calc(100% + 96px)",
             maxWidth: "none",
             position: "relative",
             overflow: "hidden",
@@ -382,7 +390,7 @@ export default function Dashboard() {
             gap: isMobile ? 20 : 24,
           }}
         >
-          {/* Subtle dark overlay at top */}
+          {/* Subtle dark overlay at top for depth */}
           <div
             style={{
               position: "absolute",
@@ -485,7 +493,7 @@ export default function Dashboard() {
         </div>
       </FadeCard>
 
-      {/* ── Sentinel Briefing card (reference: single card, coming soon) ───── */}
+      {/* Sentinel Briefing card */}
       <FadeCard delay={40}>
         <button
           onClick={() => nav("/studio/watch")}
@@ -496,7 +504,7 @@ export default function Dashboard() {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "18px 22px",
-            marginBottom: "var(--studio-gap-lg)",
+            marginBottom: 32,
             cursor: "pointer",
             textAlign: "left",
             border: "1px solid var(--line)",
@@ -535,14 +543,14 @@ export default function Dashboard() {
         </button>
       </FadeCard>
 
-      {/* ── Quick Start (reference: 5 cards with icon + title + description) ─ */}
+      {/* Quick Start */}
       <FadeCard delay={80}>
         <SectionLabel>Quick Start</SectionLabel>
         <div style={{
           display: "grid",
-          gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fill, minmax(140px, 1fr))",
-          gap: "var(--studio-gap-sm)",
-          marginBottom: "var(--studio-gap-lg)",
+          gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fill, minmax(180px, 1fr))",
+          gap: 12,
+          marginBottom: 32,
         }}>
           {QUICK_START.map(({ key, label, desc, icon: Icon, color }) => (
             <button
@@ -588,9 +596,14 @@ export default function Dashboard() {
         </div>
       </FadeCard>
 
-      {/* ── Stats row (ours: keep for power users) ──────────────────────────── */}
+      {/* Stats row */}
       <FadeCard delay={60}>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(4, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(4, 1fr)",
+          gap: 12,
+          marginBottom: 32,
+        }}>
           {stats.map(({ label, value, sub, color }, i) => (
             <div
               key={i}
@@ -602,6 +615,7 @@ export default function Dashboard() {
                 transition: "box-shadow 0.2s ease",
                 background: "transparent",
                 border: "none",
+                minHeight: "auto",
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
@@ -615,9 +629,9 @@ export default function Dashboard() {
         </div>
       </FadeCard>
 
-      {/* ── Two-column: Projects + Recent Outputs (left) | Sentinel signals (right) ─ */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap: "var(--studio-gap)" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--studio-gap-lg)" }}>
+      {/* Two-column: Projects + Recent Outputs (left) | Sentinel (right) */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap: 32 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
 
           {/* Projects (reference: section + one card, "+ New") ───────────────── */}
           <FadeCard delay={140}>
