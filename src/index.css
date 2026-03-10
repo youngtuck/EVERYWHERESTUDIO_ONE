@@ -11,6 +11,17 @@
   --teal:   #0D8C9E;
   --blue:   #3A7BD5;
 
+  /* Dashboard / design system */
+  --gold-dark:  #C8961A;
+  --gold-light: #996A00;
+  --watch-blue: #4A90F5;
+  --work-teal:  #0D8C9E;
+  --wrap-violet: #A080F5;
+  --surface-white:   #FFFFFF;
+  --surface-elevated: #FAFAF8;
+  --border-subtle:   rgba(0,0,0,0.06);
+  --border-default:  rgba(0,0,0,0.1);
+
   /* Light mode */
   --bg:       #FAFAF8;
   --bg-2:     #F4F4F2;
