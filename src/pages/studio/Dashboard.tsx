@@ -360,32 +360,61 @@ export default function Dashboard() {
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: "var(--font)" }}>
-      {/* ── Hero strip: greeting + subtle waveform background ───────────── */}
+      {/* ── Full-width hero banner (flush top, edge-to-edge) ───────────────── */}
       <FadeCard delay={0}>
-        <div style={{
-          background: "var(--fg)",
-          color: "var(--bg)",
-          borderRadius: "var(--studio-radius-lg)",
-          padding: "22px 24px 24px",
-          marginBottom: "var(--studio-gap-lg)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 18,
-          position: "relative",
-          overflow: "hidden",
-        }}>
-          {!isMobile && (
-            <div style={{ position: "absolute", inset: 0, opacity: 0.16, pointerEvents: "none" }}>
-              <DashboardWave isMobile={false} />
-            </div>
-          )}
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", opacity: 0.7, marginBottom: 6 }}>
+        <div
+          style={{
+            marginTop: "-28px",
+            marginLeft: "-32px",
+            marginRight: "-32px",
+            marginBottom: "var(--studio-gap-lg)",
+            width: "calc(100% + 64px)",
+            maxWidth: "none",
+            position: "relative",
+            overflow: "hidden",
+            background: "linear-gradient(135deg, #C8961A 0%, #d4a62e 40%, #C8961A 100%)",
+            borderRadius: "0 0 12px 12px",
+            padding: isMobile ? "24px 20px" : "40px 48px",
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: isMobile ? "stretch" : "center",
+            justifyContent: "space-between",
+            gap: isMobile ? 20 : 24,
+          }}
+        >
+          {/* Subtle dark overlay at top */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(180deg, rgba(0,0,0,0.08) 0%, transparent 40%)",
+              pointerEvents: "none",
+            }}
+          />
+          <div style={{ position: "relative", zIndex: 1, flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 11,
+                letterSpacing: "0.1em",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.65)",
+                textTransform: "uppercase",
+                marginBottom: 8,
+              }}
+            >
               {getDateLabel()}
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>
+            <h1
+              style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: isMobile ? 26 : 32,
+                fontWeight: 600,
+                color: "#fff",
+                letterSpacing: "-0.02em",
+                margin: 0,
+                lineHeight: 1.2,
+              }}
+            >
               {getGreeting()}, {firstName}.
             </h1>
             {streak >= 2 && (
@@ -394,10 +423,11 @@ export default function Dashboard() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  marginBottom: 6,
-                  background: "rgba(200,150,26,0.12)",
-                  border: "1px solid rgba(200,150,26,0.25)",
-                  color: "#C8961A",
+                  marginTop: 10,
+                  marginBottom: 4,
+                  background: "rgba(255,255,255,0.2)",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  color: "#fff",
                   fontSize: 11,
                   fontWeight: 600,
                   borderRadius: 100,
@@ -407,31 +437,49 @@ export default function Dashboard() {
                 <span>🔥 {streak} day streak</span>
               </div>
             )}
-            <p style={{ fontSize: 13, opacity: 0.85, fontWeight: 400 }}>
+            <p
+              style={{
+                fontSize: 14,
+                color: "rgba(255,255,255,0.6)",
+                marginTop: 8,
+                marginBottom: 0,
+              }}
+            >
               {subline}
             </p>
           </div>
           <button
             onClick={() => nav("/studio/work")}
             style={{
-              background: "var(--gold-l)",
-              color: "#0A0A0A",
+              background: "rgba(255,255,255,0.95)",
+              color: "#1a1a1a",
               border: "none",
-              borderRadius: "var(--studio-radius)",
-              padding: "12px 20px",
-              fontSize: 13,
-              fontWeight: 700,
+              fontWeight: 600,
+              fontSize: 14,
+              padding: "12px 24px",
+              borderRadius: 10,
               display: "flex",
               alignItems: "center",
               gap: 8,
               cursor: "pointer",
               fontFamily: "var(--font)",
-              letterSpacing: "-0.01em",
               position: "relative",
               zIndex: 1,
+              flexShrink: 0,
+              alignSelf: isMobile ? "stretch" : "center",
+              justifyContent: "center",
+              transition: "background 0.2s ease, box-shadow 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#fff";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.95)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
-            <Plus size={16} strokeWidth={2.5} />
+            <Plus size={18} strokeWidth={2.5} />
             New Output
           </button>
         </div>
