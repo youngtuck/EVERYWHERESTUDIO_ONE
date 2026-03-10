@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut, Monitor, Check, X } from "lucide-react";
+import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut } from "lucide-react";
 
 // ── Nav items (with icons, reference style) ─────────────────────────────────
 const NAV = [
@@ -37,20 +37,18 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
   const { theme } = useTheme();
   const { user, signOut } = useAuth();
 
-  const [installState, setInstallState] = useState<"hidden" | "prompt" | "installed">("hidden");
+  const [installState, setInstallState] = useState<"hidden" | "prompt" | "installed">("prompt");
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showSafariHint, setShowSafariHint] = useState(false);
-  const installPromptFiredRef = useRef(false);
 
   useEffect(() => {
-    if (localStorage.getItem("everywhere-install-card-dismissed") === "true") {
-      setInstallState("hidden");
-      return;
-    }
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as { standalone?: boolean }).standalone === true;
     if (isStandalone) {
+      setInstallState("hidden");
+      return;
+    }
+    if (localStorage.getItem("everywhere-install-dismissed") === "true") {
       setInstallState("hidden");
       return;
     }
@@ -60,24 +58,11 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
     }
     const handler = (e: Event) => {
       e.preventDefault();
-      installPromptFiredRef.current = true;
       setDeferredPrompt(e);
-      setInstallState("prompt");
     };
     window.addEventListener("beforeinstallprompt", handler);
-    const timeout = setTimeout(() => {
-      if (!installPromptFiredRef.current) {
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if ((isSafari || isIOS) && localStorage.getItem("everywhere-install-card-dismissed") !== "true") {
-          setInstallState("prompt");
-        }
-      }
-    }, 3000);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-      clearTimeout(timeout);
-    };
+    setInstallState("prompt");
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   const handleInstall = async () => {
@@ -90,14 +75,22 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
       }
       setDeferredPrompt(null);
     } else {
-      setShowSafariHint(true);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isMac = /Macintosh/.test(navigator.userAgent);
+      if (isIOS) {
+        alert("To install: tap the Share button (square with arrow) at the bottom of Safari, then tap \"Add to Home Screen\"");
+      } else if (isMac) {
+        alert("To install: look for the install icon in your browser's address bar (right side), or use the browser menu and select \"Install EVERYWHERE Studio\"");
+      } else {
+        alert("To install: open your browser menu and look for \"Install app\" or \"Add to Home Screen\"");
+      }
     }
   };
 
-  const dismissInstallCard = () => {
-    localStorage.setItem("everywhere-install-card-dismissed", "true");
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    localStorage.setItem("everywhere-install-dismissed", "true");
     setInstallState("hidden");
-    setShowSafariHint(false);
   };
 
   const handleSignOut = async () => {
@@ -348,96 +341,88 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
 
         {/* Install app card — between nav and Conversations */}
         {!collapsed && installState === "prompt" && (
-          <div style={{ margin: "0 12px 16px 12px", position: "relative" }}>
+          <div
+            onClick={handleInstall}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && handleInstall()}
+            style={{
+              margin: "0 12px 16px 12px",
+              padding: "12px 14px",
+              background: "rgba(200, 150, 26, 0.06)",
+              border: "1px solid rgba(200, 150, 26, 0.12)",
+              borderRadius: 10,
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              position: "relative",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "rgba(200, 150, 26, 0.25)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(200, 150, 26, 0.08)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "rgba(200, 150, 26, 0.12)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginTop: 1, flexShrink: 0 }}>
+              <rect x="2" y="2" width="12" height="9" rx="1.5" stroke="#C8961A" strokeWidth="1.3" fill="none" />
+              <line x1="8" y1="11" x2="8" y2="14" stroke="#C8961A" strokeWidth="1.3" />
+              <line x1="5.5" y1="14" x2="10.5" y2="14" stroke="#C8961A" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.3 }}>Get the app</div>
+              <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", marginTop: 2, lineHeight: 1.3 }}>Install for the full experience</div>
+            </div>
             <button
               type="button"
-              onClick={handleInstall}
+              onClick={handleDismiss}
               style={{
-                width: "100%",
-                background: "rgba(200, 150, 26, 0.06)",
-                border: "1px solid rgba(200, 150, 26, 0.12)",
-                borderRadius: 10,
-                padding: "12px 14px",
+                position: "absolute",
+                top: 6,
+                right: 6,
+                background: "none",
+                border: "none",
                 cursor: "pointer",
-                fontFamily: "'DM Sans', sans-serif",
-                textAlign: "left",
-                transition: "all 0.2s ease",
+                color: "rgba(0,0,0,0.2)",
+                fontSize: 14,
+                lineHeight: 1,
+                padding: "2px 4px",
+                borderRadius: 4,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(200, 150, 26, 0.25)";
-                e.currentTarget.style.boxShadow = "0 2px 8px rgba(200, 150, 26, 0.08)";
+                e.currentTarget.style.color = "rgba(0,0,0,0.5)";
+                e.stopPropagation();
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(200, 150, 26, 0.12)";
-                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.color = "rgba(0,0,0,0.2)";
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <Monitor size={16} style={{ color: "#C8961A", flexShrink: 0, marginTop: 1 }} />
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#1a1a1a" }}>Get the app</div>
-                  <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", marginTop: 2 }}>Install for the full experience</div>
-                </div>
-              </div>
+              ×
             </button>
-            {showSafariHint && (
-              <div
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  right: 12,
-                  top: "100%",
-                  marginTop: 6,
-                  background: "#1a1a1a",
-                  color: "#fff",
-                  fontSize: 11,
-                  fontFamily: "'DM Sans', sans-serif",
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                  zIndex: 10,
-                }}
-              >
-                Tap the Share button, then &quot;Add to Home Screen&quot;
-              </div>
-            )}
           </div>
         )}
         {!collapsed && installState === "installed" && (
           <div
             style={{
               margin: "0 12px 16px 12px",
+              padding: "10px 14px",
               background: "rgba(0,0,0,0.02)",
               border: "1px solid rgba(0,0,0,0.04)",
               borderRadius: 10,
-              padding: "12px 14px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
               gap: 8,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Check size={14} style={{ color: "rgba(0,0,0,0.25)", flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: "rgba(0,0,0,0.3)", fontFamily: "'DM Sans', sans-serif" }}>App installed</span>
-            </div>
-            <button
-              type="button"
-              onClick={dismissInstallCard}
-              style={{
-                background: "none",
-                border: "none",
-                padding: 4,
-                cursor: "pointer",
-                color: "rgba(0,0,0,0.25)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              aria-label="Dismiss"
-            >
-              <X size={14} />
-            </button>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="6" stroke="rgba(0,0,0,0.2)" strokeWidth="1.2" fill="none" />
+              <path d="M4 7l2 2 4-4" stroke="rgba(0,0,0,0.25)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
+            <span style={{ fontSize: 11, color: "rgba(0,0,0,0.3)" }}>App installed</span>
           </div>
         )}
 
