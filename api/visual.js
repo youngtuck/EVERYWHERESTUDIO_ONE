@@ -97,7 +97,6 @@ export default async function handler(req, res) {
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig: {
           responseModalities: ["TEXT", "IMAGE"],
-          responseMimeType: "image/png",
         },
       }),
       signal: controller.signal,
