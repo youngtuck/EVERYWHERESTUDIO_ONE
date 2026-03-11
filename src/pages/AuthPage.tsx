@@ -81,14 +81,25 @@ const AuthPage = () => {
         justifyContent: "center",
         padding: 24,
         fontFamily: "'Afacad Flux', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Subtle ambient background */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(200,150,26,0.06) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(58,123,213,0.04) 0%, transparent 50%)",
+        }}
+      />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
         body { background: #07090f; }
         .auth-input {
           width: 100%;
-          background: #07090f;
+          background: #0e1117;
           border: 1px solid rgba(255,255,255,0.12);
           border-radius: 8px;
           padding: 12px 14px;
@@ -96,17 +107,22 @@ const AuthPage = () => {
           color: #ffffff;
           outline: none;
           font-family: 'Afacad Flux', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+          transition: border-color 0.2s ease, box-shadow 0.25s ease;
         }
         .auth-input::placeholder {
           color: rgba(255,255,255,0.35);
         }
         .auth-input:focus {
           border-color: #C8961A;
-          box-shadow: 0 0 0 3px rgba(200,150,26,0.12);
+          box-shadow: 0 0 0 3px rgba(200,150,26,0.12), 0 0 20px rgba(200,150,26,0.08);
+        }
+        .auth-input:focus-visible {
+          outline: 2px solid #C8961A;
+          outline-offset: 2px;
         }
       `}</style>
 
-      <div style={{ width: "100%", maxWidth: 400 }}>
+      <div style={{ width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }}>
         {/* Brand wordmark */}
         <button
           type="button"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
+import { CommandPalette } from "./CommandPalette";
 import { useMobile } from "../../hooks/useMobile";
 
 /** Studio layout: sidebar + main outlet; full-bleed for work session. No transition on tab switch to avoid flash. */
@@ -64,6 +65,7 @@ export default function StudioShell() {
 
   return (
     <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
+      <CommandPalette />
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -100,6 +102,7 @@ export default function StudioShell() {
         <StudioSidebar
           collapsed={!isMobile && sidebarCollapsed}
           onToggleCollapsed={() => setSidebarCollapsed(c => !c)}
+          onMobileClose={isMobile ? () => setSidebarOpen(false) : undefined}
         />
       </div>
       <main style={{ flex: 1, minHeight: "100vh", background: "#F4F2ED", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none" }}>
@@ -144,7 +147,9 @@ export default function StudioShell() {
           </div>
         )}
         <div className="studio-main-inner" style={{ background: "#F4F2ED" }}>
-          <Outlet />
+          <div key={location.pathname} className="studio-page-transition">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

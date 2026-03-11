@@ -149,73 +149,85 @@ export default function Dashboard() {
 
   return (
     <div
+      className="studio-page-transition"
+      data-page="dashboard"
       style={{
         maxWidth: 720,
         margin: "0 auto",
         padding: isMobile ? "24px 16px" : "32px 24px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font)",
       }}
     >
-      {/* 1. Greeting Bar */}
+      {/* Hero: greeting + primary CTA */}
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
           marginBottom: 32,
-          flexWrap: "wrap",
-          gap: 12,
+          paddingBottom: 28,
+          borderBottom: "1px solid var(--border-subtle)",
         }}
       >
-        <div>
-          <div
-            style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: 11,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              color: "var(--text-tertiary, var(--fg-3))",
-              marginBottom: 2,
-            }}
-          >
-            {getDateLabel()}
-          </div>
-          <div
-            style={{
-              fontFamily: "'Montserrat', sans-serif",
-              fontSize: isMobile ? 20 : 22,
-              fontWeight: 600,
-              color: "var(--text-primary, #1a1a1a)",
-            }}
-          >
-            {getGreeting()}, {firstName}.
-          </div>
-        </div>
-        <button
-          onClick={() => nav("/studio/work")}
+        <div
           style={{
-            background: "var(--gold-dark)",
-            color: "#fff",
-            padding: "10px 20px",
-            borderRadius: 8,
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 14,
-            fontWeight: 500,
-            border: "none",
-            cursor: "pointer",
-            transition,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--gold-light)";
-            e.currentTarget.style.transform = "scale(1.02)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "var(--gold-dark)";
-            e.currentTarget.style.transform = "scale(1)";
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
           }}
         >
-          + New Output
-        </button>
+          <div>
+            <div
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: "var(--text-tertiary, var(--fg-3))",
+                marginBottom: 4,
+              }}
+            >
+              {getDateLabel()}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font)",
+                fontSize: isMobile ? 22 : 26,
+                fontWeight: 600,
+                color: "var(--text-primary, #1a1a1a)",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
+              }}
+            >
+              {getGreeting()}, {firstName}.
+            </div>
+          </div>
+          <button
+            onClick={() => nav("/studio/work")}
+            className="btn-gold cta-new-session"
+            style={{
+              background: "var(--gold-dark)",
+              color: "#fff",
+              padding: "12px 22px",
+              borderRadius: 8,
+              fontFamily: "var(--font)",
+              fontSize: 14,
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              transition,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--gold-hover)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--gold-dark)";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            + New Output
+          </button>
+        </div>
       </div>
 
       {/* 2. Stats Row */}
@@ -313,7 +325,8 @@ export default function Dashboard() {
                 </div>
                 <div
                   style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "var(--font)",
+                    fontVariantNumeric: "tabular-nums",
                     fontSize: 28,
                     fontWeight: 600,
                     color: "var(--text-primary, #1a1a1a)",

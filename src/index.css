@@ -14,6 +14,8 @@
   /* Dashboard / design system */
   --gold-dark:  #C8961A;
   --gold-light: #996A00;
+  --gold-hover: #d4a52e;
+  --gold-pressed: #b8860f;
   --watch-blue: #4A90F5;
   --work-teal:  #0D8C9E;
   --wrap-violet: #A080F5;
@@ -297,6 +299,19 @@ button { font-family: var(--font); }
   transition: opacity 0.15s ease;
 }
 .btn-gold:hover { opacity: 0.88; }
+.btn-gold:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.cta-new-session:hover { box-shadow: 0 4px 16px rgba(200,150,26,0.25); }
+
+/* Global focus-visible for keyboard accessibility */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 
 /* ─── PILLS ──────────────────────────────────────────────────── */
 .pill {
@@ -324,6 +339,13 @@ button { font-family: var(--font); }
   transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
   background: var(--gold-l);
 }
+.score-bar-fill.animate-on-load {
+  animation: scoreBarFill 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+@keyframes scoreBarFill {
+  from { max-width: 0; }
+  to { max-width: 100%; }
+}
 
 /* ─── CUSTOM CURSOR (disabled: fall back to OS cursor) ───────── */
 
@@ -338,6 +360,10 @@ button { font-family: var(--font); }
 }
 .page-enter {
   animation: pageSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* Studio inner route transition (tab switch) */
+.studio-page-transition {
+  animation: pageSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ─── EYEBROW ────────────────────────────────────────────────── */

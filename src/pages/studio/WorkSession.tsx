@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams, useLocation } from "react-rout
 import { FileText, Sparkles, ArrowLeft } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { useMobile } from "../../hooks/useMobile";
 import { useTheme } from "../../context/ThemeContext";
 import { getScoreColor } from "../../utils/scoreColor";
@@ -668,6 +669,7 @@ export default function WorkSession() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { toast } = useToast();
   const isMobile = useMobile();
   const { theme } = useTheme();
   const [outputType, setOutputType] = useState(searchParams.get("type") || "essay");
@@ -807,6 +809,7 @@ export default function WorkSession() {
       setGeneratedOutputId(outputId);
 
       setPhase("complete");
+      if (savedOutput) toast("Output saved.");
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Generation failed.");
       setPhase("input");
@@ -916,6 +919,39 @@ export default function WorkSession() {
             onClick={() => navigate("/studio/work?type=" + outputType)}
           >New Session</button>
         </div>
+      </div>
+
+      {/* Session progress: Input → Watson → Generate → Output */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        padding: "8px 24px",
+        borderBottom: "1px solid var(--border-subtle)",
+        background: "var(--surface-white)",
+        flexShrink: 0,
+      }}>
+        {[
+          { key: "input", label: "Input", done: phase !== "input" || messages.some(m => m.role === "user"), active: phase === "input" },
+          { key: "watson", label: "Watson", done: phase === "generating" || phase === "complete", active: phase === "input" && messages.some(m => m.role === "user") },
+          { key: "generate", label: "Generate", done: phase === "complete", active: phase === "generating" },
+          { key: "output", label: "Output", done: phase === "complete", active: phase === "complete" },
+        ].map((step, i) => (
+          <div key={step.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.04em",
+                color: step.done ? "var(--gold-dark)" : step.active ? "var(--text-primary)" : "var(--text-tertiary)",
+                transition: "color .2s",
+              }}
+            >
+              {step.label}
+            </span>
+            {i < 3 && (
+              <span style={{ width: 20, height: 1, background: "var(--line)", opacity: step.done ? 0.6 : 0.3 }} />
+            )}
+          </div>
+        ))}
       </div>
 
       {/* ── Messages area ────────────────────────────────────────────── */}

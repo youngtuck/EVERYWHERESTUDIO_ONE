@@ -328,12 +328,29 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Bottom label */}
-        <div style={{ display: "flex", justifyContent: "center", paddingBottom: 26, ...fi(.95) }}>
-          <span style={{ fontSize: 11, letterSpacing: ".12em", color: "rgba(255,255,255,.30)", fontWeight: 400 }}>
-            EVERYWHERE STUDIO &nbsp;·&nbsp; Ideas to Impact
-          </span>
-        </div>
+        {/* Minimal footer */}
+        <footer style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingBottom: 26, gap: 8, ...fi(.95), pointerEvents: zoomingToExplore ? "none" : "auto" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span style={{ fontSize: 11, letterSpacing: ".12em", color: "rgba(255,255,255,.30)", fontWeight: 400 }}>
+              EVERYWHERE STUDIO &nbsp;·&nbsp; Ideas to Impact
+            </span>
+          </div>
+          <a
+            href="/explore"
+            onClick={(e) => { e.preventDefault(); navigate("/explore"); }}
+            style={{
+              fontSize: 11,
+              letterSpacing: ".1em",
+              color: "rgba(255,255,255,.5)",
+              fontWeight: 500,
+              transition: "color .2s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,.85)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,.5)"; }}
+          >
+            Explore →
+          </a>
+        </footer>
       </div>
     </div>
   );

@@ -42,6 +42,7 @@ export default function OutputLibrary() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"list" | "card">("list");
 
   useEffect(() => {
     let query = supabase
@@ -65,11 +66,12 @@ export default function OutputLibrary() {
 
   return (
     <div
+      className="studio-page-transition"
       style={{
         maxWidth: 960,
         margin: "0 auto",
         padding: "32px 24px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font)",
       }}
     >
       {/* Page Header */}
@@ -84,7 +86,7 @@ export default function OutputLibrary() {
         <div>
           <h1
             style={{
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "var(--font)",
               fontSize: 28,
               fontWeight: 700,
               color: "var(--text-primary)",
@@ -96,7 +98,7 @@ export default function OutputLibrary() {
           </h1>
           <p
             style={{
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font)",
               fontSize: 14,
               color: "var(--text-secondary)",
               marginTop: 4,
@@ -182,7 +184,7 @@ export default function OutputLibrary() {
           style={{
             minWidth: 140,
             padding: "10px 36px 10px 16px",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font)",
             fontSize: 14,
             color: "var(--text-primary)",
             background: "var(--surface-white)",
@@ -202,6 +204,24 @@ export default function OutputLibrary() {
             </option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={() => setViewMode((m) => (m === "list" ? "card" : "list"))}
+          style={{
+            padding: "8px 12px",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 8,
+            background: "var(--surface-white)",
+            cursor: "pointer",
+            fontSize: 12,
+            fontWeight: 500,
+            color: "var(--fg-2)",
+            fontFamily: "var(--font)",
+          }}
+          title={viewMode === "list" ? "Switch to card view" : "Switch to list view"}
+        >
+          {viewMode === "list" ? "Cards" : "List"}
+        </button>
       </div>
 
       {/* Output List */}
@@ -230,7 +250,7 @@ export default function OutputLibrary() {
           <FileText size={32} style={{ color: "var(--text-tertiary)" }} />
           <h2
             style={{
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "var(--font)",
               fontSize: 18,
               fontWeight: 600,
               color: "var(--text-primary)",
@@ -278,7 +298,51 @@ export default function OutputLibrary() {
             Start Session
           </button>
         </div>
-      ) : (
+      ) : viewMode === "card" ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+            {filtered.map((o) => {
+              const sc = getScoreColor(o.score);
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => navigate(`/studio/outputs/${o.id}`)}
+                  className="card"
+                  style={{
+                    padding: 20,
+                    textAlign: "left",
+                    cursor: "pointer",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: 12,
+                    background: "var(--surface-white)",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: sc.fill, flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                      {TYPE_LABELS[o.output_type] || o.output_type}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.3 }}>
+                    {o.title}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: sc.text, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
+                    <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{timeAgo(o.created_at)}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
         <div style={{ display: "flex", flexDirection: "column" }}>
           {filtered.map((o) => {
             const sc = getScoreColor(o.score);

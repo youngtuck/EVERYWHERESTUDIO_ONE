@@ -484,6 +484,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
 
   return (
     <div
+      id="rooms"
       ref={wrapperRef}
       className="rooms-wrapper"
       style={{
@@ -593,7 +594,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       >
 
         {/* WATCH right */}
-        <div style={{
+        <div id="room-watch" style={{
           minHeight: "130vh",
           padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
           display: "flex",
@@ -648,7 +649,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
 
         {/* WORK right */}
-        <div style={{
+        <div id="room-work" style={{
           minHeight: "145vh",
           padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
           display: "flex",
@@ -707,7 +708,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
         </div>
 
         {/* WRAP right */}
-        <div style={{
+        <div id="room-wrap" style={{
           minHeight: "120vh",
           padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
           display: "flex",
@@ -774,6 +775,7 @@ export default function ExplorePage() {
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [scrollPct, setScrollPct] = useState(0);
   const [roomsVisible, setRoomsVisible] = useState(false);
+  const [activeRoom, setActiveRoom] = useState<"watch" | "work" | "wrap">("watch");
   const roomsSentinelRef = useRef<HTMLDivElement | null>(null);
 
   const toggle = () => setDark(d => !d);
@@ -848,6 +850,33 @@ export default function ExplorePage() {
     handler();
     return () => window.removeEventListener("scroll", handler);
   }, []);
+
+  // Room pills: which room is in view (when rooms section is loaded)
+  useEffect(() => {
+    if (!roomsVisible) return;
+    const ids: ("watch" | "work" | "wrap")[] = ["watch", "work", "wrap"];
+    const check = () => {
+      const vh = window.innerHeight;
+      const center = vh * 0.4;
+      let best: "watch" | "work" | "wrap" = "watch";
+      let bestDist = Infinity;
+      ids.forEach((room) => {
+        const el = document.getElementById("room-" + room);
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        const dist = Math.abs(mid - center);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = room;
+        }
+      });
+      setActiveRoom(best);
+    };
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    return () => window.removeEventListener("scroll", check);
+  }, [roomsVisible]);
 
   // Fade in from dark when arriving from landing zoom transition
   useEffect(() => {
@@ -994,6 +1023,58 @@ export default function ExplorePage() {
           />
         </div>
 
+        {/* Room pills: sticky indicators when in Rooms section (desktop) */}
+        {roomsVisible && !isMobile && (
+          <div
+            style={{
+              position: "fixed",
+              left: 24,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 90,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            {(["watch", "work", "wrap"] as const).map((room) => (
+              <button
+                key={room}
+                type="button"
+                onClick={() => document.getElementById("room-" + room)?.scrollIntoView({ behavior: "smooth" })}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: activeRoom === room ? "rgba(255,255,255,0.1)" : "transparent",
+                  color: activeRoom === room ? "#fff" : "rgba(255,255,255,0.5)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "background 0.2s, color 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  if (activeRoom !== room) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                    e.currentTarget.style.color = "rgba(255,255,255,0.85)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeRoom !== room) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "rgba(255,255,255,0.5)";
+                  }
+                }}
+              >
+                {room}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* NAV */}
         <nav style={{
           position:"fixed",
@@ -1016,6 +1097,15 @@ export default function ExplorePage() {
             <span style={{fontSize:15,fontWeight:800,color:T.text,letterSpacing:".04em"}}>WHERE</span>
             <span style={{fontSize:9,fontWeight:600,letterSpacing:".16em",color:T.textFaint,marginLeft:6,textTransform:"uppercase",alignSelf:"center"}}>Studio</span>
           </button>
+          {!isMobile && (
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <a href="#problem" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Problem</a>
+              <a href="#fw" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Framework</a>
+              <a href="#rooms" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Rooms</a>
+              <a href="#gates" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Gates</a>
+              <a href="#cta" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Contact</a>
+            </div>
+          )}
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"7px 22px",color:T.ctaText,fontSize:12,fontWeight:600,fontFamily:"'Afacad Flux',sans-serif",cursor:"pointer",transition:"opacity .2s"}}
               onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".80"}
@@ -1221,6 +1311,7 @@ export default function ExplorePage() {
 
         {/* ══ QUALITY GATES ════════════════════════════════════════════════════ */}
         <section
+          id="gates"
           style={{
             padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
             background:"#07090f",
@@ -1309,6 +1400,7 @@ export default function ExplorePage() {
 
         {/* ══ CTA ══════════════════════════════════════════════════════════════ */}
         <section
+          id="cta"
           style={{
             padding: isMobile ? "100px 24px 80px" : "180px 48px 120px",
             textAlign:"center",

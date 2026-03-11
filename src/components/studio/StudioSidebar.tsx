@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
+import { supabase } from "../../lib/supabase";
 import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut } from "lucide-react";
 
 // ── Nav items (with icons, reference style) ─────────────────────────────────
@@ -29,9 +30,10 @@ function titleCase(str: string) {
 interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  onMobileClose?: () => void;
 }
 
-export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: SidebarProps) {
+export default function StudioSidebar({ collapsed = false, onToggleCollapsed, onMobileClose }: SidebarProps) {
   const nav = useNavigate();
   const loc = useLocation();
   const { theme } = useTheme();
@@ -40,6 +42,20 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
   const [installState, setInstallState] = useState<"hidden" | "prompt" | "installed">("prompt");
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setOnboardingComplete(null);
+      return;
+    }
+    supabase
+      .from("profiles")
+      .select("onboarding_complete")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => setOnboardingComplete(data?.onboarding_complete ?? false));
+  }, [user]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -256,6 +272,25 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
             ◀
           </button>
         )}
+        {onMobileClose && (
+          <button
+            type="button"
+            onClick={onMobileClose}
+            style={{
+              background: "none",
+              border: "1px solid var(--line)",
+              borderRadius: 8,
+              padding: "6px 10px",
+              cursor: "pointer",
+              fontSize: 13,
+              color: "var(--fg-2)",
+              fontFamily: "var(--font)",
+            }}
+            aria-label="Close menu"
+          >
+            Close
+          </button>
+        )}
         {collapsed && onToggleCollapsed && (
           <button
             onClick={onToggleCollapsed}
@@ -336,6 +371,34 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed }: 
           New Session
         </button>
       </div>
+
+      {/* Onboarding progress: show when not complete */}
+      {onboardingComplete === false && !collapsed && (
+        <div style={{ padding: "0 14px 12px" }}>
+          <button
+            onClick={() => nav("/onboarding")}
+            style={{
+              width: "100%",
+              padding: "10px 14px",
+              background: "rgba(200,150,26,0.1)",
+              border: "1px solid rgba(200,150,26,0.25)",
+              borderRadius: "var(--studio-radius)",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "var(--gold-dark)",
+              cursor: "pointer",
+              fontFamily: "var(--font)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            Finish setup
+            <span style={{ fontSize: 10 }}>→</span>
+          </button>
+        </div>
+      )}
 
       {/* ── Main nav (with icons) ─────────────────────────────────────────── */}
       <nav style={{ flex: 1, padding: "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">

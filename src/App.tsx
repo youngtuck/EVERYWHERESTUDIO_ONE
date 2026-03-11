@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { lazy, Suspense, ReactNode } from "react";
 
@@ -40,7 +41,8 @@ function PageTransition({ children }: { children: ReactNode }) {
 const App = () => (
   <AuthProvider>
     <ThemeProvider>
-      <BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
         <style>{`
           @keyframes pageEnter {
             from { opacity: 0; transform: translateY(8px); }
@@ -101,6 +103,7 @@ const App = () => (
           </Routes>
         </PageTransition>
       </BrowserRouter>
+      </ToastProvider>
     </ThemeProvider>
   </AuthProvider>
 );
