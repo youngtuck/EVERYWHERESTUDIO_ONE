@@ -9,7 +9,11 @@ interface QA {
 }
 
 interface VoiceInterviewChatProps {
-  onComplete: (result: { voiceDna: VoiceDNA; markdown: string; interviewResponses: Record<string, string> }) => void;
+  onComplete: (result: {
+    voiceDna: VoiceDNA;
+    markdown: string;
+    interviewResponses: Record<string, string>;
+  }) => Promise<void> | void;
   onCancel?: () => void;
 }
 
@@ -49,7 +53,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
     inputRef.current?.focus();
   }, []);
 
-  const handleAnalyzeNow = () => {
+  const handleAnalyzeNow = async () => {
     const interviewResponses: Record<string, string> = {};
     let idx = 1;
     for (const m of messages) {
@@ -59,36 +63,40 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
       }
     }
     setLoading(true);
-    onComplete({
-      voiceDna: {
-        voice_fidelity: 0,
-        voice_layer: 0,
-        value_layer: 0,
-        personality_layer: 0,
-        traits: {
-          vocabulary_and_syntax: 0,
-          tonal_register: 0,
-          rhythm_and_cadence: 0,
-          metaphor_patterns: 0,
-          structural_habits: 0,
+    try {
+      await onComplete({
+        voiceDna: {
+          voice_fidelity: 0,
+          voice_layer: 0,
+          value_layer: 0,
+          personality_layer: 0,
+          traits: {
+            vocabulary_and_syntax: 0,
+            tonal_register: 0,
+            rhythm_and_cadence: 0,
+            metaphor_patterns: 0,
+            structural_habits: 0,
+          },
+          voice_description: "",
+          value_description: "",
+          personality_description: "",
+          contraction_frequency: "",
+          sentence_length_avg: "",
+          signature_phrases: [],
+          prohibited_words: [],
+          emotional_register: "",
+          has_dual_mode: false,
+          method: "interview",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          interview_responses: interviewResponses,
         },
-        voice_description: "",
-        value_description: "",
-        personality_description: "",
-        contraction_frequency: "",
-        sentence_length_avg: "",
-        signature_phrases: [],
-        prohibited_words: [],
-        emotional_register: "",
-        has_dual_mode: false,
-        method: "interview",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        interview_responses: interviewResponses,
-      },
-      markdown: "",
-      interviewResponses,
-    });
+        markdown: "",
+        interviewResponses,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const askNextQuestion = () => {
@@ -250,103 +258,144 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
           backdropFilter: "blur(12px)",
         }}
       >
-        <div style={{ position: "relative" }}>
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Write how you would actually respond. Short or long is fine."
-            rows={2}
+        {loading ? (
+          <div
             style={{
-              width: "100%",
-              background: "rgba(255,255,255,0.04)",
-              border: "1.5px solid rgba(255,255,255,0.1)",
-              borderRadius: 12,
-              padding: "14px 48px 14px 18px",
-              color: "#ffffff",
-              fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-              fontSize: 15,
-              resize: "none",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-          />
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-            style={{
-              position: "absolute",
-              right: 8,
-              bottom: 8,
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              border: "none",
-              background: input.trim() && !loading ? "#C8961A" : "rgba(255,255,255,0.08)",
+              padding: "16px 0 20px",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              cursor: input.trim() && !loading ? "pointer" : "default",
+              gap: 8,
             }}
           >
-            <Send size={18} color={input.trim() && !loading ? "#07090f" : "rgba(255,255,255,0.4)"} />
-          </button>
-        </div>
-        <div
-          style={{
-            marginTop: 8,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <button
-            type="button"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "none",
-              border: "none",
-              padding: 0,
-              fontSize: 12,
-              fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-              color: "rgba(255,255,255,0.3)",
-              cursor: "pointer",
-            }}
-          >
-            <Mic size={14} />
-            <span>Switch to voice</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleAnalyzeNow}
-            disabled={messages.filter(m => m.role === "user").length < 3 || loading}
-            style={{
-              fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-              fontSize: 12,
-              textTransform: "uppercase",
-              letterSpacing: "0.16em",
-              border: "none",
-              background: "none",
-              color:
-                messages.filter(m => m.role === "user").length >= 3 && !loading
-                  ? "rgba(255,255,255,0.7)"
-                  : "rgba(255,255,255,0.3)",
-              cursor:
-                messages.filter(m => m.role === "user").length >= 3 && !loading ? "pointer" : "default",
-            }}
-          >
-            Analyze responses
-          </button>
-        </div>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                border: "2px solid rgba(200,150,26,0.6)",
+                borderTopColor: "transparent",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+            <p
+              style={{
+                fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                fontSize: 13,
+                color: "rgba(255,255,255,0.7)",
+                margin: 0,
+              }}
+            >
+              Analyzing your voice patterns...
+            </p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        ) : (
+          <>
+            <div style={{ position: "relative" }}>
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Write how you would actually respond. Short or long is fine."
+                rows={2}
+                style={{
+                  width: "100%",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1.5px solid rgba(255,255,255,0.1)",
+                  borderRadius: 12,
+                  padding: "14px 48px 14px 18px",
+                  color: "#ffffff",
+                  fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                  fontSize: 15,
+                  resize: "none",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!input.trim() || loading}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  bottom: 8,
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: input.trim() && !loading ? "#C8961A" : "rgba(255,255,255,0.08)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: input.trim() && !loading ? "pointer" : "default",
+                }}
+              >
+                <Send
+                  size={18}
+                  color={input.trim() && !loading ? "#07090f" : "rgba(255,255,255,0.4)"}
+                />
+              </button>
+            </div>
+            <div
+              style={{
+                marginTop: 8,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <button
+                type="button"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  fontSize: 12,
+                  fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                  color: "rgba(255,255,255,0.3)",
+                  cursor: "pointer",
+                }}
+              >
+                <Mic size={14} />
+                <span>Switch to voice</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleAnalyzeNow}
+                disabled={messages.filter(m => m.role === "user").length < 3 || loading}
+                style={{
+                  fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                  fontSize: 12,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.16em",
+                  border: "none",
+                  background: "none",
+                  color:
+                    messages.filter(m => m.role === "user").length >= 3 && !loading
+                      ? "rgba(255,255,255,0.7)"
+                      : "rgba(255,255,255,0.3)",
+                  cursor:
+                    messages.filter(m => m.role === "user").length >= 3 && !loading
+                      ? "pointer"
+                      : "default",
+                }}
+              >
+                Analyze responses
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
