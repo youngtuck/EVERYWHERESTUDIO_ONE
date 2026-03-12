@@ -45,10 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const hasLegacyOnboarding = profile?.onboarding_complete;
           const hasVoiceDna = profile?.voice_dna_completed;
 
-          if (!hasVoiceDna && !hasLegacyOnboarding) {
-            if (path !== "/onboarding") window.location.href = "/onboarding";
-          } else {
-            if (path === "/auth" || path === "/onboarding") window.location.href = "/studio/dashboard";
+          // Only redirect when the user is on auth or onboarding already.
+          // Never redirect away from marketing pages like "/" or "/explore".
+          if (path === "/auth") {
+            if (!hasVoiceDna && !hasLegacyOnboarding) {
+              window.location.href = "/onboarding";
+            } else {
+              window.location.href = "/studio/dashboard";
+            }
+          } else if (path === "/onboarding") {
+            if (hasVoiceDna || hasLegacyOnboarding) {
+              window.location.href = "/studio/dashboard";
+            }
           }
         })();
       }
