@@ -373,7 +373,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
               <button
                 type="button"
                 onClick={handleAnalyzeNow}
-                disabled={messages.filter(m => m.role === "user").length < 3 || loading}
+                disabled={messages.filter(m => m.role === "user").length < 2 || loading}
                 style={{
                   fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
                   fontSize: 12,
@@ -382,11 +382,11 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                   border: "none",
                   background: "none",
                   color:
-                    messages.filter(m => m.role === "user").length >= 3 && !loading
+                    messages.filter(m => m.role === "user").length >= 2 && !loading
                       ? "rgba(255,255,255,0.7)"
                       : "rgba(255,255,255,0.3)",
                   cursor:
-                    messages.filter(m => m.role === "user").length >= 3 && !loading
+                    messages.filter(m => m.role === "user").length >= 2 && !loading
                       ? "pointer"
                       : "default",
                 }}
@@ -394,6 +394,23 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                 Analyze responses
               </button>
             </div>
+            {messages.filter(m => m.role === "user").length < 2 && !loading && (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                  fontSize: 11,
+                  color: "rgba(255,255,255,0.35)",
+                  textAlign: "right",
+                }}
+              >
+                Answer{" "}
+                {2 - messages.filter(m => m.role === "user").length}
+                {" "}more question
+                {2 - messages.filter(m => m.role === "user").length === 1 ? "" : "s"}
+                {" "}to continue
+              </div>
+            )}
           </>
         )}
       </div>
