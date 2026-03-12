@@ -14,7 +14,22 @@ interface VoiceInterviewChatProps {
 }
 
 const INITIAL_PROMPT =
-  "I'm going to ask you some questions to capture how you communicate. Not what you say, how you say it. Most people don't know what they sound like, but you know more than you think. Ready?";
+  "I am going to ask you some questions to capture how you communicate. Not what you say, how you say it. Most people do not know what they sound like, but you know more than you think. Ready?";
+
+const QUESTION_SEQUENCE: string[] = [
+  "First thing: when people describe you, do they see you as more formal or more casual. Do you agree with them",
+  "When you are at your best in a conversation, how would you describe your energy",
+  "When you write something you are proud of, do the sentences tend to be short and punchy, long and flowing, or a mix",
+  "Do you tend to start with the point and then support it, or build up a story and arrive at the point",
+  "Are there words or phrases you find yourself using again and again. Things people associate with you",
+  "Are there words or phrases you hate. Things that make you cringe when AI writes them",
+  "How does humor show up in your communication, if it does at all",
+  "What do you believe about your field that most people get wrong",
+  "When you write or speak, who are you really talking to. Not the broadest audience, the specific person you imagine reading it",
+  "When you disagree with someone, how do you typically handle it in writing",
+  "If you were writing a LinkedIn post right now, how would you start it. Give me the first line",
+  "Last one. Read this sentence in your head: \"Innovation requires us to leverage synergies across our ecosystem.\" How does it make you feel, and why",
+];
 
 export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatProps) {
   const [messages, setMessages] = useState<QA[]>([
@@ -24,6 +39,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const questionIndexRef = useRef(0);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -32,18 +48,6 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
-
-  const handleSend = async () => {
-    const text = input.trim();
-    if (!text || loading) return;
-    setInput("");
-    const userMsg: QA = { id: `u-${Date.now()}`, role: "user", content: text };
-    setMessages(prev => [...prev, userMsg]);
-
-    // For v1, we do not stream intermediate questions from Claude.
-    // Instead, we collect all Q&A pairs locally and let the parent
-    // component decide when to call the processor.
-  };
 
   const handleAnalyzeNow = () => {
     const interviewResponses: Record<string, string> = {};
@@ -55,10 +59,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
       }
     }
     setLoading(true);
-    // Defer to parent; it will call voiceDNAProcessor with these responses.
     onComplete({
-      // The parent will immediately replace this stub with real data.
-      // We provide minimal placeholders to satisfy the type system.
       voiceDna: {
         voice_fidelity: 0,
         voice_layer: 0,
@@ -88,6 +89,37 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
       markdown: "",
       interviewResponses,
     });
+  };
+
+  const askNextQuestion = () => {
+    const idx = questionIndexRef.current;
+    if (idx >= QUESTION_SEQUENCE.length) {
+      handleAnalyzeNow();
+      return;
+    }
+    const next = QUESTION_SEQUENCE[idx];
+    questionIndexRef.current = idx + 1;
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `sys-${Date.now()}`,
+        role: "system",
+        content: next,
+      },
+    ]);
+  };
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput("");
+    const userMsg: QA = { id: `u-${Date.now()}`, role: "user", content: text };
+    setMessages(prev => [...prev, userMsg]);
+
+    // After each answer, ask the next question from the scripted interview.
+    setTimeout(() => {
+      askNextQuestion();
+    }, 350);
   };
 
   const containerStyle = {
