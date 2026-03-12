@@ -8,6 +8,7 @@ import { lazy, Suspense, ReactNode } from "react";
 import Index from "./pages/Index";
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const StudioShell = lazy(() => import("./components/studio/StudioShell"));
 const Dashboard = lazy(() => import("./pages/studio/Dashboard"));
 const WorkSession = lazy(() => import("./pages/studio/WorkSession"));
@@ -72,7 +73,7 @@ const App = () => (
               path="/onboarding"
               element={
                 <Suspense fallback={<div style={{ background: "#07090f", height: "100vh" }} />}>
-                  <ProtectedRoute><Onboarding /></ProtectedRoute>
+                  <ProtectedRoute><OnboardingPage /></ProtectedRoute>
                 </Suspense>
               }
             />

@@ -37,12 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (async () => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("onboarding_complete")
+            .select("voice_dna_completed, onboarding_complete")
             .eq("id", session.user.id)
             .single();
 
           const path = window.location.pathname;
-          if (!profile?.onboarding_complete) {
+          const hasLegacyOnboarding = profile?.onboarding_complete;
+          const hasVoiceDna = profile?.voice_dna_completed;
+
+          if (!hasVoiceDna && !hasLegacyOnboarding) {
             if (path !== "/onboarding") window.location.href = "/onboarding";
           } else {
             if (path === "/auth" || path === "/onboarding") window.location.href = "/studio/dashboard";

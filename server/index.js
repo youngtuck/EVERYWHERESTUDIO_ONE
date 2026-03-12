@@ -165,6 +165,184 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
+// Voice DNA generation from interview responses or uploads
+app.post("/api/voice-dna", async (req, res) => {
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: "ANTHROPIC_API_KEY not set. Add it to .env — see SETUP.md." });
+  }
+  const { type, responses = {}, fileUrls = [] } = req.body || {};
+
+  if (type !== "interview" && type !== "upload") {
+    return res.status(400).json({ error: "type must be 'interview' or 'upload'." });
+  }
+
+  try {
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+
+    const system = `You are building a Voice DNA profile for EVERYWHERE Studio.
+
+You receive either:
+- A set of interview Q&A responses about how the user communicates, or
+- Text content from writing samples.
+
+Your job:
+- Infer the user's Voice DNA according to this TypeScript interface:
+
+interface VoiceDNA {
+  voice_fidelity: number;
+  voice_layer: number;
+  value_layer: number;
+  personality_layer: number;
+  traits: {
+    vocabulary_and_syntax: number;
+    tonal_register: number;
+    rhythm_and_cadence: number;
+    metaphor_patterns: number;
+    structural_habits: number;
+  };
+  voice_description: string;
+  value_description: string;
+  personality_description: string;
+  contraction_frequency: string;
+  sentence_length_avg: string;
+  signature_phrases: string[];
+  prohibited_words: string[];
+  emotional_register: string;
+  has_dual_mode: boolean;
+  content_mode?: object;
+  operations_mode?: object;
+  method: "interview" | "upload" | "both";
+  interview_responses?: Record<string,string>;
+  created_at: string;
+  updated_at: string;
+}
+
+You must return a JSON object with two top-level keys:
+- "voiceDna": VoiceDNA
+- "markdown": string (a human-readable Voice DNA document)
+
+Do not include any other keys.`;
+
+    const userContent =
+      type === "interview"
+        ? `Interview responses as JSON:\n${JSON.stringify(responses, null, 2)}\n\nBuild the Voice DNA.`
+        : `Writing sample references (file names or URLs):\n${JSON.stringify(fileUrls, null, 2)}\n\nInfer Voice DNA based on how this person writes.`;
+
+    const response = await withRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        system,
+        messages: [{ role: "user", content: userContent }],
+      })
+    );
+
+    const block = response.content?.[0];
+    const text = block?.type === "text" ? block.text : "";
+
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      console.error("[/api/voice-dna] Failed to parse JSON", err, text.slice(0, 200));
+      return res.status(502).json({ error: "Voice DNA response was not valid JSON.", retryable: false });
+    }
+
+    res.json(parsed);
+  } catch (err) {
+    console.error("[/api/voice-dna]", err);
+    const status = err.status === 401 ? 401 : 502;
+    const message = err.message || "Something went wrong on our end.";
+    res.status(status).json({
+      error: status === 401 ? "Invalid API key. Check your .env and SETUP.md." : message,
+      retryable: isRetryable(err),
+    });
+  }
+});
+
+// Brand DNA generation
+app.post("/api/brand-dna", async (req, res) => {
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: "ANTHROPIC_API_KEY not set. Add it to .env — see SETUP.md." });
+  }
+  const { input } = req.body || {};
+
+  if (!input || typeof input !== "object") {
+    return res.status(400).json({ error: "input object is required." });
+  }
+
+  try {
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    const system = `You are building a Brand DNA profile for EVERYWHERE Studio.
+
+You receive structured input about the company and how it speaks.
+
+Your job:
+- Produce a BrandDNA JSON object and a companion markdown document.
+
+interface BrandDNA {
+  company_name: string;
+  industry: string;
+  target_audience: string;
+  brand_voice_description: string;
+  tone_attributes: string[];
+  language_guidelines: string;
+  primary_colors: string[];
+  secondary_colors: string[];
+  font_families: string[];
+  logo_description: string;
+  tagline: string;
+  value_proposition: string;
+  key_messages: string[];
+  prohibited_language: string[];
+  brand_guide_url?: string;
+  logo_urls: string[];
+  style_guide_url?: string;
+  additional_docs: { name: string; url: string; type: string }[];
+  created_at: string;
+  updated_at: string;
+}
+
+Return JSON with:
+- "brandDna": BrandDNA
+- "markdown": string
+
+No other keys.`;
+
+    const userContent = `Raw structured input:\n${JSON.stringify(input, null, 2)}\n\nBuild the BrandDNA object and markdown.`;
+
+    const response = await withRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        system,
+        messages: [{ role: "user", content: userContent }],
+      })
+    );
+
+    const block = response.content?.[0];
+    const text = block?.type === "text" ? block.text : "";
+
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      console.error("[/api/brand-dna] Failed to parse JSON", err, text.slice(0, 200));
+      return res.status(502).json({ error: "Brand DNA response was not valid JSON.", retryable: false });
+    }
+
+    res.json(parsed);
+  } catch (err) {
+    console.error("[/api/brand-dna]", err);
+    const status = err.status === 401 ? 401 : 502;
+    const message = err.message || "Something went wrong on our end.";
+    res.status(status).json({
+      error: status === 401 ? "Invalid API key. Check your .env and SETUP.md." : message,
+      retryable: isRetryable(err),
+    });
+  }
+});
+
 // 404 for unknown /api routes (so frontend gets JSON, not HTML)
 app.use("/api", (req, res) => {
   res.status(404).json({

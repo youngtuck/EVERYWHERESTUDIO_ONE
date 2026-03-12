@@ -53,11 +53,11 @@ const AuthPage = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("onboarding_complete")
+        .select("voice_dna_completed, onboarding_complete")
         .eq("id", authedUser.id)
         .single();
 
-      if (!profile?.onboarding_complete) navigate("/onboarding");
+      if (!profile?.voice_dna_completed && !profile?.onboarding_complete) navigate("/onboarding");
       else navigate("/studio/dashboard");
     } catch (err) {
       setSubmitError("Something went wrong. Please try again.");
