@@ -188,31 +188,83 @@ function WatsonOrb({ size, thinking }: { size: number; thinking?: boolean }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: string }> = {
-  linkedin_post:   { label: "LinkedIn Post",   color: "#4A90D9", watson: "What's the idea you want to put out there? Give me the raw thought and we'll find the right angle." },
-  newsletter:      { label: "Newsletter",      color: "#50c8a0", watson: "What's the story this week? What happened, what did you observe, what shifted? Start wherever feels natural." },
-  sunday_story:    { label: "Sunday Story",   color: "#F5C642", watson: "What's the story this week? The experience, the insight, the moment that's worth sharing. Start anywhere." },
-  podcast_script:  { label: "Podcast Script",  color: "#F5C642", watson: "What's this episode about? Tell me the topic and who you're talking to, and we'll shape the conversation from there." },
-  twitter_thread:  { label: "Twitter Thread",  color: "#a080f5", watson: "What's the thread about? Give me the core idea and the hook, and we'll break it into beats." },
-  essay:           { label: "Essay",          color: "#4A90D9", watson: "What's the central argument you want to make? Give me the rough idea and I'll ask the questions that pull it into focus." },
-  short_video:     { label: "Short Video",    color: "#e85d75", watson: "What's the video about? What's the one thing you want the viewer to walk away knowing or feeling?" },
-  substack_note:   { label: "Substack Note",  color: "#50c8a0", watson: "What's the note? A take, a link, or a short reflection; tell me what's on your mind." },
-  talk_outline:    { label: "Talk Outline",   color: "#F5A623", watson: "What's the talk for? Tell me the audience, the occasion, and the outcome you're driving toward." },
-  email_campaign:  { label: "Email Campaign",  color: "#0D8C9E", watson: "What's the campaign goal? Who's it for, what's the sequence, and what's the one action you want them to take?" },
-  blog_post:       { label: "Blog Post",      color: "#4A90D9", watson: "What's the post about? Give me the topic and the angle, and we'll structure it for the web." },
-  executive_brief: { label: "Executive Brief", color: "#6b4dd4", watson: "What's the brief for? Audience, key points, and the decision or outcome you're supporting." },
+  essay: {
+    label: "01 Essay",
+    color: "#4A90D9",
+    watson: "What's the central argument you want to make? Give me the rough idea and I will ask the questions that pull it into focus.",
+  },
+  podcast: {
+    label: "02 Podcast",
+    color: "#F5C642",
+    watson: "What is this episode about and who are you talking to? Start with the topic and the listener you have in mind.",
+  },
+  book: {
+    label: "03 Book",
+    color: "#A080F5",
+    watson: "What is the book for and what change do you want it to create? Tell me the working title and the core promise.",
+  },
+  website: {
+    label: "04 Website",
+    color: "#0D8C9E",
+    watson: "Which page are we shaping and who is landing on it first? Start with the offer and the moment they show up.",
+  },
+  video_script: {
+    label: "05 Video Script",
+    color: "#e85d75",
+    watson: "What is the video about and where will it live? Give me the hook, the viewer, and the outcome you want.",
+  },
+  newsletter: {
+    label: "06 Newsletter",
+    color: "#50c8a0",
+    watson: "What happened this week that is worth sharing? Start with the story, the shift, or the lesson.",
+  },
+  socials: {
+    label: "07 Socials",
+    color: "#4A90D9",
+    watson: "What is the one idea you want to put into the feed? Tell me the take and where it should show up.",
+  },
+  presentation: {
+    label: "08 Presentation",
+    color: "#F5A623",
+    watson: "What is the talk for and who is in the room? Tell me the occasion, the outcome, and the one thing they should remember.",
+  },
+  business: {
+    label: "09 Business",
+    color: "#6b4dd4",
+    watson: "What are you trying to win here: a client, a project, or a renewal? Give me the stakes, the buyer, and the shape of the proposal.",
+  },
+  freestyle: {
+    label: "10 Freestyle",
+    color: "#C8961A",
+    watson: "What do you want to make that does not fit the grid? Describe it in your own words and we will build from there.",
+  },
 };
 
 const OUTPUT_TYPE_KEYS = [
-  "linkedin_post", "newsletter", "sunday_story", "podcast_script", "twitter_thread", "essay",
-  "short_video", "substack_note", "talk_outline", "email_campaign", "blog_post", "executive_brief",
+  "essay",
+  "podcast",
+  "book",
+  "website",
+  "video_script",
+  "newsletter",
+  "socials",
+  "presentation",
+  "business",
+  "freestyle",
 ] as const;
 
 // Map frontend output type keys to API output types (Watson/generate)
 const OUTPUT_TYPE_TO_API: Record<string, string> = {
-  linkedin_post: "social", newsletter: "newsletter", sunday_story: "sunday_story",
-  podcast_script: "podcast", twitter_thread: "social", essay: "essay",
-  short_video: "video", substack_note: "newsletter", talk_outline: "presentation",
-  email_campaign: "newsletter", blog_post: "essay", executive_brief: "freestyle",
+  essay: "essay",
+  podcast: "podcast",
+  book: "essay",
+  website: "presentation",
+  video_script: "video",
+  newsletter: "newsletter",
+  socials: "social",
+  presentation: "presentation",
+  business: "freestyle",
+  freestyle: "freestyle",
 };
 
 interface Message {
@@ -325,37 +377,72 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
 
 // Empty state - shown when no messages (or only Watson opening)
 const EMPTY_PROMPTS: Record<string, string> = {
-  essay: "What's the central argument you want to make?",
-  podcast_script: "What topic do you want to explore?",
-  social: "What message do you want to amplify?",
-  newsletter: "What's the through-line for this issue?",
-  linkedin_post: "What's the idea you want to put out there?",
-  twitter_thread: "What's the thread about?",
-  sunday_story: "What's the story this week?",
-  short_video: "What's the video about?",
-  substack_note: "What's the note?",
-  talk_outline: "What's the talk for?",
-  email_campaign: "What's the campaign goal?",
-  blog_post: "What's the post about?",
-  executive_brief: "What's the brief for?",
+  essay: "What is the central argument you want to make?",
+  podcast: "What is this episode about and who is listening?",
+  book: "What is the book for and what change should it create?",
+  website: "What offer are we shaping this page around?",
+  video_script: "What is the video about and where will it live?",
+  newsletter: "What story are you telling in this issue?",
+  socials: "What is the take you want to put into the feed?",
+  presentation: "What is the talk for and who is in the room?",
+  business: "What are you trying to win with this document?",
+  freestyle: "What do you want to make that does not fit a format?",
 };
 
 function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
   const prompt = EMPTY_PROMPTS[outputType] || EMPTY_PROMPTS.essay;
   const suggestions: Record<string, string[]> = {
-    linkedin_post:   ["I want to write about the future of remote work", "Why most advice about delegation is wrong", "What I learned from 500 conversations"],
-    newsletter:      ["This week I had a revelation about how I was wasting mornings", "I want to share what happened at our team offsite", "Thoughts on a book I just finished"],
-    sunday_story:    ["This week was about a conversation I almost avoided", "Story about a failure that turned into a framework", "Reflection on year three of running my business"],
-    podcast_script:  ["Solo episode on what I learned from a bad hire", "Interview prep for a conversation about AI and creativity", "Topic breakdown for my next 3 episodes"],
-    twitter_thread:  ["Thread on my creative process", "Why execution beats ideas", "The one thing most consultants miss"],
-    essay:           ["I want to write about the future of remote work", "Help me make the case for slow thinking in a fast world", "I have a contrarian take on productivity culture"],
-    short_video:     ["60-second take on why execution beats ideas", "Explainer video on my consulting framework", "Behind-the-scenes look at how I actually work"],
-    substack_note:   ["A take on the latest AI news", "Link to a piece that changed my mind", "Short reflection on this week"],
-    talk_outline:    ["Keynote for a leadership summit, 45 minutes", "Sales deck for a new service offering", "Team strategy presentation for Q2"],
-    email_campaign:  ["Launch sequence for a new product", "Re-engagement series for dormant subscribers", "Nurture sequence for leads"],
-    blog_post:       ["How we built our content system", "Lessons from 10 years of thought leadership", "Why most thought leaders sound the same"],
-    executive_brief: ["Board update on Q2 strategy", "Investment memo for a new initiative", "Summary for the leadership team"],
+    essay: [
+      "I want to write about the future of remote work.",
+      "Help me make the case for slow thinking in a fast world.",
+      "I have a contrarian take on how leaders should communicate.",
+    ],
+    podcast: [
+      "Solo episode on a mistake I made and what it taught me.",
+      "Conversation about where my industry is actually going.",
+      "Three-part series to introduce my core framework.",
+    ],
+    book: [
+      "Book that captures the philosophy behind my work.",
+      "Short book I can hand to new clients as an onboarding guide.",
+      "Field guide that turns my talks into a repeatable system.",
+    ],
+    website: [
+      "Homepage that explains my offer in plain language.",
+      "Services page that makes it clear who I am for.",
+      "About page that tells the real story behind my work.",
+    ],
+    video_script: [
+      "60-second video on the one thing my best clients have in common.",
+      "Explainer video that walks through my framework.",
+      "Behind-the-scenes video on how I actually work with clients.",
+    ],
+    newsletter: [
+      "Story from this week that changed how I see my work.",
+      "Roundup of three signals my audience should know about.",
+      "Letter to my list about a shift in my offer.",
+    ],
+    socials: [
+      "Take on a trend in my space that I disagree with.",
+      "Short thread breaking down a framework I use.",
+      "Quote and reaction to something my audience is already talking about.",
+    ],
+    presentation: [
+      "Keynote for a leadership summit, 45 minutes.",
+      "Sales deck for a new service offering.",
+      "Internal strategy presentation for my team.",
+    ],
+    business: [
+      "Proposal for a new advisory engagement.",
+      "Pitch deck for a workshop series.",
+      "RFP response for a corporate client.",
+    ],
+    freestyle: [
+      "I have a strange idea and I am not sure what format it belongs in.",
+      "I want to rewrite something that already exists but make it mine.",
+      "I want to experiment with a new way of explaining an old idea.",
+    ],
   };
   const typeSuggestions = suggestions[outputType] || suggestions.essay;
 

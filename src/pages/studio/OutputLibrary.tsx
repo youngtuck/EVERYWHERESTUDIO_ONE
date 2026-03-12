@@ -56,7 +56,8 @@ export default function OutputLibrary() {
     });
   }, [user]);
 
-  const filtered = outputs.filter((o) => {
+  const vaultOnly = outputs.filter((o) => (o.score ?? 0) >= 800);
+  const filtered = vaultOnly.filter((o) => {
     const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || o.output_type === filter;
     return matchSearch && matchFilter;
@@ -94,7 +95,7 @@ export default function OutputLibrary() {
               letterSpacing: "-0.02em",
             }}
           >
-            Outputs
+            The Vault
           </h1>
           <p
             style={{
@@ -105,7 +106,7 @@ export default function OutputLibrary() {
               marginBottom: 0,
             }}
           >
-            {outputs.length} pieces produced
+            {outputs.length} pieces in the vault
           </p>
         </div>
         <button

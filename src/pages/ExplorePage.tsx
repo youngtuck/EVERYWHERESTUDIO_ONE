@@ -1292,7 +1292,7 @@ export default function ExplorePage() {
             {/* Counters */}
             <FadeInSection style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",marginTop:48,borderTop:`1px solid ${bc}`}}>
               <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={40} suffix="+" label="AI Specialists" accent={T.watchA} /></div>
-              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={12} label="Output Formats" accent={T.workA} /></div>
+              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={10} label="Output Formats" accent={T.workA} /></div>
               <div style={{padding:isMobile ? "24px 16px" : "36px 28px"}}><Counter target={7} label="Quality Gates" accent={T.wrapA} /></div>
             </FadeInSection>
           </div>

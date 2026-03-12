@@ -43,8 +43,8 @@
       "description": "Start a new content session with Watson"
     },
     {
-      "name": "Outputs",
-      "short_name": "Outputs",
+      "name": "The Vault",
+      "short_name": "Vault",
       "url": "/studio/outputs",
       "description": "View your content library"
     },

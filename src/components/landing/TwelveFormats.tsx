@@ -1,23 +1,21 @@
 const FORMATS = [
-  { name:"LinkedIn Post", desc:"Native. CTA-optimized." },
-  { name:"Newsletter", desc:"Story-forward. Audience-tuned." },
-  { name:"Sunday Story", desc:"10 pieces, one session." },
-  { name:"Podcast Script", desc:"SSML-ready." },
-  { name:"Twitter Thread", desc:"Hook, build, land." },
-  { name:"Essay", desc:"1200–2000 words, referenced." },
-  { name:"Short Video", desc:"Script, hook, caption." },
-  { name:"Substack Note", desc:"Brief. Personal. Punchy." },
-  { name:"Talk Outline", desc:"Built for the stage." },
-  { name:"Email Campaign", desc:"Sequence with intent." },
-  { name:"Blog Post", desc:"SEO-optimized." },
-  { name:"Executive Brief", desc:"Decision-ready." },
+  { name: "Essay", desc: "Long-form argument or narrative." },
+  { name: "Podcast", desc: "Episode outline and script." },
+  { name: "Book", desc: "Chapter-ready structure and beats." },
+  { name: "Website", desc: "Homepage, about, and key pages." },
+  { name: "Video Script", desc: "Script, hook, thumbnail copy." },
+  { name: "Newsletter", desc: "Story-forward, audience-tuned." },
+  { name: "Socials", desc: "Multi-platform posts and threads." },
+  { name: "Presentation", desc: "Talk outline and slide beats." },
+  { name: "Business", desc: "Proposals, pitches, RFPs, sales docs." },
+  { name: "Freestyle", desc: "Anything that does not fit the grid." },
 ];
 export default function TwelveFormats() {
   return (
     <section style={{ padding:"100px 32px", background:"var(--bg)", borderTop:"1px solid var(--line)" }}>
       <div style={{ maxWidth:1160, margin:"0 auto" }}>
         <div style={{ maxWidth:480, marginBottom:64 }}>
-          <p className="eyebrow" style={{ marginBottom:20 }}>Output Formats</p>
+          <p className="eyebrow" style={{ marginBottom:20 }}>10 Output Formats</p>
           <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", lineHeight:1.08 }}>
             One idea,<br /><em style={{fontStyle:"italic"}}>twelve formats.</em>
           </h2>

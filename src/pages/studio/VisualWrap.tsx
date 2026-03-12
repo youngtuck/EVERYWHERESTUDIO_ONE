@@ -294,7 +294,7 @@ export default function VisualWrap() {
           className="btn-ghost"
           onClick={() => navigate("/studio/outputs")}
         >
-          Back to Outputs
+          Back to The Vault
         </button>
       </div>
     );

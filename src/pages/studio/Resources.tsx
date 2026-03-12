@@ -111,7 +111,7 @@ export default function Resources() {
             lineHeight: 1.6,
           }}
         >
-          Your Voice DNA, Brand Guide, and Publication Standards. Set once and it runs in every session.
+          Three layers run in every session: Voice DNA, Brand DNA, and Method DNA. Set once and the system carries them everywhere.
         </p>
       </div>
 

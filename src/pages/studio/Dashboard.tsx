@@ -54,12 +54,12 @@ function typeToLabel(outputType: string): string {
     .join(" ");
 }
 
-// ── Quick Start config (4 cards only) ────────────────────────────────────────
+// ── Quick Start config (templates on top of base types) ─────────────────────
 const QUICK_START = [
-  { key: "essay", label: "Essay", subtitle: "Long-form narrative", icon: FileText },
-  { key: "podcast", label: "Podcast Script", subtitle: "Episode from any topic", icon: Mic },
-  { key: "social", label: "Social Package", subtitle: "Multi-platform posts", icon: Share2 },
-  { key: "newsletter", label: "Newsletter", subtitle: "Campaign-ready email", icon: Mail },
+  { key: "essay", label: "Sunday Story (Essay)", subtitle: "Weekly reflection in your voice", icon: FileText },
+  { key: "podcast", label: "Get Current (Podcast)", subtitle: "One focused conversation per episode", icon: Mic },
+  { key: "socials", label: "Signal Sweep (Socials)", subtitle: "Multi-platform posts from one idea", icon: Share2 },
+  { key: "newsletter", label: "Field Notes (Newsletter)", subtitle: "Story-forward update to your list", icon: Mail },
 ];
 
 interface OutputRow {
@@ -108,6 +108,8 @@ export default function Dashboard() {
   }, [user]);
 
   const firstName = profileName || "there";
+  const inProgress = outputs.filter((o) => (o.score ?? 0) < 800);
+  const vault = outputs.filter((o) => (o.score ?? 0) >= 800);
   const recentThree = outputs.slice(0, 3);
   const outputsCreated = outputs.length;
   const avgBetterish =
@@ -367,7 +369,7 @@ export default function Dashboard() {
             ))}
       </div>
 
-      {/* 3. Recent Activity */}
+      {/* 3. In Progress + Vault activity */}
       <div style={{ marginBottom: 32 }}>
         <div
           style={{
@@ -386,7 +388,7 @@ export default function Dashboard() {
               color: "var(--text-tertiary, var(--fg-3))",
             }}
           >
-            RECENT
+            IN PROGRESS
           </span>
           <button
             onClick={() => nav("/studio/outputs")}
@@ -408,7 +410,7 @@ export default function Dashboard() {
               e.currentTarget.style.textDecoration = "none";
             }}
           >
-            View all
+            Open The Vault
           </button>
         </div>
 
@@ -425,7 +427,7 @@ export default function Dashboard() {
               }}
             />
           ))
-        ) : recentThree.length === 0 ? (
+        ) : inProgress.length === 0 ? (
           <div
             style={{
               background: "var(--surface-white)",
@@ -438,7 +440,7 @@ export default function Dashboard() {
               color: "var(--text-secondary)",
             }}
           >
-            No outputs yet. Start a session to create your first.{" "}
+            No work in progress. Start a session to move something forward.{" "}
             <button
               onClick={() => nav("/studio/work")}
               style={{
@@ -457,7 +459,7 @@ export default function Dashboard() {
             </button>
           </div>
         ) : (
-          recentThree.map((o, i) => {
+          inProgress.slice(0, 3).map((o, i) => {
             const scoreStyle = getScoreColor(o.score);
             return (
               <button

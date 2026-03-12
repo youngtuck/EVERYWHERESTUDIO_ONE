@@ -329,7 +329,7 @@ export default function OutputDetail() {
           className="btn-ghost"
           onClick={() => navigate("/studio/outputs")}
         >
-          Back to Outputs
+          Back to The Vault
         </button>
       </div>
     );
@@ -399,7 +399,7 @@ export default function OutputDetail() {
           onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
           onMouseLeave={e => { e.currentTarget.style.color = "rgba(0,0,0,0.4)"; }}
         >
-          <ArrowLeft size={16} /> Outputs
+          <ArrowLeft size={16} /> The Vault
         </button>
         <button
           onClick={() => navigate(`/studio/work/new?type=${output!.output_type}`)}

@@ -1,5 +1,5 @@
 import { useTheme } from "../../context/ThemeContext";
-const ITEMS = ["Watch · Work · Wrap","Voice DNA","7 Quality Gates","Betterish Score","Sentinel Intelligence","Composed Intelligence","Thought Leaders","Ideas to Impact","40 Agents","12 Formats","Watch · Work · Wrap","Voice DNA","7 Quality Gates","Betterish Score","Sentinel Intelligence","Composed Intelligence","Thought Leaders","Ideas to Impact","40 Agents","12 Formats"];
+const ITEMS = ["Watch · Work · Wrap","Voice DNA","7 Quality Gates","Betterish Score","Sentinel Intelligence","Composed Intelligence","Thought Leaders","Ideas to Impact","40 Agents","10 Output Formats","Watch · Work · Wrap","Voice DNA","7 Quality Gates","Betterish Score","Sentinel Intelligence","Composed Intelligence","Thought Leaders","Ideas to Impact","40 Agents","10 Output Formats"];
 export default function Marquee() {
   const { theme } = useTheme();
   const dark = theme === "dark";

@@ -10,7 +10,7 @@ const NAV = [
   { path: "/studio/dashboard", label: "My Studio", icon: LayoutDashboard },
   { path: "/studio/work",      label: "Work",      icon: PenLine },
   { path: "/studio/watch",     label: "Watch",     icon: Eye,    badge: "11" },
-  { path: "/studio/outputs",   label: "Outputs",   icon: FileText },
+  { path: "/studio/outputs",   label: "The Vault", icon: FileText },
   { path: "/studio/projects",  label: "Projects",  icon: FolderOpen },
   { path: "/studio/lot",       label: "The Lot",   icon: Bookmark },
 ];
