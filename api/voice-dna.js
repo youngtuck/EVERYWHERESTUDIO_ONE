@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     const client = new Anthropic({ apiKey });
 
     const system =
-      "You are a Voice DNA analyst. Given a set of interview answers, produce a structured Voice DNA profile. You must respond with ONLY valid JSON, no preamble, no markdown code blocks, no explanation. Just the raw JSON object.";
+      "You are a Voice DNA analyst. Given a set of interview answers, produce a structured Voice DNA profile. You must respond with ONLY valid JSON that can be parsed by JSON.parse in JavaScript. Use double quotes for all keys and string values. Do not include comments, placeholders, angle brackets, or any trailing commas. No preamble, no markdown code blocks, no explanation. Just the raw JSON object.";
 
     const lines = [`Interview responses from ${userName}:`];
     for (const [key, value] of Object.entries(responses)) {
@@ -32,26 +32,26 @@ export default async function handler(req, res) {
     }
     lines.push(
       "",
-      "Generate a Voice DNA profile as a JSON object with this exact structure:",
+      "Generate a Voice DNA profile as a JSON object with this exact shape. Fill in realistic numeric scores (0-100) and text based on the interview:",
       "{",
-      "  voiceDna: {",
-      "    voice_fidelity: <number 0-100>,",
-      "    voice_layer: <number 0-100>,",
-      "    value_layer: <number 0-100>,",
-      "    personality_layer: <number 0-100>,",
-      "    traits: {",
-      "      vocabulary_and_syntax: <number 0-100>,",
-      "      tonal_register: <number 0-100>,",
-      "      rhythm_and_cadence: <number 0-100>,",
-      "      metaphor_patterns: <number 0-100>,",
-      "      structural_habits: <number 0-100>",
+      '  "voiceDna": {',
+      '    "voice_fidelity": 87,',
+      '    "voice_layer": 82,',
+      '    "value_layer": 79,',
+      '    "personality_layer": 91,',
+      '    "traits": {',
+      '      "vocabulary_and_syntax": 84,',
+      '      "tonal_register": 76,',
+      '      "rhythm_and_cadence": 88,',
+      '      "metaphor_patterns": 72,',
+      '      "structural_habits": 80',
       "    },",
-      "    summary: <string, 2-3 sentences describing this person's voice>,",
-      "    signature_phrases: [<array of 3-5 phrases typical of this voice>],",
-      "    prohibited_patterns: [<array of 3-5 patterns to avoid>],",
-      "    mode: 'single'",
+      '    "summary": "2-3 sentences describing this person\\'s voice in plain language.",',
+      '    "signature_phrases": ["example phrase 1", "example phrase 2", "example phrase 3"],',
+      '    "prohibited_patterns": ["pattern to avoid 1", "pattern to avoid 2", "pattern to avoid 3"],',
+      '    "mode": "single"',
       "  },",
-      "  markdown: <string, full Voice DNA .md document in the same format as VOICE_DNA_SYSTEM.md>",
+      '  "markdown": "Full Voice DNA .md document in the same format as VOICE_DNA_SYSTEM.md, escaped as a JSON string."',
       "}"
     );
 

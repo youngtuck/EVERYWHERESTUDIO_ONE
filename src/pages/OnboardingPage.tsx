@@ -51,8 +51,10 @@ export default function OnboardingPage() {
     setProcessing(true);
     setErrorMessage(null);
     try {
+      const fullName = (user.user_metadata?.full_name as string | undefined) || user.email || "the user";
       const result: VoiceDNAResponse = await generateVoiceDNAFromInterview({
         responses: payload.interviewResponses,
+        userName: fullName,
       });
       const finalVoiceDna: VoiceDNA = {
         ...result.voiceDna,

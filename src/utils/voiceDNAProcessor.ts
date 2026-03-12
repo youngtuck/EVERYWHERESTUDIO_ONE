@@ -36,12 +36,17 @@ export interface VoiceDNAResponse {
 
 export async function generateVoiceDNAFromInterview(payload: {
   responses: Record<string, string>;
+  userName?: string;
 }): Promise<VoiceDNAResponse> {
   const url = `${API_BASE}/api/voice-dna`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "interview", responses: payload.responses }),
+    body: JSON.stringify({
+      type: "interview",
+      responses: payload.responses,
+      userName: payload.userName,
+    }),
   });
   if (!res.ok) {
     throw new Error("Failed to generate Voice DNA from interview.");
