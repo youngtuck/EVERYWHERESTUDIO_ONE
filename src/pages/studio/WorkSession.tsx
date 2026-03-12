@@ -7,6 +7,9 @@ import { useToast } from "../../context/ToastContext";
 import { useMobile } from "../../hooks/useMobile";
 import { useTheme } from "../../context/ThemeContext";
 import { getScoreColor } from "../../utils/scoreColor";
+import { runFullPipeline } from "../../lib/agents/full-pipeline";
+import type { GateResult, PipelineResult, PipelineStatus } from "../../lib/agents/types";
+import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB - minimal 2D system glyph
@@ -769,6 +772,14 @@ export default function WorkSession() {
   const [generatedScore, setGeneratedScore] = useState(0);
   const [generatedOutputId, setGeneratedOutputId] = useState<string>("new");
   const [voiceProfile, setVoiceProfile] = useState<object | null>(null);
+  const [voiceDnaMd, setVoiceDnaMd] = useState<string>("");
+  const [brandDnaMd, setBrandDnaMd] = useState<string | undefined>(undefined);
+  const [methodDnaMd, setMethodDnaMd] = useState<string | undefined>(undefined);
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>("IDLE");
+  const [currentStage, setCurrentStage] = useState<string | undefined>(undefined);
+  const [pipelineGateResults, setPipelineGateResults] = useState<GateResult[]>([]);
+  const [blockedAt, setBlockedAt] = useState<string | undefined>(undefined);
+  const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -780,10 +791,15 @@ export default function WorkSession() {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("voice_profile")
+      .select("voice_profile, voice_dna_md, brand_dna_md, method_dna_md")
       .eq("id", user.id)
       .single()
-      .then(({ data }) => setVoiceProfile(data?.voice_profile || null));
+      .then(({ data }) => {
+        setVoiceProfile(data?.voice_profile || null);
+        setVoiceDnaMd((data?.voice_dna_md as string) || "");
+        setBrandDnaMd((data?.brand_dna_md as string | null) || undefined);
+        setMethodDnaMd((data?.method_dna_md as string | null) || undefined);
+      });
   }, [user]);
 
   useEffect(() => {
@@ -900,6 +916,79 @@ export default function WorkSession() {
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Generation failed.");
       setPhase("input");
+    }
+  };
+
+  const handleRunPipeline = async () => {
+    if (!user || !generatedOutputId || generatedOutputId === "new" || !generatedContent) return;
+    setPipelineStatus("RUNNING");
+    setCurrentStage("gates");
+    setPipelineGateResults([]);
+    setBlockedAt(undefined);
+    setPipelineResult(null);
+
+    const context = {
+      userId: user.id,
+      outputId: generatedOutputId,
+      outputType: outputType as any,
+      voiceDnaMd,
+      brandDnaMd,
+      methodDnaMd,
+      targetPlatform: undefined,
+    };
+
+    const result = await runFullPipeline(generatedContent, context, {
+      onStageStart: (stage) => {
+        setCurrentStage(stage);
+      },
+      onGateComplete: (gateResult, index) => {
+        setPipelineGateResults((prev) => {
+          const next = [...prev];
+          next[index] = gateResult;
+          return next;
+        });
+      },
+      onStageComplete: () => {},
+    });
+
+    setPipelineResult(result);
+    setPipelineStatus(result.status);
+    setBlockedAt(result.blockedAt);
+
+    await supabase.from("pipeline_runs").insert({
+      output_id: generatedOutputId,
+      user_id: user.id,
+      status: result.status,
+      original_draft: result.originalDraft,
+      final_draft: result.finalDraft,
+      gate_results: result.gateResults,
+      betterish_score: result.betterishScore,
+      betterish_total: result.betterishScore?.total ?? null,
+      wrap_applied: result.wrapApplied,
+      qa_result: result.qaResult,
+      completeness_result: result.completenessResult,
+      blocked_at: result.blockedAt ?? null,
+      duration_ms: result.totalDurationMs,
+    });
+
+    if (result.status === "PASSED") {
+      await supabase
+        .from("outputs")
+        .update({
+          content: result.finalDraft,
+          score: result.betterishScore?.total ?? generatedScore,
+          content_state: "vault",
+        })
+        .eq("id", generatedOutputId);
+      toast("Quality pipeline passed. Output moved to The Vault.");
+    } else if (result.status === "BLOCKED") {
+      await supabase
+        .from("outputs")
+        .update({
+          content_state: "in_progress",
+        })
+        .eq("id", generatedOutputId);
+      toast("Quality pipeline blocked. Review gate feedback.");
     }
   };
 
@@ -1061,30 +1150,95 @@ export default function WorkSession() {
         )}
 
         {phase === "complete" && (
-          <div style={{
-            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40,
-          }}>
-            <div className="card" style={{
-              maxWidth: 400, width: "100%", padding: "var(--studio-gap-lg)",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 20, textAlign: "center",
-            }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: "var(--studio-radius)",
-                background: "var(--bg-2)", border: "1px solid var(--line)",
-                display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fg-2)",
-              }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              padding: 32,
+              gap: 16,
+            }}
+          >
+            <div
+              className="card"
+              style={{
+                maxWidth: 480,
+                width: "100%",
+                padding: "var(--studio-gap-lg)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 20,
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "var(--studio-radius)",
+                  background: "var(--bg-2)",
+                  border: "1px solid var(--line)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "var(--fg-2)",
+                }}
+              >
                 <FileText size={28} strokeWidth={1.5} />
               </div>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", margin: 0, letterSpacing: "-0.02em", fontFamily: "'DM Sans', sans-serif" }}>
+              <h2
+                style={{
+                  fontSize: 24,
+                  fontWeight: 700,
+                  color: "#1a1a1a",
+                  margin: 0,
+                  letterSpacing: "-0.02em",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
                 Your {type.label} is ready
               </h2>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 32, height: 3, borderRadius: 2, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
-                  <div style={{ height: "100%", borderRadius: 2, width: `${Math.min(100, generatedScore / 10)}%`, background: getScoreColor(generatedScore).fill }} />
+                <div
+                  style={{
+                    width: 32,
+                    height: 3,
+                    borderRadius: 2,
+                    background: "rgba(0,0,0,0.04)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      borderRadius: 2,
+                      width: `${Math.min(100, generatedScore / 10)}%`,
+                      background: getScoreColor(generatedScore).fill,
+                    }}
+                  />
                 </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: getScoreColor(generatedScore).text, fontVariantNumeric: "tabular-nums" }}>{generatedScore}</span>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: getScoreColor(generatedScore).text,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {generatedScore}
+                </span>
               </div>
-              <div style={{ display: "flex", gap: 10, width: "100%", flexDirection: "column" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  width: "100%",
+                  flexDirection: "column",
+                }}
+              >
                 <button
                   type="button"
                   className="btn-primary"
@@ -1101,8 +1255,52 @@ export default function WorkSession() {
                 >
                   Start Over
                 </button>
+                <button
+                  type="button"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border-subtle)",
+                    background:
+                      pipelineStatus === "RUNNING"
+                        ? "rgba(0,0,0,0.02)"
+                        : "var(--surface-white)",
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color:
+                      pipelineStatus === "RUNNING"
+                        ? "var(--text-tertiary)"
+                        : "var(--text-primary)",
+                    cursor:
+                      pipelineStatus === "RUNNING" || !generatedOutputId || generatedOutputId === "new"
+                        ? "default"
+                        : "pointer",
+                  }}
+                  disabled={
+                    pipelineStatus === "RUNNING" ||
+                    !generatedOutputId ||
+                    generatedOutputId === "new"
+                  }
+                  onClick={handleRunPipeline}
+                >
+                  {pipelineStatus === "RUNNING"
+                    ? "Running quality pipeline..."
+                    : "Run Quality Pipeline"}
+                </button>
               </div>
             </div>
+
+            {pipelineStatus !== "IDLE" && (
+              <div style={{ maxWidth: 720, width: "100%", marginTop: 8 }}>
+                <PipelineProgress
+                  status={pipelineStatus}
+                  currentStage={currentStage}
+                  blockedAt={blockedAt}
+                />
+              </div>
+            )}
           </div>
         )}
 

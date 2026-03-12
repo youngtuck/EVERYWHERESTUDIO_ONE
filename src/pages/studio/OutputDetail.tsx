@@ -1,15 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import {
-  ArrowLeft,
-  Globe,
-  FileText,
-  Presentation,
-  Pencil,
-  Clipboard,
-} from "lucide-react";
+import { ArrowLeft, Globe, FileText, Presentation, Pencil, Clipboard } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
+import type { BetterishScore, GateResult } from "../../lib/agents/types";
+import { GateResultsPanel } from "../../components/pipeline/GateResultsPanel";
+import { BetterishScoreCard } from "../../components/pipeline/BetterishScoreCard";
+import { PipelineBlockedAlert } from "../../components/pipeline/PipelineBlockedAlert";
 
 interface Output {
   id: string;
@@ -30,6 +27,13 @@ interface Output {
     summary?: string;
     [key: string]: unknown;
   } | null;
+}
+
+interface PipelineRunRow {
+  status: "PASSED" | "BLOCKED" | "ERROR";
+  gate_results: GateResult[];
+  betterish_score: BetterishScore | null;
+  blocked_at: string | null;
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────
@@ -176,6 +180,7 @@ export default function OutputDetail() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [toast, setToast] = useState({ message: "", visible: false });
+  const [pipelineRun, setPipelineRun] = useState<PipelineRunRow | null>(null);
 
   const showToast = useCallback((message: string) => {
     setToast({ message, visible: true });
@@ -193,9 +198,23 @@ export default function OutputDetail() {
       .select("*")
       .eq("id", id)
       .single()
-      .then(({ data, error }) => {
-        if (error || !data) setNotFound(true);
-        else setOutput(data);
+      .then(async ({ data, error }) => {
+        if (error || !data) {
+          setNotFound(true);
+          setLoading(false);
+          return;
+        }
+        setOutput(data);
+        // Load most recent pipeline run for this output, if any
+        const { data: runs } = await supabase
+          .from("pipeline_runs")
+          .select("status, gate_results, betterish_score, blocked_at")
+          .eq("output_id", id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (runs && runs.length > 0) {
+          setPipelineRun(runs[0] as PipelineRunRow);
+        }
         setLoading(false);
       });
   }, [id]);
@@ -623,6 +642,22 @@ export default function OutputDetail() {
           {output!.content}
         </pre>
       </div>
+
+      {pipelineRun && (
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+          <BetterishScoreCard score={pipelineRun.betterish_score} />
+          <GateResultsPanel results={pipelineRun.gate_results} blockedAt={pipelineRun.blocked_at || undefined} />
+          {pipelineRun.status === "BLOCKED" && (
+            <PipelineBlockedAlert
+              blockedAt={pipelineRun.blocked_at || undefined}
+              feedback={
+                pipelineRun.gate_results.find((g) => g.status === "FAIL")?.feedback ||
+                pipelineRun.gate_results[pipelineRun.gate_results.length - 1]?.feedback
+              }
+            />
+          )}
+        </div>
+      )}
 
       {/* Quality gates */}
       {gateEntries.length > 0 && (
