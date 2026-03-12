@@ -24,6 +24,7 @@ export default function OnboardingPage() {
   const [method, setMethod] = useState<Method>(null);
   const [processing, setProcessing] = useState(false);
   const [voiceDNA, setVoiceDNA] = useState<VoiceDNA | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -39,6 +40,7 @@ export default function OnboardingPage() {
 
   const handleMethodSelect = (value: Method) => {
     setMethod(value);
+    setErrorMessage(null);
     setStep(2);
   };
 
@@ -47,6 +49,7 @@ export default function OnboardingPage() {
   }) => {
     if (!user) return;
     setProcessing(true);
+    setErrorMessage(null);
     try {
       const result: VoiceDNAResponse = await generateVoiceDNAFromInterview({
         responses: payload.interviewResponses,
@@ -70,7 +73,9 @@ export default function OnboardingPage() {
         .eq("id", user.id);
 
       setStep(3);
-    } catch {
+    } catch (err) {
+      console.error("Voice DNA interview processing failed", err);
+      setErrorMessage("We could not analyze your responses. Please try again in a moment.");
       setProcessing(false);
     }
   };
@@ -78,6 +83,7 @@ export default function OnboardingPage() {
   const handleUploadComplete = async (payload: { fileUrls: string[] }) => {
     if (!user) return;
     setProcessing(true);
+    setErrorMessage(null);
     try {
       const result: VoiceDNAResponse = await generateVoiceDNAFromUploads({
         fileUrls: payload.fileUrls,
@@ -100,7 +106,9 @@ export default function OnboardingPage() {
         .eq("id", user.id);
 
       setStep(3);
-    } catch {
+    } catch (err) {
+      console.error("Voice DNA upload processing failed", err);
+      setErrorMessage("We could not analyze your writing samples. Please try again.");
       setProcessing(false);
     }
   };
@@ -160,6 +168,22 @@ export default function OnboardingPage() {
       <ProgressIndicator currentStep={step} totalSteps={4} />
 
       <main style={{ width: "100%", maxWidth: 640, flex: 1 }}>
+        {errorMessage && (
+          <div
+            style={{
+              marginBottom: 16,
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid rgba(220,38,38,0.6)",
+              background: "rgba(220,38,38,0.12)",
+              fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+              fontSize: 13,
+              color: "#fee2e2",
+            }}
+          >
+            {errorMessage}
+          </div>
+        )}
         {showStep1 && (
           <section
             style={{
