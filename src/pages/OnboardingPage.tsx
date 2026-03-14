@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MessageSquare, FileUp, Building2, ArrowRight } from "lucide-react";
+import { MessageSquare, FileUp } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -7,10 +7,10 @@ import { ProgressIndicator } from "../components/onboarding/ProgressIndicator";
 import { VoiceInterviewChat } from "../components/onboarding/VoiceInterviewChat";
 import { VoiceUpload } from "../components/onboarding/VoiceUpload";
 import { VoiceDNAReview } from "../components/onboarding/VoiceDNAReview";
-import { BrandDNAForm } from "../components/onboarding/BrandDNAForm";
+import { BrandDNAChat } from "../components/onboarding/BrandDNAChat";
 import type { VoiceDNA, VoiceDNAResponse } from "../utils/voiceDNAProcessor";
 import { generateVoiceDNAFromInterview, generateVoiceDNAFromUploads } from "../utils/voiceDNAProcessor";
-import { generateBrandDNA, type BrandDNAResponse } from "../utils/brandDNAProcessor";
+import type { BrandDNAResponse } from "../utils/brandDNAProcessor";
 
 type Step = 1 | 2 | 3 | 4;
 type Method = "interview" | "upload" | null;
@@ -140,6 +140,9 @@ export default function OnboardingPage() {
     goToDashboard();
   };
 
+  const brandStepUserName =
+    (user?.user_metadata?.full_name as string | undefined) || user?.email || "the user";
+
   const firstName =
     (user?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ||
     (user?.email ? user.email.split("@")[0] : "there");
@@ -148,7 +151,7 @@ export default function OnboardingPage() {
   const showStep2Interview = step === 2 && method === "interview";
   const showStep2Upload = step === 2 && method === "upload";
   const showStep3 = step === 3 && voiceDNA;
-  const showStep4 = step === 4;
+  const showStep4 = step === 4; // Brand DNA (Watson conversation)
 
   return (
     <div
@@ -379,96 +382,27 @@ export default function OnboardingPage() {
 
         {showStep4 && (
           <section>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(0, 1fr))",
-                gap: 16,
-                marginBottom: 32,
-              }}
-            >
-              <div
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 12,
-                  padding: "24px 20px",
-                }}
-              >
-                <Building2 size={24} color="#C8961A" />
-                <h3
-                  style={{
-                    marginTop: 14,
-                    marginBottom: 6,
-                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-                    fontSize: 16,
-                    fontWeight: 600,
-                  }}
-                >
-                  Set up Brand DNA
-                </h3>
-                <p
-                  style={{
-                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-                    fontSize: 13,
-                    color: "rgba(255,255,255,0.6)",
-                  }}
-                >
-                  Upload your brand guide, logo, messaging docs, and style guidelines.
-                </p>
-              </div>
-
+            <BrandDNAChat
+              userName={brandStepUserName}
+              onComplete={handleBrandDnaComplete}
+            />
+            <div style={{ marginTop: 16, textAlign: "center" }}>
               <button
                 type="button"
                 onClick={handleSkipBrandDna}
                 style={{
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 12,
-                  padding: "24px 20px",
-                  textAlign: "left",
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  fontSize: 13,
+                  color: "rgba(255,255,255,0.4)",
+                  background: "none",
+                  border: "none",
                   cursor: "pointer",
+                  textDecoration: "underline",
                 }}
               >
-                <ArrowRight size={24} color="#C8961A" />
-                <h3
-                  style={{
-                    marginTop: 14,
-                    marginBottom: 6,
-                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-                    fontSize: 16,
-                    fontWeight: 600,
-                  }}
-                >
-                  Skip for now
-                </h3>
-                <p
-                  style={{
-                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
-                    fontSize: 13,
-                    color: "rgba(255,255,255,0.6)",
-                  }}
-                >
-                  You can set this up any time in Settings. Go to dashboard.
-                </p>
+                Skip for now — go to dashboard
               </button>
             </div>
-
-            <BrandDNAForm
-              onComplete={async ({ brandDna }) => {
-                const result: BrandDNAResponse = await generateBrandDNA({
-                  company_name: brandDna.company_name,
-                  industry: brandDna.industry,
-                  tagline: brandDna.tagline,
-                  brand_voice_description: brandDna.brand_voice_description,
-                  tone_attributes: brandDna.tone_attributes,
-                  prohibited_language: brandDna.prohibited_language,
-                  key_messages: brandDna.key_messages,
-                });
-                await handleBrandDnaComplete(result);
-              }}
-              onSkip={handleSkipBrandDna}
-            />
           </section>
         )}
       </main>

@@ -15,8 +15,12 @@ RULES:
 
 OUTPUT TYPES: essay, newsletter, presentation, social, podcast, video, sunday_story, freestyle.`;
 
-function buildWatsonSystem(outputType, voiceProfile) {
-  let system = WATSON_SYSTEM;
+function buildWatsonSystem(outputType, voiceProfile, voiceDnaMd) {
+  let system = "";
+  if (voiceDnaMd && typeof voiceDnaMd === "string" && voiceDnaMd.trim()) {
+    system += "VOICE DNA - Write exactly like this person:\n\n" + voiceDnaMd.trim() + "\n\n---\n\n";
+  }
+  system += WATSON_SYSTEM;
   if (voiceProfile) {
     system += `\n\nUSER VOICE PROFILE:\n- Role: ${voiceProfile.role}\n- Audience: ${voiceProfile.audience}\n- Tone: ${voiceProfile.tone}\n- Writing sample: "${voiceProfile.writing_sample?.slice(0, 400)}"\n\nMatch this person's voice exactly when summarizing their ideas.`;
   }
@@ -35,10 +39,15 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured." });
 
-  const { messages = [], outputType = "freestyle", voiceProfile = null } = req.body;
+  const { messages = [], outputType = "freestyle", voiceProfile = null, voiceDnaMd, systemPromptOverride } = req.body;
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array required." });
   }
+
+  const systemPrompt =
+    typeof systemPromptOverride === "string" && systemPromptOverride.trim()
+      ? systemPromptOverride.trim()
+      : buildWatsonSystem(outputType, voiceProfile, voiceDnaMd);
 
   try {
     const client = new Anthropic({ apiKey });
@@ -50,7 +59,7 @@ export default async function handler(req, res) {
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: buildWatsonSystem(outputType, voiceProfile),
+      system: systemPrompt,
       messages: claudeMessages,
     });
 

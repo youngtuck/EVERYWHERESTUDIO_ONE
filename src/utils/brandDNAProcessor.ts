@@ -24,10 +24,11 @@ export interface BrandDNA {
 }
 
 export interface BrandDNAResponse {
-  brandDna: BrandDNA;
+  brandDna: BrandDNA | Record<string, unknown>;
   markdown: string;
 }
 
+/** Brand DNA from structured form (company name, industry, etc.). */
 export async function generateBrandDNA(input: {
   company_name: string;
   industry: string;
@@ -45,6 +46,26 @@ export async function generateBrandDNA(input: {
   });
   if (!res.ok) {
     throw new Error("Failed to generate Brand DNA.");
+  }
+  return res.json();
+}
+
+/** Brand DNA from Watson conversation history (onboarding Brand DNA step). */
+export async function generateBrandDNAFromConversation(payload: {
+  responses: { role: string; content: string }[];
+  userName: string;
+}): Promise<BrandDNAResponse> {
+  const url = `${API_BASE}/api/brand-dna`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      responses: payload.responses,
+      userName: payload.userName,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to generate Brand DNA from conversation.");
   }
   return res.json();
 }

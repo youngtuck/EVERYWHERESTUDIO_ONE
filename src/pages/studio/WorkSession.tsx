@@ -717,22 +717,27 @@ async function requestWithRetry(
 async function chatWithWatson(
   messages: { role: string; content: string }[],
   outputTypeApi: string,
-  voiceProfile: object | null
+  voiceProfile: object | null,
+  voiceDnaMd: string
 ): Promise<{ reply: string; readyToGenerate: boolean }> {
   const url = `${API_BASE}/api/chat`;
+  const body: Record<string, unknown> = {
+    messages: messages.map((m) => ({
+      role: m.role === "assistant" ? "watson" : "user",
+      content: m.content,
+    })),
+    outputType: outputTypeApi,
+    voiceProfile,
+  };
+  if (voiceDnaMd && voiceDnaMd.trim()) {
+    body.voiceDnaMd = voiceDnaMd.trim();
+  }
   const res = await requestWithRetry(
     url,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: messages.map((m) => ({
-          role: m.role === "assistant" ? "watson" : "user",
-          content: m.content,
-        })),
-        outputType: outputTypeApi,
-        voiceProfile,
-      }),
+      body: JSON.stringify(body),
     },
     FETCH_TIMEOUT_MS
   );
@@ -858,7 +863,7 @@ export default function WorkSession() {
     const chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile);
+      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd);
       setMessages(prev => [...prev, {
         id: "w-" + Date.now(),
         role: "assistant",
