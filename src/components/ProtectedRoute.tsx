@@ -11,9 +11,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const [hasVoiceDna, setHasVoiceDna] = useState<boolean | null>(null);
   const [hasLegacyOnboarding, setHasLegacyOnboarding] = useState<boolean | null>(null);
 
+  const path = location.pathname;
+
   useEffect(() => {
     let cancelled = false;
     if (!user) return;
+    setProfileChecked(false);
     supabase
       .from("profiles")
       .select("voice_dna_completed, onboarding_complete")
@@ -32,7 +35,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, path]);
 
   if (loading || (user && !profileChecked)) {
     return (
@@ -62,7 +65,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  const path = location.pathname;
   const onboardingDone = !!hasVoiceDna || !!hasLegacyOnboarding;
 
   if (path.startsWith("/studio")) {

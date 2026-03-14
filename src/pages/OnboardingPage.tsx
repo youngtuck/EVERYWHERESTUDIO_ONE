@@ -131,12 +131,19 @@ export default function OnboardingPage() {
         brand_dna_md: result.markdown,
         brand_dna_completed: true,
         brand_dna_completed_at: new Date().toISOString(),
+        onboarding_complete: true,
       })
       .eq("id", user.id);
     goToDashboard();
   };
 
-  const handleSkipBrandDna = () => {
+  const handleSkipBrandDna = async () => {
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ onboarding_complete: true })
+        .eq("id", user.id);
+    }
     goToDashboard();
   };
 
