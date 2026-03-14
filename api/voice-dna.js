@@ -1,5 +1,71 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+const SYSTEM_PROMPT = `You are a Voice DNA analyst for EVERYWHERE Studio. Given interview responses,
+produce a structured Voice DNA profile. Respond with ONLY a raw JSON object.
+No preamble. No markdown code fences. No explanation. Pure JSON only.
+The JSON must be parseable by JSON.parse() with no preprocessing.`;
+
+function buildUserMessage(userName, responses) {
+  const lines = [`Interview responses from ${userName}:`];
+  for (const [key, value] of Object.entries(responses)) {
+    lines.push(`${key}: ${String(value)}`);
+  }
+  lines.push(
+    "",
+    "Generate a Voice DNA profile as this exact JSON structure:",
+    "{",
+    "  voiceDna: {",
+    "    voice_fidelity: <number 0-100, overall match confidence>,",
+    "    voice_layer: <number 0-100, how well HOW they communicate is captured>,",
+    "    value_layer: <number 0-100, how well WHO they are is captured>,",
+    "    personality_layer: <number 0-100, how well HOW they process is captured>,",
+    "    traits: {",
+    "      vocabulary_and_syntax: <0-100>,",
+    "      tonal_register: <0-100>,",
+    "      rhythm_and_cadence: <0-100>,",
+    "      metaphor_patterns: <0-100>,",
+    "      structural_habits: <0-100>",
+    "    },",
+    "    summary: <2-3 sentence description of this person's voice>,",
+    "    signature_phrases: [<3-5 phrases typical of this voice>],",
+    "    prohibited_patterns: [<3-5 AI-typical patterns this person never uses>],",
+    "    contraction_frequency: <low | medium | high>,",
+    "    sentence_length: <short | medium | long | varied>,",
+    "    mode: single",
+    "  },",
+    "  markdown: <full Voice DNA .md document as a string, formatted with headers and tables,",
+    "             capturing all extracted voice markers, value markers, and personality markers,",
+    "             suitable for injecting into a Claude system prompt to make it write like this person>",
+    "}"
+  );
+  return lines.join("\n");
+}
+
+function stripMarkdownFences(text) {
+  if (!text || typeof text !== "string") return text;
+  let out = text.trim();
+  const codeBlockRe = /^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/i;
+  const m = out.match(codeBlockRe);
+  if (m) out = m[1].trim();
+  return out;
+}
+
+function tryParseJson(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+    return { parsed, error: null };
+  } catch (err) {
+    return { parsed: null, error: err };
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -22,62 +88,33 @@ export default async function handler(req, res) {
 
   try {
     const client = new Anthropic({ apiKey });
-
-    const system =
-      "You are a Voice DNA analyst. Given a set of interview answers, produce a structured Voice DNA profile. You must respond with ONLY valid JSON that can be parsed by JSON.parse in JavaScript. Use double quotes for all keys and string values. Do not include comments, placeholders, angle brackets, or any trailing commas. No preamble, no markdown code blocks, no explanation. Just the raw JSON object.";
-
-    const lines = [`Interview responses from ${userName}:`];
-    for (const [key, value] of Object.entries(responses)) {
-      lines.push(`${key}: ${String(value)}`);
-    }
-    lines.push(
-      "",
-      "Generate a Voice DNA profile as a JSON object with this exact shape. Fill in realistic numeric scores (0-100) and text based on the interview:",
-      "{",
-      '  "voiceDna": {',
-      '    "voice_fidelity": 87,',
-      '    "voice_layer": 82,',
-      '    "value_layer": 79,',
-      '    "personality_layer": 91,',
-      '    "traits": {',
-      '      "vocabulary_and_syntax": 84,',
-      '      "tonal_register": 76,',
-      '      "rhythm_and_cadence": 88,',
-      '      "metaphor_patterns": 72,',
-      '      "structural_habits": 80',
-      "    },",
-      '    "summary": "2-3 sentences describing this person\\'s voice in plain language.",',
-      '    "signature_phrases": ["example phrase 1", "example phrase 2", "example phrase 3"],',
-      '    "prohibited_patterns": ["pattern to avoid 1", "pattern to avoid 2", "pattern to avoid 3"],',
-      '    "mode": "single"',
-      "  },",
-      '  "markdown": "Full Voice DNA .md document in the same format as VOICE_DNA_SYSTEM.md, escaped as a JSON string."',
-      "}"
-    );
-
-    const userMessage = lines.join("\n");
+    const userMessage = buildUserMessage(userName, responses);
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system,
+      max_tokens: 4000,
+      system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
 
     const block = response.content?.[0];
-    const text = block?.type === "text" ? block.text : "";
+    let text = block?.type === "text" ? block.text : "";
 
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch (err) {
-      console.error("[api/voice-dna] Failed to parse JSON", err, text.slice(0, 500));
+    let { parsed, error } = tryParseJson(text);
+    if (error) {
+      text = stripMarkdownFences(text);
+      const retry = tryParseJson(text);
+      parsed = retry.parsed;
+      error = retry.error;
+    }
+    if (error || !parsed) {
+      console.error("[api/voice-dna] Failed to parse JSON", error, text.slice(0, 500));
       return res
         .status(502)
         .json({ error: "Voice DNA response was not valid JSON", raw: text.slice(0, 500) });
     }
 
-    const { voiceDna, markdown } = parsed || {};
+    const { voiceDna, markdown } = parsed;
     return res.status(200).json({ voiceDna, markdown });
   } catch (err) {
     console.error("[api/voice-dna]", err);
@@ -85,4 +122,3 @@ export default async function handler(req, res) {
     return res.status(status).json({ error: err.message || "Something went wrong." });
   }
 }
-

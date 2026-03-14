@@ -49,9 +49,19 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  // Focus textarea on mount and after every AI (system) message so typing lands in the field
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    const el = inputRef.current;
+    if (!el || loading) return;
+    const last = messages[messages.length - 1];
+    const justAddedAiMessage = last?.role === "system";
+    if (messages.length <= 1 || justAddedAiMessage) {
+      const t = requestAnimationFrame(() => {
+        el.focus();
+      });
+      return () => cancelAnimationFrame(t);
+    }
+  }, [messages, loading]);
 
   const handleAnalyzeNow = async () => {
     const interviewResponses: Record<string, string> = {};
@@ -300,6 +310,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                 onKeyDown={e => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
+                    e.stopPropagation();
                     handleSend();
                   }
                 }}
