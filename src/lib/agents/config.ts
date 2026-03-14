@@ -3,7 +3,7 @@ export const PIPELINE_CONFIG = {
   maxTokensPerGate: 8192,
   maxTokensForBetterish: 4096,
   maxTokensForWrap: 8192,
-  betterishThreshold: 800,
+  betterishThreshold: 900,
   maxAutoFixAttempts: 1,
 } as const;
 
@@ -72,3 +72,10 @@ export const WRAP_AGENTS = [
   { id: "dmitri", name: "Dmitri", label: "Platform", promptFile: "dmitri-platform.md" },
 ] as const;
 
+/** Map of agent keys to prompt filenames for agent-runner.ts (e.g. sara-routing, watson-capture). */
+export const AGENT_PROMPTS: Record<string, string> = {
+  "sara-routing": "sara-routing.md",
+  "watson-capture": "watson-capture.md",
+  "sentinel-intel": "sentinel-intel.md",
+  scout: "scout.md",
+};
