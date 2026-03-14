@@ -1,6 +1,20 @@
 import Anthropic from "@anthropic-ai/sdk";
+import fs from "fs";
+import path from "path";
 
 const READY_MARKER = "READY_TO_GENERATE";
+
+/** Human-readable labels for placeholder replies (modes 3–8). */
+const SYSTEM_MODE_LABELS = {
+  CONTENT_PRODUCTION: "Content Production",
+  PATH_DETERMINATION: "Path Determination",
+  DECISION_VALIDATION: "Decision Validation",
+  STRESS_TEST: "Stress Test",
+  QUICK_REVIEW: "Quick Review",
+  UX_REVIEW: "UX Review",
+  LEARNING_MODE: "Learning Mode",
+  RED_TEAM: "Red Team",
+};
 
 const WATSON_SYSTEM = `You are Dr. John Watson, the First Listener for EVERYWHERE Studio. Your role is to capture the user's ideas, not to write for them.
 
@@ -28,6 +42,27 @@ function buildWatsonSystem(outputType, voiceProfile, voiceDnaMd) {
   return system;
 }
 
+/** Inline SBU Path Determination prompt (used when sara-routing.md is not available). */
+const PATH_DETERMINATION_FALLBACK = `You are Sara convening the SBU (Strategy Board Unit) for Path Determination. The user has no direction yet—they need to explore before choosing a path.
+
+Your role:
+- Synthesize the full SBU perspective (Victor, Evan, Josh, Lee, Guy, Ward, Monty, Basil, Scott, Betterish, Dana) into ONE clear recommendation, not a list of options.
+- Dana is present but restrained; her adversarial energy shows up as questions, not arguments. The SBU is exploring, not defending.
+- Respond in Sara's voice: direct, efficient, warm. One recommendation with brief rationale. End with a conviction check: "Do you believe it yourself?"`;
+
+function loadPathDeterminationSystemPrompt() {
+  try {
+    const promptsPath = path.join(process.cwd(), "src", "lib", "agents", "prompts", "sara-routing.md");
+    const saraMd = fs.readFileSync(promptsPath, "utf8");
+    return (
+      saraMd +
+      "\n\n---\n\nSBU ACTIVATION FOR PATH DETERMINATION (Mode 2):\nConvene the full SBU. Synthesize Victor through Dana into ONE clear recommendation, not a menu. Dana asks questions; the panel explores. Output one recommendation and end with a conviction check: \"Do you believe it yourself?\""
+    );
+  } catch {
+    return PATH_DETERMINATION_FALLBACK;
+  }
+}
+
 export default async function handler(req, res) {
   // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -39,15 +74,45 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured." });
 
-  const { messages = [], outputType = "freestyle", voiceProfile = null, voiceDnaMd, systemPromptOverride } = req.body;
+  const {
+    messages = [],
+    outputType = "freestyle",
+    voiceProfile = null,
+    voiceDnaMd,
+    systemPromptOverride,
+    systemMode = "CONTENT_PRODUCTION",
+  } = req.body;
+
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array required." });
   }
 
-  const systemPrompt =
-    typeof systemPromptOverride === "string" && systemPromptOverride.trim()
-      ? systemPromptOverride.trim()
-      : buildWatsonSystem(outputType, voiceProfile, voiceDnaMd);
+  // Modes 3–8: return placeholder so routing works without full implementation
+  const placeholderModes = [
+    "DECISION_VALIDATION",
+    "STRESS_TEST",
+    "QUICK_REVIEW",
+    "UX_REVIEW",
+    "LEARNING_MODE",
+    "RED_TEAM",
+  ];
+  if (placeholderModes.includes(systemMode)) {
+    const label = SYSTEM_MODE_LABELS[systemMode] || systemMode;
+    return res.json({
+      reply: `${label} mode is being configured. Sara is assembling the right team.`,
+      readyToGenerate: false,
+    });
+  }
+
+  let systemPrompt;
+  if (typeof systemPromptOverride === "string" && systemPromptOverride.trim()) {
+    systemPrompt = systemPromptOverride.trim();
+  } else if (systemMode === "PATH_DETERMINATION") {
+    systemPrompt = loadPathDeterminationSystemPrompt();
+  } else {
+    // CONTENT_PRODUCTION or default: full Watson + Voice DNA
+    systemPrompt = buildWatsonSystem(outputType, voiceProfile, voiceDnaMd);
+  }
 
   try {
     const client = new Anthropic({ apiKey });

@@ -9,6 +9,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { getScoreColor } from "../../utils/scoreColor";
 import { runFullPipeline } from "../../lib/agents/full-pipeline";
 import type { GateResult, PipelineResult, PipelineStatus } from "../../lib/agents/types";
+import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -718,7 +719,8 @@ async function chatWithWatson(
   messages: { role: string; content: string }[],
   outputTypeApi: string,
   voiceProfile: object | null,
-  voiceDnaMd: string
+  voiceDnaMd: string,
+  systemMode: SystemMode
 ): Promise<{ reply: string; readyToGenerate: boolean }> {
   const url = `${API_BASE}/api/chat`;
   const body: Record<string, unknown> = {
@@ -728,6 +730,7 @@ async function chatWithWatson(
     })),
     outputType: outputTypeApi,
     voiceProfile,
+    systemMode,
   };
   if (voiceDnaMd && voiceDnaMd.trim()) {
     body.voiceDnaMd = voiceDnaMd.trim();
@@ -791,6 +794,7 @@ export default function WorkSession() {
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
   const outputTypeApi = OUTPUT_TYPE_TO_API[outputType] || "freestyle";
   const [isReady, setIsReady] = useState(false);
+  const [currentSystemMode, setCurrentSystemMode] = useState<SystemMode>("CONTENT_PRODUCTION");
 
   useEffect(() => {
     if (!user) return;
@@ -860,10 +864,13 @@ export default function WorkSession() {
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
 
+    const inferredMode = inferMode(text);
+    setCurrentSystemMode(inferredMode);
+
     const chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd);
+      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd, inferredMode);
       setMessages(prev => [...prev, {
         id: "w-" + Date.now(),
         role: "assistant",
@@ -1385,6 +1392,20 @@ export default function WorkSession() {
               </button>
             </div>
           )}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+                letterSpacing: ".02em",
+                textTransform: "uppercase",
+              }}
+              title="Sara inferred mode from your message"
+            >
+              {SYSTEM_MODE_LABELS[currentSystemMode]}
+            </span>
+          </div>
           <AutoTextarea
             value={input}
             onChange={setInput}
