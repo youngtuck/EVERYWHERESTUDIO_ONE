@@ -15,25 +15,46 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   useEffect(() => {
     let cancelled = false;
+    let retryTimeoutId: ReturnType<typeof setTimeout> | undefined;
     if (!user) return;
     setProfileChecked(false);
-    supabase
-      .from("profiles")
-      .select("voice_dna_completed, onboarding_complete")
-      .eq("id", user.id)
-      .single()
+
+    const fetchProfile = () =>
+      supabase
+        .from("profiles")
+        .select("voice_dna_completed, onboarding_complete")
+        .eq("id", user.id)
+        .single();
+
+    fetchProfile()
       .then(({ data }) => {
         if (cancelled) return;
+        const done = !!(data?.voice_dna_completed || data?.onboarding_complete);
         setHasVoiceDna(!!data?.voice_dna_completed);
         setHasLegacyOnboarding(!!data?.onboarding_complete);
         setProfileChecked(true);
+        // On studio, if first fetch says not done, retry once after a short delay (replication/cache lag)
+        if (path.startsWith("/studio") && !done) {
+          retryTimeoutId = window.setTimeout(() => {
+            if (cancelled) return;
+            fetchProfile().then(({ data: retryData }) => {
+              if (cancelled) return;
+              if (!!retryData?.voice_dna_completed || !!retryData?.onboarding_complete) {
+                setHasVoiceDna(!!retryData?.voice_dna_completed);
+                setHasLegacyOnboarding(!!retryData?.onboarding_complete);
+              }
+            });
+          }, 600);
+        }
       })
       .catch(() => {
         if (cancelled) return;
         setProfileChecked(true);
       });
+
     return () => {
       cancelled = true;
+      if (retryTimeoutId !== undefined) window.clearTimeout(retryTimeoutId);
     };
   }, [user, path]);
 

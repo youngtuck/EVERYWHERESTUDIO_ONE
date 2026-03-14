@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { MessageSquare, FileUp } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { ProgressIndicator } from "../components/onboarding/ProgressIndicator";
@@ -16,7 +16,6 @@ type Step = 1 | 2 | 3 | 4;
 type Method = "interview" | "upload" | null;
 
 export default function OnboardingPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
@@ -34,8 +33,9 @@ export default function OnboardingPage() {
     }
   }, [user, searchParams]);
 
+  /** Full page nav so the app loads fresh and ProtectedRoute sees the updated profile. */
   const goToDashboard = () => {
-    navigate("/studio/dashboard");
+    window.location.href = "/studio/dashboard";
   };
 
   const handleMethodSelect = (value: Method) => {
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
       goToDashboard();
       return;
     }
-    await supabase
+    const { error } = await supabase
       .from("profiles")
       .update({
         brand_dna: result.brandDna,
@@ -134,15 +134,26 @@ export default function OnboardingPage() {
         onboarding_complete: true,
       })
       .eq("id", user.id);
+
+    if (error) {
+      console.error("Profile update failed after Brand DNA", error);
+      setErrorMessage("We couldn't save your progress. Please try again.");
+      return;
+    }
     goToDashboard();
   };
 
   const handleSkipBrandDna = async () => {
     if (user) {
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({ onboarding_complete: true })
         .eq("id", user.id);
+      if (error) {
+        console.error("Profile update failed on skip", error);
+        setErrorMessage("We couldn't save. Please try again.");
+        return;
+      }
     }
     goToDashboard();
   };
