@@ -801,7 +801,7 @@ export default function ExplorePage() {
           observer.disconnect();
         }
       },
-      { root: null, rootMargin: "500px", threshold: 0 }
+      { root: null, rootMargin: "1200px 0px 1200px 0px", threshold: 0 }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -1023,7 +1023,7 @@ export default function ExplorePage() {
           />
         </div>
 
-        {/* Room pills: sticky indicators when in Rooms section (desktop) */}
+        {/* Room pills: fixed left nav in WATCH, WORK, and WRAP (desktop) */}
         {roomsVisible && !isMobile && (
           <div
             style={{
