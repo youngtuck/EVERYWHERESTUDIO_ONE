@@ -775,6 +775,7 @@ export default function ExplorePage() {
   const [showScrollHint, setShowScrollHint] = useState(true);
   const [scrollPct, setScrollPct] = useState(0);
   const [roomsVisible, setRoomsVisible] = useState(false);
+  const [roomsZoneInView, setRoomsZoneInView] = useState(false);
   const [activeRoom, setActiveRoom] = useState<"watch" | "work" | "wrap">("watch");
   const roomsSentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -802,6 +803,21 @@ export default function ExplorePage() {
         }
       },
       { root: null, rootMargin: "1200px 0px 1200px 0px", threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [roomsVisible]);
+
+  // Pills visible whenever any part of the rooms section (WATCH / WORK / WRAP) is in view
+  useEffect(() => {
+    if (!roomsVisible) return;
+    const el = roomsSentinelRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      entries => {
+        setRoomsZoneInView(entries[0]?.isIntersecting ?? false);
+      },
+      { root: null, rootMargin: "0px", threshold: 0 }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -1023,8 +1039,8 @@ export default function ExplorePage() {
           />
         </div>
 
-        {/* Room pills: fixed left nav in WATCH, WORK, and WRAP (desktop) */}
-        {roomsVisible && !isMobile && (
+        {/* Room pills: fixed left nav whenever rooms zone (WATCH / WORK / WRAP) is in view */}
+        {roomsVisible && roomsZoneInView && !isMobile && (
           <div
             style={{
               position: "fixed",
