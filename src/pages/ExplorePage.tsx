@@ -484,6 +484,8 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
   const easedReveal = easeOutCubic(revealProgress);
   // Slight stagger: orb side leads, copy side follows (adds depth)
   const revealRight = easeOutCubic(Math.max(0, (revealProgress - 0.08) / 0.92));
+  // Nav pill (sticky left) visible as soon as section enters viewport, independent of main content fade
+  const navOpacity = revealProgress > 0.02 ? 1 : revealProgress / 0.02;
 
   return (
     <div
@@ -494,19 +496,19 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
         display: "flex",
         position: "relative",
         overflowX: "clip",
-        opacity: easedReveal,
         transform: `translateY(${(1 - easedReveal) * 36}px) scale(${0.987 + 0.013 * easedReveal})`,
         transformOrigin: "center top",
         willChange: revealProgress < 1 ? "opacity, transform" : "auto",
       }}
     >
-      {/* Full-width gradient canvas: one background for the whole section, shifts with scroll (no container) */}
+      {/* Full-width gradient canvas: one background for the whole section, shifts with scroll (no container) — fade applied here so nav can stay independent */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 0,
           pointerEvents: "none",
+          opacity: easedReveal,
           background: `
             radial-gradient(
               ellipse 70% 60% at 28% 50%,
@@ -520,7 +522,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
           transition: "background 0.35s ease, box-shadow 0.35s ease",
         }}
       />
-      {/* Sticky left column on desktop; hidden on mobile */}
+      {/* Sticky left column on desktop; hidden on mobile — own opacity so nav appears as soon as section enters */}
       <div style={{
         position: "sticky",
         top: 0,
@@ -532,6 +534,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
         alignItems: "center",
         justifyContent: "center",
         zIndex: 2,
+        opacity: navOpacity,
       }}>
         {/* Inner glow layer - orb aura only (soft halo around orb) */}
         <div style={{
@@ -591,6 +594,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
           minWidth: 0,
           position: "relative",
           zIndex: 1,
+          opacity: easedReveal,
           transform: `translateY(${(1 - revealRight) * 18}px)`,
           willChange: revealProgress < 1 ? "transform" : "auto",
         }}
