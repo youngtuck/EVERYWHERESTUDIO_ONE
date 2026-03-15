@@ -57,7 +57,11 @@ function buildPrompt(content, vibe, title, author, context, brandColors, voiceSt
   return prompt;
 }
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-image";
+const MODELS = [
+  process.env.GEMINI_MODEL,
+  "gemini-2.0-flash-exp",
+  "gemini-2.0-flash",
+].filter(Boolean);
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -68,9 +72,11 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
+    console.error("[api/visual] GEMINI_API_KEY not set in environment");
     return res.status(503).json({
       success: false,
-      error: "Visual Intelligence is being configured. API key not set.",
+      error: "Visual Intelligence is being configured. GEMINI_API_KEY not set.",
+      setup: "Add GEMINI_API_KEY to Vercel environment variables. Get a key from https://aistudio.google.com/apikey"
     });
   }
 
@@ -86,58 +92,75 @@ export default async function handler(req, res) {
 
   const prompt = buildPrompt(content, vibe, title, author, context, brandColors, voiceStyle);
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
+  let lastError = null;
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+  for (const model of MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
-        },
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 55000);
 
-    if (!response.ok) {
-      const errText = await response.text();
-      let message = `Gemini API error: ${response.status}`;
-      try {
-        const errJson = JSON.parse(errText);
-        if (errJson?.error?.message) message = errJson.error.message;
-      } catch (_) {}
-      return res.status(502).json({ success: false, error: message });
-    }
+      console.log(`[api/visual] Trying model: ${model}`);
 
-    const data = await response.json();
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    let imageBase64 = null;
-    let mimeType = "image/png";
-
-    for (const part of parts) {
-      if (part.inlineData && part.inlineData.data && (part.inlineData.mimeType || "").startsWith("image/")) {
-        imageBase64 = part.inlineData.data;
-        mimeType = part.inlineData.mimeType || "image/png";
-        break;
-      }
-    }
-
-    if (!imageBase64) {
-      return res.status(502).json({
-        success: false,
-        error: "No image in response. Try another vibe or shorten the content.",
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ["TEXT", "IMAGE"],
+          },
+        }),
+        signal: controller.signal,
       });
-    }
+      clearTimeout(timeoutId);
 
-    return res.status(200).json({ success: true, image: imageBase64, mimeType });
-  } catch (err) {
-    const message = err.name === "AbortError" ? "Request timed out. Try again." : (err.message || "Image generation failed.");
-    return res.status(502).json({ success: false, error: message });
+      if (!response.ok) {
+        const errText = await response.text();
+        let message = `Gemini API error (${model}): ${response.status}`;
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson?.error?.message) message = errJson.error.message;
+        } catch (_) {}
+        console.error(`[api/visual] ${message}`);
+        lastError = message;
+        continue; // Try next model
+      }
+
+      const data = await response.json();
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      let imageBase64 = null;
+      let mimeType = "image/png";
+
+      for (const part of parts) {
+        if (part.inlineData && part.inlineData.data && (part.inlineData.mimeType || "").startsWith("image/")) {
+          imageBase64 = part.inlineData.data;
+          mimeType = part.inlineData.mimeType || "image/png";
+          break;
+        }
+      }
+
+      if (imageBase64) {
+        console.log(`[api/visual] Success with model: ${model}`);
+        return res.status(200).json({ success: true, image: imageBase64, mimeType });
+      }
+
+      console.warn(`[api/visual] No image in response from ${model}`);
+      lastError = `Model ${model} returned no image data`;
+      continue;
+    } catch (err) {
+      const message = err.name === "AbortError" ? `Timeout with ${model}` : (err.message || "Image generation failed.");
+      console.error(`[api/visual] ${message}`);
+      lastError = message;
+      continue;
+    }
   }
+
+  // All models failed
+  return res.status(502).json({
+    success: false,
+    error: lastError || "No image in response. Try another style or shorten the content.",
+    modelsAttempted: MODELS,
+  });
 }
