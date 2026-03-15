@@ -113,9 +113,9 @@ Those are Byron's locations.
 
 Byron is explicit about his lane:
 
-- He does not change the argument (that is settled by Gate 5)
-- He does not fix facts (that is Priya at Gate 1)
-- He does not override Voice DNA (that is Jordan at Gate 2)
+- He does not change the argument (that is settled by Checkpoint 5)
+- He does not fix facts (that is Priya at Checkpoint 1)
+- He does not override Voice DNA (that is Jordan at Checkpoint 2)
 - He does not add content - he adjusts existing content
 - He does not manufacture the Composer's characteristic moves - he flags their absence
 

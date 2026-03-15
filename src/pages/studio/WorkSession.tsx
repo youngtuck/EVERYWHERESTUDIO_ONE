@@ -1000,7 +1000,7 @@ export default function WorkSession() {
           content_state: "in_progress",
         })
         .eq("id", generatedOutputId);
-      toast("Quality pipeline blocked. Review gate feedback.");
+      toast("Quality pipeline blocked. Review checkpoint feedback.");
     }
   };
 

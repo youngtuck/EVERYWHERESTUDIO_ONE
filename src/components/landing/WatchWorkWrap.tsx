@@ -13,7 +13,7 @@ const DATA = [
     heading:"Where ideas become publication-ready content.",
     body:"Watson, your First Listener, interviews you. Not a form. Not a prompt. A conversation. Watson asks the questions that pull the real story out, the one that was stuck in your head.",
     detail:"What emerges sounds like you because it came from you. Voice DNA captures your rhythm, your vocabulary, your argumentative structure. It sharpens with every session.",
-    items:["Watson conversation-first production","Voice DNA: 3 layers","7 Quality Gates in sequence","Betterish Score 0–1000","10 output formats"],
+    items:["Watson conversation-first production","Voice DNA: 3 layers","7 Quality Checkpoints in sequence","Betterish Score 0–1000","10 output formats"],
   },
   {
     num:"03", id:"wrap", label:"Wrap", accent:"#3A7BD5",

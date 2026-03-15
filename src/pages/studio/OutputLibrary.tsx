@@ -56,7 +56,7 @@ export default function OutputLibrary() {
     });
   }, [user]);
 
-  const vaultOnly = outputs.filter((o) => (o.score ?? 0) >= 800);
+  const vaultOnly = outputs.filter((o) => (o.score ?? 0) >= 900);
   const filtered = vaultOnly.filter((o) => {
     const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || o.output_type === filter;

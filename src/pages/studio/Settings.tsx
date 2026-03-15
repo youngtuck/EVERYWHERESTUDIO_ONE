@@ -154,7 +154,7 @@ export default function Settings() {
   const [agentNames, setAgentNames] = useState(false);
   const [oneQuestion, setOneQuestion] = useState(true);
   const [proactive, setProactive] = useState(true);
-  const [threshold, setThreshold] = useState(800);
+  const [threshold, setThreshold] = useState(900);
   const [voiceDnaActive, setVoiceDnaActive] = useState(true);
 
   // Appearance
@@ -209,7 +209,7 @@ export default function Settings() {
         setTimezone(data.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? "");
         setTitle(data.title ?? "");
         setAvatarUrl(data.avatar_url ?? null);
-        setThreshold(data.publication_threshold ?? 800);
+        setThreshold(data.publication_threshold ?? 900);
         setAgentNames(!!data.show_agent_names);
         setOneQuestion(data.one_question_mode !== false);
         setProactive(data.proactive_suggestions !== false);
@@ -1241,7 +1241,7 @@ export default function Settings() {
             <ul style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "0 0 16px 0", paddingLeft: 20, lineHeight: 1.8 }}>
               <li>40 AI specialists active in every session</li>
               <li>12 output formats</li>
-              <li>7 quality gates</li>
+              <li>7 quality checkpoints</li>
               <li>Voice DNA + Brand DNA + Method DNA</li>
               <li>Sentinel intelligence briefings</li>
               <li>Priority support</li>

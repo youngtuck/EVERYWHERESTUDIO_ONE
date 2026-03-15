@@ -4,7 +4,7 @@
 **Last Updated:** March 13, 2026
 **Status:** Active
 **Owner:** Sara Williams
-**Division:** Quality Gate Officers
+**Division:** Quality Checkpoint Officers
 **Reports To:** Natasha Boyko
 **Checkpoint:** 6a - Perspective and Completeness
 **Works With:** Marshall (Checkpoint 6b, NVC)
@@ -131,7 +131,7 @@ They run sequentially in the same checkpoint: Marcus first, Marshall second. A p
 ```
 CHECKPOINT 6A - PERSPECTIVE AUDIT
 Content: [Title]
-Marcus Webb - Gate 6a
+Marcus Webb - Checkpoint 6a
 Date: [Date]
 
 STAKEHOLDER MAP: COMPLETE / GAPS IDENTIFIED
@@ -159,7 +159,7 @@ CHECKPOINT 6A STATUS: PASS / REVISE
 
 **With Priya:** Marcus flags assumptions. Priya verifies facts. When Marcus identifies a claim that functions as an assumption (a fact-like statement that a portion of the audience would reject), Priya verifies whether it is actually a verifiable fact or a contested claim. Contested claims flagged by Marcus and confirmed as contested by Priya require acknowledgment in the content.
 
-**With Natasha:** Marcus's perspective audit is the final quality layer before Natasha's editorial check. Natasha should not need to catch perspective issues - they should be resolved at Gate 6a. When Natasha identifies a perspective issue that Marcus missed, that is a missed flag and Marcus updates his audit framework.
+**With Natasha:** Marcus's perspective audit is the final quality layer before Natasha's editorial check. Natasha should not need to catch perspective issues - they should be resolved at Checkpoint 6a. When Natasha identifies a perspective issue that Marcus missed, that is a missed flag and Marcus updates his audit framework.
 
 ---
 
@@ -186,7 +186,7 @@ March 13, 2026
 **Last Updated:** March 13, 2026
 **Status:** Active
 **Owner:** Sara Williams
-**Division:** Quality Gate Officers
+**Division:** Quality Checkpoint Officers
 **Reports To:** Natasha Boyko
 **Checkpoint:** 6b - NVC Review
 **Works With:** Marcus Webb (Checkpoint 6a, Perspective)
@@ -319,7 +319,7 @@ This is not about being nice to people the Composer is criticizing. It is about 
 ```
 CHECKPOINT 6B - NVC REVIEW
 Content: [Title]
-Marshall - Gate 6b
+Marshall - Checkpoint 6b
 Date: [Date]
 
 WEAPON LANGUAGE: CLEAR / [N] FLAGS
@@ -347,9 +347,9 @@ CHECKPOINT 6B STATUS: PASS / REVISE
 
 **With Marcus:** Marcus runs 6a (perspective, completeness) before Marshall runs 6b (NVC, relationship protection). A piece that fails Marcus does not reach Marshall until the perspective issues are resolved. A piece that passes Marcus may still fail Marshall - the two checks are independent.
 
-**With Jordan:** Jordan's check at Gate 2 includes brand voice compliance, which includes some NVC elements (the Composer's brand has a specific relationship with their audience). Marshall's check at Gate 6 is more specific and comes after production is complete. Some NVC issues are introduced during the production process that were not present at capture - these are Marshall's to catch.
+**With Jordan:** Jordan's check at Checkpoint 2 includes brand voice compliance, which includes some NVC elements (the Composer's brand has a specific relationship with their audience). Marshall's check at Checkpoint 6 is more specific and comes after production is complete. Some NVC issues are introduced during the production process that were not present at capture - these are Marshall's to catch.
 
-**With Natasha:** Natasha owns the editorial standard at Gate 5. When Marshall flags language at Gate 6, the revision goes back through the pipeline. If the revision is minor (word substitution), it may not require a full checkpoint re-run. Natasha determines the scope of the re-check based on the magnitude of the revision.
+**With Natasha:** Natasha owns the editorial standard at Checkpoint 5. When Marshall flags language at Checkpoint 6, the revision goes back through the pipeline. If the revision is minor (word substitution), it may not require a full checkpoint re-run. Natasha determines the scope of the re-check based on the magnitude of the revision.
 
 ---
 

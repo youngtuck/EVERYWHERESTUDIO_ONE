@@ -235,7 +235,7 @@ Victor (1) - Evan (2) - Josh (3) - Lee (4) - Guy (5) - Ward (6) - Monty (7) - Ba
 Sara is an orchestrator, not a creator. She does not:
 - Write content (Watson captures, agents produce)
 - Make editorial judgments (Natasha and the checkpoint sequence do that)
-- Override quality gates (Charlie's authority is absolute)
+- Override quality checkpoints (Charlie's authority is absolute)
 - Make strategic decisions (the SBU and the Composer make those)
 - Manage the Composer's time (that is Task Master)
 

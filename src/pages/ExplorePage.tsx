@@ -1290,7 +1290,7 @@ export default function ExplorePage() {
             <FadeInSection style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",marginTop:48,borderTop:`1px solid ${bc}`}}>
               <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={40} suffix="+" label="AI Specialists" accent={T.watchA} /></div>
               <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={10} label="Output Formats" accent={T.workA} /></div>
-              <div style={{padding:isMobile ? "24px 16px" : "36px 28px"}}><Counter target={7} label="Quality Gates" accent={T.wrapA} /></div>
+              <div style={{padding:isMobile ? "24px 16px" : "36px 28px"}}><Counter target={7} label="Quality Checkpoints" accent={T.wrapA} /></div>
             </FadeInSection>
           </div>
         </section>
@@ -1306,7 +1306,7 @@ export default function ExplorePage() {
 
         <SectionDivider />
 
-        {/* ══ QUALITY GATES ════════════════════════════════════════════════════ */}
+        {/* ══ QUALITY CHECKPOINTS ════════════════════════════════════════════════════ */}
         <section
           id="gates"
           style={{
@@ -1320,7 +1320,7 @@ export default function ExplorePage() {
                 <div>
                   <FadeUp>
                     <div style={{display:"inline-flex",alignItems:"center",fontSize:11,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:14,fontWeight:500,borderLeft:"2px solid #C8961A",paddingLeft:12}}>
-                      Quality Gates
+                      Quality Checkpoints
                     </div>
                   </FadeUp>
                   <WordReveal text="Nothing ships without passing the gates." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
@@ -1352,7 +1352,7 @@ export default function ExplorePage() {
               <WordReveal text="Why It Compounds" size="clamp(34px,4.5vw,58px)" weight={700} lh={1.0} color={T.text} />
               <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:32}}>
                 <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. EVERYWHERE Studio makes it better, and the difference grows with every piece you publish.</p></FadeUp>
-                <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality gates calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
+                <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality checkpoints calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
               </div>
               <FadeUp delay={0.24}>
                 <div style={{marginTop:44, textAlign:"center"}}>

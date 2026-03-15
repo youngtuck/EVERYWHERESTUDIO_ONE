@@ -122,7 +122,7 @@ As of March 12, 2026, Claude generates interactive SVG charts, diagrams, and vis
 
 ## THE SCROLL TEST
 
-Mira's primary quality gate for long-form content. Applied to every article, essay, and long document before delivery.
+Mira's primary quality checkpoint for long-form content. Applied to every article, essay, and long document before delivery.
 
 **The test:** Scroll the document at reading speed. Without stopping. Read only the headings and subheadings.
 

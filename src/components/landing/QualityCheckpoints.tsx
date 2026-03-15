@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
 
-const GATES = [
+const CHECKPOINTS = [
   { num:"01", name:"Strategy", desc:"Clear POV. Right moment. Right position in your category." },
   { num:"02", name:"Voice", desc:"Matches all three Voice DNA layers. Fidelity Score calculated here." },
   { num:"03", name:"Accuracy", desc:"All claims verifiable. No hallucinated data ships." },
@@ -11,7 +11,7 @@ const GATES = [
   { num:"07", name:"Impact", desc:"Clear call to action. The reader knows what to do next." },
 ];
 
-export default function QualityGates() {
+export default function QualityCheckpoints() {
   const [open, setOpen] = useState<number|null>(null);
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -19,15 +19,15 @@ export default function QualityGates() {
   return (
     <section style={{ padding:"100px 32px", background:"var(--bg-2)", borderTop:"1px solid var(--line)" }}>
       <div style={{ maxWidth:760, margin:"0 auto" }}>
-        <p className="eyebrow" style={{ marginBottom:20 }}>Quality Gates</p>
+        <p className="eyebrow" style={{ marginBottom:20 }}>Quality Checkpoints</p>
         <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", marginBottom:16, lineHeight:1.08 }}>
-          Seven gates.<br /><em style={{fontStyle:"italic"}}>Everything clears all of them.</em>
+          Seven checkpoints.<br /><em style={{fontStyle:"italic"}}>Everything clears all of them.</em>
         </h2>
         <p style={{ fontSize:15, color:"var(--fg-3)", lineHeight:1.78, marginBottom:52, fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>
-          A pipeline, not a checklist. Each gate's output feeds the next. Nothing ships without clearing all seven.
+          A pipeline, not a checklist. Each checkpoint's output feeds the next. Nothing ships without clearing all seven.
         </p>
         <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
-          {GATES.map((g,i) => (
+          {CHECKPOINTS.map((g,i) => (
             <div key={i}>
               <button onClick={() => setOpen(open===i?null:i)}
                 style={{ display:"flex", alignItems:"center", gap:16, width:"100%", padding:"15px 18px", background:"var(--surface)", border:"1px solid var(--line)", borderRadius:open===i?"8px 8px 0 0":8, cursor:"pointer", textAlign:"left", transition:"background 0.12s", fontFamily:"'DM Sans',sans-serif" }}

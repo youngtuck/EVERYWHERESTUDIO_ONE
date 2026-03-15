@@ -1,11 +1,11 @@
 import type { GateResult } from "../../lib/agents/types";
 
-interface GateResultsPanelProps {
+interface CheckpointResultsPanelProps {
   results: GateResult[];
   blockedAt?: string;
 }
 
-export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) {
+export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResultsPanelProps) {
   if (!results.length) return null;
 
   return (
@@ -36,7 +36,7 @@ export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) 
             textTransform: "uppercase",
           }}
         >
-          Quality Gates
+          Quality Checkpoints
         </div>
         {blockedAt && (
           <div
@@ -51,18 +51,18 @@ export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) 
         )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {results.map((gate) => {
-          const isFail = gate.status === "FAIL";
-          const isFlag = gate.status === "FLAG";
+        {results.map((result) => {
+          const isFail = result.status === "FAIL";
+          const isFlag = result.status === "FLAG";
           const color =
-            gate.status === "PASS"
+            result.status === "PASS"
               ? "var(--work-teal)"
               : isFail
                 ? "#b91c1c"
                 : "var(--gold-dark)";
           return (
             <details
-              key={gate.timestamp + gate.gate}
+              key={result.timestamp + result.gate}
               style={{
                 borderRadius: 8,
                 border: "1px solid var(--border-subtle)",
@@ -108,7 +108,7 @@ export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) 
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {gate.gate}
+                    {result.gate}
                   </span>
                 </div>
                 <div
@@ -126,7 +126,7 @@ export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) 
                       fontWeight: 600,
                     }}
                   >
-                    {gate.score}
+                    {result.score}
                   </span>
                   <span
                     style={{
@@ -136,7 +136,7 @@ export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) 
                       letterSpacing: "0.06em",
                     }}
                   >
-                    {gate.status}
+                    {result.status}
                   </span>
                 </div>
               </summary>
@@ -148,9 +148,9 @@ export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) 
                   whiteSpace: "pre-wrap",
                 }}
               >
-                {gate.feedback}
+                {result.feedback}
               </div>
-              {gate.issues && gate.issues.length > 0 && (
+              {result.issues && result.issues.length > 0 && (
                 <ul
                   style={{
                     marginTop: 6,
@@ -159,7 +159,7 @@ export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) 
                     color: "var(--text-tertiary)",
                   }}
                 >
-                  {gate.issues.map((issue, idx) => (
+                  {result.issues.map((issue, idx) => (
                     <li key={idx}>{issue}</li>
                   ))}
                 </ul>
@@ -171,4 +171,3 @@ export function GateResultsPanel({ results, blockedAt }: GateResultsPanelProps) 
     </div>
   );
 }
-

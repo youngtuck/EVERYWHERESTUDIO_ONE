@@ -108,8 +108,8 @@ export default function Dashboard() {
   }, [user]);
 
   const firstName = profileName || "there";
-  const inProgress = outputs.filter((o) => (o.score ?? 0) < 800);
-  const vault = outputs.filter((o) => (o.score ?? 0) >= 800);
+  const inProgress = outputs.filter((o) => (o.score ?? 0) < 900);
+  const vault = outputs.filter((o) => (o.score ?? 0) >= 900);
   const recentThree = outputs.slice(0, 3);
   const outputsCreated = outputs.length;
   const avgBetterish =
@@ -273,7 +273,7 @@ export default function Dashboard() {
                 subtitle:
                   avgBetterish == null
                     ? "Complete a session"
-                    : avgBetterish >= 800
+                    : avgBetterish >= 900
                       ? "Publication ready"
                       : avgBetterish >= 600
                         ? "Getting close"

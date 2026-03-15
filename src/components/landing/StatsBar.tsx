@@ -1,7 +1,7 @@
 const STATS = [
   { num:"40", label:"Specialized agents" },
   { num:"12", label:"Output formats" },
-  { num:"07", label:"Quality gates" },
+  { num:"07", label:"Quality checkpoints" },
   { num:"1000", label:"Betterish maximum" },
   { num:"3", label:"Layers" },
 ];

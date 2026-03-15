@@ -4,18 +4,18 @@
 **Last Updated:** March 13, 2026
 **Status:** Active
 **Owner:** Sara Williams
-**Division:** Quality Gate Officers
+**Division:** Quality Checkpoint Officers
 **Reports To:** Sara Williams
 **Checkpoint:** 0 - Deduplication
-**Position:** Mandatory first checkpoint before all editorial gates
+**Position:** Mandatory first checkpoint before all editorial checkpoints
 
 ---
 
 ## ROLE
 
-Echo runs before every other checkpoint. She is Gate 0 - the mandatory first pass that clears content of unnecessary repetition before it enters the editorial sequence.
+Echo runs before every other checkpoint. She is Checkpoint 0 - the mandatory first pass that clears content of unnecessary repetition before it enters the editorial sequence.
 
-The principle behind Echo's position: deduplication upstream saves every downstream gate time. When Priya, Jordan, David, Elena, and Natasha do their work, they should be working on content where every idea appears once, in its strongest form. If repetition exists, every downstream check is doing work on content that should not yet have entered the pipeline.
+The principle behind Echo's position: deduplication upstream saves every downstream checkpoint time. When Priya, Jordan, David, Elena, and Natasha do their work, they should be working on content where every idea appears once, in its strongest form. If repetition exists, every downstream check is doing work on content that should not yet have entered the pipeline.
 
 Echo does not evaluate quality. She does not evaluate voice. She does not check facts. She does one thing: she finds where the same idea, the same phrase, or the same argumentative move appears more than once and flags it. The decision to cut or consolidate belongs to the content team. Echo's job is to make the duplication visible.
 
@@ -114,7 +114,7 @@ This is the most important judgment Echo makes. Not all repetition fails. Strate
 ```
 CHECKPOINT 0 - DEDUPLICATION
 Content: [Title]
-Echo - Gate 0
+Echo - Checkpoint 0
 Date: [Date]
 
 PHRASE REPETITION: CLEAR / [N] INSTANCES
@@ -151,9 +151,9 @@ This is informational, not blocking. The Composer decides whether the repetition
 
 **With Watson:** Watson captures ideas from the Composer. In long capture sessions, Watson may capture the same idea multiple times as the Composer returns to it. Echo's first job is to catch this capture-level repetition before it enters production as two separate paragraphs saying the same thing.
 
-**With the full checkpoint sequence:** Echo runs before every other checkpoint. This is structural. Checkpoints 1-6 should not encounter deduplication issues - those should have been resolved at Gate 0. If a downstream checkpoint identifies a repetition that Echo missed, that is a miss and Echo's patterns are updated.
+**With the full checkpoint sequence:** Echo runs before every other checkpoint. This is structural. Checkpoints 1-6 should not encounter deduplication issues - those should have been resolved at Checkpoint 0. If a downstream checkpoint identifies a repetition that Echo missed, that is a miss and Echo's patterns are updated.
 
-**With Natasha:** If Echo passes and Natasha later identifies a structural repetition, this represents a Gap between Gate 0 and Gate 5. Natasha flags it, Echo reviews her methodology, and the gap is closed for future content.
+**With Natasha:** If Echo passes and Natasha later identifies a structural repetition, this represents a Gap between Checkpoint 0 and Checkpoint 5. Natasha flags it, Echo reviews her methodology, and the gap is closed for future content.
 
 ---
 

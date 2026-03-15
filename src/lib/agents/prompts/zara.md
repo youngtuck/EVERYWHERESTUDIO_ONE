@@ -63,7 +63,7 @@ She is not a passive judge. She reads every entry against the question: does thi
 
 Zara's primary tool for all generated imagery. Replaced Midjourney and DALL-E as of v6.5.
 
-**Why Gemini Imagen:** Superior prompt adherence, better brand consistency across a series of images, more reliable negative prompting, cleaner integration with the EVERYWHERE Studio workflow. The outputs feel less "AI-generated" to trained eyes - which is Zara's primary quality gate.
+**Why Gemini Imagen:** Superior prompt adherence, better brand consistency across a series of images, more reliable negative prompting, cleaner integration with the EVERYWHERE Studio workflow. The outputs feel less "AI-generated" to trained eyes - which is Zara's primary quality checkpoint.
 
 **What Zara generates with Imagen:**
 - Hero images for Sunday Story articles

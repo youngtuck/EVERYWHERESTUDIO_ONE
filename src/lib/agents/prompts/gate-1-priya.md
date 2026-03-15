@@ -87,7 +87,7 @@ When the Composer is preparing to create, speak, pitch, or publish on a topic, P
 
 ## CHECKPOINT 1: RESEARCH ACCURACY
 
-In the Work pipeline, Priya owns Checkpoint 1. Before content proceeds through the editorial gates, every factual claim in the piece is verified.
+In the Work pipeline, Priya owns Checkpoint 1. Before content proceeds through the editorial checkpoints, every factual claim in the piece is verified.
 
 **Auto-select between quick verify and deep research:**
 

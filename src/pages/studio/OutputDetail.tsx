@@ -4,7 +4,7 @@ import { supabase } from "../../lib/supabase";
 import { ArrowLeft, Globe, FileText, Presentation, Pencil, Clipboard } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
 import type { BetterishScore, GateResult } from "../../lib/agents/types";
-import { GateResultsPanel } from "../../components/pipeline/GateResultsPanel";
+import { CheckpointResultsPanel } from "../../components/pipeline/CheckpointResultsPanel";
 import { BetterishScoreCard } from "../../components/pipeline/BetterishScoreCard";
 import { PipelineBlockedAlert } from "../../components/pipeline/PipelineBlockedAlert";
 
@@ -354,7 +354,7 @@ export default function OutputDetail() {
     );
 
   const scoreColor =
-    output!.score >= 800
+    output!.score >= 900
       ? "#10b981"
       : output!.score >= 700
         ? "#3A7BD5"
@@ -646,7 +646,7 @@ export default function OutputDetail() {
       {pipelineRun && (
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <BetterishScoreCard score={pipelineRun.betterish_score} />
-          <GateResultsPanel results={pipelineRun.gate_results} blockedAt={pipelineRun.blocked_at || undefined} />
+          <CheckpointResultsPanel results={pipelineRun.gate_results} blockedAt={pipelineRun.blocked_at || undefined} />
           {pipelineRun.status === "BLOCKED" && (
             <PipelineBlockedAlert
               blockedAt={pipelineRun.blocked_at || undefined}
@@ -659,7 +659,7 @@ export default function OutputDetail() {
         </div>
       )}
 
-      {/* Quality gates */}
+      {/* Quality checkpoints */}
       {gateEntries.length > 0 && (
         <div style={{ marginTop: 24 }}>
           {gates?.summary && (
