@@ -1,6 +1,14 @@
+// NOTE: Public signup is controlled via access code (EVERYWHERE-ALPHA-2026).
+// To fully disable public signup at the infrastructure level:
+// Supabase Dashboard > Authentication > Settings > Disable "Enable email signup"
+// This is recommended before any public launch.
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "../lib/supabase";
+
+const VALID_ACCESS_CODE = "EVERYWHERE-ALPHA-2026";
 
 const AuthPage = () => {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -8,8 +16,12 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
   const [name, setName] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [resetSent, setResetSent] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,16 +32,39 @@ const AuthPage = () => {
   const switchMode = () => {
     setReveal(false);
     setSubmitError("");
+    setResetSent(false);
     setMode(m => m === "signin" ? "signup" : "signin");
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setSubmitError("Enter your email above first.");
+      return;
+    }
+    setSubmitError("");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    if (error) {
+      setSubmitError(error.message);
+      return;
+    }
+    setResetSent(true);
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
 
-    if (mode === "signup" && password !== confirmPassword) {
-      setSubmitError("Passwords don't match.");
-      return;
+    if (mode === "signup") {
+      if (accessCode.trim().toUpperCase() !== VALID_ACCESS_CODE) {
+        setSubmitError("Invalid access code. Contact mark@mixedgrill.net to request access.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setSubmitError("Passwords don't match.");
+        return;
+      }
     }
 
     try {
@@ -124,6 +159,7 @@ const AuthPage = () => {
 
       <div style={{ width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }}>
         {/* Brand wordmark */}
+        {/* EVERYWHERE Studio wordmark: EVERY bold + WHERE light, gold accent (matches sidebar) */}
         <button
           type="button"
           onClick={() => navigate("/")}
@@ -140,7 +176,7 @@ const AuthPage = () => {
               <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: "0.16em", color: "#C8961A" }}>
                 EVERY
               </span>
-              <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: "0.16em", color: "#ffffff" }}>
+              <span style={{ fontSize: 18, fontWeight: 600, letterSpacing: "0.16em", color: "rgba(255,255,255,0.65)" }}>
                 WHERE
               </span>
             </div>
@@ -180,45 +216,126 @@ const AuthPage = () => {
             background: "#0e1117",
             border: "1px solid rgba(255,255,255,0.08)",
             borderRadius: 16,
-            padding: 40,
+            padding: 0,
+            overflow: "hidden",
           }}
         >
-          <div
-            key={mode}
-            style={{
-              opacity: reveal ? 1 : 0,
-              transform: reveal ? "translateY(0)" : "translateY(10px)",
-              transition: "opacity 0.25s ease, transform 0.25s ease",
-            }}
-          >
-            <div style={{ textAlign: "center", marginBottom: 28 }}>
-              <p
-                style={{
-                  marginBottom: 8,
-                  fontSize: 12,
-                  letterSpacing: "0.16em",
-                  textTransform: "uppercase",
-                  color: "rgba(232,232,230,0.45)",
-                  fontWeight: 500,
-                }}
-              >
-                {mode === "signin" ? "Welcome back" : "Create your studio"}
-              </p>
-              <h1
-                style={{
-                  fontSize: "clamp(22px,3vw,28px)",
-                  fontWeight: 800,
-                  color: "#ffffff",
-                  letterSpacing: "-0.04em",
-                  margin: 0,
-                }}
-              >
-                {mode === "signin" ? "Sign in to EVERYWHERE" : "Join EVERYWHERE Studio"}
-              </h1>
-            </div>
+          {/* Tabs: Sign In | Create Account */}
+          <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <button
+              type="button"
+              onClick={() => { setReveal(false); setSubmitError(""); setResetSent(false); setMode("signin"); }}
+              style={{
+                flex: 1,
+                padding: "14px 16px",
+                background: mode === "signin" ? "rgba(255,255,255,0.04)" : "transparent",
+                border: "none",
+                borderBottom: mode === "signin" ? "2px solid #C8961A" : "2px solid transparent",
+                color: mode === "signin" ? "#ffffff" : "rgba(255,255,255,0.6)",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setReveal(false); setSubmitError(""); setMode("signup"); }}
+              style={{
+                flex: 1,
+                padding: "14px 16px",
+                background: mode === "signup" ? "rgba(255,255,255,0.04)" : "transparent",
+                border: "none",
+                borderBottom: mode === "signup" ? "2px solid #C8961A" : "2px solid transparent",
+                color: mode === "signup" ? "#ffffff" : "rgba(255,255,255,0.6)",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Create Account
+            </button>
+          </div>
 
-            <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {mode === "signup" && (
+          <div
+            style={{ padding: 40 }}
+            key={mode}
+          >
+            <div
+              style={{
+                opacity: reveal ? 1 : 0,
+                transform: reveal ? "translateY(0)" : "translateY(10px)",
+                transition: "opacity 0.25s ease, transform 0.25s ease",
+              }}
+            >
+              <div style={{ textAlign: "center", marginBottom: 28 }}>
+                <p
+                  style={{
+                    marginBottom: 8,
+                    fontSize: 12,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    color: "rgba(232,232,230,0.45)",
+                    fontWeight: 500,
+                  }}
+                >
+                  {mode === "signin" ? "Welcome back" : "Create your studio"}
+                </p>
+                <h1
+                  style={{
+                    fontSize: "clamp(22px,3vw,28px)",
+                    fontWeight: 800,
+                    color: "#ffffff",
+                    letterSpacing: "-0.04em",
+                    margin: 0,
+                  }}
+                >
+                  {mode === "signin" ? "Sign in to EVERYWHERE" : "Join EVERYWHERE Studio"}
+                </h1>
+              </div>
+
+              {resetSent && (
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "#C8961A",
+                    marginBottom: 16,
+                    textAlign: "center",
+                  }}
+                >
+                  Check your email for a reset link.
+                </p>
+              )}
+
+              <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {mode === "signup" && (
+                  <div>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "rgba(255,255,255,0.55)",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        display: "block",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Full Name
+                    </label>
+                    <input
+                      className="auth-input"
+                      type="text"
+                      placeholder="Your name"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
                 <div>
                   <label
                     style={{
@@ -231,65 +348,42 @@ const AuthPage = () => {
                       marginBottom: 6,
                     }}
                   >
-                    Full Name
+                    Email
                   </label>
                   <input
                     className="auth-input"
-                    type="text"
-                    placeholder="Your name"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
+                    type="email"
+                    placeholder="you@yourcompany.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                     required
                   />
                 </div>
-              )}
-              <div>
-                <label
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "rgba(255,255,255,0.55)",
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    display: "block",
-                    marginBottom: 6,
-                  }}
-                >
-                  Email
-                </label>
-                <input
-                  className="auth-input"
-                  type="email"
-                  placeholder="you@yourcompany.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "rgba(255,255,255,0.55)",
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    display: "block",
-                    marginBottom: 6,
-                  }}
-                >
-                  Password
-                </label>
-                <input
-                  className="auth-input"
-                  type="password"
-                  placeholder="••••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {mode === "signup" && (
+                {mode === "signup" && (
+                  <div>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "rgba(255,255,255,0.55)",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        display: "block",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Access Code
+                    </label>
+                    <input
+                      className="auth-input"
+                      type="text"
+                      placeholder="Enter your access code"
+                      value={accessCode}
+                      onChange={e => setAccessCode(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
                 <div>
                   <label
                     style={{
@@ -302,18 +396,105 @@ const AuthPage = () => {
                       marginBottom: 6,
                     }}
                   >
-                    Confirm Password
+                    Password
                   </label>
-                  <input
-                    className="auth-input"
-                    type="password"
-                    placeholder="••••••••••"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    required
-                  />
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      className="auth-input"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••••"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      style={{ paddingRight: 44 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      style={{
+                        position: "absolute",
+                        right: 10,
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "rgba(255,255,255,0.5)",
+                        padding: 4,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
-              )}
+                {mode === "signup" && (
+                  <div>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "rgba(255,255,255,0.55)",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        display: "block",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Confirm Password
+                    </label>
+                    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                      <input
+                        className="auth-input"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••••"
+                        value={confirmPassword}
+                        onChange={e => setConfirmPassword(e.target.value)}
+                        required
+                        style={{ paddingRight: 44 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        style={{
+                          position: "absolute",
+                          right: 10,
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "rgba(255,255,255,0.5)",
+                          padding: 4,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {mode === "signin" && (
+                  <div style={{ marginTop: -4 }}>
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: 12,
+                        color: "#C8961A",
+                        padding: 0,
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
 
               <button
                 type="submit"
