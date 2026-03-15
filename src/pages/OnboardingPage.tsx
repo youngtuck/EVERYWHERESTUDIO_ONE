@@ -12,7 +12,7 @@ import type { VoiceDNA, VoiceDNAResponse } from "../utils/voiceDNAProcessor";
 import { generateVoiceDNAFromInterview, generateVoiceDNAFromUploads } from "../utils/voiceDNAProcessor";
 import type { BrandDNAResponse } from "../utils/brandDNAProcessor";
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 type Method = "interview" | "upload" | null;
 
 export default function OnboardingPage() {
@@ -45,6 +45,11 @@ export default function OnboardingPage() {
     const retrain = searchParams.get("retrain");
     if (retrain === "voice") {
       setStep(2);
+      setMethod("interview");
+    } else if (retrain === "brand") {
+      setStep(4);
+    } else if (retrain === "method") {
+      setStep(5);
     }
   }, [user, searchParams]);
 
@@ -207,6 +212,7 @@ export default function OnboardingPage() {
   const showStep2Upload = step === 2 && method === "upload";
   const showStep3 = step === 3 && voiceDNA;
   const showStep4 = step === 4; // Brand DNA (Watson conversation)
+  const showStep5 = step === 5; // Method DNA (placeholder)
 
   return (
     <div
@@ -479,6 +485,31 @@ export default function OnboardingPage() {
                 Skip for now — go to dashboard
               </button>
             </div>
+          </section>
+        )}
+
+        {showStep5 && (
+          <section style={{ textAlign: "center", paddingTop: 24 }}>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.8)", marginBottom: 24, lineHeight: 1.6 }}>
+              Method DNA setup is coming soon. You’ll be able to upload frameworks and methodology docs so the system thinks in your terms.
+            </p>
+            <button
+              type="button"
+              onClick={goToDashboard}
+              style={{
+                padding: "12px 24px",
+                borderRadius: 8,
+                border: "1px solid rgba(200,150,26,0.6)",
+                background: "transparent",
+                color: "#C8961A",
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Go to dashboard
+            </button>
           </section>
         )}
       </main>
