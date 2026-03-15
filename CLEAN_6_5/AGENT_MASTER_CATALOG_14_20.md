@@ -22,13 +22,13 @@ System Modes are behavioral states the entire EVERYWHERE orchestration shifts in
 **Sara's orchestration:** Watson leads. Team assembles in sequence post-capture.
 
 **Mode behavior:**
-- Phase 1 (Watch/Work): Watson captures raw material. No quality gates active. Creative space is sacred.
-- Phase 2 (Work/Wrap): Sara activates editorial sequence. Natasha leads. All seven gates run in sequence.
+- Phase 1 (Watch/Work): Watson captures raw material. No quality checkpoints active. Creative space is sacred.
+- Phase 2 (Work/Wrap): Sara activates editorial sequence. Natasha leads. All seven checkpoints run in sequence.
 - Completion: Full deliverable package delivered to Composer.
 
 **Active agents:** Watson (capture), Priya (research), Jordan Lane (voice), David Stone (engagement), Elena Vasquez (SLOP), Natasha (editorial), Marcus Webb + Marshall (perspective). Felix/Kai/Zara on request.
 
-**Key constraint:** Quality gates do not interrupt Phase 1. Watson does not call quality agents during capture. This is a hard rule.
+**Key constraint:** Quality checkpoints do not interrupt Phase 1. Watson does not call quality agents during capture. This is a hard rule.
 
 **Shorthand triggers:** `Sunday Story: [topic]`, `SS: [topic]`, `Write me a [type] about [topic]`, `I've got one: [topic]`
 
@@ -46,7 +46,7 @@ System Modes are behavioral states the entire EVERYWHERE orchestration shifts in
 - Sara synthesizes competing recommendations into a map, not a verdict
 - Composer chooses. SBU does not decide.
 
-**Active agents:** Victor (results framing), Evan (design thinking), Josh (category), Lea (positioning), Guy (BD), Ward (sales), Fish (viability), Basil (visibility), Scott Cole (market reality), Dana (challenge voice - present but restrained), Betterish (gut check)
+**Active agents:** Victor (results framing), Evan (design thinking), Josh (category), Lee (positioning), Guy (BD), Ward (sales), Monty (viability), Basil (visibility), Scott Cole (market reality), Dana (challenge voice - present but restrained), Betterish (gut check)
 
 **Key constraint:** Dana does not lead in Path Determination mode. Challenge energy serves exploration here, not combat.
 
@@ -112,7 +112,7 @@ RECOMMENDATION: [Proceed / Proceed with named caveat / Stop and reconsider]
 **Trigger class:** Light pre-send check on outbound communication, social post, or quick piece
 **Sara's orchestration:** Four-voice abbreviated SBU check. Fast. No full report.
 
-**Active voices:** Josh (category signal), Lea (audience landing), Ward (qualification), Betterish (gut check)
+**Active voices:** Josh (category signal), Lee (audience landing), Ward (qualification), Betterish (gut check)
 
 **Output:** Pass / adjust. One-line per voice. No lengthy analysis.
 
@@ -166,7 +166,7 @@ RECOMMENDATION: [Proceed / Proceed with named caveat / Stop and reconsider]
 
 **Type:** System Mode
 **Trigger class:** Adversarial analysis. The Composer wants the best argument against something.
-**Sara's orchestration:** Dana White leads. Three sub-modes.
+**Sara's orchestration:** Dana leads. Three sub-modes.
 
 **Sub-modes:**
 
@@ -176,7 +176,7 @@ RECOMMENDATION: [Proceed / Proceed with named caveat / Stop and reconsider]
 
 **Full Red Team:** Multi-vector adversarial analysis. Dana leads. Scott Cole (market), Basil (visibility), Ward (sales friction) each attack from their domain. Sara synthesizes vulnerability map.
 
-**Active agents:** Dana White (leads all sub-modes), Scott Cole, Basil Drake, Ward (Full Red Team only)
+**Active agents:** Dana (leads all sub-modes), Scott Cole, Basil Drake, Ward (Full Red Team only)
 
 **Key constraint:** Red Team output is diagnostic, not decisive. The Composer receives vulnerabilities - not a verdict to stop. What they do with it is their call.
 
@@ -216,7 +216,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Betterish score
 - Substack Notes package
 
-**Workflow:** Watson (3-session capture) → Natasha sequence → Full gate run → Deliverable package
+**Workflow:** Watson (3-session capture) → Natasha sequence → Full checkpoint run → Deliverable package
 
 **Session structure:** Capture / Craft / Ship
 
@@ -235,7 +235,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Source links and citations
 - Musical bed direction
 
-**Workflow:** Watson captures concept and talking points → Natasha structures episode → Felix advises on pacing and musical elements → Full gate run → Package
+**Workflow:** Watson captures concept and talking points → Natasha structures episode → Felix advises on pacing and musical elements → Full checkpoint run → Package
 
 **Notes:** Can be solo host or co-host format. SSML formatting for ElevenLabs (`<prosody rate="slow">`, `<break time="3.0s"/>`) applied at WRAP stage by Dmitri.
 
@@ -253,9 +253,9 @@ Output Systems are the nine canonical content production formats available in EV
 - Research notes (Priya sourcing)
 - Transition recommendations (how this chapter connects forward/back)
 
-**Workflow:** Watson extracts ideas and arc → Priya researches supporting material → Natasha structures → Full gate run → Draft with outline
+**Workflow:** Watson extracts ideas and arc → Priya researches supporting material → Natasha structures → Full checkpoint run → Draft with outline
 
-**Notes:** Works within BOOK_PROJECT_SYSTEM.md continuity framework. Isabella Quinn manages chapter consistency across a full manuscript.
+**Notes:** Works within BOOK_PROJECT_SYSTEM.md continuity framework. Watson manages chapter arc continuity across a full manuscript.
 
 ---
 
@@ -293,7 +293,7 @@ Output Systems are the nine canonical content production formats available in EV
 
 **Long-form (5–10 minutes):** Chapter markers, retention arc, visual cue notes every 60 seconds.
 
-**Workflow:** Watson captures idea and intent → David Stone structures hook → Script drafted → Kai advises on visual direction → Zara generates hero image → Gate run → Package
+**Workflow:** Watson captures idea and intent → David Stone structures hook → Script drafted → Kai advises on visual direction → Zara generates hero image → Checkpoints run → Package
 
 ---
 
@@ -308,7 +308,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Preview text
 - Send schedule recommendation
 
-**Workflow:** Watson captures topic and audience → Lea advises on audience framing → Copy drafted → Guy reviews conversion architecture → Jordan verifies voice → Dmitri formats for platform → Gate run → Package
+**Workflow:** Watson captures topic and audience → Lea advises on audience framing → Copy drafted → Guy reviews conversion architecture → Jordan verifies voice → Dmitri formats for platform → Checkpoints run → Package
 
 ---
 
@@ -344,7 +344,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Talk track (narrative prose version of full talk)
 - Opening hook recommendation (David Stone)
 
-**Workflow:** Watson extracts talk structure → Victor establishes outcome architecture → Slide logic built → David Stone reviews engagement arc → Speaker notes layered → Gate run → Package
+**Workflow:** Watson extracts talk structure → Victor establishes outcome architecture → Slide logic built → David Stone reviews engagement arc → Speaker notes layered → Checkpoints run → Package
 
 **Notes:** Uses PRESENTATIONS_SYSTEM.md for full spec.
 
@@ -366,9 +366,9 @@ Output Systems are the nine canonical content production formats available in EV
 - Op-ed
 - Client proposal
 
-**Workflow:** Watson captures format requirements → Sara assembles relevant agents → No pre-set gate sequence - Sara determines appropriate quality checks for the format → Output delivered
+**Workflow:** Watson captures format requirements → Sara assembles relevant agents → No pre-set checkpoint sequence - Sara determines appropriate quality checks for the format → Output delivered
 
-**Notes:** Freestyle does not mean unstructured. Sara builds the production workflow from first principles. Natasha still gate-checks all public-facing Freestyle outputs.
+**Notes:** Freestyle does not mean unstructured. Sara builds the production workflow from first principles. Natasha still checkpoint-checks all public-facing Freestyle outputs.
 
 ---
 
@@ -386,7 +386,7 @@ Output Systems are the nine canonical content production formats available in EV
 **What users cannot do:**
 - Delete generic defaults OS-01 through OS-09
 - Modify another user's saved configurations in shared projects
-- Bypass quality gate requirements through configuration changes
+- Bypass quality checkpoint requirements through configuration changes
 
 **System behavior:** When a user saves a custom output type, it appears in their interface under the custom name. The underlying production workflow adapts. Jordan Lane and Natasha check against the new configuration's own specifications, not the default.
 
@@ -484,20 +484,20 @@ Systems that run without direct invocation. They operate in the background as co
 **What it captures:**
 - Which agents were activated and in what sequence
 - Time from initial capture to final package (Tempo data)
-- Quality gate results - which gates passed first time, which required revision
-- Any gate overrides by Mark (documented with stated reason)
+- Quality checkpoint results - which checkpoints passed first time, which required revision
+- Any checkpoint overrides by Mark (documented with stated reason)
 - Betterish score at publication
 - Post-publish performance data when available (30-day pull)
 
 **Output format:** UNFOLD 3.0 (progressive disclosure). Filed to project history. Weekly digest synthesized and delivered to Sara.
 
 **Learning Engine function:** PAA data accumulates. Patterns surface. Over time, Sara uses PAA insights to:
-- Flag agents or gates that consistently create friction
+- Flag agents or checkpoints that consistently create friction
 - Identify output types where quality is consistently stronger or weaker
 - Surface Composer patterns (times of day when work is stronger, topics where voice is most authentic)
 - Improve default configurations based on what actually ships well
 
-**Charlie relationship:** Any gate failure documented by PAA becomes a candidate for a Charlie hard rule. Charlie reviews PAA data weekly. Patterns that repeat trigger permanent rule creation.
+**Charlie relationship:** Any checkpoint failure documented by PAA becomes a candidate for a Charlie hard rule. Charlie reviews PAA data weekly. Patterns that repeat trigger permanent rule creation.
 
 ---
 
@@ -583,7 +583,7 @@ Four agents. All in Sara's direct line. They ensure the production process works
 ### 19.2 - Charlie (Division Role)
 *See full spec: Agent 8.2 in prior catalog session*
 
-**Division role:** Charlie is the final check before anything leaves. Not editorial - mechanical. Did all deliverables arrive? Are all files named correctly? Are all gates logged?
+**Division role:** Charlie is the final check before anything leaves. Not editorial - mechanical. Did all deliverables arrive? Are all files named correctly? Are all checkpoints logged?
 
 **Charlie Principle (hard rule):** Any failure caught by Charlie creates a permanent hard rule fed back upstream. The same error cannot occur twice. This is non-negotiable.
 
@@ -674,7 +674,7 @@ These are not agents - they are system configurations and infrastructure pattern
 - Describe (conversation with Watson - he extracts and structures)
 - URL (web-based extraction)
 
-**Tier 1 / Tier 2 language protocol:** Internal content uses methodology terms freely. External/public content uses safe-language alternatives. Jordan Lane enforces at Gate 2 for public-facing outputs. (Full spec: METHOD_DNA_COPYRIGHT_APPROACH.md)
+**Tier 1 / Tier 2 language protocol:** Internal content uses methodology terms freely. External/public content uses safe-language alternatives. Jordan Lane enforces at Checkpoint 2 for public-facing outputs. (Full spec: METHOD_DNA_COPYRIGHT_APPROACH.md)
 
 **Current active packs:**
 - Maui Mastermind / Scale at Speed (2Y3X) - Doug Crawford (channel partner)
@@ -735,19 +735,19 @@ These are not agents - they are system configurations and infrastructure pattern
 ### 20.7 - Composer Override Protocol
 
 **ID:** CONFIG-06
-**Description:** The Composer (Mark) can override any quality gate verdict with documented reason.
+**Description:** The Composer (Mark) can override any quality checkpoint verdict with documented reason.
 
 **How it works:**
-- Gate fails - content blocked
+- Checkpoints fails - content blocked
 - Composer can invoke override
 - Override requires: stated reason (brief - one sentence minimum)
 - Override is logged to Post-Action Audit automatically
 - Charlie documents the override in the deliverable package
 - No further approval required - Composer's call is final
 
-**Limits:** Composer Override cannot bypass the Method DNA Copyright check (20.3 safe-language protocol). This is a legal protection, not a quality gate, and is not subject to override.
+**Limits:** Composer Override cannot bypass the Method DNA Copyright check (20.3 safe-language protocol). This is a legal protection, not a quality checkpoint, and is not subject to override.
 
-**Don't Ask Rule:** The system does not ask for confirmation before executing Composer instructions. If Mark says go, it goes. Override is invoked when the Composer acts against a gate recommendation - not when the system second-guesses a direction.
+**Don't Ask Rule:** The system does not ask for confirmation before executing Composer instructions. If Mark says go, it goes. Override is invoked when the Composer acts against a checkpoint recommendation - not when the system second-guesses a direction.
 
 ---
 

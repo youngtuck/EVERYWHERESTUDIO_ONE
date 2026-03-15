@@ -148,8 +148,8 @@ Every capability in EVERYWHERE Studio can be trained via SODOTU. Sande's active 
 - SBU activation: when and how to use Path Determination and Decision Validation
 
 **Quality infrastructure:**
-- Understanding checkpoints: what each gate checks and why
-- Reading checkpoint output: how to interpret a gate hold and what to do about it
+- Understanding checkpoints: what each checkpoint checks and why
+- Reading checkpoint output: how to interpret a checkpoint hold and what to do about it
 - Composer Override: when to use it and how to document it
 
 **Watch capabilities:**

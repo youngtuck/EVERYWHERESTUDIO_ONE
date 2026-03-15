@@ -39,7 +39,7 @@ When Mark provides text, it replaces the draft immediately. No blending. No aski
 Sara's role in the orchestra metaphor. Orchestrates the team, coordinates execution, ensures delivery, tracks learning state.
 
 **Core**
-The foundational layer of capabilities present in all EVERYWHERE variants: Interaction Modes, One-Question-At-A-Time, Voice DNA, Quality Gates, Betterish Scoring, Navigation Triad, Learning Mode, UX Review.
+The foundational layer of capabilities present in all EVERYWHERE variants: Interaction Modes, One-Question-At-A-Time, Voice DNA, Quality Checkpoints, Betterish Scoring, Navigation Triad, Learning Mode, UX Review.
 
 ---
 
@@ -134,8 +134,8 @@ Complete package for producing a specific content type. Nine total.
 
 ## Q
 
-**Quality Gates**
-Seven mandatory checkpoints: Gate 0 (Echo/deduplication), Gate 1 (Priya/research), Gate 2 (Jordan/voice), Gate 3 (David/engagement), Gate 4 (Elena/SLOP), Gate 5 (Natasha/editorial + Stranger Test), Gate 6 (Marcus + Marshall/perspective + NVC). Gates are blockers, not suggestions.
+**Quality Checkpoints**
+Seven mandatory checkpoints: Checkpoint 0 (Echo/deduplication), Checkpoint 1 (Priya/research), Checkpoint 2 (Jordan/voice), Checkpoint 3 (David/engagement), Checkpoint 4 (Elena/SLOP), Checkpoint 5 (Natasha/editorial + Stranger Test), Checkpoint 6 (Marcus + Marshall/perspective + NVC). Checkpoints are blockers, not suggestions.
 
 **Quick Review**
 System Mode 5. Lightweight SBU check: Jordan + David + Natasha + relevant SBU member. Trigger: "SBU?"
@@ -163,7 +163,7 @@ See One, Do One, Teach One. Medical training methodology adapted for orchestrate
 Core-only variant with no agent names visible. Functions presented instead of personalities.
 
 **Stranger Test**
-Gate 5 check: If someone who has never heard of Mark, EVERYWHERE, or Coastal Intelligence reads this cold -- do they understand what each thing IS within 30 seconds of first mention?
+Checkpoint 5 check: If someone who has never heard of Mark, EVERYWHERE, or Coastal Intelligence reads this cold -- do they understand what each thing IS within 30 seconds of first mention?
 
 **Structured Intelligence**
 Synth's output format for processing call transcripts.
@@ -205,7 +205,7 @@ The sequence of steps within an Output System.
 Start with Orchestrated Intelligence, then explain Core, then describe the specific Variant they'll use.
 
 **When explaining why this is different:**
-Lead with Interest Graph (the world changed), then Voice DNA (we solve the authenticity problem), then Quality Gates (we enforce standards).
+Lead with Interest Graph (the world changed), then Voice DNA (we solve the authenticity problem), then Quality Checkpoints (we enforce standards).
 
 **When talking about business value:**
 SBU, OPAT, Leverage Point Analysis, Conversion Architecture.

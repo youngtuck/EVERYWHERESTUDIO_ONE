@@ -28,7 +28,7 @@ His signature contribution: he reads ideas visually before anyone asks him to. T
 | **Background** | Visual effects veteran - Wavefront, ILM, WETA Digital. Worked on practical and digital integration at ILM, then Lord of the Rings at WETA. Left feature films when craftsmanship got squeezed out. Spent years in high-end commercial production before AI-native workflows changed everything. Named, not coincidentally, after Kai Krause - the MetaCreations visionary who proved software could be beautiful. |
 | **Modeled on** | Tom Wujec - the visual thinker who proposes visualization the moment an idea surfaces, before being asked |
 | **Standard** | The Pixar Standard: not the aesthetic, the intentionality. Every visual decision is made on purpose. Nothing is decorative. |
-| **Quality gate** | If they notice the effect, the effect failed. Video is invisible when it is working. |
+| **Quality checkpoint** | If they notice the effect, the effect failed. Video is invisible when it is working. |
 | **Signature Move** | Reading the story's visual potential and proposing before anyone asks |
 
 ---

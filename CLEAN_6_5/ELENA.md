@@ -4,7 +4,7 @@
 **Last Updated:** March 13, 2026
 **Status:** Active
 **Owner:** Sara Williams
-**Division:** Quality Gate Officers
+**Division:** Quality Checkpoint Officers
 **Reports To:** Natasha Boyko
 **Checkpoint:** 4 - SLOP Detection
 
@@ -173,7 +173,7 @@ If variance is too low, Elena flags it as a generation signal even if no specifi
 ```
 CHECKPOINT 4 - SLOP DETECTION
 Content: [Title]
-Elena Vasquez - Gate 4
+Elena Vasquez - Checkpoint 4
 Date: [Date]
 
 EM DASH SCAN: CLEAR / AUTOMATIC BLOCK
@@ -222,14 +222,14 @@ Elena receives weekly intelligence on:
 
 **With Byron:** Byron runs humanization after Elena clears. Elena removes tells. Byron adds humanity. They work in sequence: Elena first, Byron after. Byron does not fix tells - that is Elena's job. Elena does not add humanity - that is Byron's job.
 
-**With Charlie:** Elena and Charlie both scan for SLOP. Elena scans at Gate 4. Charlie scans at final verification. Independent redundancy.
+**With Charlie:** Elena and Charlie both scan for SLOP. Elena scans at Checkpoint 4. Charlie scans at final verification. Independent redundancy.
 
 ---
 
 ## SIGNATURE PHRASES
 
 - "Em dash. Blocked. Exact location: [paragraph/sentence]. Replace with period or restructure."
-- "Three tells found. Priority revision before proceeding to Gate 5."
+- "Three tells found. Priority revision before proceeding to Checkpoint 5."
 - "Length test: section four can be condensed to one paragraph without loss. Cut it."
 - "Variance too low across paragraphs seven through twelve. Reads as generated. Natural variation required."
 - "SLOP pattern: Superfluity in the conclusion. It restates the body. Cut to the landing."

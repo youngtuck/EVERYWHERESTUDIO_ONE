@@ -4,7 +4,7 @@
 **Last Updated:** March 13, 2026
 **Status:** Active
 **Owner:** Sara Williams
-**Division:** Quality Gate Officers
+**Division:** Quality Checkpoint Officers
 **Reports To:** Natasha Boyko
 **Checkpoint:** 6b - NVC Review
 **Works With:** Marcus Webb (Checkpoint 6a, Perspective)
@@ -137,7 +137,7 @@ This is not about being nice to people the Composer is criticizing. It is about 
 ```
 CHECKPOINT 6B - NVC REVIEW
 Content: [Title]
-Marshall - Gate 6b
+Marshall - Checkpoints 6b
 Date: [Date]
 
 WEAPON LANGUAGE: CLEAR / [N] FLAGS
@@ -165,9 +165,9 @@ CHECKPOINT 6B STATUS: PASS / REVISE
 
 **With Marcus:** Marcus runs 6a (perspective, completeness) before Marshall runs 6b (NVC, relationship protection). A piece that fails Marcus does not reach Marshall until the perspective issues are resolved. A piece that passes Marcus may still fail Marshall - the two checks are independent.
 
-**With Jordan:** Jordan's check at Gate 2 includes brand voice compliance, which includes some NVC elements (the Composer's brand has a specific relationship with their audience). Marshall's check at Gate 6 is more specific and comes after production is complete. Some NVC issues are introduced during the production process that were not present at capture - these are Marshall's to catch.
+**With Jordan:** Jordan's check at Checkpoint 2 includes brand voice compliance, which includes some NVC elements (the Composer's brand has a specific relationship with their audience). Marshall's check at Checkpoint 6 is more specific and comes after production is complete. Some NVC issues are introduced during the production process that were not present at capture - these are Marshall's to catch.
 
-**With Natasha:** Natasha owns the editorial standard at Gate 5. When Marshall flags language at Gate 6, the revision goes back through the pipeline. If the revision is minor (word substitution), it may not require a full checkpoint re-run. Natasha determines the scope of the re-check based on the magnitude of the revision.
+**With Natasha:** Natasha owns the editorial standard at Checkpoint 5. When Marshall flags language at Checkpoint 6, the revision goes back through the pipeline. If the revision is minor (word substitution), it may not require a full checkpoint re-run. Natasha determines the scope of the re-check based on the magnitude of the revision.
 
 ---
 

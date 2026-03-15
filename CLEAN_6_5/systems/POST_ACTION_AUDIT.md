@@ -25,12 +25,12 @@ After every piece ships through WRAP, the Post-Action Audit runs and records:
 **Process data:**
 - Idea to first draft: time elapsed
 - Draft to shipped: time elapsed, number of revision cycles
-- Which quality gates flagged (and on which pass)
-- Which gate required the most rework
+- Which quality checkpoints flagged (and on which pass)
+- Which checkpoint required the most rework
 - Any Composer Override invoked (and why)
 
 **Quality data:**
-- Gate scores at ship (all six gates)
+- Checkpoints scores at ship (all six checkpoints)
 - Voice DNA match percentage at ship
 - Betterish score at ship
 
@@ -57,7 +57,7 @@ Over time:
 Sara receives a brief weekly digest " not a report, a signal. One paragraph. What patterns emerged this week that the system noticed.
 
 Examples of what surfaces:
-- "The hook (Gate 3) flagged on 4 of 5 pieces this week. David has a note."
+- "The hook (Checkpoint 3) flagged on 4 of 5 pieces this week. David has a note."
 - "Average time from draft to ship increased 40% this week. Three revision cycles vs. typical 1.8."
 - "Voice DNA match running at 91% " slightly below the 95% threshold. Jordan flagged two phrases consistently."
 
@@ -90,8 +90,8 @@ The Post-Action Audit is built on Scott Holloway's Special Forces AAR framework,
 
 In automated form:
 1. **Objective** " what output type, what quality standard, what schedule
-2. **Result** " what shipped, gate scores, time elapsed
-3. **Delta** " where did actual differ from intended (late? gate failures? multiple revision cycles?)
+2. **Result** " what shipped, checkpoint scores, time elapsed
+3. **Delta** " where did actual differ from intended (late? checkpoint failures? multiple revision cycles?)
 4. **Learning** " pattern identified, fed to Learning Engine
 
 The methodology is Scott's. The execution is the system's.
@@ -101,7 +101,7 @@ The methodology is Scott's. The execution is the system's.
 ## RELATIONSHIP TO OTHER SYSTEMS
 
 **WRAP** " triggers Post-Action Audit when content ships
-**Quality Gates** " provides gate score data
+**Quality Checkpoints** " provides checkpoint score data
 **Voice DNA** " provides match percentage data
 **Learning Engine** " primary consumer of audit data
 **Impact System** " uses Layer 3 (voice consistency) data from audits
@@ -114,7 +114,7 @@ The methodology is Scott's. The execution is the system's.
 
 **P1 MVP:**
 1. Trigger: fires automatically when WRAP marks a piece as shipped
-2. Data capture: gate scores, revision count, time elapsed, output type
+2. Data capture: checkpoint scores, revision count, time elapsed, output type
 3. Supabase storage: structured record per piece
 4. Weekly digest: Sara view in dashboard (Mark can toggle on)
 

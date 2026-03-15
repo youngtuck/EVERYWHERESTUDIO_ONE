@@ -26,7 +26,7 @@
 
 Before ANY content production begins, Sara confirms or creates the Client Fact Sheet.
 
-**Gate:** Watson cannot begin draft without confirmed fact sheet.
+**Checkpoints:** Watson cannot begin draft without confirmed fact sheet.
 
 ### Mark Sylvester Fact Sheet (Reference)
 
@@ -98,17 +98,17 @@ Before ANY content production begins, Sara confirms or creates the Client Fact S
 
 ### Sara Williams - Chief of Staff
 - **Age**: 39 | **Background**: Agency operations director, content operations consultant
-- **Function**: Owns Client Fact Sheet (v5.2), receives draft from Watson, coordinates QA workflow, manages quality gates, routes to Strategic Business Unit (SBU) for Interest Graph review, ensures delivery
-- **Traits**: Process enforcer, timeline guardian, quality gate monitor
+- **Function**: Owns Client Fact Sheet (v5.2), receives draft from Watson, coordinates QA workflow, manages quality checkpoints, routes to Strategic Business Unit (SBU) for Interest Graph review, ensures delivery
+- **Traits**: Process enforcer, timeline guardian, quality checkpoint monitor
 - **Output**: Smoothly orchestrated production meeting all standards and deadlines
-- **Quality Standard**: All quality gates passed, Interest Graph Framework passed, timeline maintained
+- **Quality Standard**: All quality checkpoints passed, Interest Graph Framework passed, timeline maintained
 
 ---
 
 ## INTEREST GRAPH FRAMEWORK
 
 **Status:** MANDATORY for all Sunday Stories
-**Position:** After Quality Gates + Betterish, before SBU Conversion Check
+**Position:** After Quality Checkpoints + Betterish, before SBU Conversion Check
 **Owner:** Strategic Business Unit (SBU)
 
 ### Why This Matters for Sunday Stories
@@ -145,7 +145,7 @@ Sunday Stories reach strangers through algorithmic distribution. A reader who ha
 **Position:** After Interest Graph, before Format Optimization
 **Owners:** Guy (primary) + Fish (leverage)
 **Duration:** 10 minutes
-**Gate:** Cannot proceed to FINAL without PASS
+**Checkpoints:** Cannot proceed to FINAL without PASS
 
 ### Guy's Conversion Questions
 
@@ -174,8 +174,8 @@ PRE-PRODUCTION: Client Fact Sheet (Sara) |-Æ'"Å¡ Â -Æ'"Å¡ Â NEW v5.2
  |-Æ'"Å¡ Â -Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""
 CONTENT CREATION (Watson + Mark)
  |-Æ'"Å¡ Â -Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""
-Quality Gates (1-6) |-Æ'"Å¡ Â ' PASS
- Gate 5 includes Stranger Test |-Æ'"Å¡ Â -Æ'"Å¡ Â NEW v5.2
+Quality Checkpoints (1-6) |-Æ'"Å¡ Â ' PASS
+ Checkpoint 5 includes Stranger Test |-Æ'"Å¡ Â -Æ'"Å¡ Â NEW v5.2
  |-Æ'"Å¡ Â -Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""
 Betterish Scoring |-Æ'"Å¡ Â ' 500+ (83%)
  |-Æ'"Å¡ Â -Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""
@@ -239,14 +239,14 @@ All files ready for your review.
 
 ## QUALITY GATES + INTEREST GRAPH VERIFICATION
 
-### Quality Gates (6 mandatory)
+### Quality Checkpoints (6 mandatory)
 ```
-Gate 1: Research Validation (Priya) |-Æ'"Å¡ Â ' PASS/FAIL
-Gate 2: Voice Authenticity (Jordan) |-Æ'"Å¡ Â ' PASS/FAIL
-Gate 3: Engagement Optimization (David) |-Æ'"Å¡ Â ' PASS/FAIL
-Gate 4: SLOP Detection (Elena) |-Æ'"Å¡ Â ' PASS/FAIL
-Gate 5: Editorial Excellence + Stranger Test (Natasha) |-Æ'"Å¡ Â ' PASS/FAIL
-Gate 6: Perspective & Risk (Marcus + Marshall) |-Æ'"Å¡ Â ' PASS/FAIL
+Checkpoint 1: Research Validation (Priya) |-Æ'"Å¡ Â ' PASS/FAIL
+Checkpoint 2: Voice Authenticity (Jordan) |-Æ'"Å¡ Â ' PASS/FAIL
+Checkpoint 3: Engagement Optimization (David) |-Æ'"Å¡ Â ' PASS/FAIL
+Checkpoint 4: SLOP Detection (Elena) |-Æ'"Å¡ Â ' PASS/FAIL
+Checkpoint 5: Editorial Excellence + Stranger Test (Natasha) |-Æ'"Å¡ Â ' PASS/FAIL
+Checkpoint 6: Perspective & Risk (Marcus + Marshall) |-Æ'"Å¡ Â ' PASS/FAIL
 ```
 
 ### Betterish Scoring
@@ -307,8 +307,8 @@ BOTH MUST PASS BEFORE DELIVERY
 ## VERSION HISTORY
 
 **v5.2 (February 17, 2026)**
-- Added Client Fact Sheet as pre-production gate
-- Added Stranger Test to Gate 5
+- Added Client Fact Sheet as pre-production checkpoint
+- Added Stranger Test to Checkpoint 5
 - Added SBU Conversion Check after Interest Graph
 - Sunday Story deliverables: 8 |-Æ'"Å¡ Â ' 10
 - Added Hero Image Prompt (landscape)

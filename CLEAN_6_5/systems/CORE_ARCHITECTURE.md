@@ -36,7 +36,7 @@ These capabilities are present in every EVERYWHERE deployment:
 | **Interaction Modes** | Five modes governing how conversations flow | Universal UX principle |
 | **One-Question-At-A-Time** | Never overwhelm; always one decision point | ADHD-friendly = good design |
 | **Voice DNA** | Capture and apply authentic voice | The differentiator |
-| **Quality Gates** | Seven mandatory blocking gates (Gate 0 + Gates 1-6) | Non-negotiable output standard |
+| **Quality Checkpoints** | Seven mandatory blocking checkpoints (Checkpoint 0 + Checkpoints 1-6) | Non-negotiable output standard |
 | **Betterish Scoring** | Objective quality measurement (450+ threshold) | Removes subjectivity |
 | **Composer Override Protocol** | Composer text supersedes draft | Authority clarity |
 | **Don't Ask Rule** | Execute when path is clear | Friction reduction |
@@ -191,7 +191,7 @@ When the path is clear, execute. Questions slow the composer down.
 
 | Situation | Action |
 |-----------|--------|
-| When a gate fails | Fix and re-run. Don't ask permission. |
+| When a checkpoint fails | Fix and re-run. Don't ask permission. |
 | When repetition is found | Cut it. Don't ask which one. |
 | When composer provides text | Use it. Don't ask if they're sure. |
 | When the next step is obvious | Take it. Don't list options. |
@@ -211,7 +211,7 @@ CORE
 |-- Interaction Modes
 |-- One-Question-At-A-Time
 |-- Voice DNA
-|-- Quality Gates (7: Gate 0 + Gates 1-6)
+|-- Quality Checkpoints (7: Checkpoint 0 + Checkpoints 1-6)
 |-- Betterish Scoring
 |-- Composer Override Protocol
 |-- Don't Ask Rule

@@ -12,7 +12,7 @@
 
 This is the master control file for Voice DNA extraction and profile generation. It lives in the EVERYWHERE core system and governs how any user's voice profile gets created, stored, and evolved.
 
-**This file:** System architecture, methodology, quality gates  
+**This file:** System architecture, methodology, quality checkpoints  
 **User files:** VOICE_DNA_[NAME].md - one per user, grows over time
 
 ---
@@ -61,7 +61,7 @@ Research benchmark: human writing is approximately 2× more linguistically varie
 4. Establish composer's personal variance range (low/medium/high)
 5. Store as variance profile: `{baseline: "medium-high", range: "wide", tolerance: "+/- 15%"}`
 
-**Application:** Byron Chase references the variance profile during humanization. Jordan validates against it at Gate 2. Output that is too *consistent* fails - even if it passes all vocabulary checks.
+**Application:** Byron Chase references the variance profile during humanization. Jordan validates against it at Checkpoint 2. Output that is too *consistent* fails - even if it passes all vocabulary checks.
 
 ### Layer 2: Value Markers
 **Source:** Stated beliefs, decision patterns, content themes  
@@ -320,12 +320,12 @@ write, research, and publish in your voice across every format.
 
 ## QUALITY GATES
 
-### Gate 1: Source Quality
+### Checkpoint 1: Source Quality
 - Minimum 1,000 words of written content OR completed interview
 - Content is actually by the user (not AI-generated)
 - Recent enough to reflect current voice (prefer < 2 years)
 
-### Gate 2: Extraction Completeness
+### Checkpoint 2: Extraction Completeness
 - All three layers populated (including Layer 1.5)
 - Both modes detected (or confirmed single-mode user)
 - Signature phrases identified
@@ -333,12 +333,12 @@ write, research, and publish in your voice across every format.
 - **Subconscious fingerprint extracted** (pronoun ratio, article preference, variance baseline)
 - **Variance profile established** (required for Byron Chase calibration)
 
-### Gate 3: Authenticity
+### Checkpoint 3: Authenticity
 - Sample outputs pass "would they say this?" test
 - No AI-typical language in profile
 - Voice markers match across sources
 
-### Gate 4: Usability
+### Checkpoint 4: Usability
 - Profile works as system prompt
 - Calibration test shows clear correct/incorrect
 - Training instructions are actionable
@@ -391,7 +391,7 @@ Voice DNA profiles are consumed by:
 - **All agents:** Use voice profile for output generation
 - **Jordan Lane:** Validates voice consistency across outputs
 - **Byron Chase:** Humanization editing references profile
-- **Quality Gates:** Check output against profile markers
+- **Quality Checkpoints:** Check output against profile markers
 
 ### Loading a Profile
 

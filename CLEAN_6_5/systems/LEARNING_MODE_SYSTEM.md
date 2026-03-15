@@ -82,7 +82,7 @@ The system demonstrates a capability by actually running it on a real example. N
 
 **Narration style:**
 - Brief annotations, not lectures
-- "Running Gate 0 -- Echo checks for repetition before editorial gates touch it."
+- "Running Checkpoint 0 -- Echo checks for repetition before editorial checkpoints touch it."
 - "Jordan is checking voice authenticity -- looking for AI tells and pattern match."
 - Show the work, explain the purpose, keep moving
 
@@ -103,8 +103,8 @@ System hands the user the wheel. Guided practice with scaffolding.
 
 **Guidance style:**
 - Suggestive, not directive
-- "You could run quality gates now, or polish the draft first. Most people gate first."
-- "That section might trigger Elena's SLOP detection. Want to tighten it before gates?"
+- "You could run quality checkpoints now, or polish the draft first. Most people checkpoint first."
+- "That section might trigger Elena's SLOP detection. Want to tighten it before checkpoints?"
 - Let the user make choices, catch the ones that would break things
 
 **Output:** User-completed work + confidence in the workflow
@@ -123,7 +123,7 @@ User explains it back. The mastery test.
 - This is where understanding becomes solid
 
 **Validation style:**
-- "That's right -- except Gate 0 runs before Gate 1, not after."
+- "That's right -- except Checkpoint 0 runs before Checkpoint 1, not after."
 - "You nailed the flow. One thing you didn't mention: Charlie has blocking authority at the end."
 - Correct without condescending
 
@@ -159,7 +159,7 @@ Learning Mode works with any EVERYWHERE capability:
 ### Workflows
 - "Teach me Sunday Story production"
 - "Teach me how a Get Current podcast gets made"
-- "Show me how quality gates work"
+- "Show me how quality checkpoints work"
 - "Show me the Communication Cascade"
 
 ### Capabilities
@@ -238,8 +238,8 @@ MASTERY CONFIRMED
 - Proactive suggestion: "Looks like this is new for you. Want me to walk you through it?"
 - Learning Mode completion feeds back to What's Next: capability now in user's toolkit
 
-### Quality Gates
-- During DO ONE, quality gates run normally but with explanatory narration
+### Quality Checkpoints
+- During DO ONE, quality checkpoints run normally but with explanatory narration
 - User sees why things pass or fail
 - Builds intuition about quality standards
 
@@ -259,20 +259,20 @@ His job is drawing out the story, not writing it.
 
 Draft done. Now Sara takes over -- Watson's job is finished.
 
-First up: Echo runs Gate 0. Checking for repeated ideas 
+First up: Echo runs Checkpoint 0. Checking for repeated ideas 
 before the editorial team touches it.
 
 Echo: PASS. No redundancy.
 
-Gate 1: Priya verifies every claim. She needs sources.
-Gate 2: Jordan checks -- does this sound like you? 
-Gate 3: David tests -- would you keep reading after line one?
-Gate 4: Elena scans for AI language. Zero tolerance.
-Gate 5: Natasha edits for publication quality and runs 
+Checkpoint 1: Priya verifies every claim. She needs sources.
+Checkpoint 2: Jordan checks -- does this sound like you? 
+Checkpoint 3: David tests -- would you keep reading after line one?
+Checkpoint 4: Elena scans for AI language. Zero tolerance.
+Checkpoint 5: Natasha edits for publication quality and runs 
 the Stranger Test.
-Gate 6: Marcus checks blind spots. Marshall checks tone.
+Checkpoint 6: Marcus checks blind spots. Marshall checks tone.
 
-All gates passed. Charlie verifies the deliverable package 
+All checkpoints passed. Charlie verifies the deliverable package 
 is complete -- article, podcast script, show notes, video 
 script, B-roll prompts, music bed, SEO keywords, Betterish 
 score. Ten items.
@@ -347,7 +347,7 @@ or are we done?"
 - Initial system design
 - Three-phase SODOTU architecture
 - Trigger system defined
-- Integration with DISCOVER, What's Next, Quality Gates
+- Integration with DISCOVER, What's Next, Quality Checkpoints
 - Variant behavior specified
 - Narration examples provided
 

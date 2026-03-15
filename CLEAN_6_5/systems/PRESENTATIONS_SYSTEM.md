@@ -34,14 +34,14 @@ FINAL DELIVERABLE PACKAGE (prompts + outlines + scripts + validation report)
 - Which presentation format do you want?
 - Should I create a Gamma prompt?
 - Want speaker notes?
-- Did this pass quality gates?
+- Did this pass quality checkpoints?
 
 **USER ALWAYS RECEIVES:**
 - Gamma.app AI prompt (primary - copy/paste ready)
 - Slide content outline (traditional backup)
 - Webinar script (if presentation is 30+ minutes)
 - One-pager content (summary handout)
-- Validation report (confirms all gates passed)
+- Validation report (confirms all checkpoints passed)
 
 ---
 
@@ -105,7 +105,7 @@ TEAM EXECUTES AUTOMATICALLY:
 4. Develop slide content outline (traditional backup)
 5. Write webinar script (if 30+ minute presentation)
 6. Create one-pager summary content
-7. Run through all quality gates
+7. Run through all quality checkpoints
 8. Compile validation report
 ```
 
@@ -302,9 +302,9 @@ Here's what I want you to do next...
 
 ## AUTOMATIC QUALITY GATES
 
-### **All Gates Run Silently - No User Involvement**
+### **All Checkpoints Run Silently - No User Involvement**
 
-**Gate 1: Content Accuracy** (Priya Kumar - Automatic)
+**Checkpoint 1: Content Accuracy** (Priya Kumar - Automatic)
 ```
 VALIDATES AUTOMATICALLY:
  All facts verified with sources
@@ -315,7 +315,7 @@ VALIDATES AUTOMATICALLY:
 RESULT: PASS/FAIL (logged in validation report)
 ```
 
-**Gate 2: Voice Authenticity** (Jordan Lane - Automatic)
+**Checkpoint 2: Voice Authenticity** (Jordan Lane - Automatic)
 ```
 VALIDATES AUTOMATICALLY:
  Content matches client Voice DNA >95%
@@ -326,7 +326,7 @@ VALIDATES AUTOMATICALLY:
 RESULT: PASS/FAIL (logged in validation report)
 ```
 
-**Gate 3: Engagement Optimization** (David Stone - Automatic)
+**Checkpoint 3: Engagement Optimization** (David Stone - Automatic)
 ```
 VALIDATES AUTOMATICALLY:
  Opening hook grabs attention (7-second test)
@@ -338,7 +338,7 @@ VALIDATES AUTOMATICALLY:
 RESULT: PASS/FAIL (logged in validation report)
 ```
 
-**Gate 4: SLOP Detection** (Dr. Elena Vasquez - Automatic)
+**Checkpoint 4: SLOP Detection** (Dr. Elena Vasquez - Automatic)
 ```
 VALIDATES AUTOMATICALLY:
  No superfluity (content not padded)
@@ -349,7 +349,7 @@ VALIDATES AUTOMATICALLY:
 RESULT: PASS/FAIL (logged in validation report)
 ```
 
-**Gate 5: Presentation Structure** (Dmitri Wells - Automatic)
+**Checkpoint 5: Presentation Structure** (Dmitri Wells - Automatic)
 ```
 VALIDATES AUTOMATICALLY:
  Clear arc: opening -Â¢-šÂ¬-žÂ¢-Æ' ¢-š   content -Â¢-šÂ¬-žÂ¢-Æ' ¢-š   conclusion
@@ -361,7 +361,7 @@ VALIDATES AUTOMATICALLY:
 RESULT: PASS/FAIL (logged in validation report)
 ```
 
-**Gate 6: Editorial Excellence** (Isabella Quinn - Automatic for complex presentations)
+**Checkpoint 6: Editorial Excellence** (Isabella Quinn - Automatic for complex presentations)
 ```
 VALIDATES AUTOMATICALLY:
  Professional polish appropriate for audience
@@ -395,12 +395,12 @@ TEAM ASSEMBLED:
  [Additional specialists if activated]
 
 QUALITY GATES:
- Gate 1: Content Accuracy - PASS (all facts verified)
- Gate 2: Voice Authenticity - PASS (97% voice match)
- Gate 3: Engagement Optimization - PASS (strong hooks, clear CTA)
- Gate 4: SLOP Detection - PASS (0 issues)
- Gate 5: Presentation Structure - PASS (24 slides, 45-min timing)
- Gate 6: Editorial Excellence - PASS (professional polish verified)
+ Checkpoint 1: Content Accuracy - PASS (all facts verified)
+ Checkpoint 2: Voice Authenticity - PASS (97% voice match)
+ Checkpoint 3: Engagement Optimization - PASS (strong hooks, clear CTA)
+ Checkpoint 4: SLOP Detection - PASS (0 issues)
+ Checkpoint 5: Presentation Structure - PASS (24 slides, 45-min timing)
+ Checkpoint 6: Editorial Excellence - PASS (professional polish verified)
 
 DELIVERABLES INCLUDED:
  Gamma.app AI Prompt (copy/paste ready)
@@ -649,12 +649,12 @@ TEAM ASSEMBLED:
  Natasha Boyko (Contrarian Challenge)
 
 QUALITY GATES:
- Gate 1: Content Accuracy - PASS (all AI tool claims verified)
- Gate 2: Voice Authenticity - PASS (98% match, approachable tone)
- Gate 3: Engagement - PASS (contrarian hook, clear CTA)
- Gate 4: SLOP Detection - PASS (0 issues, no jargon)
- Gate 5: Structure - PASS (24 slides, 45-min pacing verified)
- Gate 6: Editorial Excellence - PASS (professional polish confirmed)
+ Checkpoint 1: Content Accuracy - PASS (all AI tool claims verified)
+ Checkpoint 2: Voice Authenticity - PASS (98% match, approachable tone)
+ Checkpoint 3: Engagement - PASS (contrarian hook, clear CTA)
+ Checkpoint 4: SLOP Detection - PASS (0 issues, no jargon)
+ Checkpoint 5: Structure - PASS (24 slides, 45-min pacing verified)
+ Checkpoint 6: Editorial Excellence - PASS (professional polish confirmed)
 
 DELIVERABLES INCLUDED:
  Gamma.app AI Prompt (789 words, copy/paste ready)
@@ -733,7 +733,7 @@ READY FOR IMMEDIATE USE: YES
 2. **Flexibility**: 4 different formats (AI prompt, outline, script, one-pager)
 3. **Complete Package**: Everything needed for successful presentation
 4. **Voice Consistent**: Speaker notes sound like them, not generic
-5. **Quality Assured**: All gates passed, ready to present
+5. **Quality Assured**: All checkpoints passed, ready to present
 
 **Why EVERYWHERE Benefits:**
 1. **On-Brand**: Orchestrates AI tools (Gamma), doesn't replace them

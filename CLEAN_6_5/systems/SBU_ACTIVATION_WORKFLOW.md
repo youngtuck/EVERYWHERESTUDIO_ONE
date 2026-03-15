@@ -113,19 +113,19 @@ Mark brings decision direction
     |
 Sara recognizes DECISION VALIDATION
     |
-Gate 1: Victor frames with OPA
+Checkpoint 1: Victor frames with OPA
     |
-Gate 2: Evan checks user alignment (NEW v5.4)
+Checkpoint 2: Evan checks user alignment (NEW v5.4)
     |
-Gate 3: Josh checks category alignment
+Checkpoint 3: Josh checks category alignment
     |
-Gate 4: Fish analyzes asymmetry
+Checkpoint 4: Fish analyzes asymmetry
     |
-Gate 5: Marcus + Marshall examine blind spots
+Checkpoint 5: Marcus + Marshall examine blind spots
     |
-Gate 6: Ward checks execution reality
+Checkpoint 6: Ward checks execution reality
     |
-Gate 7: Sara asks "Do you believe it yourself?"
+Checkpoint 7: Sara asks "Do you believe it yourself?"
     |
 GREEN/YELLOW/RED determination
     |
@@ -134,10 +134,10 @@ If GREEN + commitment -> Communication Cascade activates
 
 **Output Options:**
 - GREEN: Proceed to commitment and cascade
-- YELLOW: Adjust specific elements, re-run affected gates
+- YELLOW: Adjust specific elements, re-run affected checkpoints
 - RED: Reconsider fundamentally
 
-**See:** DECISION_VALIDATION_PROTOCOL.md for full gate details.
+**See:** DECISION_VALIDATION_PROTOCOL.md for full checkpoint details.
 
 ---
 
@@ -202,7 +202,7 @@ When a decision is validated (GREEN) and the composer commits, the content syste
    - Press version
    - Peer version
    - Subordinate version
-3. Each passes through standard quality gates
+3. Each passes through standard quality checkpoints
 4. Delivery coordinated by Sara
 
 **One decision -> Many communications -> Every audience that needs to hear it**
@@ -214,7 +214,7 @@ When a decision is validated (GREEN) and the composer commits, the content syste
 **Position:** After Interest Graph, before Format Optimization  
 **Owners:** Guy (primary) + Fish (leverage)  
 **Duration:** 10 minutes  
-**Gate:** Cannot proceed to FINAL without PASS
+**Checkpoints:** Cannot proceed to FINAL without PASS
 
 ### Guy's Conversion Questions
 
@@ -282,14 +282,14 @@ For Red Team: If verdict is MODIFY, Sara asks "Do you want to adjust and re-run,
 **v5.4 (February 5, 2026)**
 - Added Evan (Design Thinking) to SBU -- 10 members
 - Added Red Team as third activation mode
-- Added Evan to Decision Validation gate sequence
+- Added Evan to Decision Validation checkpoint sequence
 - Updated SBU Brand Ethos with Evan and expanded Dana role
 - Dana White expanded: Cage Match + Red Team Lead
 
 **v5.2 (February 17, 2026)**
 - Added Decision Validation as second activation mode
 - Added Communication Cascade after validated commitment
-- Added gate sequence for read-through
+- Added checkpoint sequence for read-through
 - Distinguished Path Determination from Decision Validation
 - Added SBU Conversion Check after Interest Graph
 - Guy + Fish must both PASS

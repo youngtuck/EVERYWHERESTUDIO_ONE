@@ -41,14 +41,14 @@ MARK SYLVESTER " Composer
     |-- CONTENT ORIGIN (1)
     |   +-- Dr. John Watson " First Listener
     |
-    |-- QUALITY GATE OFFICERS (8) " Report to Natasha
-    |   |-- Gate 0: Echo " Deduplication
-    |   |-- Gate 1: Priya Kumar " Research Accuracy
-    |   |-- Gate 2: Jordan Lane " Voice Authenticity + Platform Nativity
-    |   |-- Gate 3: David Stone " Engagement Optimization
-    |   |-- Gate 4: Dr. Elena Vasquez " SLOP Detection + AI Tells
-    |   |-- Gate 5: Natasha Boyko " Editorial Excellence
-    |   +-- Gate 6: Dr. Marcus Webb + Marshall " Perspective and NVC
+    |-- QUALITY CHECKPOINT OFFICERS (8) " Report to Natasha
+    |   |-- Checkpoint 0: Echo " Deduplication
+    |   |-- Checkpoint 1: Priya Kumar " Research Accuracy
+    |   |-- Checkpoint 2: Jordan Lane " Voice Authenticity + Platform Nativity
+    |   |-- Checkpoint 3: David Stone " Engagement Optimization
+    |   |-- Checkpoint 4: Dr. Elena Vasquez " SLOP Detection + AI Tells
+    |   |-- Checkpoint 5: Natasha Boyko " Editorial Excellence
+    |   +-- Checkpoint 6: Dr. Marcus Webb + Marshall " Perspective and NVC
     |
     |-- QUALITY SPECIALISTS (4) " Report to Natasha
     |   |-- Byron Chase " Humanization Editor
@@ -83,7 +83,7 @@ MARK SYLVESTER " Composer
 
 **Sara (Chief of Staff / Conductor)** orchestrates everything. Assembles who the moment needs " jazz trio or full orchestra. Routes all eight system modes. When the SBU is genuinely divided, surfaces competing recommendations. Dana resolves the Cage Match. Mark decides.
 
-**Natasha (Principal Editor)** sets the quality standard the entire orchestra tunes to. All gate officers and quality specialists report to her.
+**Natasha (Principal Editor)** sets the quality standard the entire orchestra tunes to. All checkpoint officers and quality specialists report to her.
 
 **Dr. Watson (First Listener)** hears every idea first and captures it before it becomes a draft.
 
@@ -102,7 +102,7 @@ MARK SYLVESTER " Composer
 | Strategic Business Unit | 10 | 11 | +Scott Cole |
 | Operations Leadership | 5 | 5 | " |
 | Content Origin | 1 | 1 | " |
-| Quality Gate Officers | 7 | 8 | Echo counted |
+| Quality Checkpoint Officers | 7 | 8 | Echo counted |
 | Quality Specialists | 4 | 4 | " |
 | Process Quality | 4 | 4 | " |
 | Web Strategy | 1 | 1 | " |
@@ -113,9 +113,9 @@ MARK SYLVESTER " Composer
 
 ---
 
-## QUALITY GATE SEQUENCE
+## QUALITY CHECKPOINT SEQUENCE
 
-| Gate | Agent | Standard |
+| Checkpoints | Agent | Standard |
 |------|-------|----------|
 | 0 | Echo | Zero redundant content |
 | 1 | Priya Kumar | 100% verified claims, minimum 8 sources for long-form |
@@ -125,7 +125,7 @@ MARK SYLVESTER " Composer
 | 5 | Natasha Boyko | Publication-grade + Stranger Test |
 | 6 | Dr. Marcus Webb + Marshall | Zero cultural missteps + NVC review |
 
-Gates are blockers, not suggestions. Sara cannot override. Mark can " documented reason required, Post-Action Audit triggered.
+Checkpoints are blockers, not suggestions. Sara cannot override. Mark can " documented reason required, Post-Action Audit triggered.
 
 ---
 
@@ -161,7 +161,7 @@ Sara Williams, Natasha Boyko, Isabella Quinn, Martin Rhodes, Riley, Diane
 
 **Content Origin (1):** Dr. John Watson
 
-**Quality Gate Officers (8):**
+**Quality Checkpoint Officers (8):**
 Echo, Priya Kumar, Jordan Lane, David Stone, Dr. Elena Vasquez, Natasha Boyko, Dr. Marcus Webb, Marshall
 
 **Quality Specialists (4):**

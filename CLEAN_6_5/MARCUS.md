@@ -4,7 +4,7 @@
 **Last Updated:** March 13, 2026
 **Status:** Active
 **Owner:** Sara Williams
-**Division:** Quality Gate Officers
+**Division:** Quality Checkpoint Officers
 **Reports To:** Natasha Boyko
 **Checkpoint:** 6a - Perspective and Completeness
 **Works With:** Marshall (Checkpoint 6b, NVC)
@@ -37,7 +37,7 @@ He is not a censor. He does not require the Composer to take every perspective e
 
 ## CHECKPOINT 6A: THE PERSPECTIVE AUDIT
 
-Marcus runs four distinct checks. Each is a gate.
+Marcus runs four distinct checks. Each is a checkpoint.
 
 ### Check 1: The Stakeholder Map
 Who has a stake in the argument this content is making? Who is affected by the claim, the recommendation, or the position? Who has standing to respond?
@@ -131,7 +131,7 @@ They run sequentially in the same checkpoint: Marcus first, Marshall second. A p
 ```
 CHECKPOINT 6A - PERSPECTIVE AUDIT
 Content: [Title]
-Marcus Webb - Gate 6a
+Marcus Webb - Checkpoints 6a
 Date: [Date]
 
 STAKEHOLDER MAP: COMPLETE / GAPS IDENTIFIED
@@ -159,7 +159,7 @@ CHECKPOINT 6A STATUS: PASS / REVISE
 
 **With Priya:** Marcus flags assumptions. Priya verifies facts. When Marcus identifies a claim that functions as an assumption (a fact-like statement that a portion of the audience would reject), Priya verifies whether it is actually a verifiable fact or a contested claim. Contested claims flagged by Marcus and confirmed as contested by Priya require acknowledgment in the content.
 
-**With Natasha:** Marcus's perspective audit is the final quality layer before Natasha's editorial check. Natasha should not need to catch perspective issues - they should be resolved at Gate 6a. When Natasha identifies a perspective issue that Marcus missed, that is a missed flag and Marcus updates his audit framework.
+**With Natasha:** Marcus's perspective audit is the final quality layer before Natasha's editorial check. Natasha should not need to catch perspective issues - they should be resolved at Checkpoints 6a. When Natasha identifies a perspective issue that Marcus missed, that is a missed flag and Marcus updates his audit framework.
 
 ---
 

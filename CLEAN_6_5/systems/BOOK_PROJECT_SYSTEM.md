@@ -16,7 +16,7 @@
 
 **Output Standards**: Publication-grade manuscript suitable for traditional publishing, self-publishing, or lead generation with accompanying marketing materials and visual framework
 
-**Timeline**: Multi-week to multi-month projects with iterative quality gates
+**Timeline**: Multi-week to multi-month projects with iterative quality checkpoints
 
 **Token Budget**: ~13,000 tokens (leaves 177,000 for manuscript work)
 
@@ -70,7 +70,7 @@ This system follows five proven phases, validated through The Trust Stack manusc
 - Key themes and insights document
 - Research database for manuscript reference
 
-**Quality Gate**: Research depth sufficient for thought leadership claims and industry authority establishment
+**Quality Checkpoint**: Research depth sufficient for thought leadership claims and industry authority establishment
 
 ---
 
@@ -117,7 +117,7 @@ This system follows five proven phases, validated through The Trust Stack manusc
 - Visual framework plan
 - Timeline with milestones
 
-**Quality Gate**: Structure supports clear argument progression and maintains reader engagement across full manuscript length
+**Quality Checkpoint**: Structure supports clear argument progression and maintains reader engagement across full manuscript length
 
 ---
 
@@ -169,7 +169,7 @@ This system follows five proven phases, validated through The Trust Stack manusc
 - Research integration notes
 - Scenario text if applicable
 
-**Quality Gate**: Each chapter maintains voice consistency, advances core argument, and engages target reader
+**Quality Checkpoint**: Each chapter maintains voice consistency, advances core argument, and engages target reader
 
 ---
 
@@ -197,7 +197,7 @@ This system follows five proven phases, validated through The Trust Stack manusc
  - Identify content that feels "anti-corporate" vs "human-centered"
  - Systematically integrate feedback across relevant sections
 
-3. **Editorial Board Quality Gates**
+3. **Editorial Board Quality Checkpoints**
  - **David Stone**: Engagement optimization
  - Identify areas losing reader attention
  - Suggest clarity improvements for non-technical audience
@@ -236,7 +236,7 @@ This system follows five proven phases, validated through The Trust Stack manusc
 - Partner feedback integration log
 - Editorial board reports
 
-**Quality Gate**: Publication-ready manuscript that maintains voice authenticity, serves strategic purpose, and meets professional standards
+**Quality Checkpoint**: Publication-ready manuscript that maintains voice authenticity, serves strategic purpose, and meets professional standards
 
 ---
 
@@ -293,7 +293,7 @@ This system follows five proven phases, validated through The Trust Stack manusc
 - Lead generation workflow documentation
 - Keynote presentation outline (if applicable)
 
-**Quality Gate**: Complete marketing ecosystem ready for distribution with clear lead generation and qualification workflow
+**Quality Checkpoint**: Complete marketing ecosystem ready for distribution with clear lead generation and qualification workflow
 
 ---
 
@@ -428,7 +428,7 @@ This system follows five proven phases, validated through The Trust Stack manusc
 
 5. **Don't Publish Without Complete Editorial Board Review**
  - David Stone (engagement), Dr. Elena Vasquez (SLOP), Dr. Marcus Webb (perspective)
- - Quality gates prevent publication of flawed content
+ - Quality checkpoints prevent publication of flawed content
  - Professional standards require multiple expert eyes
 
 ---
@@ -553,7 +553,7 @@ For co-authored or multi-contributor books:
 - Initial production version
 - Incorporates complete Trust Stack development learnings
 - Integrates AI best practices and business book writing principles
-- Includes proven workflows, quality gates, and team integration
+- Includes proven workflows, quality checkpoints, and team integration
 - Ready for reuse on future book projects
 
 ---

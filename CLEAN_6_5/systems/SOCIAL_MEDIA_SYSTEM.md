@@ -46,7 +46,7 @@ Every piece of social content must:
 ## INTEREST GRAPH FRAMEWORK (MANDATORY)
 
 **Status:** Default ON for all social media content
-**Position:** After Quality Gates, before scheduling
+**Position:** After Quality Checkpoints, before scheduling
 **Owner:** Strategic Business Unit (SBU)
 
 ### The Four Filters for Social
@@ -140,7 +140,7 @@ Every piece of social content must:
 
 ## QUALITY GATES + INTEREST GRAPH VERIFICATION
 
-### Standard Quality Gates
+### Standard Quality Checkpoints
 ```
 -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢...-Æ'"Å¡ Â Platform-specific formatting applied
 -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢...-Æ'"Å¡ Â Voice DNA consistency across platforms
@@ -167,7 +167,7 @@ ALL 4 FILTERS MUST PASS BEFORE SCHEDULING
 ```
 Content Creation
  -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'"Å¡ Â |...
-Quality Gates (Standard)
+Quality Checkpoints (Standard)
  -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'"Å¡ Â |...
 Interest Graph Framework Review
  - Josh reviews Category Signal

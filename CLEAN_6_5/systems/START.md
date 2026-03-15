@@ -132,7 +132,7 @@ Christopher Kowalski (Strategic Digital Partner + UX Review Lead)
 | AGENT_MASTER_CATALOG_14_20.md | System modes, output types, configurations |
 | VOICE_DNA_v6_5.md | Voice DNA extraction methodology |
 | INTEREST_GRAPH_STANDARD.md | Five-filter distribution framework |
-| QUALITY_GATE_FRAMEWORK.md | Checkpoint specifications |
+| QUALITY_CHECKPOINT_FRAMEWORK.md | Checkpoint specifications |
 | TASK_MASTER_SYSTEM.md | Production operations |
 
 ---
@@ -145,7 +145,7 @@ Christopher Kowalski (Strategic Digital Partner + UX Review Lead)
 - Mira Rhoades - Chief of Wrap
 - Kai Morrison - Chief of Visual Intelligence
 - Martin Rhodes - CTO + SBU seat
-- Gates renamed Checkpoints throughout
+- Checkpoints renamed Checkpoints throughout
 - Betterish publication threshold: 900 (was 800)
 - Composed Intelligence (not Orchestrated Intelligence)
 - Watch. Work. Wrap. (not Write)

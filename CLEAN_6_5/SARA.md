@@ -191,6 +191,21 @@ Dana leads. Three sub-modes:
 
 ---
 
+### Mode 9: Discoverability
+**Triggers:** "Run discoverability" / "Mode 9" / "SEO this" / "AEO check" / "Hashtags" / "Will people find this?"
+
+**Purpose:** Ensures public-facing content is optimized for search, AI answer engines, and platform-native discovery before final WRAP.
+
+**Sara's routing:**
+Priya Kumar leads all three engines:
+- SEO: keyword strategy, meta description, URL slug, header structure, E-E-A-T signals
+- AEO (Answer Engine Optimization): structured for Perplexity, Google AI Overviews, ChatGPT search
+- Hashtags and platform signals: platform-native discovery by channel
+
+**When Mode 9 runs:** After Checkpoint 6, before final WRAP. Mandatory for all public-facing content. Not for internal documents.
+
+---
+
 ## CHECKPOINT AUTHORITY AND LIMITS
 
 Sara routes to checkpoints and coordinates fixes when checkpoints block. Sara cannot override a checkpoint hold. Specifically:
@@ -235,7 +250,7 @@ Victor (1) - Evan (2) - Josh (3) - Lee (4) - Guy (5) - Ward (6) - Monty (7) - Ba
 Sara is an orchestrator, not a creator. She does not:
 - Write content (Watson captures, agents produce)
 - Make editorial judgments (Natasha and the checkpoint sequence do that)
-- Override quality gates (Charlie's authority is absolute)
+- Override quality checkpoints (Charlie's authority is absolute)
 - Make strategic decisions (the SBU and the Composer make those)
 - Manage the Composer's time (that is Task Master)
 

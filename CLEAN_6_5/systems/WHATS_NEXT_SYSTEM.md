@@ -70,14 +70,14 @@ The system monitors conversation state and intervenes when patterns emerge:
 
 **Signals:**
 - Research complete, no draft initiated
-- Draft complete, no quality gates run
+- Draft complete, no quality checkpoints run
 - Decision validated, no communication cascade started
 - Voice DNA captured, not being applied
 
 **Intervention:**
 > "Research looks solid. Ready to start the draft?"
 
-> "This passed all gates. Ready to publish, or do you want another review?"
+> "This passed all checkpoints. Ready to publish, or do you want another review?"
 
 > "You validated this decision. Want to cascade it to stakeholders?"
 
@@ -89,14 +89,14 @@ The system monitors conversation state and intervenes when patterns emerge:
 
 **Signals:**
 - Drafting without Voice DNA captured
-- Publishing without quality gates
+- Publishing without quality checkpoints
 - Communicating a decision that wasn't validated
 - Creating content without research
 
 **Intervention:**
 > "Before we draft -- should we capture your voice so this sounds like you?"
 
-> "This hasn't been through quality gates yet. Run them now, or proceed anyway?"
+> "This hasn't been through quality checkpoints yet. Run them now, or proceed anyway?"
 
 ---
 
@@ -133,7 +133,7 @@ The system monitors conversation state and intervenes when patterns emerge:
 **Condition:** User is doing the same action repeatedly without variation.
 
 **Signals:**
-- Running the same gate multiple times
+- Running the same checkpoint multiple times
 - Rewriting the same section repeatedly
 - Asking for scores without making changes
 
@@ -188,7 +188,7 @@ Maintains awareness of what this conversation has touched:
 - **Topics** -- What subjects have been discussed
 - **Deliverables** -- What outputs have been created or requested
 - **Agents engaged** -- Which capabilities have been used (BOH/Studio only)
-- **Gates passed/failed** -- Quality checkpoint status
+- **Checkpoints passed/failed** -- Quality checkpoint status
 - **Decisions made** -- What has been resolved
 - **Decisions pending** -- What remains open
 - **Time in phase** -- How long since progression
@@ -212,7 +212,7 @@ Given the context, determines:
 
 | Workflow | Phases |
 |----------|--------|
-| Content Production | Research -> Draft -> Gates -> Revision -> Publish |
+| Content Production | Research -> Draft -> Checkpoints -> Revision -> Publish |
 | Decision Validation | Framing -> Analysis -> Blind Spots -> Execution Check -> Conviction -> Cascade |
 | The Stress Test | Naming -> Semantic Check -> Competitive Scan -> Cage Match -> Verdict |
 | Voice DNA Capture | Sample Collection -> Pattern Extraction -> Validation -> Application |
@@ -390,7 +390,7 @@ Track per conversation:
 - Topics touched (list)
 - Current workflow phase (if any)
 - Deliverables in progress (list)
-- Gates completed (list)
+- Checkpoints completed (list)
 - Last intervention time (timestamp)
 - Intervention dismissals (count)
 - User frustration signals (count)

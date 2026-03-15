@@ -11,7 +11,7 @@
 
 ## PURPOSE
 
-Dedicated UX review workflow triggered by a single command. Takes any digital asset -- a Lovable build, page layout, wireframe, user flow, concept, or prototype -- and runs it through five sequential UX checks with defined owners, standards, and blocking gates.
+Dedicated UX review workflow triggered by a single command. Takes any digital asset -- a Lovable build, page layout, wireframe, user flow, concept, or prototype -- and runs it through five sequential UX checks with defined owners, standards, and blocking checkpoints.
 
 This is a review workflow, not a build workflow. It evaluates what exists and produces a UX Review Report with specific findings and fixes.
 

@@ -250,7 +250,7 @@ The client's first experience is the coach's methodology already active, combine
 
 ---
 
-## QUALITY GATE
+## QUALITY CHECKPOINT
 
 Jordan Lane validates the extracted Brand DNA against three criteria before filing:
 

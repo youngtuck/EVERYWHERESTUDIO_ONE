@@ -30,7 +30,7 @@ The eight system modes are Sara's routing logic externalized. Every user request
 1. Watson captures the idea and clarifies scope (one question maximum)
 2. Sara assembles the right team based on output type
 3. Production runs with Voice DNA + Brand DNA active throughout
-4. All seven checkpoints run in sequence (Gates 0–6)
+4. All seven checkpoints run in sequence (Checkpoints 0-6)
 5. Betterish scores - must hit 800 to proceed
 6. Charlie verifies completeness
 7. Output delivered
@@ -78,7 +78,7 @@ The eight system modes are Sara's routing logic externalized. Every user request
 ### Mode 4: The Stress Test
 
 **Zone:** Watch
-**Lead:** Josh (category) + Lea (market) + Dana (adversarial)
+**Lead:** Josh (category) + Lee (market) + Dana (adversarial)
 **Triggers:** "Run the Stress Test on [name/concept]" · "Stress-test this name" · "Is [X] a real category?"
 **Flow:**
 1. Josh evaluates category legitimacy - is this a new game or a renamed old game?
@@ -123,7 +123,7 @@ The eight system modes are Sara's routing logic externalized. Every user request
 | Podcast episode | Felix Rossi |
 | Video script | Kai Morrison |
 | Essay, long-form content | Natasha Boyko (+ Byron) |
-| Presentation | Isabella Quinn |
+| Presentation | [retired] |
 | Email | Mira Rhoades |
 
 **Five checks (digital assets - Christopher leads):**
@@ -211,13 +211,13 @@ The eight system modes are Sara's routing logic externalized. Every user request
 **Standard:** >95% Voice DNA match across all three layers (Voice, Values, Personality). Zero AI tells. Platform Nativity confirmed for assigned channel.
 **Process:**
 1. Jordan runs Voice DNA comparison across all three layers
-2. AI tells list checked (weekly updated by Elena at Gate 4 - Jordan cross-references)
+2. AI tells list checked (weekly updated by Elena at Checkpoint 4 - Jordan cross-references)
 3. Platform Nativity check against Interest Graph Standard Filter 5
 4. Score calculated as percentage match
 **Action on fail:**
-- Voice miss (<95%): Return to Byron Chase for humanization, then back to Gate 2
-- AI tells detected: Return to Elena for SLOP removal, then back to Gate 2
-- Platform Nativity fail: Return to Dmitri for platform reformatting, then back to Gate 2
+- Voice miss (<95%): Return to Byron Chase for humanization, then back to Checkpoint 2
+- AI tells detected: Return to Elena for SLOP removal, then back to Checkpoint 2
+- Platform Nativity fail: Return to Dmitri for platform reformatting, then back to Checkpoint 2
 
 ---
 
@@ -242,7 +242,7 @@ The eight system modes are Sara's routing logic externalized. Every user request
 3. Corporate language audit: words that signal committee-writing, not individual thinking
 4. Weekly update: Elena adds new AI tells to the list from current AI output patterns
 **Action on fail:** Return to Byron for removal with specific flagged language highlighted.
-**AI Tells List:** Maintained by Elena, shared with Jordan (Gate 2). Any tells Jordan flags that aren't on the list get added to Elena's queue.
+**AI Tells List:** Maintained by Elena, shared with Jordan (Checkpoint 2). Any tells Jordan flags that aren't on the list get added to Elena's queue.
 
 ---
 
@@ -370,7 +370,7 @@ Each dimension: 0–250 points. 800 total required.
 
 **Eight proactive conditions:**
 1. User in same mode for 3+ exchanges without progress
-2. Content approaching Gate 6 without having been through Gate 0
+2. Content approaching Checkpoint 6 without having been through Checkpoint 0
 3. Decision pending with no action taken after SBU recommendation
 4. Output ready but no delivery format requested
 5. Friday approaching with no plan review

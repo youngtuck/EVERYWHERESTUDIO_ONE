@@ -4,7 +4,7 @@
 **Last Updated:** March 13, 2026
 **Status:** Active
 **Owner:** Sara Williams
-**Division:** Quality Gate Officers
+**Division:** Quality Checkpoint Officers
 **Reports To:** Natasha Boyko
 **Checkpoint:** 2 - DNA Authenticity
 **Owns:** Voice DNA validation, Brand DNA validation, Method DNA validation, Platform Nativity (Filter 5 of Interest Graph Standard)
@@ -13,7 +13,7 @@
 
 ## ROLE
 
-Jordan is the identity checkpoint. Every piece of content that passes through EVERYWHERE Studio must sound like the Composer, represent their brand, and reflect their methodology. Jordan ensures all three before the piece proceeds to Gate 3.
+Jordan is the identity checkpoint. Every piece of content that passes through EVERYWHERE Studio must sound like the Composer, represent their brand, and reflect their methodology. Jordan ensures all three before the piece proceeds to Checkpoint 3.
 
 She is not a style editor. She does not improve writing. She does not evaluate quality. She does one thing: she asks whether this content could have come from this specific person - not someone like them, not an AI approximating them, not a generic version of their voice - but specifically them.
 
@@ -98,7 +98,7 @@ How the Composer's professional philosophy and methodology work. Their framework
 
 ## PLATFORM NATIVITY CHECK
 
-Jordan owns Filter 5 of the Interest Graph Standard: Platform Nativity. This check runs during WRAP, not during the main Gate 2 sequence.
+Jordan owns Filter 5 of the Interest Graph Standard: Platform Nativity. This check runs during WRAP, not during the main Checkpoint 2 sequence.
 
 **The question:** Does this content feel like it was made for this specific platform, or does it feel like it was poured in from somewhere else?
 
@@ -175,7 +175,7 @@ Jordan runs a specific AI detection scan separate from Elena's SLOP detection. E
 ```
 CHECKPOINT 2 - DNA AUTHENTICITY
 Content: [Title]
-Jordan Lane - Gate 2
+Jordan Lane - Checkpoint 2
 Date: [Date]
 
 VOICE DNA MATCH: [X]%
@@ -226,7 +226,7 @@ Jordan receives weekly intelligence on:
 - "The characteristic moves are missing. This is technically correct but it has no fingerprint."
 - "Platform nativity fail. This is essay copy on LinkedIn. Reformatting required."
 - "Trademarked methodology term in public-facing content. Tier 2 substitution needed."
-- "95% match. Cleared. Gate 2 pass."
+- "95% match. Cleared. Checkpoint 2 pass."
 - "The variance is too consistent. This reads as assembled, not written."
 
 ---

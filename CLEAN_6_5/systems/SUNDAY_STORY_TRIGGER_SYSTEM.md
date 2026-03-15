@@ -110,12 +110,12 @@ What would you like to start?
 | Step | Agent | Action | v5.2 Integration |
 |---|---|---|---|
 | 2.1 | Watson + Mark | Writing, iteration, refinement | Manifesto structure if selected |
-| 2.2 | Gate 1: Priya | Research accuracy " 100% verified | " |
-| 2.3 | Gate 2: Jordan | Voice authenticity " 95%+ match | **Voice DNA 2.0** (all 3 layers) |
-| 2.4 | Gate 3: David | Engagement " 7-second hook test | " |
-| 2.5 | Gate 4: Elena | SLOP detection " zero AI padding | " |
-| 2.6 | Gate 5: Marcus | Perspective & risk " zero missteps | " |
-| 2.7 | Gate 6: Marshall | NVC review " advisory | " |
+| 2.2 | Checkpoint 1: Priya | Research accuracy " 100% verified | " |
+| 2.3 | Checkpoint 2: Jordan | Voice authenticity " 95%+ match | **Voice DNA 2.0** (all 3 layers) |
+| 2.4 | Checkpoint 3: David | Engagement " 7-second hook test | " |
+| 2.5 | Checkpoint 4: Elena | SLOP detection " zero AI padding | " |
+| 2.6 | Checkpoint 5: Marcus | Perspective & risk " zero missteps | " |
+| 2.7 | Checkpoint 6: Marshall | NVC review " advisory | " |
 | 2.8 | IGF Filter 1: Josh | Category signal | **Euler Test** applied |
 | 2.9 | IGF Filter 2: Lea | Worldview marker | " |
 | 2.10 | IGF Filter 3: Guy | Conversion architecture | Uses **leverage points** from Fish |
@@ -125,7 +125,7 @@ What would you like to start?
 
 **Session 2 Output:**
 - Final article (~3,000 words)
-- All 6 gates passed
+- All 6 checkpoints passed
 - All 4 IGF filters passed
 - Betterish score 500+
 
@@ -165,7 +165,7 @@ What would you like to start?
 |---|---|---|
 | **Manifesto Format** | Session 1 (Watson) | If Manifesto selected |
 | **Leverage Analysis** | Session 1 (Fish) | If Strategic selected |
-| **Voice DNA 2.0** | Session 2 (Jordan, Gate 2) | Always " all 3 layers |
+| **Voice DNA 2.0** | Session 2 (Jordan, Checkpoint 2) | Always " all 3 layers |
 | **Euler Test** | Session 2 (Josh, IGF Filter 1) | Always |
 | **Leverage -Â¢' Conversion** | Session 2 (Guy, IGF Filter 3) | If strategic, uses Fish's points |
 | **Single 8-min bed** | Session 3 (Felix) | Always " new standard |
@@ -196,8 +196,8 @@ What would you like to start?
 
 ### Session 2 Team
 - Watson (iteration partner)
-- Jordan (Gate 2 + Voice DNA 2.0)
-- All Gate Officers (Priya, David, Elena, Marcus, Marshall)
+- Jordan (Checkpoint 2 + Voice DNA 2.0)
+- All Checkpoint Officers (Priya, David, Elena, Marcus, Marshall)
 - SBU for IGF (Josh, Lea, Guy, Ward)
 - Sara (orchestration)
 
@@ -230,7 +230,7 @@ Trigger: Craft or continue now.
 Session 2 complete.
 
 -Â¢" Article: [word count] words
--Â¢" Gates: 6/6 passed
+-Â¢" Checkpoints: 6/6 passed
 -Â¢" IGF: 4/4 filters passed
 -Â¢" Betterish: [score]/600 ([percentage]%)
 

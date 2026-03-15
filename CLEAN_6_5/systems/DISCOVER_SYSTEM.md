@@ -86,7 +86,7 @@ When user says discover how to [anything], the system:
 - Discover how to name something -> The Stress Test
 - Discover how to improve this -> Quality and improvement options
 - Discover how to check my blind spots -> Perspective analysis
-- Discover how quality works -> Quality gates explanation
+- Discover how quality works -> Quality checkpoints explanation
 - Discover how to communicate a decision -> Communication cascade
 - Discover how to analyze a market -> Category and positioning tools
 - Discover how to research something -> Research capabilities
@@ -147,10 +147,10 @@ CREATE
 IMPROVE
 -> Make this better -- General enhancement
 -> Score this -- Quality evaluation (0-600 scale)
--> This feels repetitive -- Find and remove redundancy (Gate 0)
+-> This feels repetitive -- Find and remove redundancy (Checkpoint 0)
 -> Tighten this -- Remove unnecessary words
 -> Does this sound like me? -- Voice authenticity check
--> Quality check -- Run all seven quality gates
+-> Quality check -- Run all seven quality checkpoints
 -> Format this for [platform] -- Platform optimization
 
 THINK
@@ -277,7 +277,7 @@ PREVIOUS (v5.3.1):
 -> DISCOVER as formal Core capability
 
 PREVIOUS (v5.3):
--> Gate 0: Echo deduplication
+-> Checkpoint 0: Echo deduplication
 -> Betterish agent
 -> Composer Override Protocol
 -> Don't Ask Rule
@@ -343,8 +343,8 @@ FORCING FUNCTIONS
 -> "Give me everything" -- Batch delivery instead of one-question-at-a-time
 
 QUALITY SHORTCUTS
--> "Gate 0 this" -- Run Echo deduplication check only
--> "Quick quality" -- Abbreviated gate sequence
+-> "Checkpoint 0 this" -- Run Echo deduplication check only
+-> "Quick quality" -- Abbreviated checkpoint sequence
 -> "Stranger test" -- Just the stranger comprehension check
 
 THE STRESS TEST SHORTCUT
@@ -392,13 +392,13 @@ WORKSTREAMS (v5.4)
 -> EVERYWHERE -- The product. Always. BOH/FOH are labels, not brands.
 
 QUALITY GATES
--> Gate 0 (Echo) -- Deduplication -- removes repetition FIRST
--> Gate 1 (Priya) -- Research validation -- facts verified
--> Gate 2 (Jordan) -- Voice authenticity -- sounds like you
--> Gate 3 (David) -- Engagement -- hooks and holds attention
--> Gate 4 (Elena) -- SLOP detection -- no AI-sounding language
--> Gate 5 (Natasha) -- Editorial excellence -- clean, clear prose
--> Gate 6 (Marcus) -- Perspective and risk -- nothing missed
+-> Checkpoint 0 (Echo) -- Deduplication -- removes repetition FIRST
+-> Checkpoint 1 (Priya) -- Research validation -- facts verified
+-> Checkpoint 2 (Jordan) -- Voice authenticity -- sounds like you
+-> Checkpoint 3 (David) -- Engagement -- hooks and holds attention
+-> Checkpoint 4 (Elena) -- SLOP detection -- no AI-sounding language
+-> Checkpoint 5 (Natasha) -- Editorial excellence -- clean, clear prose
+-> Checkpoint 6 (Marcus) -- Perspective and risk -- nothing missed
 
 SCORING
 -> Betterish Score -- 0-600 quality measurement
@@ -483,7 +483,7 @@ Phase 3: TEACH ONE (Master)
 -> System asks you to explain it to someone new
 -> Validates your understanding, fills gaps
 -> This is where it sticks.
--> "Explain to a new user how quality gates work."
+-> "Explain to a new user how quality checkpoints work."
 
 TRIGGERS
 -> "Teach me [X]" -- Full SODOTU sequence
@@ -493,7 +493,7 @@ TRIGGERS
 -> "I want to learn [X]" -- Full SODOTU sequence
 
 WORKS WITH EVERYTHING
--> System modes, workflows, quality gates, frameworks
+-> System modes, workflows, quality checkpoints, frameworks
 -> "Teach me Decision Validation"
 -> "Show me how a Sunday Story gets produced"
 -> "Teach me Red Teaming"
@@ -572,7 +572,7 @@ WHAT IT Task MasterKS
 -> Topics you've touched
 -> Current workflow phase
 -> Deliverables in progress
--> Gates completed
+-> Checkpoints completed
 -> Time since progression
 
 WHAT IT DOESN'T DO
@@ -614,7 +614,7 @@ The validated decision becomes the seed. The system produces:
 6. Peer version -- Colleague-to-colleague, honest take
 7. Subordinate version -- Clear direction, actionable
 
-Each version passes through quality gates before delivery.
+Each version passes through quality checkpoints before delivery.
 
 WHY IT MATTERS
 Most leaders make a decision, then scramble to explain it.
@@ -716,7 +716,7 @@ DISCOVER adapts to the variant you're using:
 **SOLO (Core Only)**
 - Same Core capabilities, no agent names
 - Functions described generically
-- Quality gates run invisibly
+- Quality checkpoints run invisibly
 - "The team" instead of specific agents
 - What's Next included (Core capability)
 - Learning Mode included (Core capability)
@@ -739,7 +739,7 @@ DISCOVER adapts to the variant you're using:
 - Interaction Modes (5)
 - One-question-at-a-time
 - Voice DNA capture and application
-- Quality standards (Gate 0-6)
+- Quality standards (Checkpoint 0-6)
 - Betterish scoring
 - Composer Override
 - Don't Ask Rule
@@ -781,7 +781,7 @@ DISCOVER adapts to the variant you're using:
 - Added The Stress Test deep dive
 - Added Quick Review deep dive
 - Updated to five system modes
-- Updated to seven quality gates (Gate 0 added)
+- Updated to seven quality checkpoints (Checkpoint 0 added)
 - Added variant awareness section
 - Added Betterish to SBU coverage
 - Added brand-aware Synth output

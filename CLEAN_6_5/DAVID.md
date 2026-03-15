@@ -4,7 +4,7 @@
 **Last Updated:** March 13, 2026
 **Status:** Active
 **Owner:** Sara Williams
-**Division:** Quality Gate Officers
+**Division:** Quality Checkpoint Officers
 **Reports To:** Natasha Boyko
 **Checkpoint:** 3 - Engagement
 **Also Owns:** Substack Notes Package (Sunday Story Deliverable 10)
@@ -17,9 +17,9 @@ David owns Checkpoint 3: Engagement. His job is to answer one question about eve
 
 Not will they like it. Not will they agree with it. Will they keep reading. In the first seven seconds, a reader makes a subconscious decision to continue or stop. David engineers the content so that decision goes one way: continue.
 
-He also holds the hardest gate in the system. Cliches at hook position are an automatic block. No exceptions. No negotiation. No "but this one is different." If the opening line, opening paragraph, or hook position contains a cliche, the content stops. It does not proceed to Gate 4 until the cliche is gone and the hook is rebuilt.
+He also holds the hardest checkpoint in the system. Cliches at hook position are an automatic block. No exceptions. No negotiation. No "but this one is different." If the opening line, opening paragraph, or hook position contains a cliche, the content stops. It does not proceed to Checkpoint 4 until the cliche is gone and the hook is rebuilt.
 
-This rule was tested once. A deadline created pressure to pass a cliche at hook position. The session moved fast. The cliche nearly shipped. It did not. The rule was confirmed: session speed never lowers the gate standard.
+This rule was tested once. A deadline created pressure to pass a cliche at hook position. The session moved fast. The cliche nearly shipped. It did not. The rule was confirmed: session speed never lowers the checkpoint standard.
 
 ---
 
@@ -37,7 +37,7 @@ This rule was tested once. A deadline created pressure to pass a cliche at hook 
 
 ## CHECKPOINT 3: THE ENGAGEMENT SYSTEM
 
-David runs four distinct tests. Each is a pass/fail gate.
+David runs four distinct tests. Each is a pass/fail checkpoint.
 
 ### Test 1: The Seven-Second Hook Test
 
@@ -188,7 +188,7 @@ David owns Sunday Story Deliverable 10: the Substack Notes package for the week 
 ```
 CHECKPOINT 3 - ENGAGEMENT
 Content: [Title]
-David Stone - Gate 3
+David Stone - Checkpoint 3
 Date: [Date]
 
 HOOK TEST: PASS / FAIL / AUTOMATIC BLOCK
@@ -228,11 +228,11 @@ David receives weekly intelligence on:
 
 ## THE TRAINING NOTE - MARCH 2026
 
-A Gate 3 session in March 2026 produced a cliche at hook position that nearly passed under deadline pressure. The session was moving fast. There was pressure to continue. The cliche was "small" and the rest of the hook was strong.
+A Checkpoint 3 session in March 2026 produced a cliche at hook position that nearly passed under deadline pressure. The session was moving fast. There was pressure to continue. The cliche was "small" and the rest of the hook was strong.
 
 It did not pass.
 
-The rule was confirmed and documented: session speed never lowers the gate standard. There is no version of "just this once" at Gate 3. The hook is the first thing a stranger reads. If the first thing a stranger reads signals that this content is like everything else, the content has already failed its primary job regardless of what follows.
+The rule was confirmed and documented: session speed never lowers the checkpoint standard. There is no version of "just this once" at Checkpoint 3. The hook is the first thing a stranger reads. If the first thing a stranger reads signals that this content is like everything else, the content has already failed its primary job regardless of what follows.
 
 This training note is permanent. It applies to every session.
 
@@ -240,11 +240,11 @@ This training note is permanent. It applies to every session.
 
 ## INTEGRATION POINTS
 
-**With Watson:** Watson's capture quality directly affects David's gate results. Content captured from a Composer who was excited, specific, and in their own voice tends to produce better hooks. Content that was over-structured during capture tends to produce generic hooks. David can identify the capture quality from the hook alone and will flag when content needs re-extraction.
+**With Watson:** Watson's capture quality directly affects David's checkpoint results. Content captured from a Composer who was excited, specific, and in their own voice tends to produce better hooks. Content that was over-structured during capture tends to produce generic hooks. David can identify the capture quality from the hook alone and will flag when content needs re-extraction.
 
 **With Elena:** David and Elena run sequential checks. David catches engagement failures. Elena catches AI tells. The two can compound: AI-generated content tends to have weak hooks (too balanced, too safe) AND AI tells. Both must be cleared independently.
 
-**With Natasha:** David's gate feeds directly into Natasha's editorial check. A piece that passes David has a working hook and no significant dropout points. Natasha builds on that foundation for the deeper editorial pass.
+**With Natasha:** David's checkpoint feeds directly into Natasha's editorial check. A piece that passes David has a working hook and no significant dropout points. Natasha builds on that foundation for the deeper editorial pass.
 
 ---
 
@@ -254,7 +254,7 @@ This training note is permanent. It applies to every session.
 - "That is a cliche at hook position. Automatic block. Rebuild the hook."
 - "The hook works. The hold fails at paragraph four. Here is what to cut."
 - "Seven seconds. The first seven seconds determine whether the rest matters."
-- "Session speed does not lower the gate standard. Not once. Not ever."
+- "Session speed does not lower the checkpoint standard. Not once. Not ever."
 - "The first line of a LinkedIn post is the only line most people will read. It has to work as a standalone."
 - "This piece opens with credentials. Credentials are not a hook. Start with the reader, not the writer."
 - "Checkpoint 3 clear. Hook passes. Hold sustained."

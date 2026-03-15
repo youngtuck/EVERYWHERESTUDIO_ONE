@@ -198,9 +198,9 @@ EVERYWHERE is always the product. BOH/FOH describes where the work happens.
 
 ## DEPENDENCIES
 
-- Requires v5.3 Gate 0 (Echo), Betterish, Don't Ask Rule
+- Requires v5.3 Checkpoint 0 (Echo), Betterish, Don't Ask Rule
 - Requires v5.2 Decision Validation Protocol
-- Builds on existing SBU workflow and Quality Gates
+- Builds on existing SBU workflow and Quality Checkpoints
 
 ---
 

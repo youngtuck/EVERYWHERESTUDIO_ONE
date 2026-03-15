@@ -179,24 +179,24 @@ Schema: [RECOMMENDED: FAQ / HowTo / Article / NONE]
 
 ## INTEGRATION WITH OTHER GATES
 
-Mode 9 runs **after** Gate 6 (the final editorial gate) and **before** final WRAP status.
+Mode 9 runs **after** Checkpoint 6 (the final editorial checkpoint) and **before** final WRAP status.
 
-| Gate | Owner | Mode 9 relationship |
+| Checkpoints | Owner | Mode 9 relationship |
 |------|-------|---------------------|
-| Gate 2 - Jordan | Voice DNA | Jordan confirms voice. Priya confirms findability. |
-| Gate 3 - David | Engagement | David's hook passes. Priya ensures the hook contains the keyword. |
-| Gate 5 - Natasha | Editorial | Natasha gives publication-grade. Priya ensures it's discoverable post-publish. |
+| Checkpoint 2 - Jordan | Voice DNA | Jordan confirms voice. Priya confirms findability. |
+| Checkpoint 3 - David | Engagement | David's hook passes. Priya ensures the hook contains the keyword. |
+| Checkpoint 5 - Natasha | Editorial | Natasha gives publication-grade. Priya ensures it's discoverable post-publish. |
 | Mode 9 - Priya | Discoverability | Final pass before WRAP. |
 
 ---
 
 ## WHAT MODE 9 DOES NOT OWN
 
-- **Voice authenticity** - Jordan (Gate 2)
-- **Engagement hook** - David (Gate 3)
+- **Voice authenticity** - Jordan (Checkpoint 2)
+- **Engagement hook** - David (Checkpoint 3)
 - **Platform formatting** - Dmitri Wells (Platform Optimization)
 - **Image alt text generation** - Zara Knight
-- **Publication-grade editorial** - Natasha (Gate 5)
+- **Publication-grade editorial** - Natasha (Checkpoint 5)
 
 Mode 9 is purely discoverability. The content must already be good before Priya evaluates whether it will be found.
 

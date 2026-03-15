@@ -1,4 +1,4 @@
-# Quality Gate Framework v5.4
+# Quality Checkpoint Framework v5.4
 ## Mandatory Quality Verification + Strategic Business Layer
 
 **Version:** 6.0
@@ -11,7 +11,7 @@
 
 EVERYWHERE v5.4 implements two distinct quality layers:
 
-**Layer 1: Quality Gates (7 gates: Gate 0 + Gates 1-6)**
+**Layer 1: Quality Checkpoints (7 checkpoints: Checkpoint 0 + Checkpoints 1-6)**
 Ensures content meets publication standards
 Owner: QA Division
 
@@ -19,7 +19,7 @@ Owner: QA Division
 Ensures content is engineered for algorithmic distribution and business conversion
 Owner: Strategic Business Unit (SBU)
 
-Both layers are mandatory for outbound content. Quality Gates run first; Interest Graph Framework runs after.
+Both layers are mandatory for outbound content. Quality Checkpoints run first; Interest Graph Framework runs after.
 
 ---
 
@@ -27,43 +27,43 @@ Both layers are mandatory for outbound content. Quality Gates run first; Interes
 
 Every project passes through 7 checkpoints that BLOCK progression until passed:
 
-### Gate 0: Deduplication (NEW v5.3)
+### Checkpoint 0: Deduplication (NEW v5.3)
 **Owner:** Echo
 **Checks:** Zero redundant content -- no repeated concepts, phrases, or structural redundancy
 **Blocks if:** Same idea stated multiple times, unnecessary repetition, opening/closing echo
 
-**v5.3 Addition:** Gate 0 runs first, before all editorial gates. Catches repetition before it reaches Natasha.
+**v5.3 Addition:** Checkpoint 0 runs first, before all editorial checkpoints. Catches repetition before it reaches Natasha.
 
-### Gate 1: Research Validation
+### Checkpoint 1: Research Validation
 **Owner:** Priya Kumar
 **Checks:** Sources verified, facts accurate, minimum 8 sources for long-form
 **Blocks if:** Inadequate research, unverified claims, insufficient sourcing
 
-### Gate 2: Voice Authenticity
+### Checkpoint 2: Voice Authenticity
 **Owner:** Jordan Lane
 **Checks:** Sounds like Mark, Voice DNA markers present, >95% match
 **Blocks if:** Generic AI language, off-brand tone, voice drift
 
 **v5.3 Addition:** Voice DNA is pattern recognition, not mechanical application. Overcorrection is a failure mode.
 
-### Gate 3: Engagement Optimization
+### Checkpoint 3: Engagement Optimization
 **Owner:** David Stone
 **Checks:** 7-second hook test, stakes clear, 3-5 quotables identified
 **Blocks if:** Weak hook, unclear stakes, no shareable moments
 
-### Gate 4: SLOP Detection
+### Checkpoint 4: SLOP Detection
 **Owner:** Dr. Elena Vasquez
 **Checks:** No Superfluity, Loops, Overwrought prose, Pretension
 **Blocks if:** AI padding detected, repetition, false sophistication
 
-### Gate 5: Editorial Excellence + Stranger Test
+### Checkpoint 5: Editorial Excellence + Stranger Test
 **Owner:** Natasha Boyko
 **Checks:** Publication-grade quality, assumptions stress-tested, stranger-readable
 **Blocks if:** Below publication standards, weak arguments, lazy thinking, undefined terms
 
 **Stranger Test:** If someone who has never heard of Mark, EVERYWHERE, or Coastal Intelligence reads this cold -- do they understand what each thing IS within 30 seconds of first mention?
 
-### Gate 6: Perspective & Risk
+### Checkpoint 6: Perspective & Risk
 **Owner:** Dr. Marcus Webb + Marshall
 **Checks:** Cultural sensitivity, blind spots, NVC compliance
 **Blocks if:** Cultural missteps, alienating language, unaddressed risks
@@ -72,7 +72,7 @@ Every project passes through 7 checkpoints that BLOCK progression until passed:
 
 ## COMPLETE GATE SEQUENCE (v5.4)
 
-| Gate | Agent | Standard |
+| Checkpoints | Agent | Standard |
 |------|-------|----------|
 | 0 | **Echo** | Zero redundant content |
 | 1 | Priya Kumar | 100% verified claims |
@@ -86,7 +86,7 @@ Every project passes through 7 checkpoints that BLOCK progression until passed:
 
 ## LAYER 2: INTEREST GRAPH FRAMEWORK
 
-After passing all 7 quality gates, content routes to Strategic Business Unit (SBU) for Interest Graph review.
+After passing all 7 quality checkpoints, content routes to Strategic Business Unit (SBU) for Interest Graph review.
 
 ### Filter 1: Category Signal
 **Owner:** Josh (Category Designer)
@@ -119,7 +119,7 @@ After passing all 7 quality gates, content routes to Strategic Business Unit (SB
 **Position:** After Interest Graph, before Format Optimization
 **Owners:** Guy (primary) + Fish (leverage)
 **Duration:** 10 minutes
-**Gate:** Cannot proceed to FINAL without PASS
+**Checkpoints:** Cannot proceed to FINAL without PASS
 
 ### Guy's Conversion Questions
 
@@ -166,25 +166,25 @@ PRE-PRODUCTION: Client Fact Sheet (Sara)
 CONTENT CREATION (Watson + Mark)
         |
         v
-Gate 0: Deduplication (Echo)
+Checkpoint 0: Deduplication (Echo)
         |
         v
-Gate 1: Research Validation (Priya)
+Checkpoint 1: Research Validation (Priya)
         |
         v
-Gate 2: Voice Authenticity (Jordan)
+Checkpoint 2: Voice Authenticity (Jordan)
         |
         v
-Gate 3: Engagement Optimization (David)
+Checkpoint 3: Engagement Optimization (David)
         |
         v
-Gate 4: SLOP Detection (Elena)
+Checkpoint 4: SLOP Detection (Elena)
         |
         v
-Gate 5: Editorial Excellence + Stranger Test (Natasha)
+Checkpoint 5: Editorial Excellence + Stranger Test (Natasha)
         |
         v
-Gate 6: Perspective & Risk (Marcus + Marshall)
+Checkpoint 6: Perspective & Risk (Marcus + Marshall)
         |
         v
 BETTERISH SCORING (450+ required)
@@ -221,13 +221,13 @@ DELIVERY
 
 ## FORCED EXECUTION RULES
 
-### Quality Gates
-- Gates CANNOT be skipped
+### Quality Checkpoints
+- Checkpoints CANNOT be skipped
 - System blocks progression automatically
 - Manual override requires Sara Williams approval + mandatory AAR
 - Charlie has absolute veto on completeness (cannot override)
-- **Gate 0 runs first -- deduplication before editorial** (v5.3)
-- **Stranger Test required at Gate 5**
+- **Checkpoint 0 runs first -- deduplication before editorial** (v5.3)
+- **Stranger Test required at Checkpoint 5**
 
 ### Interest Graph Framework
 - Mandatory for designated output types
@@ -244,21 +244,21 @@ DELIVERY
 
 ## FAILURE PROTOCOLS
 
-### Gate 0 Failure (v5.3)
+### Checkpoint 0 Failure (v5.3)
 1. Echo identifies redundancy
 2. Content returns to Watson for deduplication
 3. Watson fixes, resubmits
 4. Echo re-reviews
-5. Must pass before proceeding to Gate 1
+5. Must pass before proceeding to Checkpoint 1
 
-### Quality Gate Failure (Gates 1-6)
-1. Gate officer provides specific feedback
+### Quality Checkpoint Failure (Checkpoints 1-6)
+1. Checkpoint Officer provides specific feedback
 2. Content returns to relevant team member
 3. Targeted revision made
-4. Re-review on failed gate only
+4. Re-review on failed checkpoint only
 5. If fails twice -> escalate to Sara
 
-### Stranger Test Failure (Gate 5)
+### Stranger Test Failure (Checkpoint 5)
 1. Natasha identifies undefined terms
 2. Flags for Watson
 3. Watson adds context paragraph before first use
@@ -291,16 +291,16 @@ DELIVERY
 - Updated checkpoint sequence header
 
 **v5.3 (January 25, 2026)**
-- Added Gate 0: Echo (deduplication before editorial)
+- Added Checkpoint 0: Echo (deduplication before editorial)
 - Added Betterish gut check after SBU evaluation
-- Updated Jordan's Gate 2 with voice application guidance
-- Seven gates total (Gate 0 + Gates 1-6)
+- Updated Jordan's Checkpoint 2 with voice application guidance
+- Seven checkpoints total (Checkpoint 0 + Checkpoints 1-6)
 
 **v5.2 (February 17, 2026)**
-- Added Stranger Test to Gate 5 (Natasha)
+- Added Stranger Test to Checkpoint 5 (Natasha)
 - Added SBU Conversion Check after Interest Graph
 - Updated checkpoint sequence
-- Added failure protocols for new gates
+- Added failure protocols for new checkpoints
 
 **v4.3 (February 17, 2026)**
 - Added Interest Graph Framework as Layer 2

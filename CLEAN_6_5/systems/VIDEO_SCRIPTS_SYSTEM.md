@@ -134,7 +134,7 @@ The Interest Graph decides video distribution in the opening moments. Every vide
 
 ## QUALITY GATES + INTEREST GRAPH VERIFICATION
 
-### Standard Quality Gates
+### Standard Quality Checkpoints
 ```
 -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢-Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢-Æ'-" Â¢-Æ'"Å¡ Â Hook captures attention in first 3 seconds
 -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢-Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢-Æ'-" Â¢-Æ'"Å¡ Â Voice DNA consistency maintained
@@ -161,7 +161,7 @@ ALL 4 FILTERS MUST PASS BEFORE PRODUCTION
 ```
 Script Creation
  -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""
-Quality Gates (Standard)
+Quality Checkpoints (Standard)
  -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""
 Interest Graph Framework Review
  - Josh reviews first 3 seconds (Category Signal)

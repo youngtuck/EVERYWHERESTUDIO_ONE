@@ -136,7 +136,7 @@ Every piece of content passing through this standard must satisfy five requireme
 - TikTok/Reels: hook in first 2 seconds, vertical-native framing, pattern interrupts
 - Podcast: conversational scaffolding, natural transitions, no list-reading
 
-**When this filter runs:** During WRAP, not during production. Jordan Lane owns this check at Gate 2 when a specific channel is assigned.
+**When this filter runs:** During WRAP, not during production. Jordan Lane owns this check at Checkpoint 2 when a specific channel is assigned.
 
 **Failure pattern:**
 - Essay pasted verbatim into LinkedIn with no reformatting
@@ -173,7 +173,7 @@ Every piece of content passing through this standard must satisfy five requireme
 ```
 Content Creation (Watson + Team)
         ↓
-Quality Gates (Betterish + Editorial - Gates 0–6)
+Quality Checkpoints (Betterish + Editorial - Checkpoints 0-6)
         ↓
 Interest Graph Standard (SBU) ← Filters 1–4
         ↓
@@ -186,7 +186,7 @@ Publication
 
 **Relationship to Betterish:** Betterish asks "Is this good enough to publish?" The Interest Graph Standard asks "Is this engineered for algorithmic discovery and business conversion?" A piece can score 850 Betterish (Spicy Genius) and still fail this standard. Both must pass.
 
-**Relationship to Quality Gates:** This standard runs AFTER editorial quality gates pass. We don't optimize for algorithms until we've confirmed the content meets publication standards.
+**Relationship to Quality Checkpoints:** This standard runs AFTER editorial quality checkpoints pass. We don't optimize for algorithms until we've confirmed the content meets publication standards.
 
 ---
 

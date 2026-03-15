@@ -115,7 +115,7 @@ Full idea captured in Mark's voice before any drafting begins. Watson's output: 
 
 ## QUALITY GATES - BOTH VARIANTS
 
-| Gate | Agent | Standard |
+| Checkpoints | Agent | Standard |
 |------|-------|----------|
 | 0 | Echo | No redundant content from previous pieces |
 | 1 | Priya | Every factual claim verified |
@@ -126,7 +126,7 @@ Full idea captured in Mark's voice before any drafting begins. Watson's output: 
 | 6a | Marcus | No blind spots / cultural missteps |
 | 6b | Marshall | No unintentional disconnection or judgment |
 
-**Manifesto-specific check (Gate 5):**
+**Manifesto-specific check (Checkpoint 5):**
 Natasha asks: "Does this draw a line or just complain?" A manifesto that doesn't commit is a rant. Natasha enforces the distinction.
 
 ---

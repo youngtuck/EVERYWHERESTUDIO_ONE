@@ -135,7 +135,7 @@ Method DNA operates differently depending on content destination:
 **Example prompt behavior:**
 > Coach asks for a LinkedIn article about their approach to leadership team alignment. Watson writes about "weekly structured team meetings" and "quarterly priority-setting" - not about the methodology by name.
 
-**Jordan Lane role:** At Gate 2, Jordan checks all public-facing content for methodology brand names. Any trademarked term that appears in external content is flagged as a Gate 2 failure. Sara routes back to Watson for substitution.
+**Jordan Lane role:** At Checkpoint 2, Jordan checks all public-facing content for methodology brand names. Any trademarked term that appears in external content is flagged as a Checkpoint 2 failure. Sara routes back to Watson for substitution.
 
 ---
 
@@ -183,7 +183,7 @@ For any public-facing content produced for a coach client:
 1. **Scan for methodology brand names** - EOS, Maui Mastermind, Scaling Up, Vistage, YPO, 2Y3X, Traction, and any methodology-specific product names
 2. **Scan for highly specific trademarked terms** - Rocks, Level 10, GWC, Rockefeller Habits, Owner Independence Score, and similar
 3. **Substitute with Tier 2 alternatives** - Flag to Watson with specific replacement instruction
-4. **Re-check after substitution** - Gate 2 does not pass until all instances are resolved
+4. **Re-check after substitution** - Checkpoint 2 does not pass until all instances are resolved
 
 **Exception:** If the coach's client explicitly authorizes their methodology name to appear in public content (and that authorization is documented), Jordan Lane passes with a note. Documentation lives in the project file. This is rare - most methodology owners have content policies that restrict this.
 
@@ -206,7 +206,7 @@ That's the test. Write everything so a methodology owner would be comfortable se
 ## RELATED FILES
 
 - `METHODOLOGY_PACKS.md` - Channel partner infrastructure and pack creation
-- `JORDAN_LANE.md` - Gate 2 voice and brand validation
+- `JORDAN_LANE.md` - Checkpoint 2 voice and brand validation
 - `EVERYWHERE_STUDIO_FOH_SPEC_v6_1.md` - FOH feature context for coach channel
 
 ---
