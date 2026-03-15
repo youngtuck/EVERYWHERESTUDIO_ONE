@@ -1,177 +1,110 @@
-import { useState, useEffect, useRef, type ReactNode, type ComponentType, type CSSProperties } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mic, Globe, ChevronDown, Upload, BookOpen, X } from "lucide-react";
-import { getScoreColor } from "../../utils/scoreColor";
+import { Mic, Globe, BookOpen, Upload, Lightbulb, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import "./shared.css";
 
-const VOICE_LAYERS_FALLBACK = [
-  { name: "Voice Layer", desc: "How you speak: rhythm, sentence length, vocabulary, punctuation patterns", strength: 97, detail: "Direct, declarative. Short sentences that land." },
-  { name: "Value Layer", desc: "What you stand for: core beliefs, professional principles", strength: 94, detail: "Clarity over complexity. Depth over volume." },
-  { name: "Personality Layer", desc: "How you show up: humor, warmth, edge", strength: 91, detail: "Wry, self-aware. Willing to take a position." },
-];
+const CREAM = "#F4F2ED";
+const GOLD = "#C8961A";
+const DARK = "#111";
 
-const GOLD_OUTLINE_BTN = {
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+
+/** Parse voice_dna_md for section text under ### Voice Layer, ### Value Layer, ### Personality Layer */
+function parseVoiceDnaMdSections(md: string | null): { voice: string; value: string; personality: string } {
+  const fallback = { voice: "", value: "", personality: "" };
+  if (!md || typeof md !== "string") return fallback;
+  const sections: Record<string, string> = {};
+  const regex = /###\s*(Voice Layer|Value Layer|Personality Layer)\s*\n([\s\S]*?)(?=###|$)/gi;
+  let m;
+  while ((m = regex.exec(md)) !== null) {
+    const key = m[1].toLowerCase().replace(/\s+layer$/, "") as "voice" | "value" | "personality";
+    sections[key] = m[2].trim().replace(/\n+/g, " ").slice(0, 280);
+  }
+  return {
+    voice: sections.voice || fallback.voice,
+    value: sections.value || fallback.value,
+    personality: sections.personality || fallback.personality,
+  };
+}
+
+interface ProfileData {
+  voice_dna: {
+    voice_fidelity?: number;
+    voice_layer?: number;
+    value_layer?: number;
+    personality_layer?: number;
+    traits?: {
+      vocabulary_and_syntax?: number;
+      tonal_register?: number;
+      structural_habits?: number;
+    };
+    signature_phrases?: string[];
+    prohibited_words?: string[];
+    prohibited_patterns?: string[];
+    voice_description?: string;
+    value_description?: string;
+    personality_description?: string;
+  } | null;
+  voice_dna_md: string | null;
+  brand_dna: Record<string, unknown> | null;
+  brand_dna_md: string | null;
+  method_dna: Record<string, unknown> | null;
+  method_dna_md: string | null;
+}
+
+const goldOutlinedBtn = {
   padding: "8px 14px",
   borderRadius: 8,
-  border: "1px solid var(--gold-dark)",
+  border: `1px solid ${GOLD}`,
   background: "transparent",
-  color: "var(--gold-dark)",
+  color: GOLD,
   fontFamily: "'DM Sans', sans-serif",
   fontSize: 12,
   fontWeight: 600,
   cursor: "pointer",
   transition: "all 0.2s",
-} as const;
-
-const UPLOAD_ZONE = {
-  padding: "20px 24px",
-  border: "2px dashed var(--border-default)",
-  borderRadius: 10,
-  background: "none",
-  cursor: "pointer",
-  fontFamily: "'DM Sans', sans-serif",
-  fontSize: 14,
-  color: "var(--text-secondary)",
-  transition: "all 0.2s",
 };
-
-interface SectionProps {
-  icon: ComponentType<{ size?: number; style?: CSSProperties }>;
-  title: string;
-  children: ReactNode;
-}
-
-function AccordionSection({ icon: Icon, title, children }: SectionProps) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div
-      style={{
-        background: "var(--surface-white)",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: 12,
-        marginBottom: 16,
-        overflow: "hidden",
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          padding: "20px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontFamily: "'DM Sans', sans-serif",
-          transition: "background 0.15s",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.01)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Icon size={20} style={{ color: "var(--gold-dark)" }} />
-          <span style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{title}</span>
-        </div>
-        <ChevronDown
-          size={20}
-          style={{
-            color: "var(--text-tertiary)",
-            transform: open ? "rotate(180deg)" : "none",
-            transition: "transform 0.2s",
-          }}
-        />
-      </button>
-      {open && children}
-    </div>
-  );
-}
-
-interface ProfileData {
-  voice_dna: { voice_fidelity?: number; voice_layer?: number; value_layer?: number; personality_layer?: number } | null;
-  brand_dna: Record<string, unknown> | null;
-  method_dna: Record<string, unknown> | null;
-}
-
-const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 export default function Resources() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [brandFiles, setBrandFiles] = useState<{ id: string; file: File }[]>([]);
-  const [methodFiles, setMethodFiles] = useState<{ id: string; file: File }[]>([]);
   const [voiceFiles, setVoiceFiles] = useState<{ id: string; file: File }[]>([]);
   const [brandUploading, setBrandUploading] = useState(false);
   const brandInputRef = useRef<HTMLInputElement>(null);
-  const methodInputRef = useRef<HTMLInputElement>(null);
   const voiceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
+    setLoading(true);
     supabase
       .from("profiles")
-      .select("voice_dna, brand_dna, method_dna")
+      .select("voice_dna, voice_dna_md, brand_dna, brand_dna_md, method_dna, method_dna_md")
       .eq("id", user.id)
       .single()
-      .then(({ data }) => setProfile(data as ProfileData | null));
+      .then(({ data }) => {
+        setProfile(data as ProfileData | null);
+      })
+      .finally(() => setLoading(false));
   }, [user]);
 
-  const voiceFidelity = profile?.voice_dna?.voice_fidelity ?? 94.7;
-  const voiceLayers = profile?.voice_dna
-    ? [
-        { name: "Voice Layer", desc: "How you speak", strength: profile.voice_dna.voice_layer ?? 0, detail: "" },
-        { name: "Value Layer", desc: "What you stand for", strength: profile.voice_dna.value_layer ?? 0, detail: "" },
-        { name: "Personality Layer", desc: "How you show up", strength: profile.voice_dna.personality_layer ?? 0, detail: "" },
-      ]
-    : VOICE_LAYERS_FALLBACK;
+  const voiceMdSections = parseVoiceDnaMdSections(profile?.voice_dna_md ?? null);
+  const vd = profile?.voice_dna;
+  const fidelity = vd?.voice_fidelity ?? 0;
+  const traits = vd?.traits ?? {};
+  const voiceLayerScore = vd?.voice_layer ?? traits.vocabulary_and_syntax ?? 0;
+  const valueLayerScore = vd?.value_layer ?? traits.tonal_register ?? 0;
+  const personalityLayerScore = vd?.personality_layer ?? traits.structural_habits ?? 0;
+  const signaturePhrases = Array.isArray(vd?.signature_phrases) ? vd.signature_phrases : [];
+  const avoidPatterns = Array.isArray(vd?.prohibited_patterns) ? vd.prohibited_patterns : Array.isArray(vd?.prohibited_words) ? vd.prohibited_words : [];
 
   const hasBrandDna = profile?.brand_dna && Object.keys(profile.brand_dna).length > 0;
-  const hasMethodDna = profile?.method_dna && Object.keys(profile.method_dna).length > 0;
-
-  const brandSummary = hasBrandDna && profile?.brand_dna
-    ? {
-        positioning: (profile.brand_dna as Record<string, unknown>).category_position ?? (profile.brand_dna as Record<string, unknown>).brand_name ?? "—",
-        tone: Array.isArray((profile.brand_dna as Record<string, unknown>).brand_voice_adjectives)
-          ? ((profile.brand_dna as Record<string, unknown>).brand_voice_adjectives as string[]).join(", ")
-          : String((profile.brand_dna as Record<string, unknown>).brand_voice_description ?? "—"),
-        corePromise: (profile.brand_dna as Record<string, unknown>).core_promise ?? (profile.brand_dna as Record<string, unknown>).value_proposition ?? "—",
-      }
-    : null;
-
-  const addVoiceFiles = (list: FileList | null) => {
-    if (!list) return;
-    const accept = ".txt,.md,.pdf,.docx";
-    Array.from(list).forEach((f) => {
-      const ext = "." + (f.name.split(".").pop() || "").toLowerCase();
-      if (accept.includes(ext))
-        setVoiceFiles((prev) => [...prev, { id: `${f.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`, file: f }]);
-    });
-  };
-
-  const addBrandFiles = (list: FileList | null) => {
-    if (!list) return;
-    const accept = ".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.svg,.zip";
-    Array.from(list).forEach((f) => {
-      const ext = "." + (f.name.split(".").pop() || "").toLowerCase();
-      if (accept.includes(ext))
-        setBrandFiles((prev) => [...prev, { id: `${f.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`, file: f }]);
-    });
-  };
-
-  const addMethodFiles = (list: FileList | null) => {
-    if (!list) return;
-    const accept = ".pdf,.docx,.txt,.md,.pptx";
-    Array.from(list).forEach((f) => {
-      const ext = "." + (f.name.split(".").pop() || "").toLowerCase();
-      if (accept.includes(ext))
-        setMethodFiles((prev) => [...prev, { id: `${f.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`, file: f }]);
-    });
-  };
+  const hasMethodDna = profile?.method_dna && profile.method_dna !== null && Object.keys(profile.method_dna).length > 0;
+  const bd = profile?.brand_dna as Record<string, unknown> | undefined;
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -180,6 +113,24 @@ export default function Resources() {
       r.onerror = reject;
       r.readAsDataURL(file);
     });
+
+  const addVoiceFiles = (list: FileList | null) => {
+    if (!list) return;
+    Array.from(list).forEach((f) => {
+      const ext = "." + (f.name.split(".").pop() || "").toLowerCase();
+      if ([".txt", ".md", ".pdf", ".docx"].includes(ext))
+        setVoiceFiles((prev) => [...prev, { id: `${f.name}-${Date.now()}`, file: f }]);
+    });
+  };
+
+  const addBrandFiles = (list: FileList | null) => {
+    if (!list) return;
+    Array.from(list).forEach((f) => {
+      const ext = "." + (f.name.split(".").pop() || "").toLowerCase();
+      if ([".pdf", ".docx", ".txt", ".md", ".png", ".jpg", ".jpeg", ".svg", ".zip"].includes(ext))
+        setBrandFiles((prev) => [...prev, { id: `${f.name}-${Date.now()}`, file: f }]);
+    });
+  };
 
   const uploadBrandAssets = async () => {
     if (!user || !brandFiles.length || brandUploading) return;
@@ -215,314 +166,335 @@ export default function Resources() {
     }
   };
 
-  const removeVoice = (id: string) => setVoiceFiles((p) => p.filter((f) => f.id !== id));
-  const removeBrand = (id: string) => setBrandFiles((p) => p.filter((f) => f.id !== id));
-  const removeMethod = (id: string) => setMethodFiles((p) => p.filter((f) => f.id !== id));
-
-  const formatSize = (bytes: number) => (bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`);
+  if (loading) {
+    return (
+      <div style={{ background: CREAM, minHeight: "100vh", padding: "48px 24px" }}>
+        <div style={{ maxWidth: 860, margin: "0 auto" }}>
+          <div style={{ height: 32, width: 120, background: "rgba(0,0,0,0.06)", borderRadius: 8, marginBottom: 48 }} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, marginBottom: 48 }}>
+            {[1, 2, 3].map((i) => (
+              <div key={i} style={{ height: 180, background: "rgba(0,0,0,0.04)", borderRadius: 12 }} />
+            ))}
+          </div>
+          <div style={{ height: 200, background: "rgba(0,0,0,0.04)", borderRadius: 12, marginBottom: 48 }} />
+          <div style={{ height: 200, background: "rgba(0,0,0,0.04)", borderRadius: 12 }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      style={{
-        maxWidth: 720,
-        margin: "0 auto",
-        padding: "32px 24px",
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
-      <div style={{ marginBottom: 32 }}>
-        <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-tertiary)", marginBottom: 8, marginTop: 0 }}>
-          STUDIO
-        </p>
-        <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 28, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
-          Resources
-        </h1>
-        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0, maxWidth: 560, lineHeight: 1.6 }}>
-          Three layers run in every session: Voice DNA, Brand DNA, and Method DNA. Set once and the system carries them everywhere.
-        </p>
-      </div>
+    <div style={{ background: CREAM, minHeight: "100vh", padding: "48px 24px", fontFamily: "'DM Sans', sans-serif", color: DARK }}>
+      <div style={{ maxWidth: 860, margin: "0 auto" }}>
+        {/* Page title */}
+        <div style={{ marginBottom: 48 }}>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(17,17,17,0.5)", marginBottom: 8 }}>
+            STUDIO
+          </p>
+          <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 32, fontWeight: 700, color: DARK, margin: 0, letterSpacing: "-0.02em" }}>
+            Resources
+          </h1>
+          <p style={{ fontSize: 15, color: "rgba(17,17,17,0.65)", marginTop: 8, lineHeight: 1.6 }}>
+            Who you are in the system's eyes. Voice, Brand, and Method DNA run in every session.
+          </p>
+        </div>
 
-      <AccordionSection icon={Mic} title="Voice DNA">
-        <div style={{ padding: "0 24px 24px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 36, fontWeight: 700, color: "var(--gold-dark)", letterSpacing: "-0.02em" }}>
-                {typeof voiceFidelity === "number" ? voiceFidelity.toFixed(1) : voiceFidelity}
-              </span>
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)" }}>Voice Fidelity Score · Sharpening with each session</span>
+        {/* ─── SECTION 1: VOICE DNA ─── */}
+        <section style={{ marginBottom: 48 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Mic size={24} style={{ color: GOLD }} />
+              <span style={{ fontSize: 24, fontWeight: 600, color: DARK }}>Voice DNA</span>
             </div>
             <button
               type="button"
-              style={GOLD_OUTLINE_BTN}
+              style={goldOutlinedBtn}
               onClick={() => navigate("/onboarding?retrain=voice")}
               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.08)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
-              Retrain Voice DNA
+              Retrain
             </button>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {voiceLayers.map((layer) => {
-              const sc = getScoreColor(layer.strength >= 80 ? 800 : layer.strength >= 60 ? 650 : 500);
-              return (
-                <div key={layer.name} style={{ margin: "0 0 12px", padding: 20, background: "var(--surface-elevated)", border: "1px solid var(--border-subtle)", borderRadius: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>{layer.name}</span>
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: sc.text }}>{layer.strength}%</span>
-                  </div>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-secondary)", marginBottom: 8, marginTop: 0 }}>{layer.desc}</p>
-                  {layer.detail ? <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontStyle: "italic", color: "var(--text-primary)", margin: 0, lineHeight: 1.5 }}>{layer.detail}</p> : null}
-                </div>
-              );
-            })}
+
+          {/* Fidelity score card */}
+          <div
+            style={{
+              borderLeft: `4px solid ${GOLD}`,
+              background: "#fff",
+              borderRadius: 12,
+              padding: "24px 28px",
+              marginBottom: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 16,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+            }}
+          >
+            <div>
+              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 48, fontWeight: 700, color: GOLD, letterSpacing: "-0.02em", lineHeight: 1 }}>
+                {typeof fidelity === "number" ? fidelity.toFixed(1) : "—"}
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: DARK, marginTop: 4 }}>Voice Fidelity Score</div>
+              <div style={{ fontSize: 13, color: "rgba(17,17,17,0.5)", marginTop: 2 }}>Active in every session</div>
+            </div>
+            <div style={{ flex: "1 1 200px", maxWidth: 280, minWidth: 160 }}>
+              <div style={{ height: 10, background: "rgba(0,0,0,0.08)", borderRadius: 999, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${Math.min(100, Math.max(0, Number(fidelity)))}%`, background: GOLD, borderRadius: 999, transition: "width 0.4s ease" }} />
+              </div>
+            </div>
           </div>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-secondary)", marginTop: 8, marginBottom: 10, lineHeight: 1.5 }}>
-            Upload writing samples, past articles, emails, or transcripts to sharpen your Voice DNA. The more you upload, the more precise the match.
-          </p>
-          <input
-            ref={voiceInputRef}
-            type="file"
-            accept=".txt,.md,.pdf,.docx"
-            multiple
-            style={{ display: "none" }}
-            onChange={(e) => { addVoiceFiles(e.target.files); e.target.value = ""; }}
-          />
+
+          {/* Three trait cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, marginBottom: 28 }}>
+            {[
+              { title: "Voice Layer", subtitle: "How you sound", score: voiceLayerScore, desc: voiceMdSections.voice || vd?.voice_description || "" },
+              { title: "Value Layer", subtitle: "What you stand for", score: valueLayerScore, desc: voiceMdSections.value || vd?.value_description || "" },
+              { title: "Personality Layer", subtitle: "How you show up", score: personalityLayerScore, desc: voiceMdSections.personality || vd?.personality_description || "" },
+            ].map((card) => (
+              <div
+                key={card.title}
+                style={{
+                  background: "#fff",
+                  borderRadius: 12,
+                  padding: 20,
+                  border: "1px solid rgba(0,0,0,0.06)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: DARK }}>{card.title}</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: GOLD }}>{card.score}%</span>
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(17,17,17,0.5)", marginBottom: 10 }}>{card.subtitle}</div>
+                {card.desc ? <p style={{ fontSize: 13, color: "rgba(17,17,17,0.75)", lineHeight: 1.5, margin: 0 }}>{card.desc}</p> : null}
+                <div style={{ marginTop: 12, height: 4, background: "rgba(0,0,0,0.06)", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${Math.min(100, card.score)}%`, background: GOLD, borderRadius: 999 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Signature Phrases */}
+          {signaturePhrases.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(17,17,17,0.6)", marginBottom: 10 }}>Signature Phrases</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {signaturePhrases.map((phrase, i) => (
+                  <span key={i} style={{ padding: "6px 12px", borderRadius: 999, background: "rgba(200,150,26,0.12)", color: GOLD, fontSize: 13 }}>
+                    {phrase}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Patterns to avoid */}
+          {avoidPatterns.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(17,17,17,0.6)", marginBottom: 10 }}>Patterns to avoid</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {avoidPatterns.map((p, i) => (
+                  <span key={i} style={{ padding: "6px 12px", borderRadius: 999, background: "rgba(0,0,0,0.06)", color: "rgba(17,17,17,0.6)", fontSize: 13 }}>
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Voice upload zone */}
+          <input ref={voiceInputRef} type="file" accept=".txt,.md,.pdf,.docx" multiple style={{ display: "none" }} onChange={(e) => { addVoiceFiles(e.target.files); e.target.value = ""; }} />
           <div
             role="button"
             tabIndex={0}
             onClick={() => voiceInputRef.current?.click()}
             onKeyDown={(e) => e.key === "Enter" && voiceInputRef.current?.click()}
-            style={UPLOAD_ZONE}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; e.currentTarget.style.color = "var(--gold-dark)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            style={{
+              padding: "20px 24px",
+              border: "2px dashed rgba(0,0,0,0.15)",
+              borderRadius: 12,
+              background: "#fff",
+              cursor: "pointer",
+              fontSize: 14,
+              color: "rgba(17,17,17,0.6)",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = GOLD; e.currentTarget.style.color = GOLD; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; e.currentTarget.style.color = "rgba(17,17,17,0.6)"; }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Upload size={18} />
-              <span>.txt, .md, .pdf, .docx</span>
+              <span>Upload writing samples to sharpen your Voice DNA</span>
             </div>
+            <div style={{ fontSize: 12, marginTop: 6, opacity: 0.7 }}>.txt, .md, .pdf, .docx</div>
           </div>
           {voiceFiles.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
               {voiceFiles.map((f) => (
-                <span
-                  key={f.id}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "6px 10px",
-                    borderRadius: 8,
-                    background: "var(--surface-elevated)",
-                    border: "1px solid var(--border-subtle)",
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {f.file.name} · {formatSize(f.file.size)}
-                  <button type="button" aria-label="Remove" onClick={() => removeVoice(f.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
-                    <X size={14} style={{ color: "var(--text-tertiary)" }} />
+                <span key={f.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, background: "rgba(0,0,0,0.06)", fontSize: 12 }}>
+                  {f.file.name}
+                  <button type="button" aria-label="Remove" onClick={() => setVoiceFiles((p) => p.filter((x) => x.id !== f.id))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    <X size={14} />
                   </button>
                 </span>
               ))}
             </div>
           )}
-        </div>
-      </AccordionSection>
+        </section>
 
-      <AccordionSection icon={Globe} title="Brand DNA">
-        <div style={{ padding: "20px 24px 24px" }}>
-          {hasBrandDna && brandSummary ? (
+        {/* ─── SECTION 2: BRAND DNA ─── */}
+        <section style={{ marginBottom: 48 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Globe size={24} style={{ color: GOLD }} />
+              <span style={{ fontSize: 24, fontWeight: 600, color: DARK }}>Brand DNA</span>
+            </div>
+            <button type="button" style={goldOutlinedBtn} onClick={() => navigate("/onboarding?retrain=brand")} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.08)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+              {hasBrandDna ? "Retrain" : "Set Up Brand DNA"}
+            </button>
+          </div>
+
+          {hasBrandDna && bd ? (
             <>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 16 }}>
-                <button
-                  type="button"
-                  style={GOLD_OUTLINE_BTN}
-                  onClick={() => navigate("/onboarding?retrain=brand")}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.08)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                >
-                  Retrain Brand DNA
-                </button>
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: 12,
+                  padding: "24px 28px",
+                  marginBottom: 24,
+                  border: "1px solid rgba(0,0,0,0.06)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                }}
+              >
+                {bd.brand_name && <div style={{ fontSize: 22, fontWeight: 700, color: DARK, marginBottom: 8 }}>{String(bd.brand_name)}</div>}
+                {bd.core_promise && <div style={{ fontSize: 16, fontStyle: "italic", color: GOLD, marginBottom: 8 }}>{String(bd.core_promise)}</div>}
+                {bd.category_position && <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: 6, background: "rgba(0,0,0,0.06)", fontSize: 12, color: "rgba(17,17,17,0.7)" }}>{String(bd.category_position)}</span>}
               </div>
-              <div style={{ padding: "14px 16px", background: "var(--surface-elevated)", border: "1px solid var(--border-subtle)", borderRadius: 10, marginBottom: 14 }}>
+
+              <div style={{ background: "#fff", borderRadius: 12, padding: "20px 28px", border: "1px solid rgba(0,0,0,0.06)", marginBottom: 24 }}>
                 {[
-                  ["Positioning", brandSummary.positioning],
-                  ["Tone", brandSummary.tone],
-                  ["Core Promise", brandSummary.corePromise],
-                ].map(([k, v]) => (
-                  <div key={k} style={{ display: "flex", gap: 14, marginBottom: 8 }}>
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: "var(--text-tertiary)", minWidth: 90 }}>{k}</span>
-                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-secondary)" }}>{String(v)}</span>
-                  </div>
-                ))}
+                  ["Positioning", bd.category_position],
+                  ["Tone", Array.isArray(bd.brand_voice_adjectives) ? (bd.brand_voice_adjectives as string[]).join(" · ") : bd.brand_voice_adjectives],
+                  ["Core Promise", bd.core_promise],
+                  ["Declared Enemy", bd.declared_enemy],
+                  ["Target Person", bd.target_person],
+                ]
+                  .filter(([, val]) => val != null && val !== "")
+                  .map(([label, val]) => (
+                    <div key={label} style={{ display: "flex", gap: 16, padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(17,17,17,0.5)", minWidth: 120 }}>{label}</span>
+                      <span style={{ fontSize: 13, color: DARK }}>{String(val)}</span>
+                    </div>
+                  ))}
               </div>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-secondary)", marginBottom: 10, lineHeight: 1.5 }}>
-                The more brand material you give the system, the more precisely it writes in your brand's voice. Upload anything: brand guidelines, logos, marketing copy, website exports, past campaigns, style guides, tone of voice documents.
+
+              {Array.isArray(bd.never_say) && bd.never_say.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(17,17,17,0.6)", marginBottom: 10 }}>Brand would never say</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {(bd.never_say as string[]).map((s, i) => (
+                      <span key={i} style={{ padding: "6px 12px", borderRadius: 999, background: "rgba(200,80,80,0.1)", color: "rgba(120,50,50,0.9)", fontSize: 13 }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p style={{ fontSize: 13, color: "rgba(17,17,17,0.6)", marginBottom: 12, lineHeight: 1.5 }}>
+                Logos, brand guidelines, marketing copy, website exports, past campaigns, style guides. The more you upload, the more precisely the system writes in your brand's voice.
               </p>
-              <input
-                ref={brandInputRef}
-                type="file"
-                accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.svg,.zip"
-                multiple
-                style={{ display: "none" }}
-                onChange={(e) => { addBrandFiles(e.target.files); e.target.value = ""; }}
-              />
+              <input ref={brandInputRef} type="file" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.svg,.zip" multiple style={{ display: "none" }} onChange={(e) => { addBrandFiles(e.target.files); e.target.value = ""; }} />
               <div
                 role="button"
                 tabIndex={0}
                 onClick={() => brandInputRef.current?.click()}
                 onKeyDown={(e) => e.key === "Enter" && brandInputRef.current?.click()}
-                style={UPLOAD_ZONE}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; e.currentTarget.style.color = "var(--gold-dark)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                style={{ padding: "20px 24px", border: "2px dashed rgba(0,0,0,0.15)", borderRadius: 12, background: "#fff", cursor: "pointer", fontSize: 14, color: "rgba(17,17,17,0.6)", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = GOLD; e.currentTarget.style.color = GOLD; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; e.currentTarget.style.color = "rgba(17,17,17,0.6)"; }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Upload size={18} />
-                  <span>Add Brand Assets</span>
+                  <span>Upload Brand Assets</span>
                 </div>
               </div>
               {brandFiles.length > 0 && (
                 <>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
                     {brandFiles.map((f) => (
-                      <span
-                        key={f.id}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          padding: "6px 10px",
-                          borderRadius: 8,
-                          background: "var(--surface-elevated)",
-                          border: "1px solid var(--border-subtle)",
-                          fontSize: 12,
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {f.file.name} · {formatSize(f.file.size)}
-                        <button type="button" aria-label="Remove" onClick={() => removeBrand(f.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
-                          <X size={14} style={{ color: "var(--text-tertiary)" }} />
-                        </button>
+                      <span key={f.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 8, background: "rgba(0,0,0,0.06)", fontSize: 12 }}>
+                        {f.file.name}
+                        <button type="button" aria-label="Remove" onClick={() => setBrandFiles((p) => p.filter((x) => x.id !== f.id))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}><X size={14} /></button>
                       </span>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    disabled={brandUploading}
-                    onClick={uploadBrandAssets}
-                    style={{ ...GOLD_OUTLINE_BTN, marginTop: 12 }}
-                    onMouseEnter={(e) => { if (!brandUploading) e.currentTarget.style.background = "rgba(200,150,26,0.08)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  >
-                    {brandUploading ? "Processing…" : "Process & update Brand DNA"}
-                  </button>
+                  <button type="button" disabled={brandUploading} onClick={uploadBrandAssets} style={{ ...goldOutlinedBtn, marginTop: 12 }}>{brandUploading ? "Processing…" : "Process & update Brand DNA"}</button>
                 </>
               )}
             </>
           ) : (
-            <>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginBottom: 16 }}>Your Brand DNA hasn't been set up yet.</p>
+            <div style={{ textAlign: "center", padding: "48px 24px", background: "#fff", borderRadius: 12, border: "1px dashed rgba(0,0,0,0.12)" }}>
+              <p style={{ fontSize: 16, color: "rgba(17,17,17,0.7)", marginBottom: 20 }}>Your Brand DNA hasn't been captured yet.</p>
               <button
                 type="button"
-                style={GOLD_OUTLINE_BTN}
                 onClick={() => navigate("/onboarding?retrain=brand")}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.08)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                style={{ ...goldOutlinedBtn, background: GOLD, color: "#fff", borderColor: GOLD }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#b8860b"; e.currentTarget.style.borderColor = "#b8860b"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.borderColor = GOLD; }}
               >
                 Set Up Brand DNA
               </button>
-            </>
+            </div>
           )}
-        </div>
-      </AccordionSection>
+        </section>
 
-      <AccordionSection icon={BookOpen} title="Method DNA">
-        <div style={{ padding: "20px 24px 24px" }}>
-          {hasMethodDna ? (
-            <>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 16 }}>
+        {/* ─── SECTION 3: METHOD DNA ─── */}
+        <section>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <BookOpen size={24} style={{ color: GOLD }} />
+              <span style={{ fontSize: 24, fontWeight: 600, color: DARK }}>Method DNA</span>
+            </div>
+            <button type="button" style={goldOutlinedBtn} onClick={() => navigate("/onboarding?retrain=method")} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.08)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+              {hasMethodDna ? "Retrain" : "Set Up"}
+            </button>
+          </div>
+
+          {hasMethodDna && profile?.method_dna ? (
+            <div style={{ background: "#fff", borderRadius: 12, padding: "24px 28px", border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              <pre style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: DARK, whiteSpace: "pre-wrap", margin: 0 }}>{JSON.stringify(profile.method_dna, null, 2)}</pre>
+            </div>
+          ) : (
+            <div style={{ background: "#fff", borderRadius: 12, padding: "40px 32px", border: "1px dashed rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                <Lightbulb size={40} style={{ color: "rgba(200,150,26,0.6)" }} />
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 600, color: DARK, marginBottom: 12, textAlign: "center" }}>Your Method DNA</h3>
+              <p style={{ fontSize: 14, color: "rgba(17,17,17,0.7)", lineHeight: 1.6, textAlign: "center", maxWidth: 480, margin: "0 auto 24px" }}>
+                Capture your frameworks, proprietary vocabulary, and the concepts that make your thinking uniquely yours. Once trained, every output references your methodology automatically.
+              </p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 auto 28px", maxWidth: 400, fontSize: 14, color: "rgba(17,17,17,0.75)", lineHeight: 1.8 }}>
+                <li>· Your named frameworks (e.g. The 5 Rings, The OPAT System)</li>
+                <li>· Proprietary vocabulary your audience knows you for</li>
+                <li>· The mental models you return to again and again</li>
+              </ul>
+              <div style={{ textAlign: "center" }}>
                 <button
                   type="button"
-                  style={GOLD_OUTLINE_BTN}
                   onClick={() => navigate("/onboarding?retrain=method")}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.08)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  style={{ ...goldOutlinedBtn, background: GOLD, color: "#fff", borderColor: GOLD, padding: "12px 24px" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#b8860b"; e.currentTarget.style.borderColor = "#b8860b"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = GOLD; e.currentTarget.style.borderColor = GOLD; }}
                 >
-                  Retrain Method DNA
+                  Set Up Method DNA
                 </button>
               </div>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                Your frameworks, proprietary vocabulary, and methodology are stored here.
-              </p>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-secondary)", marginTop: 12, marginBottom: 10, lineHeight: 1.5 }}>
-                Upload frameworks, methodology docs, or any content that defines how you think.
-              </p>
-              <input
-                ref={methodInputRef}
-                type="file"
-                accept=".pdf,.docx,.txt,.md,.pptx"
-                multiple
-                style={{ display: "none" }}
-                onChange={(e) => { addMethodFiles(e.target.files); e.target.value = ""; }}
-              />
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => methodInputRef.current?.click()}
-                onKeyDown={(e) => e.key === "Enter" && methodInputRef.current?.click()}
-                style={UPLOAD_ZONE}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; e.currentTarget.style.color = "var(--gold-dark)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Upload size={18} />
-                  <span>Add methodology docs</span>
-                </div>
-              </div>
-              {methodFiles.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-                  {methodFiles.map((f) => (
-                    <span
-                      key={f.id}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                        background: "var(--surface-elevated)",
-                        border: "1px solid var(--border-subtle)",
-                        fontSize: 12,
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {f.file.name} · {formatSize(f.file.size)}
-                      <button type="button" aria-label="Remove" onClick={() => removeMethod(f.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
-                        <X size={14} style={{ color: "var(--text-tertiary)" }} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginBottom: 16, lineHeight: 1.6 }}>
-                Your Method DNA captures your frameworks, proprietary concepts, and the vocabulary that makes your thinking uniquely yours.
-              </p>
-              <button
-                type="button"
-                style={GOLD_OUTLINE_BTN}
-                onClick={() => navigate("/onboarding?retrain=method")}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.08)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-              >
-                Set Up Method DNA
-              </button>
-            </>
+            </div>
           )}
-        </div>
-      </AccordionSection>
+        </section>
+      </div>
     </div>
   );
 }
