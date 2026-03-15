@@ -6,7 +6,9 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-const SYSTEM_PROMPT = `You are a Brand DNA analyst for EVERYWHERE Studio. Given a conversation history (Watson asking questions, user answering), produce a structured Brand DNA profile. Respond with ONLY a raw JSON object. No preamble, no markdown code fences, no explanation. Pure JSON only, directly parseable by JSON.parse().`;
+const SYSTEM_PROMPT = `You are a Brand DNA analyst for EVERYWHERE Studio. Given a conversation history (Watson asking questions, user answering), produce a structured Brand DNA profile.
+
+CRITICAL: You must respond with ONLY a raw JSON object. No preamble, no markdown code fences, no explanation, no "Here is the profile" text. Your entire response must be valid JSON that starts with { and ends with }. If you include ANY text outside the JSON object, the system will break.`;
 
 function buildUserMessage(userName, responses) {
   const lines = [`Conversation from ${userName}:`];
@@ -59,6 +61,18 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
 
   const { responses = [], userName = "the user" } = req.body || {};
+
+  // Validate that we have actual conversation content to analyze
+  const hasContent = Array.isArray(responses)
+    ? responses.length > 0 && responses.some(m => m.content && String(m.content).trim().length > 0)
+    : responses && typeof responses === "object" && Object.keys(responses).length > 0;
+
+  if (!hasContent) {
+    return res.status(400).json({
+      error: "No conversation content provided. Brand DNA requires Watson interview responses.",
+      hint: "Send { responses: [{ role: 'user', content: '...' }, { role: 'assistant', content: '...' }], userName: 'Name' }"
+    });
+  }
 
   try {
     const client = new Anthropic({ apiKey });
