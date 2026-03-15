@@ -25,7 +25,7 @@ export default function OnboardingPage() {
   const [voiceDNA, setVoiceDNA] = useState<VoiceDNA | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // If profile is already complete, skip straight to dashboard (e.g. user completed onboarding before)
+  // If profile is already complete (or Voice DNA done), skip straight to dashboard
   useEffect(() => {
     if (!user) return;
     supabase
@@ -34,7 +34,7 @@ export default function OnboardingPage() {
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
-        if (data?.onboarding_complete) {
+        if (data?.onboarding_complete || data?.voice_dna_completed) {
           window.location.href = "/studio/dashboard";
         }
       });

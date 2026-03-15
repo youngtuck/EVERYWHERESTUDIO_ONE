@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -5,8 +6,14 @@ import { useAuth } from "../context/AuthContext";
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, profile } = useAuth();
   const path = useLocation().pathname;
+  const [profileLoadTimedOut, setProfileLoadTimedOut] = useState(false);
 
-  const profileReady = user && profile !== null;
+  useEffect(() => {
+    const t = setTimeout(() => setProfileLoadTimedOut(true), 5000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const profileReady = user && (profile !== null || profileLoadTimedOut);
   const onboardingDone = !!profile?.voice_dna_completed || !!profile?.onboarding_complete;
 
   if (loading || (user && !profileReady)) {
