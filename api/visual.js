@@ -72,11 +72,11 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error("[api/visual] GEMINI_API_KEY not set in environment");
+    console.error("[api/visual] GEMINI_API_KEY not set");
     return res.status(503).json({
       success: false,
       error: "Visual Intelligence is being configured. GEMINI_API_KEY not set.",
-      setup: "Add GEMINI_API_KEY to Vercel environment variables. Get a key from https://aistudio.google.com/apikey"
+      setup: "Add GEMINI_API_KEY to Vercel environment variables from https://aistudio.google.com/apikey"
     });
   }
 
@@ -146,21 +146,18 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, image: imageBase64, mimeType });
       }
 
-      console.warn(`[api/visual] No image in response from ${model}`);
       lastError = `Model ${model} returned no image data`;
       continue;
     } catch (err) {
-      const message = err.name === "AbortError" ? `Timeout with ${model}` : (err.message || "Image generation failed.");
-      console.error(`[api/visual] ${message}`);
-      lastError = message;
+      lastError = err.name === "AbortError" ? `Timeout with ${model}` : (err.message || "Failed");
+      console.error(`[api/visual] ${lastError}`);
       continue;
     }
   }
 
-  // All models failed
   return res.status(502).json({
     success: false,
-    error: lastError || "No image in response. Try another style or shorten the content.",
+    error: lastError || "No image generated. Try a different style or shorter content.",
     modelsAttempted: MODELS,
   });
 }
