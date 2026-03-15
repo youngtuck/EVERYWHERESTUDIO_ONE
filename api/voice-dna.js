@@ -11,37 +11,65 @@ produce a structured Voice DNA profile. Respond with ONLY a raw JSON object.
 No preamble. No markdown code fences. No explanation. Pure JSON only.
 The JSON must be parseable by JSON.parse() with no preprocessing.`;
 
-function buildUserMessage(userName, responses) {
-  const lines = [`Interview responses from ${userName}:`];
-  for (const [key, value] of Object.entries(responses)) {
-    lines.push(`${key}: ${String(value)}`);
+function buildUserMessage(userName, responses, textSamples) {
+  const lines = [];
+
+  // Format 1: Structured interview responses (object with question keys)
+  if (responses && typeof responses === "object" && !Array.isArray(responses) && Object.keys(responses).length > 0) {
+    lines.push(`Interview responses from ${userName}:`);
+    for (const [key, value] of Object.entries(responses)) {
+      lines.push(`${key}: ${String(value)}`);
+    }
   }
+  // Format 2: Conversation array (Watson chat history)
+  else if (Array.isArray(responses) && responses.length > 0) {
+    lines.push(`Conversation with ${userName}:`);
+    responses.forEach((m) => {
+      const role = m.role === "assistant" || m.role === "watson" ? "Watson" : userName;
+      if (m.content && String(m.content).trim()) {
+        lines.push(`${role}: ${String(m.content).trim()}`);
+      }
+    });
+  }
+  // Format 3: Raw text samples
+  else if (textSamples && typeof textSamples === "string" && textSamples.trim()) {
+    lines.push(`Writing samples from ${userName}:`);
+    lines.push(textSamples.trim());
+  }
+  // Format 4: Single text field in responses
+  else if (typeof responses === "string" && responses.trim()) {
+    lines.push(`Writing samples from ${userName}:`);
+    lines.push(responses.trim());
+  }
+
+  if (lines.length === 0) {
+    return null; // Signal that we have no content
+  }
+
   lines.push(
     "",
     "Generate a Voice DNA profile as this exact JSON structure:",
     "{",
-    "  voiceDna: {",
-    "    voice_fidelity: <number 0-100, overall match confidence>,",
-    "    voice_layer: <number 0-100, how well HOW they communicate is captured>,",
-    "    value_layer: <number 0-100, how well WHO they are is captured>,",
-    "    personality_layer: <number 0-100, how well HOW they process is captured>,",
-    "    traits: {",
-    "      vocabulary_and_syntax: <0-100>,",
-    "      tonal_register: <0-100>,",
-    "      rhythm_and_cadence: <0-100>,",
-    "      metaphor_patterns: <0-100>,",
-    "      structural_habits: <0-100>",
+    '  "voiceDna": {',
+    '    "voice_fidelity": <number 0-100, overall match confidence>,',
+    '    "voice_layer": <number 0-100, how well HOW they communicate is captured>,',
+    '    "value_layer": <number 0-100, how well WHO they are is captured>,',
+    '    "personality_layer": <number 0-100, how well HOW they process is captured>,',
+    '    "traits": {',
+    '      "vocabulary_and_syntax": <0-100>,',
+    '      "tonal_register": <0-100>,',
+    '      "rhythm_and_cadence": <0-100>,',
+    '      "metaphor_patterns": <0-100>,',
+    '      "structural_habits": <0-100>',
     "    },",
-    "    summary: <2-3 sentence description of this person's voice>,",
-    "    signature_phrases: [<3-5 phrases typical of this voice>],",
-    "    prohibited_patterns: [<3-5 AI-typical patterns this person never uses>],",
-    "    contraction_frequency: <low | medium | high>,",
-    "    sentence_length: <short | medium | long | varied>,",
-    "    mode: single",
+    '    "summary": "<2-3 sentence description of this person\'s voice>",',
+    '    "signature_phrases": ["<3-5 phrases typical of this voice>"],',
+    '    "prohibited_patterns": ["<3-5 AI-typical patterns this person never uses>"],',
+    '    "contraction_frequency": "<low | medium | high>",',
+    '    "sentence_length": "<short | medium | long | varied>",',
+    '    "mode": "single"',
     "  },",
-    "  markdown: <full Voice DNA .md document as a string, formatted with headers and tables,",
-    "             capturing all extracted voice markers, value markers, and personality markers,",
-    "             suitable for injecting into a Claude system prompt to make it write like this person>",
+    '  "markdown": "<full Voice DNA .md document as a string, formatted with headers and tables, capturing all extracted voice markers, value markers, and personality markers, suitable for injecting into a Claude system prompt to make it write like this person>"',
     "}"
   );
   return lines.join("\n");
@@ -84,11 +112,18 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
   }
 
-  const { responses = {}, userName = "the user" } = req.body || {};
+  const { responses, userName = "the user", textSamples, text } = req.body || {};
 
   try {
     const client = new Anthropic({ apiKey });
-    const userMessage = buildUserMessage(userName, responses);
+    const userMessage = buildUserMessage(userName, responses, textSamples || text);
+
+    if (!userMessage) {
+      return res.status(400).json({
+        error: "No voice content provided. Send interview responses, conversation history, or text samples.",
+        hint: "Send { responses: { question: answer, ... } } OR { responses: [{ role, content }] } OR { text: 'writing sample...' }"
+      });
+    }
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
