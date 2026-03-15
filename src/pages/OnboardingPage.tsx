@@ -137,7 +137,6 @@ export default function OnboardingPage() {
       .eq("id", user.id);
 
     if (error) {
-      console.warn("Profile full update failed, trying minimal update", error);
       const { error: minimalError } = await supabase
         .from("profiles")
         .update({
@@ -147,9 +146,19 @@ export default function OnboardingPage() {
         })
         .eq("id", user.id);
       if (minimalError) {
-        console.error("Profile update failed after Brand DNA", minimalError);
-        setErrorMessage("We couldn't save your progress. Please try again.");
-        return;
+        const { error: onboardingOnlyError } = await supabase
+          .from("profiles")
+          .update({ onboarding_complete: true })
+          .eq("id", user.id);
+        if (onboardingOnlyError) {
+          console.error("Profile update failed after Brand DNA", {
+            full: error,
+            minimal: minimalError,
+            onboardingOnly: onboardingOnlyError,
+          });
+          setErrorMessage("We couldn't save your progress. Please try again.");
+          return;
+        }
       }
     }
     goToDashboard();
@@ -216,7 +225,28 @@ export default function OnboardingPage() {
               color: "#fee2e2",
             }}
           >
-            {errorMessage}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <span>{errorMessage}</span>
+              {errorMessage.includes("save your progress") && (
+                <button
+                  type="button"
+                  onClick={goToDashboard}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 6,
+                    border: "1px solid rgba(255,255,255,0.4)",
+                    background: "rgba(255,255,255,0.1)",
+                    color: "#fff",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Continue to studio anyway
+                </button>
+              )}
+            </div>
           </div>
         )}
         {showStep1 && (
