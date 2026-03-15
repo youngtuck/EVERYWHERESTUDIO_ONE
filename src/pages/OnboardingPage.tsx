@@ -25,9 +25,19 @@ export default function OnboardingPage() {
   const [voiceDNA, setVoiceDNA] = useState<VoiceDNA | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // If profile is already complete (or Voice DNA done), skip straight to dashboard
+  // Retrain param takes precedence: stay on onboarding and go to the right step. Otherwise redirect if already complete.
   useEffect(() => {
     if (!user) return;
+    const retrain = searchParams.get("retrain");
+    if (retrain) {
+      if (retrain === "voice") {
+        setStep(2);
+        setMethod("interview");
+      }
+      if (retrain === "brand") setStep(4);
+      if (retrain === "method") setStep(5);
+      return;
+    }
     supabase
       .from("profiles")
       .select("voice_dna_completed, onboarding_complete")
@@ -38,19 +48,6 @@ export default function OnboardingPage() {
           window.location.href = "/studio/dashboard";
         }
       });
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    const retrain = searchParams.get("retrain");
-    if (retrain === "voice") {
-      setStep(2);
-      setMethod("interview");
-    } else if (retrain === "brand") {
-      setStep(4);
-    } else if (retrain === "method") {
-      setStep(5);
-    }
   }, [user, searchParams]);
 
   const goToDashboard = () => {

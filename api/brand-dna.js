@@ -6,7 +6,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-const SYSTEM_PROMPT = `You are a Brand DNA analyst for EVERYWHERE Studio. Given a conversation history (Watson asking questions, user answering), produce a structured Brand DNA profile. Respond with ONLY a raw JSON object. No preamble. No markdown code fences. No explanation. Pure JSON only. The JSON must be parseable by JSON.parse() with no preprocessing.`;
+const SYSTEM_PROMPT = `You are a Brand DNA analyst for EVERYWHERE Studio. Given a conversation history (Watson asking questions, user answering), produce a structured Brand DNA profile. Respond with ONLY a raw JSON object. No preamble, no markdown code fences, no explanation. Pure JSON only, directly parseable by JSON.parse().`;
 
 function buildUserMessage(userName, responses) {
   const lines = [`Conversation from ${userName}:`];
@@ -41,21 +41,10 @@ function buildUserMessage(userName, responses) {
   return lines.join("\n");
 }
 
+/** Strip markdown code fences so JSON.parse can succeed when Claude returns fenced JSON. */
 function stripMarkdownFences(text) {
   if (!text || typeof text !== "string") return text;
-  let out = text.trim();
-  const codeBlockRe = /^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/i;
-  const m = out.match(codeBlockRe);
-  if (m) out = m[1].trim();
-  return out;
-}
-
-function tryParseJson(text) {
-  try {
-    return { parsed: JSON.parse(text), error: null };
-  } catch (err) {
-    return { parsed: null, error: err };
-  }
+  return text.replace(/```json\n?/gi, "").replace(/```\n?/g, "").trim();
 }
 
 export default async function handler(req, res) {
@@ -84,17 +73,13 @@ export default async function handler(req, res) {
 
     const block = response.content?.[0];
     let text = block?.type === "text" ? block.text : "";
-
-    let { parsed, error } = tryParseJson(text);
-    if (error) {
-      text = stripMarkdownFences(text);
-      const retry = tryParseJson(text);
-      parsed = retry.parsed;
-      error = retry.error;
-    }
-    if (error || !parsed) {
-      console.error("[api/brand-dna] Failed to parse JSON", error, text.slice(0, 500));
-      return res.status(502).json({ error: "Brand DNA response was not valid JSON", raw: text.slice(0, 500) });
+    const clean = stripMarkdownFences(text);
+    let parsed;
+    try {
+      parsed = JSON.parse(clean);
+    } catch (err) {
+      console.error("[api/brand-dna] Failed to parse JSON", err, clean.slice(0, 500));
+      return res.status(502).json({ error: "Brand DNA response was not valid JSON", raw: clean.slice(0, 500) });
     }
 
     const { brandDna, markdown } = parsed;
