@@ -5,7 +5,9 @@ import { useAuth } from "../context/AuthContext";
 /** Wraps studio/onboarding routes; redirects to /auth when not signed in, and gates onboarding correctly. Uses profile from AuthContext (refreshed by onboarding before redirect). */
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, profile } = useAuth();
-  const path = useLocation().pathname;
+  const location = useLocation();
+  const path = location.pathname;
+  const retrainParam = new URLSearchParams(location.search).get("retrain");
   const [profileLoadTimedOut, setProfileLoadTimedOut] = useState(false);
 
   useEffect(() => {
@@ -52,6 +54,9 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   if (path === "/onboarding") {
+    if (retrainParam) {
+      return <>{children}</>; // Never redirect away when retrain param is present
+    }
     if (onboardingDone) {
       return <Navigate to="/studio/dashboard" replace />;
     }

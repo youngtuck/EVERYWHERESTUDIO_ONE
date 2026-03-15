@@ -65,8 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Only route once per session, on initial sign-in. Do not redirect away from /onboarding mid-flow.
       if (event === "SIGNED_IN" && session?.user && !hasRoutedRef.current) {
-        hasRoutedRef.current = true;
         const pathname = window.location.pathname;
+        const retrainParam = new URLSearchParams(window.location.search).get("retrain");
+        if (retrainParam && pathname === "/onboarding") {
+          return; // Never redirect away from /onboarding when retrain param is present
+        }
+        hasRoutedRef.current = true;
         if (pathname === "/auth") {
           (async () => {
             const { data } = await supabase
