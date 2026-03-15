@@ -399,11 +399,14 @@ function ThemeToggle({ lc }:{lc:string}) {
   );
 }
 // ─── Continuous Rooms Section: single sticky left, stacked right panels ──────
-function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
+function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRef, wrapRef }: {
   dark: boolean;
   T: Record<string,string>;
   lc: string; bc: string;
   orbSection: string; orbEnergy: number;
+  watchRef: React.RefObject<HTMLElement | null>;
+  workRef: React.RefObject<HTMLElement | null>;
+  wrapRef: React.RefObject<HTMLElement | null>;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scrollPct, setScrollPct] = useState(0); // 0→1 across all three rooms
@@ -594,7 +597,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
       >
 
         {/* WATCH right */}
-        <div id="room-watch" style={{
+        <section ref={watchRef} id="room-watch" style={{
           minHeight: "130vh",
           padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
           display: "flex",
@@ -646,10 +649,10 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
               <p style={{ fontSize: 12, color: T.textSub, lineHeight: 1.74 }}>Every claim requires two or more independent, credible sources. Unverified intelligence never ships. This is a protocol, not a preference.</p>
             </div>
           </FadeUp>
-        </div>
+        </section>
 
         {/* WORK right */}
-        <div id="room-work" style={{
+        <section ref={workRef} id="room-work" style={{
           minHeight: "145vh",
           padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
           display: "flex",
@@ -705,10 +708,10 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
               </div>
             </div>
           </FadeUp>
-        </div>
+        </section>
 
         {/* WRAP right */}
-        <div id="room-wrap" style={{
+        <section ref={wrapRef} id="room-wrap" style={{
           minHeight: "120vh",
           padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
           display: "flex",
@@ -753,7 +756,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy }: {
             <FeatureLine num="03" title="Performance Loop" desc="Engagement data flows back to sharpen your next strategy." accent={T.wrapA} delay={.12} lc={lc} bc={bc} />
             <FeatureLine num="04" title="The Flywheel" desc="Every post makes the next one better. Ideas compound over time." accent={T.wrapA} delay={.18} lc={lc} bc={bc} />
           </div>
-        </div>
+        </section>
 
       </div>
     </div>
@@ -778,6 +781,9 @@ export default function ExplorePage() {
   const [roomsZoneInView, setRoomsZoneInView] = useState(false);
   const [activeRoom, setActiveRoom] = useState<"watch" | "work" | "wrap">("watch");
   const roomsSentinelRef = useRef<HTMLDivElement | null>(null);
+  const watchRef = useRef<HTMLElement | null>(null);
+  const workRef = useRef<HTMLElement | null>(null);
+  const wrapRef = useRef<HTMLElement | null>(null);
 
   const toggle = () => setDark(d => !d);
   useEffect(() => {
@@ -808,19 +814,42 @@ export default function ExplorePage() {
     return () => observer.disconnect();
   }, [roomsVisible]);
 
-  // Pills visible whenever any part of the rooms section (WATCH / WORK / WRAP) is in view
+  // Pills visible when any room section (WATCH / WORK / WRAP) is in view; activeRoom = section with most visibility
+  const roomIntersectionRef = useRef({ watch: false, work: false, wrap: false, watchRatio: 0, workRatio: 0, wrapRatio: 0 });
   useEffect(() => {
-    if (!roomsVisible) return;
-    const el = roomsSentinelRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      entries => {
-        setRoomsZoneInView(entries[0]?.isIntersecting ?? false);
-      },
-      { root: null, rootMargin: "0px", threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+    if (!roomsVisible || typeof IntersectionObserver === "undefined") return;
+    let observer: IntersectionObserver | null = null;
+    const frameId = requestAnimationFrame(() => {
+      const elements = [watchRef.current, workRef.current, wrapRef.current].filter(Boolean) as HTMLElement[];
+      if (elements.length === 0) return;
+      observer = new IntersectionObserver(
+        (entries) => {
+          const state = roomIntersectionRef.current;
+          entries.forEach((entry) => {
+            const targetId = entry.target.id;
+            const key = targetId === "room-watch" ? "watch" : targetId === "room-work" ? "work" : targetId === "room-wrap" ? "wrap" : null;
+            if (key) {
+              state[key as "watch" | "work" | "wrap"] = entry.isIntersecting;
+              (state as Record<string, number>)[key + "Ratio"] = entry.intersectionRatio;
+            }
+          });
+          const anyInView = state.watch || state.work || state.wrap;
+          setRoomsZoneInView(anyInView);
+          if (anyInView) {
+            const best = (["watch", "work", "wrap"] as const).reduce((a, b) =>
+              (state as Record<string, number>)[b + "Ratio"] > (state as Record<string, number>)[a + "Ratio"] ? b : a
+            );
+            setActiveRoom(best);
+          }
+        },
+        { root: null, rootMargin: "0px", threshold: 0.1 }
+      );
+      elements.forEach((el) => observer!.observe(el));
+    });
+    return () => {
+      cancelAnimationFrame(frameId);
+      observer?.disconnect();
+    };
   }, [roomsVisible]);
   useEffect(() => {
     document.body.setAttribute("data-explore-theme", dark ? "dark" : "light");
@@ -1317,7 +1346,7 @@ export default function ExplorePage() {
         {/* ══ ROOMS: single continuous left column (lazy-loaded) ═══════════════ */}
         <div ref={roomsSentinelRef}>
           {roomsVisible ? (
-            <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} />
+            <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} watchRef={watchRef} workRef={workRef} wrapRef={wrapRef} />
           ) : (
             <div style={{ minHeight: "300vh", background: "#07090f" }} />
           )}
