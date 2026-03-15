@@ -30,6 +30,7 @@ Continue for 8-12 exchanges. When you have enough to build a Brand DNA profile, 
 interface BrandDNAChatProps {
   userName: string;
   onComplete: (result: BrandDNAResponse) => Promise<void> | void;
+  onAnalyzeStart?: () => void;
 }
 
 interface ChatMessage {
@@ -38,7 +39,7 @@ interface ChatMessage {
   content: string;
 }
 
-export function BrandDNAChat({ userName, onComplete }: BrandDNAChatProps) {
+export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: "opening", role: "assistant", content: OPENING_QUESTION },
   ]);
@@ -103,6 +104,7 @@ export function BrandDNAChat({ userName, onComplete }: BrandDNAChatProps) {
   const handleBuildBrandDNA = async () => {
     const userCount = messages.filter((m) => m.role === "user").length;
     if (userCount < 4 || building) return;
+    onAnalyzeStart?.();
     setBuilding(true);
     try {
       const responses = messages.map((m) => ({ role: m.role, content: m.content }));
