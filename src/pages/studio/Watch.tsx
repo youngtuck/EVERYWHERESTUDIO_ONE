@@ -1,294 +1,348 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronDown } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { supabase } from "../../lib/supabase";
 import "./shared.css";
 
-interface Signal {
-  id: string;
-  category: "moving" | "threat" | "opportunity" | "trigger" | "event";
-  title: string;
-  body: string;
-  source?: string;
-  fish?: number;
-  date: string;
-  sources?: number;
-}
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
-const MOCK_BRIEFING: Signal[] = [
-  { id: "1", category: "moving", title: "AI content tools see 40% enterprise adoption surge in Q1", body: "Enterprise software buyers are consolidating their AI tooling stack, with content production tools seeing the steepest adoption curve.", source: "Forrester Research", date: "Mar 7", sources: 3 },
-  { id: "2", category: "moving", title: "LinkedIn algorithm shifts favor original narrative content", body: "Platform data shows a significant algorithmic boost for posts with sustained first-person narrative structure over 150 words.", source: "Social Media Examiner", date: "Mar 6", sources: 2 },
-  { id: "3", category: "moving", title: "Newsletter open rates recover as inbox filtering improves", body: "After two years of decline, average B2B newsletter open rates are climbing back above 28% for segmented lists.", source: "Mailchimp / Litmus", date: "Mar 5", sources: 4 },
-  { id: "4", category: "threat", title: "Commoditization pressure on thought leadership content", body: "The market is flooded with AI-generated frameworks and listicles. Audiences are developing strong filters for generic strategic content.", source: "Content Marketing Institute", date: "Mar 6", sources: 2 },
-  { id: "5", category: "threat", title: "Short-form video continues to compress written content attention", body: "Average time spent with long-form written content is down 18% year-over-year for professionals under 40.", source: "Reuters Institute", date: "Mar 5", sources: 3 },
-  { id: "6", category: "opportunity", fish: 9, title: "Podcast listenership for business content at all-time high", body: "B2B podcast consumption up 31% in 2025. Guests with existing written content authority convert at 3x the rate.", source: "Edison Research", date: "Mar 7", sources: 3 },
-  { id: "7", category: "opportunity", fish: 8, title: "Conference speakers with pre-event content see 2x engagement", body: "Data from 12 major business conferences shows speakers who publish content in the 30 days before their talk receive substantially higher session attendance.", source: "Event Marketer", date: "Mar 6", sources: 2 },
-  { id: "8", category: "opportunity", fish: 7, title: "Executive ghostwriting demand up 55% on key platforms", body: "LinkedIn creator economy is creating strong demand for executives who publish consistently. Agencies report 55% increase in ghostwriting inquiries.", source: "PR Week", date: "Mar 5", sources: 2 },
-  { id: "9", category: "trigger", title: "The authenticity gap in AI content becomes mainstream narrative", body: "Major business press now covering the delta between AI-written and human-written content as a strategic business risk.", source: "Harvard Business Review", date: "Mar 7", sources: 2 },
-  { id: "10", category: "trigger", title: "New Pew study on trust in expert content opens a useful door", body: "73% of professionals report they trust content more when it comes with clear evidence of lived experience.", source: "Pew Research", date: "Mar 6", sources: 1 },
-  { id: "11", category: "event", title: "SXSW 2026 call for speaker submissions open through April 15", body: "Theme this year: The Human-AI Creative Partnership. 8,000 attendees, strong business track.", source: "SXSW Official", date: "Mar 7", sources: 1 },
-];
+const WATCH_BLUE = "#4A90F5";
+const HEADER_BG = "#0D1B2A";
 
-const CATEGORY_META: Record<string, { label: string; color: string; bg: string; desc: string }> = {
-  moving:      { label: "What's Moving",      color: "#C8961A", bg: "rgba(200,150,26,0.1)", desc: "Developments shaping your landscape" },
-  threat:      { label: "Threats",            color: "#D64545", bg: "rgba(214,69,69,0.1)", desc: "Risks worth watching" },
-  opportunity: { label: "Opportunities",      color: "#3A9A5C", bg: "rgba(58,154,92,0.1)", desc: "Scored by effort-to-impact ratio" },
-  trigger:     { label: "Content Triggers",   color: "#0D8C9E", bg: "rgba(13,140,158,0.1)", desc: "Angles with source material ready" },
-  event:       { label: "Event Radar",        color: "#A080F5", bg: "rgba(160,128,245,0.1)", desc: "Relevant events near you" },
+type Source = { name: string; url: string };
+type WhatsMovingItem = { title: string; summary: string; implication: string; priority: "High" | "Medium" | "Low"; sources?: Source[] };
+type ThreatItem = { title: string; summary: string; severity: string; recommended_action: string };
+type OpportunityItem = { title: string; summary: string; effort: number; impact: number; cta_label: string; cta_prompt: string };
+type ContentTriggerItem = { title: string; angle: string; format: string; cta_label: string };
+type EventRadarItem = { title: string; date: string; relevance: string; action: string };
+
+type BriefingSections = {
+  whats_moving?: WhatsMovingItem[];
+  threats?: ThreatItem[];
+  opportunities?: OpportunityItem[];
+  content_triggers?: ContentTriggerItem[];
+  event_radar?: EventRadarItem[];
 };
 
-const FILTERS = ["all", "moving", "threat", "opportunity", "trigger", "event"] as const;
+type BriefingRow = {
+  id?: string;
+  user_id: string;
+  generated_at: string;
+  date_label: string;
+  briefing: {
+    date_label?: string;
+    generated_at?: string;
+    verified_by?: string;
+    sections?: BriefingSections;
+    signals_count?: number;
+  };
+  signals_count?: number;
+};
 
-function SignalCard({ signal, onWrite }: { signal: Signal; onWrite: (s: Signal) => void }) {
-  const [expanded, setExpanded] = useState(false);
-  const meta = CATEGORY_META[signal.category];
-  const transition = "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)";
+function isToday(isoString: string): boolean {
+  if (!isoString) return false;
+  const d = new Date(isoString);
+  const today = new Date();
+  return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+}
 
+function getTodayDateLabel(): string {
+  const d = new Date();
+  const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+  const months = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}, ${d.getFullYear()}`;
+}
+
+export default function Watch() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [briefing, setBriefing] = useState<BriefingRow | null>(null);
+  const [profile, setProfile] = useState<{ full_name?: string | null; sentinel_topics?: string[] | null } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      const [bRes, pRes] = await Promise.all([
+        supabase
+          .from("sentinel_briefings")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("generated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase.from("profiles").select("full_name, sentinel_topics").eq("id", user.id).single(),
+      ]);
+      if (bRes.data) setBriefing(bRes.data as BriefingRow);
+      if (pRes.data) setProfile(pRes.data);
+      setLoading(false);
+    })();
+  }, [user?.id]);
+
+  const hasTodayBriefing = briefing && isToday(briefing.generated_at);
+  const sections = briefing?.briefing?.sections ?? {};
+  const defaultTopics = ["AI and technology", "thought leadership", "executive communication", "content strategy"];
+  const topics = (profile?.sentinel_topics?.length ? profile.sentinel_topics : defaultTopics) as string[];
+
+  const handleGenerateNow = async () => {
+    if (!user) return;
+    setGenerating(true);
+    try {
+      const url = `${API_BASE}/api/sentinel-generate`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          userName: profile?.full_name || "there",
+          topics,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setBriefing({
+        user_id: user.id,
+        generated_at: new Date().toISOString(),
+        date_label: data.date_label || getTodayDateLabel(),
+        briefing: data,
+        signals_count: data.signals_count ?? 0,
+      });
+    } catch (err) {
+      console.error("[Watch] generate failed", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const openWorkWithPrompt = (ctaPrompt: string) => {
+    navigate(`/studio/work?prompt=${encodeURIComponent(ctaPrompt)}`);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px", fontFamily: "'DM Sans', sans-serif", color: "var(--text-secondary)" }}>
+        Loading…
+      </div>
+    );
+  }
+
+  const dateLabel = hasTodayBriefing ? (briefing.briefing.date_label ?? briefing.date_label) : getTodayDateLabel();
+
+  return (
+    <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh" }}>
+      {/* Header — exact layout */}
+      <header
+        style={{
+          background: HEADER_BG,
+          color: "#fff",
+          padding: "32px 24px 40px",
+          marginBottom: 32,
+        }}
+      >
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#C8961A", marginBottom: 8 }}>
+            INTELLIGENCE BRIEFING
+          </div>
+          <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "clamp(24px,4vw,36px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+            {dateLabel}
+          </h1>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: 0 }}>
+            Verified by Priya Kumar Protocol — all claims require 2+ independent sources
+          </p>
+        </div>
+      </header>
+
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px 80px" }}>
+        {!hasTodayBriefing ? (
+          <>
+            <div
+              style={{
+                background: "var(--surface-white)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 16,
+                padding: 40,
+                textAlign: "center",
+              }}
+            >
+              <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
+                Your morning briefing is being prepared
+              </h2>
+              <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
+                Sentinel runs daily at 7:00 AM. Check back then.
+              </p>
+              <button
+                type="button"
+                onClick={handleGenerateNow}
+                disabled={generating}
+                style={{
+                  background: WATCH_BLUE,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "12px 24px",
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: generating ? "wait" : "pointer",
+                }}
+              >
+                {generating ? "Generating…" : "Generate Now"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
+            {/* Left: What's Moving + Threats */}
+            <div>
+              {(sections.whats_moving?.length ?? 0) > 0 && (
+                <SectionTitle label="What's Moving" color={WATCH_BLUE} />
+              )}
+              {(sections.whats_moving ?? []).map((item, i) => (
+                <Card key={i} style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: WATCH_BLUE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {item.priority}
+                    </span>
+                  </div>
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 8px" }}>{item.summary}</p>
+                  <p style={{ fontSize: 13, color: "var(--text-tertiary)", fontStyle: "italic", margin: "0 0 8px" }}>{item.implication}</p>
+                  {item.sources?.length ? (
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                      {item.sources.map((s, j) => (
+                        <a key={j} href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: WATCH_BLUE, marginRight: 12 }}>
+                          {s.name}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                </Card>
+              ))}
+
+              {(sections.threats?.length ?? 0) > 0 && <SectionTitle label="Threats" color="#D64545" style={{ marginTop: 32 }} />}
+              {(sections.threats ?? []).map((item, i) => (
+                <Card key={i} style={{ marginBottom: 16, borderLeft: "4px solid #D64545" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#D64545", textTransform: "uppercase" }}>{item.severity}</span>
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 8px" }}>{item.summary}</p>
+                  <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0 }}>{item.recommended_action}</p>
+                </Card>
+              ))}
+            </div>
+
+            {/* Right: Opportunities + Content Triggers + Event Radar */}
+            <div>
+              {(sections.opportunities?.length ?? 0) > 0 && <SectionTitle label="Opportunities" color="#3A9A5C" />}
+              {(sections.opportunities ?? []).map((item, i) => (
+                <Card key={i} style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", gap: 12, marginBottom: 8, fontSize: 11, color: "var(--text-tertiary)" }}>
+                    <span>Effort: {item.effort}</span>
+                    <span>Impact: {item.impact}</span>
+                  </div>
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 12px" }}>{item.summary}</p>
+                  <button
+                    type="button"
+                    onClick={() => openWorkWithPrompt(item.cta_prompt)}
+                    style={{
+                      background: "#3A9A5C",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "8px 16px",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {item.cta_label}
+                  </button>
+                </Card>
+              ))}
+
+              {(sections.content_triggers?.length ?? 0) > 0 && (
+                <SectionTitle label="Content Triggers" color="#0D8C9E" style={{ marginTop: 32 }} />
+              )}
+              {(sections.content_triggers ?? []).map((item, i) => (
+                <Card key={i} style={{ marginBottom: 16 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "#0D8C9E", textTransform: "uppercase", letterSpacing: "0.06em" }}>{item.format}</span>
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 12px" }}>{item.angle}</p>
+                  <button
+                    type="button"
+                    onClick={() => openWorkWithPrompt(item.angle)}
+                    style={{
+                      background: "transparent",
+                      color: "#0D8C9E",
+                      border: "1px solid #0D8C9E",
+                      borderRadius: 8,
+                      padding: "8px 16px",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {item.cta_label}
+                  </button>
+                </Card>
+              ))}
+
+              {(sections.event_radar?.length ?? 0) > 0 && (
+                <SectionTitle label="Event Radar" color="#A080F5" style={{ marginTop: 32 }} />
+              )}
+              {(sections.event_radar ?? []).map((item, i) => (
+                <Card key={i} style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{item.title}</h3>
+                    <span style={{ fontSize: 12, color: "var(--text-tertiary)", flexShrink: 0 }}>{item.date}</span>
+                  </div>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>{item.relevance}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: 0 }}>{item.action}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({
+  label,
+  color,
+  style = {},
+}: {
+  label: string;
+  color: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, ...style }}>
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
+    </div>
+  );
+}
+
+function Card({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div
       style={{
         background: "var(--surface-white)",
         border: "1px solid var(--border-subtle)",
         borderRadius: 12,
-        marginBottom: 12,
-        overflow: "hidden",
-        transition,
-      }}
-      onMouseEnter={(e) => {
-        if (!expanded) e.currentTarget.style.borderColor = "var(--border-default)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "var(--border-subtle)";
+        padding: 20,
+        ...style,
       }}
     >
-      <div style={{ padding: 20 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-          <span
-            style={{
-              fontFamily: "'DM Mono', monospace",
-              fontSize: 10,
-              fontWeight: 500,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              color: meta.color,
-              background: meta.bg,
-              padding: "3px 10px",
-              borderRadius: 4,
-            }}
-          >
-            {meta.label}
-          </span>
-          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text-tertiary)", flexShrink: 0 }}>
-            {signal.date}
-          </span>
-        </div>
-        <h3
-          style={{
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 16,
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            lineHeight: 1.4,
-            margin: 0,
-          }}
-        >
-          {signal.title}
-        </h3>
-
-        {expanded && (
-          <div style={{ paddingTop: 16 }}>
-            <p
-              style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14,
-                color: "var(--text-secondary)",
-                lineHeight: 1.7,
-                margin: "0 0 16px",
-              }}
-            >
-              {signal.body}
-            </p>
-            {signal.source && (
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
-                Source: {signal.source}
-                {signal.sources && signal.sources > 1 && ` + ${signal.sources - 1} more`}
-              </span>
-            )}
-            {(signal.category === "trigger" || signal.category === "opportunity") && (
-              <button
-                type="button"
-                onClick={() => onWrite(signal)}
-                style={{
-                  marginTop: 12,
-                  display: "block",
-                  background: "var(--text-primary)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "8px 16px",
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition,
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-              >
-                Write from this signal
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          background: "none",
-          border: "none",
-          borderTop: "1px solid var(--border-subtle)",
-          padding: "12px 20px",
-          cursor: "pointer",
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: 13,
-          color: "var(--text-secondary)",
-          transition,
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.02)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
-      >
-        <span>{expanded ? "Collapse" : "Read briefing"}</span>
-        <ChevronDown
-          size={18}
-          style={{
-            color: "var(--text-tertiary)",
-            transform: expanded ? "rotate(180deg)" : "none",
-            transition,
-          }}
-        />
-      </button>
-    </div>
-  );
-}
-
-export default function Watch() {
-  const navigate = useNavigate();
-  const [filter, setFilter] = useState<typeof FILTERS[number]>("all");
-  const [configOpen, setConfigOpen] = useState(false);
-
-  const filtered = filter === "all" ? MOCK_BRIEFING : MOCK_BRIEFING.filter((s) => s.category === filter);
-  const counts = FILTERS.reduce(
-    (acc, f) => {
-      acc[f] = f === "all" ? MOCK_BRIEFING.length : MOCK_BRIEFING.filter((s) => s.category === f).length;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-
-  const handleWrite = (signal: Signal) => {
-    navigate(`/studio/work?type=essay&signal=${encodeURIComponent(signal.title)}`);
-  };
-
-  const briefingDate = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-
-  return (
-    <div
-      style={{
-        maxWidth: 960,
-        margin: "0 auto",
-        padding: "32px 24px 80px",
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
-      {configOpen && (
-        <>
-          <div
-            role="presentation"
-            onClick={() => setConfigOpen(false)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100 }}
-          />
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width: 420,
-              maxWidth: "100vw",
-              background: "var(--bg-light)",
-              borderLeft: "1px solid var(--border-subtle)",
-              zIndex: 101,
-              boxShadow: "-8px 0 24px rgba(0,0,0,0.08)",
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 18, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>Sentinel configuration</h2>
-              <button type="button" onClick={() => setConfigOpen(false)} aria-label="Close" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, border: "none", background: "var(--surface-white)", cursor: "pointer", color: "var(--text-tertiary)" }}>
-                <X size={18} strokeWidth={2} />
-              </button>
-            </div>
-            <div style={{ padding: 24, flex: 1 }}>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)" }}>Configure industries, topics, and people to watch. This panel can be wired to your backend when ready.</p>
-            </div>
-          </div>
-        </>
-      )}
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
-        <div>
-          <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 28, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>Sentinel</h1>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0 }}>Morning briefing · {briefingDate} · {MOCK_BRIEFING.length} signals across 5 categories</p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-tertiary)" }}>Next briefing Tuesday</span>
-          <button type="button" onClick={() => setConfigOpen(true)} style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-default)", padding: "10px 20px", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.02)"; e.currentTarget.style.borderColor = "var(--text-tertiary)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-default)"; }}>Configure</button>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 32, WebkitOverflowScrolling: "touch" }}>
-        {FILTERS.map((f) => {
-          const active = f === filter;
-          return (
-            <button key={f} type="button" onClick={() => setFilter(f)} style={{ padding: "8px 16px", borderRadius: 20, border: `1px solid ${active ? "transparent" : "var(--border-subtle)"}`, background: active ? "var(--text-primary)" : "transparent", color: active ? "#fff" : "var(--text-secondary)", fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { if (!active) { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--text-primary)"; } }} onMouseLeave={(e) => { if (!active) { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; } }}>
-              {f === "all" ? "All" : CATEGORY_META[f].label} {counts[f]}
-            </button>
-          );
-        })}
-      </div>
-
-      {filter === "all" ? (
-        Object.entries(CATEGORY_META).map(([cat, meta]) => {
-          const signals = MOCK_BRIEFING.filter((s) => s.category === cat);
-          if (!signals.length) return null;
-          return (
-            <div key={cat} style={{ marginTop: 40, marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: meta.color }}>{meta.label}</span>
-                <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-tertiary)" }}>{meta.desc}</span>
-              </div>
-              {signals.map((s) => <SignalCard key={s.id} signal={s} onWrite={handleWrite} />)}
-            </div>
-          );
-        })
-      ) : (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: CATEGORY_META[filter].color }}>{CATEGORY_META[filter].label}</span>
-            <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-tertiary)" }}>{CATEGORY_META[filter].desc}</span>
-          </div>
-          {filtered.map((s) => <SignalCard key={s.id} signal={s} onWrite={handleWrite} />)}
-        </div>
-      )}
+      {children}
     </div>
   );
 }
