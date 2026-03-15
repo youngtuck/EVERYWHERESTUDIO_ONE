@@ -124,21 +124,33 @@ export default function OnboardingPage() {
       goToDashboard();
       return;
     }
-    const { error } = await supabase
+    const fullUpdate = {
+      brand_dna: result.brandDna,
+      brand_dna_md: result.markdown,
+      brand_dna_completed: true,
+      brand_dna_completed_at: new Date().toISOString(),
+      onboarding_complete: true,
+    };
+    let { error } = await supabase
       .from("profiles")
-      .update({
-        brand_dna: result.brandDna,
-        brand_dna_md: result.markdown,
-        brand_dna_completed: true,
-        brand_dna_completed_at: new Date().toISOString(),
-        onboarding_complete: true,
-      })
+      .update(fullUpdate)
       .eq("id", user.id);
 
     if (error) {
-      console.error("Profile update failed after Brand DNA", error);
-      setErrorMessage("We couldn't save your progress. Please try again.");
-      return;
+      console.warn("Profile full update failed, trying minimal update", error);
+      const { error: minimalError } = await supabase
+        .from("profiles")
+        .update({
+          brand_dna: result.brandDna,
+          brand_dna_md: result.markdown,
+          onboarding_complete: true,
+        })
+        .eq("id", user.id);
+      if (minimalError) {
+        console.error("Profile update failed after Brand DNA", minimalError);
+        setErrorMessage("We couldn't save your progress. Please try again.");
+        return;
+      }
     }
     goToDashboard();
   };
