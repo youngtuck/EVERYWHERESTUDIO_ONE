@@ -425,7 +425,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
       setScrollPct(totalScroll > 0 ? Math.min(1, scrolled / totalScroll) : 0);
       // Reveal: section slowly appears as it enters from below (Apple-style scroll-linked)
       // 0 when section top is at 85% of viewport, 1 when section top is at 25%
-      const rawReveal = (rect.top <= vh * 0.85) ? (vh * 0.85 - rect.top) / (vh * 0.6) : 0;
+      const rawReveal = (rect.top <= vh * 1.1) ? (vh * 1.1 - rect.top) / (vh * 0.4) : 0;
       setRevealProgress(Math.max(0, Math.min(1, rawReveal)));
     };
     window.addEventListener("scroll", onScroll, { passive: true });
