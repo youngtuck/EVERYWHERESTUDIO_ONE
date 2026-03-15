@@ -522,69 +522,6 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
           transition: "background 0.35s ease, box-shadow 0.35s ease",
         }}
       />
-      {/* Sticky left column on desktop; hidden on mobile — own opacity so nav appears as soon as section enters */}
-      <div style={{
-        position: "sticky",
-        top: 0,
-        height: "100vh",
-        width: isMobile ? "100%" : "32vw",
-        flexShrink: 0,
-        display: isMobile ? "none" : "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2,
-        opacity: navOpacity,
-      }}>
-        {/* Inner glow layer - orb aura only (soft halo around orb) */}
-        <div style={{
-          position: "absolute",
-          inset: "-15%",
-          background: `radial-gradient(ellipse 75% 75% at 50% 50%, ${glowColor} 0%, ${glowColor} 18%, rgba(${acR},${acG},${acB},${dark ? 0.1 : 0.05}) 40%, transparent 62%)`,
-          pointerEvents: "none",
-          transition: "background 0.4s ease",
-        }} />
-        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 14, fontWeight: 700, opacity: .7, transition: "color 0.4s ease" }}>
-            {roomNums[roomIdx]}
-          </div>
-          <div style={{ filter: `drop-shadow(0 0 52px ${glowColor})`, marginBottom: 16, transition: "filter 0.4s ease" }}>
-            {isMobile ? (
-              <div
-                style={{
-                  width: 200,
-                  height: 200,
-                  borderRadius: "50%",
-                  background:
-                    "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
-                }}
-              />
-            ) : (
-              <div className="orb-breathe-rooms">
-                <SiriOrb
-                  size={isMobile ? 160 : 240}
-                  energy={
-                    orbSection === "watch" ||
-                    orbSection === "work" ||
-                    orbSection === "wrap"
-                      ? orbEnergy
-                      : 0.1
-                  }
-                  palette={currentPal}
-                  dark={dark}
-                />
-              </div>
-            )}
-          </div>
-          <div style={{ fontSize: "clamp(52px,6.5vw,84px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .88, color: textColor, textAlign: "center", transition: "opacity 0.3s", marginTop: 24 }}>
-            {roomNames[roomIdx]}
-          </div>
-          <div style={{ fontSize: 9, letterSpacing: ".15em", color: textColor, opacity: .20, textTransform: "uppercase", marginTop: 8, fontWeight: 500 }}>
-            {roomSubs[roomIdx]}
-          </div>
-          <div style={{ width: 28, height: 1, background: `linear-gradient(90deg,transparent,${accentColor},transparent)`, marginTop: 18, transition: "background 0.4s ease" }} />
-        </div>
-      </div>
 
         {/* ── Right panels: stacked, normal flow; subtle stagger so copy follows orb ── */}
       <div
