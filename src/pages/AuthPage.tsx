@@ -615,6 +615,7 @@ const AuthPage = () => {
                 {mode === "signin" ? "Create one" : "Sign in"}
               </button>
             </p>
+            </div>
           </div>
         </div>
       </div>
