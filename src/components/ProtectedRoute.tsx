@@ -1,64 +1,15 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
 
-/** Wraps studio/onboarding routes; redirects to /auth when not signed in, and gates onboarding correctly. */
+/** Wraps studio/onboarding routes; redirects to /auth when not signed in, and gates onboarding correctly. Uses profile from AuthContext (refreshed by onboarding before redirect). */
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-  const [profileChecked, setProfileChecked] = useState(false);
-  const [hasVoiceDna, setHasVoiceDna] = useState<boolean | null>(null);
-  const [hasLegacyOnboarding, setHasLegacyOnboarding] = useState<boolean | null>(null);
+  const { user, loading, profile } = useAuth();
+  const path = useLocation().pathname;
 
-  const path = location.pathname;
+  const profileReady = user && profile !== null;
+  const onboardingDone = !!profile?.voice_dna_completed || !!profile?.onboarding_complete;
 
-  useEffect(() => {
-    let cancelled = false;
-    let retryTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    if (!user) return;
-    setProfileChecked(false);
-
-    const fetchProfile = () =>
-      supabase
-        .from("profiles")
-        .select("voice_dna_completed, onboarding_complete")
-        .eq("id", user.id)
-        .single();
-
-    fetchProfile()
-      .then(({ data }) => {
-        if (cancelled) return;
-        const done = !!(data?.voice_dna_completed || data?.onboarding_complete);
-        setHasVoiceDna(!!data?.voice_dna_completed);
-        setHasLegacyOnboarding(!!data?.onboarding_complete);
-        setProfileChecked(true);
-        // On studio, if first fetch says not done, retry once after a short delay (replication/cache lag)
-        if (path.startsWith("/studio") && !done) {
-          retryTimeoutId = window.setTimeout(() => {
-            if (cancelled) return;
-            fetchProfile().then(({ data: retryData }) => {
-              if (cancelled) return;
-              if (!!retryData?.voice_dna_completed || !!retryData?.onboarding_complete) {
-                setHasVoiceDna(!!retryData?.voice_dna_completed);
-                setHasLegacyOnboarding(!!retryData?.onboarding_complete);
-              }
-            });
-          }, 600);
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setProfileChecked(true);
-      });
-
-    return () => {
-      cancelled = true;
-      if (retryTimeoutId !== undefined) window.clearTimeout(retryTimeoutId);
-    };
-  }, [user, path]);
-
-  if (loading || (user && !profileChecked)) {
+  if (loading || (user && !profileReady)) {
     return (
       <div
         style={{
@@ -85,8 +36,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   if (!user) return <Navigate to="/auth" replace />;
-
-  const onboardingDone = !!hasVoiceDna || !!hasLegacyOnboarding;
 
   if (path.startsWith("/studio")) {
     if (!onboardingDone) {

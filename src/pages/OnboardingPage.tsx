@@ -16,7 +16,7 @@ type Step = 1 | 2 | 3 | 4;
 type Method = "interview" | "upload" | null;
 
 export default function OnboardingPage() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
 
   const [step, setStep] = useState<Step>(1);
@@ -24,6 +24,21 @@ export default function OnboardingPage() {
   const [processing, setProcessing] = useState(false);
   const [voiceDNA, setVoiceDNA] = useState<VoiceDNA | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // If profile is already complete, skip straight to dashboard (e.g. user completed onboarding before)
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("voice_dna_completed, onboarding_complete")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.onboarding_complete) {
+          window.location.href = "/studio/dashboard";
+        }
+      });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -33,7 +48,6 @@ export default function OnboardingPage() {
     }
   }, [user, searchParams]);
 
-  /** Full page nav so the app loads fresh and ProtectedRoute sees the updated profile. */
   const goToDashboard = () => {
     window.location.href = "/studio/dashboard";
   };
@@ -161,6 +175,7 @@ export default function OnboardingPage() {
         }
       }
     }
+    await refreshProfile();
     goToDashboard();
   };
 
@@ -175,6 +190,7 @@ export default function OnboardingPage() {
         setErrorMessage("We couldn't save. Please try again.");
         return;
       }
+      await refreshProfile();
     }
     goToDashboard();
   };
