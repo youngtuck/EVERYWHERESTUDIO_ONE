@@ -5,6 +5,32 @@
       "schedule": "0 15 * * *"
     }
   ],
+  "functions": {
+    "api/sentinel-generate.js": {
+      "maxDuration": 60
+    },
+    "api/sentinel-cron.js": {
+      "maxDuration": 60
+    },
+    "api/generate.js": {
+      "maxDuration": 60
+    },
+    "api/chat.js": {
+      "maxDuration": 30
+    },
+    "api/score.js": {
+      "maxDuration": 30
+    },
+    "api/brand-dna.js": {
+      "maxDuration": 30
+    },
+    "api/voice-dna.js": {
+      "maxDuration": 30
+    },
+    "api/visual.js": {
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/sw.js", "destination": "/sw.js" },
