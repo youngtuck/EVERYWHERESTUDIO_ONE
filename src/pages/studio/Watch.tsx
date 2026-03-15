@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
@@ -8,6 +8,14 @@ const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 const WATCH_BLUE = "#4A90F5";
 const HEADER_BG = "#0D1B2A";
+const SENTINEL_LOADING_MESSAGES = [
+  "Scanning your category...",
+  "Monitoring competitor signals...",
+  "Identifying content opportunities...",
+  "Verifying sources...",
+  "Analyzing threat landscape...",
+  "Compiling your briefing...",
+];
 
 type Source = { name: string; url: string };
 type WhatsMovingItem = { title: string; summary: string; implication: string; priority: "High" | "Medium" | "Low"; sources?: Source[] };
@@ -60,6 +68,10 @@ export default function Watch() {
   const [profile, setProfile] = useState<{ full_name?: string | null; sentinel_topics?: string[] | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [completing, setCompleting] = useState(false);
+  const [loadingFadeOut, setLoadingFadeOut] = useState(false);
+  const [statusIndex, setStatusIndex] = useState(0);
+  const completingStarted = useRef(false);
 
   useEffect(() => {
     if (!user) {
@@ -111,12 +123,38 @@ export default function Watch() {
         briefing: data,
         signals_count: data.signals_count ?? 0,
       });
+      setGenerating(false);
+      setCompleting(true);
     } catch (err) {
       console.error("[Watch] generate failed", err);
-    } finally {
       setGenerating(false);
     }
   };
+
+  useEffect(() => {
+    if (!generating && !completing) return;
+    const t = setInterval(() => {
+      setStatusIndex((i) => (i + 1) % SENTINEL_LOADING_MESSAGES.length);
+    }, 2500);
+    return () => clearInterval(t);
+  }, [generating, completing]);
+
+  useEffect(() => {
+    if (!completing || completingStarted.current) return;
+    completingStarted.current = true;
+    const t1 = setTimeout(() => setLoadingFadeOut(true), 600);
+    return () => clearTimeout(t1);
+  }, [completing]);
+
+  useEffect(() => {
+    if (!loadingFadeOut) return;
+    const t = setTimeout(() => {
+      setCompleting(false);
+      setLoadingFadeOut(false);
+      completingStarted.current = false;
+    }, 400);
+    return () => clearTimeout(t);
+  }, [loadingFadeOut]);
 
   const openWorkWithPrompt = (ctaPrompt: string) => {
     navigate(`/studio/work?prompt=${encodeURIComponent(ctaPrompt)}`);
@@ -131,9 +169,37 @@ export default function Watch() {
   }
 
   const dateLabel = hasTodayBriefing ? (briefing.briefing.date_label ?? briefing.date_label) : getTodayDateLabel();
+  const showSentinelLoading = generating || completing;
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh" }}>
+      <style>{`
+        @keyframes sentinel-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.04); }
+        }
+        @keyframes sentinel-ring-1 { to { transform: rotate(360deg); } }
+        @keyframes sentinel-ring-2 { to { transform: rotate(-360deg); } }
+        @keyframes sentinel-ring-3 { to { transform: rotate(360deg); } }
+        @keyframes sentinel-progress-loading {
+          0% { width: 0%; }
+          100% { width: 85%; }
+        }
+        .sentinel-orb-pulse { animation: sentinel-pulse 3s ease-in-out infinite; }
+        .sentinel-ring-1 { animation: sentinel-ring-1 4s linear infinite; }
+        .sentinel-ring-2 { animation: sentinel-ring-2 7s linear infinite; }
+        .sentinel-ring-3 { animation: sentinel-ring-3 12s linear infinite; }
+        .sentinel-rings-completing .sentinel-ring-1 { animation-duration: 2s; }
+        .sentinel-rings-completing .sentinel-ring-2 { animation-duration: 3.5s; }
+        .sentinel-rings-completing .sentinel-ring-3 { animation-duration: 6s; }
+        .sentinel-progress-fill-loading { animation: sentinel-progress-loading 15s ease-out forwards; }
+        .sentinel-progress-fill-complete { width: 100% !important; transition: width 300ms ease-out; animation: none; }
+        @keyframes sentinel-status-fadein {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .sentinel-status-text { animation: sentinel-status-fadein 0.5s ease-out forwards; }
+      `}</style>
       {/* Header — exact layout */}
       <header
         style={{
@@ -156,46 +222,139 @@ export default function Watch() {
         </div>
       </header>
 
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px 80px" }}>
-        {!hasTodayBriefing ? (
-          <>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px 80px", position: "relative" }}>
+        {showSentinelLoading && (
+          <div
+            style={{
+              background: "#07090F",
+              borderRadius: 16,
+              minHeight: 420,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "48px 24px",
+              transition: "opacity 400ms ease-out",
+              opacity: loadingFadeOut ? 0 : 1,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
             <div
+              className="sentinel-orb-pulse"
               style={{
-                background: "var(--surface-white)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 16,
-                padding: 40,
-                textAlign: "center",
+                width: 120,
+                height: 120,
+                borderRadius: "50%",
+                background: "radial-gradient(circle at center, #1B3A5C 0%, #0D1B2A 100%)",
+                border: "1px solid rgba(74,144,245,0.3)",
+                boxShadow: "0 0 40px rgba(74,144,245,0.15)",
+                position: "relative",
+                flexShrink: 0,
               }}
             >
-              <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
-                Your morning briefing is being prepared
-              </h2>
-              <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
-                Sentinel runs daily at 7:00 AM. Check back then.
-              </p>
-              <button
-                type="button"
-                onClick={handleGenerateNow}
-                disabled={generating}
-                style={{
-                  background: WATCH_BLUE,
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 10,
-                  padding: "12px 24px",
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: generating ? "wait" : "pointer",
-                }}
+              <div
+                className={completing ? "sentinel-rings-completing" : ""}
+                style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
               >
-                {generating ? "Generating…" : "Generate Now"}
-              </button>
+                <div
+                  className="sentinel-ring-1"
+                  style={{
+                    position: "absolute",
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    border: "1px solid rgba(74,144,245,0.6)",
+                  }}
+                />
+                <div
+                  className="sentinel-ring-2"
+                  style={{
+                    position: "absolute",
+                    width: 60,
+                    height: 60,
+                    borderRadius: "50%",
+                    border: "1px solid rgba(74,144,245,0.3)",
+                  }}
+                />
+                <div
+                  className="sentinel-ring-3"
+                  style={{
+                    position: "absolute",
+                    width: 80,
+                    height: 80,
+                    borderRadius: "50%",
+                    border: "1px solid rgba(74,144,245,0.15)",
+                  }}
+                />
+              </div>
             </div>
-          </>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
+            <div style={{ marginTop: 24, textAlign: "center" }}>
+              <div style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(74,144,245,0.7)", marginBottom: 8 }}>
+                SENTINEL
+              </div>
+              <div key={statusIndex} className="sentinel-status-text" style={{ fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.5)", minHeight: 20 }}>
+                {SENTINEL_LOADING_MESSAGES[statusIndex]}
+              </div>
+            </div>
+            <div style={{ marginTop: 32, width: 200, height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 1, overflow: "hidden" }}>
+              <div
+                className={completing ? "sentinel-progress-fill-complete" : "sentinel-progress-fill-loading"}
+                style={{
+                  height: "100%",
+                  width: 0,
+                  background: "linear-gradient(to right, #4A90F5, #0D8C9E)",
+                  borderRadius: 1,
+                }}
+              />
+            </div>
+          </div>
+        )}
+        {!hasTodayBriefing && !showSentinelLoading && (
+          <div
+            style={{
+              background: "var(--surface-white)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: 16,
+              padding: 40,
+              textAlign: "center",
+            }}
+          >
+            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
+              Your morning briefing is being prepared
+            </h2>
+            <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
+              Sentinel runs daily at 7:00 AM. Check back then.
+            </p>
+            <button
+              type="button"
+              onClick={handleGenerateNow}
+              disabled={generating}
+              style={{
+                background: WATCH_BLUE,
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                padding: "12px 24px",
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: generating ? "wait" : "pointer",
+              }}
+            >
+              Generate Now
+            </button>
+          </div>
+        )}
+        {hasTodayBriefing && (
+          <div
+            style={{
+              opacity: showSentinelLoading && !loadingFadeOut ? 0 : 1,
+              transition: "opacity 400ms ease-out",
+              pointerEvents: showSentinelLoading && !loadingFadeOut ? "none" : "auto",
+            }}
+          >
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
             {/* Left: What's Moving + Threats */}
             <div>
               {(sections.whats_moving?.length ?? 0) > 0 && (
@@ -305,6 +464,7 @@ export default function Watch() {
                 </Card>
               ))}
             </div>
+          </div>
           </div>
         )}
       </div>
