@@ -8,7 +8,7 @@ const CORS_HEADERS = {
 
 const SYSTEM_PROMPT = `You are a Brand DNA analyst for EVERYWHERE Studio. Given a conversation history (Watson asking questions, user answering), produce a structured Brand DNA profile.
 
-CRITICAL: You must respond with ONLY a raw JSON object. No preamble, no markdown code fences, no explanation, no "Here is the profile" text. Your entire response must be valid JSON that starts with { and ends with }. If you include ANY text outside the JSON object, the system will break.`;
+CRITICAL: You must respond with ONLY a raw JSON object. No preamble, no markdown code fences, no explanation, no conversational text. Your entire response must be valid JSON that starts with { and ends with }. If you include ANY text outside the JSON object, the system will break.`;
 
 function buildUserMessage(userName, responses) {
   const lines = [`Conversation from ${userName}:`];
