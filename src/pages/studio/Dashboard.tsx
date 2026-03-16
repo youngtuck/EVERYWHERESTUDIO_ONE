@@ -153,9 +153,9 @@ export default function Dashboard() {
       className="studio-page-transition"
       data-page="dashboard"
       style={{
-        maxWidth: 720,
+        maxWidth: 920,
         margin: "0 auto",
-        padding: isMobile ? "24px 16px" : "24px 24px",
+        padding: "32px 24px",
         fontFamily: "var(--font)",
       }}
     >
@@ -173,10 +173,10 @@ export default function Dashboard() {
             <div
               style={{
                 fontFamily: "'DM Mono', monospace",
-                fontSize: 10,
+                fontSize: 11,
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                color: "var(--text-tertiary)",
+                letterSpacing: "0.1em",
+                color: "rgba(0,0,0,0.3)",
                 marginBottom: 4,
               }}
             >
@@ -185,7 +185,7 @@ export default function Dashboard() {
             <div
               style={{
                 fontFamily: "'Montserrat', sans-serif",
-                fontSize: isMobile ? 20 : 24,
+                fontSize: 28,
                 fontWeight: 700,
                 color: "var(--text-primary)",
                 letterSpacing: "-0.02em",
@@ -239,19 +239,17 @@ export default function Dashboard() {
           [
             {
               key: "outputs",
-              label: "OUTPUTS CREATED",
+              label: "OUTPUTS",
               value: outputsCreated,
-              tooltip: "Total pieces of content produced through Watson.",
               subtitle:
                 outputsCreated > 0 ? `${Math.min(outputsCreated, 99)} recent` : "Get started below",
-              accent: "var(--work-teal)",
+              accent: "#4A90D9",
               color: "var(--text-primary)",
             },
             {
               key: "avg",
               label: "AVG BETTERISH",
               value: avgBetterish ?? "—",
-              tooltip: "Average quality score across outputs. 900 is publication threshold.",
               subtitle:
                 avgBetterish == null
                   ? "Complete a session"
@@ -260,30 +258,28 @@ export default function Dashboard() {
                     : avgBetterish >= 700
                       ? "Getting close"
                       : "Room to improve",
-              accent: getScoreColor(avgBetterish ?? 0).fill,
+              accent: "#C8961A",
               color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
             },
             {
               key: "voice",
               label: "VOICE FIDELITY",
               value: voicePct != null ? `${voicePct}%` : "—",
-              tooltip: "How closely the system matches your writing voice.",
               subtitle:
                 voicePct == null
                   ? "Complete onboarding"
                   : voicePct >= 80
                     ? "Strong match"
                     : "Building",
-              accent: "var(--wrap-violet)",
+              accent: "#50c8a0",
               color: "var(--text-primary)",
             },
             {
               key: "signals",
               label: "SIGNALS",
               value: "—",
-              tooltip: "Intelligence signals from Sentinel Watch.",
               subtitle: "Coming soon",
-              accent: "rgba(0,0,0,0.12)",
+              accent: "rgba(0,0,0,0.1)",
               color: "var(--text-tertiary)",
             },
           ].map((stat, i) => (
@@ -295,8 +291,8 @@ export default function Dashboard() {
                 opacity: 0,
                 background: "#fff",
                 border: "1px solid rgba(0,0,0,0.08)",
-                borderRadius: 12,
-                padding: "20px 24px 18px",
+                borderRadius: 14,
+                padding: 24,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
@@ -309,8 +305,8 @@ export default function Dashboard() {
                     fontSize: 11,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
-                    color: "rgba(0,0,0,0.45)",
-                    marginBottom: 6,
+                    color: "rgba(0,0,0,0.38)",
+                    marginBottom: 4,
                   }}
                 >
                   {stat.label}
@@ -319,10 +315,11 @@ export default function Dashboard() {
                   style={{
                     fontFamily: "var(--font)",
                     fontVariantNumeric: "tabular-nums",
-                    fontSize: 36,
+                    fontSize: 40,
                     fontWeight: 700,
-                    letterSpacing: "-0.02em",
+                    letterSpacing: "-0.03em",
                     color: stat.color,
+                    marginTop: 8,
                   }}
                 >
                   {stat.value}
@@ -331,8 +328,8 @@ export default function Dashboard() {
                   style={{
                     fontFamily: "'DM Sans', sans-serif",
                     fontSize: 12,
-                    color: "rgba(0,0,0,0.45)",
-                    marginTop: 4,
+                    color: "rgba(0,0,0,0.4)",
+                    marginTop: 6,
                   }}
                 >
                   {stat.subtitle}
@@ -371,10 +368,10 @@ export default function Dashboard() {
           <span
             style={{
               fontFamily: "'DM Mono', monospace",
-              fontSize: 10,
+              fontSize: 11,
               textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              color: "var(--text-tertiary)",
+              letterSpacing: "0.1em",
+              color: "rgba(0,0,0,0.35)",
             }}
           >
             In progress
@@ -407,7 +404,7 @@ export default function Dashboard() {
           <div
             style={{
               background: "var(--surface-white)",
-              border: "1px solid var(--border-subtle)",
+              border: "1px solid rgba(0,0,0,0.06)",
               borderRadius: 12,
               padding: 20,
               textAlign: "center",
@@ -445,23 +442,23 @@ export default function Dashboard() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "12px 16px",
-                  background: "var(--surface-white)",
-                  border: "1px solid var(--border-subtle)",
+                  padding: "16px 20px",
+                  background: "#fff",
+                  border: "1px solid rgba(0,0,0,0.06)",
                   borderRadius: 12,
                   marginBottom: 8,
                   cursor: "pointer",
                   width: "100%",
                   textAlign: "left",
-                  transition,
+                  transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-default)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)";
                   e.currentTarget.style.transform = "translateY(-1px)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-subtle)";
+                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
                   e.currentTarget.style.boxShadow = "none";
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
@@ -469,14 +466,14 @@ export default function Dashboard() {
                 <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: "rgba(0,0,0,0.04)",
-                      color: "var(--text-secondary)",
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      background: "rgba(0,0,0,0.8)",
+                      color: "#fff",
                       fontFamily: "'DM Mono', monospace",
-                      fontSize: 11,
-                      fontWeight: 500,
+                      fontSize: 12,
+                      fontWeight: 700,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -489,7 +486,7 @@ export default function Dashboard() {
                     <div
                       style={{
                         fontFamily: "'DM Sans', sans-serif",
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: 500,
                         color: "var(--text-primary, #1a1a1a)",
                         overflow: "hidden",
@@ -503,7 +500,7 @@ export default function Dashboard() {
                       style={{
                         fontFamily: "'DM Sans', sans-serif",
                         fontSize: 12,
-                        color: "var(--text-tertiary, var(--fg-3))",
+                        color: "rgba(0,0,0,0.4)",
                         marginTop: 2,
                       }}
                     >
@@ -515,14 +512,15 @@ export default function Dashboard() {
                   <span
                     style={{
                       fontFamily: "'DM Mono', monospace",
-                      fontSize: 13,
+                      fontSize: 16,
                       fontWeight: 500,
                       color: scoreStyle.text,
+                      fontVariantNumeric: "tabular-nums",
                     }}
                   >
                     {o.score}
                   </span>
-                  <ChevronRight size={14} style={{ color: "var(--text-tertiary)" }} />
+                  <ChevronRight size={14} style={{ color: "rgba(0,0,0,0.2)" }} />
                 </div>
               </button>
             );
@@ -534,10 +532,10 @@ export default function Dashboard() {
         <div
           style={{
             fontFamily: "'DM Mono', monospace",
-            fontSize: 10,
+            fontSize: 11,
             textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            color: "var(--text-tertiary)",
+            letterSpacing: "0.1em",
+            color: "rgba(0,0,0,0.35)",
             marginBottom: 10,
           }}
         >
@@ -550,7 +548,7 @@ export default function Dashboard() {
               isMobile && typeof window !== "undefined" && window.innerWidth < 640
                 ? "1fr"
                 : "repeat(2, 1fr)",
-            gap: 16,
+            gap: 12,
           }}
         >
           {QUICK_START.map(({ key, label, subtitle }) => (
@@ -558,25 +556,27 @@ export default function Dashboard() {
               key={key}
               onClick={() => nav(`/studio/work?type=${key}`)}
               style={{
-                background: "var(--surface-white)",
-                border: "1px solid var(--border-subtle)",
+                background: "#fff",
+                border: "1px solid rgba(0,0,0,0.08)",
                 borderRadius: 12,
-                padding: 16,
+                padding: 24,
                 cursor: "pointer",
                 textAlign: "left",
-                transition,
+                transition: "all 0.15s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-default)";
+                e.currentTarget.style.borderColor = "rgba(0,0,0,0.16)";
+                e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.04)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-subtle)";
+                e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+                e.currentTarget.style.boxShadow = "none";
               }}
             >
               <div
                 style={{
                   fontFamily: "'DM Sans', sans-serif",
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: 600,
                   color: "var(--text-primary)",
                 }}
@@ -587,8 +587,9 @@ export default function Dashboard() {
                 style={{
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize: 12,
-                  color: "var(--text-secondary)",
-                  marginTop: 4,
+                  color: "rgba(0,0,0,0.45)",
+                  marginTop: 6,
+                  lineHeight: 1.5,
                 }}
               >
                 {subtitle}

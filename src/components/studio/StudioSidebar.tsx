@@ -4,7 +4,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import Tooltip from "../Tooltip";
-import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut, Hammer, Package } from "lucide-react";
+import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut, Hammer, Package, BookOpen, Wrench, Archive } from "lucide-react";
 
 // ── Nav items (exact order: My Studio → Work → Watch → The Lot → Resources → Projects → The Workbench → Wrap → The Vault → Settings) ──
 const NAV = [
@@ -12,11 +12,11 @@ const NAV = [
   { path: "/studio/work",            label: "Work",         icon: PenLine,           tooltip: "Start a Watson session to produce content." },
   { path: "/studio/watch",           label: "Watch",        icon: Eye,               badge: "11", tooltip: "Sentinel intelligence. What's happening in your category." },
   { path: "/studio/lot",             label: "The Lot",      icon: Bookmark,          tooltip: "Parked ideas. Right idea, wrong time." },
-  { path: "/studio/resources",       label: "Resources",    icon: Folder,            tooltip: "Voice DNA, Brand DNA, Method DNA, and references." },
+  { path: "/studio/resources",       label: "Resources",    icon: BookOpen,          tooltip: "Voice DNA, Brand DNA, Method DNA, and references." },
   { path: "/studio/projects",        label: "Projects",     icon: FolderOpen,        tooltip: "Organize work by client, topic, or project." },
-  { path: "/studio/workbench",       label: "The Workbench", icon: Hammer,           tooltip: "In-progress work. Started but not shipped." },
+  { path: "/studio/workbench",       label: "The Workbench", icon: Wrench,           tooltip: "In-progress work. Started but not shipped." },
   { path: "/studio/wrap",            label: "Wrap",         icon: Package,           tooltip: "Final polish before publishing." },
-  { path: "/studio/outputs",         label: "The Vault",    icon: FileText,          tooltip: "Everything you've published. Permanent archive." },
+  { path: "/studio/outputs",         label: "The Vault",    icon: Archive,          tooltip: "Everything you've published. Permanent archive." },
   { path: "/studio/settings/voice",  label: "Settings",     icon: Settings,           tooltip: "Account, preferences, and configuration." },
 ];
 
