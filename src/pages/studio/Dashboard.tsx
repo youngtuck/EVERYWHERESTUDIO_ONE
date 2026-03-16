@@ -233,77 +233,134 @@ export default function Dashboard() {
           gridTemplateColumns:
             isMobile && typeof window !== "undefined" && window.innerWidth < 480
               ? "1fr"
-              : isMobile
-                ? "1fr 1fr"
-                : "repeat(4, 1fr)",
+              : "repeat(4, minmax(0, 1fr))",
           gap: 16,
           marginBottom: 24,
         }}
       >
-        {!loading && [
-          {
-            label: "Outputs",
-            value: outputsCreated,
-            tooltip: "Total pieces of content produced through Watson.",
-            color: "var(--text-primary)",
-          },
-          {
-            label: "Avg score",
-            value: avgBetterish ?? "—",
-            tooltip: "Average quality score. 900 is publication threshold.",
-            color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
-          },
-          {
-            label: "Voice",
-            value: voicePct != null ? `${voicePct}%` : "—",
-            tooltip: "How closely the system matches your writing voice.",
-            color: "var(--text-primary)",
-          },
-          {
-            label: "Signals",
-            value: "—",
-            tooltip: "Intelligence signals from Sentinel Watch.",
-            color: "var(--text-tertiary)",
-          },
-        ].map((stat, i) => (
-          <Tooltip key={stat.label} text={stat.tooltip} position="top">
-            <div
-              className="dashboard-fade-up"
-              style={{
-                animationDelay: `${i * 50}ms`,
-                opacity: 0,
-                background: "var(--surface-white)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 12,
-                padding: "16px 20px",
-              }}
-            >
+        {!loading &&
+          [
+            {
+              key: "outputs",
+              label: "OUTPUTS CREATED",
+              value: outputsCreated,
+              tooltip: "Total pieces of content produced through Watson.",
+              subtitle:
+                outputsCreated > 0 ? `${Math.min(outputsCreated, 99)} recent` : "Get started below",
+              accent: "var(--work-teal)",
+              color: "var(--text-primary)",
+            },
+            {
+              key: "avg",
+              label: "AVG BETTERISH",
+              value: avgBetterish ?? "—",
+              tooltip: "Average quality score across outputs. 900 is publication threshold.",
+              subtitle:
+                avgBetterish == null
+                  ? "Complete a session"
+                  : avgBetterish >= 900
+                    ? "Publication ready"
+                    : avgBetterish >= 700
+                      ? "Getting close"
+                      : "Room to improve",
+              accent: getScoreColor(avgBetterish ?? 0).fill,
+              color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
+            },
+            {
+              key: "voice",
+              label: "VOICE FIDELITY",
+              value: voicePct != null ? `${voicePct}%` : "—",
+              tooltip: "How closely the system matches your writing voice.",
+              subtitle:
+                voicePct == null
+                  ? "Complete onboarding"
+                  : voicePct >= 80
+                    ? "Strong match"
+                    : "Building",
+              accent: "var(--wrap-violet)",
+              color: "var(--text-primary)",
+            },
+            {
+              key: "signals",
+              label: "SIGNALS",
+              value: "—",
+              tooltip: "Intelligence signals from Sentinel Watch.",
+              subtitle: "Coming soon",
+              accent: "rgba(0,0,0,0.12)",
+              color: "var(--text-tertiary)",
+            },
+          ].map((stat, i) => (
+            <Tooltip key={stat.key} text={stat.tooltip} position="top">
               <div
+                className="dashboard-fade-up"
                 style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 10,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "var(--text-tertiary)",
-                  marginBottom: 4,
+                  animationDelay: `${i * 50}ms`,
+                  opacity: 0,
+                  background: "#fff",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 12,
+                  padding: "20px 24px 18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
                 }}
               >
-                {stat.label}
+                <div>
+                  <div
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      color: "rgba(0,0,0,0.45)",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {stat.label}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--font)",
+                      fontVariantNumeric: "tabular-nums",
+                      fontSize: 36,
+                      fontWeight: 700,
+                      letterSpacing: "-0.02em",
+                      color: stat.color,
+                    }}
+                  >
+                    {stat.value}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 12,
+                      color: "rgba(0,0,0,0.45)",
+                      marginTop: 4,
+                    }}
+                  >
+                    {stat.subtitle}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    marginTop: 10,
+                    height: 3,
+                    borderRadius: 999,
+                    background: "rgba(0,0,0,0.04)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      background: stat.accent,
+                    }}
+                  />
+                </div>
               </div>
-              <div
-                style={{
-                  fontFamily: "var(--font)",
-                  fontVariantNumeric: "tabular-nums",
-                  fontSize: 22,
-                  fontWeight: 600,
-                  color: stat.color,
-                }}
-              >
-                {stat.value}
-              </div>
-            </div>
-          </Tooltip>
-        ))}
+            </Tooltip>
+          ))}
       </div>
 
       <div style={{ marginBottom: 24 }}>

@@ -276,9 +276,9 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         </div>
       )}
 
-      {/* ── Main nav (with icons) ─────────────────────────────────────────── */}
+      {/* ── Main nav ─────────────────────────────────────────── */}
       <nav style={{ flex: 1, padding: "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">
-        <div style={{ paddingBottom: 4 }}>
+        <div style={{ paddingBottom: 4, display: "flex", flexDirection: "column", gap: 2 }}>
           {NAV.map(({ path, label, icon: Icon, badge, tooltip }) => {
             const active = isActive(path);
             return (
@@ -291,56 +291,60 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "8px 12px",
-                    paddingLeft: active ? "12px" : "14px",
-                    marginBottom: 2,
+                    padding: "10px 16px",
                     border: "none",
-                    borderRadius: "var(--studio-radius)",
-                    borderLeft: active ? "2px solid var(--gold-dark)" : "2px solid transparent",
+                    borderRadius: 8,
+                    borderLeft: active ? "3px solid var(--gold-dark)" : "3px solid transparent",
                     background: active ? "rgba(0,0,0,0.04)" : "transparent",
                     cursor: "pointer",
                     fontFamily: "var(--font)",
-                    fontSize: 12,
+                    fontSize: 14,
+                    fontWeight: 500,
                     textAlign: "left",
-                    opacity: active ? 1 : 0.5,
-                    transition: "background 0.15s, color 0.15s, opacity 0.15s, border-color 0.15s",
+                    opacity: active ? 1 : 0.7,
+                    transition: "background 0.15s ease, color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease",
                   }}
                   onMouseEnter={e => {
                     if (!active) {
-                      e.currentTarget.style.background = "var(--bg-2)";
-                      e.currentTarget.style.opacity = "0.8";
+                      e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+                      e.currentTarget.style.opacity = "0.9";
                     }
                   }}
                   onMouseLeave={e => {
                     if (!active) {
                       e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.opacity = "0.5";
+                      e.currentTarget.style.opacity = "0.7";
                     }
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    {collapsed ? (
-                      <span style={{
-                        width: 24, height: 22, display: "flex", alignItems: "center",
-                        justifyContent: "center", borderRadius: 6,
-                        background: active ? "rgba(0,0,0,0.06)" : "transparent",
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span
+                      style={{
+                        width: 24,
+                        height: 24,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: 6,
                         color: active ? "var(--fg)" : "var(--fg-3)",
                         flexShrink: 0,
-                        border: "1px solid var(--line)",
-                      }}>
-                        <Icon size={12} strokeWidth={2} />
-                      </span>
-                    ) : (
+                      }}
+                    >
+                      <Icon size={18} strokeWidth={2} />
+                    </span>
+                    {!collapsed && (
                       <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
                     )}
                   </div>
                   {badge && (
                     <span style={{
-                      fontSize: 10, fontWeight: 600,
+                      fontSize: 10,
+                      fontWeight: 600,
                       background: "var(--surface-elevated)",
                       color: "var(--fg-3)",
                       border: "1px solid var(--line)",
-                      borderRadius: 100, padding: "2px 6px",
+                      borderRadius: 100,
+                      padding: "2px 6px",
                     }}>{badge}</span>
                   )}
                 </button>
