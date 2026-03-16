@@ -13,8 +13,15 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const recognitionRef = useRef<any>(null);
+  const callbackRef = useRef(onTranscript);
+  const finalRef = useRef("");
   const isSupported =
     typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+
+  // Keep callback ref in sync without triggering effect re-runs
+  useEffect(() => {
+    callbackRef.current = onTranscript;
+  }, [onTranscript]);
 
   useEffect(() => {
     if (!isSupported) return;
@@ -27,31 +34,38 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
     recognition.lang = "en-US";
 
     recognition.onresult = (event: any) => {
-      let finalTranscript = "";
+      let newFinal = "";
       let interimTranscript = "";
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          finalTranscript += result[0].transcript;
+          newFinal += result[0].transcript;
         } else {
           interimTranscript += result[0].transcript;
         }
       }
 
-      const combined = finalTranscript || interimTranscript;
+      // Accumulate final transcript across events
+      if (newFinal) {
+        finalRef.current += newFinal;
+      }
+
+      const combined = finalRef.current + interimTranscript;
+      console.log("[VoiceInput] onresult — final so far:", finalRef.current, "interim:", interimTranscript);
       setTranscript(combined);
-      if (onTranscript) onTranscript(combined);
+      if (callbackRef.current) callbackRef.current(combined);
     };
 
     recognition.onerror = (event: any) => {
-      console.error("[VoiceInput] Error:", event.error);
+      console.log("[VoiceInput] onerror:", event.error);
       if (event.error !== "no-speech") {
         setIsListening(false);
       }
     };
 
     recognition.onend = () => {
+      console.log("[VoiceInput] onend — shouldListen:", recognitionRef.current?._shouldListen);
       if (recognitionRef.current?._shouldListen) {
         try {
           recognition.start();
@@ -66,17 +80,19 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
     return () => {
       recognition.abort();
     };
-  }, [isSupported, onTranscript]);
+  }, [isSupported]);
 
   const startListening = useCallback(() => {
     if (!recognitionRef.current) return;
     setTranscript("");
+    finalRef.current = "";
     recognitionRef.current._shouldListen = true;
     try {
       recognitionRef.current.start();
       setIsListening(true);
+      console.log("[VoiceInput] recognition.start() called");
     } catch (e) {
-      // Already started
+      console.log("[VoiceInput] start() error (already started?):", e);
     }
   }, []);
 
@@ -85,6 +101,7 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
     recognitionRef.current._shouldListen = false;
     recognitionRef.current.stop();
     setIsListening(false);
+    console.log("[VoiceInput] recognition.stop() called");
   }, []);
 
   const toggleListening = useCallback(() => {
@@ -97,4 +114,3 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
 
   return { isListening, isSupported, transcript, startListening, stopListening, toggleListening };
 }
-

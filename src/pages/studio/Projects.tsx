@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Folder, FileText, BarChart3, X } from "lucide-react";
+import { Folder, FileText, BarChart3, X, MoreVertical } from "lucide-react";
 import { getScoreColor } from "../../utils/scoreColor";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
@@ -32,10 +32,17 @@ export default function Projects() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [scores, setScores] = useState<ScoreRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Menu / rename / archive state
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameName, setRenameName] = useState("");
+  const [renameLoading, setRenameLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -83,6 +90,16 @@ export default function Projects() {
     };
   }, [user]);
 
+  const refreshProjects = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("projects")
+      .select("*, outputs(count)")
+      .eq("user_id", user.id)
+      .order("sort_order", { ascending: true });
+    setProjects((data as ProjectRow[]) || []);
+  };
+
   const averagesByProject = useMemo(() => {
     const map = new Map<string, { sum: number; count: number }>();
     for (const row of scores) {
@@ -101,7 +118,8 @@ export default function Projects() {
   }, [scores]);
 
   const sortedProjects = useMemo(() => {
-    const list = [...projects];
+    // Filter out archived projects (name prefix "[ARCHIVED]")
+    const list = projects.filter((p) => !p.name.startsWith("[ARCHIVED]"));
     list.sort((a, b) => {
       if (a.is_default && !b.is_default) return -1;
       if (b.is_default && !a.is_default) return 1;
@@ -116,7 +134,7 @@ export default function Projects() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !newName.trim()) return;
-    setCreating(true);
+    setCreateLoading(true);
     setError(null);
     try {
       const { error: insertError } = await supabase.from("projects").insert({
@@ -127,18 +145,55 @@ export default function Projects() {
       if (insertError) throw insertError;
       setNewName("");
       setNewDescription("");
-      setCreating(false);
-
-      // Refresh list
-      const { data } = await supabase
-        .from("projects")
-        .select("*, outputs(count)")
-        .eq("user_id", user.id)
-        .order("sort_order", { ascending: true });
-      setProjects((data as ProjectRow[]) || []);
+      setShowCreateModal(false);
+      await refreshProjects();
     } catch (e: any) {
-      setCreating(false);
       setError(e.message || "Could not create project.");
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleRename = async (id: string) => {
+    if (!renameName.trim()) return;
+    setRenameLoading(true);
+    try {
+      const { error: updateError } = await supabase
+        .from("projects")
+        .update({ name: renameName.trim(), updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (updateError) throw updateError;
+      setRenameId(null);
+      setRenameName("");
+      await refreshProjects();
+    } catch (e: any) {
+      setError(e.message || "Could not rename project.");
+    } finally {
+      setRenameLoading(false);
+    }
+  };
+
+  const handleArchive = async (project: ProjectRow) => {
+    setMenuOpenId(null);
+    try {
+      // Try setting archived_at first
+      const { error: archiveError } = await supabase
+        .from("projects")
+        .update({ archived_at: new Date().toISOString() } as any)
+        .eq("id", project.id);
+
+      if (archiveError) {
+        // Fallback: prefix name with [ARCHIVED]
+        const { error: fallbackError } = await supabase
+          .from("projects")
+          .update({ name: `[ARCHIVED] ${project.name}`, updated_at: new Date().toISOString() })
+          .eq("id", project.id);
+        if (fallbackError) throw fallbackError;
+      }
+
+      await refreshProjects();
+    } catch (e: any) {
+      setError(e.message || "Could not archive project.");
     }
   };
 
@@ -193,7 +248,7 @@ export default function Projects() {
           cursor: "pointer",
           transition,
         }}
-        onClick={() => setCreating(true)}
+        onClick={() => setShowCreateModal(true)}
         onMouseEnter={(e) => {
           e.currentTarget.style.opacity = "0.88";
         }}
@@ -238,7 +293,7 @@ export default function Projects() {
           cursor: "pointer",
           transition,
         }}
-        onClick={() => setCreating(true)}
+        onClick={() => setShowCreateModal(true)}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "var(--gold-light)";
           e.currentTarget.style.transform = "scale(1.02)";
@@ -266,11 +321,10 @@ export default function Projects() {
         const outputsCount = (p.outputs && p.outputs[0]?.count) || 0;
         const avgScore = averagesByProject.get(p.id) ?? 0;
         const sc = getScoreColor(avgScore > 0 ? avgScore : null);
+        const isRenaming = renameId === p.id;
         return (
-          <button
+          <div
             key={p.id}
-            type="button"
-            onClick={() => navigate(`/studio/projects/${p.id}`)}
             style={{
               background: "var(--surface-white)",
               border: "1px solid var(--border-subtle)",
@@ -280,6 +334,7 @@ export default function Projects() {
               textAlign: "left",
               fontFamily: "inherit",
               transition,
+              position: "relative",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "var(--border-default)";
@@ -291,20 +346,181 @@ export default function Projects() {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = "none";
             }}
+            onClick={() => {
+              if (!isRenaming && menuOpenId !== p.id) {
+                navigate(`/studio/projects/${p.id}`);
+              }
+            }}
           >
-            <Folder size={24} style={{ color: "var(--text-tertiary)" }} />
-            <h3
-              style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 17,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                marginTop: 16,
-                marginBottom: 4,
-              }}
-            >
-              {p.name}
-            </h3>
+            {/* Top row: icon + menu */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <Folder size={24} style={{ color: "var(--text-tertiary)" }} />
+              {!p.is_default && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpenId(menuOpenId === p.id ? null : p.id);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 4,
+                    color: "var(--text-tertiary)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  aria-label="Menu"
+                >
+                  <MoreVertical size={18} />
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown menu */}
+            {menuOpenId === p.id && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 20,
+                  background: "#fff",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 8,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  zIndex: 10,
+                  padding: "4px 0",
+                  minWidth: 140,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "8px 12px",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontFamily: "inherit",
+                    color: "var(--text-primary)",
+                  }}
+                  onClick={() => {
+                    setRenameName(p.name);
+                    setRenameId(p.id);
+                    setMenuOpenId(null);
+                  }}
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "8px 12px",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontFamily: "inherit",
+                    color: "#b91c1c",
+                  }}
+                  onClick={() => handleArchive(p)}
+                >
+                  Archive
+                </button>
+              </div>
+            )}
+
+            {/* Name - inline rename or display */}
+            {isRenaming ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleRename(p.id);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                style={{ marginTop: 16, marginBottom: 4, display: "flex", gap: 6 }}
+              >
+                <input
+                  type="text"
+                  value={renameName}
+                  onChange={(e) => setRenameName(e.target.value)}
+                  autoFocus
+                  style={{
+                    flex: 1,
+                    padding: "6px 8px",
+                    borderRadius: 6,
+                    border: "1px solid var(--border-default)",
+                    fontSize: 15,
+                    fontWeight: 600,
+                    fontFamily: "'DM Sans', sans-serif",
+                    color: "var(--text-primary)",
+                    outline: "none",
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setRenameId(null);
+                      setRenameName("");
+                    }
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={renameLoading || !renameName.trim()}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    border: "none",
+                    background: "var(--text-primary)",
+                    color: "#fff",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: renameLoading ? "wait" : "pointer",
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  {renameLoading ? "..." : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setRenameId(null); setRenameName(""); }}
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: 6,
+                    border: "1px solid var(--border-subtle)",
+                    background: "none",
+                    fontSize: 12,
+                    cursor: "pointer",
+                    fontFamily: "'DM Sans', sans-serif",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <h3
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 17,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  marginTop: 16,
+                  marginBottom: 4,
+                }}
+              >
+                {p.name}
+              </h3>
+            )}
             <p
               style={{
                 fontFamily: "'DM Sans', sans-serif",
@@ -341,7 +557,7 @@ export default function Projects() {
                 </span>
               )}
             </div>
-          </button>
+          </div>
         );
       })}
     </div>
@@ -355,6 +571,7 @@ export default function Projects() {
         padding: "32px 24px",
         fontFamily: "'DM Sans', sans-serif",
       }}
+      onClick={() => { if (menuOpenId) setMenuOpenId(null); }}
     >
       {renderHeader()}
       {error && (
@@ -370,7 +587,7 @@ export default function Projects() {
         renderGrid()
       )}
 
-      {creating && (
+      {showCreateModal && (
         <div
           style={{
             position: "fixed",
@@ -382,7 +599,7 @@ export default function Projects() {
             padding: 24,
             zIndex: 40,
           }}
-          onClick={() => setCreating(false)}
+          onClick={() => { if (!createLoading) setShowCreateModal(false); }}
         >
           <div
             style={{
@@ -400,7 +617,7 @@ export default function Projects() {
               <div style={{ fontSize: 16, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em" }}>New project</div>
               <button
                 type="button"
-                onClick={() => setCreating(false)}
+                onClick={() => { if (!createLoading) setShowCreateModal(false); }}
                 style={{
                   border: "none",
                   background: "none",
@@ -416,6 +633,11 @@ export default function Projects() {
             <p style={{ fontSize: 13, color: "rgba(0,0,0,0.7)", marginBottom: 16 }}>
               Give this project a clear name. You can update its Watch configuration and context later.
             </p>
+            {error && (
+              <div style={{ marginBottom: 12, fontSize: 13, color: "#b91c1c" }}>
+                {error}
+              </div>
+            )}
             <form onSubmit={handleCreate}>
               <div style={{ marginBottom: 12 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "rgba(0,0,0,0.7)" }}>
@@ -426,6 +648,7 @@ export default function Projects() {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   required
+                  disabled={createLoading}
                   style={{
                     width: "100%",
                     padding: "8px 10px",
@@ -445,6 +668,7 @@ export default function Projects() {
                   type="text"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
+                  disabled={createLoading}
                   style={{
                     width: "100%",
                     padding: "8px 10px",
@@ -458,7 +682,7 @@ export default function Projects() {
               </div>
               <button
                 type="submit"
-                disabled={creating || !newName.trim()}
+                disabled={createLoading || !newName.trim()}
                 style={{
                   width: "100%",
                   background: "var(--text-primary)",
@@ -468,11 +692,11 @@ export default function Projects() {
                   border: "none",
                   fontSize: 14,
                   fontWeight: 600,
-                  cursor: creating ? "wait" : "pointer",
+                  cursor: createLoading ? "wait" : "pointer",
                   fontFamily: "'DM Sans', sans-serif",
                 }}
               >
-                {creating ? "Creating…" : "Create project"}
+                {createLoading ? "Creating..." : "Create project"}
               </button>
             </form>
           </div>

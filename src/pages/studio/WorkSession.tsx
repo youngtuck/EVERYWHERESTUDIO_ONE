@@ -447,10 +447,7 @@ const SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
   ],
 };
 
-function EmptyState({ outputType, isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
-  const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
-  const prompt = EMPTY_PROMPTS[outputType] || EMPTY_PROMPTS.essay;
-
+function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
   return (
     <div style={{
       flex: 1, display: "flex", flexDirection: "column",
@@ -461,11 +458,10 @@ function EmptyState({ outputType, isMobile }: { outputType: string; onSuggestion
 
       <div style={{ maxWidth: 400 }}>
         <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 10, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
-          {prompt}
+          What's on your mind?
         </h2>
         <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
-          Start with a rough idea. Watson will ask the questions that shape it into{"\u00A0"}
-          {type.label.toLowerCase()}.
+          Start with a rough idea. Watson will ask the questions that shape it, then you'll pick the best format.
         </p>
       </div>
     </div>
@@ -794,7 +790,7 @@ export default function WorkSession() {
   const { toast } = useToast();
   const isMobile = useMobile();
   const { theme } = useTheme();
-  const [outputType, setOutputType] = useState(searchParams.get("type") || "essay");
+  const [outputType, setOutputType] = useState(searchParams.get("type") || "freestyle");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -855,12 +851,12 @@ export default function WorkSession() {
       setMessages([{
         id: "w0",
         role: "assistant",
-        content: type.watson,
+        content: "What's on your mind? Tell me your idea and we'll figure out the best format together.",
         ts: Date.now(),
       }]);
       setSessionTitle("New Session");
     }
-  }, [id, outputType, type.watson]);
+  }, [id]);
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -933,6 +929,17 @@ export default function WorkSession() {
       setLoading(false);
     }
   };
+
+  // Watch/Sentinel integration: auto-send prompt from search params
+  const promptParamHandled = useRef(false);
+  useEffect(() => {
+    const promptParam = searchParams.get("prompt");
+    if (promptParam && !promptParamHandled.current) {
+      promptParamHandled.current = true;
+      // Small delay to ensure Watson's opening message is set first
+      setTimeout(() => sendMessage(promptParam), 300);
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMakeTheThing = async () => {
     setApiError(null);
@@ -1133,15 +1140,17 @@ export default function WorkSession() {
           >
             <ArrowLeft size={20} strokeWidth={1.5} />
           </button>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 400, color: "var(--text-tertiary)", display: isMobile ? "none" : "inline-block" }}>
+            My Studio
+          </span>
+          <span style={{ color: "var(--text-tertiary)", fontSize: 12, display: isMobile ? "none" : "inline-block" }}>/</span>
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: isMobile ? "none" : "inline-block" }}>
             {sessionTitle}
           </span>
         </div>
 
-        {/* Center: output type pill */}
-        <span style={{ display: "inline-flex" }}>
-          <OutputTypePill value={outputType} onChange={setOutputType} />
-        </span>
+        {/* Center: spacer (output type pill moved to generate step) */}
+        <span style={{ display: "inline-flex" }} />
 
         {/* Right: actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1580,8 +1589,11 @@ export default function WorkSession() {
                   color: "var(--text-secondary)",
                   margin: 0,
                 }}>
-                  Watson is ready to produce your {type.label.toLowerCase()}.
+                  Watson is ready. Choose an output format and let's make the thing.
                 </p>
+                <div style={{ marginBottom: 4 }}>
+                  <OutputTypePill value={outputType} onChange={setOutputType} />
+                </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button
                     type="button"
@@ -1641,6 +1653,7 @@ export default function WorkSession() {
           borderRadius: 16,
           padding: "16px 20px",
           minHeight: 56, maxHeight: 200,
+          overflowY: "auto",
           display: "flex", flexDirection: "column", gap: 10,
           transition: "border-color 0.2s",
         }}
@@ -1779,7 +1792,7 @@ export default function WorkSession() {
         </div>
         {messages.filter((m) => m.role === "user").length === 0 && (
           <div style={{ maxWidth: 720, margin: "0 auto", marginTop: 12, display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {(SUGGESTIONS_BY_TYPE[outputType] || SUGGESTIONS_BY_TYPE.essay).map((s, i) => (
+            {(SUGGESTIONS_BY_TYPE.freestyle).map((s, i) => (
               <button
                 key={i}
                 type="button"

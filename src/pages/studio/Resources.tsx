@@ -77,6 +77,7 @@ export default function Resources() {
   const [filter, setFilter] = useState<FilterTab>("all");
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalDefaultMethod, setAddModalDefaultMethod] = useState<ContentMethod>("paste");
+  const [addModalDefaultType, setAddModalDefaultType] = useState<ResourceType | undefined>(undefined);
   const [addModalInitialFile, setAddModalInitialFile] = useState<File | null>(null);
   const [editResource, setEditResource] = useState<Resource | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -202,7 +203,7 @@ export default function Resources() {
               </button>
               <button
                 type="button"
-                onClick={() => { setAddModalDefaultMethod("paste"); setAddModalOpen(true); }}
+                onClick={() => { setAddModalDefaultMethod("paste"); setAddModalDefaultType(filter !== "all" ? filter as ResourceType : undefined); setAddModalOpen(true); }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -219,7 +220,7 @@ export default function Resources() {
                 }}
               >
                 <Plus size={16} />
-                Add Resource
+                {filter !== "all" ? `Add ${ADD_RESOURCE_TYPES.find((t) => t.value === filter)?.label ?? "Resource"}` : "Add Resource"}
               </button>
             </div>
           </div>
@@ -392,8 +393,8 @@ export default function Resources() {
         <div
           role="button"
           tabIndex={0}
-          onClick={() => setAddModalOpen(true)}
-          onKeyDown={(e) => e.key === "Enter" && setAddModalOpen(true)}
+          onClick={() => { setAddModalDefaultType(filter !== "all" ? filter as ResourceType : undefined); setAddModalOpen(true); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { setAddModalDefaultType(filter !== "all" ? filter as ResourceType : undefined); setAddModalOpen(true); } }}
           style={{
             border: "2px dashed var(--border-default, rgba(0,0,0,0.12))",
             borderRadius: 12,
@@ -413,7 +414,7 @@ export default function Resources() {
           }}
         >
           <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)", margin: 0 }}>
-            + Add Resource
+            + {filter !== "all" ? `Add ${ADD_RESOURCE_TYPES.find((t) => t.value === filter)?.label ?? "Resource"}` : "Add Resource"}
           </p>
           <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 4, marginBottom: 0 }}>
             Upload a doc, paste text, or enter a URL
@@ -426,9 +427,10 @@ export default function Resources() {
         <AddResourceModal
           user={user}
           defaultContentMethod={addModalDefaultMethod}
+          defaultType={addModalDefaultType}
           initialFile={addModalInitialFile}
-          onClose={() => { setAddModalOpen(false); setAddModalInitialFile(null); }}
-          onSaved={() => { setAddModalOpen(false); setAddModalInitialFile(null); refreshResources(); }}
+          onClose={() => { setAddModalOpen(false); setAddModalInitialFile(null); setAddModalDefaultType(undefined); }}
+          onSaved={() => { setAddModalOpen(false); setAddModalInitialFile(null); setAddModalDefaultType(undefined); refreshResources(); }}
           fileInputRef={fileInputRef}
         />
       )}
@@ -534,6 +536,7 @@ export default function Resources() {
 function AddResourceModal({
   user,
   defaultContentMethod = "paste",
+  defaultType,
   initialFile = null,
   onClose,
   onSaved,
@@ -541,12 +544,13 @@ function AddResourceModal({
 }: {
   user: { id: string } | null;
   defaultContentMethod?: ContentMethod;
+  defaultType?: ResourceType;
   initialFile?: File | null;
   onClose: () => void;
   onSaved: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }) {
-  const [resourceType, setResourceType] = useState<ResourceType>("reference");
+  const [resourceType, setResourceType] = useState<ResourceType>(defaultType ?? "reference");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [contentMethod, setContentMethod] = useState<ContentMethod>(defaultContentMethod);
@@ -562,6 +566,7 @@ function AddResourceModal({
     if (initialFile) {
       setUploadFile(initialFile);
       setContentMethod("upload");
+      setTitle(initialFile.name.replace(/\.[^.]+$/, ""));
     }
   }, [initialFile]);
 
@@ -860,7 +865,13 @@ function AddResourceModal({
               <input
                 type="file"
                 accept=".pdf,.txt,.md,.doc,.docx"
-                onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setUploadFile(file);
+                  if (file && !title.trim()) {
+                    setTitle(file.name.replace(/\.[^.]+$/, ""));
+                  }
+                }}
                 style={{ fontSize: 13 }}
               />
               {uploadFile && <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0 }}>{uploadFile.name}</p>}
