@@ -12,6 +12,8 @@ import type { VoiceDNA, VoiceDNAResponse } from "../utils/voiceDNAProcessor";
 import { generateVoiceDNAFromInterview, generateVoiceDNAFromUploads } from "../utils/voiceDNAProcessor";
 import type { BrandDNAResponse } from "../utils/brandDNAProcessor";
 
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+
 type Step = 1 | 2 | 3 | 4 | 5;
 type Method = "interview" | "upload" | null;
 
@@ -45,6 +47,9 @@ export default function OnboardingPage() {
   const [overlayComplete, setOverlayComplete] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
   const pendingBrandResultRef = useRef<BrandDNAResponse | null>(null);
+  const [brandUrl, setBrandUrl] = useState("");
+  const [brandUrlLoading, setBrandUrlLoading] = useState(false);
+  const [brandUrlError, setBrandUrlError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!overlayVisible) return;
@@ -240,6 +245,45 @@ export default function OnboardingPage() {
   const handleBrandDnaComplete = async (result: BrandDNAResponse) => {
     pendingBrandResultRef.current = result;
     setOverlayComplete(true);
+  };
+
+  const handleBrandUrlAnalyze = async () => {
+    if (!brandUrl.trim() || !brandUrl.startsWith("http")) {
+      setBrandUrlError("Enter a valid URL (must start with http or https).");
+      return;
+    }
+    setBrandUrlError(null);
+    setOverlayVisible(true);
+    setOverlayType("brand");
+    setOverlayComplete(false);
+    setStatusIndex(0);
+    setBrandUrlLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/brand-dna-from-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: brandUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Could not analyze that URL.");
+      }
+      const result: BrandDNAResponse = {
+        brandDna: data.brandDna ?? data.brand_dna ?? {},
+        markdown: data.markdown ?? "",
+      };
+      pendingBrandResultRef.current = result;
+      setOverlayComplete(true);
+    } catch (err) {
+      console.error("Brand DNA URL analysis failed", err);
+      setOverlayVisible(false);
+      setOverlayComplete(false);
+      setStatusIndex(0);
+      setBrandUrlLoading(false);
+      setBrandUrlError(
+        err instanceof Error ? err.message : "We could not analyze that site. Try a different URL."
+      );
+    }
   };
 
   const handleSkipBrandDna = async () => {
@@ -617,6 +661,78 @@ export default function OnboardingPage() {
 
         {showStep4 && (
           <section>
+            <div
+              style={{
+                marginBottom: 20,
+                padding: 16,
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(7,9,15,0.85)",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.85)",
+                  marginBottom: 8,
+                }}
+              >
+                Or paste your website URL
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input
+                  type="url"
+                  value={brandUrl}
+                  onChange={(e) => setBrandUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  style={{
+                    flex: 1,
+                    minWidth: 220,
+                    padding: "8px 10px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    background: "rgba(7,9,15,0.9)",
+                    color: "#ffffff",
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: 13,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleBrandUrlAnalyze}
+                  disabled={brandUrlLoading}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    background: brandUrlLoading ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)",
+                    color: "#ffffff",
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: brandUrlLoading ? "wait" : "pointer",
+                  }}
+                >
+                  {brandUrlLoading ? "Analyzing…" : "Analyze site"}
+                </button>
+              </div>
+              {brandUrlError && (
+                <p
+                  style={{
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: 12,
+                    color: "#FCA5A5",
+                    marginTop: 6,
+                    marginBottom: 0,
+                  }}
+                >
+                  {brandUrlError}
+                </p>
+              )}
+            </div>
+
             <BrandDNAChat
               userName={brandStepUserName}
               onComplete={handleBrandDnaComplete}
