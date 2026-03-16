@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { FileText, Sparkles, ArrowLeft } from "lucide-react";
+import { FileText, Sparkles, ArrowLeft, Mic } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -11,6 +11,7 @@ import { runFullPipeline } from "../../lib/agents/full-pipeline";
 import type { GateResult, PipelineResult, PipelineStatus } from "../../lib/agents/types";
 import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
+import { useVoiceInput } from "../../hooks/useVoiceInput";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB - minimal 2D system glyph
@@ -796,6 +797,13 @@ export default function WorkSession() {
   const [isReady, setIsReady] = useState(false);
   const [currentSystemMode, setCurrentSystemMode] = useState<SystemMode>("CONTENT_PRODUCTION");
 
+  const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
+    setInput((prev) => {
+      const separator = prev && !prev.endsWith(" ") ? " " : "";
+      return prev + separator + text;
+    });
+  });
+
   useEffect(() => {
     if (!user) return;
     supabase
@@ -852,6 +860,10 @@ export default function WorkSession() {
   const sendMessage = async (contentOverride?: string) => {
     const text = (contentOverride !== undefined ? contentOverride : input).trim();
     if (!text || loading) return;
+
+    if (isListening) {
+      stopListening();
+    }
     if (contentOverride === undefined) setInput("");
     setApiError(null);
     if (contentOverride === undefined) setTimeout(() => inputRef.current?.focus(), 0);
@@ -1406,15 +1418,82 @@ export default function WorkSession() {
               {SYSTEM_MODE_LABELS[currentSystemMode]}
             </span>
           </div>
-          <AutoTextarea
-            value={input}
-            onChange={setInput}
-            onSubmit={sendMessage}
-            placeholder={`Tell Watson about your ${type.label.toLowerCase()}...`}
-            disabled={loading}
-            inputRef={inputRef}
-          />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            {isSupported && (
+              <button
+                type="button"
+                onClick={toggleListening}
+                aria-label={isListening ? "Stop listening" : "Start voice input"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  border: isListening ? "2px solid #E53935" : "1px solid var(--border-subtle)",
+                  background: isListening ? "rgba(229, 57, 53, 0.08)" : "transparent",
+                  cursor: "pointer",
+                  color: isListening ? "#E53935" : "var(--text-tertiary)",
+                  transition: "all 0.2s ease",
+                  flexShrink: 0,
+                  position: "relative",
+                }}
+              >
+                <Mic size={18} strokeWidth={2} />
+                {isListening && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: -2,
+                      right: -2,
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: "#E53935",
+                      animation: "voicePulse 1.5s ease-in-out infinite",
+                    }}
+                  />
+                )}
+              </button>
+            )}
+            <div style={{ flex: 1 }}>
+              <AutoTextarea
+                value={input}
+                onChange={setInput}
+                onSubmit={sendMessage}
+                placeholder={`Tell Watson about your ${type.label.toLowerCase()}...`}
+                disabled={loading}
+                inputRef={inputRef}
+              />
+            </div>
+          </div>
+          {isListening && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 2px",
+                fontSize: 12,
+                color: "#E53935",
+                fontFamily: "'DM Mono', monospace",
+                letterSpacing: "0.02em",
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#E53935",
+                  animation: "voicePulse 1.5s ease-in-out infinite",
+                }}
+              />
+              Listening...
+            </div>
+          )}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
               {apiError}
               {apiError && (
