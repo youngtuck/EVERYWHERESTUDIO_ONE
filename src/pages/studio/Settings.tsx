@@ -39,6 +39,22 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
+function SectionCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: "var(--surface-white)",
+        border: "1px solid var(--border-subtle)",
+        borderRadius: 12,
+        padding: 24,
+        marginBottom: 32,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function SectionHeader({ label }: { label: string }) {
   return (
     <h2
@@ -56,116 +72,63 @@ function SectionHeader({ label }: { label: string }) {
   );
 }
 
-function SectionCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        background: "var(--surface-white)",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: 12,
-        padding: 24,
-        marginBottom: 32,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-type ProfileData = {
-  full_name: string | null;
-  title: string | null;
-  voice_dna_completed: boolean | null;
-  voice_dna_completed_at: string | null;
-  sentinel_topics: string[] | null;
-};
-
 export default function Settings() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-
   const [fullName, setFullName] = useState("");
-  const [title, setTitle] = useState("");
-  const [saveProfileStatus, setSaveProfileStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const [watchTopics, setWatchTopics] = useState<string[]>([]);
   const [watchInput, setWatchInput] = useState("");
-  const [saveWatchStatus, setSaveWatchStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [watchSaved, setWatchSaved] = useState(false);
 
-  const [voiceFidelityPct, setVoiceFidelityPct] = useState<number | null>(null);
+  const [voiceComplete, setVoiceComplete] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-
-  const showToast = (message: string, type: "success" | "error") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   useEffect(() => {
     if (!user) {
       setLoading(false);
       return;
     }
-    let cancelled = false;
-    setLoading(true);
     (async () => {
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("full_name, title, voice_dna_completed, voice_dna_completed_at, sentinel_topics")
-        .eq("id", user.id)
-        .single();
-
-      if (cancelled) return;
-      setProfile(profileData as ProfileData | null);
-      if (profileData) {
-        setFullName(profileData.full_name ?? "");
-        setTitle(profileData.title ?? "");
-        setWatchTopics(Array.isArray(profileData.sentinel_topics) ? profileData.sentinel_topics : []);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, voice_dna_completed, sentinel_topics")
+          .eq("id", user.id)
+          .single();
+        if (data) {
+          setFullName(data.full_name ?? "");
+          setVoiceComplete(!!data.voice_dna_completed);
+          setWatchTopics(Array.isArray(data.sentinel_topics) ? data.sentinel_topics : []);
+        }
+      } catch (err) {
+        console.error("[Settings] Failed to load profile:", err);
+      } finally {
+        setLoading(false);
       }
-
-      const { data: outputs } = await supabase
-        .from("outputs")
-        .select("gates")
-        .eq("user_id", user.id);
-      if (cancelled) return;
-      const withVoice = (outputs ?? []).filter(
-        (o: { gates?: { voice?: number } }) => typeof o.gates?.voice === "number"
-      );
-      const avg =
-        withVoice.length > 0
-          ? withVoice.reduce((s: number, o: { gates?: { voice?: number } }) => s + (o.gates?.voice ?? 0), 0) /
-            withVoice.length
-          : null;
-      setVoiceFidelityPct(avg != null && !Number.isNaN(avg) ? Math.round(avg) : null);
-      setLoading(false);
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [user?.id]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
-    setSaveProfileStatus("saving");
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: fullName.trim() || null,
-        title: title.trim() || null,
-      })
-      .eq("id", user.id);
-    setSaveProfileStatus(error ? "error" : "saved");
-    if (error) {
-      showToast(error.message, "error");
-      return;
+    setSaveError("");
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: fullName.trim() || null })
+        .eq("id", user.id);
+      if (error) throw error;
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err: any) {
+      setSaveError(err.message || "Save failed.");
     }
-    setProfile((p) => (p ? { ...p, full_name: fullName.trim() || null, title: title.trim() || null } : null));
-    showToast("Profile saved.", "success");
   };
 
   const handleAddWatchTopic = () => {
@@ -175,28 +138,16 @@ export default function Settings() {
     setWatchInput("");
   };
 
-  const handleRemoveWatchTopic = (index: number) => {
-    setWatchTopics((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleSaveWatch = async () => {
     if (!user) return;
-    setSaveWatchStatus("saving");
     const { error } = await supabase
       .from("profiles")
       .update({ sentinel_topics: watchTopics })
       .eq("id", user.id);
-    setSaveWatchStatus(error ? "error" : "saved");
-    if (error) {
-      showToast(error.message, "error");
-      return;
+    if (!error) {
+      setWatchSaved(true);
+      setTimeout(() => setWatchSaved(false), 2000);
     }
-    setProfile((p) => (p ? { ...p, sentinel_topics: watchTopics } : null));
-    showToast("Watch configuration saved.", "success");
-  };
-
-  const handleRetrainVoiceDna = () => {
-    navigate("/onboarding?retrain=1");
   };
 
   const handleSignOut = async () => {
@@ -204,248 +155,94 @@ export default function Settings() {
     navigate("/");
   };
 
-  const handleDeleteAccountConfirm = () => {
-    if (deleteConfirmText.toUpperCase() !== "DELETE") return;
-    setDeleteModalOpen(false);
-    setDeleteConfirmText("");
-    showToast("Contact mark@mixedgrill.studio to delete your account.", "success");
-  };
-
-  if (loading || !user) {
+  if (loading) {
     return (
-      <div
-        style={{
-          maxWidth: 720,
-          margin: "0 auto",
-          padding: "32px 24px",
-          fontFamily: "'DM Sans', sans-serif",
-          color: "var(--text-tertiary)",
-        }}
-      >
-        Loading settings…
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 24px", fontFamily: "'DM Sans', sans-serif", color: "var(--text-tertiary)" }}>
+        Loading settings...
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 720,
-        margin: "0 auto",
-        padding: "32px 24px",
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 24px", fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ marginBottom: 32 }}>
-        <p
-          style={{
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 13,
-            fontWeight: 500,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            color: "var(--text-tertiary)",
-            marginBottom: 8,
-            marginTop: 0,
-          }}
-        >
-          STUDIO
-        </p>
-        <h1
-          style={{
-            fontFamily: "'Montserrat', sans-serif",
-            fontSize: 28,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            margin: 0,
-            letterSpacing: "-0.02em",
-          }}
-        >
+        <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
           Settings
         </h1>
+        <p style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", marginTop: 8, marginBottom: 0 }}>
+          Account and preferences
+        </p>
       </div>
 
-      {toast && (
-        <div
-          role="alert"
-          style={{
-            position: "fixed",
-            top: 24,
-            left: "50%",
-            transform: "translateX(-50%)",
-            padding: "12px 20px",
-            borderRadius: 8,
-            background: toast.type === "error" ? "#D64545" : "var(--gold-dark)",
-            color: "#fff",
-            fontSize: 13,
-            fontWeight: 500,
-            zIndex: 1000,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
-
-      {/* 1. PROFILE */}
+      {/* Profile */}
       <SectionCard>
         <SectionHeader label="Profile" />
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--text-secondary)",
-                marginBottom: 6,
-              }}
-            >
-              Full name
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(0,0,0,0.4)", marginBottom: 8 }}>
+              Full Name
             </label>
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              style={{
-                width: "100%",
-                maxWidth: 320,
-                padding: "10px 12px",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 8,
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14,
-              }}
+              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; }}
             />
           </div>
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--text-secondary)",
-                marginBottom: 6,
-              }}
-            >
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(0,0,0,0.4)", marginBottom: 8 }}>
               Email
             </label>
-            <input
-              type="email"
-              value={user.email ?? ""}
-              readOnly
-              style={{
-                width: "100%",
-                maxWidth: 320,
-                padding: "10px 12px",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 8,
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14,
-                background: "var(--surface-elevated)",
-                color: "var(--text-secondary)",
-              }}
-            />
-            <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 4, marginBottom: 0 }}>
-              Email is managed by your sign-in provider.
-            </p>
+            <div style={{ fontSize: 15, color: "rgba(0,0,0,0.6)", padding: "10px 0" }}>{user?.email || ""}</div>
           </div>
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--text-secondary)",
-                marginBottom: 6,
-              }}
-            >
-              Role / title
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Founder, CMO"
-              style={{
-                width: "100%",
-                maxWidth: 320,
-                padding: "10px 12px",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 8,
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14,
-              }}
-            />
-          </div>
+          {saveError && <p style={{ fontSize: 13, color: "#D64545", margin: 0 }}>{saveError}</p>}
           <button
-            type="button"
             onClick={handleSaveProfile}
-            disabled={saveProfileStatus === "saving"}
-            style={{
-              alignSelf: "flex-start",
-              background: "var(--gold-dark)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "10px 20px",
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: saveProfileStatus === "saving" ? "wait" : "pointer",
-            }}
+            style={{ alignSelf: "flex-start", background: "#C8961A", color: "#0D1B2A", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "opacity 0.15s ease" }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
-            {saveProfileStatus === "saving" ? "Saving…" : "Save"}
+            {saved ? "Saved" : "Save Changes"}
           </button>
         </div>
       </SectionCard>
 
-      {/* 2. VOICE DNA */}
+      {/* Voice DNA */}
       <SectionCard>
         <SectionHeader label="Voice DNA" />
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
-            {profile?.voice_dna_completed
-              ? voiceFidelityPct != null
-                ? `Fidelity: ${voiceFidelityPct}% (from your outputs)`
-                : "Completed. Fidelity will appear after you produce outputs."
-              : "Not completed. Complete onboarding to train your voice."}
-          </p>
-          {profile?.voice_dna_completed_at && (
-            <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: 0 }}>
-              Last updated:{" "}
-              {new Date(profile.voice_dna_completed_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={handleRetrainVoiceDna}
-            style={{
-              alignSelf: "flex-start",
-              background: "transparent",
-              color: "var(--gold-dark)",
-              border: "1px solid var(--gold-dark)",
-              borderRadius: 8,
-              padding: "10px 20px",
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Retrain Voice DNA
-          </button>
-        </div>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 12px" }}>
+          {voiceComplete
+            ? "Voice DNA is trained. You can retrain it anytime."
+            : "Not completed. Complete onboarding to train your voice."}
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate("/onboarding?retrain=1")}
+          style={{
+            background: "transparent",
+            color: "var(--gold-dark)",
+            border: "1px solid var(--gold-dark)",
+            borderRadius: 8,
+            padding: "10px 20px",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif",
+            transition: "all 0.15s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        >
+          {voiceComplete ? "Retrain Voice DNA" : "Start Voice DNA"}
+        </button>
       </SectionCard>
 
-      {/* 3. WATCH CONFIGURATION */}
+      {/* Watch Configuration */}
       <SectionCard>
-        <SectionHeader label="Watch configuration" />
-        <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16, marginTop: 0 }}>
+        <SectionHeader label="Watch Configuration" />
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 16, marginTop: 0 }}>
           Topics Sentinel uses to build your intelligence briefings.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
@@ -457,7 +254,7 @@ export default function Settings() {
                 alignItems: "center",
                 gap: 6,
                 padding: "6px 12px",
-                background: "var(--surface-secondary)",
+                background: "var(--bg-2)",
                 border: "1px solid var(--border-subtle)",
                 borderRadius: 20,
                 fontSize: 13,
@@ -467,52 +264,28 @@ export default function Settings() {
               {topic}
               <button
                 type="button"
-                onClick={() => handleRemoveWatchTopic(i)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                  color: "var(--text-tertiary)",
-                  fontSize: 16,
-                  lineHeight: 1,
-                }}
+                onClick={() => setWatchTopics((prev) => prev.filter((_, idx) => idx !== i))}
+                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, lineHeight: 1 }}
                 aria-label="Remove"
               >
-                ×
+                x
               </button>
             </span>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
           <input
             type="text"
             value={watchInput}
             onChange={(e) => setWatchInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddWatchTopic())}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddWatchTopic(); } }}
             placeholder="Add a topic"
-            style={{
-              width: 180,
-              padding: "8px 12px",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: 8,
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 13,
-            }}
+            style={{ width: 180, padding: "8px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, outline: "none" }}
           />
           <button
             type="button"
             onClick={handleAddWatchTopic}
-            style={{
-              background: "transparent",
-              color: "var(--gold-dark)",
-              border: "1px solid var(--gold-dark)",
-              borderRadius: 8,
-              padding: "8px 16px",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            style={{ background: "transparent", color: "var(--gold-dark)", border: "1px solid var(--gold-dark)", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" }}
           >
             Add
           </button>
@@ -520,40 +293,21 @@ export default function Settings() {
         <button
           type="button"
           onClick={handleSaveWatch}
-          disabled={saveWatchStatus === "saving"}
-          style={{
-            background: "var(--gold-dark)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "10px 20px",
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: saveWatchStatus === "saving" ? "wait" : "pointer",
-          }}
+          style={{ background: "var(--gold-dark)", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "opacity 0.15s ease" }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
         >
-          {saveWatchStatus === "saving" ? "Saving…" : "Save"}
+          {watchSaved ? "Saved" : "Save"}
         </button>
       </SectionCard>
 
-      {/* 4. APPEARANCE */}
+      {/* Appearance */}
       <SectionCard>
         <SectionHeader label="Appearance" />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "14px 0",
-            borderBottom: "1px solid var(--border-subtle)",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-              Theme
-            </p>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-tertiary)", marginTop: 2, marginBottom: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Theme</p>
+            <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 2, marginBottom: 0 }}>
               {theme === "dark" ? "Dark mode" : "Light mode"}
             </p>
           </div>
@@ -561,73 +315,36 @@ export default function Settings() {
         </div>
       </SectionCard>
 
-      {/* 5. ACCOUNT */}
+      {/* Account */}
       <SectionCard>
         <SectionHeader label="Account" />
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <button
             type="button"
             onClick={handleSignOut}
-            style={{
-              alignSelf: "flex-start",
-              background: "transparent",
-              color: "var(--text-primary)",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: 8,
-              padding: "10px 20px",
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            style={{ alignSelf: "flex-start", background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s ease" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
           >
             Sign out
           </button>
           <button
             type="button"
             onClick={() => setDeleteModalOpen(true)}
-            style={{
-              alignSelf: "flex-start",
-              background: "none",
-              border: "none",
-              padding: 0,
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 13,
-              color: "var(--text-tertiary)",
-              cursor: "pointer",
-              textDecoration: "underline",
-            }}
+            style={{ alignSelf: "flex-start", background: "none", border: "none", padding: 0, fontSize: 13, color: "var(--text-tertiary)", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", textDecoration: "underline" }}
           >
             Delete my account
           </button>
         </div>
       </SectionCard>
 
-      {/* Delete account modal */}
       {deleteModalOpen && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 10000,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24,
-          }}
+          style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
           onClick={() => setDeleteModalOpen(false)}
         >
           <div
-            style={{
-              background: "var(--surface-white)",
-              borderRadius: 16,
-              padding: 24,
-              maxWidth: 400,
-              width: "100%",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
-              fontFamily: "'DM Sans', sans-serif",
-            }}
+            style={{ background: "var(--surface-white)", borderRadius: 16, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.2)", fontFamily: "'DM Sans', sans-serif" }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 18, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
@@ -641,46 +358,28 @@ export default function Settings() {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type DELETE"
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 8,
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14,
-                marginBottom: 16,
-              }}
+              style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontSize: 14, fontFamily: "'DM Sans', sans-serif", marginBottom: 16, outline: "none" }}
             />
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 type="button"
                 onClick={() => { setDeleteModalOpen(false); setDeleteConfirmText(""); }}
-                style={{
-                  background: "transparent",
-                  color: "var(--text-secondary)",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: 8,
-                  padding: "10px 18px",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
+                style={{ background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleDeleteAccountConfirm}
+                onClick={() => {
+                  if (deleteConfirmText.toUpperCase() !== "DELETE") return;
+                  setDeleteModalOpen(false);
+                  setDeleteConfirmText("");
+                }}
                 disabled={deleteConfirmText.toUpperCase() !== "DELETE"}
                 style={{
                   background: deleteConfirmText.toUpperCase() === "DELETE" ? "#D64545" : "var(--surface-elevated)",
                   color: deleteConfirmText.toUpperCase() === "DELETE" ? "#fff" : "var(--text-tertiary)",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "10px 18px",
-                  fontSize: 13,
-                  fontWeight: 600,
+                  border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600,
                   cursor: deleteConfirmText.toUpperCase() === "DELETE" ? "pointer" : "default",
                   fontFamily: "'DM Sans', sans-serif",
                 }}
