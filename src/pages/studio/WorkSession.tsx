@@ -838,11 +838,6 @@ export default function WorkSession() {
   }, [id, outputType, type.watson]);
 
   useEffect(() => {
-    const userMessages = messages.filter(m => m.role === "user").length;
-    setIsReady(userMessages >= 3);
-  }, [messages]);
-
-  useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
@@ -876,6 +871,7 @@ export default function WorkSession() {
 
     const userMessage: Message = { id: Date.now().toString(), role: "user", content: text, ts: Date.now() };
     setMessages(prev => [...prev, userMessage]);
+    setIsReady(false);
     setLoading(true);
 
     const inferredMode = inferMode(text);
@@ -892,7 +888,7 @@ export default function WorkSession() {
         ts: Date.now(),
       }]);
       if (readyToGenerate) {
-        // Optional: could auto-show "Make the thing" or auto-trigger generate
+        setIsReady(true);
       }
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Something went wrong.");
@@ -1023,6 +1019,7 @@ export default function WorkSession() {
     setGeneratedContent("");
     setGeneratedScore(0);
     setApiError(null);
+    setIsReady(false);
     setMessages([{
       id: "w0",
       role: "assistant",
@@ -1345,6 +1342,70 @@ export default function WorkSession() {
               <MessageBubble key={msg.id} msg={msg} isMobile={isMobile} />
             ))}
             {loading && <WatsonThinking />}
+            {isReady && !loading && (
+              <div style={{
+                marginTop: 8,
+                padding: "16px 20px",
+                background: "var(--surface-white)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 12,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+              }}>
+                <div style={{
+                  width: "100%",
+                  height: 1,
+                  background: "var(--border-subtle)",
+                  marginBottom: 4,
+                }} />
+                <p style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 14,
+                  color: "var(--text-secondary)",
+                  margin: 0,
+                }}>
+                  Watson is ready to produce your {type.label.toLowerCase()}.
+                </p>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={handleMakeTheThing}
+                    disabled={loading}
+                    style={{
+                      background: "var(--gold-dark)",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "8px 20px",
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: loading ? "default" : "pointer",
+                    }}
+                  >
+                    Produce it
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsReady(false)}
+                    style={{
+                      background: "transparent",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: 8,
+                      padding: "8px 20px",
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Keep talking
+                  </button>
+                </div>
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
         ))}
@@ -1371,41 +1432,6 @@ export default function WorkSession() {
           onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-dark)"; }}
           onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)"; }}
         >
-          {isReady && (
-            <div style={{
-              marginBottom: 16,
-              padding: "16px 24px",
-              background: "linear-gradient(135deg, rgba(200,150,26,0.06), rgba(200,150,26,0.02))",
-              border: "1px solid rgba(200,150,26,0.2)",
-              borderRadius: 12,
-              textAlign: "center",
-            }}>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", margin: "0 0 12px" }}>
-                Ready to generate your {type.label.toLowerCase()}
-              </p>
-              <button
-                type="button"
-                onClick={handleMakeTheThing}
-                disabled={loading}
-                style={{
-                  background: "var(--gold-dark)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "10px 20px",
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: loading ? "default" : "pointer",
-                  animation: "makeThingPulse 2.5s ease-in-out infinite",
-                }}
-                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--gold-light)"; e.currentTarget.style.transform = "scale(1.02)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gold-dark)"; e.currentTarget.style.transform = "scale(1)"; }}
-              >
-                Generate
-              </button>
-            </div>
-          )}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <span
               style={{
