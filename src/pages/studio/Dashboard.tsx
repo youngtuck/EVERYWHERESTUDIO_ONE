@@ -6,7 +6,6 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { timeAgo } from "../../utils/timeAgo";
 import { getScoreColor } from "../../utils/scoreColor";
-import Tooltip from "../../components/Tooltip";
 import "./shared.css";
 import "./dashboard.css";
 
@@ -196,34 +195,32 @@ export default function Dashboard() {
               {getGreeting()}, {firstName}.
             </div>
           </div>
-          <Tooltip text="Start a new Watson session." position="bottom">
-            <button
-              onClick={() => nav("/studio/work")}
-              className="btn-gold cta-new-session"
-              style={{
-                background: "var(--gold-dark)",
-                color: "#fff",
-                padding: "12px 22px",
-                borderRadius: 8,
-                fontFamily: "var(--font)",
-                fontSize: 14,
-                fontWeight: 600,
-                border: "none",
-                cursor: "pointer",
-                transition,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--gold-hover)";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "var(--gold-dark)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              + New Output
-            </button>
-          </Tooltip>
+          <button
+            onClick={() => nav("/studio/work")}
+            className="btn-gold cta-new-session"
+            style={{
+              background: "var(--gold-dark)",
+              color: "#fff",
+              padding: "12px 22px",
+              borderRadius: 8,
+              fontFamily: "var(--font)",
+              fontSize: 14,
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              transition,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--gold-hover)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--gold-dark)";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            + New Output
+          </button>
         </div>
       </div>
 
@@ -290,76 +287,75 @@ export default function Dashboard() {
               color: "var(--text-tertiary)",
             },
           ].map((stat, i) => (
-            <Tooltip key={stat.key} text={stat.tooltip} position="top">
-              <div
-                className="dashboard-fade-up"
-                style={{
-                  animationDelay: `${i * 50}ms`,
-                  opacity: 0,
-                  background: "#fff",
-                  border: "1px solid rgba(0,0,0,0.08)",
-                  borderRadius: 12,
-                  padding: "20px 24px 18px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                      color: "rgba(0,0,0,0.45)",
-                      marginBottom: 6,
-                    }}
-                  >
-                    {stat.label}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font)",
-                      fontVariantNumeric: "tabular-nums",
-                      fontSize: 36,
-                      fontWeight: 700,
-                      letterSpacing: "-0.02em",
-                      color: stat.color,
-                    }}
-                  >
-                    {stat.value}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontSize: 12,
-                      color: "rgba(0,0,0,0.45)",
-                      marginTop: 4,
-                    }}
-                  >
-                    {stat.subtitle}
-                  </div>
+            <div
+              key={stat.key}
+              className="dashboard-fade-up"
+              style={{
+                animationDelay: `${i * 50}ms`,
+                opacity: 0,
+                background: "#fff",
+                border: "1px solid rgba(0,0,0,0.08)",
+                borderRadius: 12,
+                padding: "20px 24px 18px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "rgba(0,0,0,0.45)",
+                    marginBottom: 6,
+                  }}
+                >
+                  {stat.label}
                 </div>
                 <div
                   style={{
-                    marginTop: 10,
-                    height: 3,
-                    borderRadius: 999,
-                    background: "rgba(0,0,0,0.04)",
-                    overflow: "hidden",
+                    fontFamily: "var(--font)",
+                    fontVariantNumeric: "tabular-nums",
+                    fontSize: 36,
+                    fontWeight: 700,
+                    letterSpacing: "-0.02em",
+                    color: stat.color,
                   }}
                 >
-                  <div
-                    style={{
-                      height: "100%",
-                      width: "100%",
-                      background: stat.accent,
-                    }}
-                  />
+                  {stat.value}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 12,
+                    color: "rgba(0,0,0,0.45)",
+                    marginTop: 4,
+                  }}
+                >
+                  {stat.subtitle}
                 </div>
               </div>
-            </Tooltip>
+              <div
+                style={{
+                  marginTop: 10,
+                  height: 3,
+                  borderRadius: 999,
+                  background: "rgba(0,0,0,0.04)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    background: stat.accent,
+                  }}
+                />
+              </div>
+            </div>
           ))}
       </div>
 

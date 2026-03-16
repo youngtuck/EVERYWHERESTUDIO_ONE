@@ -11,7 +11,6 @@ import { runFullPipeline } from "../../lib/agents/full-pipeline";
 import type { GateResult, PipelineResult, PipelineStatus } from "../../lib/agents/types";
 import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
-import Tooltip from "../../components/Tooltip";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1140,11 +1139,9 @@ export default function WorkSession() {
         </div>
 
         {/* Center: output type pill */}
-        <Tooltip text="Choose what Watson will help you produce." position="bottom">
-          <span style={{ display: "inline-flex" }}>
-            <OutputTypePill value={outputType} onChange={setOutputType} />
-          </span>
-        </Tooltip>
+        <span style={{ display: "inline-flex" }}>
+          <OutputTypePill value={outputType} onChange={setOutputType} />
+        </span>
 
         {/* Right: actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1666,28 +1663,27 @@ export default function WorkSession() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             {isSupported && (
-              <Tooltip text="Speak your idea instead of typing." position="top">
-                <button
-                  type="button"
-                  onClick={toggleListening}
-                  aria-label={isListening ? "Stop listening" : "Start voice input"}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    border: isListening ? "2px solid #E53935" : "1px solid var(--border-subtle)",
-                    background: isListening ? "rgba(229, 57, 53, 0.08)" : "transparent",
-                    cursor: "pointer",
-                    color: isListening ? "#E53935" : "var(--text-tertiary)",
-                    transition: "all 0.2s ease",
-                    flexShrink: 0,
-                    position: "relative",
-                  }}
-                >
-                  <Mic size={18} strokeWidth={2} />
+              <button
+                type="button"
+                onClick={toggleListening}
+                aria-label={isListening ? "Stop listening" : "Start voice input"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  border: isListening ? "2px solid #E53935" : "1px solid var(--border-subtle)",
+                  background: isListening ? "rgba(229, 57, 53, 0.08)" : "transparent",
+                  cursor: "pointer",
+                  color: isListening ? "#E53935" : "var(--text-tertiary)",
+                  transition: "all 0.2s ease",
+                  flexShrink: 0,
+                  position: "relative",
+                }}
+              >
+                <Mic size={18} strokeWidth={2} />
                 {isListening && (
                   <span
                     style={{
@@ -1702,8 +1698,7 @@ export default function WorkSession() {
                     }}
                   />
                 )}
-                </button>
-              </Tooltip>
+              </button>
             )}
             <div style={{ flex: 1 }}>
               <AutoTextarea
@@ -1749,24 +1744,37 @@ export default function WorkSession() {
               )}
               {!apiError && "Enter to send · Shift+Enter for new line"}
             </span>
-            <Tooltip text="Send to Watson." position="top">
-              <button
-                onClick={() => sendMessage()}
-                disabled={!input.trim() || loading}
-                style={{
-                  width: 36, height: 36, borderRadius: "50%", border: "none",
-                  background: input.trim() && !loading ? "var(--gold-dark)" : "rgba(0,0,0,0.06)",
-                  cursor: input.trim() && !loading ? "pointer" : "default",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all .15s", flexShrink: 0,
-                }}
-                title="Send message"
+            <button
+              onClick={() => sendMessage()}
+              disabled={!input.trim() || loading}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                border: "none",
+                background: input.trim() && !loading ? "var(--gold-dark)" : "rgba(0,0,0,0.06)",
+                cursor: input.trim() && !loading ? "pointer" : "default",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all .15s",
+                flexShrink: 0,
+              }}
+              title="Send message"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={input.trim() && !loading ? "#fff" : "var(--text-tertiary)"}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={input.trim() && !loading ? "#fff" : "var(--text-tertiary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </button>
-            </Tooltip>
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         </div>
         {messages.filter((m) => m.role === "user").length === 0 && (
