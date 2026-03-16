@@ -124,7 +124,7 @@ export function CommandPalette() {
               if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") e.preventDefault();
             }}
           />
-          <p style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8, marginBottom: 0 }}>
+          <p style={{ fontSize: 14, color: "var(--fg-3)", marginTop: 8, marginBottom: 0 }}>
             ↑↓ to move · Enter to go · Esc to close
           </p>
         </div>
@@ -158,7 +158,7 @@ export function CommandPalette() {
               >
                 <span>{link.label}</span>
                 {location.pathname === link.path && (
-                  <span style={{ fontSize: 10, color: "var(--gold-dark)", marginLeft: "auto" }}>Current</span>
+                  <span style={{ fontSize: 13, color: "var(--gold-dark)", marginLeft: "auto" }}>Current</span>
                 )}
               </button>
             ))

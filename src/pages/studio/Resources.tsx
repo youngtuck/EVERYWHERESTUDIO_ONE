@@ -150,7 +150,7 @@ export default function Resources() {
         <div style={{ marginBottom: 24 }}>
           <p
             style={{
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 600,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
@@ -293,7 +293,7 @@ export default function Resources() {
                 <div style={{ position: "absolute", top: 20, right: 20, display: "flex", alignItems: "center", gap: 8 }}>
                   <span
                     style={{
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: 600,
                       letterSpacing: "0.04em",
                       textTransform: "uppercase",

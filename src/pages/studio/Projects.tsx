@@ -155,7 +155,7 @@ export default function Projects() {
         <p
           style={{
             fontFamily: "'DM Mono', monospace",
-            fontSize: 11,
+            fontSize: 14,
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.05em",

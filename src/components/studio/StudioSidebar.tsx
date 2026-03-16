@@ -1,23 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../lib/supabase";
-import Tooltip from "../Tooltip";
-import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut, Hammer, Package, BookOpen, Wrench, Archive } from "lucide-react";
+import Logo from "../Logo";
+import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, Plus, ChevronDown, LogOut, Package, Archive, Loader2 } from "lucide-react";
 
-// ── Nav items (exact order: My Studio → Work → Watch → The Lot → Resources → Projects → The Workbench → Wrap → The Vault → Settings) ──
-const NAV = [
-  { path: "/studio/dashboard",       label: "My Studio",     icon: LayoutDashboard, tooltip: "Your command center. Overview of all activity." },
-  { path: "/studio/work",            label: "Work",         icon: PenLine,           tooltip: "Start a Watson session to produce content." },
-  { path: "/studio/watch",           label: "Watch",        icon: Eye,               badge: "11", tooltip: "Sentinel intelligence. What's happening in your category." },
-  { path: "/studio/lot",             label: "The Lot",      icon: Bookmark,          tooltip: "Parked ideas. Right idea, wrong time." },
-  { path: "/studio/resources",       label: "Resources",    icon: BookOpen,          tooltip: "Voice DNA, Brand DNA, Method DNA, and references." },
-  { path: "/studio/projects",        label: "Projects",     icon: FolderOpen,        tooltip: "Organize work by client, topic, or project." },
-  { path: "/studio/workbench",       label: "The Workbench", icon: Wrench,           tooltip: "In-progress work. Started but not shipped." },
-  { path: "/studio/wrap",            label: "Wrap",         icon: Package,           tooltip: "Final polish before publishing." },
-  { path: "/studio/outputs",         label: "The Vault",    icon: Archive,          tooltip: "Everything you've published. Permanent archive." },
-  { path: "/studio/settings/voice",  label: "Settings",     icon: Settings,           tooltip: "Account, preferences, and configuration." },
+// ── Nav structure: Watch > Work > Wrap (primary), then utility at bottom ──
+const PRIMARY_NAV = [
+  { path: "/studio/watch",   label: "Watch",       icon: Eye,        tooltip: "Intelligence monitoring. What's happening in your category.", primary: true },
+  { path: "/studio/lot",     label: "The Lot",     icon: Bookmark,   tooltip: "Parked ideas. Right idea, wrong time.", sub: true },
+  { path: "/studio/work",    label: "Work",        icon: PenLine,    tooltip: "Start a Watson session to produce content.", primary: true },
+  { path: "/studio/dashboard", label: "In Progress", icon: Loader2,  tooltip: "Content you've started but haven't finished.", sub: true },
+  { path: "/studio/wrap",    label: "Wrap",        icon: Package,    tooltip: "Final polish and delivery.", primary: true },
+  { path: "/studio/outputs", label: "The Vault",   icon: Archive,    tooltip: "Published archive. Everything you've shipped.", sub: true },
+];
+
+const UTILITY_NAV = [
+  { path: "/studio/resources",      label: "Resources", icon: BookOpen,   tooltip: "Voice DNA, Brand DNA, Method DNA, and references." },
+  { path: "/studio/projects",       label: "Projects",  icon: FolderOpen, tooltip: "Organize work by client or topic." },
+  { path: "/studio/settings/voice", label: "Settings",  icon: Settings,   tooltip: "Account and preferences." },
 ];
 
 function titleCase(str: string) {
@@ -63,7 +65,6 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
   const isActive = (p: string) => {
     if (p === "/studio/work") return loc.pathname === p || loc.pathname.startsWith("/studio/work/");
     if (p === "/studio/settings/voice") return loc.pathname === p || loc.pathname.startsWith("/studio/settings");
-    if (p === "/studio/workbench") return loc.pathname === p || loc.pathname.startsWith("/studio/workbench/");
     if (p === "/studio/wrap") return loc.pathname === p || loc.pathname.startsWith("/studio/wrap/");
     return loc.pathname === p || loc.pathname.startsWith(p + "/");
   };
@@ -83,15 +84,18 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       fontFamily: "'DM Sans', sans-serif",
     }}>
 
-      <div style={{
-        padding: "14px 12px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: collapsed ? "center" : "space-between",
-        gap: 8,
-      }}>
+      <div
+        style={{
+          padding: "14px 12px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: collapsed ? "center" : "space-between",
+          gap: 8,
+        }}
+      >
         <button
-          onClick={() => nav("/")}
+          onClick={() => nav("/studio")}
+          title="Go to studio home"
           style={{
             background: "none",
             border: "none",
@@ -101,13 +105,13 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             cursor: "pointer",
             padding: 0,
           }}
-          aria-label="Back to home"
+          aria-label="Go to studio"
         >
           <div style={{
             width: 24, height: 24, borderRadius: "50%",
-            background: "linear-gradient(135deg, #4a90f5 0%, #6b4dd4 100%)",
+            background: "linear-gradient(135deg, #4A90D9 0%, #6b4dd4 100%)",
             flexShrink: 0,
-            boxShadow: "0 1px 6px rgba(74,144,245,0.28)",
+            boxShadow: "0 1px 6px rgba(74,144,217,0.28)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <div style={{
@@ -116,32 +120,22 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             }} />
           </div>
           {!collapsed && (
-            <div style={{ textAlign: "left", minWidth: 0 }}>
-              <div style={{
-                fontSize: 13, fontWeight: 600, letterSpacing: "-0.02em",
-                color: "var(--fg)", lineHeight: 1.2,
-              }}>
-                <span>EVERY</span>
-                <span style={{ color: "var(--fg-3)" }}>WHERE</span>
-              </div>
-              <div style={{
-                fontSize: 9, fontWeight: 500, letterSpacing: "0.14em",
-                color: "var(--fg-3)", textTransform: "uppercase",
-              }}>Studio</div>
-            </div>
+            <Logo size={18} variant="light" />
           )}
         </button>
         {!collapsed && onToggleCollapsed && (
           <button
             onClick={onToggleCollapsed}
+            title="Collapse sidebar"
             style={{
               background: "none",
               border: "1px solid var(--line)",
               borderRadius: 999,
               padding: "4px 8px",
               cursor: "pointer",
-              fontSize: 10,
+              fontSize: 13,
               color: "var(--fg-3)",
+              transition: "all 0.15s ease",
             }}
             aria-label="Collapse sidebar"
           >
@@ -152,6 +146,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           <button
             type="button"
             onClick={onMobileClose}
+            title="Close menu"
             style={{
               background: "none",
               border: "1px solid var(--line)",
@@ -161,6 +156,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               fontSize: 13,
               color: "var(--fg-2)",
               fontFamily: "var(--font)",
+              transition: "all 0.15s ease",
             }}
             aria-label="Close menu"
           >
@@ -170,6 +166,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         {collapsed && onToggleCollapsed && (
           <button
             onClick={onToggleCollapsed}
+            title="Expand sidebar"
             style={{
               position: "absolute",
               right: 8,
@@ -179,8 +176,9 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               borderRadius: 999,
               padding: "2px 4px",
               cursor: "pointer",
-              fontSize: 10,
+              fontSize: 13,
               color: "var(--fg-3)",
+              transition: "all 0.15s ease",
             }}
             aria-label="Expand sidebar"
           >
@@ -189,9 +187,9 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         )}
       </div>
 
-      {/* ── Project (reference: "My Studio" with dropdown) ────────────────── */}
+      {/* ── Project selector ────────────────────── */}
       <div style={{ padding: "14px 14px 0" }}>
-        <button style={{
+        <button title="Switch project" style={{
           width: "100%",
           background: "var(--bg-2)",
           border: "1px solid var(--line)",
@@ -202,6 +200,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           justifyContent: "space-between",
           cursor: "pointer",
           fontFamily: "var(--font)",
+          transition: "all 0.15s ease",
         }}>
           {!collapsed && (
             <>
@@ -212,17 +211,18 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             </>
           )}
           {collapsed && (
-            <div style={{ width: "100%", textAlign: "center", fontSize: 11, fontWeight: 500, color: "var(--fg-3)" }}>
+            <div style={{ width: "100%", textAlign: "center", fontSize: 14, fontWeight: 500, color: "var(--fg-3)" }}>
               My
             </div>
           )}
         </button>
       </div>
 
-      {/* ── New Session ──────────────────────────────────────────── */}
+      {/* ── New Session ──────────────────────────── */}
       <div style={{ padding: "12px 14px 10px" }}>
         <button
           onClick={() => nav("/studio/work")}
+          title="Start a new Watson session"
           style={{
             width: "100%",
             background: "var(--fg)",
@@ -239,7 +239,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             letterSpacing: "-0.02em",
             cursor: "pointer",
             fontFamily: "var(--font)",
+            transition: "opacity 0.15s ease",
           }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
@@ -248,11 +251,12 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         </button>
       </div>
 
-      {/* Onboarding progress: show when not complete */}
+      {/* Onboarding progress */}
       {onboardingComplete === false && !collapsed && (
         <div style={{ padding: "0 14px 12px" }}>
           <button
             onClick={() => nav("/onboarding")}
+            title="Complete your studio setup"
             style={{
               width: "100%",
               padding: "10px 14px",
@@ -268,104 +272,130 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               alignItems: "center",
               justifyContent: "center",
               gap: 6,
+              transition: "all 0.15s ease",
             }}
           >
             Finish setup
-            <span style={{ fontSize: 10 }}>→</span>
+            <span style={{ fontSize: 13 }}>→</span>
           </button>
         </div>
       )}
 
-      {/* ── Main nav ─────────────────────────────────────────── */}
+      {/* ── Primary nav: Watch, Work, Wrap ─────── */}
       <nav style={{ flex: 1, padding: "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">
         <div style={{ paddingBottom: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-          {NAV.map(({ path, label, icon: Icon, badge, tooltip }) => {
+          {PRIMARY_NAV.map(({ path, label, icon: Icon, tooltip, primary, sub }) => {
             const active = isActive(path);
             return (
-              <Tooltip key={path} text={tooltip} position="right">
-                <button
-                  onClick={() => nav(path)}
-                  className={`nav-item ${active ? "active" : ""}`}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px 16px",
-                    border: "none",
-                    borderRadius: 8,
-                    borderLeft: active ? "3px solid var(--gold-dark)" : "3px solid transparent",
-                    background: active ? "rgba(0,0,0,0.04)" : "transparent",
-                    cursor: "pointer",
-                    fontFamily: "var(--font)",
-                    fontSize: 14,
-                    fontWeight: 500,
-                    textAlign: "left",
-                    opacity: active ? 1 : 0.7,
-                    transition: "background 0.15s ease, color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease",
-                  }}
-                  onMouseEnter={e => {
-                    if (!active) {
-                      e.currentTarget.style.background = "rgba(0,0,0,0.04)";
-                      e.currentTarget.style.opacity = "0.9";
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!active) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.opacity = "0.7";
-                    }
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span
-                      style={{
-                        width: 24,
-                        height: 24,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: 6,
-                        color: active ? "var(--fg)" : "var(--fg-3)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon size={18} strokeWidth={2} />
-                    </span>
-                    {!collapsed && (
-                      <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
-                    )}
-                  </div>
-                  {badge && (
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      background: "var(--surface-elevated)",
-                      color: "var(--fg-3)",
-                      border: "1px solid var(--line)",
-                      borderRadius: 100,
-                      padding: "2px 6px",
-                    }}>{badge}</span>
+              <button
+                key={path}
+                onClick={() => nav(path)}
+                title={tooltip}
+                className={`nav-item ${active ? "active" : ""}`}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: primary ? "12px 16px" : "8px 16px 8px 36px",
+                  border: "none",
+                  borderRadius: 8,
+                  borderLeft: active ? "3px solid var(--gold-dark)" : "3px solid transparent",
+                  background: active ? "rgba(0,0,0,0.04)" : "transparent",
+                  cursor: "pointer",
+                  fontFamily: "var(--font)",
+                  fontSize: primary ? 15 : 13,
+                  fontWeight: primary ? 600 : 400,
+                  textAlign: "left",
+                  opacity: active ? 1 : 0.7,
+                  transition: "background 0.15s ease, color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease",
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+                    e.currentTarget.style.opacity = "0.9";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.opacity = "0.7";
+                  }
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span
+                    style={{
+                      width: 24,
+                      height: 24,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: 6,
+                      color: active ? "var(--fg)" : "var(--fg-3)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon size={primary ? 18 : 16} strokeWidth={2} />
+                  </span>
+                  {!collapsed && (
+                    <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
                   )}
-                </button>
-              </Tooltip>
+                </div>
+              </button>
             );
           })}
         </div>
 
-        {/* Conversations */}
-        <div style={{ paddingTop: 8, paddingBottom: 4 }}>
-          {!collapsed && <div className="nav-section-label">Conversations</div>}
-          <button
-            onClick={() => nav("/studio/work")}
-            className="nav-item"
-            style={{ gap: 10, cursor: "pointer", transition: "color 0.15s ease" }}
-            onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
-            onMouseLeave={e => { e.currentTarget.style.color = "var(--fg)"; }}
-          >
-            <Plus size={12} strokeWidth={2} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
-            <span>New conversation</span>
-          </button>
+        {/* ── Utility divider + items ──────────── */}
+        <div style={{ marginTop: 16, borderTop: "1px solid var(--border-subtle)", paddingTop: 12 }}>
+          {UTILITY_NAV.map(({ path, label, icon: Icon, tooltip }) => {
+            const active = isActive(path);
+            return (
+              <button
+                key={path}
+                onClick={() => nav(path)}
+                title={tooltip}
+                className={`nav-item ${active ? "active" : ""}`}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "8px 16px",
+                  border: "none",
+                  borderRadius: 8,
+                  borderLeft: active ? "3px solid var(--gold-dark)" : "3px solid transparent",
+                  background: active ? "rgba(0,0,0,0.04)" : "transparent",
+                  cursor: "pointer",
+                  fontFamily: "var(--font)",
+                  fontSize: 13,
+                  fontWeight: 400,
+                  textAlign: "left",
+                  color: "rgba(0,0,0,0.45)",
+                  transition: "background 0.15s ease, color 0.15s ease, opacity 0.15s ease",
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+                    e.currentTarget.style.color = "rgba(0,0,0,0.65)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "rgba(0,0,0,0.45)";
+                  }
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon size={16} strokeWidth={2} />
+                  </span>
+                  {!collapsed && <span>{label}</span>}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </nav>
 
@@ -385,7 +415,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             background: "var(--surface-elevated)",
             flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 600, color: "var(--fg)",
+            fontSize: 14, fontWeight: 600, color: "var(--fg)",
           }}>
             {(user?.user_metadata?.full_name || user?.email || "?")[0].toUpperCase()}
           </div>
@@ -397,14 +427,18 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                   ? titleCase(user.email.split("@")[0])
                   : "Signed in")}
             </div>
-            {!collapsed && <div style={{ fontSize: 10, color: "var(--fg-3)" }}>{user?.email || ""}</div>}
+            {!collapsed && <div style={{ fontSize: 13, color: "var(--fg-3)" }}>{user?.email || ""}</div>}
           </div>
           <button
             onClick={handleSignOut}
+            title="Sign out"
             style={{
               background: "none", border: "none", cursor: "pointer", padding: 6,
               color: "var(--fg-3)", display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "color 0.15s ease",
             }}
+            onMouseEnter={e => { e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
             aria-label="Sign out"
           >
             <LogOut size={14} />

@@ -118,7 +118,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           <form onSubmit={handleGoogleAccessCodeSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <label
               style={{
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: "rgba(255,255,255,0.55)",
                 letterSpacing: "0.08em",

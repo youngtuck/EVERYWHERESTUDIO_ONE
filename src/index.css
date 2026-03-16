@@ -185,12 +185,12 @@ button { font-family: var(--font); }
   /* Studio typography (premium app) */
   --studio-font: 'DM Sans', -apple-system, sans-serif;
   --studio-page-title-size: 24px;
-  --studio-section-label-size: 10px;
+  --studio-section-label-size: 13px;
   --studio-section-label-spacing: 0.12em;
   --studio-body-size: 14px;
   --studio-body-height: 1.6;
   --studio-body-color: rgba(0,0,0,0.6);
-  --studio-card-label-size: 10px;
+  --studio-card-label-size: 13px;
   --studio-card-label-spacing: 0.08em;
   --studio-card-label-color: rgba(0,0,0,0.35);
   --studio-big-number-size: 32px;
@@ -317,7 +317,7 @@ textarea:focus-visible {
 .pill {
   display: inline-flex; align-items: center;
   padding: 2px 8px; border-radius: 4px;
-  font-size: 10px; font-weight: 500; letter-spacing: 0.3px;
+  font-size: 13px; font-weight: 500; letter-spacing: 0.3px;
   font-family: var(--font);
 }
 .pill-draft    { background: var(--bg-3); color: var(--fg-3); }
@@ -368,7 +368,24 @@ textarea:focus-visible {
 
 /* ─── EYEBROW ────────────────────────────────────────────────── */
 .eyebrow {
-  font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
+  font-size: 14px; font-weight: 500; letter-spacing: 0.5px;
   text-transform: uppercase; color: var(--fg-3);
   font-family: var(--font);
+}
+
+/* ─── TYPOGRAPHY: WIDOWS/ORPHANS (Item 16) ───────────────────── */
+h1, h2, h3, .studio-page-transition p {
+  text-wrap: balance;
+}
+
+/* ─── RESPONSIVE STUDIO (Item 17) ────────────────────────────── */
+@media (max-width: 768px) {
+  .studio-main-inner {
+    padding: 16px !important;
+  }
+}
+@media (max-width: 480px) {
+  button {
+    min-height: 44px;
+  }
 }

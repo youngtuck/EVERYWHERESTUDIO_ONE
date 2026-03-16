@@ -33,7 +33,7 @@ export default function QualityCheckpoints() {
                 style={{ display:"flex", alignItems:"center", gap:16, width:"100%", padding:"15px 18px", background:"var(--surface)", border:"1px solid var(--line)", borderRadius:open===i?"8px 8px 0 0":8, cursor:"pointer", textAlign:"left", transition:"background 0.12s", fontFamily:"'DM Sans',sans-serif" }}
                 onMouseEnter={e=>{ if(open!==i)(e.currentTarget as HTMLElement).style.background="var(--bg-3)"; }}
                 onMouseLeave={e=>{ if(open!==i)(e.currentTarget as HTMLElement).style.background="var(--surface)"; }}>
-                <span style={{ fontSize:11, color:"var(--fg-3)", fontFamily:"'DM Serif Display',Georgia,serif", fontStyle:"italic", minWidth:20, fontWeight:400 }}>{g.num}</span>
+                <span style={{ fontSize:13, color:"var(--fg-3)", fontFamily:"'DM Serif Display',Georgia,serif", fontStyle:"italic", minWidth:20, fontWeight:400 }}>{g.num}</span>
                 <span style={{ fontSize:14, fontWeight:400, color:"var(--fg)", flex:1 }}>{g.name}</span>
                 <span style={{ fontSize:14, color:"var(--fg-3)", transform:open===i?"rotate(45deg)":"none", transition:"transform 0.15s", display:"inline-block" }}>+</span>
               </button>

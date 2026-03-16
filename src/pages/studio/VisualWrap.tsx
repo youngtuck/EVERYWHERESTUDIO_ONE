@@ -344,7 +344,7 @@ export default function VisualWrap() {
         </h1>
         <span
           style={{
-            fontSize: 11,
+            fontSize: 14,
             fontWeight: 600,
             letterSpacing: "0.06em",
             color: "rgba(0,0,0,0.4)",
@@ -385,14 +385,14 @@ export default function VisualWrap() {
           {output.content.slice(0, 200)}
           {output.content.length > 200 ? "..." : ""}
         </div>
-        <div style={{ fontSize: 11, color: "var(--fg-3)" }}>Score: {output.score}</div>
+        <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Score: {output.score}</div>
       </div>
 
       {/* Section 2: Visual Vibe */}
       <div ref={vibeRef} style={{ marginBottom: 28 }}>
         <div
           style={{
-            fontSize: 10,
+            fontSize: 13,
             fontWeight: 600,
             letterSpacing: "0.1em",
             color: "rgba(0,0,0,0.35)",
@@ -449,7 +449,7 @@ export default function VisualWrap() {
               >
                 <Icon size={24} style={{ color: "rgba(0,0,0,0.5)", marginBottom: 8 }} />
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", marginBottom: 2 }}>{config.label}</div>
-                <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{config.descriptor}</div>
+                <div style={{ fontSize: 14, color: "rgba(0,0,0,0.4)" }}>{config.descriptor}</div>
               </button>
             );
           })}
@@ -492,7 +492,7 @@ export default function VisualWrap() {
             }}
           >
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--fg-3)", marginBottom: 4 }}>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 600, color: "var(--fg-3)", marginBottom: 4 }}>
                 Brand Colors
               </label>
               <input
@@ -505,7 +505,7 @@ export default function VisualWrap() {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--fg-3)", marginBottom: 4 }}>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 600, color: "var(--fg-3)", marginBottom: 4 }}>
                 Author Override
               </label>
               <input
@@ -518,7 +518,7 @@ export default function VisualWrap() {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--fg-3)", marginBottom: 4 }}>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 600, color: "var(--fg-3)", marginBottom: 4 }}>
                 Context
               </label>
               <input
@@ -618,7 +618,7 @@ export default function VisualWrap() {
               textAlign: "center",
             }}
           >
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>
               Kai Morrison
             </div>
             <div
@@ -702,7 +702,7 @@ export default function VisualWrap() {
               {generateError ? "" : result ? result.vibe : VIBES[selectedVibe].label}
             </div>
             {!generateError && (
-              <div style={{ fontSize: 11, color: "rgba(0,0,0,0.15)", fontVariantNumeric: "tabular-nums" }}>
+              <div style={{ fontSize: 14, color: "rgba(0,0,0,0.15)", fontVariantNumeric: "tabular-nums" }}>
                 {elapsedSeconds}s
               </div>
             )}
@@ -880,7 +880,7 @@ export default function VisualWrap() {
                       alignItems: "center",
                     }}
                   >
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(0,0,0,0.3)", marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(0,0,0,0.3)", marginBottom: 8 }}>
                       {VIBES[vibe].label}
                     </div>
                     <div
@@ -975,7 +975,7 @@ export default function VisualWrap() {
                       <button
                         type="button"
                         className="btn-ghost"
-                        style={{ fontSize: 11, padding: "6px 10px", marginTop: 8 }}
+                        style={{ fontSize: 14, padding: "6px 10px", marginTop: 8 }}
                         onClick={() => downloadPng(data.image, data.mimeType, `${output.title}-${vibe}`)}
                       >
                         Download

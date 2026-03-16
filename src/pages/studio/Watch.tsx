@@ -334,7 +334,7 @@ export default function Watch() {
         }}
       >
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#C8961A", marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#C8961A", marginBottom: 8 }}>
             INTELLIGENCE BRIEFING
           </div>
           <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "clamp(24px,4vw,36px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
@@ -609,7 +609,7 @@ export default function Watch() {
               </div>
             </div>
             <div style={{ marginTop: 24, textAlign: "center" }}>
-              <div style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(74,144,245,0.7)", marginBottom: 8 }}>
+              <div style={{ fontSize: 13, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(74,144,245,0.7)", marginBottom: 8 }}>
                 SENTINEL
               </div>
               <div key={statusIndex} className="sentinel-status-text" style={{ fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.5)", minHeight: 20 }}>
@@ -682,7 +682,7 @@ export default function Watch() {
               {(sections.whats_moving ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: WATCH_BLUE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: WATCH_BLUE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       {item.priority}
                     </span>
                   </div>
@@ -704,7 +704,7 @@ export default function Watch() {
               {(sections.threats?.length ?? 0) > 0 && <SectionTitle label="Threats" color="#D64545" style={{ marginTop: 32 }} tooltip="Risks and competitive moves to watch." />}
               {(sections.threats ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16, borderLeft: "4px solid #D64545" }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#D64545", textTransform: "uppercase" }}>{item.severity}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#D64545", textTransform: "uppercase" }}>{item.severity}</span>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
                   <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 8px" }}>{item.summary}</p>
                   <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0 }}>{item.recommended_action}</p>
@@ -717,7 +717,7 @@ export default function Watch() {
               {(sections.opportunities?.length ?? 0) > 0 && <SectionTitle label="Opportunities" color="#3A9A5C" tooltip="Content and growth opportunities to act on." />}
               {(sections.opportunities ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", gap: 12, marginBottom: 8, fontSize: 11, color: "var(--text-tertiary)" }}>
+                  <div style={{ display: "flex", gap: 12, marginBottom: 8, fontSize: 14, color: "var(--text-tertiary)" }}>
                     <span>Effort: {item.effort}</span>
                     <span>Impact: {item.impact}</span>
                   </div>
@@ -747,7 +747,7 @@ export default function Watch() {
               )}
               {(sections.content_triggers ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "#0D8C9E", textTransform: "uppercase", letterSpacing: "0.06em" }}>{item.format}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#0D8C9E", textTransform: "uppercase", letterSpacing: "0.06em" }}>{item.format}</span>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
                   <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 12px" }}>{item.angle}</p>
                   <button

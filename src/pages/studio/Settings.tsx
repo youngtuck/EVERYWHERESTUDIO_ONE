@@ -240,7 +240,7 @@ export default function Settings() {
         <p
           style={{
             fontFamily: "'DM Mono', monospace",
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.05em",
@@ -346,7 +346,7 @@ export default function Settings() {
                 color: "var(--text-secondary)",
               }}
             />
-            <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4, marginBottom: 0 }}>
+            <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 4, marginBottom: 0 }}>
               Email is managed by your sign-in provider.
             </p>
           </div>
@@ -553,7 +553,7 @@ export default function Settings() {
             <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
               Theme
             </p>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "var(--text-tertiary)", marginTop: 2, marginBottom: 0 }}>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "var(--text-tertiary)", marginTop: 2, marginBottom: 0 }}>
               {theme === "dark" ? "Dark mode" : "Light mode"}
             </p>
           </div>

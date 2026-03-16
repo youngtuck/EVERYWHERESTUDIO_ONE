@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import Logo from "../components/Logo";
 
 const VALID_ACCESS_CODE = "oneidea";
 
@@ -159,42 +160,9 @@ const AuthPage = () => {
 
       <div style={{ width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }}>
         {/* Brand wordmark */}
-        {/* EVERYWHERE Studio wordmark: EVERY bold + WHERE light, gold accent (matches sidebar) */}
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          style={{
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            marginBottom: 20,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-              <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: "0.16em", color: "#C8961A" }}>
-                EVERY
-              </span>
-              <span style={{ fontSize: 18, fontWeight: 600, letterSpacing: "0.16em", color: "rgba(255,255,255,0.65)" }}>
-                WHERE
-              </span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span
-                style={{
-                  fontSize: 9,
-                  fontWeight: 600,
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  color: "rgba(232,232,230,0.4)",
-                }}
-              >
-                Studio
-              </span>
-            </div>
-          </div>
-        </button>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+          <Logo size={18} variant="dark" onClick={() => navigate("/studio")} />
+        </div>
 
         {/* Tagline */}
         <div style={{ textAlign: "center", marginBottom: 18 }}>
@@ -293,7 +261,7 @@ const AuthPage = () => {
                     margin: 0,
                   }}
                 >
-                  {mode === "signin" ? "Sign in to EVERYWHERE" : "Join EVERYWHERE Studio"}
+                  {mode === "signin" ? "Sign in" : "Join the Studio"}
                 </h1>
               </div>
 
@@ -315,7 +283,7 @@ const AuthPage = () => {
                   <div>
                     <label
                       style={{
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: 700,
                         color: "rgba(255,255,255,0.55)",
                         letterSpacing: "0.08em",
@@ -340,7 +308,7 @@ const AuthPage = () => {
                   <div>
                     <label
                       style={{
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: 700,
                         color: "rgba(255,255,255,0.55)",
                         letterSpacing: "0.08em",
@@ -364,7 +332,7 @@ const AuthPage = () => {
                 <div>
                   <label
                     style={{
-                      fontSize: 11,
+                      fontSize: 14,
                       fontWeight: 700,
                       color: "rgba(255,255,255,0.55)",
                       letterSpacing: "0.08em",
@@ -387,7 +355,7 @@ const AuthPage = () => {
                 <div>
                   <label
                     style={{
-                      fontSize: 11,
+                      fontSize: 14,
                       fontWeight: 700,
                       color: "rgba(255,255,255,0.55)",
                       letterSpacing: "0.08em",
@@ -433,7 +401,7 @@ const AuthPage = () => {
                   <div>
                     <label
                       style={{
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: 700,
                         color: "rgba(255,255,255,0.55)",
                         letterSpacing: "0.08em",
@@ -538,7 +506,7 @@ const AuthPage = () => {
                   fontFamily: "'DM Sans', sans-serif",
                 }}
               >
-                EVERYWHERE Studio is in private Alpha.
+                <Logo size={13} variant="dark" /> is in private Alpha.
                 <br />
                 Contact mark@mixedgrill.studio for access.
               </p>
@@ -556,7 +524,7 @@ const AuthPage = () => {
               <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.1)" }} />
               <span
                 style={{
-                  fontSize: 11,
+                  fontSize: 14,
                   color: "rgba(232,232,230,0.5)",
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",

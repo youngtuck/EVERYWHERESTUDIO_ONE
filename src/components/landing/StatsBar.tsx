@@ -12,7 +12,7 @@ export default function StatsBar() {
         {STATS.map((s,i) => (
           <div key={i} style={{ textAlign:"center" }}>
             <p style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:"clamp(36px,3.5vw,56px)", fontWeight:400, color:"var(--fg)", letterSpacing:"-1.5px", lineHeight:1 }}>{s.num}</p>
-            <p style={{ fontSize:11, fontWeight:400, color:"var(--fg-3)", marginTop:8, fontFamily:"'DM Sans',sans-serif" }}>{s.label}</p>
+            <p style={{ fontSize:13, fontWeight:400, color:"var(--fg-3)", marginTop:8, fontFamily:"'DM Sans',sans-serif" }}>{s.label}</p>
           </div>
         ))}
       </div>

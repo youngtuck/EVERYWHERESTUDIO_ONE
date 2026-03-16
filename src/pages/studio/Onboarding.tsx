@@ -94,7 +94,7 @@ export default function Onboarding() {
         <div style={{ height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 1 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "#C8961A", borderRadius: 1, transition: "width 0.4s cubic-bezier(.16,1,.3,1)" }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, color: "rgba(255,255,255,0.2)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 13, color: "rgba(255,255,255,0.2)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
           <span>Voice DNA Setup</span>
           <span>{step + 1} of {STEPS.length}</span>
         </div>
@@ -102,7 +102,7 @@ export default function Onboarding() {
 
       {/* Step content */}
       <div style={{ width: "100%", maxWidth: 520 }}>
-        <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "#C8961A", textTransform: "uppercase", marginBottom: 12, fontWeight: 700, opacity: 0.8 }}>
+        <div style={{ fontSize: 12, letterSpacing: "0.2em", color: "#C8961A", textTransform: "uppercase", marginBottom: 12, fontWeight: 700, opacity: 0.8 }}>
           Voice DNA
         </div>
         <h1 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 800, color: "#E8E8E6", letterSpacing: "-0.04em", lineHeight: 1.1, marginBottom: 8 }}>

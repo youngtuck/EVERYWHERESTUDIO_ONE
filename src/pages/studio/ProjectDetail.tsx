@@ -123,17 +123,17 @@ export default function ProjectDetail() {
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Total outputs</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Total outputs</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'DM Sans', sans-serif" }}>{outputsCount}</div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Avg Betterish score</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Avg Betterish score</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: avgScore > 0 ? scoreColor(avgScore) : "rgba(0,0,0,0.35)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'DM Sans', sans-serif" }}>
             {avgScore > 0 ? avgScore : "–"}
           </div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Last active</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Last active</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontFamily: "'DM Sans', sans-serif" }}>{lastActive}</div>
         </div>
       </div>
@@ -175,15 +175,15 @@ export default function ProjectDetail() {
                 >
                   <div style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[o.type] || "#4A90D9", flexShrink: 0 }} />
                   <span style={{ flex: 1, fontSize: 14, color: "var(--fg)", fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.title}</span>
-                  <span style={{ fontSize: 11, color: "var(--fg-3)", width: 90, flexShrink: 0 }}>{TYPE_LABELS[o.type] || o.type}</span>
+                  <span style={{ fontSize: 14, color: "var(--fg-3)", width: 90, flexShrink: 0 }}>{TYPE_LABELS[o.type] || o.type}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(o.score), width: 42, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
                   <span style={{
-                    fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
+                    fontSize: 13, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
                     background: o.status === "published" ? "rgba(80,200,160,.1)" : "rgba(255,255,255,.06)",
                     color: o.status === "published" ? "#50c8a0" : "var(--fg-3)",
                     border: `1px solid ${o.status === "published" ? "rgba(80,200,160,.2)" : "var(--line)"}`,
                   }}>{o.status}</span>
-                  <span style={{ fontSize: 11, color: "var(--fg-3)", width: 48, textAlign: "right", flexShrink: 0 }}>{o.date}</span>
+                  <span style={{ fontSize: 14, color: "var(--fg-3)", width: 48, textAlign: "right", flexShrink: 0 }}>{o.date}</span>
                 </button>
               ))}
             </div>
@@ -196,7 +196,7 @@ export default function ProjectDetail() {
         <h2 style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", letterSpacing: "-0.01em", marginBottom: 14 }}>Watch Configuration</h2>
         <div className="card" style={{ padding: "var(--studio-gap)", border: "1px solid var(--line)" }}>
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>Industries</div>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>Industries</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {watchIndustries.length === 0 ? (
                 <span style={{ fontSize: 13, color: "var(--fg-3)" }}>None configured</span>
@@ -211,7 +211,7 @@ export default function ProjectDetail() {
             </div>
           </div>
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>Topics & keywords</div>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>Topics & keywords</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {watchTopics.length === 0 ? (
                 <span style={{ fontSize: 13, color: "var(--fg-3)" }}>None configured</span>
@@ -226,7 +226,7 @@ export default function ProjectDetail() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>People to watch</div>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 10 }}>People to watch</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {watchPeople.length === 0 ? (
                 <span style={{ fontSize: 13, color: "var(--fg-3)" }}>None configured</span>

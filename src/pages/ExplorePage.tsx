@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, createContext, useContext, Children } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
+import Logo from "../components/Logo";
 
 // ─── Theme context ─────────────────────────────────────────────────────────────
 const ThemeCtx = createContext<{ dark: boolean; toggle: () => void }>({ dark: true, toggle: () => {} });
@@ -280,14 +281,14 @@ function Counter({ target, suffix="", label, accent }:{target:number;suffix?:str
     <div style={{fontSize:"clamp(44px,5vw,72px)",fontWeight:800,letterSpacing:"-.05em",lineHeight:1,fontVariantNumeric:"tabular-nums"}}>
       <span style={{color:accent}}>{val}</span><span style={{color:lc,opacity:.5}}>{suffix}</span>
     </div>
-    <div style={{fontSize:9,letterSpacing:".16em",color:lc,opacity:.28,textTransform:"uppercase",marginTop:10,fontWeight:600}}>{label}</div>
+    <div style={{fontSize:12,letterSpacing:".16em",color:lc,opacity:.28,textTransform:"uppercase",marginTop:10,fontWeight:600}}>{label}</div>
   </div>;
 }
 
 function FeatureLine({num,title,desc,accent,delay=0,lc,bc}:{num:string;title:string;desc:string;accent:string;delay?:number;lc:string;bc:string}) {
   return <FadeUp delay={delay}>
     <div style={{display:"grid",gridTemplateColumns:"26px 1fr",gap:"0 16px",paddingBottom:13,paddingTop:2,borderBottom:`1px solid ${bc}`}}>
-      <span style={{fontSize:10,fontWeight:700,color:accent,opacity:.5,letterSpacing:".06em",paddingTop:1}}>{num}</span>
+      <span style={{fontSize:13,fontWeight:700,color:accent,opacity:.5,letterSpacing:".06em",paddingTop:1}}>{num}</span>
       <div><span style={{fontSize:13,fontWeight:600,color:lc}}>{title}</span><span style={{fontSize:12,color:lc,opacity:.36,lineHeight:1.6,marginLeft:7}}>{desc}</span></div>
     </div>
   </FadeUp>;
@@ -297,7 +298,7 @@ function CheckpointRow({num,name,desc,color,delay,lc,bc,last=false}:{num:string;
   const ref=useRef<HTMLDivElement>(null); const [vis,setVis]=useState(false);
   useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.1}); ob.observe(el);return()=>ob.disconnect(); },[]);
   return <div ref={ref} style={{display:"grid",gridTemplateColumns:"36px 150px 1fr",gap:"0 18px",padding:"20px 0",borderBottom:last?"none":"1px solid rgba(255,255,255,0.04)",opacity:vis?1:0,transform:vis?"none":"translateX(-10px)",transition:`opacity .45s ${delay}s ease, transform .45s ${delay}s cubic-bezier(.16,1,.3,1)`}}>
-    <span style={{fontSize:10,fontWeight:700,color:"#C8961A",letterSpacing:".08em"}}>{num}</span>
+    <span style={{fontSize:13,fontWeight:700,color:"#C8961A",letterSpacing:".08em"}}>{num}</span>
     <span style={{fontSize:13,fontWeight:600,color:"#ffffff"}}>{name}</span>
     <span style={{fontSize:12,color:lc,opacity:.36,lineHeight:1.65}}>{desc}</span>
   </div>;
@@ -307,11 +308,11 @@ function DnaBar({label,score,delay=0,accent,lc}:{label:string;score:number;delay
   const ref=useRef<HTMLDivElement>(null); const [vis,setVis]=useState(false);
   useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.2}); ob.observe(el);return()=>ob.disconnect(); },[]);
   return <div ref={ref} style={{display:"flex",alignItems:"center",gap:12,opacity:vis?1:0,transform:vis?"none":"translateX(-8px)",transition:`opacity .6s ${delay}s ease, transform .6s ${delay}s cubic-bezier(.16,1,.3,1)`}}>
-    <div style={{fontSize:11,color:lc,opacity:.28,width:155,flexShrink:0}}>{label}</div>
+    <div style={{fontSize:14,color:lc,opacity:.28,width:155,flexShrink:0}}>{label}</div>
     <div style={{flex:1,height:1,background:`${lc}14`,position:"relative"}}>
       <div style={{position:"absolute",left:0,top:0,height:"100%",background:`linear-gradient(90deg,${accent},${accent}55)`,width:vis?`${score}%`:"0%",transition:`width 1.2s ${delay+.1}s cubic-bezier(.16,1,.3,1)`}} />
     </div>
-    <div style={{fontSize:10,fontWeight:700,color:lc,opacity:.45,width:22,textAlign:"right"}}>{score}</div>
+    <div style={{fontSize:13,fontWeight:700,color:lc,opacity:.45,width:22,textAlign:"right"}}>{score}</div>
   </div>;
 }
 
@@ -321,7 +322,7 @@ function Ticker({ lc }:{lc:string}) {
   return <div style={{overflow:"hidden",maskImage:"linear-gradient(90deg,transparent,black 8%,black 92%,transparent)",WebkitMaskImage:"linear-gradient(90deg,transparent,black 8%,black 92%,transparent)"}}>
     <style>{`@keyframes ew-t{from{transform:translateX(0)}to{transform:translateX(-50%)}}.ew-t{display:flex;width:max-content;animation:ew-t 30s linear infinite}.ew-t:hover{animation-play-state:paused}`}</style>
     <div className="ew-t">
-      {d.map((f,i)=><span key={i} style={{display:"inline-flex",alignItems:"center",fontSize:11,fontWeight:500,color:lc,opacity:.20,padding:"4px 18px",whiteSpace:"nowrap",letterSpacing:".03em"}}>{f}<span style={{display:"inline-block",width:1,height:8,background:`${lc}20`,margin:"0 0 0 18px"}}/></span>)}
+      {d.map((f,i)=><span key={i} style={{display:"inline-flex",alignItems:"center",fontSize:14,fontWeight:500,color:lc,opacity:.20,padding:"4px 18px",whiteSpace:"nowrap",letterSpacing:".03em"}}>{f}<span style={{display:"inline-block",width:1,height:8,background:`${lc}20`,margin:"0 0 0 18px"}}/></span>)}
     </div>
   </div>;
 }
@@ -545,7 +546,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
           transition: "background 0.4s ease",
         }} />
         <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 14, fontWeight: 700, opacity: .7, transition: "color 0.4s ease" }}>
+          <div style={{ fontSize: 12, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 14, fontWeight: 700, opacity: .7, transition: "color 0.4s ease" }}>
             {roomNums[roomIdx]}
           </div>
           <div style={{ filter: `drop-shadow(0 0 52px ${glowColor})`, marginBottom: 16, transition: "filter 0.4s ease" }}>
@@ -579,7 +580,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
           <div style={{ fontSize: "clamp(52px,6.5vw,84px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .88, color: textColor, textAlign: "center", transition: "opacity 0.3s", marginTop: 24 }}>
             {roomNames[roomIdx]}
           </div>
-          <div style={{ fontSize: 9, letterSpacing: ".15em", color: textColor, opacity: .20, textTransform: "uppercase", marginTop: 8, fontWeight: 500 }}>
+          <div style={{ fontSize: 12, letterSpacing: ".15em", color: textColor, opacity: .20, textTransform: "uppercase", marginTop: 8, fontWeight: 500 }}>
             {roomSubs[roomIdx]}
           </div>
           <div style={{ width: 28, height: 1, background: `linear-gradient(90deg,transparent,${accentColor},transparent)`, marginTop: 18, transition: "background 0.4s ease" }} />
@@ -616,7 +617,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
         }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
+              <div style={{ fontSize: 12, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
                 Room One
               </div>
               <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
@@ -633,7 +634,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
               <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
                 WATCH
               </div>
-              <div style={{ fontSize: 10, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
+              <div style={{ fontSize: 13, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
                 The Signal Room
               </div>
             </div>
@@ -649,7 +650,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
           </div>
           <FadeUp delay={0.12}>
             <div style={{ borderLeft: `2px solid ${T.watchA}45`, paddingLeft: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: textColor, marginBottom: 5, letterSpacing: ".02em" }}>Source Verification</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: textColor, marginBottom: 5, letterSpacing: ".02em" }}>Source Verification</div>
               <p style={{ fontSize: 12, color: T.textSub, lineHeight: 1.74 }}>Every claim requires two or more independent, credible sources. Unverified intelligence never ships. This is a protocol, not a preference.</p>
             </div>
           </FadeUp>
@@ -671,7 +672,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
         }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
+              <div style={{ fontSize: 12, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
                 Room Two
               </div>
               <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
@@ -688,7 +689,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
               <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
                 WORK
               </div>
-              <div style={{ fontSize: 10, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
+              <div style={{ fontSize: 13, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
                 The Engine Room
               </div>
             </div>
@@ -697,13 +698,13 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
           <FadeUp delay={0.12}>
             <div>
-              <div style={{ fontSize: 9, letterSpacing: ".18em", color: T.textFaint, textTransform: "uppercase", marginBottom: 10, fontWeight: 500 }}>Output formats</div>
+              <div style={{ fontSize: 12, letterSpacing: ".18em", color: T.textFaint, textTransform: "uppercase", marginBottom: 10, fontWeight: 500 }}>Output formats</div>
               <Ticker lc={lc} />
             </div>
           </FadeUp>
           <FadeUp delay={0.18}>
             <div style={{ borderTop: `1px solid ${bc}`, paddingTop: 28 }}>
-              <div style={{ fontSize: 9, letterSpacing: ".2em", color: T.workA, textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>Voice DNA</div>
+              <div style={{ fontSize: 12, letterSpacing: ".2em", color: T.workA, textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>Voice DNA</div>
               <div style={{ marginBottom: 20 }}><WordReveal text="Every output sounds exactly like you." size={18} weight={700} color={textColor} lh={1.2} /></div>
               <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
                 {[["Vocabulary and Syntax", 88], ["Tonal Register", 94], ["Rhythm and Cadence", 91], ["Metaphor Patterns", 87], ["Structural Habits", 96]].map(([l, s], i) => (
@@ -730,7 +731,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
         }}>
           {isMobile && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ fontSize: 9, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
+              <div style={{ fontSize: 12, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
                 Room Three
               </div>
               <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
@@ -747,7 +748,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
               <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
                 WRAP
               </div>
-              <div style={{ fontSize: 10, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
+              <div style={{ fontSize: 13, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
                 The Distribution Room
               </div>
             </div>
@@ -1090,9 +1091,7 @@ export default function ExplorePage() {
           transition:"background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
         }}>
           <button onClick={()=>nav("/")} style={{background:"none",border:"none",display:"flex",alignItems:"baseline",cursor:"pointer",gap:0}}>
-            <span style={{fontSize:15,fontWeight:800,color:T.text,letterSpacing:".04em"}}>EVERY</span>
-            <span style={{fontSize:15,fontWeight:800,color:T.text,letterSpacing:".04em"}}>WHERE</span>
-            <span style={{fontSize:9,fontWeight:600,letterSpacing:".16em",color:T.textFaint,marginLeft:6,textTransform:"uppercase",alignSelf:"center"}}>Studio</span>
+            <Logo size={15} variant={dark ? "dark" : "light"} />
           </button>
           {!isMobile && (
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -1280,10 +1279,10 @@ export default function ExplorePage() {
           <div style={{maxWidth:920,margin:"0 auto"}}>
             <FadeInSection>
               <div style={{textAlign:"center",marginBottom:16}}>
-                <div style={{fontSize:11,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:18,fontWeight:500}}>The Framework</div>
+                <div style={{fontSize:14,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:18,fontWeight:500}}>The Framework</div>
                 <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.text,marginBottom:4}}>One idea in.</div>
                 <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.gold,marginBottom:20}}>Communications out.</div>
-                <p style={{fontSize:14,color:T.textSub,maxWidth:420,margin:"0 auto",lineHeight:1.72}}>EVERYWHERE Studio bridges what you know and what the world sees.</p>
+                <p style={{fontSize:14,color:T.textSub,maxWidth:420,margin:"0 auto",lineHeight:1.72}}><Logo size={14} variant={dark ? "dark" : "light"} /> bridges what you know and what the world sees.</p>
               </div>
             </FadeInSection>
             {/* Counters */}
@@ -1319,7 +1318,7 @@ export default function ExplorePage() {
               <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:"36px 60px",alignItems:"end",marginBottom:44}}>
                 <div>
                   <FadeUp>
-                    <div style={{display:"inline-flex",alignItems:"center",fontSize:11,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:14,fontWeight:500,borderLeft:"2px solid #C8961A",paddingLeft:12}}>
+                    <div style={{display:"inline-flex",alignItems:"center",fontSize:14,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:14,fontWeight:500,borderLeft:"2px solid #C8961A",paddingLeft:12}}>
                       Quality Checkpoints
                     </div>
                   </FadeUp>
@@ -1348,10 +1347,10 @@ export default function ExplorePage() {
         >
           <div style={{maxWidth:680,margin:"0 auto"}}>
             <FadeInSection>
-              <div style={{fontSize:9,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:16,fontWeight:500}}>Compound Advantage</div>
+              <div style={{fontSize:12,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:16,fontWeight:500}}>Compound Advantage</div>
               <WordReveal text="Why It Compounds" size="clamp(34px,4.5vw,58px)" weight={700} lh={1.0} color={T.text} />
               <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:32}}>
-                <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. EVERYWHERE Studio makes it better, and the difference grows with every piece you publish.</p></FadeUp>
+                <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. <Logo size={15} variant={dark ? "dark" : "light"} /> makes it better, and the difference grows with every piece you publish.</p></FadeUp>
                 <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality checkpoints calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
               </div>
               <FadeUp delay={0.24}>
@@ -1406,7 +1405,7 @@ export default function ExplorePage() {
         >
           <div style={{maxWidth:540,margin:"0 auto"}}>
             <FadeInSection>
-              <div style={{fontSize:11,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:24,fontWeight:500}}>Let's Talk</div>
+              <div style={{fontSize:14,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:24,fontWeight:500}}>Let's Talk</div>
               <WordReveal text="Your ideas deserve a system built to carry them." size="clamp(28px,4vw,52px)" weight={700} lh={1.02} color={T.text} center />
               <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
               <FadeUp delay={0.26}>
@@ -1502,11 +1501,7 @@ export default function ExplorePage() {
                 rowGap:12,
               }}
             >
-              <div style={{ display:"flex", alignItems:"baseline", gap:0 }}>
-                <span style={{ fontSize:14, fontWeight:700, letterSpacing:"0.16em", textTransform:"uppercase", color:"#ffffff" }}>EVERY</span>
-                <span style={{ fontSize:14, fontWeight:700, letterSpacing:"0.16em", textTransform:"uppercase", color:"rgba(255,255,255,0.42)" }}>WHERE</span>
-                <span style={{ fontSize:9, fontWeight:600, letterSpacing:"0.18em", color:"rgba(255,255,255,0.4)", marginLeft:8, textTransform:"uppercase" }}>Studio</span>
-              </div>
+              <Logo size={14} variant="dark" />
               <div style={{ fontSize:12, fontWeight:500, letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.7)" }}>
                 Composed Intelligence
               </div>

@@ -41,7 +41,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
         {blockedAt && (
           <div
             style={{
-              fontSize: 11,
+              fontSize: 14,
               fontWeight: 600,
               color: "#b91c1c",
             }}
@@ -130,7 +130,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
                   </span>
                   <span
                     style={{
-                      fontSize: 11,
+                      fontSize: 14,
                       color: "var(--text-tertiary)",
                       textTransform: "uppercase",
                       letterSpacing: "0.06em",

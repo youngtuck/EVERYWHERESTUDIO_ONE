@@ -173,7 +173,7 @@ export default function Dashboard() {
             <div
               style={{
                 fontFamily: "'DM Mono', monospace",
-                fontSize: 11,
+                fontSize: 14,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 color: "rgba(0,0,0,0.3)",
@@ -197,6 +197,7 @@ export default function Dashboard() {
           </div>
           <button
             onClick={() => nav("/studio/work")}
+            title="Start a new Watson session with your idea"
             className="btn-gold cta-new-session"
             style={{
               background: "var(--gold-dark)",
@@ -219,18 +220,21 @@ export default function Dashboard() {
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            + New Output
+            + New Idea
           </button>
         </div>
       </div>
 
       <div
+        className="dashboard-stats-grid"
         style={{
           display: "grid",
           gridTemplateColumns:
             isMobile && typeof window !== "undefined" && window.innerWidth < 480
               ? "1fr"
-              : "repeat(4, minmax(0, 1fr))",
+              : isMobile
+                ? "repeat(2, minmax(0, 1fr))"
+                : "repeat(4, minmax(0, 1fr))",
           gap: 16,
           marginBottom: 24,
         }}
@@ -245,6 +249,7 @@ export default function Dashboard() {
                 outputsCreated > 0 ? `${Math.min(outputsCreated, 99)} recent` : "Get started below",
               accent: "#4A90D9",
               color: "var(--text-primary)",
+              tooltip: "Total pieces of content produced.",
             },
             {
               key: "avg",
@@ -260,6 +265,7 @@ export default function Dashboard() {
                       : "Room to improve",
               accent: "#C8961A",
               color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
+              tooltip: "Average Betterish quality score. 900 is publication threshold.",
             },
             {
               key: "voice",
@@ -273,6 +279,7 @@ export default function Dashboard() {
                     : "Building",
               accent: "#50c8a0",
               color: "var(--text-primary)",
+              tooltip: "How closely the system matches your writing voice.",
             },
             {
               key: "signals",
@@ -281,10 +288,12 @@ export default function Dashboard() {
               subtitle: "Coming soon",
               accent: "rgba(0,0,0,0.1)",
               color: "var(--text-tertiary)",
+              tooltip: "Intelligence signals from Sentinel Watch.",
             },
           ].map((stat, i) => (
             <div
               key={stat.key}
+              title={stat.tooltip}
               className="dashboard-fade-up"
               style={{
                 animationDelay: `${i * 50}ms`,
@@ -302,7 +311,7 @@ export default function Dashboard() {
                 <div
                   style={{
                     fontFamily: "'DM Mono', monospace",
-                    fontSize: 11,
+                    fontSize: 14,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
                     color: "rgba(0,0,0,0.38)",
@@ -368,7 +377,7 @@ export default function Dashboard() {
           <span
             style={{
               fontFamily: "'DM Mono', monospace",
-              fontSize: 11,
+              fontSize: 14,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
               color: "rgba(0,0,0,0.35)",
@@ -532,7 +541,7 @@ export default function Dashboard() {
         <div
           style={{
             fontFamily: "'DM Mono', monospace",
-            fontSize: 11,
+            fontSize: 14,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
             color: "rgba(0,0,0,0.35)",

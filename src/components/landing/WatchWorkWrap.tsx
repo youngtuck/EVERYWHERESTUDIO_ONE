@@ -44,7 +44,7 @@ export default function WatchWorkWrap() {
                 <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:24 }}>
                   <span style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:14, color:"var(--fg-3)", fontStyle:"italic" }}>{s.num}</span>
                   <span style={{ width:24, height:1, background:"var(--line-2)", display:"block" }} />
-                  <span style={{ fontSize:10, fontWeight:500, letterSpacing:"1px", textTransform:"uppercase", color:s.accent, fontFamily:"'DM Sans',sans-serif" }}>{s.label}</span>
+                  <span style={{ fontSize:13, fontWeight:500, letterSpacing:"1px", textTransform:"uppercase", color:s.accent, fontFamily:"'DM Sans',sans-serif" }}>{s.label}</span>
                 </div>
 
                 <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", marginBottom:22, lineHeight:1.08 }}>

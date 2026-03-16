@@ -30,7 +30,7 @@ export function PipelineProgress({ status, currentStage, blockedAt }: PipelinePr
     >
       <div
         style={{
-          fontSize: 11,
+          fontSize: 14,
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           color: "var(--text-tertiary)",
@@ -79,7 +79,7 @@ export function PipelineProgress({ status, currentStage, blockedAt }: PipelinePr
                 borderRadius: 999,
                 background: bg,
                 border,
-                fontSize: 11,
+                fontSize: 14,
               }}
             >
               <span

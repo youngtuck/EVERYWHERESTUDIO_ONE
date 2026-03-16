@@ -43,7 +43,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
         <span>{total}</span>
         <span
           style={{
-            fontSize: 10,
+            fontSize: 13,
             color: "var(--text-tertiary)",
           }}
         >
@@ -77,7 +77,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
         <div>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 14,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "var(--text-tertiary)",
@@ -118,7 +118,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
           style={{
             padding: "4px 10px",
             borderRadius: 999,
-            fontSize: 11,
+            fontSize: 14,
             fontWeight: 600,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
@@ -151,7 +151,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
               <span
                 style={{
                   width: 140,
-                  fontSize: 11,
+                  fontSize: 14,
                   color: "var(--text-tertiary)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
@@ -181,7 +181,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
                 style={{
                   width: 40,
                   textAlign: "right",
-                  fontSize: 11,
+                  fontSize: 14,
                   color: "var(--text-secondary)",
                 }}
               >

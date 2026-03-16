@@ -33,7 +33,7 @@ function Demo() {
       {/* Header bar */}
       <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:16, paddingBottom:12, borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
         <div style={{ width:6, height:6, borderRadius:"50%", background:"#F0B429", boxShadow:"0 0 6px rgba(240,180,41,0.5)" }} />
-        <span style={{ fontSize:10, color:"rgba(255,255,255,0.2)", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.5px" }}>Watson is listening</span>
+        <span style={{ fontSize:13, color:"rgba(255,255,255,0.2)", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.5px" }}>Watson is listening</span>
       </div>
       {/* Input */}
       <div style={{ marginBottom:16, minHeight:56 }}>
@@ -45,7 +45,7 @@ function Demo() {
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:4 }}>
         {FORMATS.map((f,i) => { const on = active && i < cnt; return (
           <div key={f} style={{ padding:"8px 10px", background:on?"rgba(240,180,41,0.07)":"rgba(255,255,255,0.02)", border:`1px solid ${on?"rgba(240,180,41,0.18)":"rgba(255,255,255,0.04)"}`, borderRadius:6, opacity:on?1:0.4, transition:"all 0.18s" }}>
-            <p style={{ fontSize:9.5, fontWeight:on?500:400, color:on?"#F0B429":"rgba(255,255,255,0.38)", fontFamily:"'DM Sans',sans-serif", lineHeight:1.3, transition:"color 0.18s" }}>{f}</p>
+            <p style={{ fontSize:13, fontWeight:on?500:400, color:on?"#F0B429":"rgba(255,255,255,0.38)", fontFamily:"'DM Sans',sans-serif", lineHeight:1.3, transition:"color 0.18s" }}>{f}</p>
           </div>
         );})}
       </div>
@@ -76,7 +76,7 @@ export default function Hero() {
           {/* Eyebrow */}
           <div style={{ display:"inline-flex", alignItems:"center", gap:8, marginBottom:32, padding:"5px 12px", background:dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)", border:`1px solid ${dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)"}`, borderRadius:20 }}>
             <span style={{ width:5, height:5, borderRadius:"50%", background:"var(--teal)", display:"block" }} />
-            <span style={{ fontSize:11, fontWeight:400, letterSpacing:"0.3px", color:dark?"rgba(255,255,255,0.45)":"rgba(0,0,0,0.42)", fontFamily:"'DM Sans',sans-serif" }}>Composed Intelligence Platform</span>
+            <span style={{ fontSize:14, fontWeight:400, letterSpacing:"0.3px", color:dark?"rgba(255,255,255,0.45)":"rgba(0,0,0,0.42)", fontFamily:"'DM Sans',sans-serif" }}>Composed Intelligence Platform</span>
           </div>
 
           {/* Headline: very large, serif */}
@@ -102,7 +102,7 @@ export default function Hero() {
               Explore demo →
             </button>
           </div>
-          <p style={{ fontSize:11, color:microC, fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>Invitation only · Founding members onboarding now</p>
+          <p style={{ fontSize:14, color:microC, fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>Invitation only · Founding members onboarding now</p>
         </div>
 
         <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center" }}>

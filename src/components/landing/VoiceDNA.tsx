@@ -38,7 +38,7 @@ export default function VoiceDNA() {
               <div style={{ height:3, background:"var(--bg-3)", borderRadius:2, marginBottom:6, overflow:"hidden" }}>
                 <div style={{ height:"100%", width:`${l.pct}%`, background:"var(--gold-l)", borderRadius:2 }} />
               </div>
-              <p style={{ fontSize:11, color:"var(--fg-3)", fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>{l.note}</p>
+              <p style={{ fontSize:13, color:"var(--fg-3)", fontFamily:"'DM Sans',sans-serif", fontWeight:300 }}>{l.note}</p>
             </div>
           ))}
         </div>

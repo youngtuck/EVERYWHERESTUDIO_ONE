@@ -194,52 +194,52 @@ function WatsonOrb({ size, thinking }: { size: number; thinking?: boolean }) {
 
 const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: string }> = {
   essay: {
-    label: "01 Essay",
+    label: "Essay",
     color: "#4A90D9",
     watson: "What's on your mind? Give me the rough idea and I will ask the questions that pull it into focus.",
   },
   podcast: {
-    label: "02 Podcast",
+    label: "Podcast",
     color: "#F5C642",
     watson: "What is this episode about and who are you talking to? Start with the topic and the listener you have in mind.",
   },
   book: {
-    label: "03 Book",
+    label: "Book",
     color: "#A080F5",
     watson: "What is the book for and what change do you want it to create? Tell me the working title and the core promise.",
   },
   website: {
-    label: "04 Website",
+    label: "Website",
     color: "#0D8C9E",
     watson: "Which page are we shaping and who is landing on it first? Start with the offer and the moment they show up.",
   },
   video_script: {
-    label: "05 Video Script",
-    color: "#e85d75",
+    label: "Video Script",
+    color: "#E8B4A0",
     watson: "What is the video about and where will it live? Give me the hook, the viewer, and the outcome you want.",
   },
   newsletter: {
-    label: "06 Newsletter",
+    label: "Newsletter",
     color: "#50c8a0",
     watson: "What happened this week that is worth sharing? Start with the story, the shift, or the lesson.",
   },
   socials: {
-    label: "07 Socials",
+    label: "Socials",
     color: "#4A90D9",
     watson: "What is the one idea you want to put into the feed? Tell me the take and where it should show up.",
   },
   presentation: {
-    label: "08 Presentation",
+    label: "Presentation",
     color: "#F5A623",
     watson: "What is the talk for and who is in the room? Tell me the occasion, the outcome, and the one thing they should remember.",
   },
   business: {
-    label: "09 Business",
+    label: "Business",
     color: "#6b4dd4",
     watson: "What are you trying to win here: a client, a project, or a renewal? Give me the stakes, the buyer, and the shape of the proposal.",
   },
   freestyle: {
-    label: "10 Freestyle",
+    label: "Freestyle",
     color: "#C8961A",
     watson: "What do you want to make that does not fit the grid? Describe it in your own words and we will build from there.",
   },
@@ -600,7 +600,7 @@ function OutputTypePill({
                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: 13,
                       color: "var(--fg-3)",
                       background: "var(--bg-3)",
                       borderRadius: 4,
@@ -1188,7 +1188,7 @@ export default function WorkSession() {
           <div key={step.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: 600,
                 letterSpacing: "0.04em",
                 color: step.done ? "var(--gold-dark)" : step.active ? "var(--text-primary)" : "var(--text-tertiary)",
@@ -1651,7 +1651,7 @@ export default function WorkSession() {
             <span
               style={{
                 fontFamily: "'DM Sans', sans-serif",
-                fontSize: 11,
+                fontSize: 14,
                 color: "var(--text-tertiary)",
                 letterSpacing: ".02em",
                 textTransform: "uppercase",
@@ -1737,10 +1737,10 @@ export default function WorkSession() {
             </div>
           )}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
               {apiError}
               {apiError && (
-                <button type="button" onClick={() => setApiError(null)} style={{ fontSize: 10, fontWeight: 600, color: "var(--text-primary)", background: "rgba(0,0,0,0.06)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>Try again</button>
+                <button type="button" onClick={() => setApiError(null)} style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", background: "rgba(0,0,0,0.06)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>Try again</button>
               )}
               {!apiError && "Enter to send · Shift+Enter for new line"}
             </span>

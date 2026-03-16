@@ -494,7 +494,7 @@ export default function OutputDetail() {
       >
         <div
           style={{
-            fontSize: 10,
+            fontSize: 13,
             fontWeight: 700,
             letterSpacing: "0.12em",
             color: "rgba(0,0,0,0.3)",
@@ -514,6 +514,7 @@ export default function OutputDetail() {
         >
           <button
             onClick={wrapAsWebPage}
+            title="Open as a standalone web page"
             style={pillBase}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
@@ -530,6 +531,7 @@ export default function OutputDetail() {
           </button>
           <button
             onClick={wrapAsGoogleDoc}
+            title="Copy content and open Google Docs"
             style={pillBase}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
@@ -546,6 +548,7 @@ export default function OutputDetail() {
           </button>
           <button
             onClick={wrapAsWordDoc}
+            title="Download as a Word document"
             style={pillBase}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
@@ -562,6 +565,7 @@ export default function OutputDetail() {
           </button>
           <button
             onClick={wrapAsSlideDeck}
+            title="Export as a slide deck (coming soon)"
             style={{ ...pillBase, position: "relative" as const, opacity: 0.5 }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
@@ -579,7 +583,7 @@ export default function OutputDetail() {
                 position: "absolute",
                 top: 4,
                 right: 8,
-                fontSize: 9,
+                fontSize: 12,
                 fontWeight: 600,
                 color: "rgba(0,0,0,0.4)",
                 letterSpacing: "0.05em",
@@ -591,6 +595,7 @@ export default function OutputDetail() {
           </button>
           <button
             onClick={() => navigate(`/studio/wrap/visual/${output!.id}`)}
+            title="Open in the visual editor"
             style={pillBase}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
@@ -607,6 +612,7 @@ export default function OutputDetail() {
           </button>
           <button
             onClick={copyText}
+            title="Copy content to clipboard"
             style={pillBase}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";

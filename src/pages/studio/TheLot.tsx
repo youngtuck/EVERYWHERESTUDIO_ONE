@@ -283,7 +283,7 @@ export default function TheLot() {
               Park an Idea
             </h2>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
+              <label style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
                 What is the idea?
               </label>
               <textarea
@@ -307,7 +307,7 @@ export default function TheLot() {
               />
             </div>
             <div style={{ marginBottom: 24 }}>
-              <label style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
+              <label style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
                 Project
               </label>
               <select

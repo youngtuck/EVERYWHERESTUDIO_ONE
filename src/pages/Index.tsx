@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
+import Logo from "../components/Logo";
 
 // ── SIGNAL FIELD with fluid cursor physics ─────────────────────────────────
 function SignalField({ zoomRef }: { zoomRef: React.RefObject<number> }) {
@@ -269,11 +270,7 @@ export default function Index() {
       }}>
         {/* Logo */}
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 28, ...fi(.08) }}>
-          <div style={{ display: "flex", alignItems: "baseline" }}>
-            <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-.01em", color: "rgba(255,255,255,.95)" }}>EVERY</span>
-            <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-.01em", color: "rgba(255,255,255,.42)" }}>WHERE</span>
-            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".18em", color: "rgba(255,255,255,.38)", marginLeft: 6, alignSelf: "center", textTransform: "uppercase" }}>Studio</span>
-          </div>
+          <Logo size={20} variant="dark" showTM />
         </div>
 
         {/* Headline + CTA */}
@@ -331,25 +328,10 @@ export default function Index() {
         {/* Minimal footer */}
         <footer style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingBottom: 26, gap: 8, ...fi(.95), pointerEvents: zoomingToExplore ? "none" : "auto" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 11, letterSpacing: ".12em", color: "rgba(255,255,255,.30)", fontWeight: 400 }}>
-              EVERYWHERE STUDIO &nbsp;·&nbsp; Ideas to Impact
+            <span style={{ fontSize: 11, letterSpacing: ".12em", color: "rgba(255,255,255,.30)", fontWeight: 400, fontFamily: "'DM Sans', sans-serif" }}>
+              EVERYWHERE STUDIO · Ideas to Impact
             </span>
           </div>
-          <a
-            href="/explore"
-            onClick={(e) => { e.preventDefault(); navigate("/explore"); }}
-            style={{
-              fontSize: 11,
-              letterSpacing: ".1em",
-              color: "rgba(255,255,255,.5)",
-              fontWeight: 500,
-              transition: "color .2s ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,.85)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,.5)"; }}
-          >
-            Explore →
-          </a>
         </footer>
       </div>
     </div>

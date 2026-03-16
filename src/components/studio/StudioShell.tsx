@@ -55,10 +55,17 @@ export default function StudioShell() {
     location.pathname === "/studio/work" ||
     location.pathname.startsWith("/studio/work/");
 
+  const studioFooter = (
+    <footer style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+      EVERYWHERE STUDIO (tm) 2026, Mixed Grill, LLC, v6.5 Alpha
+    </footer>
+  );
+
   if (isFullScreen) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", transition: "none" }}>
-        <Outlet />
+      <div style={{ minHeight: "100vh", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", transition: "none", display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1 }}><Outlet /></div>
+        {studioFooter}
       </div>
     );
   }
@@ -105,7 +112,7 @@ export default function StudioShell() {
           onMobileClose={isMobile ? () => setSidebarOpen(false) : undefined}
         />
       </div>
-      <main style={{ flex: 1, minHeight: "100vh", background: "#F4F2ED", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none" }}>
+      <main style={{ flex: 1, minHeight: "100vh", background: "#F4F2ED", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none", display: "flex", flexDirection: "column" }}>
         {isMobile && (
           <div
             style={{
@@ -146,11 +153,12 @@ export default function StudioShell() {
             <span style={{ width: 32 }} />
           </div>
         )}
-        <div className="studio-main-inner" style={{ background: "#F4F2ED" }}>
+        <div className="studio-main-inner" style={{ background: "#F4F2ED", flex: 1 }}>
           <div key={location.pathname} className="studio-page-transition">
             <Outlet />
           </div>
         </div>
+        {studioFooter}
       </main>
     </div>
   );

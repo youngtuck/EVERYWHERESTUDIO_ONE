@@ -328,7 +328,7 @@ export default function OutputLibrary() {
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                     <div style={{ width: 8, height: 8, borderRadius: "50%", background: sc.fill, flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                       {TYPE_LABELS[o.output_type] || o.output_type}
                     </span>
                   </div>
@@ -425,7 +425,7 @@ export default function OutputLibrary() {
                 <span
                   style={{
                     fontFamily: "'DM Mono', monospace",
-                    fontSize: 10,
+                    fontSize: 13,
                     fontWeight: 500,
                     textTransform: "uppercase",
                     padding: "3px 10px",
