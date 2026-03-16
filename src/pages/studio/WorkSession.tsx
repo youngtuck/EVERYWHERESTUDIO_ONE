@@ -457,12 +457,9 @@ function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string
       <WatsonOrb size={120} />
 
       <div style={{ maxWidth: 400 }}>
-        <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 10, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
+        <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
           What's on your mind?
         </h2>
-        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
-          Start with a rough idea. Watson will ask the questions that shape it, then you'll pick the best format.
-        </p>
       </div>
     </div>
   );
@@ -1404,150 +1401,245 @@ export default function WorkSession() {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "flex-start",
-              padding: 32,
-              gap: 16,
+              padding: isMobile ? "24px 16px" : "32px 24px",
+              overflowY: "auto",
             }}
           >
-            <div
-              className="card"
-              style={{
-                maxWidth: 480,
-                width: "100%",
-                padding: "var(--studio-gap-lg)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 20,
-                textAlign: "center",
-              }}
-            >
-              <div
+            {/* Generated content - front and center */}
+            <div style={{ maxWidth: 680, width: "100%", marginBottom: 24 }}>
+              <pre
                 style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "var(--studio-radius)",
-                  background: "var(--bg-2)",
-                  border: "1px solid var(--line)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "var(--fg-2)",
-                }}
-              >
-                <FileText size={28} strokeWidth={1.5} />
-              </div>
-              <h2
-                style={{
-                  fontSize: 24,
-                  fontWeight: 700,
-                  color: "#1a1a1a",
-                  margin: 0,
-                  letterSpacing: "-0.02em",
                   fontFamily: "'DM Sans', sans-serif",
+                  fontSize: isMobile ? 14 : 15,
+                  lineHeight: 1.25,
+                  color: "var(--text-primary)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  margin: 0,
+                  background: "var(--surface-white)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 12,
+                  padding: isMobile ? "20px 16px" : "32px 36px",
                 }}
               >
-                Your {type.label} is ready
-              </h2>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 3,
-                    borderRadius: 2,
-                    background: "rgba(0,0,0,0.04)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      borderRadius: 2,
-                      width: `${Math.min(100, generatedScore / 10)}%`,
-                      background: getScoreColor(generatedScore).fill,
-                    }}
-                  />
-                </div>
-                <span
-                  style={{
-                    fontSize: 13,
+                {generatedContent}
+              </pre>
+            </div>
+
+            {/* Score summary + action buttons */}
+            <div style={{ maxWidth: 680, width: "100%", marginBottom: 24 }}>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 16,
+                marginBottom: 16,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: 32,
                     fontWeight: 700,
                     color: getScoreColor(generatedScore).text,
                     fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {generatedScore}
-                </span>
+                  }}>
+                    {generatedScore}
+                  </span>
+                  <span style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: generatedScore >= 900 ? "#50c8a0" : "var(--text-secondary)",
+                  }}>
+                    {generatedScore >= 900 ? "Ready to publish" : "Needs revision"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhase("input");
+                      setShowCheckpointSequence(false);
+                    }}
+                    style={{
+                      background: "transparent",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: 8,
+                      padding: "10px 20px",
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+                  >
+                    Edit and refine
+                  </button>
+                  {generatedScore >= 900 && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/studio/outputs/${generatedOutputId}`)}
+                      style={{
+                        background: "var(--gold-dark)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "10px 20px",
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "opacity 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                    >
+                      Move to Wrap
+                    </button>
+                  )}
+                  {generatedScore < 900 && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/studio/outputs/${generatedOutputId}`)}
+                      style={{
+                        background: "var(--text-primary)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "10px 20px",
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        transition: "opacity 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                    >
+                      View in Vault
+                    </button>
+                  )}
+                </div>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  width: "100%",
-                  flexDirection: "column",
-                }}
-              >
+
+              {/* Collapsible scoring breakdown */}
+              {generatedGates && (
+                <details style={{
+                  background: "var(--surface-white)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                }}>
+                  <summary style={{
+                    padding: "14px 20px",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "var(--text-secondary)",
+                    fontFamily: "'DM Sans', sans-serif",
+                    userSelect: "none",
+                    listStyle: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}>
+                    <span>Scoring breakdown</span>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transition: "transform 0.15s" }}>
+                      <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </summary>
+                  <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {CHECKPOINTS.filter(cp => cp.key !== null).map((cp) => {
+                      const score = cp.key ? (generatedGates[cp.key as keyof GatesFromApi] as number | undefined) : undefined;
+                      return (
+                        <div key={cp.number} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <span style={{ width: 140, fontSize: 13, color: "var(--text-secondary)", fontFamily: "'DM Sans', sans-serif" }}>
+                            {cp.agent}
+                          </span>
+                          <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
+                            <div style={{
+                              height: "100%",
+                              width: `${Math.max(0, Math.min(100, score ?? 0))}%`,
+                              background: score !== undefined ? checkpointScoreColor(score).text : "rgba(0,0,0,0.1)",
+                              borderRadius: 2,
+                            }} />
+                          </div>
+                          <span style={{
+                            width: 36,
+                            textAlign: "right",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            fontVariantNumeric: "tabular-nums",
+                            color: score !== undefined ? checkpointScoreColor(score).text : "var(--text-tertiary)",
+                          }}>
+                            {score ?? "–"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {generatedGates.summary && (
+                      <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0, lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif" }}>
+                        {generatedGates.summary}
+                      </p>
+                    )}
+                  </div>
+                </details>
+              )}
+
+              {/* Pipeline controls */}
+              <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  className="btn-primary"
-                  style={{ width: "100%", padding: "12px" }}
-                  onClick={() => navigate(`/studio/outputs/${generatedOutputId}`)}
-                >
-                  View Output
-                </button>
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  style={{ width: "100%", padding: "12px" }}
-                  onClick={startOver}
-                >
-                  Start Over
-                </button>
-                <button
-                  type="button"
+                  onClick={handleRunPipeline}
+                  disabled={pipelineStatus === "RUNNING" || !generatedOutputId || generatedOutputId === "new"}
                   style={{
-                    width: "100%",
-                    padding: "12px",
+                    padding: "10px 20px",
                     borderRadius: 8,
                     border: "1px solid var(--border-subtle)",
-                    background:
-                      pipelineStatus === "RUNNING"
-                        ? "rgba(0,0,0,0.02)"
-                        : "var(--surface-white)",
+                    background: pipelineStatus === "RUNNING" ? "rgba(0,0,0,0.02)" : "var(--surface-white)",
                     fontFamily: "'DM Sans', sans-serif",
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: 500,
-                    color:
-                      pipelineStatus === "RUNNING"
-                        ? "var(--text-tertiary)"
-                        : "var(--text-primary)",
-                    cursor:
-                      pipelineStatus === "RUNNING" || !generatedOutputId || generatedOutputId === "new"
-                        ? "default"
-                        : "pointer",
+                    color: pipelineStatus === "RUNNING" ? "var(--text-tertiary)" : "var(--text-secondary)",
+                    cursor: pipelineStatus === "RUNNING" ? "default" : "pointer",
+                    transition: "all 0.15s ease",
                   }}
-                  disabled={
-                    pipelineStatus === "RUNNING" ||
-                    !generatedOutputId ||
-                    generatedOutputId === "new"
-                  }
-                  onClick={handleRunPipeline}
                 >
-                  {pipelineStatus === "RUNNING"
-                    ? "Running quality pipeline..."
-                    : "Run Quality Pipeline"}
+                  {pipelineStatus === "RUNNING" ? "Running quality pipeline..." : "Run Quality Pipeline"}
+                </button>
+                <button
+                  type="button"
+                  onClick={startOver}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border-subtle)",
+                    background: "transparent",
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "var(--text-secondary)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  Start over
                 </button>
               </div>
-            </div>
 
-            {pipelineStatus !== "IDLE" && (
-              <div style={{ maxWidth: 720, width: "100%", marginTop: 8 }}>
-                <PipelineProgress
-                  status={pipelineStatus}
-                  currentStage={currentStage}
-                  blockedAt={blockedAt}
-                />
-              </div>
-            )}
+              {pipelineStatus !== "IDLE" && (
+                <div style={{ marginTop: 12 }}>
+                  <PipelineProgress
+                    status={pipelineStatus}
+                    currentStage={currentStage}
+                    blockedAt={blockedAt}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1777,41 +1869,7 @@ export default function WorkSession() {
             </button>
           </div>
         </div>
-        {messages.filter((m) => m.role === "user").length === 0 && (
-          <div style={{ maxWidth: 720, margin: "0 auto", marginTop: 12, display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {(SUGGESTIONS_BY_TYPE.freestyle).map((s, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => sendMessage(s)}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontFamily: "'DM Sans', sans-serif",
-                  background: "transparent",
-                  border: "1px solid var(--border-subtle)",
-                  color: "var(--text-tertiary)",
-                  cursor: "pointer",
-                  transition: "border-color 0.15s, color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-default)";
-                  e.currentTarget.style.color = "var(--text-secondary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-subtle)";
-                  e.currentTarget.style.color = "var(--text-tertiary)";
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-        <p style={{ textAlign: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-tertiary)", marginTop: 10, letterSpacing: ".01em" }}>
-          Watson is your First Listener. Say anything. It will ask the right questions.
-        </p>
+        {/* Suggestion pills and helper text removed for clean minimal UI */}
       </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus } from "lucide-react";
 import "./shared.css";
 
@@ -43,6 +43,7 @@ function TraitBar({ label, score, delay }: { label: string; score: number; delay
 
 export default function VoiceDnaSettings() {
   const [samples] = useState(WRITING_SAMPLES);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div
@@ -174,6 +175,7 @@ export default function VoiceDnaSettings() {
           </div>
           <button
             type="button"
+            onClick={() => fileInputRef.current?.click()}
             style={{
               background: "transparent",
               color: "var(--text-primary)",
@@ -187,6 +189,7 @@ export default function VoiceDnaSettings() {
               display: "flex",
               alignItems: "center",
               gap: 8,
+              transition: "all 0.15s ease",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(0,0,0,0.02)";
@@ -198,8 +201,21 @@ export default function VoiceDnaSettings() {
             }}
           >
             <Plus size={16} strokeWidth={2} />
-            + Add Sample
+            Add Sample
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".txt,.md,.doc,.docx,.pdf"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) {
+                console.log("[VoiceDNA] Sample file selected:", file.name);
+              }
+            }}
+          />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {samples.map((s, i) => (
