@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { FileText, Sparkles, ArrowLeft, Mic } from "lucide-react";
+import { FileText, Sparkles, ArrowLeft, Mic, Check, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -764,6 +764,41 @@ async function generateOutput(conversationSummary: string, outputTypeApi: string
   return res.json();
 }
 
+type GatesFromApi = {
+  strategy?: number;
+  voice?: number;
+  accuracy?: number;
+  ai_tells?: number;
+  audience?: number;
+  platform?: number;
+  impact?: number;
+  total?: number;
+  summary?: string;
+};
+
+const CHECKPOINTS = [
+  { number: 0, agent: "Echo", role: "Deduplication", key: null as string | null, description: "Checking for repeated ideas" },
+  { number: 1, agent: "Priya Kumar", role: "Research Accuracy", key: "accuracy", description: "Verifying claims and sources" },
+  { number: 2, agent: "Jordan Lane", role: "Voice Authenticity", key: "voice", description: "Matching your voice DNA" },
+  { number: 3, agent: "David Stone", role: "Engagement", key: "audience", description: "7-second hook test" },
+  { number: 4, agent: "Dr. Elena Vasquez", role: "SLOP Detection", key: "ai_tells", description: "Zero AI tells, zero em-dashes" },
+  { number: 5, agent: "Natasha Boyko", role: "Editorial Excellence", key: "strategy", description: "Publication-grade standard" },
+  { number: 6, agent: "Marcus Webb", role: "Perspective", key: "platform", description: "Platform and context fit" },
+  { number: 7, agent: "Marshall", role: "Impact + NVC", key: "impact", description: "Final impact assessment" },
+];
+
+function checkpointScoreColor(score: number): { text: string; bg: string } {
+  if (score >= 80) return { text: "#50c8a0", bg: "rgba(80,200,160,0.12)" };
+  if (score >= 60) return { text: "#C8961A", bg: "rgba(200,150,26,0.12)" };
+  return { text: "#E53935", bg: "rgba(229,57,53,0.12)" };
+}
+
+function totalScoreColor(total: number): string {
+  if (total >= 900) return "#50c8a0";
+  if (total >= 700) return "#C8961A";
+  return "#E53935";
+}
+
 export default function WorkSession() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -798,6 +833,10 @@ export default function WorkSession() {
   const outputTypeApi = OUTPUT_TYPE_TO_API[outputType] || "freestyle";
   const [isReady, setIsReady] = useState(false);
   const [currentSystemMode, setCurrentSystemMode] = useState<SystemMode>("CONTENT_PRODUCTION");
+  const [generatedGates, setGeneratedGates] = useState<GatesFromApi | null>(null);
+  const [showCheckpointSequence, setShowCheckpointSequence] = useState(false);
+  const [visibleCheckpointCount, setVisibleCheckpointCount] = useState(0);
+  const [revealedCheckpointCount, setRevealedCheckpointCount] = useState(0);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
     setInput((prev) => {
@@ -854,6 +893,18 @@ export default function WorkSession() {
     }
   }, [loading]);
 
+  useEffect(() => {
+    if (!showCheckpointSequence || !generatedGates || visibleCheckpointCount >= 8) return;
+    const t = setTimeout(() => setVisibleCheckpointCount((c) => c + 1), 300);
+    return () => clearTimeout(t);
+  }, [showCheckpointSequence, generatedGates, visibleCheckpointCount]);
+
+  useEffect(() => {
+    if (revealedCheckpointCount >= visibleCheckpointCount || visibleCheckpointCount === 0) return;
+    const id = setTimeout(() => setRevealedCheckpointCount(visibleCheckpointCount), 400);
+    return () => clearTimeout(id);
+  }, [visibleCheckpointCount, revealedCheckpointCount]);
+
   const sendMessage = async (contentOverride?: string) => {
     const text = (contentOverride !== undefined ? contentOverride : input).trim();
     if (!text || loading) return;
@@ -908,6 +959,12 @@ export default function WorkSession() {
       const { content, score, gates } = await generateOutput(conversationSummary, outputTypeApi, voiceProfile, user?.id);
       setGeneratedContent(content);
       setGeneratedScore(score);
+      const gatesData = (gates as GatesFromApi) ?? null;
+      setGeneratedGates(gatesData);
+      const hasGates = gatesData && typeof gatesData.total === "number";
+      setShowCheckpointSequence(!!hasGates);
+      setVisibleCheckpointCount(0);
+      setRevealedCheckpointCount(0);
 
       // Save to Supabase
       const title = sessionTitle !== "New Session" ? sessionTitle : `${type.label} - ${new Date().toLocaleDateString()}`;
@@ -1018,6 +1075,8 @@ export default function WorkSession() {
     setPhase("input");
     setGeneratedContent("");
     setGeneratedScore(0);
+    setGeneratedGates(null);
+    setShowCheckpointSequence(false);
     setApiError(null);
     setIsReady(false);
     setMessages([{
@@ -1060,6 +1119,10 @@ export default function WorkSession() {
         @keyframes makeThingPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(200,150,26,0); }
           50%      { box-shadow: 0 0 0 6px rgba(200,150,26,0.2); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
       `}</style>
 
@@ -1172,7 +1235,171 @@ export default function WorkSession() {
           </div>
         )}
 
-        {phase === "complete" && (
+        {phase === "complete" && showCheckpointSequence && generatedGates && (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              padding: 32,
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                maxWidth: 520,
+                width: "100%",
+                background: "var(--surface-white)",
+                borderRadius: 12,
+                border: "1px solid var(--border-subtle)",
+                fontFamily: "'DM Sans', sans-serif",
+                overflow: "hidden",
+              }}
+            >
+              {CHECKPOINTS.map((cp, index) => {
+                const isVisible = index < visibleCheckpointCount;
+                const isRevealed = index < revealedCheckpointCount;
+                const score = cp.key ? (generatedGates[cp.key as keyof GatesFromApi] as number | undefined) : undefined;
+                const isEcho = cp.key === null;
+                if (!isVisible) return null;
+                return (
+                  <div
+                    key={cp.number}
+                    style={{
+                      padding: "12px 16px",
+                      borderBottom: index < 7 ? "1px solid var(--border-subtle)" : "none",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        background: "var(--bg-navy, #0f172a)",
+                        color: "var(--gold-dark, #C8961A)",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {cp.number + 1}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+                        {cp.agent}
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>
+                        {cp.role}
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>
+                        {cp.description}
+                      </div>
+                    </div>
+                    <div style={{ flexShrink: 0 }}>
+                      {isEcho ? (
+                        <span style={{ display: "flex", alignItems: "center", gap: 6, color: "#50c8a0", fontSize: 13, fontWeight: 600 }}>
+                          <Check size={16} strokeWidth={2.5} />
+                          Pass
+                        </span>
+                      ) : !isRevealed ? (
+                        <Loader2 size={18} style={{ color: "var(--text-tertiary)", animation: "spin 0.8s linear infinite" }} />
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            fontVariantNumeric: "tabular-nums",
+                            color: score !== undefined ? checkpointScoreColor(score).text : "var(--text-tertiary)",
+                            background: score !== undefined ? checkpointScoreColor(score).bg : "transparent",
+                            padding: "4px 10px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          {score !== undefined ? score : "–"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {visibleCheckpointCount >= 8 && (
+              <div
+                style={{
+                  maxWidth: 520,
+                  width: "100%",
+                  marginTop: 24,
+                  textAlign: "center",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 48,
+                    fontWeight: 700,
+                    color: totalScoreColor(generatedGates.total ?? generatedScore),
+                    fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {generatedGates.total ?? generatedScore}
+                </div>
+                <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "8px 0 0" }}>
+                  Publication threshold: 900
+                </p>
+                {generatedScore >= 900 ? (
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "#50c8a0", margin: "12px 0 0" }}>
+                    Ready to publish
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "12px 0 0", maxWidth: 400, marginLeft: "auto", marginRight: "auto" }}>
+                    Below threshold. Revisions recommended.
+                    {generatedGates.summary && ` ${generatedGates.summary}`}
+                  </p>
+                )}
+                <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ padding: "10px 20px", fontSize: 14, borderRadius: 8 }}
+                    onClick={() => setShowCheckpointSequence(false)}
+                  >
+                    View output
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    style={{
+                      padding: "10px 20px",
+                      fontSize: 14,
+                      borderRadius: 8,
+                      border: "1px solid var(--border-subtle)",
+                      background: "transparent",
+                    }}
+                    onClick={() => {
+                      setPhase("input");
+                      setShowCheckpointSequence(false);
+                    }}
+                  >
+                    Revise with Watson
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {phase === "complete" && !showCheckpointSequence && (
           <div
             style={{
               flex: 1,
