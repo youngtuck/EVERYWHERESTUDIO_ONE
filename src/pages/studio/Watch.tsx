@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import Tooltip from "../../components/Tooltip";
 import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
@@ -61,6 +62,22 @@ function getTodayDateLabel(): string {
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}, ${d.getFullYear()}`;
 }
 
+type SentinelSeedResponse = {
+  industries?: string[];
+  topics?: string[];
+  people?: string[];
+  competitors?: string[];
+  contentTriggers?: string[];
+};
+
+function flattenSeedResponse(data: SentinelSeedResponse): string[] {
+  const out: string[] = [];
+  [data.industries, data.topics, data.people, data.competitors, data.contentTriggers].forEach((arr) => {
+    if (Array.isArray(arr)) arr.forEach((s) => { if (s && String(s).trim()) out.push(String(s).trim()); });
+  });
+  return out;
+}
+
 export default function Watch() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -72,6 +89,13 @@ export default function Watch() {
   const [loadingFadeOut, setLoadingFadeOut] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
   const completingStarted = useRef(false);
+
+  const [setupLinkedInUrl, setSetupLinkedInUrl] = useState("");
+  const [seedLoading, setSeedLoading] = useState(false);
+  const [seedError, setSeedError] = useState("");
+  const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
+  const [newTopicInput, setNewTopicInput] = useState("");
+  const [startWatchingLoading, setStartWatchingLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -99,6 +123,106 @@ export default function Watch() {
   const sections = briefing?.briefing?.sections ?? {};
   const defaultTopics = ["AI and technology", "thought leadership", "executive communication", "content strategy"];
   const topics = (profile?.sentinel_topics?.length ? profile.sentinel_topics : defaultTopics) as string[];
+  const needsSetup = profile != null && (!profile.sentinel_topics || profile.sentinel_topics.length === 0);
+
+  const handleAnalyzeLinkedIn = async () => {
+    if (!setupLinkedInUrl.trim() || !setupLinkedInUrl.includes("linkedin.com")) {
+      setSeedError("Enter a valid LinkedIn profile URL.");
+      return;
+    }
+    setSeedError("");
+    setSeedLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/sentinel-seed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkedInUrl: setupLinkedInUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed");
+      setSuggestedTopics(flattenSeedResponse(data));
+    } catch (err) {
+      setSeedError(err instanceof Error ? err.message : "Failed to analyze URL.");
+    } finally {
+      setSeedLoading(false);
+    }
+  };
+
+  const handleAutoDetectVoiceDna = async () => {
+    if (!user) return;
+    setSeedError("");
+    setSeedLoading(true);
+    try {
+      const { data: resources } = await supabase
+        .from("resources")
+        .select("content")
+        .eq("user_id", user.id)
+        .eq("resource_type", "voice_dna");
+      const voiceDnaContent = (resources || [])
+        .map((r: { content?: string }) => r.content || "")
+        .filter(Boolean)
+        .join("\n\n")
+        .slice(0, 30000);
+      if (!voiceDnaContent.trim()) {
+        setSeedError("No Voice DNA resources found. Add Voice DNA in Studio Resources first.");
+        setSeedLoading(false);
+        return;
+      }
+      const res = await fetch(`${API_BASE}/api/sentinel-seed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voiceDnaContent, userName: profile?.full_name || "there" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed");
+      setSuggestedTopics(flattenSeedResponse(data));
+    } catch (err) {
+      setSeedError(err instanceof Error ? err.message : "Failed to detect from Voice DNA.");
+    } finally {
+      setSeedLoading(false);
+    }
+  };
+
+  const handleStartWatching = async () => {
+    if (!user || suggestedTopics.length === 0) return;
+    setStartWatchingLoading(true);
+    setSeedError("");
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ sentinel_topics: suggestedTopics })
+        .eq("id", user.id);
+      if (error) throw error;
+      setProfile((p) => (p ? { ...p, sentinel_topics: suggestedTopics } : null));
+      setSuggestedTopics([]);
+      setGenerating(true);
+      const res = await fetch(`${API_BASE}/api/sentinel-generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          userName: profile?.full_name || "there",
+          topics: suggestedTopics,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setBriefing({
+        user_id: user.id,
+        generated_at: new Date().toISOString(),
+        date_label: data.date_label || getTodayDateLabel(),
+        briefing: data,
+        signals_count: data.signals_count ?? 0,
+      });
+      setGenerating(false);
+      setCompleting(true);
+    } catch (err) {
+      setSeedError(err instanceof Error ? err.message : "Failed to save or generate briefing.");
+      setGenerating(false);
+    } finally {
+      setStartWatchingLoading(false);
+    }
+  };
 
   const handleGenerateNow = async () => {
     if (!user) return;
@@ -205,8 +329,8 @@ export default function Watch() {
         style={{
           background: HEADER_BG,
           color: "#fff",
-          padding: "32px 24px 40px",
-          marginBottom: 32,
+          padding: "24px 24px 32px",
+          marginBottom: 24,
         }}
       >
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
@@ -222,8 +346,203 @@ export default function Watch() {
         </div>
       </header>
 
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px 80px", position: "relative" }}>
-        {showSentinelLoading && (
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px 60px", position: "relative" }}>
+        {needsSetup && (
+          <div
+            style={{
+              background: "var(--surface-white)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: 12,
+              padding: 24,
+              marginBottom: 24,
+            }}
+          >
+            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>
+              Set up your Watch
+            </h2>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 24px" }}>
+              Seed Sentinel with topics from your LinkedIn profile or Voice DNA so it knows what to monitor.
+            </p>
+            {suggestedTopics.length === 0 ? (
+              <>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6 }}>
+                    Paste your LinkedIn URL
+                  </label>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <input
+                      type="url"
+                      value={setupLinkedInUrl}
+                      onChange={(e) => setSetupLinkedInUrl(e.target.value)}
+                      placeholder="https://linkedin.com/in/..."
+                      style={{
+                        flex: 1,
+                        minWidth: 200,
+                        padding: "10px 12px",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: 8,
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: 14,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAnalyzeLinkedIn}
+                      disabled={seedLoading}
+                      style={{
+                        background: WATCH_BLUE,
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "10px 20px",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: seedLoading ? "wait" : "pointer",
+                      }}
+                    >
+                      {seedLoading ? "Analyzing…" : "Analyze"}
+                    </button>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 8 }}>
+                    Or use your Studio content
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAutoDetectVoiceDna}
+                    disabled={seedLoading}
+                    style={{
+                      background: "transparent",
+                      color: WATCH_BLUE,
+                      border: `1px solid ${WATCH_BLUE}`,
+                      borderRadius: 8,
+                      padding: "10px 20px",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: seedLoading ? "wait" : "pointer",
+                    }}
+                  >
+                    {seedLoading ? "Detecting…" : "Auto-detect from Voice DNA"}
+                  </button>
+                </div>
+                {seedError && (
+                  <p style={{ fontSize: 13, color: "#D64545", margin: "0 0 16px" }}>{seedError}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 16px" }}>
+                  Review and edit your topics, then click Start Watching.
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                  {suggestedTopics.map((topic, i) => (
+                    <span
+                      key={`${topic}-${i}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "6px 12px",
+                        background: "var(--surface-secondary)",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: 20,
+                        fontSize: 13,
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      {topic}
+                      <button
+                        type="button"
+                        onClick={() => setSuggestedTopics((prev) => prev.filter((_, idx) => idx !== i))}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          color: "var(--text-tertiary)",
+                          fontSize: 16,
+                          lineHeight: 1,
+                        }}
+                        aria-label="Remove"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
+                  <input
+                    type="text"
+                    value={newTopicInput}
+                    onChange={(e) => setNewTopicInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (newTopicInput.trim()) {
+                          setSuggestedTopics((prev) => [...prev, newTopicInput.trim()]);
+                          setNewTopicInput("");
+                        }
+                      }
+                    }}
+                    placeholder="Add a topic"
+                    style={{
+                      width: 180,
+                      padding: "8px 12px",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: 8,
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 13,
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newTopicInput.trim()) {
+                        setSuggestedTopics((prev) => [...prev, newTopicInput.trim()]);
+                        setNewTopicInput("");
+                      }
+                    }}
+                    style={{
+                      background: "transparent",
+                      color: WATCH_BLUE,
+                      border: `1px solid ${WATCH_BLUE}`,
+                      borderRadius: 8,
+                      padding: "8px 16px",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleStartWatching}
+                  disabled={startWatchingLoading || suggestedTopics.length === 0}
+                  style={{
+                    background: WATCH_BLUE,
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 10,
+                    padding: "12px 24px",
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: startWatchingLoading ? "wait" : "pointer",
+                  }}
+                >
+                  {startWatchingLoading ? "Starting…" : "Start Watching"}
+                </button>
+                {seedError && (
+                  <p style={{ fontSize: 13, color: "#D64545", margin: "16px 0 0" }}>{seedError}</p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {!needsSetup && showSentinelLoading && (
           <div
             style={{
               background: "#07090F",
@@ -310,7 +629,7 @@ export default function Watch() {
             </div>
           </div>
         )}
-        {!hasTodayBriefing && !showSentinelLoading && (
+        {!needsSetup && !hasTodayBriefing && !showSentinelLoading && (
           <div
             style={{
               background: "var(--surface-white)",
@@ -346,7 +665,7 @@ export default function Watch() {
             </button>
           </div>
         )}
-        {hasTodayBriefing && (
+        {!needsSetup && hasTodayBriefing && (
           <div
             style={{
               opacity: showSentinelLoading && !loadingFadeOut ? 0 : 1,
@@ -358,7 +677,7 @@ export default function Watch() {
             {/* Left: What's Moving + Threats */}
             <div>
               {(sections.whats_moving?.length ?? 0) > 0 && (
-                <SectionTitle label="What's Moving" color={WATCH_BLUE} />
+                <SectionTitle label="What's Moving" color={WATCH_BLUE} tooltip="Key shifts in your category and what they mean." />
               )}
               {(sections.whats_moving ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
@@ -382,7 +701,7 @@ export default function Watch() {
                 </Card>
               ))}
 
-              {(sections.threats?.length ?? 0) > 0 && <SectionTitle label="Threats" color="#D64545" style={{ marginTop: 32 }} />}
+              {(sections.threats?.length ?? 0) > 0 && <SectionTitle label="Threats" color="#D64545" style={{ marginTop: 32 }} tooltip="Risks and competitive moves to watch." />}
               {(sections.threats ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16, borderLeft: "4px solid #D64545" }}>
                   <span style={{ fontSize: 11, fontWeight: 600, color: "#D64545", textTransform: "uppercase" }}>{item.severity}</span>
@@ -395,7 +714,7 @@ export default function Watch() {
 
             {/* Right: Opportunities + Content Triggers + Event Radar */}
             <div>
-              {(sections.opportunities?.length ?? 0) > 0 && <SectionTitle label="Opportunities" color="#3A9A5C" />}
+              {(sections.opportunities?.length ?? 0) > 0 && <SectionTitle label="Opportunities" color="#3A9A5C" tooltip="Content and growth opportunities to act on." />}
               {(sections.opportunities ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", gap: 12, marginBottom: 8, fontSize: 11, color: "var(--text-tertiary)" }}>
@@ -424,7 +743,7 @@ export default function Watch() {
               ))}
 
               {(sections.content_triggers?.length ?? 0) > 0 && (
-                <SectionTitle label="Content Triggers" color="#0D8C9E" style={{ marginTop: 32 }} />
+                <SectionTitle label="Content Triggers" color="#0D8C9E" style={{ marginTop: 32 }} tooltip="Moments that warrant a piece of content." />
               )}
               {(sections.content_triggers ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
@@ -451,7 +770,7 @@ export default function Watch() {
               ))}
 
               {(sections.event_radar?.length ?? 0) > 0 && (
-                <SectionTitle label="Event Radar" color="#A080F5" style={{ marginTop: 32 }} />
+                <SectionTitle label="Event Radar" color="#A080F5" style={{ marginTop: 32 }} tooltip="Upcoming events relevant to your focus." />
               )}
               {(sections.event_radar ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
@@ -475,17 +794,22 @@ export default function Watch() {
 function SectionTitle({
   label,
   color,
+  tooltip,
   style = {},
 }: {
   label: string;
   color: string;
+  tooltip?: string;
   style?: React.CSSProperties;
 }) {
+  const labelEl = (
+    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color }}>
+      {label}
+    </span>
+  );
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, ...style }}>
-      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color }}>
-        {label}
-      </span>
+      {tooltip ? <Tooltip text={tooltip} position="top">{labelEl}</Tooltip> : labelEl}
       <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
     </div>
   );

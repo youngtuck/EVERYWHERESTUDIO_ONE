@@ -293,7 +293,7 @@ function FeatureLine({num,title,desc,accent,delay=0,lc,bc}:{num:string;title:str
   </FadeUp>;
 }
 
-function GateRow({num,name,desc,color,delay,lc,bc,last=false}:{num:string;name:string;desc:string;color:string;delay:number;lc:string;bc:string;last?:boolean}) {
+function CheckpointRow({num,name,desc,color,delay,lc,bc,last=false}:{num:string;name:string;desc:string;color:string;delay:number;lc:string;bc:string;last?:boolean}) {
   const ref=useRef<HTMLDivElement>(null); const [vis,setVis]=useState(false);
   useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.1}); ob.observe(el);return()=>ob.disconnect(); },[]);
   return <div ref={ref} style={{display:"grid",gridTemplateColumns:"36px 150px 1fr",gap:"0 18px",padding:"20px 0",borderBottom:last?"none":"1px solid rgba(255,255,255,0.04)",opacity:vis?1:0,transform:vis?"none":"translateX(-10px)",transition:`opacity .45s ${delay}s ease, transform .45s ${delay}s cubic-bezier(.16,1,.3,1)`}}>
@@ -1099,7 +1099,7 @@ export default function ExplorePage() {
               <a href="#problem" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Problem</a>
               <a href="#fw" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Framework</a>
               <a href="#rooms" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Rooms</a>
-              <a href="#gates" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Gates</a>
+              <a href="#checkpoints" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Checkpoints</a>
               <a href="#cta" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Contact</a>
             </div>
           )}
@@ -1308,7 +1308,7 @@ export default function ExplorePage() {
 
         {/* ══ QUALITY CHECKPOINTS ════════════════════════════════════════════════════ */}
         <section
-          id="gates"
+          id="checkpoints"
           style={{
             padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
             background:"#07090f",
@@ -1323,7 +1323,7 @@ export default function ExplorePage() {
                       Quality Checkpoints
                     </div>
                   </FadeUp>
-                  <WordReveal text="Nothing ships without passing the gates." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
+                  <WordReveal text="Nothing ships without passing the checkpoints." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
                 </div>
                 <FadeUp delay={0.1}><p style={{fontSize:13,lineHeight:1.75,color:T.textSub}}>7 checks before anything reaches your audience. No AI tells. No off-brand moments. No weak writing.</p></FadeUp>
               </div>
@@ -1331,7 +1331,7 @@ export default function ExplorePage() {
             <div style={{borderTop:`1px solid ${bc}`}}>
               <FadeInSection>
                 {[["01","Strategy","Does this serve your goals?","#3A7BD5"],["02","Voice","Does this sound like you?","#0D8C9E"],["03","Accuracy","Are the facts verified?","#C8961A"],["04","AI Tells","Could anyone spot the AI?","#e8506a"],["05","Audience","Will this resonate?","#A080F5"],["06","Platform","Is this native to the channel?","#4ab8f5"],["07","Impact","Will this move people to action?","#10b981"]].map(([num,name,desc,color],i,arr)=>(
-                  <GateRow key={i} num={num} name={name} desc={desc} color={color} delay={0.03+i*.05} lc={lc} bc={bc} last={i===arr.length-1} />
+                  <CheckpointRow key={i} num={num} name={name} desc={desc} color={color} delay={0.03+i*.05} lc={lc} bc={bc} last={i===arr.length-1} />
                 ))}
               </FadeInSection>
             </div>

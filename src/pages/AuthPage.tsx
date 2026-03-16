@@ -1,4 +1,4 @@
-// NOTE: Public signup is controlled via access code (EVERYWHERE-ALPHA-2026).
+// NOTE: Public signup is gated by access code "OneIdea" (case-insensitive).
 // To fully disable public signup at the infrastructure level:
 // Supabase Dashboard > Authentication > Settings > Disable "Enable email signup"
 // This is recommended before any public launch.
@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
-const VALID_ACCESS_CODE = "EVERYWHERE-ALPHA-2026";
+const VALID_ACCESS_CODE = "oneidea";
 
 const AuthPage = () => {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -57,8 +57,8 @@ const AuthPage = () => {
     setSubmitError("");
 
     if (mode === "signup") {
-      if (accessCode.trim().toUpperCase() !== VALID_ACCESS_CODE) {
-        setSubmitError("Invalid access code. Contact mark@mixedgrill.net to request access.");
+      if (accessCode.trim().toLowerCase() !== VALID_ACCESS_CODE) {
+        setSubmitError("Invalid access code. Contact mark@mixedgrill.studio for access.");
         return;
       }
       if (password !== confirmPassword) {
@@ -336,6 +336,31 @@ const AuthPage = () => {
                     />
                   </div>
                 )}
+                {mode === "signup" && (
+                  <div>
+                    <label
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "rgba(255,255,255,0.55)",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        display: "block",
+                        marginBottom: 6,
+                      }}
+                    >
+                      ACCESS CODE
+                    </label>
+                    <input
+                      className="auth-input"
+                      type="text"
+                      placeholder="Enter your access code"
+                      value={accessCode}
+                      onChange={e => setAccessCode(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
                 <div>
                   <label
                     style={{
@@ -359,31 +384,6 @@ const AuthPage = () => {
                     required
                   />
                 </div>
-                {mode === "signup" && (
-                  <div>
-                    <label
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "rgba(255,255,255,0.55)",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        display: "block",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Access Code
-                    </label>
-                    <input
-                      className="auth-input"
-                      type="text"
-                      placeholder="Enter your access code"
-                      value={accessCode}
-                      onChange={e => setAccessCode(e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
                 <div>
                   <label
                     style={{
@@ -526,6 +526,23 @@ const AuthPage = () => {
                 </p>
               )}
             </form>
+
+            {mode === "signup" && (
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "rgba(255,255,255,0.4)",
+                  textAlign: "center",
+                  marginTop: 20,
+                  lineHeight: 1.6,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                EVERYWHERE Studio is in private Alpha.
+                <br />
+                Contact mark@mixedgrill.studio for access.
+              </p>
+            )}
 
             {/* Divider */}
             <div

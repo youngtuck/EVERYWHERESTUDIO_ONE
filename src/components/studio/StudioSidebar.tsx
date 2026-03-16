@@ -3,20 +3,21 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import Tooltip from "../Tooltip";
 import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut, Hammer, Package } from "lucide-react";
 
 // ── Nav items (exact order: My Studio → Work → Watch → The Lot → Resources → Projects → The Workbench → Wrap → The Vault → Settings) ──
 const NAV = [
-  { path: "/studio/dashboard",       label: "My Studio",     icon: LayoutDashboard },
-  { path: "/studio/work",            label: "Work",         icon: PenLine },
-  { path: "/studio/watch",           label: "Watch",       icon: Eye,        badge: "11" },
-  { path: "/studio/lot",             label: "The Lot",      icon: Bookmark },
-  { path: "/studio/resources",       label: "Resources",    icon: Folder },
-  { path: "/studio/projects",        label: "Projects",     icon: FolderOpen },
-  { path: "/studio/workbench",       label: "The Workbench", icon: Hammer },
-  { path: "/studio/wrap",            label: "Wrap",         icon: Package },
-  { path: "/studio/outputs",         label: "The Vault",     icon: FileText },
-  { path: "/studio/settings/voice", label: "Settings",      icon: Settings },
+  { path: "/studio/dashboard",       label: "My Studio",     icon: LayoutDashboard, tooltip: "Your command center. Overview of all activity." },
+  { path: "/studio/work",            label: "Work",         icon: PenLine,           tooltip: "Start a Watson session to produce content." },
+  { path: "/studio/watch",           label: "Watch",        icon: Eye,               badge: "11", tooltip: "Sentinel intelligence. What's happening in your category." },
+  { path: "/studio/lot",             label: "The Lot",      icon: Bookmark,          tooltip: "Parked ideas. Right idea, wrong time." },
+  { path: "/studio/resources",       label: "Resources",    icon: Folder,            tooltip: "Voice DNA, Brand DNA, Method DNA, and references." },
+  { path: "/studio/projects",        label: "Projects",     icon: FolderOpen,        tooltip: "Organize work by client, topic, or project." },
+  { path: "/studio/workbench",       label: "The Workbench", icon: Hammer,           tooltip: "In-progress work. Started but not shipped." },
+  { path: "/studio/wrap",            label: "Wrap",         icon: Package,           tooltip: "Final polish before publishing." },
+  { path: "/studio/outputs",         label: "The Vault",    icon: FileText,          tooltip: "Everything you've published. Permanent archive." },
+  { path: "/studio/settings/voice",  label: "Settings",     icon: Settings,           tooltip: "Account, preferences, and configuration." },
 ];
 
 function titleCase(str: string) {
@@ -39,9 +40,6 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
   const { theme } = useTheme();
   const { user, signOut } = useAuth();
 
-  const [installState, setInstallState] = useState<"hidden" | "prompt" | "installed">("prompt");
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstallModal, setShowInstallModal] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -57,58 +55,6 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       .then(({ data }) => setOnboardingComplete(data?.onboarding_complete ?? false));
   }, [user]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as { standalone?: boolean }).standalone === true;
-    if (isStandalone) {
-      setInstallState("hidden");
-      return;
-    }
-    if (localStorage.getItem("everywhere-install-dismissed") === "true") {
-      setInstallState("hidden");
-      return;
-    }
-    if (localStorage.getItem("everywhere-installed") === "true") {
-      setInstallState("installed");
-      return;
-    }
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    setInstallState("prompt");
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  const handleInstall = async () => {
-    if (deferredPrompt) {
-      try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === "accepted") {
-          localStorage.setItem("everywhere-installed", "true");
-          setInstallState("installed");
-        }
-      } finally {
-        setDeferredPrompt(null);
-      }
-    } else {
-      setShowInstallModal(true);
-    }
-  };
-
-  const handleDismiss = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    localStorage.setItem("everywhere-install-dismissed", "true");
-    setInstallState("hidden");
-  };
-
-  const isChrome = /Chrome|Edg/.test(navigator.userAgent) && !/Safari|FxiOS/.test(navigator.userAgent);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
   const handleSignOut = async () => {
     await signOut();
     nav("/");
@@ -123,81 +69,12 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
   };
 
   return (
-    <>
-      {/* Install instructions modal (when browser doesn't give us the native prompt) */}
-      {showInstallModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 10000,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24,
-          }}
-          onClick={() => setShowInstallModal(false)}
-        >
-          <div
-            style={{
-              background: "#F4F2ED",
-              borderRadius: 16,
-              padding: "24px 28px",
-              maxWidth: 400,
-              boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a", marginBottom: 12 }}>
-              Install EVERYWHERE Studio
-            </div>
-            <p style={{ fontSize: 14, color: "rgba(0,0,0,0.7)", lineHeight: 1.5, margin: "0 0 16px" }}>
-              When your browser offers to install, we’ll show the usual “Do you want to install?” dialog right here. Until then, use one of these:
-            </p>
-            {isIOS ? (
-              <p style={{ fontSize: 14, color: "rgba(0,0,0,0.8)", lineHeight: 1.5 }}>
-                Tap the <strong>Share</strong> button at the bottom of Safari (square with an arrow), then tap <strong>“Add to Home Screen”</strong>.
-              </p>
-            ) : isChrome ? (
-              <p style={{ fontSize: 14, color: "rgba(0,0,0,0.8)", lineHeight: 1.5 }}>
-                Click the <strong>three-dot menu (⋮)</strong> in the top-right of the window, then choose <strong>“Install EVERYWHERE Studio”</strong>. You may also see an install icon in the address bar.
-              </p>
-            ) : (
-              <p style={{ fontSize: 14, color: "rgba(0,0,0,0.8)", lineHeight: 1.5 }}>
-                Open your browser menu and look for <strong>“Install app”</strong> or <strong>“Add to Home Screen”</strong>.
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={() => setShowInstallModal(false)}
-              style={{
-                marginTop: 20,
-                width: "100%",
-                background: "#C8961A",
-                color: "#1a1a1a",
-                border: "none",
-                borderRadius: 10,
-                padding: "12px 20px",
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
-
     <aside style={{
       width: collapsed ? 68 : "var(--studio-sidebar-width)",
       flexShrink: 0,
       height: "100vh",
       background: "#fff",
-      borderRight: "1px solid rgba(0,0,0,0.06)",
+      borderRight: "1px solid var(--border-subtle)",
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
@@ -206,10 +83,8 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       fontFamily: "'DM Sans', sans-serif",
     }}>
 
-      {/* ── Logo + collapse toggle ────────────────────────────────── */}
       <div style={{
-        padding: "16px 12px 14px",
-        borderBottom: "1px solid var(--line)",
+        padding: "14px 12px",
         display: "flex",
         alignItems: "center",
         justifyContent: collapsed ? "center" : "space-between",
@@ -404,163 +279,77 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       {/* ── Main nav (with icons) ─────────────────────────────────────────── */}
       <nav style={{ flex: 1, padding: "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">
         <div style={{ paddingBottom: 4 }}>
-          {NAV.map(({ path, label, icon: Icon, badge }) => {
+          {NAV.map(({ path, label, icon: Icon, badge, tooltip }) => {
             const active = isActive(path);
             return (
-              <button
-                key={path}
-                onClick={() => nav(path)}
-                className={`nav-item ${active ? "active" : ""}`}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 12px",
-                  paddingLeft: active ? "12px" : "14px",
-                  marginBottom: 2,
-                  border: "none",
-                  borderRadius: "var(--studio-radius)",
-                  borderLeft: active ? "2px solid #C8961A" : "2px solid transparent",
-                  background: active ? "rgba(200,150,26,0.08)" : "transparent",
-                  cursor: "pointer",
-                  fontFamily: "var(--font)",
-                  fontSize: 12,
-                  textAlign: "left",
-                  opacity: active ? 1 : 0.5,
-                  transition: "background 0.15s, color 0.15s, opacity 0.15s, border-color 0.15s",
-                }}
-                onMouseEnter={e => {
-                  if (!active) {
-                    e.currentTarget.style.background = "var(--bg-2)";
-                    e.currentTarget.style.opacity = "0.8";
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!active) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.opacity = "0.5";
-                  }
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{
-                    width: 24, height: 22, display: "flex", alignItems: "center",
-                    justifyContent: "center", borderRadius: 6,
-                    background: active ? "rgba(200,150,26,0.12)" : "transparent",
-                    color: active ? "var(--fg)" : "var(--fg-3)",
-                    flexShrink: 0,
-                    border: active ? "1px solid var(--line-2)" : "1px solid var(--line)",
-                    transition: "background 0.15s, color 0.15s, border-color 0.15s",
-                  }}>
-                    <Icon size={12} strokeWidth={2} />
-                  </span>
-                  {!collapsed && (
-                    <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
+              <Tooltip key={path} text={tooltip} position="right">
+                <button
+                  onClick={() => nav(path)}
+                  className={`nav-item ${active ? "active" : ""}`}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 12px",
+                    paddingLeft: active ? "12px" : "14px",
+                    marginBottom: 2,
+                    border: "none",
+                    borderRadius: "var(--studio-radius)",
+                    borderLeft: active ? "2px solid var(--gold-dark)" : "2px solid transparent",
+                    background: active ? "rgba(0,0,0,0.04)" : "transparent",
+                    cursor: "pointer",
+                    fontFamily: "var(--font)",
+                    fontSize: 12,
+                    textAlign: "left",
+                    opacity: active ? 1 : 0.5,
+                    transition: "background 0.15s, color 0.15s, opacity 0.15s, border-color 0.15s",
+                  }}
+                  onMouseEnter={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = "var(--bg-2)";
+                      e.currentTarget.style.opacity = "0.8";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.opacity = "0.5";
+                    }
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {collapsed ? (
+                      <span style={{
+                        width: 24, height: 22, display: "flex", alignItems: "center",
+                        justifyContent: "center", borderRadius: 6,
+                        background: active ? "rgba(0,0,0,0.06)" : "transparent",
+                        color: active ? "var(--fg)" : "var(--fg-3)",
+                        flexShrink: 0,
+                        border: "1px solid var(--line)",
+                      }}>
+                        <Icon size={12} strokeWidth={2} />
+                      </span>
+                    ) : (
+                      <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
+                    )}
+                  </div>
+                  {badge && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 600,
+                      background: "var(--surface-elevated)",
+                      color: "var(--fg-3)",
+                      border: "1px solid var(--line)",
+                      borderRadius: 100, padding: "2px 6px",
+                    }}>{badge}</span>
                   )}
-                </div>
-                {badge && (
-                  <span style={{
-                    fontSize: 10, fontWeight: 600,
-                    background: "rgba(200,150,26,0.12)",
-                    color: "var(--gold)",
-                    border: "1px solid rgba(200,150,26,0.2)",
-                    borderRadius: 100, padding: "2px 6px",
-                  }}>{badge}</span>
-                )}
-              </button>
+                </button>
+              </Tooltip>
             );
           })}
         </div>
 
-        {/* Install app card — between nav and Conversations */}
-        {!collapsed && installState === "prompt" && (
-          <div
-            onClick={handleInstall}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && handleInstall()}
-            style={{
-              margin: "0 12px 16px 12px",
-              padding: "12px 14px",
-              background: "rgba(200, 150, 26, 0.06)",
-              border: "1px solid rgba(200, 150, 26, 0.12)",
-              borderRadius: 10,
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-              position: "relative",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 10,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(200, 150, 26, 0.25)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(200, 150, 26, 0.08)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(200, 150, 26, 0.12)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginTop: 1, flexShrink: 0 }}>
-              <rect x="2" y="2" width="12" height="9" rx="1.5" stroke="#C8961A" strokeWidth="1.3" fill="none" />
-              <line x1="8" y1="11" x2="8" y2="14" stroke="#C8961A" strokeWidth="1.3" />
-              <line x1="5.5" y1="14" x2="10.5" y2="14" stroke="#C8961A" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.3 }}>Get the app</div>
-              <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", marginTop: 2, lineHeight: 1.3 }}>Install for the full experience</div>
-            </div>
-            <button
-              type="button"
-              onClick={handleDismiss}
-              style={{
-                position: "absolute",
-                top: 6,
-                right: 6,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "rgba(0,0,0,0.2)",
-                fontSize: 14,
-                lineHeight: 1,
-                padding: "2px 4px",
-                borderRadius: 4,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "rgba(0,0,0,0.5)";
-                e.stopPropagation();
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "rgba(0,0,0,0.2)";
-              }}
-            >
-              ×
-            </button>
-          </div>
-        )}
-        {!collapsed && installState === "installed" && (
-          <div
-            style={{
-              margin: "0 12px 16px 12px",
-              padding: "10px 14px",
-              background: "rgba(0,0,0,0.02)",
-              border: "1px solid rgba(0,0,0,0.04)",
-              borderRadius: 10,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="7" cy="7" r="6" stroke="rgba(0,0,0,0.2)" strokeWidth="1.2" fill="none" />
-              <path d="M4 7l2 2 4-4" stroke="rgba(0,0,0,0.25)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </svg>
-            <span style={{ fontSize: 11, color: "rgba(0,0,0,0.3)" }}>App installed</span>
-          </div>
-        )}
-
-        {/* Conversations (reference: CONVERSATIONS + New conversation) ───────── */}
+        {/* Conversations */}
         <div style={{ paddingTop: 8, paddingBottom: 4 }}>
           {!collapsed && <div className="nav-section-label">Conversations</div>}
           <button
@@ -576,10 +365,9 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         </div>
       </nav>
 
-      {/* ── Bottom: user profile ─────────────────────────────────── */}
       <div style={{
-        borderTop: "1px solid var(--line)",
-        padding: "14px 14px",
+        borderTop: "1px solid var(--border-subtle)",
+        padding: "12px 14px",
         display: "flex",
         flexDirection: "column",
         gap: 10,
@@ -590,10 +378,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         }}>
           <div style={{
             width: 28, height: 28, borderRadius: "50%",
-            background: "linear-gradient(135deg, #C8961A, #F0B429)",
+            background: "var(--surface-elevated)",
             flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 600, color: "#0A0A0A",
+            fontSize: 11, fontWeight: 600, color: "var(--fg)",
           }}>
             {(user?.user_metadata?.full_name || user?.email || "?")[0].toUpperCase()}
           </div>
@@ -620,6 +408,5 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         </div>
       </div>
     </aside>
-    </>
   );
 }

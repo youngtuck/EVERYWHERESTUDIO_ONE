@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Mic, Share2, Mail, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { timeAgo } from "../../utils/timeAgo";
 import { getScoreColor } from "../../utils/scoreColor";
+import Tooltip from "../../components/Tooltip";
 import "./shared.css";
 import "./dashboard.css";
 
@@ -54,12 +55,11 @@ function typeToLabel(outputType: string): string {
     .join(" ");
 }
 
-// ── Quick Start config (templates on top of base types) ─────────────────────
 const QUICK_START = [
-  { key: "essay", label: "Sunday Story (Essay)", subtitle: "Weekly reflection in your voice", icon: FileText },
-  { key: "podcast", label: "Get Current (Podcast)", subtitle: "One focused conversation per episode", icon: Mic },
-  { key: "socials", label: "Signal Sweep (Socials)", subtitle: "Multi-platform posts from one idea", icon: Share2 },
-  { key: "newsletter", label: "Field Notes (Newsletter)", subtitle: "Story-forward update to your list", icon: Mail },
+  { key: "essay", label: "Sunday Story (Essay)", subtitle: "Weekly reflection in your voice" },
+  { key: "podcast", label: "Get Current (Podcast)", subtitle: "One focused conversation per episode" },
+  { key: "socials", label: "Signal Sweep (Socials)", subtitle: "Multi-platform posts from one idea" },
+  { key: "newsletter", label: "Field Notes (Newsletter)", subtitle: "Story-forward update to your list" },
 ];
 
 interface OutputRow {
@@ -156,18 +156,11 @@ export default function Dashboard() {
       style={{
         maxWidth: 720,
         margin: "0 auto",
-        padding: isMobile ? "24px 16px" : "32px 24px",
+        padding: isMobile ? "24px 16px" : "24px 24px",
         fontFamily: "var(--font)",
       }}
     >
-      {/* Hero: greeting + primary CTA */}
-      <div
-        style={{
-          marginBottom: 32,
-          paddingBottom: 28,
-          borderBottom: "1px solid var(--border-subtle)",
-        }}
-      >
+      <div style={{ marginBottom: 24 }}>
         <div
           style={{
             display: "flex",
@@ -181,10 +174,10 @@ export default function Dashboard() {
             <div
               style={{
                 fontFamily: "'DM Mono', monospace",
-                fontSize: 11,
+                fontSize: 10,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                color: "var(--text-tertiary, var(--fg-3))",
+                color: "var(--text-tertiary)",
                 marginBottom: 4,
               }}
             >
@@ -192,10 +185,10 @@ export default function Dashboard() {
             </div>
             <div
               style={{
-                fontFamily: "var(--font)",
-                fontSize: isMobile ? 22 : 26,
-                fontWeight: 600,
-                color: "var(--text-primary, #1a1a1a)",
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: isMobile ? 20 : 24,
+                fontWeight: 700,
+                color: "var(--text-primary)",
                 letterSpacing: "-0.02em",
                 lineHeight: 1.2,
               }}
@@ -203,36 +196,37 @@ export default function Dashboard() {
               {getGreeting()}, {firstName}.
             </div>
           </div>
-          <button
-            onClick={() => nav("/studio/work")}
-            className="btn-gold cta-new-session"
-            style={{
-              background: "var(--gold-dark)",
-              color: "#fff",
-              padding: "12px 22px",
-              borderRadius: 8,
-              fontFamily: "var(--font)",
-              fontSize: 14,
-              fontWeight: 600,
-              border: "none",
-              cursor: "pointer",
-              transition,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--gold-hover)";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--gold-dark)";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-            + New Output
-          </button>
+          <Tooltip text="Start a new Watson session." position="bottom">
+            <button
+              onClick={() => nav("/studio/work")}
+              className="btn-gold cta-new-session"
+              style={{
+                background: "var(--gold-dark)",
+                color: "#fff",
+                padding: "12px 22px",
+                borderRadius: 8,
+                fontFamily: "var(--font)",
+                fontSize: 14,
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+                transition,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--gold-hover)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--gold-dark)";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              + New Output
+            </button>
+          </Tooltip>
         </div>
       </div>
 
-      {/* 2. Stats Row */}
       <div
         style={{
           display: "grid",
@@ -242,135 +236,77 @@ export default function Dashboard() {
               : isMobile
                 ? "1fr 1fr"
                 : "repeat(4, 1fr)",
-          gap: 12,
-          marginBottom: 32,
+          gap: 16,
+          marginBottom: 24,
         }}
       >
-        {loading
-          ? [0, 1, 2, 3].map((i) => (
+        {!loading && [
+          {
+            label: "Outputs",
+            value: outputsCreated,
+            tooltip: "Total pieces of content produced through Watson.",
+            color: "var(--text-primary)",
+          },
+          {
+            label: "Avg score",
+            value: avgBetterish ?? "—",
+            tooltip: "Average quality score. 900 is publication threshold.",
+            color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
+          },
+          {
+            label: "Voice",
+            value: voicePct != null ? `${voicePct}%` : "—",
+            tooltip: "How closely the system matches your writing voice.",
+            color: "var(--text-primary)",
+          },
+          {
+            label: "Signals",
+            value: "—",
+            tooltip: "Intelligence signals from Sentinel Watch.",
+            color: "var(--text-tertiary)",
+          },
+        ].map((stat, i) => (
+          <Tooltip key={stat.label} text={stat.tooltip} position="top">
+            <div
+              className="dashboard-fade-up"
+              style={{
+                animationDelay: `${i * 50}ms`,
+                opacity: 0,
+                background: "var(--surface-white)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 12,
+                padding: "16px 20px",
+              }}
+            >
               <div
-                key={i}
-                className="dashboard-skeleton"
                 style={{
-                  borderRadius: 12,
-                  height: 120,
-                  animationDelay: `${i * 50}ms`,
-                }}
-              />
-            ))
-          : [
-              {
-                label: "OUTPUTS CREATED",
-                value: outputsCreated,
-                subtitle:
-                  outputsCreated > 0 ? `${Math.min(outputsCreated, 99)} recent` : "Get started below",
-                barFill: "var(--work-teal)",
-                barPct: Math.min(100, (outputsCreated / 50) * 100),
-              },
-              {
-                label: "AVG BETTERISH",
-                value: avgBetterish ?? "—",
-                subtitle:
-                  avgBetterish == null
-                    ? "Complete a session"
-                    : avgBetterish >= 900
-                      ? "Publication ready"
-                      : avgBetterish >= 600
-                        ? "Getting close"
-                        : "Room to improve",
-                barFill: "var(--gold-dark)",
-                barPct: avgBetterish != null ? (avgBetterish / 1000) * 100 : 0,
-              },
-              {
-                label: "VOICE FIDELITY",
-                value: voicePct != null ? `${voicePct}%` : "—",
-                subtitle:
-                  voicePct == null
-                    ? "Complete onboarding"
-                    : voicePct >= 80
-                      ? "Strong match"
-                      : "Building",
-                barFill: "var(--wrap-violet)",
-                barPct: voicePct ?? 0,
-              },
-              {
-                label: "SIGNALS",
-                value: "—",
-                subtitle: "Coming soon",
-                barFill: "var(--watch-blue)",
-                barPct: 0,
-              },
-            ].map((stat, i) => (
-              <div
-                key={stat.label}
-                className="dashboard-fade-up"
-                style={{
-                  animationDelay: `${i * 50}ms`,
-                  opacity: 0,
-                  background: "var(--surface-white)",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: 12,
-                  padding: "16px 20px",
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "var(--text-tertiary)",
+                  marginBottom: 4,
                 }}
               >
-                <div
-                  style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: 10,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    color: "var(--text-tertiary, var(--fg-3))",
-                    marginBottom: 4,
-                  }}
-                >
-                  {stat.label}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font)",
-                    fontVariantNumeric: "tabular-nums",
-                    fontSize: 28,
-                    fontWeight: 600,
-                    color: "var(--text-primary, #1a1a1a)",
-                  }}
-                >
-                  {stat.value}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: 12,
-                    fontWeight: 400,
-                    color: "var(--text-tertiary, var(--fg-3))",
-                    marginBottom: 8,
-                  }}
-                >
-                  {stat.subtitle}
-                </div>
-                <div
-                  style={{
-                    height: 3,
-                    borderRadius: 2,
-                    background: "rgba(0,0,0,0.04)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      width: `${stat.barPct}%`,
-                      background: stat.barFill,
-                      borderRadius: 2,
-                      transition: "width 0.5s ease",
-                    }}
-                  />
-                </div>
+                {stat.label}
               </div>
-            ))}
+              <div
+                style={{
+                  fontFamily: "var(--font)",
+                  fontVariantNumeric: "tabular-nums",
+                  fontSize: 22,
+                  fontWeight: 600,
+                  color: stat.color,
+                }}
+              >
+                {stat.value}
+              </div>
+            </div>
+          </Tooltip>
+        ))}
       </div>
 
-      {/* 3. In Progress + Vault activity */}
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 24 }}>
         <div
           style={{
             display: "flex",
@@ -382,13 +318,13 @@ export default function Dashboard() {
           <span
             style={{
               fontFamily: "'DM Mono', monospace",
-              fontSize: 11,
+              fontSize: 10,
               textTransform: "uppercase",
               letterSpacing: "0.05em",
-              color: "var(--text-tertiary, var(--fg-3))",
+              color: "var(--text-tertiary)",
             }}
           >
-            IN PROGRESS
+            In progress
           </span>
           <button
             onClick={() => nav("/studio/outputs")}
@@ -414,38 +350,25 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {loading ? (
-          [0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="dashboard-skeleton"
-              style={{
-                borderRadius: 12,
-                height: 72,
-                marginBottom: 8,
-                animationDelay: `${i * 50}ms`,
-              }}
-            />
-          ))
-        ) : inProgress.length === 0 ? (
+        {loading ? null : inProgress.length === 0 ? (
           <div
             style={{
               background: "var(--surface-white)",
               border: "1px solid var(--border-subtle)",
               borderRadius: 12,
-              padding: 24,
+              padding: 20,
               textAlign: "center",
               fontFamily: "'DM Sans', sans-serif",
-              fontSize: 14,
+              fontSize: 13,
               color: "var(--text-secondary)",
             }}
           >
-            No work in progress. Start a session to move something forward.{" "}
+            No work in progress.{" "}
             <button
               onClick={() => nav("/studio/work")}
               style={{
                 fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: 500,
                 color: "var(--gold-dark)",
                 background: "none",
@@ -455,11 +378,11 @@ export default function Dashboard() {
                 textDecoration: "underline",
               }}
             >
-              Start Session
+              Start session
             </button>
           </div>
         ) : (
-          inProgress.slice(0, 3).map((o, i) => {
+          inProgress.slice(0, 3).map((o) => {
             const scoreStyle = getScoreColor(o.score);
             return (
               <button
@@ -469,7 +392,7 @@ export default function Dashboard() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "14px 20px",
+                  padding: "12px 16px",
                   background: "var(--surface-white)",
                   border: "1px solid var(--border-subtle)",
                   borderRadius: 12,
@@ -535,45 +458,18 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    flexShrink: 0,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div
-                      style={{
-                        width: 40,
-                        height: 3,
-                        borderRadius: 2,
-                        background: "rgba(0,0,0,0.06)",
-                        overflow: "hidden",
-                      }}
-                    >
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${(o.score / 1000) * 100}%`,
-                        background: scoreStyle.fill,
-                        borderRadius: 2,
-                      }}
-                    />
-                    </div>
-                    <span
-                      style={{
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: scoreStyle.text,
-                      }}
-                    >
-                      {o.score}
-                    </span>
-                  </div>
-                  <ChevronRight size={16} style={{ color: "var(--text-tertiary, var(--fg-3))" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                  <span
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: scoreStyle.text,
+                    }}
+                  >
+                    {o.score}
+                  </span>
+                  <ChevronRight size={14} style={{ color: "var(--text-tertiary)" }} />
                 </div>
               </button>
             );
@@ -581,19 +477,18 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* 4. Quick Start Grid */}
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 24 }}>
         <div
           style={{
             fontFamily: "'DM Mono', monospace",
-            fontSize: 11,
+            fontSize: 10,
             textTransform: "uppercase",
             letterSpacing: "0.05em",
-            color: "var(--text-tertiary, var(--fg-3))",
-            marginBottom: 12,
+            color: "var(--text-tertiary)",
+            marginBottom: 10,
           }}
         >
-          CREATE
+          Create
         </div>
         <div
           style={{
@@ -602,10 +497,10 @@ export default function Dashboard() {
               isMobile && typeof window !== "undefined" && window.innerWidth < 640
                 ? "1fr"
                 : "repeat(2, 1fr)",
-            gap: 12,
+            gap: 16,
           }}
         >
-          {QUICK_START.map(({ key, label, subtitle, icon: Icon }, i) => (
+          {QUICK_START.map(({ key, label, subtitle }) => (
             <button
               key={key}
               onClick={() => nav(`/studio/work?type=${key}`)}
@@ -613,38 +508,24 @@ export default function Dashboard() {
                 background: "var(--surface-white)",
                 border: "1px solid var(--border-subtle)",
                 borderRadius: 12,
-                padding: 20,
+                padding: 16,
                 cursor: "pointer",
                 textAlign: "left",
                 transition,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--gold-dark)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
-                const icon = e.currentTarget.querySelector(".quick-start-icon");
-                if (icon) (icon as HTMLElement).style.color = "var(--gold-dark)";
+                e.currentTarget.style.borderColor = "var(--border-default)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = "var(--border-subtle)";
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-                const icon = e.currentTarget.querySelector(".quick-start-icon");
-                if (icon) (icon as HTMLElement).style.color = "var(--text-secondary)";
               }}
             >
-              <Icon
-                size={20}
-                className="quick-start-icon"
-                style={{ color: "var(--text-secondary)", transition }}
-              />
               <div
                 style={{
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize: 14,
                   fontWeight: 600,
-                  color: "var(--text-primary, #1a1a1a)",
-                  marginTop: 12,
+                  color: "var(--text-primary)",
                 }}
               >
                 {label}
@@ -652,8 +533,7 @@ export default function Dashboard() {
               <div
                 style={{
                   fontFamily: "'DM Sans', sans-serif",
-                  fontSize: 13,
-                  fontWeight: 400,
+                  fontSize: 12,
                   color: "var(--text-secondary)",
                   marginTop: 4,
                 }}
@@ -665,53 +545,31 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 5. Sentinel Briefing — only if data exists */}
       {hasSignals && (
         <button
           onClick={() => nav("/studio/watch")}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 14,
+            gap: 12,
             width: "100%",
-            padding: 20,
+            padding: 16,
             background: "var(--surface-white)",
             border: "1px solid var(--border-subtle)",
             borderRadius: 12,
             cursor: "pointer",
             textAlign: "left",
-            transition,
           }}
         >
-          <span style={{ color: "var(--watch-blue)" }}>
-            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M4 9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9z" />
-              <path d="M12 6v12" />
-              <path d="M8 12h8" />
-            </svg>
-          </span>
           <div style={{ flex: 1 }}>
-            <div
-              style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-              }}
-            >
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
               Sentinel Briefing
             </div>
-            <div
-              style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 13,
-                color: "var(--text-secondary)",
-              }}
-            >
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
               Latest signal summary
             </div>
           </div>
-          <ChevronRight size={16} style={{ color: "var(--text-tertiary)" }} />
+          <ChevronRight size={14} style={{ color: "var(--text-tertiary)" }} />
         </button>
       )}
     </div>

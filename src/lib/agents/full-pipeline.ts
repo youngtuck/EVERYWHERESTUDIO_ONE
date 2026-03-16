@@ -19,11 +19,11 @@ export async function runFullPipeline(
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-  callbacks?.onStageStart?.("gates");
+  callbacks?.onStageStart?.("checkpoints");
 
   const gateResult = await runGatePipeline(rawDraft, context, callbacks?.onGateComplete);
 
-  callbacks?.onStageComplete?.("gates");
+  callbacks?.onStageComplete?.("checkpoints");
 
   if (gateResult.status === "BLOCKED") {
     return {

@@ -12,6 +12,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   profile: ProfileOnboarding;
+  profileLoaded: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   profile: null,
+  profileLoaded: false,
   refreshProfile: async () => {},
   signOut: async () => {},
 });
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileOnboarding>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const hasRoutedRef = useRef(false);
 
   const refreshProfile = useCallback(async () => {
@@ -47,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         : null
     );
+    setProfileLoaded(true);
   }, [user?.id]);
 
   useEffect(() => {
@@ -96,8 +100,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) {
       setProfile(null);
+      setProfileLoaded(false);
       return;
     }
+    setProfileLoaded(false);
     refreshProfile();
   }, [user?.id, refreshProfile]);
 
@@ -105,10 +111,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     hasRoutedRef.current = false;
     setProfile(null);
+    setProfileLoaded(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, profile, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, profileLoaded, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -22,7 +22,7 @@ export async function runGatePipeline(
 
     const result = await runAgent(
       gate.promptFile,
-      `Gate ${gate.id.split("-")[1]}: ${gate.name} (${gate.label})`,
+      `Checkpoint ${gate.id.split("-")[1]}: ${gate.name} (${gate.label})`,
       currentDraft,
       context,
       "evaluate"
@@ -44,7 +44,7 @@ export async function runGatePipeline(
 
       const recheck = await runAgent(
         gate.promptFile,
-        `Gate ${gate.id.split("-")[1]}: ${gate.name} (recheck)`,
+        `Checkpoint ${gate.id.split("-")[1]}: ${gate.name} (recheck)`,
         currentDraft,
         context,
         "evaluate"
@@ -57,7 +57,7 @@ export async function runGatePipeline(
           status: "BLOCKED",
           currentDraft,
           results,
-          blockedAt: `Gate ${gate.id.split("-")[1]}: ${gate.name}`,
+          blockedAt: `Checkpoint ${gate.id.split("-")[1]}: ${gate.name}`,
         };
       }
 

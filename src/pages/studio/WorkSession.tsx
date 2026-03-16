@@ -11,6 +11,7 @@ import { runFullPipeline } from "../../lib/agents/full-pipeline";
 import type { GateResult, PipelineResult, PipelineStatus } from "../../lib/agents/types";
 import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
+import Tooltip from "../../components/Tooltip";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,7 +197,7 @@ const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: strin
   essay: {
     label: "01 Essay",
     color: "#4A90D9",
-    watson: "What's the central argument you want to make? Give me the rough idea and I will ask the questions that pull it into focus.",
+    watson: "What's on your mind? Give me the rough idea and I will ask the questions that pull it into focus.",
   },
   podcast: {
     label: "02 Podcast",
@@ -380,9 +381,9 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
   );
 }
 
-// Empty state - shown when no messages (or only Watson opening)
+// Empty state - shown when no messages (or only Watson opening). Suggestion pills moved below input.
 const EMPTY_PROMPTS: Record<string, string> = {
-  essay: "What is the central argument you want to make?",
+  essay: "What's on your mind?",
   podcast: "What is this episode about and who is listening?",
   book: "What is the book for and what change should it create?",
   website: "What offer are we shaping this page around?",
@@ -394,62 +395,62 @@ const EMPTY_PROMPTS: Record<string, string> = {
   freestyle: "What do you want to make that does not fit a format?",
 };
 
-function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
+const SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
+  essay: [
+    "I want to write about the future of remote work.",
+    "Help me make the case for slow thinking in a fast world.",
+    "I have a contrarian take on how leaders should communicate.",
+  ],
+  podcast: [
+    "Solo episode on a mistake I made and what it taught me.",
+    "Conversation about where my industry is actually going.",
+    "Three-part series to introduce my core framework.",
+  ],
+  book: [
+    "Book that captures the philosophy behind my work.",
+    "Short book I can hand to new clients as an onboarding guide.",
+    "Field guide that turns my talks into a repeatable system.",
+  ],
+  website: [
+    "Homepage that explains my offer in plain language.",
+    "Services page that makes it clear who I am for.",
+    "About page that tells the real story behind my work.",
+  ],
+  video_script: [
+    "60-second video on the one thing my best clients have in common.",
+    "Explainer video that walks through my framework.",
+    "Behind-the-scenes video on how I actually work with clients.",
+  ],
+  newsletter: [
+    "Story from this week that changed how I see my work.",
+    "Roundup of three signals my audience should know about.",
+    "Letter to my list about a shift in my offer.",
+  ],
+  socials: [
+    "Take on a trend in my space that I disagree with.",
+    "Short thread breaking down a framework I use.",
+    "Quote and reaction to something my audience is already talking about.",
+  ],
+  presentation: [
+    "Keynote for a leadership summit, 45 minutes.",
+    "Sales deck for a new service offering.",
+    "Internal strategy presentation for my team.",
+  ],
+  business: [
+    "Proposal for a new advisory engagement.",
+    "Pitch deck for a workshop series.",
+    "RFP response for a corporate client.",
+  ],
+  freestyle: [
+    "I have a strange idea and I am not sure what format it belongs in.",
+    "I want to rewrite something that already exists but make it mine.",
+    "I want to experiment with a new way of explaining an old idea.",
+  ],
+};
+
+function EmptyState({ outputType, isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
   const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
   const prompt = EMPTY_PROMPTS[outputType] || EMPTY_PROMPTS.essay;
-  const suggestions: Record<string, string[]> = {
-    essay: [
-      "I want to write about the future of remote work.",
-      "Help me make the case for slow thinking in a fast world.",
-      "I have a contrarian take on how leaders should communicate.",
-    ],
-    podcast: [
-      "Solo episode on a mistake I made and what it taught me.",
-      "Conversation about where my industry is actually going.",
-      "Three-part series to introduce my core framework.",
-    ],
-    book: [
-      "Book that captures the philosophy behind my work.",
-      "Short book I can hand to new clients as an onboarding guide.",
-      "Field guide that turns my talks into a repeatable system.",
-    ],
-    website: [
-      "Homepage that explains my offer in plain language.",
-      "Services page that makes it clear who I am for.",
-      "About page that tells the real story behind my work.",
-    ],
-    video_script: [
-      "60-second video on the one thing my best clients have in common.",
-      "Explainer video that walks through my framework.",
-      "Behind-the-scenes video on how I actually work with clients.",
-    ],
-    newsletter: [
-      "Story from this week that changed how I see my work.",
-      "Roundup of three signals my audience should know about.",
-      "Letter to my list about a shift in my offer.",
-    ],
-    socials: [
-      "Take on a trend in my space that I disagree with.",
-      "Short thread breaking down a framework I use.",
-      "Quote and reaction to something my audience is already talking about.",
-    ],
-    presentation: [
-      "Keynote for a leadership summit, 45 minutes.",
-      "Sales deck for a new service offering.",
-      "Internal strategy presentation for my team.",
-    ],
-    business: [
-      "Proposal for a new advisory engagement.",
-      "Pitch deck for a workshop series.",
-      "RFP response for a corporate client.",
-    ],
-    freestyle: [
-      "I have a strange idea and I am not sure what format it belongs in.",
-      "I want to rewrite something that already exists but make it mine.",
-      "I want to experiment with a new way of explaining an old idea.",
-    ],
-  };
-  const typeSuggestions = suggestions[outputType] || suggestions.essay;
 
   return (
     <div style={{
@@ -459,28 +460,14 @@ function EmptyState({ outputType, onSuggestion, isMobile }: { outputType: string
     }}>
       <WatsonOrb size={120} />
 
-      <div style={{ maxWidth: 480 }}>
-        <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 10, letterSpacing: "-0.02em" }}>
+      <div style={{ maxWidth: 400 }}>
+        <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 10, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
           {prompt}
         </h2>
-        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
-          Start with a rough idea. Watson will ask the questions that shape it into {type.label.toLowerCase()}.
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
+          Start with a rough idea. Watson will ask the questions that shape it into{"\u00A0"}
+          {type.label.toLowerCase()}.
         </p>
-      </div>
-
-      {/* Suggestion chips */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: isMobile ? "100%" : 520, marginTop: 24 }}>
-        {typeSuggestions.map((s, i) => (
-          <button key={i} onClick={() => onSuggestion(s)} type="button" style={{
-            background: "var(--surface-white)", border: "1px solid var(--border-subtle)",
-            borderRadius: 12, padding: "14px 20px", cursor: "pointer",
-            textAlign: "left", fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 400,
-            color: "var(--text-secondary)", lineHeight: 1.5, transition: "all 0.2s",
-          }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.transform = "translateY(0)"; }}
-          >{s}</button>
-        ))}
       </div>
     </div>
   );
@@ -1001,7 +988,7 @@ export default function WorkSession() {
   const handleRunPipeline = async () => {
     if (!user || !generatedOutputId || generatedOutputId === "new" || !generatedContent) return;
     setPipelineStatus("RUNNING");
-    setCurrentStage("gates");
+    setCurrentStage("checkpoints");
     setPipelineGateResults([]);
     setBlockedAt(undefined);
     setPipelineResult(null);
@@ -1153,7 +1140,11 @@ export default function WorkSession() {
         </div>
 
         {/* Center: output type pill */}
-        <OutputTypePill value={outputType} onChange={setOutputType} />
+        <Tooltip text="Choose what Watson will help you produce." position="bottom">
+          <span style={{ display: "inline-flex" }}>
+            <OutputTypePill value={outputType} onChange={setOutputType} />
+          </span>
+        </Tooltip>
 
         {/* Right: actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1675,27 +1666,28 @@ export default function WorkSession() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             {isSupported && (
-              <button
-                type="button"
-                onClick={toggleListening}
-                aria-label={isListening ? "Stop listening" : "Start voice input"}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  border: isListening ? "2px solid #E53935" : "1px solid var(--border-subtle)",
-                  background: isListening ? "rgba(229, 57, 53, 0.08)" : "transparent",
-                  cursor: "pointer",
-                  color: isListening ? "#E53935" : "var(--text-tertiary)",
-                  transition: "all 0.2s ease",
-                  flexShrink: 0,
-                  position: "relative",
-                }}
-              >
-                <Mic size={18} strokeWidth={2} />
+              <Tooltip text="Speak your idea instead of typing." position="top">
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  aria-label={isListening ? "Stop listening" : "Start voice input"}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    border: isListening ? "2px solid #E53935" : "1px solid var(--border-subtle)",
+                    background: isListening ? "rgba(229, 57, 53, 0.08)" : "transparent",
+                    cursor: "pointer",
+                    color: isListening ? "#E53935" : "var(--text-tertiary)",
+                    transition: "all 0.2s ease",
+                    flexShrink: 0,
+                    position: "relative",
+                  }}
+                >
+                  <Mic size={18} strokeWidth={2} />
                 {isListening && (
                   <span
                     style={{
@@ -1710,7 +1702,8 @@ export default function WorkSession() {
                     }}
                   />
                 )}
-              </button>
+                </button>
+              </Tooltip>
             )}
             <div style={{ flex: 1 }}>
               <AutoTextarea
@@ -1756,24 +1749,58 @@ export default function WorkSession() {
               )}
               {!apiError && "Enter to send · Shift+Enter for new line"}
             </span>
-            <button
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || loading}
-              style={{
-                width: 36, height: 36, borderRadius: "50%", border: "none",
-                background: input.trim() && !loading ? "var(--gold-dark)" : "rgba(0,0,0,0.06)",
-                cursor: input.trim() && !loading ? "pointer" : "default",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all .15s", flexShrink: 0,
-              }}
-              title="Send message"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={input.trim() && !loading ? "#fff" : "var(--text-tertiary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
+            <Tooltip text="Send to Watson." position="top">
+              <button
+                onClick={() => sendMessage()}
+                disabled={!input.trim() || loading}
+                style={{
+                  width: 36, height: 36, borderRadius: "50%", border: "none",
+                  background: input.trim() && !loading ? "var(--gold-dark)" : "rgba(0,0,0,0.06)",
+                  cursor: input.trim() && !loading ? "pointer" : "default",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all .15s", flexShrink: 0,
+                }}
+                title="Send message"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={input.trim() && !loading ? "#fff" : "var(--text-tertiary)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </Tooltip>
           </div>
         </div>
+        {messages.filter((m) => m.role === "user").length === 0 && (
+          <div style={{ maxWidth: 720, margin: "0 auto", marginTop: 12, display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {(SUGGESTIONS_BY_TYPE[outputType] || SUGGESTIONS_BY_TYPE.essay).map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => sendMessage(s)}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontFamily: "'DM Sans', sans-serif",
+                  background: "transparent",
+                  border: "1px solid var(--border-subtle)",
+                  color: "var(--text-tertiary)",
+                  cursor: "pointer",
+                  transition: "border-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border-default)";
+                  e.currentTarget.style.color = "var(--text-secondary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border-subtle)";
+                  e.currentTarget.style.color = "var(--text-tertiary)";
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
         <p style={{ textAlign: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-tertiary)", marginTop: 10, letterSpacing: ".01em" }}>
           Watson is your First Listener. Say anything. It will ask the right questions.
         </p>

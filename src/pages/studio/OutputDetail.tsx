@@ -265,8 +265,9 @@ export default function OutputDetail() {
   <title>${titleEscaped}</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'DM Sans', -apple-system, sans-serif; background: #fff; color: #1a1a1a; line-height: 1.7; margin: 0; padding: 0 24px 48px; }
-    .wrap { max-width: 720px; margin: 0 auto; }
+    body { font-family: 'DM Sans', -apple-system, sans-serif; background: #fff; color: #1a1a1a; line-height: 1.25; margin: 0; padding: 0 24px 48px; }
+    .wrap { max-width: 680px; margin: 0 auto; }
+    .content { line-height: 1.25; font-size: 15px; color: var(--text-primary, #1a1a1a); }
     .wordmark { font-size: 11px; letter-spacing: 0.12em; color: rgba(0,0,0,0.35); margin-bottom: 32px; }
     h1 { font-size: 28px; font-weight: 700; margin: 0 0 24px; letter-spacing: -0.02em; }
     h2 { font-size: 20px; font-weight: 600; margin: 32px 0 16px; padding-top: 8px; }
@@ -625,22 +626,26 @@ export default function OutputDetail() {
 
       {/* Content */}
       <div
-        className="card"
-        style={{ padding: isMobile ? "20px 16px" : "32px 36px" }}
+        style={{ maxWidth: 680, margin: "0 auto" }}
       >
-        <pre
-          style={{
-            fontFamily: "var(--font)",
-            fontSize: isMobile ? 14 : 15,
-            lineHeight: 1.8,
-            color: "var(--fg)",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-            margin: 0,
-          }}
+        <div
+          className="card"
+          style={{ padding: isMobile ? "20px 16px" : "32px 36px" }}
         >
-          {output!.content}
-        </pre>
+          <pre
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: isMobile ? 14 : 15,
+              lineHeight: 1.25,
+              color: "var(--text-primary)",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              margin: 0,
+            }}
+          >
+            {output!.content}
+          </pre>
+        </div>
       </div>
 
       {pipelineRun && (

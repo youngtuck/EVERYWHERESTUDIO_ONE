@@ -7,7 +7,7 @@ interface PipelineProgressProps {
 }
 
 const STAGES = [
-  { id: "gates", label: "Checkpoints 0-6" },
+  { id: "checkpoints", label: "Checkpoints 0-6" },
   { id: "betterish", label: "Betterish" },
   { id: "wrap", label: "Wrap" },
   { id: "qa", label: "QA" },

@@ -371,9 +371,10 @@ export default function VisualWrap() {
         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{output.title}</div>
         <div
           style={{
-            fontSize: 12,
-            color: "var(--fg-3)",
-            lineHeight: 1.5,
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 15,
+            color: "var(--text-primary)",
+            lineHeight: 1.25,
             marginBottom: 8,
             overflow: "hidden",
             display: "-webkit-box",

@@ -9,6 +9,9 @@
     "api/sentinel-generate.js": {
       "maxDuration": 60
     },
+    "api/sentinel-seed.js": {
+      "maxDuration": 30
+    },
     "api/sentinel-cron.js": {
       "maxDuration": 60
     },
@@ -24,10 +27,16 @@
     "api/brand-dna.js": {
       "maxDuration": 30
     },
+    "api/brand-dna-from-url.js": {
+      "maxDuration": 60
+    },
     "api/voice-dna.js": {
       "maxDuration": 30
     },
     "api/visual.js": {
+      "maxDuration": 60
+    },
+    "api/upload-resource.js": {
       "maxDuration": 60
     }
   },
