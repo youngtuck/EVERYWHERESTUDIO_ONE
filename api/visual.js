@@ -59,40 +59,9 @@ function buildPrompt(content, vibe, title, author, context, brandColors, voiceSt
 
 const MODELS = [
   process.env.GEMINI_MODEL,
-  "gemini-2.0-flash-exp",
+  "gemini-2.5-flash-image",
+  "gemini-3.1-flash-image-preview",
 ].filter(Boolean);
-
-// Two request formats to try per model
-const REQUEST_FORMATS = [
-  {
-    name: "responseModalities",
-    buildBody: (prompt) => ({
-      contents: [{ role: "user", parts: [{ text: "Generate an image: " + prompt }] }],
-      generationConfig: {
-        responseModalities: ["image", "text"],
-      },
-    }),
-  },
-  {
-    name: "response_mime_type",
-    buildBody: (prompt) => ({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        response_mime_type: "image/png",
-      },
-    }),
-  },
-];
-
-function extractImage(data) {
-  const parts = data?.candidates?.[0]?.content?.parts || [];
-  for (const part of parts) {
-    if (part.inlineData?.data && (part.inlineData.mimeType || "").startsWith("image/")) {
-      return { imageBase64: part.inlineData.data, mimeType: part.inlineData.mimeType || "image/png" };
-    }
-  }
-  return null;
-}
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -126,54 +95,64 @@ export default async function handler(req, res) {
   let lastError = null;
 
   for (const model of MODELS) {
-    for (const format of REQUEST_FORMATS) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 55000);
-        console.log(`[api/visual] Trying model: ${model}, format: ${format.name}`);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 55000);
+      console.log(`[api/visual] Trying model: ${model}`);
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const body = JSON.stringify(format.buildBody(prompt));
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const body = JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+        },
+      });
 
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body,
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
 
-        if (!response.ok) {
-          const errText = await response.text();
-          console.error(`[api/visual] ${model}/${format.name} HTTP ${response.status}:`, errText);
-          let message = `Gemini API error (${model}/${format.name}): ${response.status}`;
-          try {
-            const errJson = JSON.parse(errText);
-            if (errJson?.error?.message) message = errJson.error.message;
-          } catch (_) {}
-          lastError = message;
-          continue;
-        }
-
-        const data = await response.json();
-        console.log(`[api/visual] ${model}/${format.name} response keys:`, JSON.stringify(Object.keys(data)));
-
-        const result = extractImage(data);
-        if (result) {
-          console.log(`[api/visual] Success with ${model}/${format.name}`);
-          return res.status(200).json({ success: true, image: result.imageBase64, mimeType: result.mimeType });
-        }
-
-        // Log full response structure for debugging
-        const candidateKeys = data?.candidates?.[0]?.content?.parts?.map(p => Object.keys(p)) || [];
-        console.log(`[api/visual] ${model}/${format.name} no image found. Part keys:`, JSON.stringify(candidateKeys));
-        lastError = `Model ${model}/${format.name} returned no image data`;
-        continue;
-      } catch (err) {
-        lastError = err.name === "AbortError" ? `Timeout with ${model}/${format.name}` : (err.message || "Failed");
-        console.error(`[api/visual] ${lastError}`);
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error(`[api/visual] ${model} HTTP ${response.status}:`, errText);
+        let message = `Gemini API error (${model}): ${response.status}`;
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson?.error?.message) message = errJson.error.message;
+        } catch (_) {}
+        lastError = message;
         continue;
       }
+
+      const data = await response.json();
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      let imageBase64 = null;
+      let mimeType = "image/png";
+
+      for (const part of parts) {
+        if (part.inlineData?.data && (part.inlineData.mimeType || "").startsWith("image/")) {
+          imageBase64 = part.inlineData.data;
+          mimeType = part.inlineData.mimeType || "image/png";
+          break;
+        }
+      }
+
+      if (imageBase64) {
+        console.log(`[api/visual] Success with model: ${model}`);
+        return res.status(200).json({ success: true, image: imageBase64, mimeType });
+      }
+
+      console.log(`[api/visual] ${model} returned no image. Part keys:`, JSON.stringify(parts.map(p => Object.keys(p))));
+      lastError = `Model ${model} returned no image data`;
+      continue;
+    } catch (err) {
+      lastError = err.name === "AbortError" ? `Timeout with ${model}` : (err.message || "Failed");
+      console.error(`[api/visual] ${lastError}`);
+      continue;
     }
   }
 
