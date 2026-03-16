@@ -721,7 +721,8 @@ async function chatWithWatson(
   outputTypeApi: string,
   voiceProfile: object | null,
   voiceDnaMd: string,
-  systemMode: SystemMode
+  systemMode: SystemMode,
+  userId: string | undefined
 ): Promise<{ reply: string; readyToGenerate: boolean }> {
   const url = `${API_BASE}/api/chat`;
   const body: Record<string, unknown> = {
@@ -732,6 +733,7 @@ async function chatWithWatson(
     outputType: outputTypeApi,
     voiceProfile,
     systemMode,
+    userId,
   };
   if (voiceDnaMd && voiceDnaMd.trim()) {
     body.voiceDnaMd = voiceDnaMd.trim();
@@ -748,14 +750,14 @@ async function chatWithWatson(
   return res.json();
 }
 
-async function generateOutput(conversationSummary: string, outputTypeApi: string, voiceProfile: object | null): Promise<{ content: string; score: number; gates?: unknown }> {
+async function generateOutput(conversationSummary: string, outputTypeApi: string, voiceProfile: object | null, userId: string | undefined): Promise<{ content: string; score: number; gates?: unknown }> {
   const url = `${API_BASE}/api/generate`;
   const res = await requestWithRetry(
     url,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ conversationSummary, outputType: outputTypeApi, voiceProfile }),
+      body: JSON.stringify({ conversationSummary, outputType: outputTypeApi, voiceProfile, userId }),
     },
     FETCH_TIMEOUT_MS
   );
@@ -882,7 +884,7 @@ export default function WorkSession() {
     const chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd, inferredMode);
+      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd, inferredMode, user?.id);
       setMessages(prev => [...prev, {
         id: "w-" + Date.now(),
         role: "assistant",
@@ -907,7 +909,7 @@ export default function WorkSession() {
       .join("\n\n");
 
     try {
-      const { content, score, gates } = await generateOutput(conversationSummary, outputTypeApi, voiceProfile);
+      const { content, score, gates } = await generateOutput(conversationSummary, outputTypeApi, voiceProfile, user?.id);
       setGeneratedContent(content);
       setGeneratedScore(score);
 

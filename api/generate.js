@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { scoreContent } from "./_score.js";
+import { getUserResources } from "./_resources.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -13,12 +14,34 @@ export default async function handler(req, res) {
 
   const { conversationSummary = "", outputType = "freestyle", voiceProfile = null } = req.body;
 
+  let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
+  const userId = req.body?.userId;
+  if (userId) {
+    try {
+      resources = await getUserResources(userId);
+    } catch (e) {
+      console.error("[api/generate] Failed to load resources", e);
+    }
+  }
+
   try {
     const client = new Anthropic({ apiKey });
 
     let system = `You are producing a single piece of content for EVERYWHERE Studio. Use the captured conversation to write in the user's voice. Output only the final content — no meta-commentary, no preamble, no "Here is your essay:" headers. Format appropriately for the type: ${outputType}.`;
     if (voiceProfile) {
       system += `\n\nUSER VOICE PROFILE:\n- Role: ${voiceProfile.role}\n- Audience: ${voiceProfile.audience}\n- Tone: ${voiceProfile.tone}\n- Writing sample: "${voiceProfile.writing_sample?.slice(0, 600)}"\n\nMatch this person's voice exactly.`;
+    }
+    if (resources.voiceDna) {
+      system += "\n\nVOICE DNA - Match this voice exactly:\n" + resources.voiceDna;
+    }
+    if (resources.brandDna) {
+      system += "\n\nBRAND DNA - Stay on brand:\n" + resources.brandDna;
+    }
+    if (resources.methodDna) {
+      system += "\n\nMETHOD DNA - Use these frameworks and proprietary terminology exactly as written. Do not paraphrase tool names:\n" + resources.methodDna;
+    }
+    if (resources.references) {
+      system += "\n\nREFERENCE MATERIALS:\n" + resources.references;
     }
 
     const response = await client.messages.create({

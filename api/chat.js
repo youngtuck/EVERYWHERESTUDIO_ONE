@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
+import { getUserResources } from "./_resources.js";
 
 const READY_MARKER = "READY_TO_GENERATE";
 
@@ -94,10 +95,20 @@ RULES:
 
 OUTPUT TYPES: essay, newsletter, presentation, social, podcast, video, sunday_story, freestyle.`;
 
-function buildWatsonSystem(outputType, voiceProfile, voiceDnaMd) {
+function buildWatsonSystem(outputType, voiceProfile, voiceDnaMd, resources) {
   let system = "";
-  if (voiceDnaMd && typeof voiceDnaMd === "string" && voiceDnaMd.trim()) {
-    system += "VOICE DNA - Write exactly like this person:\n\n" + voiceDnaMd.trim() + "\n\n---\n\n";
+  const voiceContext = ((resources?.voiceDna || "") + "\n" + (voiceDnaMd || "")).trim();
+  if (voiceContext) {
+    system += "VOICE DNA - Write exactly like this person:\n\n" + voiceContext + "\n\n---\n\n";
+  }
+  if (resources?.brandDna) {
+    system += "BRAND DNA - Stay consistent with this brand:\n\n" + resources.brandDna.trim() + "\n\n---\n\n";
+  }
+  if (resources?.methodDna) {
+    system += "METHOD DNA - Use these frameworks and proprietary concepts. Use the exact terminology. Do not paraphrase proprietary tool names into generic language:\n\n" + resources.methodDna.trim() + "\n\n---\n\n";
+  }
+  if (resources?.references) {
+    system += "REFERENCE MATERIALS:\n\n" + resources.references.trim() + "\n\n---\n\n";
   }
   system += WATSON_SYSTEM;
   if (voiceProfile) {
@@ -161,7 +172,17 @@ export default async function handler(req, res) {
     voiceDnaMd,
     systemPromptOverride,
     systemMode = "CONTENT_PRODUCTION",
+    userId,
   } = req.body;
+
+  let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
+  if (userId) {
+    try {
+      resources = await getUserResources(userId);
+    } catch (e) {
+      console.error("[api/chat] Failed to load resources", e);
+    }
+  }
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array required." });
@@ -207,7 +228,7 @@ export default async function handler(req, res) {
     systemPrompt = loadPathDeterminationSystemPrompt();
   } else {
     // CONTENT_PRODUCTION or default: full Watson + Voice DNA
-    systemPrompt = buildWatsonSystem(outputType, voiceProfile, voiceDnaMd);
+    systemPrompt = buildWatsonSystem(outputType, voiceProfile, voiceDnaMd, resources);
   }
 
   try {
