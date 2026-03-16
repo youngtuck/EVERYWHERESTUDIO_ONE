@@ -341,7 +341,7 @@ export default function Watch() {
             {dateLabel}
           </h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: 0 }}>
-            Verified by Priya Kumar Protocol — all claims require 2+ independent sources
+            Verified by Priya Protocol — all claims require 2+ independent sources
           </p>
         </div>
       </header>

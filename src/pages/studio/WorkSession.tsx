@@ -757,12 +757,12 @@ type GatesFromApi = {
 
 const CHECKPOINTS = [
   { number: 0, agent: "Echo", role: "Deduplication", key: null as string | null, description: "Checking for repeated ideas" },
-  { number: 1, agent: "Priya Kumar", role: "Research Accuracy", key: "accuracy", description: "Verifying claims and sources" },
-  { number: 2, agent: "Jordan Lane", role: "Voice Authenticity", key: "voice", description: "Matching your voice DNA" },
-  { number: 3, agent: "David Stone", role: "Engagement", key: "audience", description: "7-second hook test" },
-  { number: 4, agent: "Dr. Elena Vasquez", role: "SLOP Detection", key: "ai_tells", description: "Zero AI tells, zero em-dashes" },
-  { number: 5, agent: "Natasha Boyko", role: "Editorial Excellence", key: "strategy", description: "Publication-grade standard" },
-  { number: 6, agent: "Marcus Webb", role: "Perspective", key: "platform", description: "Platform and context fit" },
+  { number: 1, agent: "Priya", role: "Research Accuracy", key: "accuracy", description: "Verifying claims and sources" },
+  { number: 2, agent: "Jordan", role: "Voice Authenticity", key: "voice", description: "Matching your voice DNA" },
+  { number: 3, agent: "David", role: "Engagement", key: "audience", description: "7-second hook test" },
+  { number: 4, agent: "Elena", role: "SLOP Detection", key: "ai_tells", description: "Zero AI tells, zero em-dashes" },
+  { number: 5, agent: "Natasha", role: "Editorial Excellence", key: "strategy", description: "Publication-grade standard" },
+  { number: 6, agent: "Marcus", role: "Perspective", key: "platform", description: "Platform and context fit" },
   { number: 7, agent: "Marshall", role: "Impact + NVC", key: "impact", description: "Final impact assessment" },
 ];
 

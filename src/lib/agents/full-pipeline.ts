@@ -68,7 +68,7 @@ export async function runFullPipeline(
   callbacks?.onStageStart?.("qa");
   const qaResult = await runAgent(
     "alex-sterling-qa.md",
-    "QA: Alex Sterling",
+    "QA: Alex",
     wrapResult.finalDraft,
     context
   );

@@ -23,6 +23,68 @@ import { useMobile } from "../../hooks/useMobile";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
+function Lightbox({ image, alt, onClose }: { image: string; alt: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="View full size"
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(0, 0, 0, 0.85)",
+        zIndex: 9999,
+      }}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        style={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          background: "rgba(255,255,255,0.1)",
+          border: "none",
+          borderRadius: 8,
+          padding: 8,
+          cursor: "pointer",
+          color: "#fff",
+          transition: "background 0.15s ease",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+        aria-label="Close"
+      >
+        <X size={24} />
+      </button>
+      <img
+        src={`data:image/png;base64,${image}`}
+        alt={alt}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: "90vw",
+          maxHeight: "85vh",
+          objectFit: "contain",
+          borderRadius: 8,
+        }}
+      />
+    </div>
+  );
+}
+
 const VIBES = {
   Sketchbook: {
     label: "Sketchbook",
@@ -92,6 +154,7 @@ export default function VisualWrap() {
   const [authorOverride, setAuthorOverride] = useState("");
   const [contextText, setContextText] = useState("");
   const [lightbox, setLightbox] = useState<{ image: string; vibe: string } | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "1:1">("16:9");
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [resultRevealPhase, setResultRevealPhase] = useState<null | "revealing" | "complete">(null);
@@ -183,13 +246,14 @@ export default function VisualWrap() {
           vibe,
           brandColors: brandColors.trim() || null,
           voiceStyle,
+          aspectRatio,
         }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Generation failed");
       return data as { image: string; mimeType: string };
     },
-    [output, author, context, brandColors, voiceStyle]
+    [output, author, context, brandColors, voiceStyle, aspectRatio]
   );
 
   const handleGenerateOne = async () => {
@@ -456,6 +520,53 @@ export default function VisualWrap() {
         </div>
       </div>
 
+      {/* Section: Aspect Ratio */}
+      <div style={{ marginBottom: 28 }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: "0.1em",
+            color: "rgba(0,0,0,0.35)",
+            marginBottom: 12,
+            textTransform: "uppercase",
+          }}
+        >
+          ASPECT RATIO
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {([
+            { value: "16:9" as const, label: "16:9", subtitle: "Landscape" },
+            { value: "9:16" as const, label: "9:16", subtitle: "Portrait" },
+            { value: "1:1" as const, label: "1:1", subtitle: "Square" },
+          ]).map((opt) => {
+            const selected = aspectRatio === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setAspectRatio(opt.value)}
+                style={{
+                  padding: "10px 18px",
+                  border: selected ? "2px solid #C8961A" : "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 10,
+                  background: selected ? "rgba(200,150,26,0.04)" : "#fff",
+                  cursor: "pointer",
+                  fontFamily: "'DM Sans', sans-serif",
+                  textAlign: "center",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; }}
+                onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; }}
+              >
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{opt.label}</div>
+                <div style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", marginTop: 2 }}>{opt.subtitle}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Section 3: Customize (collapsible) */}
       <div style={{ marginBottom: 28 }}>
         <button
@@ -619,7 +730,7 @@ export default function VisualWrap() {
             }}
           >
             <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>
-              Kai Morrison
+              Kai
             </div>
             <div
               style={{
@@ -664,6 +775,7 @@ export default function VisualWrap() {
                   <img
                     src={result ? `data:${result.mimeType};base64,${result.image}` : ""}
                     alt=""
+                    onClick={() => result && resultRevealPhase === "complete" && setLightbox({ image: result.image, vibe: result.vibe })}
                     style={{
                       position: "absolute",
                       inset: 0,
@@ -673,6 +785,7 @@ export default function VisualWrap() {
                       borderRadius: 12,
                       opacity: resultRevealPhase === "complete" ? 1 : resultRevealPhase === "revealing" ? 0 : 0,
                       transition: "opacity 0.8s ease-out 0.2s",
+                      cursor: resultRevealPhase === "complete" ? "pointer" : "default",
                     }}
                   />
                 </>
@@ -813,11 +926,13 @@ export default function VisualWrap() {
             <img
               src={`data:${result.mimeType};base64,${result.image}`}
               alt={`Visual: ${result.vibe}`}
+              onClick={() => setLightbox({ image: result.image, vibe: result.vibe })}
               style={{
                 width: "100%",
                 borderRadius: 12,
                 boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
                 display: "block",
+                cursor: "pointer",
               }}
             />
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 16 }}>
@@ -996,47 +1111,11 @@ export default function VisualWrap() {
 
       {/* Lightbox */}
       {lightbox && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="View full size"
-          onClick={() => setLightbox(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.85)",
-            zIndex: 1000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setLightbox(null)}
-            style={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              background: "rgba(255,255,255,0.1)",
-              border: "none",
-              borderRadius: 8,
-              padding: 8,
-              cursor: "pointer",
-              color: "#fff",
-            }}
-            aria-label="Close"
-          >
-            <X size={24} />
-          </button>
-          <img
-            src={`data:image/png;base64,${lightbox.image}`}
-            alt={lightbox.vibe}
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 8 }}
-          />
-        </div>
+        <Lightbox
+          image={lightbox.image}
+          alt={lightbox.vibe}
+          onClose={() => setLightbox(null)}
+        />
       )}
     </div>
   );

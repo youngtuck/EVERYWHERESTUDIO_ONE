@@ -20,7 +20,7 @@ Return this exact JSON structure:
 {
   "date_label": "THURSDAY, FEBRUARY 19, 2026",
   "generated_at": "ISO timestamp string",
-  "verified_by": "Priya Kumar Protocol — all claims require 2+ independent sources",
+  "verified_by": "Priya Protocol — all claims require 2+ independent sources",
   "sections": {
     "whats_moving": [
       {

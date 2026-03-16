@@ -34,10 +34,20 @@ const VIBES = {
   },
 };
 
-function buildPrompt(content, vibe, title, author, context, brandColors, voiceStyle) {
-  const vibeConfig = VIBES[vibe] || VIBES.Sketchbook;
+const ASPECT_LABELS = {
+  "16:9": "16:9 landscape",
+  "9:16": "9:16 portrait",
+  "1:1": "1:1 square format",
+};
 
-  let prompt = vibeConfig.prompt + "\n\n";
+function buildPrompt(content, vibe, title, author, context, brandColors, voiceStyle, aspectRatio) {
+  const vibeConfig = VIBES[vibe] || VIBES.Sketchbook;
+  const ratioLabel = ASPECT_LABELS[aspectRatio] || ASPECT_LABELS["16:9"];
+
+  // Replace hardcoded "16:9 landscape" in vibe prompts with dynamic ratio
+  let vibePrompt = vibeConfig.prompt.replace(/16:9 landscape/g, ratioLabel);
+
+  let prompt = vibePrompt + "\n\n";
   prompt += `Top banner with bold title: "${title}".\n`;
   prompt += `Byline: "${author}" in smaller text.\n`;
   prompt += `Context: "${context}".\n\n`;
@@ -88,9 +98,10 @@ export default async function handler(req, res) {
     vibe = "Sketchbook",
     brandColors = null,
     voiceStyle = null,
+    aspectRatio = "16:9",
   } = req.body || {};
 
-  const prompt = buildPrompt(content, vibe, title, author, context, brandColors, voiceStyle);
+  const prompt = buildPrompt(content, vibe, title, author, context, brandColors, voiceStyle, aspectRatio);
 
   let lastError = null;
 
