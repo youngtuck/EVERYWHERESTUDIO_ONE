@@ -59,8 +59,8 @@ function buildPrompt(content, vibe, title, author, context, brandColors, voiceSt
 
 const MODELS = [
   process.env.GEMINI_MODEL,
-  "gemini-2.0-flash-exp",
-  "gemini-2.0-flash",
+  "gemini-2.0-flash-exp-image-generation",
+  "imagen-3.0-generate-002",
 ].filter(Boolean);
 
 export default async function handler(req, res) {
@@ -95,23 +95,35 @@ export default async function handler(req, res) {
   let lastError = null;
 
   for (const model of MODELS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 55000);
+      console.log("[api/visual] Trying model:", model);
 
-      console.log(`[api/visual] Trying model: ${model}`);
+      let url, body;
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      if (model.startsWith("imagen")) {
+        // Imagen API uses a different endpoint and format
+        url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`;
+        body = JSON.stringify({
+          instances: [{ prompt: prompt }],
+          parameters: { sampleCount: 1, aspectRatio: "16:9" },
+        });
+      } else {
+        // Gemini models use generateContent
+        url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        body = JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
             responseModalities: ["TEXT", "IMAGE"],
           },
-        }),
+        });
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -123,26 +135,34 @@ export default async function handler(req, res) {
           const errJson = JSON.parse(errText);
           if (errJson?.error?.message) message = errJson.error.message;
         } catch (_) {}
-        console.error(`[api/visual] ${message}`);
+        console.error("[api/visual]", message);
         lastError = message;
-        continue; // Try next model
+        continue;
       }
 
       const data = await response.json();
-      const parts = data?.candidates?.[0]?.content?.parts || [];
       let imageBase64 = null;
       let mimeType = "image/png";
 
-      for (const part of parts) {
-        if (part.inlineData && part.inlineData.data && (part.inlineData.mimeType || "").startsWith("image/")) {
-          imageBase64 = part.inlineData.data;
-          mimeType = part.inlineData.mimeType || "image/png";
-          break;
+      // Imagen response format
+      if (data?.predictions?.[0]?.bytesBase64Encoded) {
+        imageBase64 = data.predictions[0].bytesBase64Encoded;
+        mimeType = data.predictions[0].mimeType || "image/png";
+      }
+      // Gemini response format
+      else {
+        const parts = data?.candidates?.[0]?.content?.parts || [];
+        for (const part of parts) {
+          if (part.inlineData?.data && (part.inlineData.mimeType || "").startsWith("image/")) {
+            imageBase64 = part.inlineData.data;
+            mimeType = part.inlineData.mimeType || "image/png";
+            break;
+          }
         }
       }
 
       if (imageBase64) {
-        console.log(`[api/visual] Success with model: ${model}`);
+        console.log("[api/visual] Success with model:", model);
         return res.status(200).json({ success: true, image: imageBase64, mimeType });
       }
 
@@ -150,7 +170,7 @@ export default async function handler(req, res) {
       continue;
     } catch (err) {
       lastError = err.name === "AbortError" ? `Timeout with ${model}` : (err.message || "Failed");
-      console.error(`[api/visual] ${lastError}`);
+      console.error("[api/visual]", lastError);
       continue;
     }
   }
