@@ -3,20 +3,20 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
-import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut } from "lucide-react";
+import { LayoutDashboard, PenLine, Eye, FileText, FolderOpen, Folder, Settings, Plus, ChevronDown, Bookmark, LogOut, Hammer, Package } from "lucide-react";
 
-// ── Nav items (with icons, reference style) ─────────────────────────────────
+// ── Nav items (exact order: My Studio → Work → Watch → The Lot → Resources → Projects → The Workbench → Wrap → The Vault → Settings) ──
 const NAV = [
-  { path: "/studio/dashboard", label: "My Studio", icon: LayoutDashboard },
-  { path: "/studio/work",      label: "Work",      icon: PenLine },
-  { path: "/studio/watch",     label: "Watch",     icon: Eye,    badge: "11" },
-  { path: "/studio/outputs",   label: "The Vault", icon: FileText },
-  { path: "/studio/projects",  label: "Projects",  icon: FolderOpen },
-  { path: "/studio/lot",       label: "The Lot",   icon: Bookmark },
-];
-const NAV_BOTTOM = [
-  { path: "/studio/resources", label: "Resources", icon: Folder },
-  { path: "/studio/settings/voice",   label: "Settings",  icon: Settings },
+  { path: "/studio/dashboard",       label: "My Studio",     icon: LayoutDashboard },
+  { path: "/studio/work",            label: "Work",         icon: PenLine },
+  { path: "/studio/watch",           label: "Watch",       icon: Eye,        badge: "11" },
+  { path: "/studio/lot",             label: "The Lot",      icon: Bookmark },
+  { path: "/studio/resources",       label: "Resources",    icon: Folder },
+  { path: "/studio/projects",        label: "Projects",     icon: FolderOpen },
+  { path: "/studio/workbench",       label: "The Workbench", icon: Hammer },
+  { path: "/studio/wrap",            label: "Wrap",         icon: Package },
+  { path: "/studio/outputs",         label: "The Vault",     icon: FileText },
+  { path: "/studio/settings/voice", label: "Settings",      icon: Settings },
 ];
 
 function titleCase(str: string) {
@@ -114,12 +114,13 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
     nav("/");
   };
 
-  const isActive = (p: string) =>
-    p === "/studio/work"
-      ? loc.pathname === p || loc.pathname.startsWith("/studio/work/")
-      : p === "/studio/settings/voice"
-        ? loc.pathname === p || loc.pathname.startsWith("/studio/settings")
-        : loc.pathname === p;
+  const isActive = (p: string) => {
+    if (p === "/studio/work") return loc.pathname === p || loc.pathname.startsWith("/studio/work/");
+    if (p === "/studio/settings/voice") return loc.pathname === p || loc.pathname.startsWith("/studio/settings");
+    if (p === "/studio/workbench") return loc.pathname === p || loc.pathname.startsWith("/studio/workbench/");
+    if (p === "/studio/wrap") return loc.pathname === p || loc.pathname.startsWith("/studio/wrap/");
+    return loc.pathname === p || loc.pathname.startsWith(p + "/");
+  };
 
   return (
     <>
@@ -572,65 +573,6 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             <Plus size={12} strokeWidth={2} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
             <span>New conversation</span>
           </button>
-        </div>
-
-        <div>
-          {!collapsed && <div className="nav-section-label">More</div>}
-          {NAV_BOTTOM.map(({ path, label, icon: Icon }) => {
-            const active = isActive(path);
-            return (
-              <button
-                key={path}
-                onClick={() => nav(path)}
-                className={`nav-item ${active ? "active" : ""}`}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-start",
-                  gap: 10,
-                  padding: "8px 12px",
-                  paddingLeft: active ? "12px" : "14px",
-                  marginBottom: 2,
-                  border: "none",
-                  borderRadius: "var(--studio-radius)",
-                  borderLeft: active ? "2px solid #C8961A" : "2px solid transparent",
-                  background: active ? "rgba(200,150,26,0.08)" : "transparent",
-                  cursor: "pointer",
-                  fontFamily: "var(--font)",
-                  fontSize: 12,
-                  textAlign: "left",
-                  opacity: active ? 1 : 0.5,
-                  transition: "background 0.15s, color 0.15s, opacity 0.15s, border-color 0.15s",
-                }}
-                onMouseEnter={e => {
-                  if (!active) {
-                    e.currentTarget.style.background = "var(--bg-2)";
-                    e.currentTarget.style.opacity = "0.8";
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!active) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.opacity = "0.5";
-                  }
-                }}
-              >
-                <span style={{
-                  width: 24, height: 22, display: "flex", alignItems: "center",
-                  justifyContent: "center", borderRadius: 6,
-                  background: active ? "rgba(200,150,26,0.12)" : "transparent",
-                  color: active ? "var(--fg)" : "var(--fg-3)",
-                  flexShrink: 0,
-                  border: active ? "1px solid var(--line-2)" : "1px solid var(--line)",
-                  transition: "background 0.15s, color 0.15s, border-color 0.15s",
-                }}>
-                  <Icon size={12} strokeWidth={2} />
-                </span>
-                <span style={{ color: active ? "var(--fg)" : "var(--fg-3)" }}>{label}</span>
-              </button>
-            );
-          })}
         </div>
       </nav>
 
