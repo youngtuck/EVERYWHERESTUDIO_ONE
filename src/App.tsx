@@ -23,6 +23,7 @@ const VoiceDnaSettings = lazy(() => import("./pages/studio/VoiceDnaSettings"));
 const Onboarding = lazy(() => import("./pages/studio/Onboarding"));
 const TheLot = lazy(() => import("./pages/studio/TheLot"));
 const Workbench = lazy(() => import("./pages/studio/Workbench"));
+const Wrap = lazy(() => import("./pages/studio/Wrap"));
 const VisualWrap = lazy(() => import("./pages/studio/VisualWrap"));
 
 function PageTransition({ children }: { children: ReactNode }) {
@@ -93,6 +94,7 @@ const App = () => (
               <Route path="watch" element={<Watch />} />
               <Route path="outputs" element={<OutputLibrary />} />
               <Route path="outputs/:id" element={<OutputDetail />} />
+              <Route path="wrap" element={<Wrap />} />
               <Route path="wrap/visual/:outputId" element={<VisualWrap />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:id" element={<ProjectDetail />} />
