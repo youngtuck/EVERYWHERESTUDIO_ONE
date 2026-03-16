@@ -1660,20 +1660,7 @@ export default function WorkSession() {
           onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-dark)"; }}
           onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)"; }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <span
-              style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14,
-                color: "var(--text-tertiary)",
-                letterSpacing: ".02em",
-                textTransform: "uppercase",
-              }}
-              title="Sara inferred mode from your message"
-            >
-              {SYSTEM_MODE_LABELS[currentSystemMode]}
-            </span>
-          </div>
+          {/* System mode label removed per Mark's request */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             {isSupported && (
               <button
@@ -1718,7 +1705,7 @@ export default function WorkSession() {
                 value={input}
                 onChange={setInput}
                 onSubmit={sendMessage}
-                placeholder={`Tell Watson about your ${type.label.toLowerCase()}...`}
+                placeholder="Tell Watson what's on your mind..."
                 disabled={loading}
                 inputRef={inputRef}
               />
