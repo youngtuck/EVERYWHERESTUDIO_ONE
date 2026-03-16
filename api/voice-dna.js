@@ -112,11 +112,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
   }
 
-  const { responses, userName = "the user", textSamples, text } = req.body || {};
+  const { responses, userName = "the user", textSamples, text: textInput } = req.body || {};
 
   try {
     const client = new Anthropic({ apiKey });
-    const userMessage = buildUserMessage(userName, responses, textSamples || text);
+    const userMessage = buildUserMessage(userName, responses, textSamples || textInput);
 
     if (!userMessage) {
       return res.status(400).json({
