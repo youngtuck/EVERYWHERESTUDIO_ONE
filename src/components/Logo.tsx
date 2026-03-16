@@ -1,14 +1,67 @@
-interface LogoProps { size?: "sm"|"md"|"lg"; onDark?: boolean; }
-const Logo = ({ size = "md", onDark = false }: LogoProps) => {
-  const s = { sm:{fs:13,sub:8.5}, md:{fs:15,sub:10}, lg:{fs:22,sub:13.5} }[size];
-  return (
-    <div style={{ display:"inline-flex", alignItems:"center", gap:2, fontFamily:"'DM Sans',sans-serif", userSelect:"none", letterSpacing:"-0.03em" }}>
-      <span style={{ fontSize:s.fs, fontWeight:600 }}>
-        <span style={{ color: onDark ? "rgba(255,255,255,0.88)" : "var(--fg)" }}>Every</span>
-        <span style={{ color:"#3A7BD5" }}>where</span>
-      </span>
-      <span style={{ fontSize:s.sub, fontWeight:400, letterSpacing:"0.08em", textTransform:"uppercase", color: onDark ? "rgba(255,255,255,0.28)" : "var(--fg-3)", marginLeft:6, fontVariant:"small-caps" }}>Studio</span>
-    </div>
-  );
+interface LogoProps {
+    size?: number;
+    variant?: "dark" | "light";
+    onClick?: () => void;
+}
+
+const Logo = ({ size = 20, variant = "dark", onClick }: LogoProps) => {
+    const isDark = variant === "dark";
+    const studioColor = isDark ? "#F5C642" : "#0D1B2A";
+
+    return (
+          <button
+                  onClick={onClick}
+                  type="button"
+                  style={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            cursor: onClick ? "pointer" : "default",
+                            letterSpacing: "-1px",
+                            fontFamily: "'Afacad Flux', sans-serif",
+                            background: "none",
+                            border: "none",
+                            padding: 0,
+                            gap: 0,
+                  }}
+                >
+                <span
+                          style={{
+                                      color: "#4A90D9",
+                                      fontWeight: 700,
+                                      fontSize: size,
+                                      lineHeight: 1,
+                                      textTransform: "uppercase" as const,
+                          }}
+                        >
+                        EVERYWHERE
+                </span>span>
+                <span
+                          style={{
+                                      color: studioColor,
+                                      fontWeight: 300,
+                                      fontSize: size,
+                                      lineHeight: 1,
+                                      textTransform: "uppercase" as const,
+                          }}
+                        >
+                        STUDIO
+                  {size >= 24 && (
+                                    <span
+                                                  style={{
+                                                                  color: studioColor,
+                                                                  fontSize: size * 0.52,
+                                                                  fontWeight: 400,
+                                                                  verticalAlign: "top",
+                                                                  marginLeft: -1,
+                                                                  lineHeight: 1.5,
+                                                  }}
+                                                >
+                                      {"\u2122"}
+                                    </span>span>
+                        )}
+                </span>span>
+          </button>button>
+        );
 };
-export default Logo;
+
+export default Logo;</button>
