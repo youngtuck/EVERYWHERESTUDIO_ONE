@@ -439,12 +439,12 @@ function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string
     <div style={{
       flex: 1, display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      padding: "60px 40px", gap: 32, textAlign: "center",
+      padding: "0 40px 120px", gap: 20, textAlign: "center",
     }}>
-      <WatsonOrb size={120} />
+      <WatsonOrb size={80} />
 
       <div style={{ maxWidth: 400 }}>
-        <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
+        <h2 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
           What's on your mind?
         </h2>
       </div>
