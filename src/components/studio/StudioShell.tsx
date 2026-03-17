@@ -51,24 +51,11 @@ export default function StudioShell() {
     };
   }, []);
 
-  const isFullScreen =
-    location.pathname === "/studio/work" ||
-    location.pathname.startsWith("/studio/work/");
-
   const studioFooter = (
     <footer style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
       EVERYWHERE STUDIO (tm) 2026, Mixed Grill, LLC, v6.5 Alpha
     </footer>
   );
-
-  if (isFullScreen) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", transition: "none", display: "flex", flexDirection: "column" }}>
-        <div style={{ flex: 1 }}><Outlet /></div>
-        {studioFooter}
-      </div>
-    );
-  }
 
   return (
     <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
@@ -100,9 +87,10 @@ export default function StudioShell() {
             : {
                 position: "relative",
                 height: "100vh",
-                width: 240,
+                width: sidebarCollapsed ? 60 : 240,
                 flexShrink: 0,
                 zIndex: 1,
+                transition: "width 0.2s ease",
               }
         }
       >

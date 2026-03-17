@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../lib/supabase";
 import Logo from "../Logo";
-import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, Plus, ChevronDown, LogOut, Package, Archive, Loader2 } from "lucide-react";
+import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, Plus, LogOut, Package, Archive, Loader2 } from "lucide-react";
 
 // ── Nav structure: Watch > Work > Wrap (primary), then utility at bottom ──
 const PRIMARY_NAV = [
@@ -71,7 +71,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
 
   return (
     <aside style={{
-      width: collapsed ? 68 : "var(--studio-sidebar-width)",
+      width: collapsed ? 60 : 240,
       flexShrink: 0,
       height: "100vh",
       background: "#fff",
@@ -82,11 +82,12 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       position: "sticky",
       top: 0,
       fontFamily: "'DM Sans', sans-serif",
+      transition: "width 0.2s ease",
     }}>
 
       <div
         style={{
-          padding: "14px 12px",
+          padding: collapsed ? "14px 8px" : "14px 12px",
           display: "flex",
           alignItems: "center",
           justifyContent: collapsed ? "center" : "space-between",
@@ -163,63 +164,51 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             Close
           </button>
         )}
-        {collapsed && onToggleCollapsed && (
+      </div>
+      {collapsed && onToggleCollapsed && (
+        <div style={{ padding: "0 8px 8px", display: "flex", justifyContent: "center" }}>
           <button
             onClick={onToggleCollapsed}
             title="Expand sidebar"
             style={{
-              position: "absolute",
-              right: 8,
-              top: 12,
               background: "none",
               border: "1px solid var(--line)",
-              borderRadius: 999,
-              padding: "2px 4px",
+              borderRadius: 6,
+              width: 40,
+              height: 28,
               cursor: "pointer",
-              fontSize: 13,
+              fontSize: 12,
               color: "var(--fg-3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               transition: "all 0.15s ease",
             }}
             aria-label="Expand sidebar"
           >
             ▶
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* ── Project selector ────────────────────── */}
-      <div style={{ padding: "14px 14px 0" }}>
-        <button title="Switch project" style={{
-          width: "100%",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--studio-radius)",
-          padding: "10px 12px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          cursor: "pointer",
-          fontFamily: "var(--font)",
-          transition: "all 0.15s ease",
-        }}>
-          {!collapsed && (
-            <>
-              <div style={{ textAlign: "left", minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>My Studio</div>
-              </div>
-              <ChevronDown size={14} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
-            </>
-          )}
-          {collapsed && (
-            <div style={{ width: "100%", textAlign: "center", fontSize: 14, fontWeight: 500, color: "var(--fg-3)" }}>
-              My
-            </div>
-          )}
-        </button>
-      </div>
+      {/* ── Project label ────────────────────── */}
+      {!collapsed && (
+        <div style={{ padding: "14px 14px 0" }}>
+          <div style={{
+            width: "100%",
+            background: "var(--bg-2)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--studio-radius)",
+            padding: "10px 12px",
+            fontFamily: "var(--font)",
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>My Studio</div>
+          </div>
+        </div>
+      )}
 
       {/* ── New Session ──────────────────────────── */}
-      <div style={{ padding: "12px 14px 10px" }}>
+      <div style={{ padding: collapsed ? "8px 8px 6px" : "12px 14px 10px" }}>
         <button
           onClick={() => nav("/studio/work")}
           title="Start a new Watson session"
@@ -228,14 +217,14 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             background: "var(--fg)",
             color: "var(--bg)",
             border: "none",
-            borderRadius: "var(--studio-radius)",
-            padding: "10px 14px",
+            borderRadius: collapsed ? 8 : "var(--studio-radius)",
+            padding: collapsed ? "10px 0" : "10px 14px",
             fontSize: 13,
             fontWeight: 600,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 8,
+            gap: collapsed ? 0 : 8,
             letterSpacing: "-0.02em",
             cursor: "pointer",
             fontFamily: "var(--font)",
@@ -247,7 +236,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
-          New Session
+          {!collapsed && "New Session"}
         </button>
       </div>
 
@@ -282,7 +271,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       )}
 
       {/* ── Primary nav: Watch, Work, Wrap ─────── */}
-      <nav style={{ flex: 1, padding: "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">
+      <nav style={{ flex: 1, padding: collapsed ? "6px 4px" : "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">
         <div style={{ paddingBottom: 4, display: "flex", flexDirection: "column", gap: 2 }}>
           {PRIMARY_NAV.map(({ path, label, icon: Icon, tooltip, primary, sub }) => {
             const active = isActive(path);
@@ -296,17 +285,18 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                   width: "100%",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: primary ? "12px 16px" : "8px 16px 8px 36px",
+                  justifyContent: collapsed ? "center" : "space-between",
+                  padding: collapsed ? "10px 0" : primary ? "12px 16px" : "8px 16px 8px 36px",
+                  minHeight: collapsed ? 40 : undefined,
                   border: "none",
                   borderRadius: 8,
-                  borderLeft: active ? "3px solid var(--gold-dark)" : "3px solid transparent",
+                  borderLeft: collapsed ? "none" : active ? "3px solid var(--gold-dark)" : "3px solid transparent",
                   background: active ? "rgba(0,0,0,0.04)" : "transparent",
                   cursor: "pointer",
                   fontFamily: "var(--font)",
                   fontSize: primary ? 15 : 13,
                   fontWeight: primary ? 600 : 400,
-                  textAlign: "left",
+                  textAlign: collapsed ? "center" : "left",
                   opacity: active ? 1 : 0.7,
                   transition: "background 0.15s ease, color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease",
                 }}

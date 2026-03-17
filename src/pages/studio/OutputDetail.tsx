@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { ArrowLeft, Globe, FileText, Presentation, Pencil, Clipboard } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
+import { useAuth } from "../../context/AuthContext";
 import type { BetterishScore, GateResult } from "../../lib/agents/types";
 import { CheckpointResultsPanel } from "../../components/pipeline/CheckpointResultsPanel";
 import { BetterishScoreCard } from "../../components/pipeline/BetterishScoreCard";
@@ -172,15 +173,31 @@ const pillBase = {
 
 const iconStyle = { width: 16, height: 16, color: "rgba(0,0,0,0.4)", flexShrink: 0 };
 
+const REFORMAT_TYPES = [
+  "Essay",
+  "Podcast",
+  "Newsletter",
+  "Social",
+  "Video Script",
+  "Presentation",
+  "Book",
+  "Business",
+  "Freestyle",
+];
+
 export default function OutputDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useMobile();
+  const { user } = useAuth();
   const [output, setOutput] = useState<Output | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [toast, setToast] = useState({ message: "", visible: false });
   const [pipelineRun, setPipelineRun] = useState<PipelineRunRow | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [reformatting, setReformatting] = useState(false);
+  const [reformatType, setReformatType] = useState<string | null>(null);
 
   const showToast = useCallback((message: string) => {
     setToast({ message, visible: true });
@@ -288,15 +305,13 @@ export default function OutputDetail() {
 </body>
 </html>`;
 
-    const blob = new Blob([htmlString], { type: "text/html" });
-    window.open(URL.createObjectURL(blob));
+    setPreviewHtml(htmlString);
   }, [output]);
 
   const wrapAsGoogleDoc = useCallback(async () => {
     if (!output) return;
     await navigator.clipboard.writeText(output.content);
-    window.open("https://docs.google.com/document/create", "_blank");
-    showToast("Content copied. Paste into your new Google Doc.");
+    showToast("Content copied to clipboard. Open Google Docs to paste.");
   }, [output, showToast]);
 
   const wrapAsWordDoc = useCallback(() => {
@@ -316,6 +331,47 @@ export default function OutputDetail() {
   const wrapAsSlideDeck = useCallback(() => {
     showToast("Slide deck export coming soon.");
   }, [showToast]);
+
+  const handleReformat = useCallback(async (selectedType: string) => {
+    if (!output || reformatting) return;
+    setReformatting(true);
+    setReformatType(selectedType);
+    try {
+      const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+      const res = await fetch(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: output.content,
+          outputType: selectedType,
+          userId: user?.id,
+        }),
+      });
+      if (!res.ok) throw new Error("Generation failed");
+      const data = await res.json();
+      const { error: saveError, data: saved } = await supabase
+        .from("outputs")
+        .insert({
+          title: data.title || `${output.title} (${selectedType})`,
+          content: data.content || data.text || "",
+          output_type: selectedType.toLowerCase().replace(/\s+/g, "_"),
+          score: data.score ?? 0,
+          user_id: user?.id,
+          gates: data.gates ?? null,
+        })
+        .select("id")
+        .single();
+      if (saveError || !saved) throw new Error("Failed to save output");
+      showToast(`${selectedType} created!`);
+      navigate(`/studio/output/${saved.id}`);
+    } catch (err) {
+      console.error(err);
+      showToast("Something went wrong. Please try again.");
+    } finally {
+      setReformatting(false);
+      setReformatType(null);
+    }
+  }, [output, reformatting, user, showToast, navigate]);
 
   if (loading)
     return (
@@ -745,6 +801,68 @@ export default function OutputDetail() {
           </div>
         </div>
       )}
+
+      {/* Web Preview (inline) */}
+      {previewHtml && (
+        <div style={{ marginTop: 24, maxWidth: 680, margin: "24px auto 0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Web Preview</span>
+            <button onClick={() => setPreviewHtml(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--text-tertiary)" }}>Close</button>
+          </div>
+          <iframe
+            srcDoc={previewHtml}
+            title="Output preview"
+            style={{ width: "100%", height: 600, border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, background: "#fff" }}
+            sandbox="allow-same-origin"
+          />
+        </div>
+      )}
+
+      {/* Produce in another format */}
+      <div style={{ marginTop: 32, maxWidth: 680, margin: "32px auto 0" }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            color: "rgba(0,0,0,0.3)",
+            marginBottom: 12,
+            textTransform: "uppercase",
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+        >
+          PRODUCE IN ANOTHER FORMAT
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {REFORMAT_TYPES.map((t) => (
+            <button
+              key={t}
+              disabled={reformatting}
+              onClick={() => handleReformat(t)}
+              style={{
+                ...pillBase,
+                fontSize: 12,
+                padding: "7px 14px",
+                opacity: reformatting && reformatType !== t ? 0.4 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!reformatting) {
+                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              {reformatting && reformatType === t ? "Generating..." : t}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <Toast message={toast.message} visible={toast.visible} />
     </div>
