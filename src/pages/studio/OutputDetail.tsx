@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import { ArrowLeft, Globe, FileText, Presentation, Pencil, Clipboard } from "lucide-react";
+import { ArrowLeft, Globe, FileText, Pencil, Clipboard } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
 import { useAuth } from "../../context/AuthContext";
 import type { BetterishScore, GateResult } from "../../lib/agents/types";
@@ -179,7 +179,6 @@ const REFORMAT_TYPES = [
   "Newsletter",
   "Social",
   "Video Script",
-  "Presentation",
   "Book",
   "Business",
   "Freestyle",
@@ -327,10 +326,6 @@ export default function OutputDetail() {
     a.click();
     URL.revokeObjectURL(url);
   }, [output]);
-
-  const wrapAsSlideDeck = useCallback(() => {
-    showToast("Slide deck export coming soon.");
-  }, [showToast]);
 
   const handleReformat = useCallback(async (selectedType: string) => {
     if (!output || reformatting) return;
@@ -618,36 +613,6 @@ export default function OutputDetail() {
             }}
           >
             <FileText style={iconStyle} /> Word Doc
-          </button>
-          <button
-            onClick={wrapAsSlideDeck}
-            title="Export as a slide deck (coming soon)"
-            style={{ ...pillBase, position: "relative" as const, opacity: 0.5 }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
-              e.currentTarget.style.boxShadow = "none";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-            <span
-              style={{
-                position: "absolute",
-                top: 4,
-                right: 8,
-                fontSize: 12,
-                fontWeight: 600,
-                color: "rgba(0,0,0,0.4)",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Soon
-            </span>
-            <Presentation style={iconStyle} /> Slide Deck
           </button>
           <button
             onClick={() => navigate(`/studio/wrap/visual/${output!.id}`)}

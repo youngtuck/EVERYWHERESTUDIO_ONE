@@ -747,8 +747,8 @@ export default function VisualWrap() {
               style={{
                 position: "relative",
                 width: "100%",
-                maxWidth: 500,
-                aspectRatio: "16/9",
+                maxWidth: aspectRatio === "9:16" ? 280 : 500,
+                aspectRatio: aspectRatio.replace(":", "/"),
                 border: "1px solid rgba(0,0,0,0.06)",
                 borderRadius: 12,
                 background: "#FAFAF8",
@@ -1002,7 +1002,7 @@ export default function VisualWrap() {
                       style={{
                         position: "relative",
                         width: "100%",
-                        aspectRatio: "16/9",
+                        aspectRatio: aspectRatio.replace(":", "/"),
                         border: "1px solid rgba(0,0,0,0.06)",
                         borderRadius: 12,
                         background: "#FAFAF8",

@@ -285,7 +285,7 @@ export default function Dashboard() {
               key: "signals",
               label: "SIGNALS",
               value: "—",
-              subtitle: "Coming soon",
+              subtitle: "Activating",
               accent: "rgba(0,0,0,0.1)",
               color: "var(--text-tertiary)",
               tooltip: "Intelligence signals from Sentinel Watch.",

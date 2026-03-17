@@ -32,16 +32,17 @@ export default function Tooltip({ text, children, position = "top" }: TooltipPro
             ...posStyles[position],
             background: "#1a1a1a",
             color: "#fff",
-            padding: "6px 12px",
+            padding: "8px 14px",
             borderRadius: 6,
-            fontSize: 12,
+            fontSize: 13,
             fontFamily: "'DM Sans', sans-serif",
-            whiteSpace: "normal",
-            maxWidth: 240,
+            whiteSpace: "nowrap",
+            maxWidth: 280,
             lineHeight: 1.4,
             zIndex: 1000,
             pointerEvents: "none",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            textAlign: "left",
           }}
         >
           {text}

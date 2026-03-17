@@ -766,7 +766,7 @@ export default function OnboardingPage() {
         {showStep5 && (
           <section style={{ textAlign: "center", paddingTop: 24 }}>
             <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.8)", marginBottom: 24, lineHeight: 1.6 }}>
-              Method DNA setup is coming soon. You’ll be able to upload frameworks and methodology docs so the system thinks in your terms.
+              Method DNA lets you upload frameworks and methodology docs so the system thinks in your terms. You can set this up later in Resources.
             </p>
             <button
               type="button"
