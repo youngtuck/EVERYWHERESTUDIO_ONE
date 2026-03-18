@@ -123,6 +123,7 @@ export default function Watch() {
   const hasTodayBriefing = briefing && isToday(briefing.generated_at);
   const sections = briefing?.briefing?.sections ?? {};
   const defaultTopics = ["AI and technology", "thought leadership", "executive communication", "content strategy"];
+  const usingDefaultTopics = !profile?.sentinel_topics?.length;
   const topics = (profile?.sentinel_topics?.length ? profile.sentinel_topics : defaultTopics) as string[];
   const needsSetup = profile != null && (!profile.sentinel_topics || profile.sentinel_topics.length === 0);
 
@@ -338,8 +339,13 @@ export default function Watch() {
           <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#C8961A", marginBottom: 8 }}>
             INTELLIGENCE BRIEFING
           </div>
-          <h1 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: "clamp(24px,4vw,36px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+          <h1 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: "clamp(24px,4vw,36px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             {dateLabel}
+            {usingDefaultTopics && hasTodayBriefing && (
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "#F5C642", background: "rgba(245,198,66,0.12)", padding: "3px 10px", borderRadius: 4 }}>
+                Sample
+              </span>
+            )}
           </h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: 0 }}>
             Verified by Priya Protocol — all claims require 2+ independent sources

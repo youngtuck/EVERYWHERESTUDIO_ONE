@@ -271,9 +271,23 @@ export default function Settings() {
       {/* Watch Configuration */}
       <SectionCard>
         <SectionHeader label="Watch Configuration" />
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 16, marginTop: 0 }}>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 12, marginTop: 0 }}>
           Topics Sentinel uses to build your intelligence briefings.
         </p>
+        {watchTopics.length === 0 && (
+          <div style={{
+            padding: "10px 14px",
+            background: "rgba(74,144,217,0.06)",
+            borderLeft: "3px solid #4A90D9",
+            borderRadius: 4,
+            marginBottom: 16,
+            fontSize: 13,
+            color: "var(--text-secondary)",
+            lineHeight: 1.5,
+          }}>
+            Sample briefing active. Add your topics below to customize your intelligence briefing.
+          </div>
+        )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
           {watchTopics.map((topic, i) => (
             <span
