@@ -699,8 +699,6 @@ function EmptyState({
     </div>
   );
 }
-  );
-}
 
 function WatsonThinking() {
   return (
@@ -1436,9 +1434,6 @@ export default function WorkSession() {
             setApiError={setApiError}
           />
         </EmptyState>
-      ) : (
-        <>
-        </div>
       ) : (
         <>
       {/* Session progress: Input → Watson → Generate → Output */}
