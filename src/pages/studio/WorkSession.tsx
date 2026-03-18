@@ -12,15 +12,15 @@ import type { GateResult, PipelineResult, PipelineStatus } from "../../lib/agent
 import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
-import LivingWordCloud from "../../components/studio/LivingWordCloud";
+import WatsonOrb from "../../components/studio/WatsonOrb";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WATSON ORB - minimal 2D system glyph
+// WATSON ORB MINI - minimal 2D system glyph (message bubble / thinking state)
 // thinking=false: calm, slow inner waveform.
 // thinking=true:  slightly brighter, more active wave + glow.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function WatsonOrb({ size, thinking }: { size: number; thinking?: boolean }) {
+function WatsonOrbMini({ size, thinking }: { size: number; thinking?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef(0);
   const energyRef = useRef(0);
@@ -346,7 +346,7 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
     }}>
       {!isUser && (
         <div style={{ flexShrink: 0, marginBottom: 2 }}>
-          <WatsonOrb size={28} />
+          <WatsonOrbMini size={28} />
         </div>
       )}
 
@@ -435,22 +435,196 @@ const SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
   ],
 };
 
-function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
+// Reusable input card for both empty-state (inline) and sticky bar (when messages exist)
+function SessionInputBox({
+  input,
+  setInput,
+  sendMessage,
+  loading,
+  inputRef,
+  isSupported,
+  toggleListening,
+  isListening,
+  apiError,
+  setApiError,
+}: {
+  input: string;
+  setInput: (v: string) => void;
+  sendMessage: () => void;
+  loading: boolean;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  isSupported: boolean;
+  toggleListening: () => void;
+  isListening: boolean;
+  apiError: string;
+  setApiError: (v: string) => void;
+}) {
+  return (
+    <div
+      style={{
+        width: "100%",
+        background: "var(--surface-white)",
+        border: "1.5px solid var(--border-default)",
+        borderRadius: 12,
+        padding: "16px 20px",
+        minHeight: 56,
+        maxHeight: 200,
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        transition: "border-color 0.2s",
+      }}
+      onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-dark)"; }}
+      onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)"; }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        {isSupported && (
+          <button
+            type="button"
+            onClick={toggleListening}
+            aria-label={isListening ? "Stop listening" : "Start voice input"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              border: isListening ? "2px solid #E53935" : "1px solid var(--border-subtle)",
+              background: isListening ? "rgba(229, 57, 53, 0.08)" : "transparent",
+              cursor: "pointer",
+              color: isListening ? "#E53935" : "var(--text-tertiary)",
+              transition: "all 0.2s ease",
+              flexShrink: 0,
+              position: "relative",
+            }}
+          >
+            <Mic size={18} strokeWidth={2} />
+            {isListening && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -2,
+                  right: -2,
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: "#E53935",
+                  animation: "voicePulse 1.5s ease-in-out infinite",
+                }}
+              />
+            )}
+          </button>
+        )}
+        <div style={{ flex: 1 }}>
+          <AutoTextarea
+            value={input}
+            onChange={setInput}
+            onSubmit={sendMessage}
+            placeholder="Tell Watson what's on your mind..."
+            disabled={loading}
+            inputRef={inputRef}
+          />
+        </div>
+      </div>
+      {isListening && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "6px 2px",
+            fontSize: 12,
+            color: "#E53935",
+            fontFamily: "'Afacad Flux', sans-serif",
+            letterSpacing: "0.02em",
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#E53935",
+              animation: "voicePulse 1.5s ease-in-out infinite",
+            }}
+          />
+          Listening...
+        </div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+        <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
+          {apiError}
+          {apiError && (
+            <button type="button" onClick={() => setApiError("")} style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", background: "rgba(0,0,0,0.06)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>Try again</button>
+          )}
+          {!apiError && "Enter to send · Shift+Enter for new line"}
+        </span>
+        <button
+          onClick={() => sendMessage()}
+          disabled={!input.trim() || loading}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            border: "none",
+            background: input.trim() && !loading ? "var(--gold-dark)" : "rgba(0,0,0,0.06)",
+            cursor: input.trim() && !loading ? "pointer" : "default",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all .15s",
+            flexShrink: 0,
+          }}
+          title="Send message"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={input.trim() && !loading ? "#fff" : "var(--text-tertiary)"}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ children }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean; children?: React.ReactNode }) {
   return (
     <div style={{
-      position: "relative",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       minHeight: "calc(100vh - 160px)",
-      gap: 24,
+      gap: 0,
+      position: "relative",
     }}>
-      <LivingWordCloud />
-      <div style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: 640, padding: "0 32px" }}>
-        <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 42, fontWeight: 700, color: "#0D1B2A", marginBottom: 0, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
-          What's on your mind?
-        </h2>
+      <WatsonOrb size={80} />
+      <h1 style={{
+        fontSize: 42,
+        fontWeight: 700,
+        color: "#0D1B2A",
+        fontFamily: "'Afacad Flux', sans-serif",
+        letterSpacing: "-0.5px",
+        textAlign: "center",
+        marginTop: -16,
+        marginBottom: 24,
+        position: "relative",
+        zIndex: 1,
+      }}>
+        What's on your mind?
+      </h1>
+      <div style={{ width: "100%", maxWidth: 640, position: "relative", zIndex: 1, padding: "0 32px" }}>
+        {children}
       </div>
     </div>
   );
@@ -464,7 +638,7 @@ function WatsonThinking() {
       gap: 10,
     }}>
       <div style={{ flexShrink: 0 }}>
-        <WatsonOrb size={28} thinking />
+        <WatsonOrbMini size={28} thinking />
       </div>
       <div style={{
         display: "flex",
@@ -1212,7 +1386,7 @@ export default function WorkSession() {
             gap: 24, padding: 40,
           }}>
             <div style={{ animation: "orbPulse 2s ease-in-out infinite" }}>
-              <WatsonOrb size={180} thinking />
+              <WatsonOrbMini size={180} thinking />
             </div>
             <p style={{ fontSize: 15, fontWeight: 500, color: "var(--fg-2)", letterSpacing: "-0.01em" }}>
               Watson is working...
@@ -1639,7 +1813,20 @@ export default function WorkSession() {
             outputType={outputType}
             onSuggestion={(s) => sendMessage(s)}
             isMobile={isMobile}
-          />
+          >
+            <SessionInputBox
+              input={input}
+              setInput={setInput}
+              sendMessage={sendMessage}
+              loading={loading}
+              inputRef={inputRef}
+              isSupported={isSupported}
+              toggleListening={toggleListening}
+              isListening={isListening}
+              apiError={apiError ?? ""}
+              setApiError={setApiError}
+            />
+          </EmptyState>
         ) : (
           <div style={{
             maxWidth: 760, width: "100%", margin: "0 auto",
@@ -1721,146 +1908,28 @@ export default function WorkSession() {
         ))}
       </div>
 
-      {/* ── Input bar (only when phase is input) ────────────────────────────── */}
-      {phase === "input" && (
+      {/* ── Input bar (only when phase is input and there are messages) ───────── */}
+      {phase === "input" && messages.length > 1 && (
       <div style={{
         flexShrink: 0,
         position: "sticky", bottom: 0,
         padding: isMobile ? "8px 12px 16px" : "16px 24px 24px",
         background: "linear-gradient(transparent, var(--bg-light) 20%)",
       }}>
-        <div style={{
-          maxWidth: 640, margin: "0 auto", width: "100%",
-          background: "var(--surface-white)",
-          border: "1.5px solid var(--border-default)",
-          borderRadius: 12,
-          padding: "16px 20px",
-          minHeight: 56, maxHeight: 200,
-          overflowY: "auto",
-          display: "flex", flexDirection: "column", gap: 10,
-          transition: "border-color 0.2s",
-        }}
-          onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-dark)"; }}
-          onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)"; }}
-        >
-          {/* System mode label removed per Mark's request */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            {isSupported && (
-              <button
-                type="button"
-                onClick={toggleListening}
-                aria-label={isListening ? "Stop listening" : "Start voice input"}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  border: isListening ? "2px solid #E53935" : "1px solid var(--border-subtle)",
-                  background: isListening ? "rgba(229, 57, 53, 0.08)" : "transparent",
-                  cursor: "pointer",
-                  color: isListening ? "#E53935" : "var(--text-tertiary)",
-                  transition: "all 0.2s ease",
-                  flexShrink: 0,
-                  position: "relative",
-                }}
-              >
-                <Mic size={18} strokeWidth={2} />
-                {isListening && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: -2,
-                      right: -2,
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      background: "#E53935",
-                      animation: "voicePulse 1.5s ease-in-out infinite",
-                    }}
-                  />
-                )}
-              </button>
-            )}
-            <div style={{ flex: 1 }}>
-              <AutoTextarea
-                value={input}
-                onChange={setInput}
-                onSubmit={sendMessage}
-                placeholder="Tell Watson what's on your mind..."
-                disabled={loading}
-                inputRef={inputRef}
-              />
-            </div>
-          </div>
-          {isListening && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "6px 2px",
-                fontSize: 12,
-                color: "#E53935",
-                fontFamily: "'Afacad Flux', sans-serif",
-                letterSpacing: "0.02em",
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: "#E53935",
-                  animation: "voicePulse 1.5s ease-in-out infinite",
-                }}
-              />
-              Listening...
-            </div>
-          )}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-            <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
-              {apiError}
-              {apiError && (
-                <button type="button" onClick={() => setApiError(null)} style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", background: "rgba(0,0,0,0.06)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>Try again</button>
-              )}
-              {!apiError && "Enter to send · Shift+Enter for new line"}
-            </span>
-            <button
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || loading}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                border: "none",
-                background: input.trim() && !loading ? "var(--gold-dark)" : "rgba(0,0,0,0.06)",
-                cursor: input.trim() && !loading ? "pointer" : "default",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all .15s",
-                flexShrink: 0,
-              }}
-              title="Send message"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={input.trim() && !loading ? "#fff" : "var(--text-tertiary)"}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+        <div style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
+          <SessionInputBox
+            input={input}
+            setInput={setInput}
+            sendMessage={sendMessage}
+            loading={loading}
+            inputRef={inputRef}
+            isSupported={isSupported}
+            toggleListening={toggleListening}
+            isListening={isListening}
+            apiError={apiError ?? ""}
+            setApiError={setApiError}
+          />
         </div>
-        {/* Suggestion pills and helper text removed for clean minimal UI */}
       </div>
       )}
     </div>
