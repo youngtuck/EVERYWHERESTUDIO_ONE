@@ -217,26 +217,50 @@ export default function Settings() {
             ? "Voice DNA is trained. You can retrain it anytime."
             : "Not completed. Complete onboarding to train your voice."}
         </p>
-        <button
-          type="button"
-          onClick={() => navigate("/onboarding?retrain=1")}
-          style={{
-            background: "transparent",
-            color: "var(--gold-dark)",
-            border: "1px solid var(--gold-dark)",
-            borderRadius: 8,
-            padding: "10px 20px",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: "'Afacad Flux', sans-serif",
-            transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-        >
-          {voiceComplete ? "Retrain Voice DNA" : "Start Voice DNA"}
-        </button>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => navigate("/onboarding?retrain=1")}
+            style={{
+              background: "transparent",
+              color: "var(--gold-dark)",
+              border: "1px solid var(--gold-dark)",
+              borderRadius: 8,
+              padding: "10px 20px",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "'Afacad Flux', sans-serif",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            {voiceComplete ? "Retrain Voice DNA" : "Start Voice DNA"}
+          </button>
+          {voiceComplete && (
+            <button
+              type="button"
+              onClick={() => navigate("/studio/settings/voice")}
+              style={{
+                background: "transparent",
+                color: "var(--text-secondary)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 8,
+                padding: "10px 20px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'Afacad Flux', sans-serif",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+            >
+              View Voice Profile
+            </button>
+          )}
+        </div>
       </SectionCard>
 
       {/* Watch Configuration */}

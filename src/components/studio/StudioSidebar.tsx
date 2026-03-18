@@ -19,7 +19,7 @@ const PRIMARY_NAV = [
 const UTILITY_NAV = [
   { path: "/studio/resources",      label: "Resources", icon: BookOpen,   tooltip: "Voice DNA, Brand DNA, Method DNA, and references." },
   { path: "/studio/projects",       label: "Projects",  icon: FolderOpen, tooltip: "Organize work by client or topic." },
-  { path: "/studio/settings/voice", label: "Settings",  icon: Settings,   tooltip: "Account and preferences." },
+  { path: "/studio/settings",       label: "Settings",  icon: Settings,   tooltip: "Account and preferences." },
 ];
 
 function titleCase(str: string) {
@@ -64,7 +64,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
 
   const isActive = (p: string) => {
     if (p === "/studio/work") return loc.pathname === p || loc.pathname.startsWith("/studio/work/");
-    if (p === "/studio/settings/voice") return loc.pathname === p || loc.pathname.startsWith("/studio/settings");
+    if (p === "/studio/settings") return loc.pathname === p || loc.pathname.startsWith("/studio/settings");
     if (p === "/studio/wrap") return loc.pathname === p || loc.pathname.startsWith("/studio/wrap/");
     return loc.pathname === p || loc.pathname.startsWith(p + "/");
   };
