@@ -506,12 +506,17 @@ function SessionInputBox({
           : {}),
       }}
       onFocus={() => setFocusWithin(true)}
-      onBlur={() => setFocusWithin(false)}
+      onBlur={(e) => {
+        // Don't lose focus highlight when clicking buttons inside this container
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setFocusWithin(false);
+      }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {isSupported && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={toggleListening}
             aria-label={isListening ? "Stop listening" : "Start voice input"}
             style={{
@@ -528,6 +533,7 @@ function SessionInputBox({
               transition: "background 0.15s ease",
               flexShrink: 0,
               position: "relative",
+              zIndex: 10,
             }}
             onMouseEnter={(e) => {
               if (!isListening) {
@@ -570,7 +576,8 @@ function SessionInputBox({
         </div>
         <button
           type="button"
-          onClick={() => sendMessage()}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => { if (sendEnabled) sendMessage(); }}
           disabled={!sendEnabled}
           title="Send message"
           style={{
@@ -587,6 +594,8 @@ function SessionInputBox({
             transition: "background 0.15s ease",
             flexShrink: 0,
             opacity: sendEnabled ? 1 : 0.3,
+            position: "relative",
+            zIndex: 10,
           }}
           onMouseEnter={(e) => {
             if (sendEnabled) e.currentTarget.style.background = "#1B263B";
