@@ -1216,25 +1216,28 @@ export default function WorkSession() {
   const handleMakeTheThing = async () => {
     setApiError(null);
     setPhase("generating");
+    setPipelineStatus("IDLE");
+    setPipelineGateResults([]);
+    setBlockedAt(undefined);
+    setPipelineResult(null);
+    setShowCheckpointSequence(false);
+    setShowTotalScore(false);
+
     const conversationSummary = messages
       .map(m => (m.role === "user" ? "User: " : "Watson: ") + m.content)
       .join("\n\n");
 
     try {
+      // ── Pass 1: Generate draft ──────────────────────
       const { content, score, gates } = await generateOutput(conversationSummary, outputTypeApi, voiceProfile, user?.id);
       setGeneratedContent(content);
       setGeneratedScore(score);
       const gatesData = (gates as GatesFromApi) ?? null;
       setGeneratedGates(gatesData);
-      const hasGates = gatesData && typeof gatesData.total === "number";
-      setShowCheckpointSequence(!!hasGates);
-      setVisibleCheckpointCount(0);
-      setRevealedCheckpointCount(0);
 
-      // Save to Supabase
+      // Save draft to Supabase
       const title = sessionTitle !== "New Session" ? sessionTitle : `${type.label} - ${new Date().toLocaleDateString()}`;
-
-      const { data: savedOutput, error: saveError } = await supabase
+      const { data: savedOutput } = await supabase
         .from("outputs")
         .insert({
           user_id: user!.id,
@@ -1244,19 +1247,85 @@ export default function WorkSession() {
           score,
           conversation_summary: conversationSummary,
           gates,
+          content_state: "in_progress",
         })
         .select()
         .single();
 
-      if (saveError) {
-        // Save failed; output not persisted (user can retry or copy content)
-      }
-
       const outputId = savedOutput?.id ?? "new";
       setGeneratedOutputId(outputId);
+      toast("Draft generated. Running quality review...");
+
+      // ── Pass 2: Run real pipeline ───────────────────
+      if (outputId !== "new" && user) {
+        setPipelineStatus("RUNNING");
+        setShowCheckpointSequence(true);
+        setVisibleCheckpointCount(0);
+        setRevealedCheckpointCount(0);
+
+        const context = {
+          userId: user.id,
+          outputId,
+          outputType: outputType as any,
+          voiceDnaMd,
+          brandDnaMd,
+          methodDnaMd,
+          targetPlatform: undefined,
+        };
+
+        const result = await runFullPipeline(content, context, {
+          onStageStart: (stage) => setCurrentStage(stage),
+          onGateComplete: (gateResult, index) => {
+            setPipelineGateResults((prev) => {
+              const next = [...prev];
+              next[index] = gateResult;
+              return next;
+            });
+          },
+          onStageComplete: () => {},
+        });
+
+        setPipelineResult(result);
+        setPipelineStatus(result.status);
+        setBlockedAt(result.blockedAt);
+
+        // Save pipeline run
+        await supabase.from("pipeline_runs").insert({
+          output_id: outputId,
+          user_id: user.id,
+          status: result.status,
+          original_draft: result.originalDraft,
+          final_draft: result.finalDraft,
+          gate_results: result.gateResults,
+          betterish_score: result.betterishScore,
+          betterish_total: result.betterishScore?.total ?? null,
+          wrap_applied: result.wrapApplied,
+          qa_result: result.qaResult,
+          completeness_result: result.completenessResult,
+          blocked_at: result.blockedAt ?? null,
+          duration_ms: result.totalDurationMs,
+        });
+
+        // Update output with pipeline results
+        const finalScore = result.betterishScore?.total ?? score;
+        const finalContent = result.finalDraft || content;
+        setGeneratedContent(finalContent);
+        setGeneratedScore(finalScore);
+
+        await supabase.from("outputs").update({
+          content: finalContent,
+          score: finalScore,
+          content_state: result.status === "PASSED" ? "vault" : "in_progress",
+        }).eq("id", outputId);
+
+        if (result.status === "PASSED") {
+          toast("Quality pipeline passed. Output moved to The Vault.");
+        } else if (result.status === "BLOCKED") {
+          toast("Quality pipeline flagged issues. Review checkpoint feedback.");
+        }
+      }
 
       setPhase("complete");
-      if (savedOutput) toast("Output saved.");
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Generation failed.");
       setPhase("input");
@@ -1544,7 +1613,20 @@ export default function WorkSession() {
             flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
             gap: 24, padding: 40,
           }}>
-            <LoadingAnimation variant="generate" progress={undefined} message="Watson is working..." />
+            <LoadingAnimation
+              variant={pipelineStatus === "RUNNING" ? "sentinel" : "generate"}
+              progress={undefined}
+              message={
+                pipelineStatus === "RUNNING"
+                  ? `Running quality checkpoints... ${pipelineGateResults.filter(Boolean).length}/7 complete`
+                  : "Writing your draft..."
+              }
+            />
+            <p style={{ fontSize: 13, color: "var(--fg-3)", textAlign: "center", maxWidth: 360 }}>
+              {pipelineStatus === "RUNNING"
+                ? "7 specialist agents are reviewing your content. This takes 30-60\u00A0seconds."
+                : "Generating your first draft, then running the full quality\u00A0pipeline."}
+            </p>
           </div>
         )}
 
@@ -1940,7 +2022,7 @@ export default function WorkSession() {
                     onMouseLeave={(e) => { if (pipelineStatus !== "RUNNING") { e.currentTarget.style.background = "var(--surface-white)"; } }}
                   >
                     <Sparkles size={16} />
-                    {pipelineStatus === "RUNNING" ? "Running quality pipeline..." : "Run Quality Pipeline"}
+                    {pipelineStatus === "RUNNING" ? "Re-running pipeline..." : "Re-run Quality Pipeline"}
                   </button>
                   <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
                     Run all 7 specialist checkpoints with detailed feedback
