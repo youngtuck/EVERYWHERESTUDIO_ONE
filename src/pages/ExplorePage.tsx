@@ -1211,9 +1211,16 @@ export default function ExplorePage() {
             <div style={{fontSize:"clamp(48px,8vw,106px)",fontWeight:800,letterSpacing:"-.045em",lineHeight:.92,color:T.gold,marginBottom:32}}>Composed.</div>
           </div>
 
+          {/* Value prop tagline */}
+          <div style={{position:"relative",zIndex:2,textAlign:"center",marginBottom:16,opacity:mounted?1:0,transform:mounted?"none":"translateY(8px)",transition:"opacity .8s .48s ease, transform .8s .48s cubic-bezier(.16,1,.3,1)"}}>
+            <p style={{fontSize:"clamp(18px,2.2vw,24px)",fontWeight:600,letterSpacing:"-.02em",color:T.textSub,margin:0}}>
+              One idea in. <span style={{color:T.gold}}>Publication-ready content out.</span>
+            </p>
+          </div>
+
           {/* Subhead */}
-          <div style={{position:"relative",zIndex:2,maxWidth:500,textAlign:"center",marginBottom:38,opacity:mounted?1:0,transition:"opacity .8s .52s ease"}}>
-            <p style={{fontSize:"clamp(14px,1.5vw,17px)",lineHeight:1.74,color:T.textSub,fontWeight:400}}>
+          <div style={{position:"relative",zIndex:2,maxWidth:500,textAlign:"center",marginBottom:38,opacity:mounted?1:0,transition:"opacity .8s .6s ease"}}>
+            <p style={{fontSize:"clamp(13px,1.4vw,15px)",lineHeight:1.74,color:T.textFaint,fontWeight:400}}>
               You have the ideas, the expertise, and the point of view. What you don't have is the system to turn all of that into content that actually lands.
             </p>
           </div>
