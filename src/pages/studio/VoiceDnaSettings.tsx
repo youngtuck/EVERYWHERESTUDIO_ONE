@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, RefreshCw } from "lucide-react";
 import "./shared.css";
 
 const FIDELITY_SCORE = 94.7;
@@ -42,6 +43,7 @@ function TraitBar({ label, score, delay }: { label: string; score: number; delay
 }
 
 export default function VoiceDnaSettings() {
+  const navigate = useNavigate();
   const [samples] = useState(WRITING_SAMPLES);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,6 +122,9 @@ export default function VoiceDnaSettings() {
               transition: "width 0.6s ease",
             }}
           />
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 10 }}>
+          Last trained: Mar 4, 2026
         </div>
       </section>
 
@@ -237,6 +242,58 @@ export default function VoiceDnaSettings() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Retrain section */}
+      <section
+        style={{
+          background: "var(--surface-white)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: 12,
+          padding: 32,
+          marginTop: 24,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Afacad Flux', sans-serif",
+            fontSize: 14,
+            fontWeight: 500,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: "var(--text-tertiary)",
+            marginBottom: 12,
+          }}
+        >
+          RETRAIN
+        </div>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 16px", lineHeight: 1.6 }}>
+          Add new writing samples or re-analyze existing ones to improve voice matching accuracy.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate("/onboarding?step=voice&retrain=true")}
+          style={{
+            background: "transparent",
+            color: "var(--gold-dark)",
+            border: "2px solid var(--gold-dark)",
+            borderRadius: 8,
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'Afacad Flux', sans-serif",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.15s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,198,66,0.06)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        >
+          <RefreshCw size={16} />
+          Retrain Voice DNA
+        </button>
       </section>
     </div>
   );
