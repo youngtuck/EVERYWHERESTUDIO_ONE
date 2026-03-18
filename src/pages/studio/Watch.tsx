@@ -286,7 +286,7 @@ export default function Watch() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px", fontFamily: "'DM Sans', sans-serif", color: "var(--text-secondary)" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px", fontFamily: "'Montserrat', sans-serif", color: "var(--text-secondary)" }}>
         Loading…
       </div>
     );
@@ -296,7 +296,7 @@ export default function Watch() {
   const showSentinelLoading = generating || completing;
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'Montserrat', sans-serif", minHeight: "100vh" }}>
       <style>{`
         @keyframes sentinel-pulse {
           0%, 100% { transform: scale(1); }
@@ -381,7 +381,7 @@ export default function Watch() {
                         padding: "10px 12px",
                         border: "1px solid var(--border-subtle)",
                         borderRadius: 8,
-                        fontFamily: "'DM Sans', sans-serif",
+                        fontFamily: "'Montserrat', sans-serif",
                         fontSize: 14,
                       }}
                     />
@@ -491,7 +491,7 @@ export default function Watch() {
                       padding: "8px 12px",
                       border: "1px solid var(--border-subtle)",
                       borderRadius: 8,
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: 13,
                     }}
                   />
@@ -527,7 +527,7 @@ export default function Watch() {
                     border: "none",
                     borderRadius: 10,
                     padding: "12px 24px",
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 14,
                     fontWeight: 600,
                     cursor: startWatchingLoading ? "wait" : "pointer",
@@ -612,7 +612,7 @@ export default function Watch() {
               <div style={{ fontSize: 13, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(74,144,245,0.7)", marginBottom: 8 }}>
                 SENTINEL
               </div>
-              <div key={statusIndex} className="sentinel-status-text" style={{ fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.5)", minHeight: 20 }}>
+              <div key={statusIndex} className="sentinel-status-text" style={{ fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: "rgba(255,255,255,0.5)", minHeight: 20 }}>
                 {SENTINEL_LOADING_MESSAGES[statusIndex]}
               </div>
             </div>
@@ -655,7 +655,7 @@ export default function Watch() {
                 border: "none",
                 borderRadius: 10,
                 padding: "12px 24px",
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "'Montserrat', sans-serif",
                 fontSize: 14,
                 fontWeight: 600,
                 cursor: generating ? "wait" : "pointer",
@@ -803,7 +803,7 @@ function SectionTitle({
   style?: React.CSSProperties;
 }) {
   const labelEl = (
-    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color }}>
+    <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color }}>
       {label}
     </span>
   );

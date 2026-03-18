@@ -209,7 +209,7 @@ export default function Projects() {
       <div>
         <p
           style={{
-            fontFamily: "'DM Mono', monospace",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 14,
             fontWeight: 500,
             textTransform: "uppercase",
@@ -241,7 +241,7 @@ export default function Projects() {
           color: "#fff",
           padding: "10px 20px",
           borderRadius: 8,
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Montserrat', sans-serif",
           fontSize: 14,
           fontWeight: 500,
           border: "none",
@@ -276,7 +276,7 @@ export default function Projects() {
       >
         Create your first project
       </h2>
-      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
+      <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginBottom: 20 }}>
         Projects organize your Watch configuration, outputs, and context.
       </p>
       <button
@@ -286,7 +286,7 @@ export default function Projects() {
           color: "#fff",
           padding: "10px 20px",
           borderRadius: 8,
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Montserrat', sans-serif",
           fontSize: 14,
           fontWeight: 500,
           border: "none",
@@ -462,7 +462,7 @@ export default function Projects() {
                     border: "1px solid var(--border-default)",
                     fontSize: 15,
                     fontWeight: 600,
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     color: "var(--text-primary)",
                     outline: "none",
                   }}
@@ -485,7 +485,7 @@ export default function Projects() {
                     fontSize: 12,
                     fontWeight: 600,
                     cursor: renameLoading ? "wait" : "pointer",
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                   }}
                 >
                   {renameLoading ? "..." : "Save"}
@@ -500,7 +500,7 @@ export default function Projects() {
                     background: "none",
                     fontSize: 12,
                     cursor: "pointer",
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     color: "var(--text-secondary)",
                   }}
                 >
@@ -510,7 +510,7 @@ export default function Projects() {
             ) : (
               <h3
                 style={{
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: 17,
                   fontWeight: 600,
                   color: "var(--text-primary)",
@@ -523,7 +523,7 @@ export default function Projects() {
             )}
             <p
               style={{
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "'Montserrat', sans-serif",
                 fontSize: 13,
                 color: "var(--text-secondary)",
                 margin: 0,
@@ -544,14 +544,14 @@ export default function Projects() {
             >
               <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <FileText size={14} style={{ color: "var(--text-tertiary)" }} />
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
+                <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
                   {outputsCount} outputs
                 </span>
               </span>
               {avgScore > 0 && (
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <BarChart3 size={14} style={{ color: sc.text }} />
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 500, color: sc.text }}>
+                  <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 500, color: sc.text }}>
                     avg {avgScore}
                   </span>
                 </span>
@@ -569,7 +569,7 @@ export default function Projects() {
         maxWidth: 960,
         margin: "0 auto",
         padding: "32px 24px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
       }}
       onClick={() => { if (menuOpenId) setMenuOpenId(null); }}
     >
@@ -609,7 +609,7 @@ export default function Projects() {
               borderRadius: 16,
               padding: 24,
               boxShadow: "0 18px 40px rgba(0,0,0,0.28)",
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -655,7 +655,7 @@ export default function Projects() {
                     borderRadius: 8,
                     border: "1px solid rgba(0,0,0,0.12)",
                     fontSize: 13,
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     outline: "none",
                   }}
                 />
@@ -675,7 +675,7 @@ export default function Projects() {
                     borderRadius: 8,
                     border: "1px solid rgba(0,0,0,0.12)",
                     fontSize: 13,
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     outline: "none",
                   }}
                 />
@@ -693,7 +693,7 @@ export default function Projects() {
                   fontSize: 14,
                   fontWeight: 600,
                   cursor: createLoading ? "wait" : "pointer",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 {createLoading ? "Creating..." : "Create project"}

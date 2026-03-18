@@ -35,7 +35,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
           alignItems: "center",
           gap: 4,
           fontFamily:
-            "'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+            "'Montserrat', sans-serif",
           fontSize: 12,
           color,
         }}
@@ -63,7 +63,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
         borderRadius: 12,
         border: "1px solid var(--border-subtle)",
         background: "var(--surface-white)",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
       }}
     >
       <div
@@ -96,7 +96,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
             <span
               style={{
                 fontFamily:
-                  "'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+                  "'Montserrat', sans-serif",
                 fontSize: 28,
                 fontWeight: 600,
                 color,

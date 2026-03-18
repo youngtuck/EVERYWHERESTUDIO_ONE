@@ -63,7 +63,7 @@ export default function TheLot() {
         maxWidth: 960,
         margin: "0 auto",
         padding: "32px 24px 80px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
@@ -80,7 +80,7 @@ export default function TheLot() {
           >
             The Lot
           </h1>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0 }}>
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0 }}>
             Ideas parked for later
           </p>
         </div>
@@ -92,7 +92,7 @@ export default function TheLot() {
             color: "#fff",
             padding: "10px 20px",
             borderRadius: 8,
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 14,
             fontWeight: 500,
             border: "none",
@@ -130,7 +130,7 @@ export default function TheLot() {
           >
             No ideas parked yet
           </h2>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 320, margin: "0 auto 20px" }}>
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 320, margin: "0 auto 20px" }}>
             Use The Lot to save ideas you are not ready to develop.
           </p>
           <button
@@ -141,7 +141,7 @@ export default function TheLot() {
               color: "#fff",
               padding: "10px 20px",
               borderRadius: 8,
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: 14,
               fontWeight: 500,
               border: "none",
@@ -184,7 +184,7 @@ export default function TheLot() {
               <div>
                 <h3
                   style={{
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 16,
                     fontWeight: 600,
                     color: "var(--text-primary)",
@@ -200,7 +200,7 @@ export default function TheLot() {
                 </h3>
                 <p
                   style={{
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 13,
                     color: "var(--text-secondary)",
                     marginTop: 8,
@@ -216,7 +216,7 @@ export default function TheLot() {
                 </p>
               </div>
               <div style={{ marginTop: "auto", paddingTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
+                <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
                   {idea.projectName}
                 </span>
                 <button
@@ -228,7 +228,7 @@ export default function TheLot() {
                     border: "1px solid var(--border-default)",
                     padding: "6px 14px",
                     borderRadius: 8,
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 13,
                     fontWeight: 500,
                     cursor: "pointer",
@@ -274,7 +274,7 @@ export default function TheLot() {
               border: "1px solid var(--border-subtle)",
               boxShadow: "0 24px 48px rgba(0,0,0,0.12)",
               zIndex: 9999,
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
               padding: "24px 28px",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -283,7 +283,7 @@ export default function TheLot() {
               Park an Idea
             </h2>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
+              <label style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
                 What is the idea?
               </label>
               <textarea
@@ -295,7 +295,7 @@ export default function TheLot() {
                   width: "100%",
                   resize: "vertical",
                   minHeight: 100,
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: 14,
                   padding: "10px 14px",
                   border: "1px solid var(--border-subtle)",
@@ -307,7 +307,7 @@ export default function TheLot() {
               />
             </div>
             <div style={{ marginBottom: 24 }}>
-              <label style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
+              <label style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
                 Project
               </label>
               <select
@@ -315,7 +315,7 @@ export default function TheLot() {
                 onChange={(e) => setNewIdeaProjectId(e.target.value)}
                 style={{
                   width: "100%",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: 14,
                   padding: "10px 14px",
                   border: "1px solid var(--border-subtle)",
@@ -329,10 +329,10 @@ export default function TheLot() {
               </select>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-              <button type="button" onClick={() => setModalOpen(false)} style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-default)", padding: "10px 20px", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+              <button type="button" onClick={() => setModalOpen(false)} style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-default)", padding: "10px 20px", borderRadius: 8, fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
                 Cancel
               </button>
-              <button type="button" onClick={handleParkIt} disabled={!newIdeaText.trim()} style={{ background: "var(--gold-dark)", color: "#fff", border: "none", padding: "10px 20px", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, cursor: newIdeaText.trim() ? "pointer" : "default", opacity: newIdeaText.trim() ? 1 : 0.6 }}>
+              <button type="button" onClick={handleParkIt} disabled={!newIdeaText.trim()} style={{ background: "var(--gold-dark)", color: "#fff", border: "none", padding: "10px 20px", borderRadius: 8, fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 500, cursor: newIdeaText.trim() ? "pointer" : "default", opacity: newIdeaText.trim() ? 1 : 0.6 }}>
                 Park It
               </button>
             </div>

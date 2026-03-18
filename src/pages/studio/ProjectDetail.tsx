@@ -197,7 +197,7 @@ export default function ProjectDetail() {
                 onKeyDown={handleKeyDown}
                 style={{
                   fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em",
-                  fontFamily: "'DM Sans', sans-serif", border: "1px solid var(--line)",
+                  fontFamily: "'Montserrat', sans-serif", border: "1px solid var(--line)",
                   borderRadius: "var(--studio-radius)", padding: "4px 10px",
                   background: "var(--bg-2)", outline: "none", width: "100%",
                 }}
@@ -208,7 +208,7 @@ export default function ProjectDetail() {
               onClick={handleStartEdit}
               style={{
                 fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em",
-                marginBottom: 6, fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
+                marginBottom: 6, fontFamily: "'Montserrat', sans-serif", cursor: "pointer",
                 borderRadius: "var(--studio-radius)", padding: "2px 4px", margin: "-2px -4px 6px -4px",
                 transition: "background .12s",
               }}
@@ -220,7 +220,7 @@ export default function ProjectDetail() {
             </h1>
           )}
           {project.description && (
-            <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, margin: 0, fontFamily: "'DM Sans', sans-serif" }}>
+            <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>
               {project.description}
             </p>
           )}
@@ -236,7 +236,7 @@ export default function ProjectDetail() {
             padding: "8px 14px", borderRadius: "var(--studio-radius)",
             border: "1px solid var(--line)", background: "var(--bg-2)",
             cursor: archiving ? "wait" : "pointer", color: "var(--fg-2)",
-            fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
+            fontSize: 13, fontFamily: "'Montserrat', sans-serif", fontWeight: 500,
             opacity: archiving ? 0.5 : 1,
           }}
         >
@@ -248,18 +248,18 @@ export default function ProjectDetail() {
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Total outputs</div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'DM Sans', sans-serif" }}>{outputsCount}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Montserrat', sans-serif" }}>Total outputs</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'Montserrat', sans-serif" }}>{outputsCount}</div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Avg Betterish score</div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: avgScore > 0 ? scoreColor(avgScore) : "rgba(0,0,0,0.35)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'DM Sans', sans-serif" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Montserrat', sans-serif" }}>Avg Betterish score</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: avgScore > 0 ? scoreColor(avgScore) : "rgba(0,0,0,0.35)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'Montserrat', sans-serif" }}>
             {avgScore > 0 ? avgScore : "–"}
           </div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>Last active</div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontFamily: "'DM Sans', sans-serif" }}>{lastActive}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Montserrat', sans-serif" }}>Last active</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontFamily: "'Montserrat', sans-serif" }}>{lastActive}</div>
         </div>
       </div>
 

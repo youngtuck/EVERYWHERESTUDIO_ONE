@@ -69,7 +69,7 @@ export default function Wrap() {
         maxWidth: 960,
         margin: "0 auto",
         padding: "32px 24px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
       }}
     >
       <div style={{ marginBottom: 32 }}>
@@ -146,7 +146,7 @@ export default function Wrap() {
               fontSize: 14,
               fontWeight: 600,
               cursor: "pointer",
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
               transition: "opacity 0.15s ease",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
@@ -203,7 +203,7 @@ export default function Wrap() {
                 <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
                   <span
                     style={{
-                      fontFamily: "'DM Mono', monospace",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: 16,
                       fontWeight: 500,
                       color: sc.text,
@@ -224,7 +224,7 @@ export default function Wrap() {
                       fontSize: 13,
                       fontWeight: 600,
                       cursor: "pointer",
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       whiteSpace: "nowrap",
                       transition: "opacity 0.15s ease",
                     }}

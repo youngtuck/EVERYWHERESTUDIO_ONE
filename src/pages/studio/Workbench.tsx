@@ -103,7 +103,7 @@ export default function Workbench() {
         maxWidth: 720,
         margin: "0 auto",
         padding: "24px 24px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
       }}
     >
       <div style={{ marginBottom: 24 }}>
@@ -187,7 +187,7 @@ export default function Workbench() {
                 </div>
                 <span
                   style={{
-                    fontFamily: "'DM Mono', monospace",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 13,
                     fontWeight: 500,
                     color: scoreStyle.text,
@@ -208,7 +208,7 @@ export default function Workbench() {
                       border: "none",
                       borderRadius: 8,
                       cursor: "pointer",
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "'Montserrat', sans-serif",
                     }}
                   >
                     Continue
@@ -261,7 +261,7 @@ export default function Workbench() {
                               background: "none",
                               border: "none",
                               cursor: "pointer",
-                              fontFamily: "'DM Sans', sans-serif",
+                              fontFamily: "'Montserrat', sans-serif",
                               color: "var(--text-primary)",
                             }}
                           >
@@ -279,7 +279,7 @@ export default function Workbench() {
                               background: "none",
                               border: "none",
                               cursor: "pointer",
-                              fontFamily: "'DM Sans', sans-serif",
+                              fontFamily: "'Montserrat', sans-serif",
                               color: "#D64545",
                             }}
                           >
@@ -334,7 +334,7 @@ export default function Workbench() {
                   border: "1px solid var(--border-subtle)",
                   borderRadius: 8,
                   cursor: "pointer",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 Cancel
@@ -351,7 +351,7 @@ export default function Workbench() {
                   border: "none",
                   borderRadius: 8,
                   cursor: "pointer",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 Delete

@@ -74,14 +74,14 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       width: collapsed ? 60 : 240,
       flexShrink: 0,
       height: "100vh",
-      background: "#fff",
+      background: "#F7F9FC",
       borderRight: "1px solid var(--border-subtle)",
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
       position: "sticky",
       top: 0,
-      fontFamily: "'DM Sans', sans-serif",
+      fontFamily: "'Montserrat', sans-serif",
       transition: "width 0.2s ease",
     }}>
 
@@ -110,7 +110,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         >
           <div style={{
             width: 24, height: 24, borderRadius: "50%",
-            background: "linear-gradient(135deg, #4A90D9 0%, #6b4dd4 100%)",
+            background: "linear-gradient(135deg, #4A90D9 0%, #1B263B 100%)",
             flexShrink: 0,
             boxShadow: "0 1px 6px rgba(74,144,217,0.28)",
             display: "flex", alignItems: "center", justifyContent: "center",

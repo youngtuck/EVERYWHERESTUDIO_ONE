@@ -32,7 +32,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
           display: "flex",
           justifyContent: "space-between",
           alignItems: "baseline",
-          fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+          fontFamily: "'Montserrat', sans-serif",
           fontSize: 15,
           fontWeight: 600,
           color: "#ffffff",
@@ -44,7 +44,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
       <p
         style={{
           marginTop: 4,
-          fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+          fontFamily: "'Montserrat', sans-serif",
           fontSize: 13,
           color: "rgba(255,255,255,0.6)",
         }}
@@ -82,7 +82,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
           </span>
           <span
             style={{
-              fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: 16,
               color: "rgba(255,255,255,0.4)",
             }}
@@ -120,7 +120,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
       <div style={{ marginBottom: 32 }}>
         <div
           style={{
-            fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 13,
             fontWeight: 600,
             letterSpacing: "0.12em",
@@ -139,7 +139,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
                 <div
                   style={{
                     width: 180,
-                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 14,
                     color: "rgba(255,255,255,0.8)",
                   }}
@@ -170,7 +170,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
                   style={{
                     width: 40,
                     textAlign: "right",
-                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 14,
                     fontWeight: 600,
                     color: "#C8961A",
@@ -203,7 +203,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
             padding: "14px 18px",
             background: "#C8961A",
             color: "#07090f",
-            fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 14,
             fontWeight: 600,
             cursor: "pointer",
@@ -223,7 +223,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
               border: "1px solid rgba(255,255,255,0.35)",
               background: "transparent",
               color: "#ffffff",
-              fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: 14,
               fontWeight: 500,
               cursor: "pointer",
@@ -240,7 +240,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
               border: "none",
               background: "none",
               color: "rgba(255,255,255,0.65)",
-              fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: 13,
               textDecoration: "underline",
               cursor: "pointer",

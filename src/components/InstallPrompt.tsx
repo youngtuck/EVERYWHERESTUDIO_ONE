@@ -50,7 +50,7 @@ export default function InstallPrompt() {
         gap: 16,
         boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
         zIndex: 9999,
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
         fontSize: 14,
         maxWidth: 420,
         animation: "slideUp 0.4s ease-out",
@@ -78,7 +78,7 @@ export default function InstallPrompt() {
           fontSize: 13,
           cursor: "pointer",
           whiteSpace: "nowrap",
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Montserrat', sans-serif",
         }}
       >
         Install

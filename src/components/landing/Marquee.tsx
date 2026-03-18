@@ -7,9 +7,9 @@ export default function Marquee() {
     <div style={{ overflow:"hidden", borderTop:`1px solid ${dark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.06)"}`, borderBottom:`1px solid ${dark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.06)"}`, padding:"10px 0", background:dark?"#090907":"#F4F4F2" }}>
       <div className="marquee-track">
         {ITEMS.map((item,i)=>(
-          <span key={i} style={{ display:"inline-flex", alignItems:"center", gap:16, padding:"0 16px", fontSize:13, fontWeight:400, letterSpacing:"0.3px", color:dark?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.28)", fontFamily:"'DM Sans',sans-serif", whiteSpace:"nowrap" }}>
+          <span key={i} style={{ display:"inline-flex", alignItems:"center", gap:16, padding:"0 16px", fontSize:13, fontWeight:400, letterSpacing:"0.3px", color:dark?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.28)", fontFamily:"'Montserrat', sans-serif", whiteSpace:"nowrap" }}>
             {item}
-            <span style={{ color:"rgba(200,150,26,0.4)", fontSize:5 }}>●</span>
+            <span style={{ color:"rgba(245,198,66,0.4)", fontSize:5 }}>●</span>
           </span>
         ))}
       </div>

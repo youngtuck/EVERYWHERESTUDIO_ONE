@@ -17,10 +17,10 @@ export default function Nav() {
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
-  const bg     = overHero ? "rgba(13,27,42,0.92)" : dark ? "rgba(12,12,10,0.94)" : "rgba(250,250,248,0.94)";
-  const bd     = overHero ? "rgba(255,255,255,0.06)" : dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)";
-  const linkC  = overHero ? "rgba(255,255,255,0.44)" : dark ? "var(--fg-3)" : "var(--fg-3)";
-  const linkH  = overHero ? "rgba(255,255,255,0.88)" : dark ? "var(--fg)" : "var(--fg)";
+  const bg     = "#0D1B2A";
+  const bd     = "rgba(255,255,255,0.1)";
+  const linkC  = "rgba(255,255,255,0.7)";
+  const linkH  = "#fff";
 
   const LINKS = ["Problem","Framework","Rooms","Checkpoints","Contact"];
 
@@ -32,7 +32,7 @@ export default function Nav() {
       <div style={{ display:"flex", alignItems:"center", gap:20 }}>
         {LINKS.map(s=>(
           <a key={s} href={`#${s.toLowerCase()}`}
-            style={{ fontSize:13, fontWeight:400, color:linkC, textDecoration:"none", fontFamily:"'DM Sans',sans-serif", transition:"color 0.15s", letterSpacing:"-0.01em" }}
+            style={{ fontSize:13, fontWeight:400, color:linkC, textDecoration:"none", fontFamily:"'Montserrat', sans-serif", transition:"color 0.15s", letterSpacing:"-0.01em" }}
             onMouseEnter={e=>(e.currentTarget.style.color=linkH)}
             onMouseLeave={e=>(e.currentTarget.style.color=linkC)}>
             {s}
@@ -40,7 +40,7 @@ export default function Nav() {
         ))}
         <ThemeToggle onDark={overHero || dark} />
         <a href="/auth" onClick={(e)=>{e.preventDefault();navigate("/auth");}}
-          style={{ padding:"8px 20px", borderRadius:8, background:"#F5C642", color:"#0D1B2A", fontSize:13, fontWeight:700, textDecoration:"none", textTransform:"uppercase", letterSpacing:"0.06em", fontFamily:"'DM Sans',sans-serif", transition:"opacity 0.15s" }}
+          style={{ padding:"8px 20px", borderRadius:8, background:"#F5C642", color:"#0D1B2A", fontSize:13, fontWeight:700, textDecoration:"none", textTransform:"uppercase", letterSpacing:"0.06em", fontFamily:"'Montserrat', sans-serif", transition:"opacity 0.15s" }}
           onMouseEnter={e=>(e.currentTarget.style.opacity="0.88")}
           onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
           Open Studio

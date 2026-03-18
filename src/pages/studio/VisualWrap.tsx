@@ -331,7 +331,7 @@ export default function VisualWrap() {
           alignItems: "center",
           justifyContent: "center",
           minHeight: "60vh",
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Montserrat', sans-serif",
         }}
       >
         <div
@@ -351,7 +351,7 @@ export default function VisualWrap() {
 
   if (notFound || !output) {
     return (
-      <div style={{ padding: 48, textAlign: "center", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ padding: 48, textAlign: "center", fontFamily: "'Montserrat', sans-serif" }}>
         <p style={{ color: "var(--fg-3)", marginBottom: 16 }}>Output not found.</p>
         <button
           type="button"
@@ -372,7 +372,7 @@ export default function VisualWrap() {
         maxWidth: 860,
         margin: "0 auto",
         padding: isMobile ? "24px 16px" : "40px 32px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
         background: "#F4F2ED",
         minHeight: "100vh",
       }}
@@ -403,7 +403,7 @@ export default function VisualWrap() {
         >
           <ArrowLeft size={16} /> Back
         </button>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", flex: 1, fontFamily: "'DM Sans', sans-serif" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", flex: 1, fontFamily: "'Montserrat', sans-serif" }}>
           Visual Intelligence
         </h1>
         <span
@@ -435,7 +435,7 @@ export default function VisualWrap() {
         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{output.title}</div>
         <div
           style={{
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 15,
             color: "var(--text-primary)",
             lineHeight: 1.25,
@@ -552,7 +552,7 @@ export default function VisualWrap() {
                   borderRadius: 10,
                   background: selected ? "rgba(200,150,26,0.04)" : "#fff",
                   cursor: "pointer",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   textAlign: "center",
                   transition: "all 0.15s ease",
                 }}
@@ -679,7 +679,7 @@ export default function VisualWrap() {
             textTransform: "uppercase",
             cursor: generating || generatingAll ? "not-allowed" : "pointer",
             opacity: generating || generatingAll ? 0.4 : 1,
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           Generate Visual
@@ -698,7 +698,7 @@ export default function VisualWrap() {
             fontSize: 14,
             fontWeight: 600,
             cursor: generating || generatingAll ? "not-allowed" : "pointer",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           Generate All 6 Vibes
@@ -729,7 +729,7 @@ export default function VisualWrap() {
               textAlign: "center",
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 12, fontFamily: "'DM Sans', sans-serif" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 12, fontFamily: "'Montserrat', sans-serif" }}>
               Kai
             </div>
             <div

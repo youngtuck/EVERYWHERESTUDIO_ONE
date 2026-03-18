@@ -21,16 +21,16 @@ export default function StudioShell() {
     const root = document.getElementById("root");
     document.body.style.background = "";
     document.body.style.backgroundImage = "none";
-    document.body.style.backgroundColor = "#F4F2ED";
+    document.body.style.backgroundColor = "#F7F9FC";
     document.body.style.transition = "none";
     document.documentElement.style.background = "";
     document.documentElement.style.backgroundImage = "none";
-    document.documentElement.style.backgroundColor = "#F4F2ED";
+    document.documentElement.style.backgroundColor = "#F7F9FC";
     document.documentElement.style.transition = "none";
     if (root) {
       root.style.background = "";
       root.style.backgroundImage = "none";
-      root.style.backgroundColor = "#F4F2ED";
+      root.style.backgroundColor = "#F7F9FC";
       root.style.transition = "none";
     }
     return () => {
@@ -52,13 +52,13 @@ export default function StudioShell() {
   }, []);
 
   const studioFooter = (
-    <footer style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+    <footer style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
       EVERYWHERE STUDIO (tm) 2026, Mixed Grill, LLC, v6.5 Alpha
     </footer>
   );
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F4F2ED", fontFamily: "'DM Sans', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F7F9FC", fontFamily: "'Montserrat', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
       <CommandPalette />
       {isMobile && sidebarOpen && (
         <div
@@ -100,7 +100,7 @@ export default function StudioShell() {
           onMobileClose={isMobile ? () => setSidebarOpen(false) : undefined}
         />
       </div>
-      <main style={{ flex: 1, minHeight: "100vh", background: "#F4F2ED", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none", display: "flex", flexDirection: "column" }}>
+      <main style={{ flex: 1, minHeight: "100vh", background: "#F7F9FC", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none", display: "flex", flexDirection: "column" }}>
         {isMobile && (
           <div
             style={{
@@ -112,7 +112,7 @@ export default function StudioShell() {
               position: "sticky",
               top: 0,
               zIndex: 20,
-              background: "#F4F2ED",
+              background: "#F7F9FC",
             }}
           >
             <button
@@ -141,7 +141,7 @@ export default function StudioShell() {
             <span style={{ width: 32 }} />
           </div>
         )}
-        <div className="studio-main-inner" style={{ background: "#F4F2ED", flex: 1 }}>
+        <div className="studio-main-inner" style={{ background: "#F7F9FC", flex: 1 }}>
           <div key={location.pathname} className="studio-page-transition">
             <Outlet />
           </div>

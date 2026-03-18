@@ -106,7 +106,7 @@ export function VoiceUpload({ onComplete }: VoiceUploadProps) {
         <p
           style={{
             marginTop: 16,
-            fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 16,
             fontWeight: 500,
             color: "#ffffff",
@@ -117,7 +117,7 @@ export function VoiceUpload({ onComplete }: VoiceUploadProps) {
         <p
           style={{
             marginTop: 8,
-            fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 14,
             color: "rgba(255,255,255,0.55)",
           }}
@@ -127,7 +127,7 @@ export function VoiceUpload({ onComplete }: VoiceUploadProps) {
         <p
           style={{
             marginTop: 16,
-            fontFamily: "'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 11,
             color: "rgba(255,255,255,0.35)",
           }}
@@ -154,7 +154,7 @@ export function VoiceUpload({ onComplete }: VoiceUploadProps) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 14,
                     color: "#ffffff",
                     whiteSpace: "nowrap",
@@ -166,7 +166,7 @@ export function VoiceUpload({ onComplete }: VoiceUploadProps) {
                 </div>
                 <div
                   style={{
-                    fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 12,
                     color: "rgba(255,255,255,0.5)",
                   }}
@@ -205,7 +205,7 @@ export function VoiceUpload({ onComplete }: VoiceUploadProps) {
           border: "none",
           borderRadius: 999,
           padding: "14px 16px",
-          fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif",
+          fontFamily: "'Montserrat', sans-serif",
           fontSize: 14,
           fontWeight: 600,
           cursor: files.length && !processing ? "pointer" : "default",

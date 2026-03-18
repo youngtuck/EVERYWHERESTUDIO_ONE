@@ -15,7 +15,7 @@ export default function TwelveFormats() {
       <div style={{ maxWidth:1160, margin:"0 auto" }}>
         <div style={{ maxWidth:480, marginBottom:64 }}>
           <p className="eyebrow" style={{ marginBottom:20 }}>9 Output Formats</p>
-          <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", lineHeight:1.08 }}>
+          <h2 style={{ fontFamily:"'Montserrat', sans-serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", lineHeight:1.08 }}>
             One idea,<br /><em style={{fontStyle:"italic"}}>twelve formats.</em>
           </h2>
         </div>
@@ -25,8 +25,8 @@ export default function TwelveFormats() {
               style={{ padding:"20px 18px", background:"var(--surface)", border:"1px solid var(--line)", borderRadius:10, cursor:"default", transition:"all 0.15s" }}
               onMouseEnter={e=>{ e.currentTarget.style.borderColor="var(--line-2)"; e.currentTarget.style.boxShadow="var(--shadow-sm)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--line)"; e.currentTarget.style.boxShadow="none"; }}>
-              <p style={{ fontSize:13, fontWeight:500, color:"var(--fg)", marginBottom:4, fontFamily:"'DM Sans',sans-serif", letterSpacing:"-0.01em" }}>{f.name}</p>
-              <p style={{ fontSize:11, color:"var(--fg-3)", fontFamily:"'DM Sans',sans-serif", fontWeight:300, lineHeight:1.4 }}>{f.desc}</p>
+              <p style={{ fontSize:13, fontWeight:500, color:"var(--fg)", marginBottom:4, fontFamily:"'Montserrat', sans-serif", letterSpacing:"-0.01em" }}>{f.name}</p>
+              <p style={{ fontSize:11, color:"var(--fg-3)", fontFamily:"'Montserrat', sans-serif", fontWeight:300, lineHeight:1.4 }}>{f.desc}</p>
             </div>
           ))}
         </div>

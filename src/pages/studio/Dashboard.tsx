@@ -138,7 +138,7 @@ export default function Dashboard() {
           margin: "0 auto",
           padding: "32px 24px",
           textAlign: "center",
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Montserrat', sans-serif",
           fontSize: 14,
           color: "var(--text-secondary)",
         }}
@@ -172,11 +172,11 @@ export default function Dashboard() {
           <div>
             <div
               style={{
-                fontFamily: "'DM Mono', monospace",
+                fontFamily: "'Montserrat', sans-serif",
                 fontSize: 14,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
-                color: "rgba(0,0,0,0.3)",
+                color: "#64748B",
                 marginBottom: 4,
               }}
             >
@@ -200,8 +200,8 @@ export default function Dashboard() {
             title="Start a new Watson session with your idea"
             className="btn-gold cta-new-session"
             style={{
-              background: "var(--gold-dark)",
-              color: "#fff",
+              background: "#F5C642",
+              color: "#0D1B2A",
               padding: "12px 22px",
               borderRadius: 8,
               fontFamily: "var(--font)",
@@ -212,11 +212,11 @@ export default function Dashboard() {
               transition,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--gold-hover)";
+              e.currentTarget.style.background = "#e5b33a";
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--gold-dark)";
+              e.currentTarget.style.background = "#F5C642";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -263,7 +263,7 @@ export default function Dashboard() {
                     : avgBetterish >= 700
                       ? "Getting close"
                       : "Room to improve",
-              accent: "#C8961A",
+              accent: "#F5C642",
               color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
               tooltip: "Average Betterish quality score. 900 is publication threshold.",
             },
@@ -310,11 +310,11 @@ export default function Dashboard() {
               <div>
                 <div
                   style={{
-                    fontFamily: "'DM Mono', monospace",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 14,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
-                    color: "rgba(0,0,0,0.38)",
+                    color: "#64748B",
                     marginBottom: 4,
                   }}
                 >
@@ -335,9 +335,9 @@ export default function Dashboard() {
                 </div>
                 <div
                   style={{
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 12,
-                    color: "rgba(0,0,0,0.4)",
+                    color: "#64748B",
                     marginTop: 6,
                   }}
                 >
@@ -376,11 +376,11 @@ export default function Dashboard() {
         >
           <span
             style={{
-              fontFamily: "'DM Mono', monospace",
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: 14,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
-              color: "rgba(0,0,0,0.35)",
+              color: "#64748B",
             }}
           >
             In progress
@@ -388,7 +388,7 @@ export default function Dashboard() {
           <button
             onClick={() => nav("/studio/outputs")}
             style={{
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: 12,
               fontWeight: 500,
               color: "var(--gold-dark)",
@@ -417,7 +417,7 @@ export default function Dashboard() {
               borderRadius: 12,
               padding: 20,
               textAlign: "center",
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: 13,
               color: "var(--text-secondary)",
             }}
@@ -426,7 +426,7 @@ export default function Dashboard() {
             <button
               onClick={() => nav("/studio/work")}
               style={{
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "'Montserrat', sans-serif",
                 fontSize: 13,
                 fontWeight: 500,
                 color: "var(--gold-dark)",
@@ -480,7 +480,7 @@ export default function Dashboard() {
                       borderRadius: "50%",
                       background: "rgba(0,0,0,0.8)",
                       color: "#fff",
-                      fontFamily: "'DM Mono', monospace",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: 12,
                       fontWeight: 700,
                       display: "flex",
@@ -494,7 +494,7 @@ export default function Dashboard() {
                   <div style={{ minWidth: 0 }}>
                     <div
                       style={{
-                        fontFamily: "'DM Sans', sans-serif",
+                        fontFamily: "'Montserrat', sans-serif",
                         fontSize: 15,
                         fontWeight: 500,
                         color: "var(--text-primary, #1a1a1a)",
@@ -507,9 +507,9 @@ export default function Dashboard() {
                     </div>
                     <div
                       style={{
-                        fontFamily: "'DM Sans', sans-serif",
+                        fontFamily: "'Montserrat', sans-serif",
                         fontSize: 12,
-                        color: "rgba(0,0,0,0.4)",
+                        color: "#64748B",
                         marginTop: 2,
                       }}
                     >
@@ -520,7 +520,7 @@ export default function Dashboard() {
                 <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                   <span
                     style={{
-                      fontFamily: "'DM Mono', monospace",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: 16,
                       fontWeight: 500,
                       color: scoreStyle.text,
@@ -540,11 +540,11 @@ export default function Dashboard() {
       <div style={{ marginBottom: 24 }}>
         <div
           style={{
-            fontFamily: "'DM Mono', monospace",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: 14,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
-            color: "rgba(0,0,0,0.35)",
+            color: "#64748B",
             marginBottom: 10,
           }}
         >
@@ -584,7 +584,7 @@ export default function Dashboard() {
             >
               <div
                 style={{
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: 15,
                   fontWeight: 600,
                   color: "var(--text-primary)",
@@ -594,7 +594,7 @@ export default function Dashboard() {
               </div>
               <div
                 style={{
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: 12,
                   color: "rgba(0,0,0,0.45)",
                   marginTop: 6,
@@ -625,10 +625,10 @@ export default function Dashboard() {
           }}
         >
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+            <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
               Sentinel Briefing
             </div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+            <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
               Latest signal summary
             </div>
           </div>

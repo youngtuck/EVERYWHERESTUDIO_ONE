@@ -143,7 +143,7 @@ export default function Resources() {
         minHeight: "100vh",
         background: "var(--surface-primary, #F4F2ED)",
         padding: isMobile ? "24px 16px" : "32px 24px",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
       }}
     >
       <div style={{ maxWidth: 960, margin: "0 auto" }}>

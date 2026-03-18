@@ -111,12 +111,12 @@ const AuthPage = () => {
     <div
       style={{
         minHeight: "100vh",
-        background: "#07090f",
+        background: "#0D1B2A",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        fontFamily: "'Afacad Flux', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamily: "'Montserrat', sans-serif",
         position: "relative",
         overflow: "hidden",
       }}
@@ -127,33 +127,33 @@ const AuthPage = () => {
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          background: "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(200,150,26,0.06) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(58,123,213,0.04) 0%, transparent 50%)",
+          background: "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(245,198,66,0.06) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(74,144,217,0.04) 0%, transparent 50%)",
         }}
       />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
-        body { background: #07090f; }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap');
+        body { background: #0D1B2A; }
         .auth-input {
           width: 100%;
-          background: #0e1117;
-          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
           border-radius: 8px;
           padding: 12px 14px;
           font-size: 14px;
           color: #ffffff;
           outline: none;
-          font-family: 'Afacad Flux', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Montserrat', sans-serif;
           transition: border-color 0.2s ease, box-shadow 0.25s ease;
         }
         .auth-input::placeholder {
           color: rgba(255,255,255,0.35);
         }
         .auth-input:focus {
-          border-color: #C8961A;
-          box-shadow: 0 0 0 3px rgba(200,150,26,0.12), 0 0 20px rgba(200,150,26,0.08);
+          border-color: #F5C642;
+          box-shadow: 0 0 0 3px rgba(245,198,66,0.12), 0 0 20px rgba(245,198,66,0.08);
         }
         .auth-input:focus-visible {
-          outline: 2px solid #C8961A;
+          outline: 2px solid #F5C642;
           outline-offset: 2px;
         }
       `}</style>
@@ -181,7 +181,7 @@ const AuthPage = () => {
         {/* Form card */}
         <div
           style={{
-            background: "#0e1117",
+            background: "#1B263B",
             border: "1px solid rgba(255,255,255,0.08)",
             borderRadius: 16,
             padding: 0,
@@ -198,7 +198,7 @@ const AuthPage = () => {
                 padding: "14px 16px",
                 background: mode === "signin" ? "rgba(255,255,255,0.04)" : "transparent",
                 border: "none",
-                borderBottom: mode === "signin" ? "2px solid #C8961A" : "2px solid transparent",
+                borderBottom: mode === "signin" ? "2px solid #F5C642" : "2px solid transparent",
                 color: mode === "signin" ? "#ffffff" : "rgba(255,255,255,0.6)",
                 fontSize: 13,
                 fontWeight: 600,
@@ -216,7 +216,7 @@ const AuthPage = () => {
                 padding: "14px 16px",
                 background: mode === "signup" ? "rgba(255,255,255,0.04)" : "transparent",
                 border: "none",
-                borderBottom: mode === "signup" ? "2px solid #C8961A" : "2px solid transparent",
+                borderBottom: mode === "signup" ? "2px solid #F5C642" : "2px solid transparent",
                 color: mode === "signup" ? "#ffffff" : "rgba(255,255,255,0.6)",
                 fontSize: 13,
                 fontWeight: 600,
@@ -269,7 +269,7 @@ const AuthPage = () => {
                 <p
                   style={{
                     fontSize: 13,
-                    color: "#C8961A",
+                    color: "#F5C642",
                     marginBottom: 16,
                     textAlign: "center",
                   }}
@@ -283,10 +283,10 @@ const AuthPage = () => {
                   <div>
                     <label
                       style={{
-                        fontSize: 14,
+                        fontSize: 11,
                         fontWeight: 700,
-                        color: "rgba(255,255,255,0.55)",
-                        letterSpacing: "0.08em",
+                        color: "rgba(255,255,255,0.6)",
+                        letterSpacing: "2px",
                         textTransform: "uppercase",
                         display: "block",
                         marginBottom: 6,
@@ -308,10 +308,10 @@ const AuthPage = () => {
                   <div>
                     <label
                       style={{
-                        fontSize: 14,
+                        fontSize: 11,
                         fontWeight: 700,
-                        color: "rgba(255,255,255,0.55)",
-                        letterSpacing: "0.08em",
+                        color: "rgba(255,255,255,0.6)",
+                        letterSpacing: "2px",
                         textTransform: "uppercase",
                         display: "block",
                         marginBottom: 6,
@@ -332,10 +332,10 @@ const AuthPage = () => {
                 <div>
                   <label
                     style={{
-                      fontSize: 14,
+                      fontSize: 11,
                       fontWeight: 700,
-                      color: "rgba(255,255,255,0.55)",
-                      letterSpacing: "0.08em",
+                      color: "rgba(255,255,255,0.6)",
+                      letterSpacing: "2px",
                       textTransform: "uppercase",
                       display: "block",
                       marginBottom: 6,
@@ -355,10 +355,10 @@ const AuthPage = () => {
                 <div>
                   <label
                     style={{
-                      fontSize: 14,
+                      fontSize: 11,
                       fontWeight: 700,
-                      color: "rgba(255,255,255,0.55)",
-                      letterSpacing: "0.08em",
+                      color: "rgba(255,255,255,0.6)",
+                      letterSpacing: "2px",
                       textTransform: "uppercase",
                       display: "block",
                       marginBottom: 6,
@@ -401,10 +401,10 @@ const AuthPage = () => {
                   <div>
                     <label
                       style={{
-                        fontSize: 14,
+                        fontSize: 11,
                         fontWeight: 700,
-                        color: "rgba(255,255,255,0.55)",
-                        letterSpacing: "0.08em",
+                        color: "rgba(255,255,255,0.6)",
+                        letterSpacing: "2px",
                         textTransform: "uppercase",
                         display: "block",
                         marginBottom: 6,
@@ -454,7 +454,7 @@ const AuthPage = () => {
                         border: "none",
                         cursor: "pointer",
                         fontSize: 12,
-                        color: "#C8961A",
+                        color: "#F5C642",
                         padding: 0,
                         fontFamily: "inherit",
                       }}
@@ -469,8 +469,8 @@ const AuthPage = () => {
                 style={{
                   marginTop: 10,
                   width: "100%",
-                  background: "#C8961A",
-                  color: "#0A0A0A",
+                  background: "#F5C642",
+                  color: "#0D1B2A",
                   border: "none",
                   borderRadius: 10,
                   padding: "12px 14px",
@@ -503,7 +503,7 @@ const AuthPage = () => {
                   textAlign: "center",
                   marginTop: 20,
                   lineHeight: 1.6,
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 <Logo size={13} variant="dark" /> is in private Alpha.
@@ -545,9 +545,9 @@ const AuthPage = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 10,
-                background: "transparent",
+                background: "#1B263B",
                 borderRadius: 10,
-                border: "1px solid rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.1)",
                 color: "#ffffff",
                 padding: "11px 14px",
                 cursor: "pointer",
@@ -593,7 +593,7 @@ const AuthPage = () => {
                   cursor: "pointer",
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#C8961A",
+                  color: "#F5C642",
                   textDecoration: "none",
                 }}
               >

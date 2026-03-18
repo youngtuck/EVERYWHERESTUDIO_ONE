@@ -157,14 +157,14 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 24px", fontFamily: "'DM Sans', sans-serif", color: "var(--text-tertiary)" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 24px", fontFamily: "'Montserrat', sans-serif", color: "var(--text-tertiary)" }}>
         Loading settings...
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 24px", fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 24px", fontFamily: "'Montserrat', sans-serif" }}>
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
           Settings
@@ -186,7 +186,7 @@ export default function Settings() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
+              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, fontFamily: "'Montserrat', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
               onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; }}
             />
@@ -200,7 +200,7 @@ export default function Settings() {
           {saveError && <p style={{ fontSize: 13, color: "#D64545", margin: 0 }}>{saveError}</p>}
           <button
             onClick={handleSaveProfile}
-            style={{ alignSelf: "flex-start", background: "#C8961A", color: "#0D1B2A", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "opacity 0.15s ease" }}
+            style={{ alignSelf: "flex-start", background: "#C8961A", color: "#0D1B2A", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Montserrat', sans-serif", transition: "opacity 0.15s ease" }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
@@ -229,7 +229,7 @@ export default function Settings() {
             fontSize: 13,
             fontWeight: 600,
             cursor: "pointer",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'Montserrat', sans-serif",
             transition: "all 0.15s ease",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
@@ -280,7 +280,7 @@ export default function Settings() {
             onChange={(e) => setWatchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddWatchTopic(); } }}
             placeholder="Add a topic"
-            style={{ width: 180, padding: "8px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, outline: "none" }}
+            style={{ width: 180, padding: "8px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontFamily: "'Montserrat', sans-serif", fontSize: 13, outline: "none" }}
           />
           <button
             type="button"
@@ -293,7 +293,7 @@ export default function Settings() {
         <button
           type="button"
           onClick={handleSaveWatch}
-          style={{ background: "var(--gold-dark)", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "opacity 0.15s ease" }}
+          style={{ background: "var(--gold-dark)", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Montserrat', sans-serif", transition: "opacity 0.15s ease" }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
         >
@@ -322,7 +322,7 @@ export default function Settings() {
           <button
             type="button"
             onClick={handleSignOut}
-            style={{ alignSelf: "flex-start", background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s ease" }}
+            style={{ alignSelf: "flex-start", background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Montserrat', sans-serif", transition: "all 0.15s ease" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
           >
@@ -331,7 +331,7 @@ export default function Settings() {
           <button
             type="button"
             onClick={() => setDeleteModalOpen(true)}
-            style={{ alignSelf: "flex-start", background: "none", border: "none", padding: 0, fontSize: 13, color: "var(--text-tertiary)", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", textDecoration: "underline" }}
+            style={{ alignSelf: "flex-start", background: "none", border: "none", padding: 0, fontSize: 13, color: "var(--text-tertiary)", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", textDecoration: "underline" }}
           >
             Delete my account
           </button>
@@ -344,7 +344,7 @@ export default function Settings() {
           onClick={() => setDeleteModalOpen(false)}
         >
           <div
-            style={{ background: "var(--surface-white)", borderRadius: 16, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.2)", fontFamily: "'DM Sans', sans-serif" }}
+            style={{ background: "var(--surface-white)", borderRadius: 16, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.2)", fontFamily: "'Montserrat', sans-serif" }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 18, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
@@ -358,13 +358,13 @@ export default function Settings() {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type DELETE"
-              style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontSize: 14, fontFamily: "'DM Sans', sans-serif", marginBottom: 16, outline: "none" }}
+              style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontSize: 14, fontFamily: "'Montserrat', sans-serif", marginBottom: 16, outline: "none" }}
             />
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 type="button"
                 onClick={() => { setDeleteModalOpen(false); setDeleteConfirmText(""); }}
-                style={{ background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                style={{ background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Montserrat', sans-serif" }}
               >
                 Cancel
               </button>
@@ -381,7 +381,7 @@ export default function Settings() {
                   color: deleteConfirmText.toUpperCase() === "DELETE" ? "#fff" : "var(--text-tertiary)",
                   border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600,
                   cursor: deleteConfirmText.toUpperCase() === "DELETE" ? "pointer" : "default",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 Confirm
