@@ -495,11 +495,6 @@ function SessionInputBox({
       onBlur={() => setFocusWithin(false)}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      }}
-      onFocus={() => setFocusWithin(true)}
-      onBlur={() => setFocusWithin(false)}
-    >
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
         {isSupported && (
           <button
             type="button"
@@ -586,7 +581,16 @@ function SessionInputBox({
             if (sendEnabled) e.currentTarget.style.background = "#0D1B2A";
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
         </button>
@@ -617,7 +621,15 @@ function SessionInputBox({
       )}
       {apiError && (
         <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, color: "var(--danger)" }}>{apiError}</span>
+          <span
+            style={{
+              fontFamily: "'Afacad Flux', sans-serif",
+              fontSize: 13,
+              color: "var(--danger)",
+            }}
+          >
+            {apiError}
+          </span>
           <button
             type="button"
             onClick={() => setApiError("")}
@@ -639,7 +651,15 @@ function SessionInputBox({
     </div>
   );
 }
-function EmptyState({ children }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean; children?: React.ReactNode }) {
+
+function EmptyState({
+  children,
+}: {
+  outputType: string;
+  onSuggestion: (s: string) => void;
+  isMobile: boolean;
+  children?: React.ReactNode;
+}) {
   return (
     <div
       style={{
