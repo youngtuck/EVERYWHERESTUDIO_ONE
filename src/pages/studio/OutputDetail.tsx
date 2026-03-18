@@ -309,8 +309,15 @@ export default function OutputDetail() {
 
   const copyText = useCallback(async () => {
     if (!output) return;
-    await navigator.clipboard.writeText(output.content);
-    showToast("Copied!");
+    // Strip basic markdown to plain text
+    const plain = output.content
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/\*(.+?)\*/g, "$1")
+      .replace(/_(.+?)_/g, "$1")
+      .replace(/`(.+?)`/g, "$1");
+    await navigator.clipboard.writeText(plain);
+    showToast("Copied to clipboard");
   }, [output, showToast]);
 
   const wrapAsWebPage = useCallback(() => {
@@ -345,34 +352,48 @@ export default function OutputDetail() {
     </nav>`
         : "";
 
+    const authorName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
+    const dateStr = new Date(output.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
     const htmlString = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${titleEscaped}</title>
+  <meta property="og:title" content="${titleEscaped}">
+  <meta property="og:type" content="article">
+  <meta property="og:description" content="${escapeHtml(output.content.slice(0, 160))}">
+  <link href="https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'Afacad Flux', sans-serif; background: #fff; color: #1a1a1a; line-height: 1.25; margin: 0; padding: 0 24px 48px; }
-    .wrap { max-width: 680px; margin: 0 auto; }
-    .content { line-height: 1.25; font-size: 15px; color: var(--text-primary, #1a1a1a); }
-    .wordmark { font-size: 11px; letter-spacing: 0.12em; color: rgba(0,0,0,0.35); margin-bottom: 32px; }
-    h1 { font-size: 28px; font-weight: 700; margin: 0 0 24px; letter-spacing: -0.02em; }
-    h2 { font-size: 20px; font-weight: 600; margin: 32px 0 16px; padding-top: 8px; }
-    h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; }
-    p { margin: 0 0 16px; }
-    a { color: #3A7BD5; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(0,0,0,0.06); font-size: 12px; color: rgba(0,0,0,0.4); }
+    body { font-family: 'Afacad Flux', -apple-system, sans-serif; background: #0D1B2A; color: #F0F0EE; line-height: 1.7; margin: 0; padding: 0; }
+    .header { padding: 32px 24px 0; max-width: 720px; margin: 0 auto; }
+    .wordmark { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 40px; }
+    .wordmark .ew { color: #4A90D9; font-weight: 700; }
+    .wordmark .st { color: #F5C642; font-weight: 300; }
+    h1 { font-size: 32px; font-weight: 700; margin: 0 0 12px; letter-spacing: -0.02em; color: #fff; }
+    .meta { font-size: 14px; color: rgba(240,240,238,0.4); margin-bottom: 32px; }
+    .content-wrap { max-width: 720px; margin: 0 auto; padding: 0 24px 48px; }
+    .content { font-size: 16px; line-height: 1.7; color: rgba(240,240,238,0.85); }
+    .content h2 { font-size: 22px; font-weight: 600; margin: 36px 0 16px; color: #fff; }
+    .content h3 { font-size: 18px; font-weight: 600; margin: 28px 0 12px; color: #fff; }
+    .content p { margin: 0 0 18px; }
+    .content a { color: #4A90D9; }
+    .footer { max-width: 720px; margin: 0 auto; padding: 32px 24px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: rgba(240,240,238,0.3); }
+    @media(max-width:640px) { h1 { font-size: 24px; } .content { font-size: 15px; } }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="wordmark">EVERYWHERE Studio</div>
+  <div class="header">
+    <div class="wordmark"><span class="ew">EVERYWHERE</span> <span class="st">STUDIO</span></div>
     <h1>${titleEscaped}</h1>
-    ${navHtml}
-    <div class="content">${contentHtml}</div>
-    <div class="footer">Composed Intelligence</div>
+    <div class="meta">${authorName ? escapeHtml(String(authorName)) + " &middot; " : ""}${dateStr}</div>
   </div>
+  ${navHtml}
+  <div class="content-wrap">
+    <div class="content">${contentHtml}</div>
+  </div>
+  <div class="footer">Made with EVERYWHERE Studio</div>
 </body>
 </html>`;
 
@@ -381,15 +402,44 @@ export default function OutputDetail() {
 
   const wrapAsGoogleDoc = useCallback(async () => {
     if (!output) return;
-    await navigator.clipboard.writeText(output.content);
-    showToast("Content copied to clipboard. Open Google Docs to paste.");
+    const html = `<h1>${escapeHtml(output.title)}</h1>${simpleMarkdownToHtml(output.content)}`;
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([output.content], { type: "text/plain" }),
+        }),
+      ]);
+      showToast("Rich text copied. Open Google Docs and paste.");
+    } catch {
+      await navigator.clipboard.writeText(output.content);
+      showToast("Content copied. Open Google Docs and paste.");
+    }
   }, [output, showToast]);
 
   const wrapAsWordDoc = useCallback(() => {
     if (!output) return;
     const contentHtml = simpleMarkdownToHtml(output.content);
     const titleEscaped = escapeHtml(output.title);
-    const htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset="utf-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;line-height:1.6;max-width:6.5in;margin:1in;}h1{font-size:18pt;margin-bottom:12pt;}h2{font-size:14pt;margin-top:18pt;margin-bottom:8pt;}h3{font-size:12pt;margin-top:14pt;margin-bottom:6pt;}p{margin-bottom:8pt;}</style></head><body><h1>${titleEscaped}</h1>${contentHtml}</body></html>`;
+    const authorName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "EVERYWHERE Studio";
+    const dateStr = new Date(output.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    const htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset="utf-8">
+<style>
+  body{font-family:Calibri,sans-serif;font-size:11pt;line-height:1.6;max-width:6.5in;margin:1in;}
+  h1{font-size:18pt;margin-bottom:6pt;}
+  h2{font-size:14pt;margin-top:18pt;margin-bottom:8pt;}
+  h3{font-size:12pt;margin-top:14pt;margin-bottom:6pt;}
+  p{margin-bottom:8pt;}
+  .meta{font-size:10pt;color:#666;margin-bottom:18pt;}
+  .footer{margin-top:36pt;padding-top:12pt;border-top:1px solid #ddd;font-size:9pt;color:#999;}
+</style></head>
+<body>
+  <h1>${titleEscaped}</h1>
+  <div class="meta">${escapeHtml(String(authorName))} &middot; ${dateStr}</div>
+  ${contentHtml}
+  <div class="footer">Created with EVERYWHERE Studio</div>
+</body></html>`;
     const blob = new Blob([htmlContent], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -397,7 +447,8 @@ export default function OutputDetail() {
     a.download = `${output.title.replace(/[^\w\s-]/g, "")}.doc`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [output]);
+    showToast("Word document downloaded");
+  }, [output, user, showToast]);
 
   const handleReformat = useCallback(async (selectedType: string) => {
     if (!output || reformatting) return;
@@ -975,7 +1026,24 @@ export default function OutputDetail() {
         <div style={{ marginTop: 24, maxWidth: 680, margin: "24px auto 0" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>Web Preview</span>
-            <button onClick={() => setPreviewHtml(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--text-tertiary)" }}>Close</button>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => {
+                  const blob = new Blob([previewHtml!], { type: "text/html" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${output!.title.replace(/[^\w\s-]/g, "")}.html`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  showToast("HTML file downloaded");
+                }}
+                style={{ background: "none", border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif" }}
+              >
+                Download HTML
+              </button>
+              <button onClick={() => setPreviewHtml(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--text-tertiary)" }}>Close</button>
+            </div>
           </div>
           <iframe
             srcDoc={previewHtml}
