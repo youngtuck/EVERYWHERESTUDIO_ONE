@@ -103,7 +103,12 @@ export default function Settings() {
           .eq("id", user.id)
           .single();
         if (data) {
-          setFullName(data.full_name ?? "");
+          setFullName(
+            data.full_name
+            || (user.user_metadata?.full_name as string)
+            || (user.user_metadata?.name as string)
+            || ""
+          );
           setVoiceComplete(!!data.voice_dna_completed);
           setWatchTopics(Array.isArray(data.sentinel_topics) ? data.sentinel_topics : []);
         }
