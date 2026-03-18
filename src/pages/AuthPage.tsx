@@ -574,32 +574,34 @@ const AuthPage = () => {
               Continue with Google
             </button>
 
-            {/* Toggle */}
-            <p
-              style={{
-                textAlign: "center",
-                marginTop: 24,
-                fontSize: 13,
-                color: "rgba(232,232,230,0.65)",
-              }}
-            >
-              {mode === "signin" ? "Don't have a studio? " : "Already have a studio? "}
-              <button
-                type="button"
-                onClick={switchMode}
+            {/* Toggle - only show on Create Account (Sign In tab is visible at top) */}
+            {mode === "signup" && (
+              <p
                 style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
+                  textAlign: "center",
+                  marginTop: 24,
                   fontSize: 13,
-                  fontWeight: 700,
-                  color: "#F5C642",
-                  textDecoration: "none",
+                  color: "rgba(232,232,230,0.65)",
                 }}
               >
-                {mode === "signin" ? "Create one" : "Sign in"}
-              </button>
-            </p>
+                Already have a studio?{" "}
+                <button
+                  type="button"
+                  onClick={switchMode}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "#F5C642",
+                    textDecoration: "none",
+                  }}
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
             </div>
           </div>
         </div>
