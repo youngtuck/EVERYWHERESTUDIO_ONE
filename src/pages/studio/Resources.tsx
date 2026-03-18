@@ -177,7 +177,7 @@ export default function Resources() {
                 STUDIO RESOURCES
               </h1>
               <p style={{ fontSize: 14, color: "var(--text-secondary, rgba(0,0,0,0.6))", marginTop: 8, marginBottom: 0, lineHeight: 1.5 }}>
-                Everything the system uses to write in your voice and stay on strategy.
+                Everything the system uses to write in your voice and stay on strategy.
               </p>
             </div>
             <div style={{ display: "flex", gap: 10 }}>

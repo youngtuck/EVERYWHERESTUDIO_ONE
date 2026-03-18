@@ -641,18 +641,18 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
             </div>
           )}
           <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
-          <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
+          <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            <FeatureLine num="01" title="What's Moving" desc="Developments shaping your category right now" accent={T.watchA} delay={0} lc={lc} bc={bc} />
+            <FeatureLine num="01" title="What's Moving" desc="Developments shaping your category right now" accent={T.watchA} delay={0} lc={lc} bc={bc} />
             <FeatureLine num="02" title="Threats" desc="Items requiring defensive positioning or response" accent={T.watchA} delay={.06} lc={lc} bc={bc} />
-            <FeatureLine num="03" title="Opportunities" desc="Scored by effort-to-impact ratio, highest leverage first" accent={T.watchA} delay={.12} lc={lc} bc={bc} />
+            <FeatureLine num="03" title="Opportunities" desc="Scored by effort-to-impact ratio, highest leverage first" accent={T.watchA} delay={.12} lc={lc} bc={bc} />
             <FeatureLine num="04" title="Content Triggers" desc="Angles ready to hand directly to the production engine" accent={T.watchA} delay={.18} lc={lc} bc={bc} />
             <FeatureLine num="05" title="Event Radar" desc="Upcoming events filtered by proximity and relevance" accent={T.watchA} delay={.24} lc={lc} bc={bc} />
           </div>
           <FadeUp delay={0.12}>
             <div style={{ borderLeft: `2px solid ${T.watchA}45`, paddingLeft: 18 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: textColor, marginBottom: 5, letterSpacing: ".02em" }}>Source Verification</div>
-              <p style={{ fontSize: 12, color: T.textSub, lineHeight: 1.74 }}>Every claim requires two or more independent, credible sources. Unverified intelligence never ships. This is a protocol, not a preference.</p>
+              <p style={{ fontSize: 12, color: T.textSub, lineHeight: 1.74 }}>Every claim requires two or more independent, credible sources. Unverified intelligence never ships. This is a protocol, not a preference.</p>
             </div>
           </FadeUp>
           <FadeUp delay={0.18}>
@@ -714,7 +714,7 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
               </div>
             </div>
           )}
-          <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
+          <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
           <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
           <FadeUp delay={0.12}>
             <div>
@@ -806,8 +806,8 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             <FeatureLine num="01" title="Content Calendar" desc="Visual scheduling across all channels from a single canvas." accent={T.wrapA} delay={0} lc={lc} bc={bc} />
             <FeatureLine num="02" title="One-Click Deploy" desc="Publish to LinkedIn, newsletter, Substack, social simultaneously." accent={T.wrapA} delay={.06} lc={lc} bc={bc} />
-            <FeatureLine num="03" title="Performance Loop" desc="Engagement data flows back to sharpen your next strategy." accent={T.wrapA} delay={.12} lc={lc} bc={bc} />
-            <FeatureLine num="04" title="The Flywheel" desc="Every post makes the next one better. Ideas compound over time." accent={T.wrapA} delay={.18} lc={lc} bc={bc} />
+            <FeatureLine num="03" title="Performance Loop" desc="Engagement data flows back to sharpen your next strategy." accent={T.wrapA} delay={.12} lc={lc} bc={bc} />
+            <FeatureLine num="04" title="The Flywheel" desc="Every post makes the next one better. Ideas compound over time." accent={T.wrapA} delay={.18} lc={lc} bc={bc} />
           </div>
           <FadeUp delay={0.24}>
             <div style={{ maxWidth: 420, marginLeft: "auto", marginTop: 32, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20, transform: "rotate(0.5deg)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}>
@@ -1217,14 +1217,14 @@ export default function ExplorePage() {
           {/* Value prop tagline */}
           <div style={{position:"relative",zIndex:2,textAlign:"center",marginBottom:16,opacity:mounted?1:0,transform:mounted?"none":"translateY(8px)",transition:"opacity .8s .48s ease, transform .8s .48s cubic-bezier(.16,1,.3,1)"}}>
             <p style={{fontSize:"clamp(18px,2.2vw,24px)",fontWeight:600,letterSpacing:"-.02em",color:T.textSub,margin:0}}>
-              One idea in. <span style={{color:T.gold}}>Publication-ready content out.</span>
+              One idea in. <span style={{color:T.gold}}>Publication-ready content out.</span>
             </p>
           </div>
 
           {/* Subhead */}
           <div style={{position:"relative",zIndex:2,maxWidth:500,textAlign:"center",marginBottom:38,opacity:mounted?1:0,transition:"opacity .8s .6s ease"}}>
             <p style={{fontSize:"clamp(13px,1.4vw,15px)",lineHeight:1.74,color:T.textFaint,fontWeight:400}}>
-              You have the ideas, the expertise, and the point of view. What you don't have is the system to turn all of that into content that actually lands.
+              You have the ideas, the expertise, and the point of view. What you don't have is the system to turn all of that into content that actually lands.
             </p>
           </div>
 
@@ -1381,7 +1381,7 @@ export default function ExplorePage() {
                 <div style={{fontSize:14,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:18,fontWeight:500}}>The Framework</div>
                 <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.text,marginBottom:4}}>One idea in.</div>
                 <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.gold,marginBottom:20}}>Communications out.</div>
-                <p style={{fontSize:14,color:T.textSub,maxWidth:420,margin:"0 auto",lineHeight:1.72}}><Logo size={14} variant={dark ? "dark" : "light"} /> bridges what you know and what the world sees.</p>
+                <p style={{fontSize:14,color:T.textSub,maxWidth:420,margin:"0 auto",lineHeight:1.72}}><Logo size={14} variant={dark ? "dark" : "light"} /> bridges what you know and what the world sees.</p>
               </div>
             </FadeInSection>
             {/* Counters */}
@@ -1421,7 +1421,7 @@ export default function ExplorePage() {
                       Quality Checkpoints
                     </div>
                   </FadeUp>
-                  <WordReveal text="Nothing ships without passing the checkpoints." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
+                  <WordReveal text="Nothing ships without passing the checkpoints." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
                 </div>
                 <FadeUp delay={0.1}><p style={{fontSize:13,lineHeight:1.75,color:T.textSub}}>7 checks before anything reaches your audience. No AI tells. No off-brand moments. No weak writing.</p></FadeUp>
               </div>
@@ -1466,9 +1466,9 @@ export default function ExplorePage() {
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
                 {[
                   { letter: "S", title: "SUPERFLUITY", desc: "More words than the content earns. Paragraphs that restate their opening. Transitions that summarize before advancing." },
-                  { letter: "L", title: "LOOPS", desc: "Arguments that circle back without advancing. The impression of development without substance." },
+                  { letter: "L", title: "LOOPS", desc: "Arguments that circle back without advancing. The impression of development without substance." },
                   { letter: "O", title: "OVERWROUGHT", desc: "Language that tries harder than the content requires. Metaphors strained past their limit. Vocabulary one register too formal." },
-                  { letter: "P", title: "PRETENSION", desc: "Complexity for its own sake. Hedging dressed as nuance. Abstract language where concrete examples would serve." },
+                  { letter: "P", title: "PRETENSION", desc: "Complexity for its own sake. Hedging dressed as nuance. Abstract language where concrete examples would serve." },
                 ].map((item, i) => (
                   <FadeUp key={item.letter} delay={0.06 + i * 0.06}>
                     <div style={{
@@ -1547,7 +1547,7 @@ export default function ExplorePage() {
                   margin: 0,
                   fontFamily: "'Afacad Flux', sans-serif",
                 }}>
-                  One em dash in prose output is an automatic block. This is the single most reliable AI tell in 2026. No exceptions.
+                  One em dash in prose output is an automatic block. This is the single most reliable AI tell in 2026. No exceptions.
                 </p>
               </div>
             </FadeUp>
@@ -1567,7 +1567,7 @@ export default function ExplorePage() {
               <div style={{fontSize:12,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:16,fontWeight:500}}>Compound Advantage</div>
               <WordReveal text="Why It Compounds" size="clamp(34px,4.5vw,58px)" weight={700} lh={1.0} color={T.text} />
               <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:32}}>
-                <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. <Logo size={15} variant={dark ? "dark" : "light"} /> makes it better, and the difference grows with every piece you publish.</p></FadeUp>
+                <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. <Logo size={15} variant={dark ? "dark" : "light"} /> makes it better, and the difference grows with every piece you publish.</p></FadeUp>
                 <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality checkpoints calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
               </div>
               <FadeUp delay={0.24}>
@@ -1593,7 +1593,7 @@ export default function ExplorePage() {
                       textAlign:"center",
                     }}
                   >
-                    Competitors can copy the output format. They cannot copy the system underneath it.
+                    Competitors can copy the output format. They cannot copy the system underneath it.
                   </div>
                   <div
                     style={{
@@ -1624,7 +1624,7 @@ export default function ExplorePage() {
             <FadeInSection>
               <div style={{fontSize:14,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:24,fontWeight:500}}>Let's Talk</div>
               <WordReveal text="Your ideas deserve a system built to carry them." size="clamp(28px,4vw,52px)" weight={700} lh={1.02} color={T.text} center />
-              <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
+              <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
               <FadeUp delay={0.26}>
                 <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:48,flexWrap:"wrap"}}>
                   <button

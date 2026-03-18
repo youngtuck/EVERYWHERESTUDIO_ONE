@@ -131,7 +131,7 @@ export default function TheLot() {
             No ideas parked yet
           </h2>
           <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 320, margin: "0 auto 20px" }}>
-            Use The Lot to save ideas you are not ready to develop.
+            Use The Lot to save ideas you are not ready to develop.
           </p>
           <button
             type="button"

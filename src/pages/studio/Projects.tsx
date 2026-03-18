@@ -236,7 +236,7 @@ export default function Projects() {
           Projects
         </h1>
         <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 6, marginBottom: 0 }}>
-          Organize your outputs by client, campaign, or initiative.
+          Organize your outputs by client, campaign, or initiative.
         </p>
       </div>
       <button

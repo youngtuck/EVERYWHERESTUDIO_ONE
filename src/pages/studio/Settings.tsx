@@ -175,7 +175,7 @@ export default function Settings() {
           Settings
         </h1>
         <p style={{ fontSize: 14, color: "var(--fg-3)", marginTop: 8, marginBottom: 0 }}>
-          Account and preferences
+          Account and preferences
         </p>
       </div>
 
@@ -272,7 +272,7 @@ export default function Settings() {
       <SectionCard>
         <SectionHeader label="Watch Configuration" />
         <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 12, marginTop: 0 }}>
-          Topics Sentinel uses to build your intelligence briefings.
+          Topics Sentinel uses to build your intelligence briefings.
         </p>
         {watchTopics.length === 0 && (
           <div style={{

@@ -200,17 +200,17 @@ const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: strin
   essay: {
     label: "Essay",
     color: "#4A90D9",
-    watson: "What's on your mind? Give me the rough idea and I will ask the questions that pull it into focus.",
+    watson: "What's on your mind? Give me the rough idea and I will ask the questions that pull it into focus.",
   },
   podcast: {
     label: "Podcast",
     color: "#F5C642",
-    watson: "What is this episode about and who are you talking to? Start with the topic and the listener you have in mind.",
+    watson: "What is this episode about and who are you talking to? Start with the topic and the listener you have in mind.",
   },
   book: {
     label: "Book",
     color: "#A080F5",
-    watson: "What is the book for and what change do you want it to create? Tell me the working title and the core promise.",
+    watson: "What is the book for and what change do you want it to create? Tell me the working title and the core promise.",
   },
   website: {
     label: "Website",
@@ -1091,7 +1091,7 @@ export default function WorkSession() {
       setMessages([{
         id: "w0",
         role: "assistant",
-        content: "What's on your mind? Tell me your idea and we'll figure out the best format together.",
+        content: "What's on your mind? Tell me your idea and we'll figure out the best format together.",
         ts: Date.now(),
       }]);
       setSessionTitle("New Session");
@@ -1696,7 +1696,7 @@ export default function WorkSession() {
                   </p>
                 ) : (
                   <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "12px 0 0", maxWidth: 400, marginLeft: "auto", marginRight: "auto" }}>
-                    Below threshold. Revisions recommended.
+                    Below threshold. Revisions recommended.
                     {generatedGates.summary && ` ${generatedGates.summary}`}
                   </p>
                 )}
@@ -1914,7 +1914,7 @@ export default function WorkSession() {
                       lineHeight: 1.5,
                       fontFamily: "'Afacad Flux', sans-serif",
                     }}>
-                      Score below publication threshold. Run the full quality pipeline for detailed specialist feedback and automatic revisions.
+                      Score below publication threshold. Run the full quality pipeline for detailed specialist feedback and automatic revisions.
                     </div>
                   )}
                   <button
@@ -1943,7 +1943,7 @@ export default function WorkSession() {
                     {pipelineStatus === "RUNNING" ? "Running quality pipeline..." : "Run Quality Pipeline"}
                   </button>
                   <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
-                    Run all 7 specialist checkpoints with detailed feedback
+                    Run all 7 specialist checkpoints with detailed feedback
                   </div>
                   {pipelineStatus !== "IDLE" && (
                     <div style={{ marginTop: 12 }}>
@@ -2091,7 +2091,7 @@ export default function WorkSession() {
                   color: "var(--text-secondary)",
                   margin: 0,
                 }}>
-                  Watson is ready. Choose an output format and let's make the thing.
+                  Watson is ready. Choose an output format and let's make the thing.
                 </p>
                 <div style={{ marginBottom: 4 }}>
                   <OutputTypePill value={outputType} onChange={setOutputType} />

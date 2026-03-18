@@ -277,7 +277,7 @@ export default function OutputLibrary() {
               marginBottom: 0,
             }}
           >
-            Start a session with Watson to create your first piece.
+            Start a session with Watson to create your first piece.
           </p>
           <button
             onClick={() => navigate("/studio/work")}

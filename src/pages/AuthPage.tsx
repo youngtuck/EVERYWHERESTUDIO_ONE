@@ -59,7 +59,7 @@ const AuthPage = () => {
 
     if (mode === "signup") {
       if (accessCode.trim().toLowerCase() !== VALID_ACCESS_CODE) {
-        setSubmitError("Invalid access code. Contact mark@mixedgrill.studio for access.");
+        setSubmitError("Invalid access code. Contact mark@mixedgrill.studio for access.");
         return;
       }
       if (password !== confirmPassword) {
@@ -508,7 +508,7 @@ const AuthPage = () => {
               >
                 <Logo size={13} variant="dark" /> is in private Alpha.
                 <br />
-                Contact mark@mixedgrill.studio for access.
+                Contact mark@mixedgrill.studio for access.
               </p>
             )}
 

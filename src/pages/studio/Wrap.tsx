@@ -95,7 +95,7 @@ export default function Wrap() {
             lineHeight: 1.6,
           }}
         >
-          Final polish and delivery. Three specialists refine your content before it ships.
+          Final polish and delivery. Three specialists refine your content before it ships.
         </p>
         <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
           {[
