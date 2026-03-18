@@ -2,6 +2,7 @@ import { useState } from "react";
 import { PenLine, Settings } from "lucide-react";
 import Logo from "../Logo";
 import ThemeToggle from "../ThemeToggle";
+import NotificationBell from "./NotificationBell";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -45,6 +46,8 @@ export default function StudioTopBar({ onToggleSidebar }: Props) {
       </button>
 
       <ThemeToggle />
+
+      <NotificationBell />
 
       <button onClick={() => navigate("/studio/settings")}
         title="Settings"

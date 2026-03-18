@@ -1320,6 +1320,17 @@ export default function WorkSession() {
 
         if (result.status === "PASSED") {
           toast("Quality pipeline passed. Output moved to The Vault.");
+          // Insert notification for published output
+          if (user) {
+            supabase.from("notifications").insert({
+              user_id: user.id,
+              type: "output_published",
+              title: `Your ${type.label} scored ${finalScore}`,
+              body: "Ready to publish. View it in The Vault.",
+              read: false,
+              link: `/studio/outputs/${outputId}`,
+            });
+          }
         } else if (result.status === "BLOCKED") {
           toast("Quality pipeline flagged issues. Review checkpoint feedback.");
         }

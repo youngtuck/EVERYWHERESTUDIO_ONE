@@ -358,6 +358,20 @@ export default function Settings() {
         </div>
       </SectionCard>
 
+      {/* Notifications */}
+      <SectionCard>
+        <SectionHeader label="Notifications" />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>In-app notifications</p>
+            <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 2, marginBottom: 0 }}>
+              Briefing alerts, output scores, and activity reminders
+            </p>
+          </div>
+          <Toggle value={true} onChange={() => {}} />
+        </div>
+      </SectionCard>
+
       {/* Account */}
       <SectionCard>
         <SectionHeader label="Account" />

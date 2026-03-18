@@ -146,6 +146,19 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: insertError.message || "Failed to save briefing" });
     }
 
+    // Insert in-app notification
+    const signalCount = typeof parsed.signals_count === "number" ? parsed.signals_count : 0;
+    await supabase.from("notifications").insert({
+      user_id: userId,
+      type: "briefing_ready",
+      title: "Your intelligence briefing is ready",
+      body: signalCount > 0 ? `${signalCount} signals detected in your category.` : "Fresh insights for your category.",
+      read: false,
+      link: "/studio/watch",
+    }).then(({ error: notifErr }) => {
+      if (notifErr) console.error("[api/sentinel-generate] Notification insert error", notifErr);
+    });
+
     return res.status(200).json(parsed);
   } catch (err) {
     console.error("[api/sentinel-generate]", err);
