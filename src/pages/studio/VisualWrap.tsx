@@ -1,5 +1,5 @@
 /**
- * Visual Intelligence — Wrap As Visual. Picks a vibe, generates an illustrated image via Gemini.
+ * Visual Intelligence — Wrap As Visual. Picks a style, generates an illustrated image via Gemini.
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -452,7 +452,7 @@ export default function VisualWrap() {
         <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Score: {output.score}</div>
       </div>
 
-      {/* Section 2: Visual Vibe */}
+      {/* Section 2: Visual Style */}
       <div ref={vibeRef} style={{ marginBottom: 28 }}>
         <div
           style={{
@@ -464,10 +464,10 @@ export default function VisualWrap() {
             textTransform: "uppercase",
           }}
         >
-          VISUAL VIBE
+          VISUAL STYLE
         </div>
         <p style={{ fontSize: 13, color: "var(--fg-3)", marginBottom: 16 }}>
-          Each vibe is a completely different illustration style
+          Each style is a completely different illustration approach
         </p>
         <div
           style={{
@@ -701,7 +701,7 @@ export default function VisualWrap() {
             fontFamily: "'Afacad Flux', sans-serif",
           }}
         >
-          Generate All 6 Vibes
+          Generate All 6 Styles
         </button>
       </div>
 
@@ -856,7 +856,7 @@ export default function VisualWrap() {
                   style={{ display: "flex", alignItems: "center", gap: 6 }}
                   onClick={() => vibeRef.current?.scrollIntoView({ behavior: "smooth" })}
                 >
-                  Try Another Vibe
+                  Try Another Style
                 </button>
               </div>
             )}
@@ -961,7 +961,7 @@ export default function VisualWrap() {
                 style={{ display: "flex", alignItems: "center", gap: 6 }}
                 onClick={() => vibeRef.current?.scrollIntoView({ behavior: "smooth" })}
               >
-                Try Another Vibe
+                Try Another Style
               </button>
             </div>
           </div>
