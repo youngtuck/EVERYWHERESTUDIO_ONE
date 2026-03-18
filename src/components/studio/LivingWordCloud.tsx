@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -10,13 +10,11 @@ const DEFAULT_WORDS = [
   'thinking', 'intelligence', 'content', 'channel', 'leadership',
   'framework', 'methodology', 'authentic', 'platform', 'growth',
   'narrative', 'conviction', 'precision', 'presence', 'depth',
-  'original', 'publish', 'audience', 'category', 'position',
 ];
 
 export default function LivingWordCloud() {
   const { user } = useAuth();
   const [words, setWords] = useState<string[]>(DEFAULT_WORDS);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -28,8 +26,8 @@ export default function LivingWordCloud() {
           .eq('user_id', user.id).eq('is_active', true).limit(5);
         if (resources) {
           for (const r of resources) {
-            const text = (r.title + ' ' + (r.content || '')).toLowerCase();
-            const meaningful = text.split(/[\s,.\-:;!?()[\]{}'"\/|]+/)
+            const meaningful = (r.title + ' ' + (r.content || '')).toLowerCase()
+              .split(/[\s,.\-:;!?()[\]{}'"\/|]+/)
               .filter(w => w.length > 3 && w.length < 13)
               .filter(w => !['about','their','which','would','could','should','there','these','those','other','after','before','between','through','during','without','that','this','with','from','have','been','were','they','what','when','into','more','than','each','also','does','your','will','just','some','very','most','only','every','made','make','using','used'].includes(w));
             collected.push(...meaningful.slice(0, 10));
@@ -41,99 +39,94 @@ export default function LivingWordCloud() {
           .from('outputs').select('title')
           .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5);
         if (outputs) {
-          for (const o of outputs) {
-            collected.push(...(o.title || '').split(/\s+/).filter((w: string) => w.length > 3).slice(0, 3));
-          }
+          for (const o of outputs) collected.push(...(o.title || '').split(/\s+/).filter((w: string) => w.length > 3).slice(0, 3));
         }
       } catch (e) {}
       const unique = [...new Set(collected.map(w => w.toLowerCase()))];
-      setWords(unique.length >= 12 ? unique.slice(0, 40) : [...unique, ...DEFAULT_WORDS].slice(0, 40));
+      setWords(unique.length >= 12 ? unique.slice(0, 32) : [...unique, ...DEFAULT_WORDS].slice(0, 32));
     })();
   }, [user]);
 
-  const cloudWords = useMemo(() => {
-    return words.map((text, i) => {
-      const t = i / words.length;
-      const angle = i * 2.39996322;
-      const r = 3 + t * 28;
-      const x = 50 + Math.cos(angle) * r + (Math.random() - 0.5) * 6;
-      const y = 42 + Math.sin(angle) * r * 0.5 + (Math.random() - 0.5) * 5;
+  const rows = useMemo(() => {
+    const shuffled = [...words].sort(() => Math.random() - 0.5);
+    const result: { words: string[]; size: number; opacity: number; speed: number; direction: number }[] = [];
+    const sizes = [42, 28, 20, 32, 16];
+    const opacities = [0.06, 0.04, 0.07, 0.05, 0.03];
 
-      let size: number, opacity: number, weight: number;
-      if (i < 5) {
-        size = 36 + Math.random() * 18;
-        opacity = 0.08 + Math.random() * 0.06;
-        weight = 600;
-      } else if (i < 15) {
-        size = 20 + Math.random() * 12;
-        opacity = 0.06 + Math.random() * 0.05;
-        weight = 400;
-      } else {
-        size = 13 + Math.random() * 8;
-        opacity = 0.04 + Math.random() * 0.04;
-        weight = 300;
+    for (let i = 0; i < 5; i++) {
+      const rowWords: string[] = [];
+      for (let j = 0; j < 3; j++) {
+        const start = (i * 6 + j * 2) % shuffled.length;
+        for (let k = 0; k < 8; k++) {
+          rowWords.push(shuffled[(start + k) % shuffled.length]);
+        }
       }
-
-      return {
-        text, size, opacity, weight,
-        x: Math.max(3, Math.min(97, x)),
-        y: Math.max(8, Math.min(85, y)),
-        duration: 25 + Math.random() * 35,
-        delay: Math.random() * -25,
-        fadeDelay: 5 + Math.random() * 15,
-        fadeDuration: 8 + Math.random() * 12,
-      };
-    });
+      result.push({
+        words: rowWords,
+        size: sizes[i],
+        opacity: opacities[i],
+        speed: 40 + i * 15,
+        direction: i % 2 === 0 ? 1 : -1,
+      });
+    }
+    return result;
   }, [words]);
 
   return (
-    <div ref={containerRef} style={{
+    <div style={{
       position: 'absolute',
-      top: 0, left: 0, right: 0, bottom: 0,
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -55%)',
+      width: '120%',
+      height: '320px',
       overflow: 'hidden',
       pointerEvents: 'none',
       zIndex: 0,
+      maskImage: 'radial-gradient(ellipse 60% 50% at 50% 50%, black 30%, transparent 70%)',
+      WebkitMaskImage: 'radial-gradient(ellipse 60% 50% at 50% 50%, black 30%, transparent 70%)',
     }}>
       <style>{`
-        @keyframes cloudFloat {
-          0% { transform: translate(0, 0); }
-          25% { transform: translate(6px, -8px); }
-          50% { transform: translate(-4px, -3px); }
-          75% { transform: translate(5px, 6px); }
-          100% { transform: translate(0, 0); }
+        @keyframes scrollLeft {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
         }
-        @keyframes cloudAppear {
-          0% { opacity: 0; filter: blur(8px); }
-          20% { opacity: var(--peak); filter: blur(0px); }
-          80% { opacity: var(--peak); filter: blur(0px); }
-          100% { opacity: 0; filter: blur(8px); }
+        @keyframes scrollRight {
+          from { transform: translateX(-50%); }
+          to { transform: translateX(0); }
         }
       `}</style>
-      {cloudWords.map((w, i) => (
-        <span
+      {rows.map((row, i) => (
+        <div
           key={i}
           style={{
-            position: 'absolute',
-            left: `${w.x}%`,
-            top: `${w.y}%`,
-            fontSize: `${w.size}px`,
-            fontFamily: "'Afacad Flux', sans-serif",
-            fontWeight: w.weight,
-            color: '#4A90D9',
-            opacity: 0,
-            ['--peak' as any]: w.opacity,
-            animation: `cloudFloat ${w.duration}s ease-in-out infinite, cloudAppear ${w.fadeDuration}s ease-in-out infinite`,
-            animationDelay: `${w.delay}s, ${w.fadeDelay}s`,
+            display: 'flex',
+            gap: row.size * 0.8,
             whiteSpace: 'nowrap',
-            userSelect: 'none',
-            lineHeight: 1,
-            textTransform: 'lowercase',
-            letterSpacing: w.size > 30 ? '1px' : '0.3px',
-            willChange: 'transform, opacity, filter',
+            animation: `${row.direction === 1 ? 'scrollLeft' : 'scrollRight'} ${row.speed}s linear infinite`,
+            marginBottom: row.size * 0.3,
           }}
         >
-          {w.text}
-        </span>
+          {row.words.map((word, j) => (
+            <span
+              key={j}
+              style={{
+                fontFamily: "'Afacad Flux', sans-serif",
+                fontSize: row.size,
+                fontWeight: row.size > 30 ? 600 : 300,
+                color: '#4A90D9',
+                opacity: row.opacity,
+                textTransform: row.size > 30 ? 'uppercase' as const : 'lowercase' as const,
+                letterSpacing: row.size > 30 ? '2px' : '0.5px',
+                userSelect: 'none',
+                lineHeight: 1.1,
+                flexShrink: 0,
+              }}
+            >
+              {word}
+            </span>
+          ))}
+        </div>
       ))}
     </div>
   );

@@ -443,12 +443,11 @@ function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      minHeight: "calc(100vh - 200px)",
-      marginTop: "-40px",
-      marginBottom: "-32px",
+      minHeight: "calc(100vh - 160px)",
+      gap: 24,
     }}>
       <LivingWordCloud />
-      <div style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: 600, padding: "0 32px", marginBottom: 32 }}>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: 640, padding: "0 32px" }}>
         <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 42, fontWeight: 700, color: "#0D1B2A", marginBottom: 0, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
           What's on your mind?
         </h2>
@@ -1731,10 +1730,10 @@ export default function WorkSession() {
         background: "linear-gradient(transparent, var(--bg-light) 20%)",
       }}>
         <div style={{
-          maxWidth: 720, margin: "0 auto",
+          maxWidth: 640, margin: "0 auto", width: "100%",
           background: "var(--surface-white)",
           border: "1.5px solid var(--border-default)",
-          borderRadius: 16,
+          borderRadius: 12,
           padding: "16px 20px",
           minHeight: 56, maxHeight: 200,
           overflowY: "auto",
