@@ -146,7 +146,7 @@ export default function StudioShell() {
             <Outlet />
           </div>
         </div>
-        {studioFooter}
+        {!/^\/studio\/work(\/|$)/.test(location.pathname) && studioFooter}
       </main>
     </div>
   );

@@ -600,13 +600,13 @@ function SessionInputBox({
 function EmptyState({ children }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean; children?: React.ReactNode }) {
   return (
     <div style={{
+      height: "100%",
+      overflow: "hidden",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      minHeight: "calc(100vh - 160px)",
-      gap: 0,
-      position: "relative",
+      paddingTop: "5vh",
     }}>
       <WatsonOrb size={80} />
       <h1 style={{
@@ -616,14 +616,12 @@ function EmptyState({ children }: { outputType: string; onSuggestion: (s: string
         fontFamily: "'Afacad Flux', sans-serif",
         letterSpacing: "-0.5px",
         textAlign: "center",
-        marginTop: -16,
-        marginBottom: 24,
-        position: "relative",
-        zIndex: 1,
+        marginTop: -20,
+        marginBottom: 32,
       }}>
         What's on your mind?
       </h1>
-      <div style={{ width: "100%", maxWidth: 640, position: "relative", zIndex: 1, padding: "0 32px" }}>
+      <div style={{ width: "100%", maxWidth: 640, padding: "0 32px" }}>
         {children}
       </div>
     </div>
@@ -1281,10 +1279,10 @@ export default function WorkSession() {
         }
       `}</style>
 
-      {/* ── Top bar ─────────────────────────────────────────────────── */}
+      {/* ── Top bar (fixed 60px) ───────────────────────────────────── */}
       <div style={{
         position: "sticky", top: 0, zIndex: 50,
-        height: 52, display: "flex", alignItems: "center", justifyContent: "space-between",
+        height: 60, display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "12px 24px",
         borderBottom: "1px solid var(--border-subtle)",
         background: "rgba(244, 242, 237, 0.85)", backdropFilter: "blur(12px)",
@@ -1342,6 +1340,37 @@ export default function WorkSession() {
         </div>
       </div>
 
+      {/* ── Empty state: no scroll, fits viewport exactly ───────────────── */}
+      {phase === "input" && messages.length <= 1 ? (
+        <div style={{
+          height: "calc(100vh - 60px)",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+          <EmptyState
+            outputType={outputType}
+            onSuggestion={(s) => sendMessage(s)}
+            isMobile={isMobile}
+          >
+            <SessionInputBox
+              input={input}
+              setInput={setInput}
+              sendMessage={sendMessage}
+              loading={loading}
+              inputRef={inputRef}
+              isSupported={isSupported}
+              toggleListening={toggleListening}
+              isListening={isListening}
+              apiError={apiError ?? ""}
+              setApiError={setApiError}
+            />
+          </EmptyState>
+        </div>
+      ) : (
+        <>
       {/* Session progress: Input → Watson → Generate → Output */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -1808,26 +1837,7 @@ export default function WorkSession() {
           </div>
         )}
 
-        {phase === "input" && (messages.length <= 1 ? (
-          <EmptyState
-            outputType={outputType}
-            onSuggestion={(s) => sendMessage(s)}
-            isMobile={isMobile}
-          >
-            <SessionInputBox
-              input={input}
-              setInput={setInput}
-              sendMessage={sendMessage}
-              loading={loading}
-              inputRef={inputRef}
-              isSupported={isSupported}
-              toggleListening={toggleListening}
-              isListening={isListening}
-              apiError={apiError ?? ""}
-              setApiError={setApiError}
-            />
-          </EmptyState>
-        ) : (
+        {phase === "input" && (
           <div style={{
             maxWidth: 760, width: "100%", margin: "0 auto",
             padding: "32px 24px 8px", display: "flex", flexDirection: "column", gap: 20,
@@ -1905,7 +1915,7 @@ export default function WorkSession() {
             )}
             <div ref={bottomRef} />
           </div>
-        ))}
+        )}
       </div>
 
       {/* ── Input bar (only when phase is input and there are messages) ───────── */}
@@ -1931,6 +1941,8 @@ export default function WorkSession() {
           />
         </div>
       </div>
+      )}
+        </>
       )}
     </div>
   );
