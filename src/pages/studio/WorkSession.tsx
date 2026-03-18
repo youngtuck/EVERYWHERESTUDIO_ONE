@@ -1450,16 +1450,38 @@ export default function WorkSession() {
           { key: "watson", label: "Watson", done: phase === "generating" || phase === "complete", active: phase === "input" && messages.some(m => m.role === "user") },
           { key: "generate", label: "Generate", done: phase === "complete", active: phase === "generating" },
           { key: "output", label: "Output", done: phase === "complete", active: phase === "complete" },
-        ].map((step, i) => (
+        ].map((step, i) => {
+          const clickable =
+            (step.key === "watson" && (phase === "generating" || phase === "complete")) ||
+            (step.key === "generate" && phase === "complete" && !!generatedGates) ||
+            (step.key === "output" && phase === "complete");
+
+          const handleStepClick = () => {
+            if (!clickable) return;
+            if (step.key === "watson") {
+              setPhase("input");
+              setShowCheckpointSequence(false);
+            } else if (step.key === "generate") {
+              setShowCheckpointSequence(true);
+            } else if (step.key === "output") {
+              setShowCheckpointSequence(false);
+            }
+          };
+
+          return (
           <div key={step.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span
+              onClick={handleStepClick}
               style={{
                 fontSize: 14,
                 fontWeight: 600,
                 letterSpacing: "0.04em",
                 color: step.done ? "var(--gold-dark)" : step.active ? "var(--text-primary)" : "var(--text-tertiary)",
                 transition: "color .2s",
+                cursor: clickable ? "pointer" : "default",
               }}
+              onMouseEnter={(e) => { if (clickable) e.currentTarget.style.color = "var(--text-primary)"; }}
+              onMouseLeave={(e) => { if (clickable) e.currentTarget.style.color = step.done ? "var(--gold-dark)" : step.active ? "var(--text-primary)" : "var(--text-tertiary)"; }}
             >
               {step.label}
             </span>
@@ -1467,7 +1489,8 @@ export default function WorkSession() {
               <span style={{ width: 20, height: 1, background: "var(--line)", opacity: step.done ? 0.6 : 0.3 }} />
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── Messages area ────────────────────────────────────────────── */}
