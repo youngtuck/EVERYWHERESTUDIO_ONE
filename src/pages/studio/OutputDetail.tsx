@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { ArrowLeft, Globe, FileText, Pencil, Clipboard } from "lucide-react";
@@ -198,6 +198,77 @@ export default function OutputDetail() {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [reformatting, setReformatting] = useState(false);
   const [reformatType, setReformatType] = useState<string | null>(null);
+
+  // Inline editing state
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showRescore, setShowRescore] = useState(false);
+  const [rescoring, setRescoring] = useState(false);
+  const editRef = useRef<HTMLTextAreaElement>(null);
+
+  // Warn before navigating away with unsaved changes
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedChanges]);
+
+  const startEditing = () => {
+    setEditContent(output!.content);
+    setEditing(true);
+    setHasUnsavedChanges(false);
+    setTimeout(() => editRef.current?.focus(), 100);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setEditContent("");
+    setHasUnsavedChanges(false);
+  };
+
+  const saveEdits = async () => {
+    if (!output || !editContent.trim()) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("outputs")
+      .update({ content: editContent.trim() })
+      .eq("id", output.id);
+    setSaving(false);
+    if (!error) {
+      setOutput({ ...output, content: editContent.trim() });
+      setEditing(false);
+      setHasUnsavedChanges(false);
+      setShowRescore(true);
+      showToast("Content updated");
+    } else {
+      showToast("Save failed. Try again.");
+    }
+  };
+
+  const handleRescore = async () => {
+    if (!output || !user) return;
+    setRescoring(true);
+    try {
+      const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+      const res = await fetch(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationSummary: output.content, outputType: output.output_type, userId: user.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newScore = data.score ?? output.score;
+        await supabase.from("outputs").update({ score: newScore, gates: data.gates ?? null }).eq("id", output.id);
+        setOutput({ ...output, score: newScore, gates: data.gates ?? output.gates });
+        setShowRescore(false);
+        showToast(`Score updated: ${newScore}`);
+      }
+    } catch {}
+    setRescoring(false);
+  };
 
   const showToast = useCallback((message: string) => {
     setToast({ message, visible: true });
@@ -496,18 +567,44 @@ export default function OutputDetail() {
 
       {/* Title + meta */}
       <div style={{ marginBottom: 28 }}>
-        <h1
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: "var(--fg)",
-            letterSpacing: "-0.02em",
-            marginBottom: 8,
-            fontFamily: "'Afacad Flux', sans-serif",
-          }}
-        >
-          {output!.title}
-        </h1>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+          <h1
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              color: "var(--fg)",
+              letterSpacing: "-0.02em",
+              margin: 0,
+              fontFamily: "'Afacad Flux', sans-serif",
+            }}
+          >
+            {output!.title}
+          </h1>
+          {!editing && (
+            <button
+              type="button"
+              onClick={startEditing}
+              title="Edit content"
+              style={{
+                background: "none",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 6,
+                padding: "6px 14px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--fg-3)",
+                cursor: "pointer",
+                fontFamily: "'Afacad Flux', sans-serif",
+                transition: "all 0.15s ease",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--fg)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+            >
+              Edit
+            </button>
+          )}
+        </div>
         <div
           style={{
             display: "flex",
@@ -653,27 +750,132 @@ export default function OutputDetail() {
       </div>
 
       {/* Content */}
-      <div
-        style={{ maxWidth: 680, margin: "0 auto" }}
-      >
-        <div
-          className="card"
-          style={{ padding: isMobile ? "20px 16px" : "32px 36px" }}
-        >
-          <pre
-            style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: isMobile ? 14 : 15,
-              lineHeight: 1.25,
-              color: "var(--text-primary)",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-              margin: 0,
-            }}
-          >
-            {output!.content}
-          </pre>
-        </div>
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>
+        {editing ? (
+          <>
+            {/* Edit toolbar */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
+              padding: "10px 16px",
+              background: "var(--surface-white)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: 8,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg-2)" }}>Editing</span>
+                {hasUnsavedChanges && (
+                  <span style={{ fontSize: 12, color: "var(--gold-dark)", fontStyle: "italic" }}>Unsaved changes</span>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  style={{
+                    padding: "6px 14px", borderRadius: 6, border: "1px solid var(--border-subtle)",
+                    background: "transparent", fontSize: 13, fontWeight: 500, color: "var(--fg-3)",
+                    cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={saveEdits}
+                  disabled={saving || !hasUnsavedChanges}
+                  style={{
+                    padding: "6px 14px", borderRadius: 6, border: "none",
+                    background: hasUnsavedChanges ? "var(--gold-dark)" : "var(--bg-3)",
+                    color: hasUnsavedChanges ? "#0D1B2A" : "var(--fg-3)",
+                    fontSize: 13, fontWeight: 700, cursor: hasUnsavedChanges ? "pointer" : "default",
+                    fontFamily: "'Afacad Flux', sans-serif",
+                  }}
+                >
+                  {saving ? "Saving..." : "Save edits"}
+                </button>
+              </div>
+            </div>
+            {/* Textarea editor */}
+            <textarea
+              ref={editRef}
+              value={editContent}
+              onChange={(e) => { setEditContent(e.target.value); setHasUnsavedChanges(true); }}
+              style={{
+                width: "100%",
+                minHeight: 400,
+                padding: isMobile ? "20px 16px" : "32px 36px",
+                fontFamily: "'Afacad Flux', sans-serif",
+                fontSize: 15,
+                lineHeight: 1.7,
+                color: "var(--fg)",
+                background: "var(--surface-white)",
+                border: "1px solid var(--cornflower)",
+                borderRadius: 8,
+                resize: "vertical",
+                outline: "none",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            />
+            {/* Word/char count */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 16, marginTop: 8, fontSize: 12, color: "var(--fg-3)" }}>
+              <span>{editContent.trim().split(/\s+/).filter(Boolean).length} words</span>
+              <span>{editContent.length} characters</span>
+            </div>
+          </>
+        ) : (
+          <div className="card" style={{ padding: isMobile ? "20px 16px" : "32px 36px" }}>
+            <pre
+              style={{
+                fontFamily: "'Afacad Flux', sans-serif",
+                fontSize: isMobile ? 14 : 15,
+                lineHeight: 1.25,
+                color: "var(--text-primary)",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                margin: 0,
+              }}
+            >
+              {output!.content}
+            </pre>
+          </div>
+        )}
+
+        {/* Re-score prompt after editing */}
+        {showRescore && !editing && (
+          <div style={{
+            marginTop: 16,
+            padding: "12px 16px",
+            background: "rgba(74,144,217,0.06)",
+            borderLeft: "3px solid var(--cornflower)",
+            borderRadius: 6,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 10,
+          }}>
+            <span style={{ fontSize: 13, color: "var(--fg-2)" }}>
+              Content edited. Re-score to update your Betterish score.
+            </span>
+            <button
+              type="button"
+              onClick={handleRescore}
+              disabled={rescoring}
+              style={{
+                padding: "6px 16px", borderRadius: 6, border: "none",
+                background: "var(--cornflower)", color: "#fff",
+                fontSize: 13, fontWeight: 600, cursor: rescoring ? "default" : "pointer",
+                fontFamily: "'Afacad Flux', sans-serif",
+              }}
+            >
+              {rescoring ? "Scoring..." : "Re-score"}
+            </button>
+          </div>
+        )}
       </div>
 
       {pipelineRun && (
