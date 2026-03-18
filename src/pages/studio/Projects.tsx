@@ -25,6 +25,7 @@ type ScoreRow = {
 };
 
 const transition = "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)";
+const PROJECT_ACCENTS = ["#4A90D9", "#F5C642", "#E8B4A0", "#64748B", "#50c8a0"];
 
 export default function Projects() {
   const navigate = useNavigate();
@@ -220,7 +221,7 @@ export default function Projects() {
             marginTop: 0,
           }}
         >
-          WRAP
+          ORGANIZE
         </p>
         <h1
           style={{
@@ -234,6 +235,9 @@ export default function Projects() {
         >
           Projects
         </h1>
+        <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 6, marginBottom: 0 }}>
+          Organize your outputs by client, campaign, or initiative.
+        </p>
       </div>
       <button
         type="button"
@@ -318,17 +322,21 @@ export default function Projects() {
       }}
       className="projects-grid"
     >
-      {sortedProjects.map((p) => {
+      {sortedProjects.map((p, idx) => {
         const outputsCount = (p.outputs && p.outputs[0]?.count) || 0;
         const avgScore = averagesByProject.get(p.id) ?? 0;
         const sc = getScoreColor(avgScore > 0 ? avgScore : null);
         const isRenaming = renameId === p.id;
+        const accentColor = PROJECT_ACCENTS[idx % PROJECT_ACCENTS.length];
+        const lastActive = p.updated_at ? new Date(p.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+        const displayDesc = p.is_default ? "All outputs land here unless assigned to a project" : p.description;
         return (
           <div
             key={p.id}
             style={{
               background: "var(--surface-white)",
               border: "1px solid var(--border-subtle)",
+              borderLeft: `3px solid ${accentColor}`,
               borderRadius: 12,
               padding: 24,
               cursor: "pointer",
@@ -533,30 +541,48 @@ export default function Projects() {
                 whiteSpace: "nowrap",
               }}
             >
-              {p.description}
+              {displayDesc}
             </p>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 16,
-                marginTop: 20,
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <FileText size={14} style={{ color: "var(--text-tertiary)" }} />
-                <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
-                  {outputsCount} outputs
+            {outputsCount === 0 ? (
+              <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--bg-2)", borderRadius: 6, textAlign: "center" }}>
+                <span style={{ fontSize: 13, color: "var(--text-tertiary)" }}>
+                  Start a session to create your first output
                 </span>
-              </span>
-              {avgScore > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); navigate("/studio/work"); }}
+                  style={{ display: "block", margin: "8px auto 0", background: "none", border: "none", fontSize: 13, fontWeight: 600, color: "var(--gold-dark)", cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                >
+                  New Session
+                </button>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                  marginTop: 20,
+                }}
+              >
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <BarChart3 size={14} style={{ color: sc.text }} />
-                  <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, fontWeight: 500, color: sc.text }}>
-                    avg {avgScore}
+                  <FileText size={14} style={{ color: "var(--text-tertiary)" }} />
+                  <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
+                    {outputsCount} output{outputsCount !== 1 ? "s" : ""}
                   </span>
                 </span>
-              )}
+                {avgScore > 0 && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <BarChart3 size={14} style={{ color: sc.text }} />
+                    <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, fontWeight: 500, color: sc.text }}>
+                      avg {avgScore}
+                    </span>
+                  </span>
+                )}
+              </div>
+            )}
+            <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 12 }}>
+              {lastActive ? `Last active: ${lastActive}` : "No activity yet"}
             </div>
           </div>
         );
