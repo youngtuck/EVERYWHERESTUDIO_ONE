@@ -654,6 +654,25 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
               <p style={{ fontSize: 12, color: T.textSub, lineHeight: 1.74 }}>Every claim requires two or more independent, credible sources. Unverified intelligence never ships. This is a protocol, not a preference.</p>
             </div>
           </FadeUp>
+          <FadeUp delay={0.18}>
+            <div style={{ maxWidth: 420, marginLeft: "auto", marginTop: 32, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20, transform: "rotate(1deg)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#4A90D9", marginBottom: 12 }}>WHAT'S MOVING</div>
+              <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: "#E53935", textTransform: "uppercase", letterSpacing: "1px" }}>High</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginBottom: 6 }}>AI content detection tools reaching enterprise adoption</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>Three major platforms announced native detection. Your differentiation strategy needs to account for this shift.</div>
+              </div>
+              <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: "#F5C642", textTransform: "uppercase", letterSpacing: "1px" }}>Medium</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginBottom: 4 }}>Newsletter open rates shifting toward story-led formats</div>
+                <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", marginTop: 6 }} />
+              </div>
+            </div>
+          </FadeUp>
         </section>
 
         {/* WORK right */}
@@ -713,6 +732,34 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
               </div>
             </div>
           </FadeUp>
+          <FadeUp delay={0.24}>
+            <div style={{ maxWidth: 420, marginLeft: "auto", marginTop: 32, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20, transform: "rotate(-1deg)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+                  <div style={{ marginLeft: "auto", maxWidth: "75%", background: "rgba(13,27,42,0.8)", borderRadius: "12px 12px 4px 12px", padding: "10px 14px", fontSize: 12, color: "rgba(255,255,255,0.9)", lineHeight: 1.5 }}>
+                    I want to write about why most leadership advice is backwards. The people giving it have never actually led through chaos.
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg, #4A90D9, #1B263B)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.8)" }} />
+                  </div>
+                  <div style={{ maxWidth: "75%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px 12px 12px 4px", padding: "10px 14px", fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>
+                    Sharp take. What was the specific moment that crystallized this for you?
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                {["Essay", "Newsletter", "Podcast"].map(f => (
+                  <span key={f} style={{ padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", fontSize: 10, color: "rgba(255,255,255,0.5)", fontFamily: "'Afacad Flux', sans-serif" }}>{f}</span>
+                ))}
+                <span style={{ padding: "4px 10px", borderRadius: 12, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>+7</span>
+              </div>
+              <div style={{ display: "inline-flex", padding: "6px 16px", borderRadius: 6, background: "#F5C642", color: "#0D1B2A", fontSize: 11, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                Produce it
+              </div>
+            </div>
+          </FadeUp>
         </section>
 
         {/* WRAP right */}
@@ -761,6 +808,26 @@ function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRe
             <FeatureLine num="03" title="Performance Loop" desc="Engagement data flows back to sharpen your next strategy." accent={T.wrapA} delay={.12} lc={lc} bc={bc} />
             <FeatureLine num="04" title="The Flywheel" desc="Every post makes the next one better. Ideas compound over time." accent={T.wrapA} delay={.18} lc={lc} bc={bc} />
           </div>
+          <FadeUp delay={0.24}>
+            <div style={{ maxWidth: 420, marginLeft: "auto", marginTop: 32, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20, transform: "rotate(0.5deg)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12 }}>WRAP AS</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+                {["Web Page", "Google Doc", "Word Doc", "Visual", "Copy Text"].map(f => (
+                  <span key={f} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.6)", fontFamily: "'Afacad Flux', sans-serif" }}>{f}</span>
+                ))}
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "14px 16px" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>Why Most Leadership Advice Is Backwards</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
+                  The people giving leadership advice have never actually led through chaos. They led through structure someone else built...
+                </div>
+                <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#4A90D9" }}>Betterish: 912</span>
+                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Ready to publish</span>
+                </div>
+              </div>
+            </div>
+          </FadeUp>
         </section>
 
       </div>
