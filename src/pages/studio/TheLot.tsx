@@ -217,7 +217,7 @@ export default function TheLot() {
               </div>
               <div style={{ marginTop: "auto", paddingTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
                 <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
-                  {idea.projectName}
+                  {idea.projectName !== "My Studio" ? idea.projectName : "Parked"}
                 </span>
                 <button
                   type="button"
@@ -306,28 +306,7 @@ export default function TheLot() {
                 onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
               />
             </div>
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
-                Project
-              </label>
-              <select
-                value={newIdeaProjectId}
-                onChange={(e) => setNewIdeaProjectId(e.target.value)}
-                style={{
-                  width: "100%",
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  fontSize: 14,
-                  padding: "10px 14px",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: 8,
-                  background: "var(--surface-white)",
-                }}
-              >
-                {PROJECTS.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
+            {/* Project assignment removed - all ideas go to default project until multi-project support is live */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
               <button type="button" onClick={() => setModalOpen(false)} style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-default)", padding: "10px 20px", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
                 Cancel
