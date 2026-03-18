@@ -48,7 +48,10 @@ function buildPrompt(content, vibe, title, author, context, brandColors, voiceSt
   let vibePrompt = vibeConfig.prompt.replace(/16:9 landscape/g, ratioLabel);
 
   let prompt = vibePrompt + "\n\n";
-  prompt += `Top banner with bold title: "${title}".\n`;
+
+  // Title handling: the raw title may be the user's unedited input.
+  // Instruct the model to create a polished headline from the content.
+  prompt += `HEADLINE INSTRUCTIONS: The working title is "${title}". Do NOT use this raw title as-is. Instead, create a compelling, concise headline (maximum 8 words) that captures the core message of the content below. Place this polished headline in the top banner in bold.\n`;
   prompt += `Byline: "${author}" in smaller text.\n`;
   prompt += `Context: "${context}".\n\n`;
   prompt += `Content to visualize (organize into 3-4 sections with headers, bullets, and relevant icons):\n`;
@@ -62,7 +65,14 @@ function buildPrompt(content, vibe, title, author, context, brandColors, voiceSt
   }
 
   prompt += `\nVery small footer bottom-right: "EVERYWHERE Studio" in subtle text.\n`;
-  prompt += `All text in the image must be spelled correctly. No typos. No gibberish. Every word must be real and readable.`;
+
+  // Spelling and quality controls
+  prompt += `\nCRITICAL TEXT QUALITY RULES:\n`;
+  prompt += `1. Every word in the image MUST be spelled correctly. Double-check all spelling before finalizing.\n`;
+  prompt += `2. Common AI spelling errors to avoid: "uniquness" should be "uniqueness", "algorthm" should be "algorithm", "transformitive" should be "transformative", "flattented" should be "flattened". Verify every word.\n`;
+  prompt += `3. Never include raw numbering artifacts like "none2", "1." inline with bullet text, or broken list formatting. All text must read as clean, publication-ready copy.\n`;
+  prompt += `4. No gibberish, placeholder text, or lorem ipsum. Every word must be real, meaningful, and readable.\n`;
+  prompt += `5. Before finalizing, re-read every single word in the output and correct any spelling errors.\n`;
 
   return prompt;
 }
