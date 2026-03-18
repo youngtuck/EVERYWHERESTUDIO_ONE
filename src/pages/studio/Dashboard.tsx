@@ -80,6 +80,8 @@ export default function Dashboard() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [hasWatchTopics, setHasWatchTopics] = useState(false);
+  const [signalCount, setSignalCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -94,14 +96,17 @@ export default function Dashboard() {
         .select("id, title, output_type, score, gates, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false }),
-      supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+      supabase.from("profiles").select("full_name, sentinel_topics").eq("id", user.id).single(),
+      supabase.from("sentinel_briefings").select("signals_count").eq("user_id", user.id).order("generated_at", { ascending: false }).limit(1).maybeSingle(),
     ])
-      .then(([outRes, profileRes]) => {
+      .then(([outRes, profileRes, briefingRes]) => {
         if (outRes.error) throw outRes.error;
         setOutputs((outRes.data as OutputRow[]) || []);
         if (profileRes.data?.full_name)
           setProfileName((profileRes.data.full_name as string).split(" ")[0] || null);
         else if (user.email) setProfileName(user.email.split("@")[0]);
+        setHasWatchTopics(Array.isArray(profileRes.data?.sentinel_topics) && profileRes.data.sentinel_topics.length > 0);
+        setSignalCount(briefingRes?.data?.signals_count ?? null);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -285,11 +290,17 @@ export default function Dashboard() {
             {
               key: "signals",
               label: "SIGNALS",
-              value: "—",
-              subtitle: "Activating",
-              accent: "rgba(0,0,0,0.1)",
-              color: "var(--text-tertiary)",
-              tooltip: "Intelligence signals from Sentinel Watch.",
+              value: signalCount != null ? signalCount : "—",
+              subtitle: !hasWatchTopics
+                ? "Set up Watch topics"
+                : signalCount != null
+                  ? `From latest briefing`
+                  : "Briefing arrives at 7am",
+              accent: signalCount != null ? "#4A90D9" : "rgba(0,0,0,0.1)",
+              color: signalCount != null ? "var(--text-primary)" : "var(--text-tertiary)",
+              tooltip: !hasWatchTopics
+                ? "Configure Watch topics in Settings to activate Sentinel intelligence."
+                : "Intelligence signals from your latest Sentinel briefing.",
             },
           ].map((stat, i) => (
             <div
@@ -340,7 +351,9 @@ export default function Dashboard() {
                     fontSize: 12,
                     color: "#64748B",
                     marginTop: 6,
+                    ...(stat.key === "signals" && !hasWatchTopics ? { color: "#4A90D9", cursor: "pointer", textDecoration: "underline" } : {}),
                   }}
+                  onClick={stat.key === "signals" && !hasWatchTopics ? () => nav("/studio/settings") : undefined}
                 >
                   {stat.subtitle}
                 </div>
