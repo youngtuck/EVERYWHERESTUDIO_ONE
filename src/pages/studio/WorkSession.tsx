@@ -477,8 +477,9 @@ function SessionInputBox({
   return (
     <div
       style={{
-        maxWidth: 800,
-        width: "calc(100% - 48px)",
+        maxWidth: 760,
+        width: "100%",
+        margin: "0 auto",
         background: "white",
         border: "1px solid #E2E8F0",
         borderRadius: 24,
@@ -489,6 +490,11 @@ function SessionInputBox({
         ...(focusWithin
           ? { borderColor: "#4A90D9", boxShadow: "0 2px 20px rgba(74,144,217,0.12)" }
           : {}),
+      }}
+      onFocus={() => setFocusWithin(true)}
+      onBlur={() => setFocusWithin(false)}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       }}
       onFocus={() => setFocusWithin(true)}
       onBlur={() => setFocusWithin(false)}
@@ -633,39 +639,46 @@ function SessionInputBox({
     </div>
   );
 }
-
 function EmptyState({ children }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean; children?: React.ReactNode }) {
   return (
-    <div style={{
-      height: "100%",
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "flex-start",
-      paddingTop: "22vh",
-      paddingLeft: 48,
-      paddingRight: 48,
-      width: "100%",
-      boxSizing: "border-box",
-    }}>
+    <div
+      style={{
+        height: "calc(100vh - 60px)",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0 24px",
+      }}
+    >
       <WatsonOrb size={80} />
-      <h1 style={{
-        fontSize: 42,
-        fontWeight: 700,
-        color: "#0D1B2A",
-        fontFamily: "'Afacad Flux', sans-serif",
-        letterSpacing: "-0.5px",
-        textAlign: "center",
-        marginTop: -20,
-        marginBottom: 32,
-      }}>
+      <h1
+        style={{
+          fontSize: 42,
+          fontWeight: 700,
+          color: "#0D1B2A",
+          fontFamily: "'Afacad Flux', sans-serif",
+          letterSpacing: "-0.5px",
+          textAlign: "center",
+          marginTop: -16,
+          marginBottom: 32,
+        }}
+      >
         What's on your mind?
       </h1>
-      <div style={{ width: "100%", maxWidth: 900 }}>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 760,
+          margin: "0 auto",
+        }}
+      >
         {children}
       </div>
     </div>
+  );
+}
   );
 }
 
@@ -1383,35 +1396,28 @@ export default function WorkSession() {
           >New Session</button>
         </div>
       </div>
-
-      {/* ── Empty state: no scroll, fits viewport exactly ───────────────── */}
+      {/* ── Empty state: perfectly centered ─────────────────────────────── */}
       {phase === "input" && messages.length <= 1 ? (
-        <div style={{
-          height: "calc(100vh - 60px)",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <EmptyState
-            outputType={outputType}
-            onSuggestion={(s) => sendMessage(s)}
-            isMobile={isMobile}
-          >
-            <SessionInputBox
-              input={input}
-              setInput={setInput}
-              sendMessage={sendMessage}
-              loading={loading}
-              inputRef={inputRef}
-              isSupported={isSupported}
-              toggleListening={toggleListening}
-              isListening={isListening}
-              apiError={apiError ?? ""}
-              setApiError={setApiError}
-            />
-          </EmptyState>
+        <EmptyState
+          outputType={outputType}
+          onSuggestion={(s) => sendMessage(s)}
+          isMobile={isMobile}
+        >
+          <SessionInputBox
+            input={input}
+            setInput={setInput}
+            sendMessage={sendMessage}
+            loading={loading}
+            inputRef={inputRef}
+            isSupported={isSupported}
+            toggleListening={toggleListening}
+            isListening={isListening}
+            apiError={apiError ?? ""}
+            setApiError={setApiError}
+          />
+        </EmptyState>
+      ) : (
+        <>
         </div>
       ) : (
         <>
