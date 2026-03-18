@@ -101,7 +101,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
             border: "1px solid rgba(255,255,255,0.12)",
             borderRadius: 16,
             padding: 40,
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
           }}
         >
           <p

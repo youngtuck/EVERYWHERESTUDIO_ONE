@@ -60,7 +60,7 @@ function Toast({
         borderRadius: 100,
         fontSize: 13,
         fontWeight: 500,
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "'Afacad Flux', sans-serif",
         boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
         zIndex: 1000,
         pointerEvents: "none",
@@ -168,7 +168,7 @@ const pillBase = {
   color: "#1a1a1a",
   cursor: "pointer" as const,
   transition: "all 0.2s ease",
-  fontFamily: "'Montserrat', sans-serif",
+  fontFamily: "'Afacad Flux', sans-serif",
 };
 
 const iconStyle = { width: 16, height: 16, color: "rgba(0,0,0,0.4)", flexShrink: 0 };
@@ -261,7 +261,7 @@ export default function OutputDetail() {
         ? `
     <nav style="position:sticky;top:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,0,0,0.06);padding:12px 0;margin-bottom:24px;z-index:10;">
       <div style="max-width:720px;margin:0 auto;padding:0 24px;">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;font-family:'Montserrat', sans-serif;">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px;font-family:'Afacad Flux', sans-serif;">
           ${headings
             .map(
               (h) =>
@@ -281,7 +281,7 @@ export default function OutputDetail() {
   <title>${titleEscaped}</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: 'Montserrat', sans-serif; background: #fff; color: #1a1a1a; line-height: 1.25; margin: 0; padding: 0 24px 48px; }
+    body { font-family: 'Afacad Flux', sans-serif; background: #fff; color: #1a1a1a; line-height: 1.25; margin: 0; padding: 0 24px 48px; }
     .wrap { max-width: 680px; margin: 0 auto; }
     .content { line-height: 1.25; font-size: 15px; color: var(--text-primary, #1a1a1a); }
     .wordmark { font-size: 11px; letter-spacing: 0.12em; color: rgba(0,0,0,0.35); margin-bottom: 32px; }
@@ -438,7 +438,7 @@ export default function OutputDetail() {
         maxWidth: 800,
         margin: "0 auto",
         padding: isMobile ? "24px 16px" : "40px 32px",
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "'Afacad Flux', sans-serif",
       }}
     >
       {/* Header: back link + New Session */}
@@ -464,7 +464,7 @@ export default function OutputDetail() {
             fontSize: 13,
             fontWeight: 500,
             padding: 0,
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             transition: "color 0.15s ease",
           }}
           onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
@@ -483,7 +483,7 @@ export default function OutputDetail() {
             borderRadius: 8,
             cursor: "pointer",
             color: "rgba(0,0,0,0.4)",
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             transition: "color 0.15s ease",
           }}
           onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
@@ -502,7 +502,7 @@ export default function OutputDetail() {
             color: "#1a1a1a",
             letterSpacing: "-0.02em",
             marginBottom: 8,
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
           }}
         >
           {output!.title}
@@ -515,7 +515,7 @@ export default function OutputDetail() {
             fontSize: 14,
             color: "rgba(0,0,0,0.6)",
             lineHeight: 1.6,
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
           }}
         >
           <span style={{ textTransform: "capitalize" }}>
@@ -551,7 +551,7 @@ export default function OutputDetail() {
             color: "rgba(0,0,0,0.3)",
             marginBottom: 12,
             textTransform: "uppercase",
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
           }}
         >
           WRAP AS
@@ -661,7 +661,7 @@ export default function OutputDetail() {
         >
           <pre
             style={{
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: isMobile ? 14 : 15,
               lineHeight: 1.25,
               color: "var(--text-primary)",
@@ -700,7 +700,7 @@ export default function OutputDetail() {
                 fontSize: 13,
                 color: "var(--fg-2)",
                 marginBottom: 14,
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
               }}
             >
               {gates.summary}
@@ -724,7 +724,7 @@ export default function OutputDetail() {
                       width: 90,
                       fontSize: 12,
                       color: "var(--fg-3)",
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                     }}
                   >
                     {label}
@@ -755,7 +755,7 @@ export default function OutputDetail() {
                       fontSize: 12,
                       fontVariantNumeric: "tabular-nums",
                       color: cl,
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                     }}
                   >
                     {v}
@@ -793,7 +793,7 @@ export default function OutputDetail() {
             color: "rgba(0,0,0,0.3)",
             marginBottom: 12,
             textTransform: "uppercase",
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
           }}
         >
           PRODUCE IN ANOTHER FORMAT

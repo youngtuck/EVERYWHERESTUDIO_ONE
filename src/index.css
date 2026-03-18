@@ -25,7 +25,7 @@
   --border-default: #E2E8F0;
 
   /* Font */
-  --font: 'Montserrat', sans-serif;
+  --font: 'Afacad Flux', sans-serif;
   --font-logo: 'Afacad Flux', sans-serif;
 
   /* Legacy aliases (keep for compatibility) */
@@ -73,7 +73,7 @@
   --border-strong: var(--line-2);
   --topbar-bg: var(--topbar);
   --bg-inverse: #0D1B2A;
-  --font-serif: 'Montserrat', sans-serif;
+  --font-serif: 'Afacad Flux', sans-serif;
 }
 
 [data-theme="dark"] {
@@ -203,7 +203,7 @@ button { font-family: var(--font); }
   --studio-radius: 6px;
   --studio-radius-lg: 8px;
   --studio-sidebar-width: 240px;
-  --studio-font: 'Montserrat', sans-serif;
+  --studio-font: 'Afacad Flux', sans-serif;
   --studio-page-title-size: 28px;
   --studio-section-label-size: 11px;
   --studio-section-label-spacing: 2px;

@@ -1,8 +1,8 @@
 const STATS = [
-  { num:"40", label:"Specialized agents" },
-  { num:"12", label:"Output formats" },
-  { num:"07", label:"Quality checkpoints" },
-  { num:"1000", label:"Betterish maximum" },
+  { num:"40", label:"AI Specialists" },
+  { num:"10", label:"Output Formats" },
+  { num:"8", label:"Quality Checkpoints" },
+  { num:"1000", label:"Betterish Maximum" },
   { num:"3", label:"Layers" },
 ];
 export default function StatsBar() {
@@ -11,8 +11,8 @@ export default function StatsBar() {
       <div style={{ maxWidth:1160, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:20 }} className="stats-g">
         {STATS.map((s,i) => (
           <div key={i} style={{ textAlign:"center" }}>
-            <p style={{ fontFamily:"'Montserrat', sans-serif", fontSize:"clamp(36px,3.5vw,56px)", fontWeight:400, color:"var(--fg)", letterSpacing:"-1.5px", lineHeight:1 }}>{s.num}</p>
-            <p style={{ fontSize:13, fontWeight:400, color:"var(--fg-3)", marginTop:8, fontFamily:"'Montserrat', sans-serif" }}>{s.label}</p>
+            <p style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:"clamp(36px,3.5vw,56px)", fontWeight:400, color:"#F5C642", letterSpacing:"-1.5px", lineHeight:1 }}>{s.num}</p>
+            <p style={{ fontSize:13, fontWeight:400, color:"rgba(255,255,255,0.5)", marginTop:8, fontFamily:"'Afacad Flux', sans-serif" }}>{s.label}</p>
           </div>
         ))}
       </div>

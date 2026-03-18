@@ -991,7 +991,7 @@ export default function ExplorePage() {
         className="noise-overlay"
         style={{
           background:"#07090f",
-          fontFamily:"'Montserrat', sans-serif",
+          fontFamily:"'Afacad Flux', sans-serif",
           color:T.text,
           backgroundColor:T.bg,
           overflowX:"clip",
@@ -1103,7 +1103,7 @@ export default function ExplorePage() {
             </div>
           )}
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"7px 22px",color:T.ctaText,fontSize:12,fontWeight:600,fontFamily:"'Montserrat', sans-serif",cursor:"pointer",transition:"opacity .2s"}}
+            <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"7px 22px",color:T.ctaText,fontSize:12,fontWeight:600,fontFamily:"'Afacad Flux', sans-serif",cursor:"pointer",transition:"opacity .2s"}}
               onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".80"}
               onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>
               Get Early Access
@@ -1152,7 +1152,7 @@ export default function ExplorePage() {
 
           {/* CTAs */}
           <div style={{position:"relative",zIndex:2,display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",opacity:mounted?1:0,transition:"opacity .8s .68s ease"}}>
-            <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"12px 38px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Montserrat', sans-serif",cursor:"pointer",transition:"opacity .2s"}}
+            <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"12px 38px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Afacad Flux', sans-serif",cursor:"pointer",transition:"opacity .2s"}}
               onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".82"}
               onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>
               Get Early Access
@@ -1167,7 +1167,7 @@ export default function ExplorePage() {
                 fontSize:13,
                 fontWeight:500,
                 color:"rgba(255,255,255,0.75)",
-                fontFamily:"'Montserrat', sans-serif",
+                fontFamily:"'Afacad Flux', sans-serif",
                 cursor:"pointer",
                 transition:"all 0.25s ease",
               }}
@@ -1420,7 +1420,7 @@ export default function ExplorePage() {
                       fontSize:15,
                       fontWeight:600,
                       color:"#07090f",
-                      fontFamily:"'Montserrat', sans-serif",
+                      fontFamily:"'Afacad Flux', sans-serif",
                       cursor:"pointer",
                       transition:"all 0.25s ease",
                     }}
@@ -1449,7 +1449,7 @@ export default function ExplorePage() {
                       fontSize:15,
                       fontWeight:500,
                       color:"rgba(255,255,255,0.7)",
-                      fontFamily:"'Montserrat', sans-serif",
+                      fontFamily:"'Afacad Flux', sans-serif",
                       cursor:"pointer",
                       transition:"all 0.25s ease",
                     }}
@@ -1489,7 +1489,7 @@ export default function ExplorePage() {
               display:"flex",
               flexDirection:"column",
               gap:24,
-              fontFamily:"'Montserrat', sans-serif",
+              fontFamily:"'Afacad Flux', sans-serif",
             }}
           >
             <div

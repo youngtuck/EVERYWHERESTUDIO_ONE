@@ -52,13 +52,13 @@ export default function StudioShell() {
   }, []);
 
   const studioFooter = (
-    <footer style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+    <footer style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
       EVERYWHERE STUDIO (tm) 2026, Mixed Grill, LLC, v6.5 Alpha
     </footer>
   );
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F7F9FC", fontFamily: "'Montserrat', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F7F9FC", fontFamily: "'Afacad Flux', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
       <CommandPalette />
       {isMobile && sidebarOpen && (
         <div

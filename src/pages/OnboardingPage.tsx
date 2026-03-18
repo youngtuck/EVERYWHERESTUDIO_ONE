@@ -404,7 +404,7 @@ export default function OnboardingPage() {
             </div>
             <p
               style={{
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 14,
                 color: "rgba(0,0,0,0.65)",
                 margin: "0 0 8px",
@@ -415,7 +415,7 @@ export default function OnboardingPage() {
             </p>
             <p
               style={{
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 12,
                 color: "rgba(0,0,0,0.4)",
                 margin: 0,
@@ -439,7 +439,7 @@ export default function OnboardingPage() {
               borderRadius: 8,
               border: "1px solid rgba(220,38,38,0.6)",
               background: "rgba(220,38,38,0.12)",
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 13,
               color: "#fee2e2",
             }}
@@ -491,7 +491,7 @@ export default function OnboardingPage() {
             <p
               style={{
                 marginTop: 12,
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 16,
                 fontStyle: "italic",
                 color: "rgba(255,255,255,0.55)",
@@ -503,7 +503,7 @@ export default function OnboardingPage() {
             <p
               style={{
                 marginTop: 40,
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 20,
                 fontWeight: 600,
                 color: "#ffffff",
@@ -536,7 +536,7 @@ export default function OnboardingPage() {
                 <div
                   style={{
                     marginTop: 16,
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 16,
                     fontWeight: 600,
                     color: "#ffffff",
@@ -547,7 +547,7 @@ export default function OnboardingPage() {
                 <p
                   style={{
                     marginTop: 8,
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
                     color: "rgba(255,255,255,0.55)",
                   }}
@@ -557,7 +557,7 @@ export default function OnboardingPage() {
                 <p
                   style={{
                     marginTop: 12,
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 12,
                     color: "#C8961A",
                   }}
@@ -582,7 +582,7 @@ export default function OnboardingPage() {
                 <div
                   style={{
                     marginTop: 16,
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 16,
                     fontWeight: 600,
                     color: "#ffffff",
@@ -593,7 +593,7 @@ export default function OnboardingPage() {
                 <p
                   style={{
                     marginTop: 8,
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
                     color: "rgba(255,255,255,0.55)",
                   }}
@@ -603,7 +603,7 @@ export default function OnboardingPage() {
                 <p
                   style={{
                     marginTop: 12,
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 12,
                     color: "#C8961A",
                   }}
@@ -616,7 +616,7 @@ export default function OnboardingPage() {
             <p
               style={{
                 marginTop: 32,
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 14,
                 color: "rgba(255,255,255,0.35)",
                 textAlign: "center",
@@ -672,7 +672,7 @@ export default function OnboardingPage() {
             >
               <div
                 style={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 13,
                   fontWeight: 600,
                   color: "rgba(255,255,255,0.85)",
@@ -695,7 +695,7 @@ export default function OnboardingPage() {
                     border: "1px solid rgba(255,255,255,0.18)",
                     background: "rgba(7,9,15,0.9)",
                     color: "#ffffff",
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
                   }}
                 />
@@ -709,7 +709,7 @@ export default function OnboardingPage() {
                     border: "1px solid rgba(255,255,255,0.2)",
                     background: brandUrlLoading ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)",
                     color: "#ffffff",
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: brandUrlLoading ? "wait" : "pointer",
@@ -721,7 +721,7 @@ export default function OnboardingPage() {
               {brandUrlError && (
                 <p
                   style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 12,
                     color: "#FCA5A5",
                     marginTop: 6,
@@ -748,7 +748,7 @@ export default function OnboardingPage() {
                 type="button"
                 onClick={handleSkipBrandDna}
                 style={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 13,
                   color: "rgba(255,255,255,0.4)",
                   background: "none",
@@ -765,7 +765,7 @@ export default function OnboardingPage() {
 
         {showStep5 && (
           <section style={{ textAlign: "center", paddingTop: 24 }}>
-            <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.8)", marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.8)", marginBottom: 24, lineHeight: 1.6 }}>
               Method DNA lets you upload frameworks and methodology docs so the system thinks in your terms. You can set this up later in Resources.
             </p>
             <button
@@ -777,7 +777,7 @@ export default function OnboardingPage() {
                 border: "1px solid rgba(200,150,26,0.6)",
                 background: "transparent",
                 color: "#C8961A",
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 14,
                 fontWeight: 600,
                 cursor: "pointer",

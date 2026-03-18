@@ -35,7 +35,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
           alignItems: "center",
           gap: 4,
           fontFamily:
-            "'Montserrat', sans-serif",
+            "'Afacad Flux', sans-serif",
           fontSize: 12,
           color,
         }}
@@ -63,7 +63,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
         borderRadius: 12,
         border: "1px solid var(--border-subtle)",
         background: "var(--surface-white)",
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "'Afacad Flux', sans-serif",
       }}
     >
       <div
@@ -96,7 +96,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
             <span
               style={{
                 fontFamily:
-                  "'Montserrat', sans-serif",
+                  "'Afacad Flux', sans-serif",
                 fontSize: 28,
                 fontWeight: 600,
                 color,

@@ -20,7 +20,7 @@ const WRITING_SAMPLES = [
 function TraitBar({ label, score, delay }: { label: string; score: number; delay: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-      <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", width: 180, flexShrink: 0 }}>{label}</div>
+      <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", width: 180, flexShrink: 0 }}>{label}</div>
       <div style={{ flex: 1, height: 8, borderRadius: 4, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
         <div style={{ width: `${score}%`, height: "100%", overflow: "hidden", borderRadius: 4 }}>
           <div
@@ -36,7 +36,7 @@ function TraitBar({ label, score, delay }: { label: string; score: number; delay
           />
         </div>
       </div>
-      <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--gold-dark)", width: 48, textAlign: "right" }}>{score}%</div>
+      <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--gold-dark)", width: 48, textAlign: "right" }}>{score}%</div>
     </div>
   );
 }
@@ -51,13 +51,13 @@ export default function VoiceDnaSettings() {
         maxWidth: 720,
         margin: "0 auto",
         padding: "32px 24px 80px",
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "'Afacad Flux', sans-serif",
       }}
     >
       <header style={{ marginBottom: 24 }}>
         <h1
           style={{
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 28,
             fontWeight: 700,
             color: "var(--text-primary)",
@@ -67,7 +67,7 @@ export default function VoiceDnaSettings() {
         >
           Voice DNA
         </h1>
-        <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0 }}>
+        <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0 }}>
           How the system learns to write like you
         </p>
       </header>
@@ -83,7 +83,7 @@ export default function VoiceDnaSettings() {
       >
         <div
           style={{
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14,
             fontWeight: 500,
             textTransform: "uppercase",
@@ -97,7 +97,7 @@ export default function VoiceDnaSettings() {
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 14 }}>
           <span
             style={{
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 48,
               fontWeight: 700,
               color: "var(--gold-dark)",
@@ -108,7 +108,7 @@ export default function VoiceDnaSettings() {
           >
             {FIDELITY_SCORE}
           </span>
-          <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 16, fontWeight: 400, color: "var(--text-tertiary)" }}>/ 100</span>
+          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 16, fontWeight: 400, color: "var(--text-tertiary)" }}>/ 100</span>
         </div>
         <div style={{ height: 6, borderRadius: 3, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
           <div
@@ -134,7 +134,7 @@ export default function VoiceDnaSettings() {
       >
         <div
           style={{
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14,
             fontWeight: 500,
             textTransform: "uppercase",
@@ -163,7 +163,7 @@ export default function VoiceDnaSettings() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <div
             style={{
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 14,
               fontWeight: 500,
               textTransform: "uppercase",
@@ -182,7 +182,7 @@ export default function VoiceDnaSettings() {
               border: "1px solid var(--border-default)",
               padding: "10px 20px",
               borderRadius: 8,
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 14,
               fontWeight: 500,
               cursor: "pointer",
@@ -229,10 +229,10 @@ export default function VoiceDnaSettings() {
                 justifyContent: "space-between",
               }}
             >
-              <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
+              <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
-                <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>{s.wordCount} words</span>
-                <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>{s.dateAdded}</span>
+                <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>{s.wordCount} words</span>
+                <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>{s.dateAdded}</span>
               </div>
             </div>
           ))}

@@ -143,7 +143,7 @@ export default function Resources() {
         minHeight: "100vh",
         background: "var(--surface-primary, #F4F2ED)",
         padding: isMobile ? "24px 16px" : "32px 24px",
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "'Afacad Flux', sans-serif",
       }}
     >
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
@@ -165,7 +165,7 @@ export default function Resources() {
             <div>
               <h1
                 style={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 28,
                   fontWeight: 700,
                   color: "var(--text-primary, #111)",
@@ -709,7 +709,7 @@ function AddResourceModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 700, margin: 0 }}>Add Resource</h2>
+          <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 20, fontWeight: 700, margin: 0 }}>Add Resource</h2>
           <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
             <X size={20} />
           </button>
@@ -963,7 +963,7 @@ function EditResourceModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 700, margin: 0 }}>Edit Resource</h2>
+          <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 20, fontWeight: 700, margin: 0 }}>Edit Resource</h2>
           <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
             <X size={20} />
           </button>

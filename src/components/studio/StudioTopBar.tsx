@@ -29,7 +29,7 @@ export default function StudioTopBar({ onToggleSidebar }: Props) {
 
       <div style={{ width:1, height:16, background:"var(--border)", margin:"0 4px" }} />
 
-      <button title="Switch project" style={{ background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:5, padding:"4px 8px", borderRadius:5, color:"var(--text-muted)", fontSize:12, fontFamily:"'Montserrat', sans-serif", fontWeight:450, letterSpacing:"-0.01em", transition:"color 0.15s ease" }}
+      <button title="Switch project" style={{ background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:5, padding:"4px 8px", borderRadius:5, color:"var(--text-muted)", fontSize:12, fontFamily:"'Afacad Flux', sans-serif", fontWeight:450, letterSpacing:"-0.01em", transition:"color 0.15s ease" }}
         onMouseEnter={e=>(e.currentTarget.style.color="var(--text-primary)")}
         onMouseLeave={e=>(e.currentTarget.style.color="var(--text-muted)")}>
         Mark's Studio<span style={{ fontSize:10, opacity:0.5 }}>▾</span>
@@ -55,7 +55,7 @@ export default function StudioTopBar({ onToggleSidebar }: Props) {
 
       <button onClick={() => navigate("/studio/work")}
         title="Start a new Watson session"
-        style={{ background:"var(--text-primary)", color:"var(--bg-primary)", border:"none", cursor:"pointer", fontSize:12, fontWeight:600, padding:"7px 14px", borderRadius:6, fontFamily:"'Montserrat', sans-serif", display:"flex", alignItems:"center", gap:6, transition:"opacity 0.15s", letterSpacing:"-0.01em" }}
+        style={{ background:"var(--text-primary)", color:"var(--bg-primary)", border:"none", cursor:"pointer", fontSize:12, fontWeight:600, padding:"7px 14px", borderRadius:6, fontFamily:"'Afacad Flux', sans-serif", display:"flex", alignItems:"center", gap:6, transition:"opacity 0.15s", letterSpacing:"-0.01em" }}
         onMouseEnter={e=>(e.currentTarget.style.opacity="0.8")} onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
         <PenLine size={11} />New session
       </button>

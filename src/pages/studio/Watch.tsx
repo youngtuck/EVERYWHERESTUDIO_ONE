@@ -286,7 +286,7 @@ export default function Watch() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px", fontFamily: "'Montserrat', sans-serif", color: "var(--text-secondary)" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px", fontFamily: "'Afacad Flux', sans-serif", color: "var(--text-secondary)" }}>
         Loading…
       </div>
     );
@@ -296,7 +296,7 @@ export default function Watch() {
   const showSentinelLoading = generating || completing;
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'Afacad Flux', sans-serif", minHeight: "100vh" }}>
       <style>{`
         @keyframes sentinel-pulse {
           0%, 100% { transform: scale(1); }
@@ -337,7 +337,7 @@ export default function Watch() {
           <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#C8961A", marginBottom: 8 }}>
             INTELLIGENCE BRIEFING
           </div>
-          <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: "clamp(24px,4vw,36px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+          <h1 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: "clamp(24px,4vw,36px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
             {dateLabel}
           </h1>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: 0 }}>
@@ -357,7 +357,7 @@ export default function Watch() {
               marginBottom: 24,
             }}
           >
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>
+            <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>
               Set up your Watch
             </h2>
             <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 24px" }}>
@@ -381,7 +381,7 @@ export default function Watch() {
                         padding: "10px 12px",
                         border: "1px solid var(--border-subtle)",
                         borderRadius: 8,
-                        fontFamily: "'Montserrat', sans-serif",
+                        fontFamily: "'Afacad Flux', sans-serif",
                         fontSize: 14,
                       }}
                     />
@@ -491,7 +491,7 @@ export default function Watch() {
                       padding: "8px 12px",
                       border: "1px solid var(--border-subtle)",
                       borderRadius: 8,
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 13,
                     }}
                   />
@@ -527,7 +527,7 @@ export default function Watch() {
                     border: "none",
                     borderRadius: 10,
                     padding: "12px 24px",
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 14,
                     fontWeight: 600,
                     cursor: startWatchingLoading ? "wait" : "pointer",
@@ -612,7 +612,7 @@ export default function Watch() {
               <div style={{ fontSize: 13, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(74,144,245,0.7)", marginBottom: 8 }}>
                 SENTINEL
               </div>
-              <div key={statusIndex} className="sentinel-status-text" style={{ fontSize: 13, fontFamily: "'Montserrat', sans-serif", color: "rgba(255,255,255,0.5)", minHeight: 20 }}>
+              <div key={statusIndex} className="sentinel-status-text" style={{ fontSize: 13, fontFamily: "'Afacad Flux', sans-serif", color: "rgba(255,255,255,0.5)", minHeight: 20 }}>
                 {SENTINEL_LOADING_MESSAGES[statusIndex]}
               </div>
             </div>
@@ -639,7 +639,7 @@ export default function Watch() {
               textAlign: "center",
             }}
           >
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
+            <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
               Your morning briefing is being prepared
             </h2>
             <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
@@ -655,7 +655,7 @@ export default function Watch() {
                 border: "none",
                 borderRadius: 10,
                 padding: "12px 24px",
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 14,
                 fontWeight: 600,
                 cursor: generating ? "wait" : "pointer",
@@ -803,7 +803,7 @@ function SectionTitle({
   style?: React.CSSProperties;
 }) {
   const labelEl = (
-    <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color }}>
+    <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color }}>
       {label}
     </span>
   );

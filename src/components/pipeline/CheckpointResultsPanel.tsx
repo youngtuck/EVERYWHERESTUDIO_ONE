@@ -16,7 +16,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
         borderRadius: 12,
         background: "var(--surface-white)",
         border: "1px solid var(--border-subtle)",
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "'Afacad Flux', sans-serif",
       }}
     >
       <div
@@ -121,7 +121,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
                 >
                   <span
                     style={{
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                       color: color,
                       fontWeight: 600,
                     }}

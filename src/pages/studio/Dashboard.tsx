@@ -138,7 +138,7 @@ export default function Dashboard() {
           margin: "0 auto",
           padding: "32px 24px",
           textAlign: "center",
-          fontFamily: "'Montserrat', sans-serif",
+          fontFamily: "'Afacad Flux', sans-serif",
           fontSize: 14,
           color: "var(--text-secondary)",
         }}
@@ -172,7 +172,7 @@ export default function Dashboard() {
           <div>
             <div
               style={{
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 14,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
@@ -184,7 +184,7 @@ export default function Dashboard() {
             </div>
             <div
               style={{
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 28,
                 fontWeight: 700,
                 color: "var(--text-primary)",
@@ -310,7 +310,7 @@ export default function Dashboard() {
               <div>
                 <div
                   style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 14,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
@@ -335,7 +335,7 @@ export default function Dashboard() {
                 </div>
                 <div
                   style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 12,
                     color: "#64748B",
                     marginTop: 6,
@@ -376,7 +376,7 @@ export default function Dashboard() {
         >
           <span
             style={{
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 14,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
@@ -388,7 +388,7 @@ export default function Dashboard() {
           <button
             onClick={() => nav("/studio/outputs")}
             style={{
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 12,
               fontWeight: 500,
               color: "var(--gold-dark)",
@@ -417,7 +417,7 @@ export default function Dashboard() {
               borderRadius: 12,
               padding: 20,
               textAlign: "center",
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 13,
               color: "var(--text-secondary)",
             }}
@@ -426,7 +426,7 @@ export default function Dashboard() {
             <button
               onClick={() => nav("/studio/work")}
               style={{
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 13,
                 fontWeight: 500,
                 color: "var(--gold-dark)",
@@ -480,7 +480,7 @@ export default function Dashboard() {
                       borderRadius: "50%",
                       background: "rgba(0,0,0,0.8)",
                       color: "#fff",
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 12,
                       fontWeight: 700,
                       display: "flex",
@@ -494,7 +494,7 @@ export default function Dashboard() {
                   <div style={{ minWidth: 0 }}>
                     <div
                       style={{
-                        fontFamily: "'Montserrat', sans-serif",
+                        fontFamily: "'Afacad Flux', sans-serif",
                         fontSize: 15,
                         fontWeight: 500,
                         color: "var(--text-primary, #1a1a1a)",
@@ -507,7 +507,7 @@ export default function Dashboard() {
                     </div>
                     <div
                       style={{
-                        fontFamily: "'Montserrat', sans-serif",
+                        fontFamily: "'Afacad Flux', sans-serif",
                         fontSize: 12,
                         color: "#64748B",
                         marginTop: 2,
@@ -520,7 +520,7 @@ export default function Dashboard() {
                 <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                   <span
                     style={{
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 16,
                       fontWeight: 500,
                       color: scoreStyle.text,
@@ -540,7 +540,7 @@ export default function Dashboard() {
       <div style={{ marginBottom: 24 }}>
         <div
           style={{
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
@@ -584,7 +584,7 @@ export default function Dashboard() {
             >
               <div
                 style={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 15,
                   fontWeight: 600,
                   color: "var(--text-primary)",
@@ -594,7 +594,7 @@ export default function Dashboard() {
               </div>
               <div
                 style={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 12,
                   color: "rgba(0,0,0,0.45)",
                   marginTop: 6,
@@ -625,10 +625,10 @@ export default function Dashboard() {
           }}
         >
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
+            <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
               Sentinel Briefing
             </div>
-            <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+            <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
               Latest signal summary
             </div>
           </div>

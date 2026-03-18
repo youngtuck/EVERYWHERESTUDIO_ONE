@@ -81,7 +81,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       overflow: "hidden",
       position: "sticky",
       top: 0,
-      fontFamily: "'Montserrat', sans-serif",
+      fontFamily: "'Afacad Flux', sans-serif",
       transition: "width 0.2s ease",
     }}>
 

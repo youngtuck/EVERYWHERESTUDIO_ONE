@@ -136,7 +136,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
       >
         <div
           style={{
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 13,
             color: "rgba(255,255,255,0.7)",
             letterSpacing: "0.08em",
@@ -163,7 +163,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                 background: m.role === "user" ? "rgba(255,255,255,0.08)" : "transparent",
                 borderRadius: m.role === "user" ? "16px 16px 4px 16px" : 0,
                 padding: m.role === "user" ? "12px 18px" : 0,
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 15,
                 color: "rgba(255,255,255,0.85)",
                 lineHeight: 1.6,
@@ -220,7 +220,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                 animation: "spin 0.8s linear infinite",
               }}
             />
-            <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", margin: 0 }}>
+            <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", margin: 0 }}>
               Building your Brand DNA...
             </p>
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -248,7 +248,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                   borderRadius: 12,
                   padding: "14px 48px 14px 18px",
                   color: "#ffffff",
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 15,
                   resize: "none",
                   outline: "none",
@@ -283,7 +283,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                 onClick={handleBuildBrandDNA}
                 disabled={!canBuild}
                 style={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 12,
                   textTransform: "uppercase",
                   letterSpacing: "0.16em",
@@ -302,7 +302,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
               <div
                 style={{
                   marginTop: 4,
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 11,
                   color: "rgba(255,255,255,0.35)",
                   textAlign: "right",

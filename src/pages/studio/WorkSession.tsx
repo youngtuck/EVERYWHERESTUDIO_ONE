@@ -361,7 +361,7 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
           <TypingIndicator />
         ) : (
           <p style={{
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14, lineHeight: 1.6,
             color: isUser ? "#FFFFFF" : "var(--text-primary)",
             fontWeight: 400,
@@ -444,7 +444,7 @@ function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string
       <WatsonOrb size={80} />
 
       <div style={{ maxWidth: 400 }}>
-        <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
+        <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
           What's on your mind?
         </h2>
       </div>
@@ -540,7 +540,7 @@ function OutputTypePill({
         display: "flex", alignItems: "center", gap: 6,
         background: "var(--surface-white)", border: "1px solid var(--border-subtle)",
         borderRadius: 20, padding: "6px 16px",
-        cursor: "pointer", fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--text-primary)",
+        cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--text-primary)",
         transition: "all .15s",
       }}
         onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border-default)"}
@@ -1070,7 +1070,7 @@ export default function WorkSession() {
     <div style={{
       display: "flex", flexDirection: "column", height: "100vh",
       background: "var(--bg-light)",
-      overflow: "hidden", fontFamily: "'Montserrat', sans-serif",
+      overflow: "hidden", fontFamily: "'Afacad Flux', sans-serif",
     }}>
       <style>{`
         @keyframes typingBounce {
@@ -1124,11 +1124,11 @@ export default function WorkSession() {
           >
             <ArrowLeft size={20} strokeWidth={1.5} />
           </button>
-          <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 400, color: "var(--text-tertiary)", display: isMobile ? "none" : "inline-block" }}>
+          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 400, color: "var(--text-tertiary)", display: isMobile ? "none" : "inline-block" }}>
             My Studio
           </span>
           <span style={{ color: "var(--text-tertiary)", fontSize: 12, display: isMobile ? "none" : "inline-block" }}>/</span>
-          <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: isMobile ? "none" : "inline-block" }}>
+          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: isMobile ? "none" : "inline-block" }}>
             {sessionTitle}
           </span>
         </div>
@@ -1141,7 +1141,7 @@ export default function WorkSession() {
           <button style={{
             background: "none", border: "none",
             borderRadius: 6, padding: "6px 12px", cursor: "pointer",
-            fontFamily: "'Montserrat', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--gold-dark)",
+            fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--gold-dark)",
             transition: "all .15s",
           }}
             title="View outputs"
@@ -1153,7 +1153,7 @@ export default function WorkSession() {
           <button style={{
             background: "var(--text-primary)", border: "none",
             borderRadius: 8, padding: "10px 20px", cursor: "pointer",
-            fontFamily: "'Montserrat', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff",
+            fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff",
             transition: "opacity .15s",
           }}
             title="Start new session"
@@ -1235,7 +1235,7 @@ export default function WorkSession() {
                 background: "var(--surface-white)",
                 borderRadius: 12,
                 border: "1px solid var(--border-subtle)",
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 overflow: "hidden",
               }}
             >
@@ -1321,7 +1321,7 @@ export default function WorkSession() {
                   width: "100%",
                   marginTop: 24,
                   textAlign: "center",
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                 }}
               >
                 <div
@@ -1396,7 +1396,7 @@ export default function WorkSession() {
             <div style={{ maxWidth: 680, width: "100%", marginBottom: 24 }}>
               <pre
                 style={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: isMobile ? 14 : 15,
                   lineHeight: 1.25,
                   color: "var(--text-primary)",
@@ -1425,7 +1425,7 @@ export default function WorkSession() {
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <span style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 32,
                     fontWeight: 700,
                     color: getScoreColor(generatedScore).text,
@@ -1454,7 +1454,7 @@ export default function WorkSession() {
                       border: "1px solid var(--border-subtle)",
                       borderRadius: 8,
                       padding: "10px 20px",
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 14,
                       fontWeight: 500,
                       cursor: "pointer",
@@ -1475,7 +1475,7 @@ export default function WorkSession() {
                         border: "none",
                         borderRadius: 8,
                         padding: "10px 20px",
-                        fontFamily: "'Montserrat', sans-serif",
+                        fontFamily: "'Afacad Flux', sans-serif",
                         fontSize: 14,
                         fontWeight: 600,
                         cursor: "pointer",
@@ -1497,7 +1497,7 @@ export default function WorkSession() {
                         border: "none",
                         borderRadius: 8,
                         padding: "10px 20px",
-                        fontFamily: "'Montserrat', sans-serif",
+                        fontFamily: "'Afacad Flux', sans-serif",
                         fontSize: 14,
                         fontWeight: 500,
                         cursor: "pointer",
@@ -1526,7 +1526,7 @@ export default function WorkSession() {
                     fontSize: 14,
                     fontWeight: 600,
                     color: "var(--text-secondary)",
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     userSelect: "none",
                     listStyle: "none",
                     display: "flex",
@@ -1543,7 +1543,7 @@ export default function WorkSession() {
                       const score = cp.key ? (generatedGates[cp.key as keyof GatesFromApi] as number | undefined) : undefined;
                       return (
                         <div key={cp.number} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ width: 140, fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Montserrat', sans-serif" }}>
+                          <span style={{ width: 140, fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif" }}>
                             {cp.agent}
                           </span>
                           <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
@@ -1568,7 +1568,7 @@ export default function WorkSession() {
                       );
                     })}
                     {generatedGates.summary && (
-                      <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0, lineHeight: 1.5, fontFamily: "'Montserrat', sans-serif" }}>
+                      <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0, lineHeight: 1.5, fontFamily: "'Afacad Flux', sans-serif" }}>
                         {generatedGates.summary}
                       </p>
                     )}
@@ -1587,7 +1587,7 @@ export default function WorkSession() {
                     borderRadius: 8,
                     border: "1px solid var(--border-subtle)",
                     background: pipelineStatus === "RUNNING" ? "rgba(0,0,0,0.02)" : "var(--surface-white)",
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
                     fontWeight: 500,
                     color: pipelineStatus === "RUNNING" ? "var(--text-tertiary)" : "var(--text-secondary)",
@@ -1605,7 +1605,7 @@ export default function WorkSession() {
                     borderRadius: 8,
                     border: "1px solid var(--border-subtle)",
                     background: "transparent",
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
                     fontWeight: 500,
                     color: "var(--text-secondary)",
@@ -1663,7 +1663,7 @@ export default function WorkSession() {
                   marginBottom: 4,
                 }} />
                 <p style={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 14,
                   color: "var(--text-secondary)",
                   margin: 0,
@@ -1684,7 +1684,7 @@ export default function WorkSession() {
                       border: "none",
                       borderRadius: 8,
                       padding: "8px 20px",
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 13,
                       fontWeight: 500,
                       cursor: loading ? "default" : "pointer",
@@ -1701,7 +1701,7 @@ export default function WorkSession() {
                       border: "1px solid var(--border-subtle)",
                       borderRadius: 8,
                       padding: "8px 20px",
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 13,
                       fontWeight: 500,
                       cursor: "pointer",
@@ -1799,7 +1799,7 @@ export default function WorkSession() {
                 padding: "6px 2px",
                 fontSize: 12,
                 color: "#E53935",
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 letterSpacing: "0.02em",
               }}
             >
@@ -1816,7 +1816,7 @@ export default function WorkSession() {
             </div>
           )}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-            <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
               {apiError}
               {apiError && (
                 <button type="button" onClick={() => setApiError(null)} style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", background: "rgba(0,0,0,0.06)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>Try again</button>

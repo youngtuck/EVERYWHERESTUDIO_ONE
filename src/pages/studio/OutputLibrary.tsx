@@ -116,7 +116,7 @@ export default function OutputLibrary() {
             color: "#fff",
             padding: "10px 20px",
             borderRadius: 8,
-            fontFamily: "'Montserrat', sans-serif",
+            fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14,
             fontWeight: 500,
             border: "none",
@@ -162,7 +162,7 @@ export default function OutputLibrary() {
             style={{
               width: "100%",
               padding: "10px 16px 10px 40px",
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 14,
               color: "var(--text-primary)",
               background: "var(--surface-white)",
@@ -263,7 +263,7 @@ export default function OutputLibrary() {
           </h2>
           <p
             style={{
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 14,
               color: "var(--text-secondary)",
               marginTop: 8,
@@ -280,7 +280,7 @@ export default function OutputLibrary() {
               color: "#fff",
               padding: "10px 20px",
               borderRadius: 8,
-              fontFamily: "'Montserrat', sans-serif",
+              fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 14,
               fontWeight: 500,
               border: "none",
@@ -386,7 +386,7 @@ export default function OutputLibrary() {
                 <span
                   style={{
                     flex: 1,
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 15,
                     fontWeight: 500,
                     color: "var(--text-primary)",
@@ -399,7 +399,7 @@ export default function OutputLibrary() {
                 </span>
                 <span
                   style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
                     color: "var(--text-tertiary)",
                     width: 120,
@@ -411,7 +411,7 @@ export default function OutputLibrary() {
                 </span>
                 <span
                   style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 14,
                     fontWeight: 600,
                     color: sc.text,
@@ -424,7 +424,7 @@ export default function OutputLibrary() {
                 </span>
                 <span
                   style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
                     fontWeight: 500,
                     textTransform: "uppercase",
@@ -442,7 +442,7 @@ export default function OutputLibrary() {
                 </span>
                 <span
                   style={{
-                    fontFamily: "'Montserrat', sans-serif",
+                    fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 12,
                     color: "var(--text-tertiary)",
                     width: 72,

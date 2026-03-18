@@ -25,7 +25,7 @@ export function PipelineProgress({ status, currentStage, blockedAt }: PipelinePr
         borderRadius: 10,
         background: "var(--surface-white)",
         border: "1px solid var(--border-subtle)",
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "'Afacad Flux', sans-serif",
       }}
     >
       <div

@@ -116,7 +116,7 @@ const AuthPage = () => {
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        fontFamily: "'Montserrat', sans-serif",
+        fontFamily: "'Afacad Flux', sans-serif",
         position: "relative",
         overflow: "hidden",
       }}
@@ -131,7 +131,7 @@ const AuthPage = () => {
         }}
       />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..1000&display=swap');
         body { background: #0D1B2A; }
         .auth-input {
           width: 100%;
@@ -142,7 +142,7 @@ const AuthPage = () => {
           font-size: 14px;
           color: #ffffff;
           outline: none;
-          font-family: 'Montserrat', sans-serif;
+          font-family: 'Afacad Flux', sans-serif;
           transition: border-color 0.2s ease, box-shadow 0.25s ease;
         }
         .auth-input::placeholder {
@@ -503,7 +503,7 @@ const AuthPage = () => {
                   textAlign: "center",
                   marginTop: 20,
                   lineHeight: 1.6,
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: "'Afacad Flux', sans-serif",
                 }}
               >
                 <Logo size={13} variant="dark" /> is in private Alpha.
