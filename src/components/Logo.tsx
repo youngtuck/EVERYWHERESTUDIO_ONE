@@ -4,50 +4,42 @@ interface LogoProps {
   onDark?: boolean;
   variant?: "dark" | "light";
   onClick?: () => void;
-  showTM?: boolean;
 }
 
-const Logo = ({ size = "md", onDark, variant, onClick, showTM = false }: LogoProps) => {
+const Logo = ({ size = "md", onDark, variant, onClick }: LogoProps) => {
   const isDark = variant ? variant === "dark" : !!onDark;
 
-  const preset = typeof size === "number"
-    ? { fs: size, sub: size * 0.6 }
-    : { sm: { fs: 13, sub: 8.5 }, md: { fs: 15, sub: 10 }, lg: { fs: 22, sub: 13.5 } }[size];
+  const fs = typeof size === "number"
+    ? size
+    : { sm: 13, md: 15, lg: 22 }[size];
 
-  const numericSize = typeof size === "number" ? size : preset.fs;
-
-  const styles: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "baseline",
-    gap: 2,
-    fontFamily: "'Afacad Flux', sans-serif",
-    userSelect: "none",
-    letterSpacing: "-1px",
-    cursor: onClick ? "pointer" : "default",
-  };
+  const studioFs = fs * 0.65;
+  const tmFs = studioFs * 0.24;
+  const studioColor = isDark ? "#F5C642" : "#0D1B2A";
 
   return (
-    <div style={styles} onClick={onClick}>
-      <span style={{ fontSize: preset.fs, fontWeight: 700, color: "#4A90D9" }}>
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "baseline",
+        fontFamily: "'Afacad Flux', sans-serif",
+        userSelect: "none",
+        letterSpacing: "-2px",
+        cursor: onClick ? "pointer" : "default",
+        whiteSpace: "nowrap",
+      }}
+      onClick={onClick}
+    >
+      <span style={{ fontSize: fs, fontWeight: 700, color: "#4A90D9", textTransform: "uppercase" }}>
         EVERYWHERE
       </span>
-      <span
-        style={{
-          fontSize: preset.sub,
-          fontWeight: 300,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: isDark ? "#F5C642" : "#0D1B2A",
-          marginLeft: 6,
-        }}
-      >
-        Studio
+      <span style={{ width: fs * 0.25 }} />
+      <span style={{ fontSize: studioFs, fontWeight: 300, color: studioColor, textTransform: "uppercase", letterSpacing: "-2px" }}>
+        STUDIO
       </span>
-      {showTM && numericSize >= 24 && (
-        <span style={{ fontSize: "0.52em", verticalAlign: "super", color: isDark ? "#F5C642" : "#0D1B2A", fontWeight: 300 }}>
-          TM
-        </span>
-      )}
+      <sup style={{ fontSize: Math.max(tmFs, 5), fontWeight: 300, color: studioColor, marginLeft: 1, lineHeight: 1 }}>
+        ™
+      </sup>
     </div>
   );
 };

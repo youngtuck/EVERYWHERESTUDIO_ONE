@@ -270,7 +270,7 @@ export default function Index() {
       }}>
         {/* Logo */}
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 28, ...fi(.08) }}>
-          <Logo size={20} variant="dark" showTM />
+          <Logo size={20} variant="dark" />
         </div>
 
         {/* Headline + CTA */}
