@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, createContext, useContext, Children } from
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
+import { MARKETING_NUMBERS } from "../lib/constants";
 
 // ─── Theme context ─────────────────────────────────────────────────────────────
 const ThemeCtx = createContext<{ dark: boolean; toggle: () => void }>({ dark: true, toggle: () => {} });
@@ -1375,9 +1376,9 @@ export default function ExplorePage() {
             </FadeInSection>
             {/* Counters */}
             <FadeInSection style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",marginTop:48,borderTop:`1px solid ${bc}`}}>
-              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={40} suffix="+" label="AI Specialists" accent={T.watchA} /></div>
-              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={10} label="Output Formats" accent={T.workA} /></div>
-              <div style={{padding:isMobile ? "24px 16px" : "36px 28px"}}><Counter target={7} label="Quality Checkpoints" accent={T.wrapA} /></div>
+              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={MARKETING_NUMBERS.specialistCount} suffix="+" label="AI Specialists" accent={T.watchA} /></div>
+              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={MARKETING_NUMBERS.outputFormatCount} label="Output Formats" accent={T.workA} /></div>
+              <div style={{padding:isMobile ? "24px 16px" : "36px 28px"}}><Counter target={MARKETING_NUMBERS.qualityCheckpoints} label="Quality Checkpoints" accent={T.wrapA} /></div>
             </FadeInSection>
           </div>
         </section>

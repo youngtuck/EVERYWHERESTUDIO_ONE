@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { getScoreColor } from "../../utils/scoreColor";
 import { timeAgo } from "../../utils/timeAgo";
+import { MARKETING_NUMBERS } from "../../lib/constants";
 import "./shared.css";
 
 interface Output {
@@ -54,7 +55,7 @@ export default function Wrap() {
       .from("outputs")
       .select("id, title, output_type, score, created_at")
       .eq("user_id", user.id)
-      .gte("score", 900)
+      .gte("score", MARKETING_NUMBERS.betterishThreshold)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setOutputs((data as Output[]) ?? []);
@@ -157,7 +158,7 @@ export default function Wrap() {
               lineHeight: 1.6,
             }}
           >
-            Content needs a Betterish score of 900+ to enter Wrap. Start a session with Watson to create something worth publishing.
+            Content needs a Betterish score of {MARKETING_NUMBERS.betterishThreshold}+ to enter Wrap. Start a session with Watson to create something worth publishing.
           </p>
           <button
             onClick={() => navigate("/studio/work")}

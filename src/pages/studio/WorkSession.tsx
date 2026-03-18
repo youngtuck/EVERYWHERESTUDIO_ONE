@@ -14,6 +14,7 @@ import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 import WatsonOrb from "../../components/studio/WatsonOrb";
 import LoadingAnimation from "../../components/studio/LoadingAnimation";
+import { MARKETING_NUMBERS } from "../../lib/constants";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB MINI - minimal 2D system glyph (message bubble / thinking state)
@@ -1647,7 +1648,7 @@ export default function WorkSession() {
                   {generatedGates.total ?? generatedScore}
                 </div>
                 <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "8px 0 0" }}>
-                  Publication threshold: 900
+                  Publication threshold: {MARKETING_NUMBERS.betterishThreshold}
                 </p>
                 {generatedScore >= 900 ? (
                   <p style={{ fontSize: 14, fontWeight: 600, color: "#50c8a0", margin: "12px 0 0" }}>
