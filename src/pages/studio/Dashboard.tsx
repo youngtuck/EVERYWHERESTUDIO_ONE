@@ -270,17 +270,17 @@ export default function Dashboard() {
             },
             {
               key: "voice",
-              label: "VOICE FIDELITY",
+              label: "VOICE MATCH",
               value: voicePct != null ? `${voicePct}%` : "—",
               subtitle:
                 voicePct == null
                   ? "Complete onboarding"
                   : voicePct >= 80
                     ? "Strong match"
-                    : "Building",
-              accent: "#50c8a0",
+                    : `Avg across ${withVoice.length} output${withVoice.length !== 1 ? "s" : ""}`,
+              accent: "#4A90D9",
               color: "var(--text-primary)",
-              tooltip: "How closely the system matches your writing voice.",
+              tooltip: "Average voice match score across your generated content. See Voice DNA in Settings for your full voice profile.",
             },
             {
               key: "signals",
