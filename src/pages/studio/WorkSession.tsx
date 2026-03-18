@@ -12,6 +12,7 @@ import type { GateResult, PipelineResult, PipelineStatus } from "../../lib/agent
 import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
+import LivingWordCloud from "../../components/studio/LivingWordCloud";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB - minimal 2D system glyph
@@ -437,20 +438,17 @@ const SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
 function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
   return (
     <div style={{
+      position: "relative",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       minHeight: "calc(100vh - 200px)",
-      padding: "0 40px",
-      marginTop: "-60px",
-      gap: 16,
-      textAlign: "center",
+      marginTop: "-40px",
     }}>
-      <WatsonOrb size={64} />
-
-      <div style={{ maxWidth: 400 }}>
-        <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
+      <LivingWordCloud />
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: 500, padding: "0 40px" }}>
+        <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
           What's on your mind?
         </h2>
       </div>
