@@ -15,6 +15,7 @@ import { useVoiceInput } from "../../hooks/useVoiceInput";
 import WatsonOrb from "../../components/studio/WatsonOrb";
 import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import { MARKETING_NUMBERS } from "../../lib/constants";
+import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB MINI - minimal 2D system glyph (message bubble / thinking state)
@@ -1072,6 +1073,21 @@ export default function WorkSession() {
 
   useEffect(() => {
     if (id === "new" || !id) {
+      const persisted = loadSession();
+      if (persisted && persisted.messages.length > 1) {
+        setMessages(persisted.messages);
+        setInput(persisted.input || "");
+        setOutputType(persisted.outputType || "freestyle");
+        setSessionTitle(persisted.sessionTitle || "New Session");
+        setPhase(persisted.phase === "generating" ? "input" : persisted.phase);
+        setGeneratedContent(persisted.generatedContent || "");
+        setGeneratedScore(persisted.generatedScore || 0);
+        setGeneratedOutputId(persisted.generatedOutputId || "new");
+        setGeneratedGates(persisted.generatedGates || null);
+        setIsReady(persisted.isReady || false);
+        setTimeout(() => toast("Session restored"), 300);
+        return;
+      }
       setMessages([{
         id: "w0",
         role: "assistant",
@@ -1085,6 +1101,29 @@ export default function WorkSession() {
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
+
+  // Persist session state on changes (debounced)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (messages.length <= 1 && !input.trim() && phase === "input") return;
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveSession({
+        messages: messages.filter(m => !m.typing),
+        input,
+        outputType,
+        sessionTitle,
+        phase,
+        generatedContent,
+        generatedScore,
+        generatedOutputId,
+        generatedGates,
+        isReady,
+        timestamp: Date.now(),
+      });
+    }, 500);
+    return () => clearTimeout(saveTimeoutRef.current);
+  }, [messages, input, outputType, sessionTitle, phase, generatedContent, generatedScore, generatedOutputId, generatedGates, isReady]);
 
   useEffect(() => {
     const state = location.state as { ideaTitle?: string; ideaDescription?: string } | null;
@@ -1314,6 +1353,7 @@ export default function WorkSession() {
     }]);
     setInput("");
     setSessionTitle("New Session");
+    clearSession();
   };
 
   return (
@@ -1412,7 +1452,7 @@ export default function WorkSession() {
             title="Start new session"
             onMouseEnter={e => e.currentTarget.style.opacity = ".88"}
             onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            onClick={() => navigate("/studio/work?type=" + outputType)}
+            onClick={() => { clearSession(); navigate("/studio/work?type=" + outputType); }}
           >New Session</button>
         </div>
       </div>
@@ -1780,7 +1820,7 @@ export default function WorkSession() {
                   {generatedScore >= 900 && (
                     <button
                       type="button"
-                      onClick={() => navigate(`/studio/outputs/${generatedOutputId}`)}
+                      onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
                       style={{
                         background: "var(--gold-dark)",
                         color: "#fff",
@@ -1802,7 +1842,7 @@ export default function WorkSession() {
                   {generatedScore < 900 && (
                     <button
                       type="button"
-                      onClick={() => navigate(`/studio/outputs/${generatedOutputId}`)}
+                      onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
                       style={{
                         background: "var(--text-primary)",
                         color: "#fff",
