@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
 import { CommandPalette } from "./CommandPalette";
 import { useMobile } from "../../hooks/useMobile";
+import Logo from "../Logo";
 
 /** Studio layout: sidebar + main outlet; full-bleed for work session. No transition on tab switch to avoid flash. */
 
@@ -52,8 +53,23 @@ export default function StudioShell() {
   }, []);
 
   const studioFooter = (
-    <footer style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: "16px 24px", width: "100%", flexShrink: 0, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-      EVERYWHERE STUDIO (tm) 2026, Mixed Grill, LLC, v6.5 Alpha
+    <footer style={{
+      fontFamily: "'Afacad Flux', sans-serif",
+      fontSize: 12,
+      color: "var(--fg-3)",
+      textAlign: "center",
+      padding: "20px 24px",
+      width: "100%",
+      flexShrink: 0,
+      borderTop: "1px solid var(--line)",
+      background: "transparent",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+    }}>
+      <Logo size="sm" variant="light" />
+      <span>™ 2026, Mixed Grill, LLC, v6.5 Alpha</span>
     </footer>
   );
 
