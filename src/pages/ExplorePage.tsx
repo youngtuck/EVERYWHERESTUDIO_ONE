@@ -1309,6 +1309,27 @@ export default function ExplorePage() {
             >
               Used by executive coaches, consultants, and keynote speakers who charge $10K+ per engagement
             </p>
+            <FadeUp delay={0.1}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12, marginTop: 32, maxWidth: 800, marginLeft: "auto", marginRight: "auto" }}>
+                {[
+                  { title: "Executive Coaches", desc: "Turn frameworks into a publishing engine" },
+                  { title: "Keynote Speakers", desc: "Extend every talk into lasting content" },
+                  { title: "Management Consultants", desc: "Scale thought leadership across clients" },
+                  { title: "Published Authors", desc: "Keep your ideas in circulation everywhere" },
+                ].map((p) => (
+                  <div key={p.title} style={{
+                    padding: "16px 14px",
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: 8,
+                    textAlign: "center",
+                  }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.7)", marginBottom: 4, fontFamily: "'Afacad Flux', sans-serif" }}>{p.title}</div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", lineHeight: 1.5, fontFamily: "'Afacad Flux', sans-serif" }}>{p.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </FadeUp>
           </div>
         </section>
 
