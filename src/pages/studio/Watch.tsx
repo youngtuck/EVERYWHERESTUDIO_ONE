@@ -209,13 +209,24 @@ export default function Watch() {
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
+      const now = new Date().toISOString();
       setBriefing({
         user_id: user.id,
-        generated_at: new Date().toISOString(),
+        generated_at: now,
         date_label: data.date_label || getTodayDateLabel(),
         briefing: data,
         signals_count: data.signals_count ?? 0,
       });
+
+      // Persist to Supabase
+      await supabase.from("sentinel_briefings").insert({
+        user_id: user.id,
+        generated_at: now,
+        date_label: data.date_label || getTodayDateLabel(),
+        briefing: data,
+        signals_count: data.signals_count ?? 0,
+      });
+
       setGenerating(false);
       setCompleting(true);
     } catch (err) {
@@ -242,13 +253,25 @@ export default function Watch() {
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setBriefing({
+      const now = new Date().toISOString();
+      const row: BriefingRow = {
         user_id: user.id,
-        generated_at: new Date().toISOString(),
+        generated_at: now,
         date_label: data.date_label || getTodayDateLabel(),
         briefing: data,
         signals_count: data.signals_count ?? 0,
+      };
+      setBriefing(row);
+
+      // Persist to Supabase so it survives page refresh
+      await supabase.from("sentinel_briefings").insert({
+        user_id: user.id,
+        generated_at: now,
+        date_label: row.date_label,
+        briefing: data,
+        signals_count: data.signals_count ?? 0,
       });
+
       setGenerating(false);
       setCompleting(true);
     } catch (err) {
@@ -347,9 +370,33 @@ export default function Watch() {
               </span>
             )}
           </h1>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: 0 }}>
-            Verified by Priya Protocol — all claims require 2+ independent sources
-          </p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: 0 }}>
+              Verified by Priya Protocol — all claims require 2+ independent sources
+            </p>
+            {!needsSetup && !generating && (
+              <button
+                type="button"
+                onClick={handleGenerateNow}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 6,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  background: "transparent",
+                  color: "rgba(255,255,255,0.6)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}
+              >
+                Refresh briefing
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
