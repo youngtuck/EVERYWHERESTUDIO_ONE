@@ -1827,31 +1827,44 @@ export default function WorkSession() {
                     </svg>
                   </summary>
                   <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
-                    {CHECKPOINTS.filter(cp => cp.key !== null).map((cp) => {
+                    {CHECKPOINTS.map((cp) => {
+                      const isEcho = cp.key === null;
                       const score = cp.key ? (generatedGates[cp.key as keyof GatesFromApi] as number | undefined) : undefined;
                       return (
                         <div key={cp.number} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                           <span style={{ width: 140, fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif" }}>
                             {cp.agent}
                           </span>
-                          <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
-                            <div style={{
-                              height: "100%",
-                              width: `${Math.max(0, Math.min(100, score ?? 0))}%`,
-                              background: score !== undefined ? checkpointScoreColor(score).text : "rgba(0,0,0,0.1)",
-                              borderRadius: 2,
-                            }} />
-                          </div>
-                          <span style={{
-                            width: 36,
-                            textAlign: "right",
-                            fontSize: 13,
-                            fontWeight: 600,
-                            fontVariantNumeric: "tabular-nums",
-                            color: score !== undefined ? checkpointScoreColor(score).text : "var(--text-tertiary)",
-                          }}>
-                            {score ?? "–"}
-                          </span>
+                          {isEcho ? (
+                            <>
+                              <div style={{ flex: 1 }} />
+                              <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: "#50c8a0" }}>
+                                <Check size={14} strokeWidth={2.5} />
+                                Pass
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
+                                <div style={{
+                                  height: "100%",
+                                  width: `${Math.max(0, Math.min(100, score ?? 0))}%`,
+                                  background: score !== undefined ? checkpointScoreColor(score).text : "rgba(0,0,0,0.1)",
+                                  borderRadius: 2,
+                                }} />
+                              </div>
+                              <span style={{
+                                width: 36,
+                                textAlign: "right",
+                                fontSize: 13,
+                                fontWeight: 600,
+                                fontVariantNumeric: "tabular-nums",
+                                color: score !== undefined ? checkpointScoreColor(score).text : "var(--text-tertiary)",
+                              }}>
+                                {score ?? "–"}
+                              </span>
+                            </>
+                          )}
                         </div>
                       );
                     })}
