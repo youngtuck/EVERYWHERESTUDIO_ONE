@@ -729,8 +729,11 @@ export default function VisualWrap() {
               textAlign: "center",
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 12, fontFamily: "'Afacad Flux', sans-serif" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 4, fontFamily: "'Afacad Flux', sans-serif" }}>
               Kai
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(0,0,0,0.35)", marginBottom: 12, fontFamily: "'Afacad Flux', sans-serif" }}>
+              Visual Intelligence - Transforms your content into publication-ready visual formats
             </div>
             <div
               style={{

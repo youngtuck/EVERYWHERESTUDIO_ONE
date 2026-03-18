@@ -94,8 +94,32 @@ export default function Wrap() {
             lineHeight: 1.6,
           }}
         >
-          Final polish and delivery. Byron humanizes. Mira packages. Dmitri optimizes.
+          Final polish and delivery. Three specialists refine your content before it ships.
         </p>
+        <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
+          {[
+            { name: "Byron", role: "Humanization", desc: "Adds natural rhythm, personality, and the human touches that AI misses" },
+            { name: "Mira", role: "Format", desc: "Structures content for the specific output format and reading context" },
+            { name: "Dmitri", role: "Platform", desc: "Optimizes for the target platform's conventions and audience expectations" },
+          ].map((s) => (
+            <div
+              key={s.name}
+              style={{
+                flex: "1 1 200px",
+                padding: "12px 14px",
+                background: "var(--surface-white)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 8,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{s.name}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "#4A90D9" }}>{s.role}</span>
+              </div>
+              <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {loading ? (
