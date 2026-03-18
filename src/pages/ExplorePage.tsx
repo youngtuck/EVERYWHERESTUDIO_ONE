@@ -1339,6 +1339,124 @@ export default function ExplorePage() {
 
         <SectionDivider />
 
+        {/* ══ SLOP DETECTOR ══════════════════════════════════════════════════ */}
+        <section
+          style={{
+            padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
+            background: "#07090f",
+          }}
+        >
+          <div style={{ maxWidth: 800, margin: "0 auto" }}>
+            <FadeInSection>
+              <div style={{ marginBottom: 44 }}>
+                <FadeUp>
+                  <div style={{ display: "inline-flex", alignItems: "center", fontSize: 14, letterSpacing: ".15em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", marginBottom: 14, fontWeight: 500, borderLeft: "2px solid #e8506a", paddingLeft: 12 }}>
+                    The SLOP Detector
+                  </div>
+                </FadeUp>
+                <WordReveal text="If AI wrote it, Elena catches it." size="clamp(28px,3.8vw,48px)" weight={700} lh={1.08} color={T.text} />
+                <FadeUp delay={0.1}>
+                  <p style={{ fontSize: 15, lineHeight: 1.78, color: T.textSub, marginTop: 24, maxWidth: 600 }}>
+                    SLOP stands for four failure patterns that mark content as machine-generated. Our detection system maintains a living database of AI tells, updated weekly. One em dash in prose? Automatic block.
+                  </p>
+                </FadeUp>
+              </div>
+            </FadeInSection>
+
+            <FadeInSection>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
+                {[
+                  { letter: "S", title: "SUPERFLUITY", desc: "More words than the content earns. Paragraphs that restate their opening. Transitions that summarize before advancing." },
+                  { letter: "L", title: "LOOPS", desc: "Arguments that circle back without advancing. The impression of development without substance." },
+                  { letter: "O", title: "OVERWROUGHT", desc: "Language that tries harder than the content requires. Metaphors strained past their limit. Vocabulary one register too formal." },
+                  { letter: "P", title: "PRETENSION", desc: "Complexity for its own sake. Hedging dressed as nuance. Abstract language where concrete examples would serve." },
+                ].map((item, i) => (
+                  <FadeUp key={item.letter} delay={0.06 + i * 0.06}>
+                    <div style={{
+                      background: "rgba(232,80,106,0.04)",
+                      border: "1px solid rgba(232,80,106,0.12)",
+                      borderRadius: 8,
+                      padding: isMobile ? "20px 16px" : "24px 20px",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                        <span style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 6,
+                          background: "rgba(232,80,106,0.12)",
+                          color: "#e8506a",
+                          fontSize: 18,
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontFamily: "'Afacad Flux', sans-serif",
+                          flexShrink: 0,
+                        }}>
+                          {item.letter}
+                        </span>
+                        <span style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          letterSpacing: "1px",
+                          textTransform: "uppercase",
+                          color: "#e8506a",
+                          fontFamily: "'Afacad Flux', sans-serif",
+                        }}>
+                          {item.title}
+                        </span>
+                      </div>
+                      <p style={{
+                        fontSize: 14,
+                        lineHeight: 1.7,
+                        color: "rgba(255,255,255,0.55)",
+                        margin: 0,
+                        fontFamily: "'Afacad Flux', sans-serif",
+                      }}>
+                        {item.desc}
+                      </p>
+                    </div>
+                  </FadeUp>
+                ))}
+              </div>
+            </FadeInSection>
+
+            <FadeUp delay={0.36}>
+              <div style={{
+                marginTop: 32,
+                background: "rgba(232,80,106,0.06)",
+                border: "1px solid rgba(232,80,106,0.15)",
+                borderLeft: "4px solid #e8506a",
+                borderRadius: 6,
+                padding: isMobile ? "16px" : "16px 20px",
+              }}>
+                <div style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "2px",
+                  textTransform: "uppercase",
+                  color: "#e8506a",
+                  marginBottom: 8,
+                  fontFamily: "'Afacad Flux', sans-serif",
+                }}>
+                  The em dash rule
+                </div>
+                <p style={{
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  color: "rgba(255,255,255,0.6)",
+                  margin: 0,
+                  fontFamily: "'Afacad Flux', sans-serif",
+                }}>
+                  One em dash in prose output is an automatic block. This is the single most reliable AI tell in 2026. No exceptions.
+                </p>
+              </div>
+            </FadeUp>
+          </div>
+        </section>
+
+        <SectionDivider />
+
         {/* ══ COMPOUND ═════════════════════════════════════════════════════════ */}
         <section
           style={{
