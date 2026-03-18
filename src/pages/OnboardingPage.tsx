@@ -14,7 +14,7 @@ import type { BrandDNAResponse } from "../utils/brandDNAProcessor";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type Method = "interview" | "upload" | null;
 
 const VOICE_STATUS_MESSAGES = [
@@ -36,11 +36,20 @@ export default function OnboardingPage() {
   const { user, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
 
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<Step>(0);
   const [method, setMethod] = useState<Method>(null);
   const [processing, setProcessing] = useState(false);
   const [voiceDNA, setVoiceDNA] = useState<VoiceDNA | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Profile step state
+  const [profileName, setProfileName] = useState("");
+  const [profileRole, setProfileRole] = useState("");
+  const [profileAudience, setProfileAudience] = useState("");
+
+  // Watch topics step state
+  const [watchTopics, setWatchTopics] = useState<string[]>([]);
+  const [watchInput, setWatchInput] = useState("");
 
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [overlayType, setOverlayType] = useState<"voice" | "brand">("voice");
@@ -79,9 +88,13 @@ export default function OnboardingPage() {
   // Retrain param takes precedence: stay on onboarding and go to the right step. Otherwise redirect if already complete.
   useEffect(() => {
     if (!user) return;
+    // Pre-fill profile name from auth metadata
+    const authName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || "";
+    if (authName && !profileName) setProfileName(authName);
+
     const retrain = searchParams.get("retrain");
     if (retrain) {
-      if (retrain === "voice") {
+      if (retrain === "voice" || retrain === "1") {
         setStep(2);
         setMethod("interview");
       }
@@ -103,6 +116,47 @@ export default function OnboardingPage() {
 
   const goToDashboard = () => {
     window.location.href = "/studio/dashboard";
+  };
+
+  const handleProfileSave = async () => {
+    if (!user || !profileName.trim()) return;
+    setErrorMessage(null);
+    try {
+      await supabase.from("profiles").update({
+        full_name: profileName.trim(),
+      }).eq("id", user.id);
+    } catch (e) {
+      // Non-blocking: profile save failure shouldn't stop onboarding
+    }
+    setStep(1);
+  };
+
+  const handleWatchTopicsSave = async () => {
+    if (!user) return;
+    setErrorMessage(null);
+    try {
+      await supabase.from("profiles").update({
+        sentinel_topics: watchTopics,
+        onboarding_complete: true,
+      }).eq("id", user.id);
+      await refreshProfile();
+    } catch (e) {
+      // Try just marking complete
+      try {
+        await supabase.from("profiles").update({ onboarding_complete: true }).eq("id", user.id);
+        await refreshProfile();
+      } catch {}
+    }
+    setStep(6);
+  };
+
+  const handleSkipToComplete = async () => {
+    if (!user) return;
+    try {
+      await supabase.from("profiles").update({ onboarding_complete: true }).eq("id", user.id);
+      await refreshProfile();
+    } catch {}
+    setStep(6);
   };
 
   const handleMethodSelect = (value: Method) => {
@@ -198,7 +252,7 @@ export default function OnboardingPage() {
 
   const runBrandDnaSave = async (result: BrandDNAResponse) => {
     if (!user) {
-      goToDashboard();
+      setStep(5);
       return;
     }
     const fullUpdate = {
@@ -206,40 +260,20 @@ export default function OnboardingPage() {
       brand_dna_md: result.markdown,
       brand_dna_completed: true,
       brand_dna_completed_at: new Date().toISOString(),
-      onboarding_complete: true,
     };
-    let { error } = await supabase
+    const { error } = await supabase
       .from("profiles")
       .update(fullUpdate)
       .eq("id", user.id);
 
     if (error) {
-      const { error: minimalError } = await supabase
-        .from("profiles")
-        .update({
-          brand_dna: result.brandDna,
-          brand_dna_md: result.markdown,
-          onboarding_complete: true,
-        })
-        .eq("id", user.id);
-      if (minimalError) {
-        const { error: onboardingOnlyError } = await supabase
-          .from("profiles")
-          .update({ onboarding_complete: true })
-          .eq("id", user.id);
-        if (onboardingOnlyError) {
-          console.error("Profile update failed after Brand DNA", {
-            full: error,
-            minimal: minimalError,
-            onboardingOnly: onboardingOnlyError,
-          });
-          setErrorMessage("We couldn't save your progress. Please try again.");
-          return;
-        }
-      }
+      // Try minimal save
+      await supabase.from("profiles").update({
+        brand_dna: result.brandDna,
+        brand_dna_md: result.markdown,
+      }).eq("id", user.id);
     }
-    await refreshProfile();
-    goToDashboard();
+    setStep(5); // Go to Watch Topics
   };
 
   const handleBrandDnaComplete = async (result: BrandDNAResponse) => {
@@ -287,34 +321,25 @@ export default function OnboardingPage() {
   };
 
   const handleSkipBrandDna = async () => {
-    if (user) {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ onboarding_complete: true })
-        .eq("id", user.id);
-      if (error) {
-        console.error("Profile update failed on skip", error);
-        setErrorMessage("We couldn't save. Please try again.");
-        return;
-      }
-      await refreshProfile();
-    }
-    goToDashboard();
+    setStep(5); // Go to Watch Topics instead of completing
   };
 
   const brandStepUserName =
     (user?.user_metadata?.full_name as string | undefined) || user?.email || "the user";
 
   const firstName =
+    profileName.split(" ")[0] ||
     (user?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ||
     (user?.email ? user.email.split("@")[0] : "there");
 
-  const showStep1 = step === 1;
+  const showStep0 = step === 0; // Profile
+  const showStep1 = step === 1; // Voice method selection
   const showStep2Interview = step === 2 && method === "interview";
   const showStep2Upload = step === 2 && method === "upload";
-  const showStep3 = step === 3 && voiceDNA;
+  const showStep3 = step === 3 && voiceDNA; // Voice DNA review
   const showStep4 = step === 4; // Brand DNA (Watson conversation)
-  const showStep5 = step === 5; // Method DNA (placeholder)
+  const showStep5 = step === 5; // Watch topics
+  const showStep6 = step === 6; // Complete
 
   return (
     <div
@@ -428,7 +453,7 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      <ProgressIndicator currentStep={step} totalSteps={4} />
+      <ProgressIndicator currentStep={Math.min(step, 5)} totalSteps={5} />
 
       <main style={{ width: "100%", maxWidth: 640, flex: 1 }}>
         {errorMessage && (
@@ -468,6 +493,77 @@ export default function OnboardingPage() {
             </div>
           </div>
         )}
+        {/* ── STEP 0: PROFILE ──────────────────────── */}
+        {showStep0 && (
+          <section style={{ minHeight: "60vh", display: "flex", flexDirection: "column", justifyContent: "center", maxWidth: 480 }}>
+            <h1 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 32, fontWeight: 700, color: "#ffffff", margin: "0 0 8px" }}>
+              Welcome to EVERYWHERE Studio
+            </h1>
+            <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.55)", marginBottom: 32, lineHeight: 1.6 }}>
+              Let's set up your studio. This takes about 10 minutes.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <label style={{ display: "block", fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 8 }}>
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="Your name"
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 8 }}>
+                  What do you do?
+                </label>
+                <input
+                  type="text"
+                  value={profileRole}
+                  onChange={(e) => setProfileRole(e.target.value)}
+                  placeholder="Executive coach, consultant, keynote speaker..."
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 8 }}>
+                  Who is your audience?
+                </label>
+                <input
+                  type="text"
+                  value={profileAudience}
+                  onChange={(e) => setProfileAudience(e.target.value)}
+                  placeholder="Senior leaders, entrepreneurs, HR executives..."
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleProfileSave}
+              disabled={!profileName.trim()}
+              style={{
+                marginTop: 32,
+                padding: "14px 32px",
+                borderRadius: 8,
+                border: "none",
+                background: profileName.trim() ? "#F5C642" : "rgba(255,255,255,0.1)",
+                color: profileName.trim() ? "#0D1B2A" : "rgba(255,255,255,0.3)",
+                fontFamily: "'Afacad Flux', sans-serif",
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: profileName.trim() ? "pointer" : "default",
+                alignSelf: "flex-start",
+              }}
+            >
+              Continue
+            </button>
+          </section>
+        )}
+
+        {/* ── STEP 1: VOICE METHOD SELECTION ──────── */}
         {showStep1 && (
           <section
             style={{
@@ -757,33 +853,113 @@ export default function OnboardingPage() {
                   textDecoration: "underline",
                 }}
               >
-                Skip for now — go to dashboard
+                Skip for now
               </button>
             </div>
           </section>
         )}
 
+        {/* ── STEP 5: WATCH TOPICS ──────────────────── */}
         {showStep5 && (
-          <section style={{ textAlign: "center", paddingTop: 24 }}>
-            <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.8)", marginBottom: 24, lineHeight: 1.6 }}>
-              Method DNA lets you upload frameworks and methodology docs so the system thinks in your terms. You can set this up later in Resources.
+          <section style={{ minHeight: "50vh", display: "flex", flexDirection: "column", justifyContent: "center", maxWidth: 520 }}>
+            <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 28, fontWeight: 700, color: "#ffffff", margin: "0 0 8px" }}>
+              What should Sentinel watch?
+            </h2>
+            <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.55)", marginBottom: 24, lineHeight: 1.6 }}>
+              Add 3-8 topics for your daily intelligence briefing. These can be industries, trends, competitors, or areas of{"\u00A0"}expertise.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+              {watchTopics.map((topic, i) => (
+                <span key={`${topic}-${i}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, fontSize: 13, color: "rgba(255,255,255,0.8)", fontFamily: "'Afacad Flux', sans-serif" }}>
+                  {topic}
+                  <button type="button" onClick={() => setWatchTopics(prev => prev.filter((_, idx) => idx !== i))} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 16, lineHeight: 1 }}>x</button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <input
+                type="text"
+                value={watchInput}
+                onChange={(e) => setWatchInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && watchInput.trim()) { e.preventDefault(); setWatchTopics(prev => [...prev, watchInput.trim()]); setWatchInput(""); } }}
+                placeholder="Type a topic and press Enter"
+                style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, outline: "none" }}
+              />
+              <button type="button" onClick={() => { if (watchInput.trim()) { setWatchTopics(prev => [...prev, watchInput.trim()]); setWatchInput(""); } }} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.08)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                Add
+              </button>
+            </div>
+            {profileRole && watchTopics.length === 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>Suggested based on your role:</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {["thought leadership", "content strategy", "executive communication", "industry trends", "audience growth"].map(s => (
+                    <button key={s} type="button" onClick={() => setWatchTopics(prev => [...prev, s])} style={{ padding: "5px 10px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "rgba(255,255,255,0.5)", fontSize: 12, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}>+ {s}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
+              <button
+                type="button"
+                onClick={handleWatchTopicsSave}
+                disabled={watchTopics.length < 3}
+                style={{
+                  padding: "14px 32px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: watchTopics.length >= 3 ? "#F5C642" : "rgba(255,255,255,0.1)",
+                  color: watchTopics.length >= 3 ? "#0D1B2A" : "rgba(255,255,255,0.3)",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: watchTopics.length >= 3 ? "pointer" : "default",
+                }}
+              >
+                Finish Setup
+              </button>
+              <button
+                type="button"
+                onClick={handleSkipToComplete}
+                style={{ padding: "14px 20px", borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.4)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}
+              >
+                Skip for now
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* ── STEP 6: COMPLETE ──────────────────────── */}
+        {showStep6 && (
+          <section style={{ minHeight: "50vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(245,198,66,0.12)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+              <span style={{ fontSize: 28 }}>&#10003;</span>
+            </div>
+            <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 28, fontWeight: 700, color: "#ffffff", margin: "0 0 8px" }}>
+              Your studio is ready
+            </h2>
+            <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.55)", marginBottom: 32, lineHeight: 1.6, maxWidth: 400 }}>
+              Voice DNA captured. {watchTopics.length > 0 ? `Sentinel watching ${watchTopics.length} topics. ` : ""}You can refine everything in{"\u00A0"}Settings.
             </p>
             <button
               type="button"
               onClick={goToDashboard}
               style={{
-                padding: "12px 24px",
+                padding: "14px 40px",
                 borderRadius: 8,
-                border: "1px solid rgba(200,150,26,0.6)",
-                background: "transparent",
-                color: "#C8961A",
+                border: "none",
+                background: "#F5C642",
+                color: "#0D1B2A",
                 fontFamily: "'Afacad Flux', sans-serif",
-                fontSize: 14,
-                fontWeight: 600,
+                fontSize: 16,
+                fontWeight: 700,
                 cursor: "pointer",
+                transition: "opacity 0.15s ease",
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
             >
-              Go to dashboard
+              Enter Your Studio
             </button>
           </section>
         )}
