@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FileText, Search } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
@@ -37,6 +37,9 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function OutputLibrary() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const viewParam = searchParams.get("view");
+  const isInProgressView = viewParam === "in_progress";
   const { user } = useAuth();
   const [outputs, setOutputs] = useState<Output[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +59,10 @@ export default function OutputLibrary() {
     });
   }, [user]);
 
-  const filtered = outputs.filter((o) => {
+  const baseOutputs = isInProgressView
+    ? outputs.filter((o) => (o.score ?? 0) < 900)
+    : outputs;
+  const filtered = baseOutputs.filter((o) => {
     const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || o.output_type === filter;
     return matchSearch && matchFilter;
@@ -94,7 +100,7 @@ export default function OutputLibrary() {
               letterSpacing: "-0.02em",
             }}
           >
-            The Vault
+            {isInProgressView ? "In Progress" : "The Vault"}
           </h1>
           <p
             style={{
@@ -105,7 +111,9 @@ export default function OutputLibrary() {
               marginBottom: 0,
             }}
           >
-            {outputs.length} pieces in the vault
+            {isInProgressView
+              ? `${baseOutputs.length} piece${baseOutputs.length !== 1 ? "s" : ""} in progress`
+              : `${outputs.length} pieces in the vault`}
           </p>
         </div>
         <button
@@ -258,7 +266,7 @@ export default function OutputLibrary() {
               marginBottom: 0,
             }}
           >
-            No outputs yet
+            {isInProgressView ? "Nothing in progress" : "No outputs yet"}
           </h2>
           <p
             style={{

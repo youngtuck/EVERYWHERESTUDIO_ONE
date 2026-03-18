@@ -11,7 +11,7 @@ const PRIMARY_NAV = [
   { path: "/studio/watch",   label: "Watch",       icon: Eye,        tooltip: "Intelligence monitoring. What's happening in your category.", primary: true },
   { path: "/studio/lot",     label: "The Lot",     icon: Bookmark,   tooltip: "Parked ideas. Right idea, wrong time.", sub: true },
   { path: "/studio/work",    label: "Work",        icon: PenLine,    tooltip: "Start a Watson session to produce content.", primary: true },
-  { path: "/studio/dashboard", label: "In Progress", icon: Loader2,  tooltip: "Content you've started but haven't finished.", sub: true },
+  { path: "/studio/outputs?view=in_progress", label: "In Progress", icon: Loader2,  tooltip: "Content you've started but haven't finished.", sub: true },
   { path: "/studio/wrap",    label: "Wrap",        icon: Package,    tooltip: "Final polish and delivery.", primary: true },
   { path: "/studio/outputs", label: "The Vault",   icon: Archive,    tooltip: "Published archive. Everything you've shipped.", sub: true },
 ];
@@ -66,6 +66,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
     if (p === "/studio/work") return loc.pathname === p || loc.pathname.startsWith("/studio/work/");
     if (p === "/studio/settings") return loc.pathname === p || loc.pathname.startsWith("/studio/settings");
     if (p === "/studio/wrap") return loc.pathname === p || loc.pathname.startsWith("/studio/wrap/");
+    // In Progress: active when on outputs page with view=in_progress
+    if (p.includes("?view=in_progress")) return loc.pathname === "/studio/outputs" && loc.search.includes("view=in_progress");
+    // The Vault: active when on outputs page without in_progress filter
+    if (p === "/studio/outputs") return loc.pathname === "/studio/outputs" && !loc.search.includes("view=in_progress");
     return loc.pathname === p || loc.pathname.startsWith(p + "/");
   };
 
