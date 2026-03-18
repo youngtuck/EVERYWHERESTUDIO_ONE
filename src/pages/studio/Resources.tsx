@@ -334,7 +334,7 @@ export default function Resources() {
                       position: "absolute",
                       top: 44,
                       right: 20,
-                      background: "#fff",
+                      background: "var(--surface-white)",
                       border: "1px solid var(--border-subtle)",
                       borderRadius: 8,
                       boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
@@ -465,7 +465,7 @@ export default function Resources() {
         >
           <div
             style={{
-              background: "#fff",
+              background: "var(--surface-white)",
               borderRadius: 12,
               padding: 24,
               maxWidth: 400,
@@ -486,7 +486,7 @@ export default function Resources() {
                   padding: "10px 18px",
                   borderRadius: 8,
                   border: "1px solid var(--border-subtle)",
-                  background: "#fff",
+                  background: "var(--surface-white)",
                   cursor: "pointer",
                   fontSize: 14,
                   fontFamily: "inherit",
@@ -698,7 +698,7 @@ function AddResourceModal({
     >
       <div
         style={{
-          background: "#fff",
+          background: "var(--surface-white)",
           borderRadius: 16,
           padding: 32,
           maxWidth: 560,
@@ -883,7 +883,7 @@ function AddResourceModal({
         {error && <p style={{ fontSize: 13, color: "#b91c1c", marginBottom: 16 }}>{error}</p>}
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <button type="button" onClick={onClose} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "#fff", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
+          <button type="button" onClick={onClose} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
             Cancel
           </button>
           <button
@@ -952,7 +952,7 @@ function EditResourceModal({
     >
       <div
         style={{
-          background: "#fff",
+          background: "var(--surface-white)",
           borderRadius: 16,
           padding: 32,
           maxWidth: 640,
@@ -1036,7 +1036,7 @@ function EditResourceModal({
         </div>
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <button type="button" onClick={onClose} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "#fff", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
+          <button type="button" onClick={onClose} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
             Cancel
           </button>
           <button

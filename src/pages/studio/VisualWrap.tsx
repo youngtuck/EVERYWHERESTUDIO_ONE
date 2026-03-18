@@ -373,7 +373,7 @@ export default function VisualWrap() {
         margin: "0 auto",
         padding: isMobile ? "24px 16px" : "40px 32px",
         fontFamily: "'Afacad Flux', sans-serif",
-        background: "#F4F2ED",
+        background: "var(--surface-primary)",
         minHeight: "100vh",
       }}
     >
@@ -403,7 +403,7 @@ export default function VisualWrap() {
         >
           <ArrowLeft size={16} /> Back
         </button>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", flex: 1, fontFamily: "'Afacad Flux', sans-serif" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em", flex: 1, fontFamily: "'Afacad Flux', sans-serif" }}>
           Visual Intelligence
         </h1>
         <span
@@ -411,7 +411,7 @@ export default function VisualWrap() {
             fontSize: 14,
             fontWeight: 600,
             letterSpacing: "0.06em",
-            color: "rgba(0,0,0,0.4)",
+            color: "var(--fg-3)",
             textTransform: "uppercase",
             padding: "4px 10px",
             background: "rgba(0,0,0,0.06)",
@@ -425,8 +425,8 @@ export default function VisualWrap() {
       {/* Section 1: Output preview */}
       <div
         style={{
-          background: "#fff",
-          border: "1px solid rgba(0,0,0,0.06)",
+          background: "var(--surface-white)",
+          border: "1px solid var(--border-subtle)",
           borderRadius: 12,
           padding: 16,
           marginBottom: 28,
@@ -459,7 +459,7 @@ export default function VisualWrap() {
             fontSize: 13,
             fontWeight: 600,
             letterSpacing: "0.1em",
-            color: "rgba(0,0,0,0.35)",
+            color: "var(--fg-3)",
             marginBottom: 4,
             textTransform: "uppercase",
           }}
@@ -490,9 +490,9 @@ export default function VisualWrap() {
                   width: "100%",
                   maxWidth: 140,
                   padding: 16,
-                  border: selected ? "2px solid #C8961A" : "1px solid rgba(0,0,0,0.08)",
+                  border: selected ? "2px solid #C8961A" : "1px solid var(--border-subtle)",
                   borderRadius: 12,
-                  background: selected ? "rgba(200,150,26,0.04)" : "#fff",
+                  background: selected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
                   cursor: "pointer",
                   textAlign: "center",
                   transition: "all 0.2s ease",
@@ -500,20 +500,20 @@ export default function VisualWrap() {
                 }}
                 onMouseEnter={(e) => {
                   if (!selected) {
-                    e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+                    e.currentTarget.style.borderColor = "var(--border-default)";
                     e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!selected) {
-                    e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+                    e.currentTarget.style.borderColor = "var(--border-subtle)";
                     e.currentTarget.style.boxShadow = "none";
                   }
                 }}
               >
-                <Icon size={24} style={{ color: "rgba(0,0,0,0.5)", marginBottom: 8 }} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", marginBottom: 2 }}>{config.label}</div>
-                <div style={{ fontSize: 14, color: "rgba(0,0,0,0.4)" }}>{config.descriptor}</div>
+                <Icon size={24} style={{ color: "var(--fg-2)", marginBottom: 8 }} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 2 }}>{config.label}</div>
+                <div style={{ fontSize: 14, color: "var(--fg-3)" }}>{config.descriptor}</div>
               </button>
             );
           })}
@@ -527,7 +527,7 @@ export default function VisualWrap() {
             fontSize: 13,
             fontWeight: 600,
             letterSpacing: "0.1em",
-            color: "rgba(0,0,0,0.35)",
+            color: "var(--fg-3)",
             marginBottom: 12,
             textTransform: "uppercase",
           }}
@@ -548,19 +548,19 @@ export default function VisualWrap() {
                 onClick={() => setAspectRatio(opt.value)}
                 style={{
                   padding: "10px 18px",
-                  border: selected ? "2px solid #C8961A" : "1px solid rgba(0,0,0,0.08)",
+                  border: selected ? "2px solid #C8961A" : "1px solid var(--border-subtle)",
                   borderRadius: 10,
-                  background: selected ? "rgba(200,150,26,0.04)" : "#fff",
+                  background: selected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
                   cursor: "pointer",
                   fontFamily: "'Afacad Flux', sans-serif",
                   textAlign: "center",
                   transition: "all 0.15s ease",
                 }}
-                onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)"; }}
-                onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; }}
+                onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--border-default)"; }}
+                onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
               >
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{opt.label}</div>
-                <div style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", marginTop: 2 }}>{opt.subtitle}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{opt.label}</div>
+                <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{opt.subtitle}</div>
               </button>
             );
           })}
@@ -594,8 +594,8 @@ export default function VisualWrap() {
             style={{
               marginTop: 12,
               padding: 20,
-              background: "#fff",
-              border: "1px solid rgba(0,0,0,0.06)",
+              background: "var(--surface-white)",
+              border: "1px solid var(--border-subtle)",
               borderRadius: 12,
               display: "flex",
               flexDirection: "column",
@@ -692,9 +692,9 @@ export default function VisualWrap() {
             width: "100%",
             height: 56,
             borderRadius: 12,
-            border: "2px solid #1a1a1a",
+            border: "2px solid var(--fg)",
             background: "transparent",
-            color: "#1a1a1a",
+            color: "var(--fg)",
             fontSize: 14,
             fontWeight: 600,
             cursor: generating || generatingAll ? "not-allowed" : "pointer",
@@ -718,8 +718,8 @@ export default function VisualWrap() {
         >
           <div
             style={{
-              background: "#fff",
-              border: "1px solid rgba(0,0,0,0.06)",
+              background: "var(--surface-white)",
+              border: "1px solid var(--border-subtle)",
               borderRadius: 16,
               padding: 48,
               minHeight: 320,
@@ -729,16 +729,16 @@ export default function VisualWrap() {
               textAlign: "center",
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(0,0,0,0.3)", marginBottom: 4, fontFamily: "'Afacad Flux', sans-serif" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 4, fontFamily: "'Afacad Flux', sans-serif" }}>
               Kai
             </div>
-            <div style={{ fontSize: 12, color: "rgba(0,0,0,0.35)", marginBottom: 12, fontFamily: "'Afacad Flux', sans-serif" }}>
+            <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 12, fontFamily: "'Afacad Flux', sans-serif" }}>
               Visual Intelligence - Transforms your content into publication-ready visual formats
             </div>
             <div
               style={{
                 fontSize: 14,
-                color: resultRevealPhase === "complete" ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.5)",
+                color: resultRevealPhase === "complete" ? "var(--fg-2)" : "var(--fg-2)",
                 fontStyle: "italic",
                 marginBottom: 24,
               }}
@@ -752,7 +752,7 @@ export default function VisualWrap() {
                 width: "100%",
                 maxWidth: aspectRatio === "9:16" ? 280 : 500,
                 aspectRatio: aspectRatio.replace(":", "/"),
-                border: "1px solid rgba(0,0,0,0.06)",
+                border: "1px solid var(--border-subtle)",
                 borderRadius: 12,
                 background: "#FAFAF8",
                 overflow: "hidden",
@@ -760,7 +760,7 @@ export default function VisualWrap() {
               }}
             >
               {generateError ? (
-                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "rgba(0,0,0,0.4)" }}>
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--fg-3)" }}>
                   Generation failed. Try again.
                 </div>
               ) : result && (resultRevealPhase === "revealing" || resultRevealPhase === "complete") ? (
@@ -814,11 +814,11 @@ export default function VisualWrap() {
               )}
             </div>
 
-            <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(0,0,0,0.25)", marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-3)", marginBottom: 4 }}>
               {generateError ? "" : result ? result.vibe : VIBES[selectedVibe].label}
             </div>
             {!generateError && (
-              <div style={{ fontSize: 14, color: "rgba(0,0,0,0.15)", fontVariantNumeric: "tabular-nums" }}>
+              <div style={{ fontSize: 14, color: "var(--fg-3)", fontVariantNumeric: "tabular-nums" }}>
                 {elapsedSeconds}s
               </div>
             )}
@@ -987,8 +987,8 @@ export default function VisualWrap() {
                   <div
                     key={vibe}
                     style={{
-                      background: "#fff",
-                      border: "1px solid rgba(0,0,0,0.06)",
+                      background: "var(--surface-white)",
+                      border: "1px solid var(--border-subtle)",
                       borderRadius: 16,
                       overflow: "hidden",
                       minHeight: 200,
@@ -998,7 +998,7 @@ export default function VisualWrap() {
                       alignItems: "center",
                     }}
                   >
-                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(0,0,0,0.3)", marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)", marginBottom: 8 }}>
                       {VIBES[vibe].label}
                     </div>
                     <div
@@ -1006,7 +1006,7 @@ export default function VisualWrap() {
                         position: "relative",
                         width: "100%",
                         aspectRatio: aspectRatio.replace(":", "/"),
-                        border: "1px solid rgba(0,0,0,0.06)",
+                        border: "1px solid var(--border-subtle)",
                         borderRadius: 12,
                         background: "#FAFAF8",
                         overflow: "hidden",
@@ -1040,7 +1040,7 @@ export default function VisualWrap() {
                             alignItems: "center",
                             justifyContent: "center",
                             fontSize: 12,
-                            color: "rgba(0,0,0,0.4)",
+                            color: "var(--fg-3)",
                           }}
                         >
                           Generation failed. Try again.

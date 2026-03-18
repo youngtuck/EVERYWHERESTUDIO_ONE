@@ -196,7 +196,7 @@ export default function ProjectDetail() {
                 onBlur={handleSaveEdit}
                 onKeyDown={handleKeyDown}
                 style={{
-                  fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em",
+                  fontSize: 24, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em",
                   fontFamily: "'Afacad Flux', sans-serif", border: "1px solid var(--line)",
                   borderRadius: "var(--studio-radius)", padding: "4px 10px",
                   background: "var(--bg-2)", outline: "none", width: "100%",
@@ -207,7 +207,7 @@ export default function ProjectDetail() {
             <h1
               onClick={handleStartEdit}
               style={{
-                fontSize: 24, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em",
+                fontSize: 24, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em",
                 marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif", cursor: "pointer",
                 borderRadius: "var(--studio-radius)", padding: "2px 4px", margin: "-2px -4px 6px -4px",
                 transition: "background .12s",
@@ -220,7 +220,7 @@ export default function ProjectDetail() {
             </h1>
           )}
           {project.description && (
-            <p style={{ fontSize: 14, color: "rgba(0,0,0,0.6)", lineHeight: 1.6, margin: 0, fontFamily: "'Afacad Flux', sans-serif" }}>
+            <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: 0, fontFamily: "'Afacad Flux', sans-serif" }}>
               {project.description}
             </p>
           )}
@@ -248,18 +248,18 @@ export default function ProjectDetail() {
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--studio-gap)", marginBottom: "var(--studio-gap-lg)" }}>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>Total outputs</div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'Afacad Flux', sans-serif" }}>{outputsCount}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>Total outputs</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'Afacad Flux', sans-serif" }}>{outputsCount}</div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>Avg Betterish score</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>Avg Betterish score</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: avgScore > 0 ? scoreColor(avgScore) : "rgba(0,0,0,0.35)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'Afacad Flux', sans-serif" }}>
             {avgScore > 0 ? avgScore : "–"}
           </div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>Last active</div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em", fontFamily: "'Afacad Flux', sans-serif" }}>{lastActive}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>Last active</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em", fontFamily: "'Afacad Flux', sans-serif" }}>{lastActive}</div>
         </div>
       </div>
 

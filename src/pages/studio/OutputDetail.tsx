@@ -160,18 +160,18 @@ const pillBase = {
   alignItems: "center" as const,
   gap: 8,
   padding: "10px 20px",
-  border: "1px solid rgba(0,0,0,0.08)",
+  border: "1px solid var(--border-subtle)",
   borderRadius: 10,
-  background: "#fff",
+  background: "var(--surface-white)",
   fontSize: 13,
   fontWeight: 500,
-  color: "#1a1a1a",
+  color: "var(--fg)",
   cursor: "pointer" as const,
   transition: "all 0.2s ease",
   fontFamily: "'Afacad Flux', sans-serif",
 };
 
-const iconStyle = { width: 16, height: 16, color: "rgba(0,0,0,0.4)", flexShrink: 0 };
+const iconStyle = { width: 16, height: 16, color: "var(--fg-3)", flexShrink: 0 };
 
 const REFORMAT_TYPES = [
   "Essay",
@@ -458,7 +458,7 @@ export default function OutputDetail() {
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: "rgba(0,0,0,0.4)",
+            color: "var(--fg-3)",
             display: "flex",
             alignItems: "center",
             gap: 6,
@@ -469,26 +469,26 @@ export default function OutputDetail() {
             transition: "color 0.15s ease",
           }}
           onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "rgba(0,0,0,0.4)"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
         >
           <ArrowLeft size={16} /> The Vault
         </button>
         <button
           onClick={() => navigate(`/studio/work/new?type=${output!.output_type}`)}
           style={{
-            border: "1px solid rgba(0,0,0,0.1)",
+            border: "1px solid var(--border-default)",
             background: "transparent",
             padding: "8px 16px",
             fontSize: 13,
             fontWeight: 500,
             borderRadius: 8,
             cursor: "pointer",
-            color: "rgba(0,0,0,0.4)",
+            color: "var(--fg-3)",
             fontFamily: "'Afacad Flux', sans-serif",
             transition: "color 0.15s ease",
           }}
           onMouseEnter={e => { e.currentTarget.style.color = "#C8961A"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "rgba(0,0,0,0.4)"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
         >
           New Session
         </button>
@@ -500,7 +500,7 @@ export default function OutputDetail() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            color: "#1a1a1a",
+            color: "var(--fg)",
             letterSpacing: "-0.02em",
             marginBottom: 8,
             fontFamily: "'Afacad Flux', sans-serif",
@@ -514,7 +514,7 @@ export default function OutputDetail() {
             alignItems: "center",
             gap: 16,
             fontSize: 14,
-            color: "rgba(0,0,0,0.6)",
+            color: "var(--fg-2)",
             lineHeight: 1.6,
             fontFamily: "'Afacad Flux', sans-serif",
           }}
@@ -538,8 +538,8 @@ export default function OutputDetail() {
       {/* WRAP AS toolbar */}
       <div
         style={{
-          borderTop: "1px solid rgba(0,0,0,0.06)",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          borderTop: "1px solid var(--border-subtle)",
+          borderBottom: "1px solid var(--border-subtle)",
           padding: "20px 0",
           marginBottom: 32,
         }}
@@ -549,7 +549,7 @@ export default function OutputDetail() {
             fontSize: 13,
             fontWeight: 700,
             letterSpacing: "0.12em",
-            color: "rgba(0,0,0,0.3)",
+            color: "var(--fg-3)",
             marginBottom: 12,
             textTransform: "uppercase",
             fontFamily: "'Afacad Flux', sans-serif",
@@ -569,12 +569,12 @@ export default function OutputDetail() {
             title="Open as a standalone web page"
             style={pillBase}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+              e.currentTarget.style.borderColor = "var(--border-default)";
               e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+              e.currentTarget.style.borderColor = "var(--border-subtle)";
               e.currentTarget.style.boxShadow = "none";
               e.currentTarget.style.transform = "translateY(0)";
             }}
@@ -586,12 +586,12 @@ export default function OutputDetail() {
             title="Copy content and open Google Docs"
             style={pillBase}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+              e.currentTarget.style.borderColor = "var(--border-default)";
               e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+              e.currentTarget.style.borderColor = "var(--border-subtle)";
               e.currentTarget.style.boxShadow = "none";
               e.currentTarget.style.transform = "translateY(0)";
             }}
@@ -603,12 +603,12 @@ export default function OutputDetail() {
             title="Download as a Word document"
             style={pillBase}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+              e.currentTarget.style.borderColor = "var(--border-default)";
               e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+              e.currentTarget.style.borderColor = "var(--border-subtle)";
               e.currentTarget.style.boxShadow = "none";
               e.currentTarget.style.transform = "translateY(0)";
             }}
@@ -620,12 +620,12 @@ export default function OutputDetail() {
             title="Open in the visual editor"
             style={pillBase}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+              e.currentTarget.style.borderColor = "var(--border-default)";
               e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+              e.currentTarget.style.borderColor = "var(--border-subtle)";
               e.currentTarget.style.boxShadow = "none";
               e.currentTarget.style.transform = "translateY(0)";
             }}
@@ -637,12 +637,12 @@ export default function OutputDetail() {
             title="Copy content to clipboard"
             style={pillBase}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+              e.currentTarget.style.borderColor = "var(--border-default)";
               e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+              e.currentTarget.style.borderColor = "var(--border-subtle)";
               e.currentTarget.style.boxShadow = "none";
               e.currentTarget.style.transform = "translateY(0)";
             }}
@@ -778,7 +778,7 @@ export default function OutputDetail() {
           <iframe
             srcDoc={previewHtml}
             title="Output preview"
-            style={{ width: "100%", height: 600, border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, background: "#fff" }}
+            style={{ width: "100%", height: 600, border: "1px solid var(--border-subtle)", borderRadius: 12, background: "var(--surface-white)" }}
             sandbox="allow-same-origin"
           />
         </div>
@@ -791,7 +791,7 @@ export default function OutputDetail() {
             fontSize: 13,
             fontWeight: 700,
             letterSpacing: "0.12em",
-            color: "rgba(0,0,0,0.3)",
+            color: "var(--fg-3)",
             marginBottom: 12,
             textTransform: "uppercase",
             fontFamily: "'Afacad Flux', sans-serif",
@@ -813,13 +813,13 @@ export default function OutputDetail() {
               }}
               onMouseEnter={(e) => {
                 if (!reformatting) {
-                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.15)";
+                  e.currentTarget.style.borderColor = "var(--border-default)";
                   e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
                   e.currentTarget.style.transform = "translateY(-1px)";
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+                e.currentTarget.style.borderColor = "var(--border-subtle)";
                 e.currentTarget.style.boxShadow = "none";
                 e.currentTarget.style.transform = "translateY(0)";
               }}

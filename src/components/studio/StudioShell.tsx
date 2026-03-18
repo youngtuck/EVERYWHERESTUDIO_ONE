@@ -22,16 +22,16 @@ export default function StudioShell() {
     const root = document.getElementById("root");
     document.body.style.background = "";
     document.body.style.backgroundImage = "none";
-    document.body.style.backgroundColor = "#F7F9FC";
+    document.body.style.backgroundColor = "";
     document.body.style.transition = "none";
     document.documentElement.style.background = "";
     document.documentElement.style.backgroundImage = "none";
-    document.documentElement.style.backgroundColor = "#F7F9FC";
+    document.documentElement.style.backgroundColor = "";
     document.documentElement.style.transition = "none";
     if (root) {
       root.style.background = "";
       root.style.backgroundImage = "none";
-      root.style.backgroundColor = "#F7F9FC";
+      root.style.backgroundColor = "";
       root.style.transition = "none";
     }
     return () => {
@@ -74,7 +74,7 @@ export default function StudioShell() {
   );
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "#F7F9FC", fontFamily: "'Afacad Flux', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "var(--bg-2)", fontFamily: "'Afacad Flux', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
       <CommandPalette />
       {isMobile && sidebarOpen && (
         <div
@@ -116,7 +116,7 @@ export default function StudioShell() {
           onMobileClose={isMobile ? () => setSidebarOpen(false) : undefined}
         />
       </div>
-      <main style={{ flex: 1, minHeight: "100vh", background: "#F7F9FC", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none", display: "flex", flexDirection: "column" }}>
+      <main style={{ flex: 1, minHeight: "100vh", background: "var(--bg-2)", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none", display: "flex", flexDirection: "column" }}>
         {isMobile && (
           <div
             style={{
@@ -128,7 +128,7 @@ export default function StudioShell() {
               position: "sticky",
               top: 0,
               zIndex: 20,
-              background: "#F7F9FC",
+              background: "var(--bg-2)",
             }}
           >
             <button
@@ -157,7 +157,7 @@ export default function StudioShell() {
             <span style={{ width: 32 }} />
           </div>
         )}
-        <div className="studio-main-inner" style={{ background: "#F7F9FC", flex: 1 }}>
+        <div className="studio-main-inner" style={{ background: "var(--bg-2)", flex: 1 }}>
           <div key={location.pathname} className="studio-page-transition">
             <Outlet />
           </div>

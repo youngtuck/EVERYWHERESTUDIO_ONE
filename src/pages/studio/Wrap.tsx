@@ -192,17 +192,17 @@ export default function Wrap() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   padding: "16px 20px",
-                  background: "#fff",
-                  border: "1px solid rgba(0,0,0,0.06)",
+                  background: "var(--surface-white)",
+                  border: "1px solid var(--border-subtle)",
                   borderRadius: 12,
                   transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+                  e.currentTarget.style.borderColor = "var(--border-default)";
                   e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
+                  e.currentTarget.style.borderColor = "var(--border-subtle)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
@@ -220,7 +220,7 @@ export default function Wrap() {
                     >
                       {o.title}
                     </div>
-                    <div style={{ fontSize: 13, color: "rgba(0,0,0,0.4)", marginTop: 2 }}>
+                    <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 2 }}>
                       {TYPE_LABELS[o.output_type] || o.output_type} · {timeAgo(o.created_at)}
                     </div>
                   </div>

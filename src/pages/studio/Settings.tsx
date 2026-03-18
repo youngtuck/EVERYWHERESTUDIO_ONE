@@ -174,7 +174,7 @@ export default function Settings() {
         <h1 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
           Settings
         </h1>
-        <p style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", marginTop: 8, marginBottom: 0 }}>
+        <p style={{ fontSize: 14, color: "var(--fg-3)", marginTop: 8, marginBottom: 0 }}>
           Account and preferences
         </p>
       </div>
@@ -184,23 +184,23 @@ export default function Settings() {
         <SectionHeader label="Profile" />
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(0,0,0,0.4)", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
               Full Name
             </label>
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
+              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, border: "1px solid var(--border-default)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
               onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
             />
           </div>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(0,0,0,0.4)", marginBottom: 8 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
               Email
             </label>
-            <div style={{ fontSize: 15, color: "rgba(0,0,0,0.6)", padding: "10px 0" }}>{user?.email || ""}</div>
+            <div style={{ fontSize: 15, color: "var(--fg-2)", padding: "10px 0" }}>{user?.email || ""}</div>
           </div>
           {saveError && <p style={{ fontSize: 13, color: "#D64545", margin: 0 }}>{saveError}</p>}
           <button

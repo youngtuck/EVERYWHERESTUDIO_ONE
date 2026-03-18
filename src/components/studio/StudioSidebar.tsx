@@ -78,7 +78,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       width: collapsed ? 60 : 240,
       flexShrink: 0,
       height: "100vh",
-      background: "#F7F9FC",
+      background: "var(--sidebar)",
       borderRight: "1px solid var(--border-subtle)",
       display: "flex",
       flexDirection: "column",

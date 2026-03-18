@@ -97,15 +97,27 @@
   --bg-tertiary: var(--bg-3);
   --text-primary: var(--fg);
   --text-secondary: var(--fg-2);
+  --text-tertiary: rgba(240,240,238,0.4);
   --text-muted: var(--fg-3);
   --border: var(--line);
   --border-strong: var(--line-2);
   --topbar-bg: var(--topbar);
   --border-subtle: rgba(255,255,255,0.1);
   --border-default: rgba(255,255,255,0.15);
+  --border-light: rgba(255,255,255,0.1);
   --surface-white: #1B263B;
+  --surface-primary: #0D1B2A;
+  --surface-secondary: #1B263B;
   --surface-elevated: #1B263B;
   --bg-light: #0D1B2A;
+  --bg-inverse: #F7F9FC;
+  --bg-navy: #0D1B2A;
+  --danger: #FF6B6B;
+  --success: #50C8A0;
+  --gold-dark: #F5C642;
+  --cornflower: #4A90D9;
+  --soft-gray: #1B263B;
+  --mid-gray: rgba(240,240,238,0.4);
 }
 
 /* ─── RESET ──────────────────────────────────────────────────── */
@@ -128,6 +140,10 @@ body {
   font-size: 16px;
   line-height: 1.6;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+[data-theme="dark"] .watson-input::placeholder {
+  color: rgba(240,240,238,0.3) !important;
 }
 a { text-decoration: none; color: inherit; }
 button { font-family: var(--font); }

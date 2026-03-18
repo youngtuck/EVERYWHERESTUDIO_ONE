@@ -182,7 +182,7 @@ export default function Dashboard() {
                 fontSize: 14,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
-                color: "#64748B",
+                color: "var(--fg-3)",
                 marginBottom: 4,
               }}
             >
@@ -310,8 +310,8 @@ export default function Dashboard() {
               style={{
                 animationDelay: `${i * 50}ms`,
                 opacity: 0,
-                background: "#fff",
-                border: "1px solid rgba(0,0,0,0.08)",
+                background: "var(--surface-white)",
+                border: "1px solid var(--border-subtle)",
                 borderRadius: 14,
                 padding: 24,
                 display: "flex",
@@ -326,7 +326,7 @@ export default function Dashboard() {
                     fontSize: 14,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
-                    color: "#64748B",
+                    color: "var(--fg-3)",
                     marginBottom: 4,
                   }}
                 >
@@ -349,7 +349,7 @@ export default function Dashboard() {
                   style={{
                     fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 12,
-                    color: "#64748B",
+                    color: "var(--fg-3)",
                     marginTop: 6,
                     ...(stat.key === "signals" && !hasWatchTopics ? { color: "#4A90D9", cursor: "pointer", textDecoration: "underline" } : {}),
                   }}
@@ -394,7 +394,7 @@ export default function Dashboard() {
               fontSize: 14,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
-              color: "#64748B",
+              color: "var(--fg-3)",
             }}
           >
             In progress
@@ -427,7 +427,7 @@ export default function Dashboard() {
           <div
             style={{
               background: "var(--surface-white)",
-              border: "1px solid rgba(0,0,0,0.06)",
+              border: "1px solid var(--border-subtle)",
               borderRadius: 12,
               padding: 20,
               textAlign: "center",
@@ -466,8 +466,8 @@ export default function Dashboard() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   padding: "16px 20px",
-                  background: "#fff",
-                  border: "1px solid rgba(0,0,0,0.06)",
+                  background: "var(--surface-white)",
+                  border: "1px solid var(--border-subtle)",
                   borderRadius: 12,
                   marginBottom: 8,
                   cursor: "pointer",
@@ -523,7 +523,7 @@ export default function Dashboard() {
                       style={{
                         fontFamily: "'Afacad Flux', sans-serif",
                         fontSize: 12,
-                        color: "#64748B",
+                        color: "var(--fg-3)",
                         marginTop: 2,
                       }}
                     >
@@ -558,7 +558,7 @@ export default function Dashboard() {
             fontSize: 14,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
-            color: "#64748B",
+            color: "var(--fg-3)",
             marginBottom: 10,
           }}
         >
@@ -579,8 +579,8 @@ export default function Dashboard() {
               key={key}
               onClick={() => nav(`/studio/work?type=${key}`)}
               style={{
-                background: "#fff",
-                border: "1px solid rgba(0,0,0,0.08)",
+                background: "var(--surface-white)",
+                border: "1px solid var(--border-subtle)",
                 borderRadius: 12,
                 padding: 24,
                 cursor: "pointer",
@@ -610,7 +610,7 @@ export default function Dashboard() {
                 style={{
                   fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 12,
-                  color: "rgba(0,0,0,0.45)",
+                  color: "var(--fg-3)",
                   marginTop: 6,
                   lineHeight: 1.5,
                 }}

@@ -395,7 +395,7 @@ export default function Projects() {
                   position: "absolute",
                   top: 48,
                   right: 20,
-                  background: "#fff",
+                  background: "var(--surface-white)",
                   border: "1px solid var(--border-subtle)",
                   borderRadius: 8,
                   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
@@ -634,7 +634,7 @@ export default function Projects() {
             style={{
               maxWidth: 420,
               width: "100%",
-              background: "#F4F2ED",
+              background: "var(--surface-primary)",
               borderRadius: 16,
               padding: 24,
               boxShadow: "0 18px 40px rgba(0,0,0,0.28)",
@@ -643,7 +643,7 @@ export default function Projects() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em" }}>New project</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em" }}>New project</div>
               <button
                 type="button"
                 onClick={() => { if (!createLoading) setShowCreateModal(false); }}
@@ -652,14 +652,14 @@ export default function Projects() {
                   background: "none",
                   cursor: "pointer",
                   padding: 4,
-                  color: "rgba(0,0,0,0.5)",
+                  color: "var(--fg-2)",
                 }}
                 aria-label="Close"
               >
                 <X size={16} />
               </button>
             </div>
-            <p style={{ fontSize: 13, color: "rgba(0,0,0,0.7)", marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: "var(--fg-2)", marginBottom: 16 }}>
               Give this project a clear name. You can update its Watch configuration and context later.
             </p>
             {error && (
@@ -669,7 +669,7 @@ export default function Projects() {
             )}
             <form onSubmit={handleCreate}>
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "rgba(0,0,0,0.7)" }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "var(--fg-2)" }}>
                   Name
                 </label>
                 <input
@@ -682,7 +682,7 @@ export default function Projects() {
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: 8,
-                    border: "1px solid rgba(0,0,0,0.12)",
+                    border: "1px solid var(--border-default)",
                     fontSize: 13,
                     fontFamily: "'Afacad Flux', sans-serif",
                     outline: "none",
@@ -690,8 +690,8 @@ export default function Projects() {
                 />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "rgba(0,0,0,0.7)" }}>
-                  Description <span style={{ fontWeight: 400, color: "rgba(0,0,0,0.45)" }}>(optional)</span>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "var(--fg-2)" }}>
+                  Description <span style={{ fontWeight: 400, color: "var(--fg-3)" }}>(optional)</span>
                 </label>
                 <input
                   type="text"
@@ -702,7 +702,7 @@ export default function Projects() {
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: 8,
-                    border: "1px solid rgba(0,0,0,0.12)",
+                    border: "1px solid var(--border-default)",
                     fontSize: 13,
                     fontFamily: "'Afacad Flux', sans-serif",
                     outline: "none",
