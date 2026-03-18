@@ -54,7 +54,7 @@ const App = () => (
         `}</style>
         <PageTransition>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Navigate to="/explore" replace />} />
             <Route
               path="/explore"
               element={
