@@ -14,8 +14,10 @@ const Logo = ({ size = "md", onDark, variant, onClick }: LogoProps) => {
     : { sm: 13, md: 15, lg: 22 }[size];
 
   const studioFs = fs * 0.65;
-  const tmFs = studioFs * 0.24;
   const studioColor = isDark ? "#F5C642" : "#0D1B2A";
+  const gap = Math.max(2, Math.round(fs * 0.15));
+  const showTM = fs >= 16;
+  const tmFs = studioFs * 0.5;
 
   return (
     <div
@@ -24,22 +26,42 @@ const Logo = ({ size = "md", onDark, variant, onClick }: LogoProps) => {
         alignItems: "baseline",
         fontFamily: "'Afacad Flux', sans-serif",
         userSelect: "none",
-        letterSpacing: "-2px",
         cursor: onClick ? "pointer" : "default",
         whiteSpace: "nowrap",
       }}
       onClick={onClick}
     >
-      <span style={{ fontSize: fs, fontWeight: 700, color: "#4A90D9", textTransform: "uppercase" }}>
+      <span style={{
+        fontSize: fs,
+        fontWeight: 700,
+        color: "#4A90D9",
+        textTransform: "uppercase",
+        letterSpacing: "-0.02em",
+      }}>
         EVERYWHERE
       </span>
-      <span style={{ width: fs * 0.25 }} />
-      <span style={{ fontSize: studioFs, fontWeight: 300, color: studioColor, textTransform: "uppercase", letterSpacing: "-2px" }}>
+      <span style={{
+        fontSize: studioFs,
+        fontWeight: 300,
+        color: studioColor,
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        marginLeft: gap,
+      }}>
         STUDIO
       </span>
-      <sup style={{ fontSize: Math.max(tmFs, 5), fontWeight: 300, color: studioColor, marginLeft: 1, lineHeight: 1 }}>
-        ™
-      </sup>
+      {showTM && (
+        <sup style={{
+          fontSize: tmFs,
+          fontWeight: 300,
+          color: studioColor,
+          marginLeft: 1,
+          lineHeight: 1,
+          verticalAlign: "super",
+        }}>
+          ™
+        </sup>
+      )}
     </div>
   );
 };
