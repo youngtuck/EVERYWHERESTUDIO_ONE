@@ -7,21 +7,8 @@ const DEFAULT_WORDS = [
   'insight', 'clarity', 'strategy', 'story', 'momentum',
   'resonance', 'authority', 'perspective', 'signal', 'craft',
   'compose', 'refine', 'amplify', 'deliver', 'connect',
-  'thinking', 'intelligence', 'content', 'production', 'channel',
-  'coaching', 'leadership', 'framework', 'methodology', 'brand',
-  'authentic', 'expertise', 'platform', 'newsletter', 'keynote',
-  'podcast', 'essay', 'social', 'audience', 'growth',
-];
-
-const BRAND_COLORS = [
-  '#4A90D9',
-  '#1B263B',
-  '#F5C642',
-  '#E8B4A0',
-  '#64748B',
-  '#4A90D9',
-  '#0D1B2A',
-  '#4A90D9',
+  'thinking', 'intelligence', 'content', 'channel', 'leadership',
+  'framework', 'methodology', 'authentic', 'platform', 'growth',
 ];
 
 interface CloudWord {
@@ -30,11 +17,9 @@ interface CloudWord {
   y: number;
   size: number;
   opacity: number;
-  color: string;
   weight: number;
-  rotation: number;
-  animDuration: number;
-  animDelay: number;
+  duration: number;
+  delay: number;
 }
 
 export default function LivingWordCloud() {
@@ -43,132 +28,84 @@ export default function LivingWordCloud() {
 
   useEffect(() => {
     if (!user) return;
-    loadUserWords();
+    (async () => {
+      const collected: string[] = [];
+      try {
+        const { data: resources } = await supabase
+          .from('resources')
+          .select('title, content')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .limit(5);
+        if (resources) {
+          for (const r of resources) {
+            const text = (r.title + ' ' + (r.content || '')).toLowerCase();
+            const meaningful = text
+              .split(/[\s,.\-:;!?()[\]{}'"\/|]+/)
+              .filter(w => w.length > 3 && w.length < 13)
+              .filter(w => !['about','their','which','would','could','should','there','these','those','other','after','before','between','through','during','without','that','this','with','from','have','been','were','they','what','when','into','more','than','each','also','does','your','will','just','some','very','most','only','every','made','make'].includes(w));
+            collected.push(...meaningful.slice(0, 10));
+          }
+        }
+      } catch (e) {}
+      try {
+        const { data: outputs } = await supabase
+          .from('outputs')
+          .select('title')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        if (outputs) {
+          for (const o of outputs) {
+            const tw = (o.title || '').split(/\s+/).filter((w: string) => w.length > 3);
+            collected.push(...tw.slice(0, 3));
+          }
+        }
+      } catch (e) {}
+      const unique = [...new Set(collected.map(w => w.toLowerCase()))];
+      if (unique.length >= 12) {
+        setWords(unique.slice(0, 30));
+      } else {
+        setWords([...unique, ...DEFAULT_WORDS].slice(0, 30));
+      }
+    })();
   }, [user]);
 
-  async function loadUserWords() {
-    if (!user) return;
-    const collected: string[] = [];
-    const stopWords = ['about','their','which','would','could','should','there','these','those','other','after','before','between','through','during','without','that','this','with','from','have','been','were','they','what','when','into','more','than','each','also','does','your','will','just','some','very','most'];
-
-    try {
-      const { data: resources } = await supabase
-        .from('resources')
-        .select('title, content, resource_type')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .limit(5);
-
-      if (resources) {
-        for (const r of resources) {
-          const text = (r.title + ' ' + (r.content || '')).toLowerCase();
-          const meaningful = text
-            .split(/[\s,.\-:;!?()[\]{}'"\/|]+/)
-            .filter(w => w.length > 3 && w.length < 14)
-            .filter(w => !stopWords.includes(w));
-          collected.push(...meaningful.slice(0, 12));
-        }
-      }
-    } catch (e) { /* silent */ }
-
-    try {
-      const { data: outputs } = await supabase
-        .from('outputs')
-        .select('title')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (outputs) {
-        for (const o of outputs) {
-          const titleWords = (o.title || '').split(/\s+/).filter((w: string) => w.length > 3);
-          collected.push(...titleWords.slice(0, 3));
-        }
-      }
-    } catch (e) { /* silent */ }
-
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('sentinel_topics')
-        .eq('id', user.id)
-        .single();
-
-      if (profile?.sentinel_topics && Array.isArray(profile.sentinel_topics)) {
-        collected.push(...profile.sentinel_topics);
-      }
-    } catch (e) { /* silent */ }
-
-    const unique = [...new Set(collected.map(w => w.toLowerCase()))];
-    if (unique.length >= 15) {
-      setWords(unique.slice(0, 40));
-    } else {
-      setWords([...unique, ...DEFAULT_WORDS].slice(0, 40));
-    }
-  }
-
   const cloudWords = useMemo<CloudWord[]>(() => {
-    const result: CloudWord[] = [];
-    const count = Math.min(words.length, 40);
+    return words.map((text, i) => {
+      const t = i / words.length;
+      const angle = (i / words.length) * Math.PI * 2 * 2.39996;
+      const r = 4 + t * 22;
+      const x = 50 + Math.cos(angle) * r + (Math.random() - 0.5) * 8;
+      const y = 45 + Math.sin(angle) * r * 0.55 + (Math.random() - 0.5) * 6;
+      const size = 12 + (1 - t) * 20 + Math.random() * 4;
+      const opacity = 0.04 + (1 - t) * 0.11 + Math.random() * 0.03;
 
-    for (let i = 0; i < count; i++) {
-      const importance = 1 - (i / count);
-      const size = importance > 0.85 ? 38 + Math.random() * 16
-                 : importance > 0.6  ? 24 + Math.random() * 12
-                 : importance > 0.3  ? 16 + Math.random() * 8
-                 :                     11 + Math.random() * 6;
-
-      const weight = size > 30 ? 700 : size > 20 ? 600 : 400;
-      const opacity = size > 30 ? 0.18 + Math.random() * 0.1
-                    : size > 20 ? 0.12 + Math.random() * 0.08
-                    :             0.07 + Math.random() * 0.06;
-
-      const angle = (i / count) * Math.PI * 2 * 3.7;
-      const radius = 8 + (i / count) * 38;
-      const x = 50 + Math.cos(angle) * radius + (Math.random() - 0.5) * 12;
-      const y = 50 + Math.sin(angle) * radius * 0.6 + (Math.random() - 0.5) * 10;
-
-      const rotation = Math.random() > 0.8 ? (Math.random() > 0.5 ? 90 : -90) :
-                        Math.random() > 0.85 ? Math.round((Math.random() - 0.5) * 20) : 0;
-
-      result.push({
-        text: words[i],
-        x: Math.max(5, Math.min(95, x)),
-        y: Math.max(5, Math.min(95, y)),
+      return {
+        text,
+        x: Math.max(15, Math.min(85, x)),
+        y: Math.max(15, Math.min(80, y)),
         size,
         opacity,
-        color: BRAND_COLORS[Math.floor(Math.random() * BRAND_COLORS.length)],
-        weight,
-        rotation,
-        animDuration: 20 + Math.random() * 30,
-        animDelay: Math.random() * -20,
-      });
-    }
-    return result;
+        weight: Math.random() > 0.5 ? 300 : 400,
+        duration: 30 + Math.random() * 40,
+        delay: Math.random() * -30,
+      };
+    });
   }, [words]);
 
   return (
     <div style={{
       position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+      top: 0, left: 0, right: 0, bottom: 0,
       overflow: 'hidden',
       pointerEvents: 'none',
       zIndex: 0,
-      padding: 0,
-      margin: 0,
     }}>
       <style>{`
-        @keyframes cloudDrift {
-          0%, 100% { transform: translate(0, 0) rotate(var(--rot)); }
-          33% { transform: translate(4px, -6px) rotate(var(--rot)); }
-          66% { transform: translate(-3px, 4px) rotate(var(--rot)); }
-        }
-        @keyframes cloudPulse {
-          0%, 100% { opacity: var(--base-opacity); }
-          50% { opacity: calc(var(--base-opacity) * 1.4); }
+        @keyframes gentleDrift {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(3px, -4px); }
         }
       `}</style>
       {cloudWords.map((w, i) => (
@@ -181,18 +118,15 @@ export default function LivingWordCloud() {
             fontSize: `${w.size}px`,
             fontFamily: "'Afacad Flux', sans-serif",
             fontWeight: w.weight,
-            color: w.color,
+            color: '#4A90D9',
             opacity: w.opacity,
-            transform: `rotate(${w.rotation}deg)`,
-            ['--rot' as any]: `${w.rotation}deg`,
-            ['--base-opacity' as any]: w.opacity,
-            animation: `cloudDrift ${w.animDuration}s ease-in-out infinite, cloudPulse ${w.animDuration * 1.2}s ease-in-out infinite`,
-            animationDelay: `${w.animDelay}s`,
+            animation: `gentleDrift ${w.duration}s ease-in-out infinite`,
+            animationDelay: `${w.delay}s`,
             whiteSpace: 'nowrap',
             userSelect: 'none',
             lineHeight: 1,
-            textTransform: w.size > 28 ? 'uppercase' as const : 'lowercase' as const,
-            letterSpacing: w.size > 28 ? '1px' : '0.3px',
+            textTransform: 'lowercase',
+            letterSpacing: '0.3px',
           }}
         >
           {w.text}
