@@ -959,14 +959,14 @@ type GatesFromApi = {
 };
 
 const CHECKPOINTS = [
-  { number: 0, agent: "Echo", role: "Deduplication", key: null as string | null, description: "Checking for repeated ideas" },
-  { number: 1, agent: "Priya", role: "Research Accuracy", key: "accuracy", description: "Verifying claims and sources" },
-  { number: 2, agent: "Jordan", role: "Voice Authenticity", key: "voice", description: "Matching your voice DNA" },
-  { number: 3, agent: "David", role: "Engagement", key: "audience", description: "7-second hook test" },
-  { number: 4, agent: "Elena", role: "SLOP Detection", key: "ai_tells", description: "Zero AI tells, zero em-dashes" },
-  { number: 5, agent: "Natasha", role: "Editorial Excellence", key: "strategy", description: "Publication-grade standard" },
-  { number: 6, agent: "Marcus", role: "Perspective", key: "platform", description: "Platform and context fit" },
-  { number: 7, agent: "Marshall", role: "Impact + NVC", key: "impact", description: "Final impact assessment" },
+  { number: 0, agent: "Echo", role: "Deduplication", key: null as string | null, description: "Scanning for repeated concepts and structural patterns" },
+  { number: 1, agent: "Priya", role: "Research Accuracy", key: "accuracy", description: "Verifying claims against independent sources" },
+  { number: 2, agent: "Jordan", role: "Voice Authenticity", key: "voice", description: "Matching output against your Voice DNA profile" },
+  { number: 3, agent: "David", role: "Engagement", key: "audience", description: "Testing the hook - 7 seconds to earn attention" },
+  { number: 4, agent: "Elena", role: "SLOP Detection", key: "ai_tells", description: "Zero AI tells, zero em dashes, zero filler" },
+  { number: 5, agent: "Natasha", role: "Editorial Excellence", key: "strategy", description: "Publication-grade quality check" },
+  { number: 6, agent: "Marcus", role: "Perspective", key: "platform", description: "Cultural sensitivity and platform fit" },
+  { number: 7, agent: "Marshall", role: "Impact + NVC", key: "impact", description: "Final impact and communication assessment" },
 ];
 
 function checkpointScoreColor(score: number): { text: string; bg: string } {
@@ -1019,6 +1019,7 @@ export default function WorkSession() {
   const [showCheckpointSequence, setShowCheckpointSequence] = useState(false);
   const [visibleCheckpointCount, setVisibleCheckpointCount] = useState(0);
   const [revealedCheckpointCount, setRevealedCheckpointCount] = useState(0);
+  const [showTotalScore, setShowTotalScore] = useState(false);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
     setInput((prev) => {
@@ -1077,14 +1078,23 @@ export default function WorkSession() {
 
   useEffect(() => {
     if (!showCheckpointSequence || !generatedGates || visibleCheckpointCount >= 8) return;
-    const t = setTimeout(() => setVisibleCheckpointCount((c) => c + 1), 300);
+    const t = setTimeout(() => setVisibleCheckpointCount((c) => c + 1), 600);
     return () => clearTimeout(t);
   }, [showCheckpointSequence, generatedGates, visibleCheckpointCount]);
 
   useEffect(() => {
     if (revealedCheckpointCount >= visibleCheckpointCount || visibleCheckpointCount === 0) return;
-    const id = setTimeout(() => setRevealedCheckpointCount(visibleCheckpointCount), 400);
+    const id = setTimeout(() => setRevealedCheckpointCount(visibleCheckpointCount), 800);
     return () => clearTimeout(id);
+  }, [visibleCheckpointCount, revealedCheckpointCount]);
+
+  useEffect(() => {
+    if (visibleCheckpointCount < 8 || revealedCheckpointCount < 8) {
+      setShowTotalScore(false);
+      return;
+    }
+    const t = setTimeout(() => setShowTotalScore(true), 800);
+    return () => clearTimeout(t);
   }, [visibleCheckpointCount, revealedCheckpointCount]);
 
   const sendMessage = async (contentOverride?: string) => {
@@ -1270,6 +1280,7 @@ export default function WorkSession() {
     setGeneratedScore(0);
     setGeneratedGates(null);
     setShowCheckpointSequence(false);
+    setShowTotalScore(false);
     setApiError(null);
     setIsReady(false);
     setMessages([{
@@ -1463,6 +1474,19 @@ export default function WorkSession() {
               overflowY: "auto",
             }}
           >
+            <div style={{
+              fontFamily: "'Afacad Flux', sans-serif",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "3px",
+              textTransform: "uppercase",
+              color: "#4A90D9",
+              marginBottom: 12,
+              maxWidth: 520,
+              width: "100%",
+            }}>
+              QUALITY PIPELINE
+            </div>
             <div
               style={{
                 maxWidth: 520,
@@ -1549,7 +1573,7 @@ export default function WorkSession() {
               })}
             </div>
 
-            {visibleCheckpointCount >= 8 && (
+            {showTotalScore && (
               <div
                 style={{
                   maxWidth: 520,
@@ -1557,8 +1581,15 @@ export default function WorkSession() {
                   marginTop: 24,
                   textAlign: "center",
                   fontFamily: "'Afacad Flux', sans-serif",
+                  animation: "scoreReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                 }}
               >
+                <style>{`
+                  @keyframes scoreReveal {
+                    from { opacity: 0; transform: scale(0.8); }
+                    to { opacity: 1; transform: scale(1); }
+                  }
+                `}</style>
                 <div
                   style={{
                     fontSize: 48,
