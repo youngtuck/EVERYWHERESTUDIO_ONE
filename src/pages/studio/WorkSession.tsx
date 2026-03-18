@@ -1800,6 +1800,99 @@ export default function WorkSession() {
                 </div>
               </div>
 
+              {/* Quality Pipeline CTA */}
+              {pipelineStatus === "PASSED" ? (
+                <div style={{
+                  padding: "14px 18px",
+                  background: "rgba(80,200,160,0.06)",
+                  borderLeft: "3px solid #50c8a0",
+                  borderRadius: 6,
+                  marginBottom: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 10,
+                }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#50c8a0", fontFamily: "'Afacad Flux', sans-serif" }}>All 7 checkpoints passed</div>
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>Content moved to The Vault.</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/studio/outputs")}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 6,
+                      border: "none",
+                      background: "#50c8a0",
+                      color: "#fff",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      fontFamily: "'Afacad Flux', sans-serif",
+                    }}
+                  >
+                    View in Vault
+                  </button>
+                </div>
+              ) : (
+                <div style={{ marginBottom: 16 }}>
+                  {generatedScore < 900 && pipelineStatus === "IDLE" && (
+                    <div style={{
+                      padding: "12px 16px",
+                      background: "rgba(245,198,66,0.06)",
+                      borderLeft: "3px solid var(--gold-dark)",
+                      borderRadius: 6,
+                      marginBottom: 12,
+                      fontSize: 13,
+                      color: "var(--text-secondary)",
+                      lineHeight: 1.5,
+                      fontFamily: "'Afacad Flux', sans-serif",
+                    }}>
+                      Score below publication threshold. Run the full quality pipeline for detailed specialist feedback and automatic revisions.
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleRunPipeline}
+                    disabled={pipelineStatus === "RUNNING" || !generatedOutputId || generatedOutputId === "new"}
+                    style={{
+                      padding: "12px 20px",
+                      borderRadius: 8,
+                      border: "2px solid var(--gold-dark)",
+                      background: pipelineStatus === "RUNNING" ? "rgba(245,198,66,0.04)" : "var(--surface-white)",
+                      fontFamily: "'Afacad Flux', sans-serif",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: pipelineStatus === "RUNNING" ? "var(--text-tertiary)" : "var(--gold-dark)",
+                      cursor: pipelineStatus === "RUNNING" ? "default" : "pointer",
+                      transition: "all 0.15s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => { if (pipelineStatus !== "RUNNING") { e.currentTarget.style.background = "rgba(245,198,66,0.06)"; } }}
+                    onMouseLeave={(e) => { if (pipelineStatus !== "RUNNING") { e.currentTarget.style.background = "var(--surface-white)"; } }}
+                  >
+                    <Sparkles size={16} />
+                    {pipelineStatus === "RUNNING" ? "Running quality pipeline..." : "Run Quality Pipeline"}
+                  </button>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
+                    Run all 7 specialist checkpoints with detailed feedback
+                  </div>
+                  {pipelineStatus !== "IDLE" && (
+                    <div style={{ marginTop: 12 }}>
+                      <PipelineProgress
+                        status={pipelineStatus}
+                        currentStage={currentStage}
+                        blockedAt={blockedAt}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Collapsible scoring breakdown */}
               {generatedGates && (
                 <details style={{
@@ -1877,27 +1970,8 @@ export default function WorkSession() {
                 </details>
               )}
 
-              {/* Pipeline controls */}
-              <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={handleRunPipeline}
-                  disabled={pipelineStatus === "RUNNING" || !generatedOutputId || generatedOutputId === "new"}
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: 8,
-                    border: "1px solid var(--border-subtle)",
-                    background: pipelineStatus === "RUNNING" ? "rgba(0,0,0,0.02)" : "var(--surface-white)",
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    color: pipelineStatus === "RUNNING" ? "var(--text-tertiary)" : "var(--text-secondary)",
-                    cursor: pipelineStatus === "RUNNING" ? "default" : "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {pipelineStatus === "RUNNING" ? "Running quality pipeline..." : "Run Quality Pipeline"}
-                </button>
+              {/* Start over */}
+              <div style={{ marginTop: 16 }}>
                 <button
                   type="button"
                   onClick={startOver}
@@ -1917,16 +1991,6 @@ export default function WorkSession() {
                   Start over
                 </button>
               </div>
-
-              {pipelineStatus !== "IDLE" && (
-                <div style={{ marginTop: 12 }}>
-                  <PipelineProgress
-                    status={pipelineStatus}
-                    currentStage={currentStage}
-                    blockedAt={blockedAt}
-                  />
-                </div>
-              )}
             </div>
           </div>
         )}
