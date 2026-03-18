@@ -1329,7 +1329,7 @@ export default function ExplorePage() {
             </FadeInSection>
             <div style={{borderTop:`1px solid ${bc}`}}>
               <FadeInSection>
-                {[["01","Strategy","Does this serve your goals?","#3A7BD5"],["02","Voice","Does this sound like you?","#0D8C9E"],["03","Accuracy","Are the facts verified?","#C8961A"],["04","AI Tells","Could anyone spot the AI?","#e8506a"],["05","Audience","Will this resonate?","#A080F5"],["06","Platform","Is this native to the channel?","#4ab8f5"],["07","Impact","Will this move people to action?","#10b981"]].map(([num,name,desc,color],i,arr)=>(
+                {[["01","Echo","Catches repeated concepts and structural patterns","#4A90D9"],["02","Priya","Verifies every claim against independent sources","#C8961A"],["03","Jordan","Matches Voice DNA above 95% fidelity","#0D8C9E"],["04","David","7-second hook test with clear stakes","#A080F5"],["05","Elena","SLOP Detection: zero AI tells, zero em dashes","#e8506a"],["06","Natasha","Publication-grade editorial standard","#4ab8f5"],["07","Marcus + Marshall","Cultural sensitivity and perspective check","#10b981"]].map(([num,name,desc,color],i,arr)=>(
                   <CheckpointRow key={i} num={num} name={name} desc={desc} color={color} delay={0.03+i*.05} lc={lc} bc={bc} last={i===arr.length-1} />
                 ))}
               </FadeInSection>
