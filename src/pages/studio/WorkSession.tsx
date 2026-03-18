@@ -477,12 +477,13 @@ function SessionInputBox({
   return (
     <div
       style={{
-        maxWidth: 720,
-        width: "100%",
+        maxWidth: 800,
+        width: "calc(100% - 48px)",
         background: "white",
         border: "1px solid #E2E8F0",
         borderRadius: 24,
-        padding: "16px 20px",
+        padding: "14px 20px",
+        minHeight: 56,
         boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
         transition: "border-color 0.15s ease, box-shadow 0.15s ease",
         ...(focusWithin
@@ -541,7 +542,7 @@ function SessionInputBox({
             )}
           </button>
         )}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, width: "100%" }}>
           <AutoTextarea
             value={input}
             onChange={setInput}
@@ -643,6 +644,10 @@ function EmptyState({ children }: { outputType: string; onSuggestion: (s: string
       alignItems: "center",
       justifyContent: "flex-start",
       paddingTop: "22vh",
+      paddingLeft: 48,
+      paddingRight: 48,
+      width: "100%",
+      boxSizing: "border-box",
     }}>
       <WatsonOrb size={80} />
       <h1 style={{
@@ -657,7 +662,7 @@ function EmptyState({ children }: { outputType: string; onSuggestion: (s: string
       }}>
         What's on your mind?
       </h1>
-      <div style={{ width: "100%", maxWidth: 720, padding: "0 24px" }}>
+      <div style={{ width: "100%", maxWidth: 900 }}>
         {children}
       </div>
     </div>
@@ -1965,7 +1970,7 @@ export default function WorkSession() {
         padding: isMobile ? "8px 12px 16px" : "16px 24px 24px",
         background: "linear-gradient(transparent, var(--bg-light) 20%)",
       }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto", width: "100%", padding: "0 24px", boxSizing: "border-box" }}>
           <SessionInputBox
             input={input}
             setInput={setInput}
