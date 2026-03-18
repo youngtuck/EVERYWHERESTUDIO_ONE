@@ -2020,6 +2020,28 @@ export default function WorkSession() {
             apiError={apiError ?? ""}
             setApiError={setApiError}
           />
+          {!isReady && !loading && messages.filter(m => m.role === "user").length >= 2 && (
+            <div style={{ textAlign: "right", marginTop: 8, maxWidth: 760, marginLeft: "auto", marginRight: "auto" }}>
+              <button
+                type="button"
+                onClick={() => setIsReady(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  fontSize: 12,
+                  color: "var(--text-tertiary)",
+                  cursor: "pointer",
+                  transition: "color 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--gold-dark)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-tertiary)"; }}
+              >
+                Ready to produce? Skip ahead
+              </button>
+            </div>
+          )}
         </div>
       </div>
       )}
