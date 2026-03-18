@@ -437,11 +437,17 @@ const SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
 function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string) => void; isMobile: boolean }) {
   return (
     <div style={{
-      flex: 1, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      padding: "0 40px 120px", gap: 20, textAlign: "center",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "calc(100vh - 200px)",
+      padding: "0 40px",
+      marginTop: "-60px",
+      gap: 16,
+      textAlign: "center",
     }}>
-      <WatsonOrb size={80} />
+      <WatsonOrb size={64} />
 
       <div style={{ maxWidth: 400 }}>
         <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
