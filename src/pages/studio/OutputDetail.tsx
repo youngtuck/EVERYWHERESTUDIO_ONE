@@ -179,6 +179,7 @@ const REFORMAT_TYPES = [
   "Newsletter",
   "Social",
   "Video Script",
+  "Presentation",
   "Book",
   "Business",
   "Freestyle",

@@ -230,6 +230,11 @@ const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: strin
     color: "#4A90D9",
     watson: "What is the one idea you want to put into the feed? Tell me the take and where it should show up.",
   },
+  presentation: {
+    label: "Presentation",
+    color: "#E8506A",
+    watson: "What is the presentation for, who is in the room, and what decision should they make by the last slide?",
+  },
   business: {
     label: "Business",
     color: "#6b4dd4",
@@ -250,6 +255,7 @@ const OUTPUT_TYPE_KEYS = [
   "video_script",
   "newsletter",
   "socials",
+  "presentation",
   "business",
   "freestyle",
 ] as const;
@@ -263,6 +269,7 @@ const OUTPUT_TYPE_TO_API: Record<string, string> = {
   video_script: "video",
   newsletter: "newsletter",
   socials: "social",
+  presentation: "presentation",
   business: "freestyle",
   freestyle: "freestyle",
 };
@@ -395,6 +402,7 @@ const EMPTY_PROMPTS: Record<string, string> = {
   video_script: "What is the video about and where will it live?",
   newsletter: "What story are you telling in this issue?",
   socials: "What is the take you want to put into the feed?",
+  presentation: "What is the talk for and who is in the room?",
   business: "What are you trying to win with this document?",
   freestyle: "What do you want to make that does not fit a format?",
 };
@@ -434,6 +442,11 @@ const SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
     "Take on a trend in my space that I disagree with.",
     "Short thread breaking down a framework I use.",
     "Quote and reaction to something my audience is already talking about.",
+  ],
+  presentation: [
+    "Keynote for a leadership summit, 45 minutes.",
+    "Sales deck for a new service offering.",
+    "Internal strategy presentation for my team.",
   ],
   business: [
     "Proposal for a new advisory engagement.",
