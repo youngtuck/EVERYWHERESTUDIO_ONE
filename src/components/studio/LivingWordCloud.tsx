@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -9,22 +9,14 @@ const DEFAULT_WORDS = [
   'compose', 'refine', 'amplify', 'deliver', 'connect',
   'thinking', 'intelligence', 'content', 'channel', 'leadership',
   'framework', 'methodology', 'authentic', 'platform', 'growth',
+  'narrative', 'conviction', 'precision', 'presence', 'depth',
+  'original', 'publish', 'audience', 'category', 'position',
 ];
-
-interface CloudWord {
-  text: string;
-  x: number;
-  y: number;
-  size: number;
-  opacity: number;
-  weight: number;
-  duration: number;
-  delay: number;
-}
 
 export default function LivingWordCloud() {
   const { user } = useAuth();
   const [words, setWords] = useState<string[]>(DEFAULT_WORDS);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -32,70 +24,70 @@ export default function LivingWordCloud() {
       const collected: string[] = [];
       try {
         const { data: resources } = await supabase
-          .from('resources')
-          .select('title, content')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .limit(5);
+          .from('resources').select('title, content')
+          .eq('user_id', user.id).eq('is_active', true).limit(5);
         if (resources) {
           for (const r of resources) {
             const text = (r.title + ' ' + (r.content || '')).toLowerCase();
-            const meaningful = text
-              .split(/[\s,.\-:;!?()[\]{}'"\/|]+/)
+            const meaningful = text.split(/[\s,.\-:;!?()[\]{}'"\/|]+/)
               .filter(w => w.length > 3 && w.length < 13)
-              .filter(w => !['about','their','which','would','could','should','there','these','those','other','after','before','between','through','during','without','that','this','with','from','have','been','were','they','what','when','into','more','than','each','also','does','your','will','just','some','very','most','only','every','made','make'].includes(w));
+              .filter(w => !['about','their','which','would','could','should','there','these','those','other','after','before','between','through','during','without','that','this','with','from','have','been','were','they','what','when','into','more','than','each','also','does','your','will','just','some','very','most','only','every','made','make','using','used'].includes(w));
             collected.push(...meaningful.slice(0, 10));
           }
         }
       } catch (e) {}
       try {
         const { data: outputs } = await supabase
-          .from('outputs')
-          .select('title')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
+          .from('outputs').select('title')
+          .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5);
         if (outputs) {
           for (const o of outputs) {
-            const tw = (o.title || '').split(/\s+/).filter((w: string) => w.length > 3);
-            collected.push(...tw.slice(0, 3));
+            collected.push(...(o.title || '').split(/\s+/).filter((w: string) => w.length > 3).slice(0, 3));
           }
         }
       } catch (e) {}
       const unique = [...new Set(collected.map(w => w.toLowerCase()))];
-      if (unique.length >= 12) {
-        setWords(unique.slice(0, 30));
-      } else {
-        setWords([...unique, ...DEFAULT_WORDS].slice(0, 30));
-      }
+      setWords(unique.length >= 12 ? unique.slice(0, 40) : [...unique, ...DEFAULT_WORDS].slice(0, 40));
     })();
   }, [user]);
 
-  const cloudWords = useMemo<CloudWord[]>(() => {
+  const cloudWords = useMemo(() => {
     return words.map((text, i) => {
       const t = i / words.length;
-      const angle = (i / words.length) * Math.PI * 2 * 2.39996;
-      const r = 4 + t * 22;
-      const x = 50 + Math.cos(angle) * r + (Math.random() - 0.5) * 8;
-      const y = 45 + Math.sin(angle) * r * 0.55 + (Math.random() - 0.5) * 6;
-      const size = 12 + (1 - t) * 20 + Math.random() * 4;
-      const opacity = 0.04 + (1 - t) * 0.11 + Math.random() * 0.03;
+      const angle = i * 2.39996322;
+      const r = 3 + t * 28;
+      const x = 50 + Math.cos(angle) * r + (Math.random() - 0.5) * 6;
+      const y = 42 + Math.sin(angle) * r * 0.5 + (Math.random() - 0.5) * 5;
+
+      let size: number, opacity: number, weight: number;
+      if (i < 5) {
+        size = 36 + Math.random() * 18;
+        opacity = 0.08 + Math.random() * 0.06;
+        weight = 600;
+      } else if (i < 15) {
+        size = 20 + Math.random() * 12;
+        opacity = 0.06 + Math.random() * 0.05;
+        weight = 400;
+      } else {
+        size = 13 + Math.random() * 8;
+        opacity = 0.04 + Math.random() * 0.04;
+        weight = 300;
+      }
 
       return {
-        text,
-        x: Math.max(15, Math.min(85, x)),
-        y: Math.max(15, Math.min(80, y)),
-        size,
-        opacity,
-        weight: Math.random() > 0.5 ? 300 : 400,
-        duration: 30 + Math.random() * 40,
-        delay: Math.random() * -30,
+        text, size, opacity, weight,
+        x: Math.max(3, Math.min(97, x)),
+        y: Math.max(8, Math.min(85, y)),
+        duration: 25 + Math.random() * 35,
+        delay: Math.random() * -25,
+        fadeDelay: 5 + Math.random() * 15,
+        fadeDuration: 8 + Math.random() * 12,
       };
     });
   }, [words]);
 
   return (
-    <div style={{
+    <div ref={containerRef} style={{
       position: 'absolute',
       top: 0, left: 0, right: 0, bottom: 0,
       overflow: 'hidden',
@@ -103,9 +95,18 @@ export default function LivingWordCloud() {
       zIndex: 0,
     }}>
       <style>{`
-        @keyframes gentleDrift {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(3px, -4px); }
+        @keyframes cloudFloat {
+          0% { transform: translate(0, 0); }
+          25% { transform: translate(6px, -8px); }
+          50% { transform: translate(-4px, -3px); }
+          75% { transform: translate(5px, 6px); }
+          100% { transform: translate(0, 0); }
+        }
+        @keyframes cloudAppear {
+          0% { opacity: 0; filter: blur(8px); }
+          20% { opacity: var(--peak); filter: blur(0px); }
+          80% { opacity: var(--peak); filter: blur(0px); }
+          100% { opacity: 0; filter: blur(8px); }
         }
       `}</style>
       {cloudWords.map((w, i) => (
@@ -119,14 +120,16 @@ export default function LivingWordCloud() {
             fontFamily: "'Afacad Flux', sans-serif",
             fontWeight: w.weight,
             color: '#4A90D9',
-            opacity: w.opacity,
-            animation: `gentleDrift ${w.duration}s ease-in-out infinite`,
-            animationDelay: `${w.delay}s`,
+            opacity: 0,
+            ['--peak' as any]: w.opacity,
+            animation: `cloudFloat ${w.duration}s ease-in-out infinite, cloudAppear ${w.fadeDuration}s ease-in-out infinite`,
+            animationDelay: `${w.delay}s, ${w.fadeDelay}s`,
             whiteSpace: 'nowrap',
             userSelect: 'none',
             lineHeight: 1,
             textTransform: 'lowercase',
-            letterSpacing: '0.3px',
+            letterSpacing: w.size > 30 ? '1px' : '0.3px',
+            willChange: 'transform, opacity, filter',
           }}
         >
           {w.text}

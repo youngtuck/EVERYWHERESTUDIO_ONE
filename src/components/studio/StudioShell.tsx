@@ -52,7 +52,7 @@ export default function StudioShell() {
   }, []);
 
   const studioFooter = (
-    <footer style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+    <footer style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "rgba(0,0,0,0.3)", textAlign: "center", padding: "16px 24px", width: "100%", flexShrink: 0, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
       EVERYWHERE STUDIO (tm) 2026, Mixed Grill, LLC, v6.5 Alpha
     </footer>
   );

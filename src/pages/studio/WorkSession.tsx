@@ -445,10 +445,11 @@ function EmptyState({ isMobile }: { outputType: string; onSuggestion: (s: string
       justifyContent: "center",
       minHeight: "calc(100vh - 200px)",
       marginTop: "-40px",
+      marginBottom: "-32px",
     }}>
       <LivingWordCloud />
-      <div style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: 500, padding: "0 40px" }}>
-        <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 24, fontWeight: 600, color: "var(--text-primary)", marginBottom: 0, letterSpacing: "-0.02em", lineHeight: 1.3 }}>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: 600, padding: "0 32px", marginBottom: 32 }}>
+        <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 42, fontWeight: 700, color: "#0D1B2A", marginBottom: 0, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
           What's on your mind?
         </h2>
       </div>
