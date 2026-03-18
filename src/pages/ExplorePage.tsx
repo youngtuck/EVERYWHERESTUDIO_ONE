@@ -1071,6 +1071,7 @@ export default function ExplorePage() {
           @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&family=DM+Sans:wght@400;500;600&display=swap');
           *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
           html{scroll-behavior:smooth;}
+          [id]{scroll-margin-top:60px;}
           ::selection{background:${T.gold}40;}
           ${!dark ? "*, *::before, *::after { cursor: auto !important; } a, button, [role='button'], [style*='cursor:pointer'], [style*='cursor: pointer'] { cursor: pointer !important; }" : ""}
           .noise-overlay::before{
@@ -1146,17 +1147,19 @@ export default function ExplorePage() {
           position:"fixed",
           top:0,
           left:0,
+          right:0,
           width:"100%",
-          zIndex:100,
+          zIndex:200,
           height:54,
           padding:"0 36px",
           display:"flex",
           alignItems:"center",
           justifyContent:"space-between",
-          background: navScrolled ? "rgba(7,9,15,0.85)" : "transparent",
-          backdropFilter: navScrolled ? "blur(20px)" : "none",
-          borderBottom: navScrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
-          transition:"background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
+          background: navScrolled ? "rgba(7,9,15,0.92)" : "rgba(7,9,15,0.6)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderBottom: navScrolled ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255,255,255,0.03)",
+          transition:"background 0.3s ease, border-color 0.3s ease",
         }}>
           <button onClick={()=>nav("/")} style={{background:"none",border:"none",display:"flex",alignItems:"baseline",cursor:"pointer",gap:0}}>
             <Logo size={15} variant={dark ? "dark" : "light"} />
