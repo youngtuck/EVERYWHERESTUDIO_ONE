@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import Tooltip from "../../components/Tooltip";
+import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
@@ -559,74 +560,7 @@ export default function Watch() {
               zIndex: 1,
             }}
           >
-            <div
-              className="sentinel-orb-pulse"
-              style={{
-                width: 120,
-                height: 120,
-                borderRadius: "50%",
-                background: "radial-gradient(circle at center, #1B3A5C 0%, #0D1B2A 100%)",
-                border: "1px solid rgba(74,144,245,0.3)",
-                boxShadow: "0 0 40px rgba(74,144,245,0.15)",
-                position: "relative",
-                flexShrink: 0,
-              }}
-            >
-              <div
-                className={completing ? "sentinel-rings-completing" : ""}
-                style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
-              >
-                <div
-                  className="sentinel-ring-1"
-                  style={{
-                    position: "absolute",
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    border: "1px solid rgba(74,144,245,0.6)",
-                  }}
-                />
-                <div
-                  className="sentinel-ring-2"
-                  style={{
-                    position: "absolute",
-                    width: 60,
-                    height: 60,
-                    borderRadius: "50%",
-                    border: "1px solid rgba(74,144,245,0.3)",
-                  }}
-                />
-                <div
-                  className="sentinel-ring-3"
-                  style={{
-                    position: "absolute",
-                    width: 80,
-                    height: 80,
-                    borderRadius: "50%",
-                    border: "1px solid rgba(74,144,245,0.15)",
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ marginTop: 24, textAlign: "center" }}>
-              <div style={{ fontSize: 13, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(74,144,245,0.7)", marginBottom: 8 }}>
-                SENTINEL
-              </div>
-              <div key={statusIndex} className="sentinel-status-text" style={{ fontSize: 13, fontFamily: "'Afacad Flux', sans-serif", color: "rgba(255,255,255,0.5)", minHeight: 20 }}>
-                {SENTINEL_LOADING_MESSAGES[statusIndex]}
-              </div>
-            </div>
-            <div style={{ marginTop: 32, width: 200, height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 1, overflow: "hidden" }}>
-              <div
-                className={completing ? "sentinel-progress-fill-complete" : "sentinel-progress-fill-loading"}
-                style={{
-                  height: "100%",
-                  width: 0,
-                  background: "linear-gradient(to right, #4A90F5, #0D8C9E)",
-                  borderRadius: 1,
-                }}
-              />
-            </div>
+            <LoadingAnimation variant="sentinel" message={SENTINEL_LOADING_MESSAGES[statusIndex]} />
           </div>
         )}
         {!needsSetup && !hasTodayBriefing && !showSentinelLoading && (

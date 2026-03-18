@@ -4,6 +4,7 @@ import { Folder, FileText, BarChart3, X, MoreVertical } from "lucide-react";
 import { getScoreColor } from "../../utils/scoreColor";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import "./shared.css";
 
 type ProjectRow = {
@@ -580,7 +581,9 @@ export default function Projects() {
         </div>
       )}
       {loading ? (
-        <div style={{ padding: "40px 0", fontSize: 14, color: "var(--text-secondary)" }}>Loading projects…</div>
+        <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+          <LoadingAnimation variant="sentinel" message="Loading projects..." />
+        </div>
       ) : sortedProjects.length === 0 ? (
         renderEmpty()
       ) : (

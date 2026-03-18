@@ -13,6 +13,7 @@ import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 import WatsonOrb from "../../components/studio/WatsonOrb";
+import LoadingAnimation from "../../components/studio/LoadingAnimation";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WATSON ORB MINI - minimal 2D system glyph (message bubble / thinking state)
@@ -702,41 +703,8 @@ function EmptyState({
 
 function WatsonThinking() {
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-    }}>
-      <div style={{ flexShrink: 0 }}>
-        <WatsonOrbMini size={28} thinking />
-      </div>
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        background: "var(--surface)",
-        border: "1px solid var(--line)",
-        borderRadius: 20,
-        padding: "8px 14px",
-      }}>
-        <span style={{
-          fontSize: 12,
-          fontWeight: 500,
-          color: "var(--fg-3)",
-          letterSpacing: "0.01em",
-        }}>Watson is thinking</span>
-        <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
-          {[0, 1, 2].map(i => (
-            <div key={i} style={{
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: "var(--fg-3)",
-              animation: `watsonDot 1.4s ${i * 0.16}s ease-in-out infinite`,
-            }} />
-          ))}
-        </div>
-      </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <LoadingAnimation variant="watson" message="Watson is listening..." />
     </div>
   );
 }
@@ -1479,12 +1447,7 @@ export default function WorkSession() {
             flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
             gap: 24, padding: 40,
           }}>
-            <div style={{ animation: "orbPulse 2s ease-in-out infinite" }}>
-              <WatsonOrbMini size={180} thinking />
-            </div>
-            <p style={{ fontSize: 15, fontWeight: 500, color: "var(--fg-2)", letterSpacing: "-0.01em" }}>
-              Watson is working...
-            </p>
+            <LoadingAnimation variant="generate" progress={undefined} message="Watson is working..." />
           </div>
         )}
 

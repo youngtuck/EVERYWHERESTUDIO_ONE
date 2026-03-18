@@ -4,6 +4,7 @@ import { MoreVertical, Upload, Plus, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
+import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
@@ -260,8 +261,8 @@ export default function Resources() {
           }}
         >
           {loading ? (
-            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 48, color: "var(--text-tertiary)" }}>
-              Loading resources…
+            <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center", padding: 48 }}>
+              <LoadingAnimation variant="sentinel" message="Loading resources..." />
             </div>
           ) : (
             filtered.map((r) => (

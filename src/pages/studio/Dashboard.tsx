@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { timeAgo } from "../../utils/timeAgo";
 import { getScoreColor } from "../../utils/scoreColor";
 import "./shared.css";
+import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import "./dashboard.css";
 
 function getGreeting(): string {
