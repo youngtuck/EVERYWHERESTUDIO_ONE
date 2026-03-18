@@ -274,9 +274,9 @@ interface Message {
   typing?: boolean;
 }
 
-// Auto-resize textarea
+// Auto-resize textarea (premium chatbot style)
 function AutoTextarea({
-  value, onChange, onSubmit, placeholder, disabled, inputRef,
+  value, onChange, onSubmit, placeholder, disabled, inputRef, className,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -284,6 +284,7 @@ function AutoTextarea({
   placeholder: string;
   disabled?: boolean;
   inputRef?: React.RefObject<HTMLTextAreaElement>;
+  className?: string;
 }) {
   const localRef = useRef<HTMLTextAreaElement>(null);
   const refToUse = inputRef ?? localRef;
@@ -292,12 +293,13 @@ function AutoTextarea({
     const el = refToUse.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 200) + "px";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
   }, [value, refToUse]);
 
   return (
     <textarea
       ref={refToUse}
+      className={className}
       value={value}
       onChange={e => onChange(e.target.value)}
       onKeyDown={e => {
@@ -310,10 +312,19 @@ function AutoTextarea({
       disabled={disabled}
       rows={1}
       style={{
-        width: "100%", resize: "none", border: "none", outline: "none",
-        background: "transparent", fontFamily: "var(--font)", fontSize: 15,
-        lineHeight: 1.6, color: "var(--fg)", padding: 0,
-        maxHeight: 200, overflowY: "auto",
+        width: "100%",
+        resize: "none",
+        border: "none",
+        outline: "none",
+        background: "transparent",
+        fontFamily: "'Afacad Flux', sans-serif",
+        fontSize: 16,
+        lineHeight: 1.5,
+        color: "#0D1B2A",
+        padding: 0,
+        minHeight: 24,
+        maxHeight: 120,
+        overflowY: "auto",
       }}
     />
   );
@@ -435,7 +446,7 @@ const SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
   ],
 };
 
-// Reusable input card for both empty-state (inline) and sticky bar (when messages exist)
+// Premium chatbot-style input (Claude / ChatGPT / Gemini pattern)
 function SessionInputBox({
   input,
   setInput,
@@ -459,26 +470,29 @@ function SessionInputBox({
   apiError: string;
   setApiError: (v: string) => void;
 }) {
+  const [focusWithin, setFocusWithin] = useState(false);
+  const hasText = !!input.trim();
+  const sendEnabled = hasText && !loading;
+
   return (
     <div
       style={{
+        maxWidth: 720,
         width: "100%",
-        background: "var(--surface-white)",
-        border: "1.5px solid var(--border-default)",
-        borderRadius: 12,
+        background: "white",
+        border: "1px solid #E2E8F0",
+        borderRadius: 24,
         padding: "16px 20px",
-        minHeight: 56,
-        maxHeight: 200,
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        transition: "border-color 0.2s",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+        ...(focusWithin
+          ? { borderColor: "#4A90D9", boxShadow: "0 2px 20px rgba(74,144,217,0.12)" }
+          : {}),
       }}
-      onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--gold-dark)"; }}
-      onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-default)"; }}
+      onFocus={() => setFocusWithin(true)}
+      onBlur={() => setFocusWithin(false)}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
         {isSupported && (
           <button
             type="button"
@@ -488,16 +502,26 @@ function SessionInputBox({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               borderRadius: "50%",
-              border: isListening ? "2px solid #E53935" : "1px solid var(--border-subtle)",
-              background: isListening ? "rgba(229, 57, 53, 0.08)" : "transparent",
+              border: "none",
+              background: isListening ? "rgba(229, 57, 53, 0.12)" : "rgba(0,0,0,0.04)",
               cursor: "pointer",
-              color: isListening ? "#E53935" : "var(--text-tertiary)",
-              transition: "all 0.2s ease",
+              color: isListening ? "#E53935" : "#64748B",
+              transition: "background 0.15s ease",
               flexShrink: 0,
               position: "relative",
+            }}
+            onMouseEnter={(e) => {
+              if (!isListening) {
+                e.currentTarget.style.background = "rgba(0,0,0,0.08)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isListening) {
+                e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+              }
             }}
           >
             <Mic size={18} strokeWidth={2} />
@@ -507,8 +531,8 @@ function SessionInputBox({
                   position: "absolute",
                   top: -2,
                   right: -2,
-                  width: 10,
-                  height: 10,
+                  width: 8,
+                  height: 8,
                   borderRadius: "50%",
                   background: "#E53935",
                   animation: "voicePulse 1.5s ease-in-out infinite",
@@ -517,7 +541,7 @@ function SessionInputBox({
             )}
           </button>
         )}
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <AutoTextarea
             value={input}
             onChange={setInput}
@@ -525,8 +549,40 @@ function SessionInputBox({
             placeholder="Tell Watson what's on your mind..."
             disabled={loading}
             inputRef={inputRef}
+            className="watson-input"
           />
         </div>
+        <button
+          type="button"
+          onClick={() => sendMessage()}
+          disabled={!sendEnabled}
+          title="Send message"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            border: "none",
+            background: sendEnabled ? "#0D1B2A" : "rgba(13, 27, 42, 0.3)",
+            color: "white",
+            cursor: sendEnabled ? "pointer" : "default",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 0.15s ease",
+            flexShrink: 0,
+            opacity: sendEnabled ? 1 : 0.3,
+          }}
+          onMouseEnter={(e) => {
+            if (sendEnabled) e.currentTarget.style.background = "#1B263B";
+          }}
+          onMouseLeave={(e) => {
+            if (sendEnabled) e.currentTarget.style.background = "#0D1B2A";
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
       {isListening && (
         <div
@@ -534,17 +590,16 @@ function SessionInputBox({
             display: "flex",
             alignItems: "center",
             gap: 8,
-            padding: "6px 2px",
+            marginTop: 10,
             fontSize: 12,
             color: "#E53935",
             fontFamily: "'Afacad Flux', sans-serif",
-            letterSpacing: "0.02em",
           }}
         >
           <span
             style={{
-              width: 8,
-              height: 8,
+              width: 6,
+              height: 6,
               borderRadius: "50%",
               background: "#E53935",
               animation: "voicePulse 1.5s ease-in-out infinite",
@@ -553,46 +608,27 @@ function SessionInputBox({
           Listening...
         </div>
       )}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-        <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: apiError ? "var(--danger)" : "var(--text-tertiary)", letterSpacing: ".01em", display: "flex", alignItems: "center", gap: 8 }}>
-          {apiError}
-          {apiError && (
-            <button type="button" onClick={() => setApiError("")} style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", background: "rgba(0,0,0,0.06)", border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>Try again</button>
-          )}
-          {!apiError && "Enter to send · Shift+Enter for new line"}
-        </span>
-        <button
-          onClick={() => sendMessage()}
-          disabled={!input.trim() || loading}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            border: "none",
-            background: input.trim() && !loading ? "var(--gold-dark)" : "rgba(0,0,0,0.06)",
-            cursor: input.trim() && !loading ? "pointer" : "default",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all .15s",
-            flexShrink: 0,
-          }}
-          title="Send message"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={input.trim() && !loading ? "#fff" : "var(--text-tertiary)"}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+      {apiError && (
+        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, color: "var(--danger)" }}>{apiError}</span>
+          <button
+            type="button"
+            onClick={() => setApiError("")}
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#0D1B2A",
+              background: "rgba(0,0,0,0.06)",
+              border: "none",
+              borderRadius: 6,
+              padding: "4px 10px",
+              cursor: "pointer",
+            }}
           >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
+            Try again
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -605,8 +641,8 @@ function EmptyState({ children }: { outputType: string; onSuggestion: (s: string
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "center",
-      paddingTop: "5vh",
+      justifyContent: "flex-start",
+      paddingTop: "22vh",
     }}>
       <WatsonOrb size={80} />
       <h1 style={{
@@ -621,7 +657,7 @@ function EmptyState({ children }: { outputType: string; onSuggestion: (s: string
       }}>
         What's on your mind?
       </h1>
-      <div style={{ width: "100%", maxWidth: 640, padding: "0 32px" }}>
+      <div style={{ width: "100%", maxWidth: 720, padding: "0 24px" }}>
         {children}
       </div>
     </div>
@@ -1277,6 +1313,9 @@ export default function WorkSession() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        .watson-input::placeholder {
+          color: rgba(0,0,0,0.3);
+        }
       `}</style>
 
       {/* ── Top bar (fixed 60px) ───────────────────────────────────── */}
@@ -1926,7 +1965,7 @@ export default function WorkSession() {
         padding: isMobile ? "8px 12px 16px" : "16px 24px 24px",
         background: "linear-gradient(transparent, var(--bg-light) 20%)",
       }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
           <SessionInputBox
             input={input}
             setInput={setInput}
