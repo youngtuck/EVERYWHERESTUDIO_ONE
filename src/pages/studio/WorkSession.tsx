@@ -550,8 +550,30 @@ function EmptyState({
 
 function WatsonThinking() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <LoadingAnimation variant="watson" message="Watson is listening..." />
+    <div style={{ display: "flex", alignItems: "center", padding: "12px 0" }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "10px 20px",
+        background: "var(--surface-white)",
+        borderRadius: 20,
+        border: "1px solid var(--border-subtle)",
+      }}>
+        {[
+          { color: "#4A90D9", delay: "0s" },
+          { color: "#F5C642", delay: "0.15s" },
+          { color: "#4A90D9", delay: "0.3s" },
+        ].map((dot, i) => (
+          <div key={i} style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: dot.color,
+            animation: `watsonPulse 1.4s ${dot.delay} ease-in-out infinite`,
+          }} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -1417,8 +1439,8 @@ export default function WorkSession() {
           40%          { transform: translateY(-3px); opacity: 1; }
         }
         @keyframes watsonPulse {
-          0%, 100% { box-shadow: 0 0 10px rgba(100,120,255,0.3); }
-          50%      { box-shadow: 0 0 20px rgba(100,120,255,0.6), 0 0 40px rgba(80,60,200,0.2); }
+          0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
+          50% { transform: scale(1.3) translateY(-4px); opacity: 1; }
         }
         @keyframes makeThingPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(200,150,26,0); }
