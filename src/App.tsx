@@ -25,6 +25,7 @@ const TheLot = lazy(() => import("./pages/studio/TheLot"));
 const Workbench = lazy(() => import("./pages/studio/Workbench"));
 const Wrap = lazy(() => import("./pages/studio/Wrap"));
 const VisualWrap = lazy(() => import("./pages/studio/VisualWrap"));
+const AdminPanel = lazy(() => import("./pages/studio/AdminPanel"));
 
 function PageTransition({ children }: { children: ReactNode }) {
   const location = useLocation();
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="settings/voice" element={<VoiceDnaSettings />} />
               <Route path="lot" element={<TheLot />} />
               <Route path="workbench" element={<Workbench />} />
+              <Route path="admin" element={<AdminPanel />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

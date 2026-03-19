@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../lib/supabase";
 import Logo from "../Logo";
-import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, Plus, LogOut, Package, Archive, Loader2 } from "lucide-react";
+import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, Plus, LogOut, Package, Archive, Loader2, Shield } from "lucide-react";
 
 // ── Nav structure: Watch > Work > Wrap (primary), then utility at bottom ──
 const PRIMARY_NAV = [
@@ -43,6 +43,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
   const { user, signOut } = useAuth();
 
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -51,10 +52,13 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
     }
     supabase
       .from("profiles")
-      .select("onboarding_complete")
+      .select("onboarding_complete, is_admin")
       .eq("id", user.id)
       .single()
-      .then(({ data }) => setOnboardingComplete(data?.onboarding_complete ?? false));
+      .then(({ data }) => {
+        setOnboardingComplete(data?.onboarding_complete ?? false);
+        setIsAdmin(!!data?.is_admin);
+      });
   }, [user]);
 
   const handleSignOut = async () => {
@@ -390,6 +394,30 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               </button>
             );
           })}
+          {isAdmin && (
+            <button
+              onClick={() => nav("/studio/admin")}
+              title="Admin panel"
+              className={`nav-item ${isActive("/studio/admin") ? "active" : ""}`}
+              style={{
+                width: "100%", display: "flex", alignItems: "center",
+                padding: "8px 16px", border: "none", borderRadius: 8,
+                borderLeft: isActive("/studio/admin") ? "3px solid var(--gold-dark)" : "3px solid transparent",
+                background: isActive("/studio/admin") ? "rgba(0,0,0,0.04)" : "transparent",
+                cursor: "pointer", fontFamily: "var(--font)", fontSize: 13, fontWeight: 400,
+                textAlign: "left", color: "#F5C642",
+                transition: "background 0.15s ease, color 0.15s ease",
+                marginTop: 8,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Shield size={16} strokeWidth={2} />
+                </span>
+                {!collapsed && <span>Admin</span>}
+              </div>
+            </button>
+          )}
         </div>
       </nav>
 
