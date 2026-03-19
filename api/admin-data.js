@@ -6,23 +6,34 @@
 import { createClient } from "@supabase/supabase-js";
 
 async function verifyAdmin(req) {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !serviceRoleKey) return { admin: false, error: "Not configured" };
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error("[admin-data] Missing env vars. SUPABASE_URL:", !!supabaseUrl, "SERVICE_ROLE_KEY:", !!serviceRoleKey);
+    return { admin: false, error: "Server not configured. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars." };
+  }
 
   const token = (req.headers.authorization || "").replace("Bearer ", "");
-  if (!token) return { admin: false, error: "No token" };
+  if (!token) return { admin: false, error: "No auth token provided" };
 
-  const anonClient = createClient(supabaseUrl, anonKey || serviceRoleKey);
-  const { data: { user }, error } = await anonClient.auth.getUser(token);
-  if (error || !user) return { admin: false, error: "Invalid token" };
+  try {
+    // Use service role to verify the token (more reliable than anon key)
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const { data: { user }, error } = await adminClient.auth.getUser(token);
+    if (error || !user) {
+      console.error("[admin-data] Token verification failed:", error?.message);
+      return { admin: false, error: "Invalid or expired auth token" };
+    }
 
-  const adminClient = createClient(supabaseUrl, serviceRoleKey);
-  const { data: profile } = await adminClient.from("profiles").select("is_admin").eq("id", user.id).single();
-  if (!profile?.is_admin) return { admin: false, error: "Not admin" };
+    const { data: profile } = await adminClient.from("profiles").select("is_admin").eq("id", user.id).single();
+    if (!profile?.is_admin) return { admin: false, error: "Not an admin user" };
 
-  return { admin: true, userId: user.id, client: adminClient };
+    return { admin: true, userId: user.id, client: adminClient };
+  } catch (err) {
+    console.error("[admin-data] Auth error:", err);
+    return { admin: false, error: "Authentication failed" };
+  }
 }
 
 export default async function handler(req, res) {

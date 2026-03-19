@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ valid: false, error: "Access code is required." });
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) {
     // Fallback: hardcoded universal code if Supabase not configured
