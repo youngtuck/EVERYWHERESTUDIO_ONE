@@ -568,8 +568,10 @@ function EmptyState({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "0 24px",
+        justifyContent: "flex-start",
+        paddingTop: "calc((100vh - 60px) * 0.22)",
+        paddingLeft: 24,
+        paddingRight: 24,
       }}
     >
       <WatsonOrb size={isMobile ? 56 : 80} />
@@ -581,8 +583,8 @@ function EmptyState({
           fontFamily: "'Afacad Flux', sans-serif",
           letterSpacing: "-0.5px",
           textAlign: "center",
-          marginTop: isMobile ? -8 : -16,
-          marginBottom: isMobile ? 20 : 32,
+          marginTop: 16,
+          marginBottom: 24,
         }}
       >
         What's on your mind?
