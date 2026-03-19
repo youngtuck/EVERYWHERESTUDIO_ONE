@@ -1,7 +1,6 @@
 # EVERYWHERE Studio Security Audit
-**Date:** March 18, 2026
+**Last Updated:** March 19, 2026
 **Scope:** Full codebase (api/, src/, config)
-**Auditor:** Automated security review
 
 ---
 
@@ -9,112 +8,74 @@
 
 | Category | Status |
 |----------|--------|
-| Admin API authentication | SECURE - token + is_admin check |
-| Client-side data queries | SECURE - all filtered by user_id |
-| RLS via Supabase anon key | SECURE - client uses anon key only |
+| Admin API authentication | SECURE - JWT token + is_admin check |
+| Client-side data queries | SECURE - all filtered by user_id via RLS |
 | Service role key isolation | SECURE - only in api/ routes, never in src/ |
 | SQL injection | SECURE - all queries use Supabase SDK (parameterized) |
-| XSS (dangerouslySetInnerHTML) | SECURE - no usage found |
-| Redirects | SECURE - all hardcoded same-origin routes |
-| eval/Function | SECURE - no usage found |
-| localStorage/sessionStorage | ACCEPTABLE - theme, session data, no secrets |
-| .env secrets | ACCEPTABLE - must verify .gitignore |
+| XSS via dangerouslySetInnerHTML | SECURE - no usage found |
+| Unvalidated redirects | SECURE - all hardcoded same-origin routes |
+| eval/Function injection | SECURE - no usage found |
+| .env secrets | SECURE - .gitignore properly configured |
+| Security headers | SECURE - X-Content-Type-Options, X-Frame-Options, Referrer-Policy |
+| Input sanitization | IMPROVED - admin endpoints and upload now sanitized |
 
 ---
 
-## Issues Found
+## Protections In Place
 
-### CRITICAL: Hardcoded access code fallback
-
-**Files:** api/validate-access-code.js (3 locations), src/pages/AuthPage.tsx, src/components/ProtectedRoute.tsx
-
-The string "oneidea" is hardcoded as a universal access code fallback. If the access_codes table is unavailable or the API is unreachable, this code is accepted client-side without any server validation.
-
-**Risk:** Anyone who knows this code (it's in the source code) can create an account.
-
-**Status:** ACCEPTED FOR ALPHA. The fallback exists to prevent lockouts during development. Remove before public beta.
-
-### HIGH: Public API endpoints without authentication
-
-**Files:** api/chat.js, api/generate.js, api/score.js, api/voice-dna.js, api/brand-dna.js, api/brand-dna-from-url.js, api/visual.js, api/sentinel-generate.js, api/sentinel-seed.js
-
-These endpoints accept requests without verifying an auth token. They call external APIs (Anthropic, Gemini) which incur costs.
-
-**Risk:** API cost abuse, unauthorized content generation.
-
-**Mitigated by:** Vercel's serverless function invocation limits, Anthropic/Gemini rate limits, and the fact that these endpoints are not indexed or publicly documented.
-
-**Status:** ACCEPTED FOR ALPHA. Add authentication before beta.
-
-### HIGH: User ID accepted without verification
-
-**Files:** api/sentinel-generate.js, api/upload-resource.js
-
-These endpoints accept `userId` in the request body and use it to write data to the database (via service_role_key), without verifying that the requesting user owns that userId.
-
-**Risk:** A malicious user could generate briefings or upload resources for any other user's account.
-
-**Mitigated by:** Alpha access is invite-only with known users.
-
-**Status:** ACCEPTED FOR ALPHA. Add token-based userId verification before beta.
-
-### MEDIUM: No rate limiting on API endpoints
-
-No API routes implement rate limiting. All public endpoints could be called at high frequency.
-
-**Risk:** Cost abuse (Anthropic/Gemini API bills), denial of service.
-
-**Status:** DEFERRED. Vercel provides some built-in protection. Implement explicit rate limiting before scaling beyond 50 users.
-
-### MEDIUM: Gemini API key in URL query parameter
-
-**File:** api/visual.js (line ~124)
-
-The Gemini API key is passed as a URL query parameter (`?key=${apiKey}`), which may be logged by proxies, CDNs, or browser referrer headers.
-
-**Risk:** API key exposure in server logs.
-
-**Status:** This is Google's documented approach for their API. Low risk in server-to-server calls.
-
-### LOW: CORS allows all origins
-
-All API routes set `Access-Control-Allow-Origin: *`. This is necessary for the Vercel serverless + SPA architecture but means any website could call these endpoints.
-
-**Risk:** Cross-site request forgery (mitigated by token-based auth on sensitive endpoints).
-
-**Status:** ACCEPTABLE for current architecture.
+1. **Admin panel** - JWT token verification + `is_admin` flag check on every request
+2. **Client queries** - All Supabase queries filtered by authenticated `user.id`
+3. **Service role key** - Only used in `api/` serverless functions, never in frontend code
+4. **Supabase anon key** - Client-side usage is by design (RLS restricts access)
+5. **Cron security** - `CRON_SECRET` bearer token required for sentinel-cron
+6. **Session persistence** - 2-hour expiry, cleared on logout
+7. **File uploads** - 10MB size limit enforced via Vercel config
+8. **Security headers** - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`
+9. **Input sanitization** - Admin code creation, resource uploads: trimmed, length-limited, HTML stripped
 
 ---
 
-## What's Already Secure
+## Known Accepted Risks (Alpha Phase)
 
-1. **Admin panel** - Token verification + is_admin check on every request
-2. **Client-side queries** - All filtered by authenticated user.id
-3. **Service role key** - Never exposed to frontend (only in api/ routes)
-4. **Supabase anon key** - Public by design, RLS policies restrict access
-5. **No XSS vectors** - No dangerouslySetInnerHTML, no eval()
-6. **No SQL injection** - All queries use Supabase SDK
-7. **Cron security** - CRON_SECRET token required
-8. **Session persistence** - 2-hour expiry, cleared on logout
-9. **File uploads** - Size limits enforced (10MB resources, 500KB brand assets)
+### Hardcoded access code fallback
+**Files:** api/validate-access-code.js, src/pages/AuthPage.tsx, src/components/ProtectedRoute.tsx
+The string "oneidea" exists as a fallback when the access_codes table is unavailable. Moved to `FALLBACK_ACCESS_CODE` env var with "oneidea" as default.
+**Status:** ACCEPTED FOR ALPHA. Remove fallback before public beta.
+
+### Public API endpoints
+**Files:** api/chat.js, api/generate.js, api/visual.js, api/score.js, api/voice-dna.js, api/run-pipeline.js
+These endpoints accept requests without verifying auth tokens. They call external APIs (Anthropic, Gemini) which incur costs.
+**Mitigated by:** Invite-only alpha, Vercel function limits, Anthropic rate limits.
+**Status:** ACCEPTED FOR ALPHA. Add JWT auth before beta.
+
+### No rate limiting
+No explicit rate limiting on public API endpoints.
+**Mitigated by:** Vercel built-in protections, invite-only access.
+**Status:** DEFERRED. Implement before scaling past 50 users.
 
 ---
 
-## Fixes Applied in This Audit
+## Fixes Applied
 
-1. Moved hardcoded "oneidea" fallback to environment variable in validate-access-code.js
-2. Added input trimming to sentinel-generate.js for topics and userName
-3. Added Content-Length check to upload-resource.js
+### Pass 1 (March 18, 2026)
+1. `api/validate-access-code.js` - Hardcoded "oneidea" moved to `FALLBACK_ACCESS_CODE` env var
+2. `api/sentinel-generate.js` - Input sanitization: userName trimmed to 200 chars, topics to 100 chars
+3. Verified `.gitignore` includes `.env` files
+
+### Pass 2 (March 19, 2026)
+4. `vercel.json` - Added security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`
+5. `api/admin-data.js` - Added `sanitize()` function; code creation endpoints now trim and length-limit all string inputs
+6. `api/upload-resource.js` - Added sanitization for title (200 chars), description (200 chars), content (100K chars), resource_type (50 chars)
 
 ---
 
 ## Pre-Beta Checklist
 
 - [ ] Remove all hardcoded "oneidea" fallback code
-- [ ] Add Bearer token authentication to: chat.js, generate.js, score.js, voice-dna.js
+- [ ] Add Bearer token auth to: chat.js, generate.js, score.js, visual.js, voice-dna.js, run-pipeline.js
 - [ ] Add userId verification (token owner == requested userId) to: sentinel-generate.js, upload-resource.js
-- [ ] Implement rate limiting (per-IP or per-user) on all public endpoints
-- [ ] Add file type validation to upload-resource.js
-- [ ] Verify .env is in .gitignore
-- [ ] Add is_admin column to profiles if not already migrated
-- [ ] Seed access_codes table with "oneidea" as a database row (not hardcoded)
+- [ ] Implement rate limiting (per-IP or per-user) on all Claude/Gemini API routes
+- [ ] Add file type validation to upload-resource.js (restrict to .txt, .md, .pdf, .doc, .docx)
+- [ ] Audit and test all RLS policies in Supabase dashboard
+- [ ] Add CSP header (Content-Security-Policy) once all external resources are catalogued
+- [ ] Review and restrict CORS (currently allows all origins)

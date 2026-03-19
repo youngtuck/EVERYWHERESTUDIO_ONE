@@ -36,6 +36,11 @@ async function verifyAdmin(req) {
   }
 }
 
+function sanitize(input, maxLength = 500) {
+  if (!input || typeof input !== "string") return "";
+  return input.trim().slice(0, maxLength).replace(/<[^>]*>/g, "");
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -184,10 +189,10 @@ export default async function handler(req, res) {
     if (action === "create_code") {
       const { name, email, note, code } = params;
       const { data, error: insertError } = await client.from("access_codes").insert({
-        code,
-        assigned_name: name || null,
-        assigned_email: email || null,
-        note: note || null,
+        code: sanitize(code, 20),
+        assigned_name: sanitize(name, 200) || null,
+        assigned_email: sanitize(email, 200) || null,
+        note: sanitize(note, 500) || null,
         created_by: userId,
         max_uses: 1,
         use_count: 0,

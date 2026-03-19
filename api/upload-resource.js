@@ -94,15 +94,16 @@ export default async function handler(req, res) {
       extractedContent = "(Text extraction requires ANTHROPIC_API_KEY. Original file stored in Supabase Storage.)";
     }
 
-    // Insert into resources table
+    // Insert into resources table (with sanitization)
+    const safeName = (n) => typeof n === "string" ? n.trim().slice(0, 200).replace(/<[^>]*>/g, "") : "";
     const { data, error: insertError } = await supabase
       .from("resources")
       .insert({
         user_id: userId,
-        resource_type: resourceType || "reference",
-        title: title,
-        description: description || `Uploaded from ${fileName || "file"}`,
-        content: extractedContent || "(No text content extracted)",
+        resource_type: (resourceType || "reference").slice(0, 50),
+        title: safeName(title) || safeName(fileName) || "Untitled",
+        description: safeName(description) || `Uploaded from ${safeName(fileName) || "file"}`,
+        content: (extractedContent || "(No text content extracted)").slice(0, 100000),
         is_active: true,
         metadata: { original_file: filePath, file_name: fileName, file_type: fileType },
       })
