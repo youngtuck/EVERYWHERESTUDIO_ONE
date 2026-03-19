@@ -1,3 +1,5 @@
+import { useTheme } from "../context/ThemeContext";
+
 interface LogoProps {
   size?: "sm" | "md" | "lg" | number;
   /** @deprecated Prefer `variant="dark" | "light"` going forward. */
@@ -7,7 +9,14 @@ interface LogoProps {
 }
 
 const Logo = ({ size = "md", onDark, variant, onClick }: LogoProps) => {
-  const isDark = variant ? variant === "dark" : !!onDark;
+  const { theme } = useTheme();
+
+  // If variant is explicitly set, use it. Otherwise auto-detect from theme.
+  const isDark = variant
+    ? variant === "dark"
+    : onDark !== undefined
+      ? onDark
+      : theme === "dark";
 
   const fs = typeof size === "number"
     ? size

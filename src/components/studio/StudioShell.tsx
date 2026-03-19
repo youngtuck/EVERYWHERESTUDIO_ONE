@@ -151,7 +151,7 @@ export default function StudioShell() {
                 <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
             </button>
-            <Logo size="sm" variant="light" />
+            <Logo size="sm" />
             <NotificationBell />
           </div>
         )}

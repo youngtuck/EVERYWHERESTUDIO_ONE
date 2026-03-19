@@ -130,7 +130,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             }} />
           </div>
           {!collapsed && (
-            <Logo size={18} variant="light" />
+            <Logo size={18} />
           )}
         </button>
         {!collapsed && onToggleCollapsed && (
