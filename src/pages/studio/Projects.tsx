@@ -38,6 +38,7 @@ export default function Projects() {
   const [createLoading, setCreateLoading] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [newColor, setNewColor] = useState("#4A90D9");
   const [error, setError] = useState<string | null>(null);
 
   // Menu / rename / archive state
@@ -708,6 +709,22 @@ export default function Projects() {
                     outline: "none",
                   }}
                 />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 8, color: "var(--fg-2)" }}>Color</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {["#4A90D9", "#F5C642", "#E8B4A0", "#50c8a0", "#A080F5", "#64748B"].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setNewColor(c)}
+                      style={{
+                        width: 28, height: 28, borderRadius: 6, background: c, border: newColor === c ? "2px solid var(--fg)" : "2px solid transparent",
+                        cursor: "pointer", transition: "border-color 0.15s ease",
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
               <button
                 type="submit"

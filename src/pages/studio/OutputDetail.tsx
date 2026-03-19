@@ -16,6 +16,7 @@ interface Output {
   output_type: string;
   score: number;
   created_at: string;
+  project_id?: string | null;
   gates?: {
     strategy?: number;
     voice?: number;
@@ -198,6 +199,22 @@ export default function OutputDetail() {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [reformatting, setReformatting] = useState(false);
   const [reformatType, setReformatType] = useState<string | null>(null);
+
+  // Project assignment
+  const [userProjects, setUserProjects] = useState<Array<{ id: string; name: string }>>([]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("projects").select("id, name").eq("user_id", user.id).then(({ data }) => {
+      if (data) setUserProjects(data);
+    });
+  }, [user]);
+
+  const moveToProject = async (projectId: string) => {
+    if (!output) return;
+    await supabase.from("outputs").update({ project_id: projectId }).eq("id", output.id);
+    setOutput({ ...output, project_id: projectId });
+    showToast(`Moved to ${userProjects.find(p => p.id === projectId)?.name || "project"}`);
+  };
 
   // Inline editing state
   const [editing, setEditing] = useState(false);
@@ -681,6 +698,23 @@ export default function OutputDetail() {
             Score: {output!.score}
           </span>
         </div>
+        {userProjects.length > 1 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+            <span style={{ fontSize: 12, color: "var(--fg-3)" }}>Project:</span>
+            <select
+              value={output!.project_id || ""}
+              onChange={(e) => moveToProject(e.target.value)}
+              style={{
+                fontSize: 12, fontFamily: "'Afacad Flux', sans-serif", color: "var(--fg-2)",
+                background: "transparent", border: "1px solid var(--border-subtle)", borderRadius: 6,
+                padding: "4px 8px", cursor: "pointer", outline: "none",
+              }}
+            >
+              <option value="">Unassigned</option>
+              {userProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* WRAP AS toolbar */}

@@ -1045,6 +1045,8 @@ export default function WorkSession() {
   const [visibleCheckpointCount, setVisibleCheckpointCount] = useState(0);
   const [revealedCheckpointCount, setRevealedCheckpointCount] = useState(0);
   const [showTotalScore, setShowTotalScore] = useState(false);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
     setInput((prev) => {
@@ -1052,6 +1054,18 @@ export default function WorkSession() {
       return prev + separator + text;
     });
   });
+
+  // Load projects for project selector
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("projects").select("id, name").eq("user_id", user.id).order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setProjects(data);
+          if (!activeProjectId) setActiveProjectId(data.find((p: any) => p.is_default)?.id || data[0].id);
+        }
+      });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -1249,6 +1263,7 @@ export default function WorkSession() {
           conversation_summary: conversationSummary,
           gates,
           content_state: "in_progress",
+          project_id: activeProjectId || null,
         })
         .select()
         .single();
@@ -1498,9 +1513,26 @@ export default function WorkSession() {
           >
             <ArrowLeft size={20} strokeWidth={1.5} />
           </button>
-          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 400, color: "var(--text-tertiary)", display: isMobile ? "none" : "inline-block" }}>
-            My Studio
-          </span>
+          {projects.length > 1 ? (
+            <select
+              value={activeProjectId || ""}
+              onChange={(e) => setActiveProjectId(e.target.value || null)}
+              style={{
+                fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 400,
+                color: "var(--text-tertiary)", background: "transparent", border: "none",
+                outline: "none", cursor: "pointer", display: isMobile ? "none" : "inline-block",
+                appearance: "none", padding: "0 12px 0 0",
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 2.5L4 5.5L7 2.5' stroke='%2364748B' strokeWidth='1' strokeLinecap='round'/%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat", backgroundPosition: "right center",
+              }}
+            >
+              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          ) : (
+            <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 400, color: "var(--text-tertiary)", display: isMobile ? "none" : "inline-block" }}>
+              {projects[0]?.name || "My Studio"}
+            </span>
+          )}
           <span style={{ color: "var(--text-tertiary)", fontSize: 12, display: isMobile ? "none" : "inline-block" }}>/</span>
           <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: isMobile ? "none" : "inline-block" }}>
             {sessionTitle}
