@@ -15,6 +15,7 @@ import { useVoiceInput } from "../../hooks/useVoiceInput";
 import WatsonOrb from "../../components/studio/WatsonOrb";
 import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import { MARKETING_NUMBERS } from "../../lib/constants";
+import SpecialistPanel from "../../components/studio/SpecialistPanel";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1674,185 +1675,47 @@ export default function WorkSession() {
           </div>
         )}
 
-        {phase === "complete" && showCheckpointSequence && generatedGates && (
+        {phase === "complete" && showCheckpointSequence && (
           <div
             style={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              padding: 32,
+              padding: isMobile ? "24px 16px" : "32px 24px",
               overflowY: "auto",
+              maxWidth: 960,
+              margin: "0 auto",
+              width: "100%",
             }}
           >
-            <div style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "3px",
-              textTransform: "uppercase",
-              color: "#4A90D9",
-              marginBottom: 12,
-              maxWidth: 520,
-              width: "100%",
-            }}>
-              QUALITY PIPELINE
-            </div>
-            <div
-              style={{
-                maxWidth: 520,
-                width: "100%",
-                background: "var(--surface-white)",
-                borderRadius: 12,
-                border: "1px solid var(--border-subtle)",
-                fontFamily: "'Afacad Flux', sans-serif",
-                overflow: "hidden",
-              }}
-            >
-              {CHECKPOINTS.map((cp, index) => {
-                const isVisible = index < visibleCheckpointCount;
-                const isRevealed = index < revealedCheckpointCount;
-                const score = cp.key ? (generatedGates[cp.key as keyof GatesFromApi] as number | undefined) : undefined;
-                const isEcho = cp.key === null;
-                if (!isVisible) return null;
-                return (
-                  <div
-                    key={cp.number}
-                    style={{
-                      padding: "12px 16px",
-                      borderBottom: index < 7 ? "1px solid var(--border-subtle)" : "none",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        background: "var(--bg-navy, #0f172a)",
-                        color: "var(--gold-dark, #C8961A)",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {cp.number + 1}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
-                        {cp.agent}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>
-                        {cp.role}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>
-                        {cp.description}
-                      </div>
-                    </div>
-                    <div style={{ flexShrink: 0 }}>
-                      {isEcho ? (
-                        <span style={{ display: "flex", alignItems: "center", gap: 6, color: "#50c8a0", fontSize: 13, fontWeight: 600 }}>
-                          <Check size={16} strokeWidth={2.5} />
-                          Pass
-                        </span>
-                      ) : !isRevealed ? (
-                        <Loader2 size={18} style={{ color: "var(--text-tertiary)", animation: "spin 0.8s linear infinite" }} />
-                      ) : (
-                        <span
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            fontVariantNumeric: "tabular-nums",
-                            color: score !== undefined ? checkpointScoreColor(score).text : "var(--text-tertiary)",
-                            background: score !== undefined ? checkpointScoreColor(score).bg : "transparent",
-                            padding: "4px 10px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          {score !== undefined ? score : "–"}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
+            <SpecialistPanel
+              pipelineGateResults={pipelineGateResults.length > 0 ? pipelineGateResults : undefined}
+              simpleGates={pipelineGateResults.length === 0 ? generatedGates : undefined}
+              visibleCount={visibleCheckpointCount}
+              revealedCount={revealedCheckpointCount}
+              totalScore={showTotalScore ? (generatedScore || undefined) : undefined}
+              showTotal={showTotalScore}
+              isAnimating={!showTotalScore}
+              threshold={MARKETING_NUMBERS.betterishThreshold}
+            />
             {showTotalScore && (
-              <div
-                style={{
-                  maxWidth: 520,
-                  width: "100%",
-                  marginTop: 24,
-                  textAlign: "center",
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  animation: "scoreReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-                }}
-              >
-                <style>{`
-                  @keyframes scoreReveal {
-                    from { opacity: 0; transform: scale(0.8); }
-                    to { opacity: 1; transform: scale(1); }
-                  }
-                `}</style>
-                <div
-                  style={{
-                    fontSize: 48,
-                    fontWeight: 700,
-                    color: totalScoreColor(generatedGates.total ?? generatedScore),
-                    fontVariantNumeric: "tabular-nums",
-                    lineHeight: 1.2,
-                  }}
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ padding: "10px 20px", fontSize: 14, borderRadius: 8 }}
+                  onClick={() => setShowCheckpointSequence(false)}
                 >
-                  {generatedGates.total ?? generatedScore}
-                </div>
-                <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "8px 0 0" }}>
-                  Publication threshold: {MARKETING_NUMBERS.betterishThreshold}
-                </p>
-                {generatedScore >= 900 ? (
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#50c8a0", margin: "12px 0 0" }}>
-                    Ready to publish
-                  </p>
-                ) : (
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "12px 0 0", maxWidth: 400, marginLeft: "auto", marginRight: "auto" }}>
-                    Below threshold. Revisions recommended.
-                    {generatedGates.summary && ` ${generatedGates.summary}`}
-                  </p>
-                )}
-                <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    style={{ padding: "10px 20px", fontSize: 14, borderRadius: 8 }}
-                    onClick={() => setShowCheckpointSequence(false)}
-                  >
-                    View output
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    style={{
-                      padding: "10px 20px",
-                      fontSize: 14,
-                      borderRadius: 8,
-                      border: "1px solid var(--border-subtle)",
-                      background: "transparent",
-                    }}
-                    onClick={() => {
-                      setPhase("input");
-                      setShowCheckpointSequence(false);
-                    }}
-                  >
-                    Revise with Watson
-                  </button>
-                </div>
+                  View output
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ padding: "10px 20px", fontSize: 14, borderRadius: 8, border: "1px solid var(--border-subtle)", background: "transparent" }}
+                  onClick={() => { setPhase("input"); setShowCheckpointSequence(false); }}
+                >
+                  Revise with Watson
+                </button>
               </div>
             )}
           </div>
@@ -2083,81 +1946,17 @@ export default function WorkSession() {
                 </div>
               )}
 
-              {/* Collapsible scoring breakdown */}
-              {generatedGates && (
-                <details style={{
-                  background: "var(--surface-white)",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: 12,
-                  overflow: "hidden",
-                }}>
-                  <summary style={{
-                    padding: "14px 20px",
-                    cursor: "pointer",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "var(--text-secondary)",
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    userSelect: "none",
-                    listStyle: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}>
-                    <span>Scoring breakdown</span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transition: "transform 0.15s" }}>
-                      <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </summary>
-                  <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
-                    {CHECKPOINTS.map((cp) => {
-                      const isEcho = cp.key === null;
-                      const score = cp.key ? (generatedGates[cp.key as keyof GatesFromApi] as number | undefined) : undefined;
-                      return (
-                        <div key={cp.number} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ width: 140, fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif" }}>
-                            {cp.agent}
-                          </span>
-                          {isEcho ? (
-                            <>
-                              <div style={{ flex: 1 }} />
-                              <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: "#50c8a0" }}>
-                                <Check size={14} strokeWidth={2.5} />
-                                Pass
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
-                                <div style={{
-                                  height: "100%",
-                                  width: `${Math.max(0, Math.min(100, score ?? 0))}%`,
-                                  background: score !== undefined ? checkpointScoreColor(score).text : "rgba(0,0,0,0.1)",
-                                  borderRadius: 2,
-                                }} />
-                              </div>
-                              <span style={{
-                                width: 36,
-                                textAlign: "right",
-                                fontSize: 13,
-                                fontWeight: 600,
-                                fontVariantNumeric: "tabular-nums",
-                                color: score !== undefined ? checkpointScoreColor(score).text : "var(--text-tertiary)",
-                              }}>
-                                {score ?? "–"}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {generatedGates.summary && (
-                      <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8, marginBottom: 0, lineHeight: 1.5, fontFamily: "'Afacad Flux', sans-serif" }}>
-                        {generatedGates.summary}
-                      </p>
-                    )}
-                  </div>
-                </details>
+              {/* Specialist Pipeline Results */}
+              {(generatedGates || pipelineGateResults.length > 0) && (
+                <div style={{ marginTop: 8 }}>
+                  <SpecialistPanel
+                    pipelineGateResults={pipelineGateResults.length > 0 ? pipelineGateResults : undefined}
+                    simpleGates={pipelineGateResults.length === 0 ? generatedGates : undefined}
+                    totalScore={generatedScore || undefined}
+                    showTotal={false}
+                    threshold={MARKETING_NUMBERS.betterishThreshold}
+                  />
+                </div>
               )}
 
               {/* Start over */}
