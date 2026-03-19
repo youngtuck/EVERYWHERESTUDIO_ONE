@@ -742,6 +742,7 @@ function OutputTypePill({
   onChange: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [openDir, setOpenDir] = useState<"up" | "down">("down");
   const type = OUTPUT_TYPES[value] || OUTPUT_TYPES.essay;
   const ref = useRef<HTMLDivElement>(null);
 
@@ -752,6 +753,17 @@ function OutputTypePill({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (!open || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < 360 && rect.top > 360) {
+      setOpenDir("up");
+    } else {
+      setOpenDir("down");
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -796,10 +808,14 @@ function OutputTypePill({
 
       {open && (
         <div style={{
-          position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)",
+          position: "absolute",
+          ...(openDir === "down" ? { top: "calc(100% + 8px)" } : { bottom: "calc(100% + 8px)" }),
+          left: "50%",
+          transform: "translateX(-50%)",
           background: "var(--surface)", border: "1px solid var(--line)",
           borderRadius: 12, padding: 6, minWidth: 220, maxHeight: 320, overflowY: "auto",
           boxShadow: "var(--shadow-md)", zIndex: 50,
+          animation: openDir === "down" ? "ddDown .15s ease-out" : "ddUp .15s ease-out",
         }}>
           {OUTPUT_TYPE_KEYS.map(t => {
             const ot = OUTPUT_TYPES[t];
@@ -1500,6 +1516,14 @@ export default function WorkSession() {
         @keyframes typingBounce {
           0%, 80%, 100% { transform: translateY(0); opacity: .4; }
           40%            { transform: translateY(-4px); opacity: 1; }
+        }
+        @keyframes ddDown {
+          from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes ddUp {
+          from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         @keyframes orbAtmos {
           0%, 100% { opacity: 0.7; transform: scale(1); }
