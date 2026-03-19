@@ -27,38 +27,35 @@ function WatsonOrbMini({ size, thinking }: { size: number; thinking?: boolean })
       width: size,
       height: size,
       borderRadius: "50%",
-      background: "radial-gradient(circle at 40% 35%, rgba(74,144,217,0.85) 0%, rgba(13,27,42,0.95) 65%)",
+      background: "radial-gradient(circle at 35% 30%, rgba(120,180,255,0.7) 0%, rgba(74,144,217,0.5) 25%, rgba(27,38,59,0.85) 60%, rgba(13,27,42,0.95) 100%)",
       boxShadow: thinking
-        ? "0 0 12px rgba(74,144,217,0.4), inset 0 -2px 6px rgba(245,198,66,0.25), inset 0 2px 4px rgba(74,144,217,0.3)"
-        : "0 0 6px rgba(74,144,217,0.2), inset 0 -2px 4px rgba(245,198,66,0.15)",
+        ? "0 0 14px rgba(74,144,217,0.35), 0 0 4px rgba(74,144,217,0.2), inset 0 -3px 6px rgba(13,27,42,0.4), inset 0 2px 4px rgba(160,200,255,0.25)"
+        : "0 0 10px rgba(74,144,217,0.2), 0 0 3px rgba(74,144,217,0.1), inset 0 -3px 6px rgba(13,27,42,0.4), inset 0 2px 4px rgba(160,200,255,0.15)",
       flexShrink: 0,
       position: "relative",
       overflow: "hidden",
       animation: thinking ? "orbMiniPulse 2s ease-in-out infinite" : "none",
       transition: "box-shadow 0.3s ease",
     }}>
-      {/* Inner highlight dot */}
       <div style={{
         position: "absolute",
-        top: "30%",
-        left: "35%",
-        width: size * 0.22,
-        height: size * 0.22,
+        top: "20%",
+        left: "25%",
+        width: "35%",
+        height: "30%",
         borderRadius: "50%",
-        background: "rgba(255,255,255,0.45)",
-        filter: "blur(1px)",
-      }} />
-      {/* Gold accent at bottom */}
-      <div style={{
-        position: "absolute",
-        bottom: "15%",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: size * 0.35,
-        height: size * 0.12,
-        borderRadius: "50%",
-        background: "rgba(245,198,66,0.25)",
+        background: "radial-gradient(circle, rgba(180,215,255,0.5) 0%, transparent 70%)",
         filter: "blur(2px)",
+      }} />
+      <div style={{
+        position: "absolute",
+        bottom: "10%",
+        left: "20%",
+        width: "60%",
+        height: "20%",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(74,144,217,0.2) 0%, transparent 70%)",
+        filter: "blur(1.5px)",
       }} />
     </div>
   );
