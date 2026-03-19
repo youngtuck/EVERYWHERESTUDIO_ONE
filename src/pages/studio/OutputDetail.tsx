@@ -706,6 +706,7 @@ export default function OutputDetail() {
           WRAP AS
         </div>
         <div
+          className="wrap-as-bar"
           style={{
             display: "flex",
             flexWrap: "wrap",

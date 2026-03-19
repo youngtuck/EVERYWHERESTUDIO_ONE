@@ -679,6 +679,7 @@ function SessionInputBox({
 
 function EmptyState({
   children,
+  isMobile,
 }: {
   outputType: string;
   onSuggestion: (s: string) => void;
@@ -697,17 +698,17 @@ function EmptyState({
         padding: "0 24px",
       }}
     >
-      <WatsonOrb size={80} />
+      <WatsonOrb size={isMobile ? 56 : 80} />
       <h1
         style={{
-          fontSize: 42,
+          fontSize: isMobile ? 28 : 42,
           fontWeight: 700,
           color: "var(--fg)",
           fontFamily: "'Afacad Flux', sans-serif",
           letterSpacing: "-0.5px",
           textAlign: "center",
-          marginTop: -16,
-          marginBottom: 32,
+          marginTop: isMobile ? -8 : -16,
+          marginBottom: isMobile ? 20 : 32,
         }}
       >
         What's on your mind?

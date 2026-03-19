@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
 import Tooltip from "../../components/Tooltip";
 import LoadingAnimation from "../../components/studio/LoadingAnimation";
@@ -82,6 +83,7 @@ function flattenSeedResponse(data: SentinelSeedResponse): string[] {
 export default function Watch() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useMobile();
   const [briefing, setBriefing] = useState<BriefingRow | null>(null);
   const [profile, setProfile] = useState<{ full_name?: string | null; sentinel_topics?: string[] | null } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -660,7 +662,7 @@ export default function Watch() {
               pointerEvents: showSentinelLoading && !loadingFadeOut ? "none" : "auto",
             }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 32, alignItems: "start" }}>
             {/* Left: What's Moving + Threats */}
             <div>
               {(sections.whats_moving?.length ?? 0) > 0 && (

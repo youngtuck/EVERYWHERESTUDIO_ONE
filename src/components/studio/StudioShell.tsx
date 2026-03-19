@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
 import { CommandPalette } from "./CommandPalette";
+import MobileBottomNav from "./MobileBottomNav";
+import NotificationBell from "./NotificationBell";
 import { useMobile } from "../../hooks/useMobile";
 import Logo from "../Logo";
 
@@ -129,6 +131,7 @@ export default function StudioShell() {
               top: 0,
               zIndex: 20,
               background: "var(--bg-2)",
+              backdropFilter: "blur(12px)",
             }}
           >
             <button
@@ -144,25 +147,26 @@ export default function StudioShell() {
                 justifyContent: "center",
                 cursor: "pointer",
                 color: "var(--fg-2)",
+                minHeight: 44,
+                minWidth: 44,
               }}
               aria-label="Open navigation"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
             </button>
-            <span style={{ fontSize: 12, color: "var(--fg-3)", letterSpacing: ".08em", textTransform: "uppercase" }}>
-              Studio
-            </span>
-            <span style={{ width: 32 }} />
+            <Logo size="sm" variant="light" />
+            <NotificationBell />
           </div>
         )}
-        <div className="studio-main-inner" style={{ background: "var(--bg-2)", flex: 1 }}>
+        <div className="studio-main-inner" style={{ background: "var(--bg-2)", flex: 1, paddingBottom: isMobile ? 80 : 0 }}>
           <div key={location.pathname} className="studio-page-transition">
             <Outlet />
           </div>
         </div>
-        {!/^\/studio\/work(\/|$)/.test(location.pathname) && studioFooter}
+        {!isMobile && !/^\/studio\/work(\/|$)/.test(location.pathname) && studioFooter}
+        {isMobile && <MobileBottomNav />}
       </main>
     </div>
   );
