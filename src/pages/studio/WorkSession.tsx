@@ -18,50 +18,6 @@ import SpecialistPanel from "../../components/studio/SpecialistPanel";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WATSON ORB MINI - lightweight CSS orb for chat bubbles (no canvas)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function WatsonOrbMini({ size, thinking }: { size: number; thinking?: boolean }) {
-  return (
-    <div style={{
-      width: size,
-      height: size,
-      borderRadius: "50%",
-      background: "radial-gradient(circle at 35% 30%, rgba(120,180,255,0.7) 0%, rgba(74,144,217,0.5) 25%, rgba(27,38,59,0.85) 60%, rgba(13,27,42,0.95) 100%)",
-      boxShadow: thinking
-        ? "0 0 14px rgba(74,144,217,0.35), 0 0 4px rgba(74,144,217,0.2), inset 0 -3px 6px rgba(13,27,42,0.4), inset 0 2px 4px rgba(160,200,255,0.25)"
-        : "0 0 10px rgba(74,144,217,0.2), 0 0 3px rgba(74,144,217,0.1), inset 0 -3px 6px rgba(13,27,42,0.4), inset 0 2px 4px rgba(160,200,255,0.15)",
-      flexShrink: 0,
-      position: "relative",
-      overflow: "hidden",
-      animation: thinking ? "orbMiniPulse 2s ease-in-out infinite" : "none",
-      transition: "box-shadow 0.3s ease",
-    }}>
-      <div style={{
-        position: "absolute",
-        top: "20%",
-        left: "25%",
-        width: "35%",
-        height: "30%",
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(180,215,255,0.5) 0%, transparent 70%)",
-        filter: "blur(2px)",
-      }} />
-      <div style={{
-        position: "absolute",
-        bottom: "10%",
-        left: "20%",
-        width: "60%",
-        height: "20%",
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(74,144,217,0.2) 0%, transparent 70%)",
-        filter: "blur(1.5px)",
-      }} />
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // EVERYWHERE STUDIO - WORK SESSION
 // Inspired by the best: ChatGPT, Claude, Perplexity, Grok, Gemini.
 // Clean. Simple. The model is the product.
@@ -233,15 +189,8 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
     <div style={{
       display: "flex",
       flexDirection: isUser ? "row-reverse" : "row",
-      gap: 12, alignItems: "flex-end",
       maxWidth: "100%",
     }}>
-      {!isUser && (
-        <div style={{ flexShrink: 0, marginBottom: 2 }}>
-          <WatsonOrbMini size={28} />
-        </div>
-      )}
-
       <div style={{
         maxWidth: isMobile ? "95%" : isUser ? "85%" : "85%",
         background: isUser ? "var(--text-primary)" : "var(--surface-white)",
