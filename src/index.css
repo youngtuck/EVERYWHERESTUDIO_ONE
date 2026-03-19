@@ -185,7 +185,6 @@ button { font-family: var(--font); }
 .studio-main { flex: 1; overflow-y: auto; background: var(--bg); }
 .studio-main-inner {
   padding: var(--studio-page-pad);
-  min-height: 100%;
 }
 .studio-main-inner[data-page="dashboard"] {
   max-width: none;
