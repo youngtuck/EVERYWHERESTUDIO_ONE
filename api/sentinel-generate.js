@@ -99,8 +99,10 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
 
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-  const { userId, userName, topics } = body;
+  const { userId, userName: rawUserName, topics: rawTopics } = body;
   if (!userId) return res.status(400).json({ error: "userId required" });
+  const userName = typeof rawUserName === "string" ? rawUserName.trim().slice(0, 200) : "there";
+  const topics = Array.isArray(rawTopics) ? rawTopics.map(t => String(t).trim().slice(0, 100)).filter(Boolean) : [];
 
   const dateLabel = getDateLabel();
 
