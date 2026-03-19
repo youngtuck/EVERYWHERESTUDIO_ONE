@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FileText, Search } from "lucide-react";
+import { FileText, Search, Trash2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { timeAgo } from "../../utils/timeAgo";
@@ -46,6 +46,18 @@ export default function OutputLibrary() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const [deleteTarget, setDeleteTarget] = useState<Output | null>(null);
+  const [toast, setToast] = useState("");
+
+  const handleDelete = async () => {
+    if (!deleteTarget || !user) return;
+    await supabase.from("pipeline_runs").delete().eq("output_id", deleteTarget.id);
+    await supabase.from("outputs").delete().eq("id", deleteTarget.id).eq("user_id", user.id);
+    setOutputs(prev => prev.filter(o => o.id !== deleteTarget.id));
+    setDeleteTarget(null);
+    setToast("Output deleted");
+    setTimeout(() => setToast(""), 2000);
+  };
 
   useEffect(() => {
     let query = supabase
@@ -344,7 +356,19 @@ export default function OutputLibrary() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
                     <span style={{ fontSize: 18, fontWeight: 700, color: sc.text, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
-                    <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{timeAgo(o.created_at)}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{timeAgo(o.created_at)}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(o); }}
+                        title="Delete"
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--fg-3)", transition: "color 0.15s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-3)"; }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </div>
                 </button>
               );
@@ -459,9 +483,40 @@ export default function OutputLibrary() {
                 >
                   {timeAgo(o.created_at)}
                 </span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(o); }}
+                  title="Delete output"
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--fg-3)", flexShrink: 0, marginLeft: 4, transition: "color 0.15s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-3)"; }}
+                >
+                  <Trash2 size={14} />
+                </button>
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      {deleteTarget && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }} onClick={() => setDeleteTarget(null)}>
+          <div style={{ background: "var(--surface-white)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }} onClick={(e) => e.stopPropagation()}>
+            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Delete this output?</p>
+            <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20 }}>"{deleteTarget.title}" will be permanently removed.</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => setDeleteTarget(null)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", cursor: "pointer", fontSize: 14, fontFamily: "'Afacad Flux', sans-serif" }}>Cancel</button>
+              <button type="button" onClick={handleDelete} style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: "var(--danger)", color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: "'Afacad Flux', sans-serif" }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)", background: "#1a1a1a", color: "#fff", padding: "10px 24px", borderRadius: 100, fontSize: 13, fontWeight: 500, fontFamily: "'Afacad Flux', sans-serif", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", zIndex: 1000 }}>
+          {toast}
         </div>
       )}
     </div>

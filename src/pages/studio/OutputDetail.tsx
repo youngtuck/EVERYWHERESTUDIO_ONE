@@ -222,6 +222,15 @@ export default function OutputDetail() {
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showRescore, setShowRescore] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteOutput = async () => {
+    if (!output || !user) return;
+    await supabase.from("pipeline_runs").delete().eq("output_id", output.id);
+    await supabase.from("outputs").delete().eq("id", output.id).eq("user_id", user.id);
+    showToast("Output deleted");
+    navigate("/studio/outputs");
+  };
   const [rescoring, setRescoring] = useState(false);
   const editRef = useRef<HTMLTextAreaElement>(null);
 
@@ -700,6 +709,15 @@ export default function OutputDetail() {
               >
                 Revise with Watson
               </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--danger)", fontFamily: "'Afacad Flux', sans-serif", padding: "6px 0", transition: "opacity 0.15s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+              >
+                Delete output
+              </button>
             </div>
           )}
         </div>
@@ -1165,6 +1183,18 @@ export default function OutputDetail() {
         </div>
       </div>
 
+      {showDeleteConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }} onClick={() => setShowDeleteConfirm(false)}>
+          <div style={{ background: "var(--surface-white)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }} onClick={(e) => e.stopPropagation()}>
+            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Delete this output?</p>
+            <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20 }}>This cannot be undone.</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", cursor: "pointer", fontSize: 14, fontFamily: "'Afacad Flux', sans-serif" }}>Cancel</button>
+              <button type="button" onClick={handleDeleteOutput} style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: "var(--danger)", color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: "'Afacad Flux', sans-serif" }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
       <Toast message={toast.message} visible={toast.visible} />
     </div>
   );
