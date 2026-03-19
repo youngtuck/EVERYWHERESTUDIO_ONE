@@ -38,6 +38,13 @@
     },
     "api/upload-resource.js": {
       "maxDuration": 60
+    },
+    "api/run-pipeline.js": {
+      "maxDuration": 120,
+      "includeFiles": "src/lib/agents/prompts/*.md"
+    },
+    "api/admin-data.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

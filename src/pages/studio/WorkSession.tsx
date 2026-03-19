@@ -7,8 +7,7 @@ import { useToast } from "../../context/ToastContext";
 import { useMobile } from "../../hooks/useMobile";
 import { useTheme } from "../../context/ThemeContext";
 import { getScoreColor } from "../../utils/scoreColor";
-import { runFullPipeline } from "../../lib/agents/full-pipeline";
-import type { GateResult, PipelineResult, PipelineStatus } from "../../lib/agents/types";
+import type { PipelineStatus } from "../../lib/agents/types";
 import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
@@ -1031,9 +1030,9 @@ export default function WorkSession() {
   const [methodDnaMd, setMethodDnaMd] = useState<string | undefined>(undefined);
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>("IDLE");
   const [currentStage, setCurrentStage] = useState<string | undefined>(undefined);
-  const [pipelineGateResults, setPipelineGateResults] = useState<GateResult[]>([]);
+  const [pipelineGateResults, setPipelineGateResults] = useState<any[]>([]);
   const [blockedAt, setBlockedAt] = useState<string | undefined>(undefined);
-  const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
+  const [pipelineResult, setPipelineResult] = useState<any>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -1273,61 +1272,60 @@ export default function WorkSession() {
       setGeneratedOutputId(outputId);
       toast("Draft generated. Running quality review...");
 
-      // ── Pass 2: Run real pipeline ───────────────────
+      // ── Pass 2: Run real pipeline via API ───────────────
       if (outputId !== "new" && user) {
         setPipelineStatus("RUNNING");
         setShowCheckpointSequence(true);
         setVisibleCheckpointCount(0);
         setRevealedCheckpointCount(0);
 
-        const context = {
-          userId: user.id,
-          outputId,
-          outputType: outputType as any,
-          voiceDnaMd,
-          brandDnaMd,
-          methodDnaMd,
-          targetPlatform: undefined,
-        };
+        try {
+          const pipelineRes = await fetch(`${API_BASE}/api/run-pipeline`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              draft: content,
+              outputType: outputTypeApi,
+              voiceDnaMd,
+              brandDnaMd,
+              methodDnaMd,
+              userId: user.id,
+              outputId,
+            }),
+          });
 
-        const result = await runFullPipeline(content, context, {
-          onStageStart: (stage) => setCurrentStage(stage),
-          onGateComplete: (gateResult, index) => {
-            setPipelineGateResults((prev) => {
-              const next = [...prev];
-              next[index] = gateResult;
-              return next;
-            });
-          },
-          onStageComplete: () => {},
-        });
+          if (!pipelineRes.ok) throw new Error("Pipeline API failed");
+          const result = await pipelineRes.json();
 
-        setPipelineResult(result);
-        setPipelineStatus(result.status);
-        setBlockedAt(result.blockedAt);
+          // Populate gate results for the SpecialistPanel
+          const gateResultsArr = (result.gateResults || []).map((g: any) => ({
+            gate: g.gate,
+            status: g.status,
+            score: g.score,
+            feedback: g.feedback,
+            issues: g.issues,
+          }));
+          setPipelineGateResults(gateResultsArr);
+          setPipelineStatus(result.status);
+          setBlockedAt(result.blockedAt);
 
-        // Save pipeline run
-        await supabase.from("pipeline_runs").insert({
-          output_id: outputId,
-          user_id: user.id,
-          status: result.status,
-          original_draft: result.originalDraft,
-          final_draft: result.finalDraft,
-          gate_results: result.gateResults,
-          betterish_score: result.betterishScore,
-          betterish_total: result.betterishScore?.total ?? null,
-          wrap_applied: result.wrapApplied,
-          qa_result: result.qaResult,
-          completeness_result: result.completenessResult,
-          blocked_at: result.blockedAt ?? null,
-          duration_ms: result.totalDurationMs,
-        });
+          // Save pipeline run to Supabase
+          await supabase.from("pipeline_runs").insert({
+            output_id: outputId,
+            user_id: user.id,
+            status: result.status,
+            gate_results: result.gateResults,
+            betterish_score: result.betterishScore,
+            betterish_total: result.betterishScore?.total ?? null,
+            blocked_at: result.blockedAt ?? null,
+            duration_ms: result.totalDurationMs,
+          });
 
-        // Update output with pipeline results
-        const finalScore = result.betterishScore?.total ?? score;
-        const finalContent = result.finalDraft || content;
-        setGeneratedContent(finalContent);
-        setGeneratedScore(finalScore);
+          // Update output with pipeline results
+          const finalScore = result.betterishScore?.total ?? score;
+          const finalContent = result.finalDraft || content;
+          setGeneratedContent(finalContent);
+          setGeneratedScore(finalScore);
 
         await supabase.from("outputs").update({
           content: finalContent,
@@ -1351,6 +1349,11 @@ export default function WorkSession() {
         } else if (result.status === "BLOCKED") {
           toast("Quality pipeline flagged issues. Review checkpoint feedback.");
         }
+        } catch (pipelineErr) {
+          console.error("[WorkSession] Pipeline failed:", pipelineErr);
+          toast("Quality pipeline unavailable. Showing unscored draft.");
+          setPipelineStatus("IDLE");
+        }
       }
 
       setPhase("complete");
@@ -1363,73 +1366,65 @@ export default function WorkSession() {
   const handleRunPipeline = async () => {
     if (!user || !generatedOutputId || generatedOutputId === "new" || !generatedContent) return;
     setPipelineStatus("RUNNING");
-    setCurrentStage("checkpoints");
     setPipelineGateResults([]);
     setBlockedAt(undefined);
     setPipelineResult(null);
 
-    const context = {
-      userId: user.id,
-      outputId: generatedOutputId,
-      outputType: outputType as any,
-      voiceDnaMd,
-      brandDnaMd,
-      methodDnaMd,
-      targetPlatform: undefined,
-    };
+    try {
+      const pipelineRes = await fetch(`${API_BASE}/api/run-pipeline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft: generatedContent,
+          outputType: outputTypeApi,
+          voiceDnaMd,
+          brandDnaMd,
+          methodDnaMd,
+          userId: user.id,
+          outputId: generatedOutputId,
+        }),
+      });
 
-    const result = await runFullPipeline(generatedContent, context, {
-      onStageStart: (stage) => {
-        setCurrentStage(stage);
-      },
-      onGateComplete: (gateResult, index) => {
-        setPipelineGateResults((prev) => {
-          const next = [...prev];
-          next[index] = gateResult;
-          return next;
-        });
-      },
-      onStageComplete: () => {},
-    });
+      if (!pipelineRes.ok) throw new Error("Pipeline API failed");
+      const result = await pipelineRes.json();
 
-    setPipelineResult(result);
-    setPipelineStatus(result.status);
-    setBlockedAt(result.blockedAt);
+      setPipelineGateResults((result.gateResults || []).map((g: any) => ({
+        gate: g.gate, status: g.status, score: g.score, feedback: g.feedback, issues: g.issues,
+      })));
+      setPipelineStatus(result.status);
+      setBlockedAt(result.blockedAt);
 
-    await supabase.from("pipeline_runs").insert({
-      output_id: generatedOutputId,
-      user_id: user.id,
-      status: result.status,
-      original_draft: result.originalDraft,
-      final_draft: result.finalDraft,
-      gate_results: result.gateResults,
-      betterish_score: result.betterishScore,
-      betterish_total: result.betterishScore?.total ?? null,
-      wrap_applied: result.wrapApplied,
-      qa_result: result.qaResult,
-      completeness_result: result.completenessResult,
-      blocked_at: result.blockedAt ?? null,
-      duration_ms: result.totalDurationMs,
-    });
+      const finalScore = result.betterishScore?.total ?? generatedScore;
+      const finalContent = result.finalDraft || generatedContent;
+      setGeneratedContent(finalContent);
+      setGeneratedScore(finalScore);
 
-    if (result.status === "PASSED") {
-      await supabase
-        .from("outputs")
-        .update({
-          content: result.finalDraft,
-          score: result.betterishScore?.total ?? generatedScore,
-          content_state: "vault",
-        })
-        .eq("id", generatedOutputId);
-      toast("Quality pipeline passed. Output moved to The Vault.");
-    } else if (result.status === "BLOCKED") {
-      await supabase
-        .from("outputs")
-        .update({
-          content_state: "in_progress",
-        })
-        .eq("id", generatedOutputId);
-      toast("Quality pipeline blocked. Review checkpoint feedback.");
+      await supabase.from("pipeline_runs").insert({
+        output_id: generatedOutputId,
+        user_id: user.id,
+        status: result.status,
+        gate_results: result.gateResults,
+        betterish_score: result.betterishScore,
+        betterish_total: result.betterishScore?.total ?? null,
+        blocked_at: result.blockedAt ?? null,
+        duration_ms: result.totalDurationMs,
+      });
+
+      await supabase.from("outputs").update({
+        content: finalContent,
+        score: finalScore,
+        content_state: result.status === "PASSED" ? "vault" : "in_progress",
+      }).eq("id", generatedOutputId);
+
+      if (result.status === "PASSED") {
+        toast("Quality pipeline passed. Output moved to The Vault.");
+      } else {
+        toast("Quality pipeline complete. Review specialist feedback.");
+      }
+    } catch (err) {
+      console.error("[WorkSession] Re-run pipeline failed:", err);
+      toast("Pipeline failed. Try again.");
+      setPipelineStatus("IDLE");
     }
   };
 
