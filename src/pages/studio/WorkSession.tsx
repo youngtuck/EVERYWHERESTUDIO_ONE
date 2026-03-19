@@ -569,7 +569,7 @@ function EmptyState({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-start",
-        paddingTop: "calc((100vh - 60px) * 0.22)",
+        paddingTop: "calc((100vh - 60px) * 0.12)",
         paddingLeft: 24,
         paddingRight: 24,
       }}
