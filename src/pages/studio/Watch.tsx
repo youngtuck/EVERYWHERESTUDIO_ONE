@@ -323,7 +323,7 @@ export default function Watch() {
   const showSentinelLoading = generating || completing;
 
   return (
-    <div style={{ fontFamily: "'Afacad Flux', sans-serif", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'Afacad Flux', sans-serif",  }}>
       <style>{`
         @keyframes sentinel-pulse {
           0%, 100% { transform: scale(1); }

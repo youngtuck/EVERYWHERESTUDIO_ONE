@@ -374,7 +374,7 @@ export default function VisualWrap() {
         padding: isMobile ? "24px 16px" : "40px 32px",
         fontFamily: "'Afacad Flux', sans-serif",
         background: "var(--surface-primary)",
-        minHeight: "100vh",
+        
       }}
     >
       {/* Top bar */}

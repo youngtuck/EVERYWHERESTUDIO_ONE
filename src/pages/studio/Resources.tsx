@@ -141,7 +141,7 @@ export default function Resources() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        
         background: "var(--surface-primary, #F4F2ED)",
         padding: isMobile ? "24px 16px" : "32px 24px",
         fontFamily: "'Afacad Flux', sans-serif",

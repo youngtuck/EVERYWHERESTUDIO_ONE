@@ -515,7 +515,7 @@ export default function OutputDetail() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          height: "100vh",
+          minHeight: "40vh",
         }}
       >
         <div
