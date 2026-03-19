@@ -1065,6 +1065,9 @@ export default function WorkSession() {
   const [loadingMessage, setLoadingMessage] = useState("Writing your draft...");
   const loadingStartRef = useRef(Date.now());
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [revisionMode, setRevisionMode] = useState(false);
+  const [revisionOutputId, setRevisionOutputId] = useState<string | null>(null);
+  const [revisionContent, setRevisionContent] = useState<string | null>(null);
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
@@ -1199,7 +1202,33 @@ export default function WorkSession() {
   }, [messages, input, outputType, sessionTitle, phase, generatedContent, generatedScore, generatedOutputId, generatedGates, isReady]);
 
   useEffect(() => {
-    const state = location.state as { ideaTitle?: string; ideaDescription?: string } | null;
+    const state = location.state as {
+      ideaTitle?: string;
+      ideaDescription?: string;
+      reviseOutputId?: string;
+      reviseContent?: string;
+      reviseTitle?: string;
+      reviseType?: string;
+      reviseScore?: number;
+    } | null;
+
+    if (state?.reviseOutputId) {
+      setRevisionMode(true);
+      setRevisionOutputId(state.reviseOutputId);
+      setRevisionContent(state.reviseContent || null);
+      setGeneratedOutputId(state.reviseOutputId);
+      if (state.reviseType) setOutputType(state.reviseType);
+      setSessionTitle(`Revising: ${state.reviseTitle || "Untitled"}`);
+      const typeLabel = state.reviseType ? (OUTPUT_TYPES[state.reviseType]?.label || state.reviseType) : "content";
+      setMessages([{
+        id: "w0",
+        role: "assistant",
+        content: `I have your ${typeLabel} titled "${state.reviseTitle || "Untitled"}" (scored ${state.reviseScore ?? "unscored"}). What would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`,
+        ts: Date.now(),
+      }]);
+      return;
+    }
+
     if (state?.ideaTitle) {
       setInput(state.ideaDescription ? `${state.ideaTitle}\n\n${state.ideaDescription}` : state.ideaTitle);
     }
@@ -1255,7 +1284,15 @@ export default function WorkSession() {
     const inferredMode = inferMode(text);
     setCurrentSystemMode(inferredMode);
 
-    const chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
+    let chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
+    // In revision mode, prepend the original content as context
+    if (revisionMode && revisionContent && chatHistory.length <= 3) {
+      chatHistory = [
+        { role: "user" as const, content: `[REVISION CONTEXT - Original content being revised:]\n\n${revisionContent.slice(0, 3000)}` },
+        { role: "assistant" as const, content: "I've reviewed the original content. Let me know what you'd like to change." },
+        ...chatHistory,
+      ];
+    }
 
     try {
       const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd, inferredMode, user?.id);
@@ -1309,26 +1346,42 @@ export default function WorkSession() {
       setGeneratedGates(gatesData);
 
       // Save draft to Supabase
-      const title = sessionTitle !== "New Session" ? sessionTitle : `${type.label} - ${new Date().toLocaleDateString()}`;
-      const { data: savedOutput } = await supabase
-        .from("outputs")
-        .insert({
-          user_id: user!.id,
-          title,
-          content,
-          output_type: outputType,
-          score,
-          conversation_summary: conversationSummary,
-          gates,
-          content_state: "in_progress",
-          project_id: activeProjectId || null,
-        })
-        .select()
-        .single();
+      const title = sessionTitle.startsWith("Revising:") ? sessionTitle.replace("Revising: ", "") : (sessionTitle !== "New Session" ? sessionTitle : `${type.label} - ${new Date().toLocaleDateString()}`);
+      let outputId: string;
 
-      const outputId = savedOutput?.id ?? "new";
+      if (revisionMode && revisionOutputId) {
+        // Update existing output
+        await supabase.from("outputs").update({
+          content,
+          score,
+          gates,
+          conversation_summary: conversationSummary,
+          content_state: "in_progress",
+        }).eq("id", revisionOutputId);
+        outputId = revisionOutputId;
+        toast("Revision saved. Running quality review...");
+      } else {
+        // Create new output
+        const { data: savedOutput } = await supabase
+          .from("outputs")
+          .insert({
+            user_id: user!.id,
+            title,
+            content,
+            output_type: outputType,
+            score,
+            conversation_summary: conversationSummary,
+            gates,
+            content_state: "in_progress",
+            project_id: activeProjectId || null,
+          })
+          .select()
+          .single();
+        outputId = savedOutput?.id ?? "new";
+        toast("Draft generated. Running quality review...");
+      }
+
       setGeneratedOutputId(outputId);
-      toast("Draft generated. Running quality review...");
 
       // ── Pass 2: Run real pipeline via API ───────────────
       if (outputId !== "new" && user) {
@@ -2073,6 +2126,21 @@ export default function WorkSession() {
             maxWidth: 760, width: "100%", margin: "0 auto",
             padding: "32px 24px 8px", display: "flex", flexDirection: "column", gap: 20,
           }}>
+            {revisionMode && revisionContent && (
+              <details style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                <summary style={{ padding: "10px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif", userSelect: "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>View original content</span>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ transition: "transform 0.15s" }}>
+                    <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </summary>
+                <div style={{ padding: "0 16px 16px", maxHeight: 300, overflowY: "auto" }}>
+                  <pre style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, lineHeight: 1.5, color: "var(--fg-3)", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
+                    {revisionContent}
+                  </pre>
+                </div>
+              </details>
+            )}
             {messages.map(msg => (
               <MessageBubble key={msg.id} msg={msg} isMobile={isMobile} />
             ))}

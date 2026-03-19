@@ -649,28 +649,58 @@ export default function OutputDetail() {
             {output!.title}
           </h1>
           {!editing && (
-            <button
-              type="button"
-              onClick={startEditing}
-              title="Edit content"
-              style={{
-                background: "none",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 6,
-                padding: "6px 14px",
-                fontSize: 13,
-                fontWeight: 500,
-                color: "var(--fg-3)",
-                cursor: "pointer",
-                fontFamily: "'Afacad Flux', sans-serif",
-                transition: "all 0.15s ease",
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--fg)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--fg-3)"; }}
-            >
-              Edit
-            </button>
+            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={startEditing}
+                title="Edit content directly"
+                style={{
+                  background: "none",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 6,
+                  padding: "6px 14px",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--fg-3)",
+                  cursor: "pointer",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--fg)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/studio/work", {
+                  state: {
+                    reviseOutputId: output!.id,
+                    reviseContent: output!.content,
+                    reviseTitle: output!.title,
+                    reviseType: output!.output_type,
+                    reviseScore: output!.score,
+                  },
+                })}
+                title="Revise this content with Watson"
+                style={{
+                  background: "var(--gold-dark)",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "6px 14px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#0D1B2A",
+                  cursor: "pointer",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "opacity 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+              >
+                Revise with Watson
+              </button>
+            </div>
           )}
         </div>
         <div
