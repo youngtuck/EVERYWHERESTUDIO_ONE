@@ -56,22 +56,17 @@ export default function StudioShell() {
 
   const studioFooter = (
     <footer style={{
-      fontFamily: "'Afacad Flux', sans-serif",
+      fontFamily: "var(--font)",
       fontSize: 12,
       color: "var(--fg-3)",
       textAlign: "center",
-      padding: "20px 24px",
-      width: "100%",
+      padding: "24px",
       flexShrink: 0,
       borderTop: "1px solid var(--line)",
-      background: "transparent",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
     }}>
-      <Logo size="sm" variant="light" />
-      <span>™ 2026, Mixed Grill, LLC, v6.5 Alpha</span>
+      <span>EVERYWHERE STUDIO</span>
+      <span style={{ margin: "0 2px" }}>™</span>
+      <span> 2026, Mixed Grill, LLC, v6.5 Alpha</span>
     </footer>
   );
 
@@ -118,7 +113,7 @@ export default function StudioShell() {
           onMobileClose={isMobile ? () => setSidebarOpen(false) : undefined}
         />
       </div>
-      <main style={{ flex: 1, minHeight: "100vh", background: "var(--bg-2)", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none", display: "flex", flexDirection: "column" }}>
+      <main style={{ flex: 1, background: "var(--bg-2)", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none", display: "flex", flexDirection: "column", minHeight: 0 }}>
         {isMobile && (
           <div
             style={{
