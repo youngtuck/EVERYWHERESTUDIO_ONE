@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const VALID_ACCESS_CODE = "oneidea";
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 /** Wraps studio/onboarding routes; redirects to /auth when not signed in, and controls onboarding flow. Uses profile from AuthContext (refreshed by onboarding before redirect). */
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -41,13 +41,36 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const profileReady = user && (profile !== null || profileLoadTimedOut);
   const onboardingDone = !!profile?.voice_dna_completed || !!profile?.onboarding_complete;
 
-  const handleGoogleAccessCodeSubmit = (e: React.FormEvent) => {
+  const handleGoogleAccessCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGoogleCodeError("");
-    if (googleAccessCode.trim().toLowerCase() !== VALID_ACCESS_CODE) {
-      setGoogleCodeError("Invalid access code. Contact mark@mixedgrill.studio for access.");
-      signOut();
-      return;
+    try {
+      const res = await fetch(`${API_BASE}/api/validate-access-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: googleAccessCode.trim(), email: user?.email || "" }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setGoogleCodeError(data.error || "Invalid access code.");
+        signOut();
+        return;
+      }
+      // Redeem the code
+      if (data.codeId && user) {
+        fetch(`${API_BASE}/api/redeem-access-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ codeId: data.codeId, userId: user.id }),
+        });
+      }
+    } catch {
+      // Fallback: accept "oneidea" if API unreachable
+      if (googleAccessCode.trim().toLowerCase() !== "oneidea") {
+        setGoogleCodeError("Invalid access code.");
+        signOut();
+        return;
+      }
     }
     setGoogleAccessCodeVerified(true);
     refreshProfile();

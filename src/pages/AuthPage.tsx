@@ -9,7 +9,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import Logo from "../components/Logo";
 
-const VALID_ACCESS_CODE = "oneidea";
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 const AuthPage = () => {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -58,9 +58,23 @@ const AuthPage = () => {
     setSubmitError("");
 
     if (mode === "signup") {
-      if (accessCode.trim().toLowerCase() !== VALID_ACCESS_CODE) {
-        setSubmitError("Invalid access code. Contact mark@mixedgrill.studio for access.");
-        return;
+      try {
+        const codeRes = await fetch(`${API_BASE}/api/validate-access-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: accessCode.trim(), email: email.trim() }),
+        });
+        const codeData = await codeRes.json();
+        if (!codeData.valid) {
+          setSubmitError(codeData.error || "Invalid access code.");
+          return;
+        }
+        (window as any).__ewCodeId = codeData.codeId;
+      } catch {
+        if (accessCode.trim().toLowerCase() !== "oneidea") {
+          setSubmitError("Invalid access code.");
+          return;
+        }
       }
       if (password !== confirmPassword) {
         setSubmitError("Passwords don't match.");
@@ -79,6 +93,16 @@ const AuthPage = () => {
           options: { data: { full_name: name } }
         });
         if (error) { setSubmitError(error.message); return; }
+        // Redeem the access code
+        const codeId = (window as any).__ewCodeId;
+        if (codeId) {
+          fetch(`${API_BASE}/api/redeem-access-code`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ codeId }),
+          });
+          delete (window as any).__ewCodeId;
+        }
         setSubmitError("Check your email to confirm your account.");
         return;
       }
