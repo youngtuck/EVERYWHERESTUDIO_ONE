@@ -1045,6 +1045,9 @@ export default function WorkSession() {
   const [visibleCheckpointCount, setVisibleCheckpointCount] = useState(0);
   const [revealedCheckpointCount, setRevealedCheckpointCount] = useState(0);
   const [showTotalScore, setShowTotalScore] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("Writing your draft...");
+  const loadingStartRef = useRef(Date.now());
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
@@ -1116,6 +1119,45 @@ export default function WorkSession() {
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
+
+  // Progressive loading animation during generation
+  useEffect(() => {
+    if (phase !== "generating") {
+      if (loadingProgress > 0) setLoadingProgress(100);
+      return;
+    }
+    loadingStartRef.current = Date.now();
+    setLoadingProgress(0);
+    setLoadingMessage("Writing your draft...");
+
+    const interval = setInterval(() => {
+      const elapsed = (Date.now() - loadingStartRef.current) / 1000;
+      let progress: number;
+      let message: string;
+
+      if (elapsed < 12) {
+        progress = (elapsed / 12) * 30;
+        message = "Writing your draft...";
+      } else if (elapsed < 25) {
+        progress = 30 + ((elapsed - 12) / 13) * 25;
+        message = "Applying your voice DNA...";
+      } else if (elapsed < 40) {
+        progress = 55 + ((elapsed - 25) / 15) * 20;
+        message = "Running quality checkpoints...";
+      } else if (elapsed < 55) {
+        progress = 75 + ((elapsed - 40) / 15) * 15;
+        message = "Almost there...";
+      } else {
+        progress = Math.min(95, 90 + (elapsed - 55) * 0.1);
+        message = "Taking a bit longer than usual...";
+      }
+
+      setLoadingProgress(progress);
+      setLoadingMessage(message);
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [phase]);
 
   // Persist session state on changes (debounced)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -1651,22 +1693,45 @@ export default function WorkSession() {
         {phase === "generating" && (
           <div style={{
             flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            gap: 24, padding: 40,
+            gap: 0, padding: 40,
           }}>
-            <LoadingAnimation
-              variant={pipelineStatus === "RUNNING" ? "sentinel" : "generate"}
-              progress={undefined}
-              message={
-                pipelineStatus === "RUNNING"
-                  ? `Running quality checkpoints... ${pipelineGateResults.filter(Boolean).length}/7 complete`
-                  : "Writing your draft..."
+            <style>{`
+              @keyframes shimmerBar {
+                0% { background-position: -200% center; }
+                100% { background-position: 200% center; }
               }
-            />
-            <p style={{ fontSize: 13, color: "var(--fg-3)", textAlign: "center", maxWidth: 360 }}>
-              {pipelineStatus === "RUNNING"
-                ? "7 specialist agents are reviewing your content. This takes 30-60\u00A0seconds."
-                : "Generating your first draft, then running the full quality\u00A0pipeline."}
-            </p>
+            `}</style>
+            <WatsonOrb size={48} thinking />
+            <div style={{ marginTop: 24, width: "100%", maxWidth: 400 }}>
+              {/* Progress bar */}
+              <div style={{ height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
+                <div style={{
+                  height: "100%",
+                  width: `${loadingProgress}%`,
+                  borderRadius: 2,
+                  background: "linear-gradient(90deg, #4A90D9, #F5C642)",
+                  backgroundSize: "200% 100%",
+                  animation: "shimmerBar 2s linear infinite",
+                  transition: "width 0.5s ease-out",
+                }} />
+              </div>
+              {/* Message */}
+              <div style={{ textAlign: "center", marginTop: 16 }}>
+                <p style={{
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: "var(--fg-2)",
+                  margin: 0,
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "opacity 0.3s ease",
+                }}>
+                  {loadingMessage}
+                </p>
+                <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "8px 0 0", opacity: 0.7 }}>
+                  Generating your draft, then running the full quality pipeline.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
