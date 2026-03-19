@@ -583,8 +583,8 @@ function EmptyState({
           fontFamily: "'Afacad Flux', sans-serif",
           letterSpacing: "-0.5px",
           textAlign: "center",
-          marginTop: 16,
-          marginBottom: 24,
+          marginTop: -40,
+          marginBottom: 20,
         }}
       >
         What's on your mind?
