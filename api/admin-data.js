@@ -51,13 +51,27 @@ export default async function handler(req, res) {
   try {
     // ── USERS LIST ────────────────────────────────
     if (action === "get_users") {
-      const { data: profiles } = await client.from("profiles").select("id, full_name, email, onboarding_complete, voice_dna_completed, created_at, sentinel_topics");
+      const { data: profiles } = await client.from("profiles").select("id, full_name, onboarding_complete, voice_dna_completed, created_at, sentinel_topics");
       const { data: outputStats } = await client.from("outputs").select("user_id, score, created_at, output_type");
+
+      // Get emails from auth.users (email is NOT in profiles table)
+      let authUsers = [];
+      try {
+        const { data: authData } = await client.auth.admin.listUsers({ perPage: 1000 });
+        authUsers = authData?.users || [];
+      } catch (e) {
+        console.error("[admin-data] Failed to list auth users:", e);
+      }
+      const emailMap = {};
+      for (const au of authUsers) {
+        emailMap[au.id] = au.email || "";
+      }
 
       const userMap = {};
       for (const p of (profiles || [])) {
         userMap[p.id] = {
           ...p,
+          email: emailMap[p.id] || null,
           outputCount: 0,
           avgScore: 0,
           lastActive: null,

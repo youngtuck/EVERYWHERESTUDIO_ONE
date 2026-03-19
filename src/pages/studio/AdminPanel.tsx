@@ -28,12 +28,17 @@ function timeAgo(iso: string): string {
 async function adminFetch(action: string, params: Record<string, any> = {}) {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
+  if (!token) throw new Error("No auth session");
   const res = await fetch(`${API_BASE}/api/admin-data`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ action, ...params }),
   });
-  if (!res.ok) throw new Error((await res.json()).error || "Request failed");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    console.error(`[Admin] API error for ${action}:`, res.status, body);
+    throw new Error(body.error || `Request failed (${res.status})`);
+  }
   return res.json();
 }
 
@@ -201,10 +206,20 @@ function PeopleTab() {
   const [detail, setDetail] = useState<any>(null);
 
   useEffect(() => {
-    adminFetch("get_users").then(d => { setUsers(d.users || []); setLoading(false); }).catch(() => setLoading(false));
+    adminFetch("get_users")
+      .then(d => {
+        console.log("[Admin] Users response:", d);
+        setUsers(d.users || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("[Admin] Failed to load users:", err);
+        setLoading(false);
+      });
   }, []);
 
   const getStatus = (u: any) => {
+    if (!u.created_at) return u.onboarding_complete ? "active" : "onboarding";
     const daysSinceSignup = (Date.now() - new Date(u.created_at).getTime()) / 86400000;
     if (daysSinceSignup < 2) return "new";
     if (!u.onboarding_complete) return "onboarding";
