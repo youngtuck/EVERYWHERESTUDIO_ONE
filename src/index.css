@@ -184,11 +184,10 @@ button { font-family: var(--font); }
 .studio-sidebar.collapsed { width: 60px; }
 .studio-main { flex: 1; overflow-y: auto; background: var(--bg); }
 .studio-main-inner {
-  padding: var(--studio-page-pad);
+  padding: 0;
 }
 .studio-main-inner[data-page="dashboard"] {
   max-width: none;
-  padding: 32px 48px;
 }
 @media (min-width: 1600px) {
   .studio-main-inner[data-page="dashboard"] {
@@ -416,7 +415,7 @@ h1, h2, h3, .studio-page-transition p {
 /* ─── RESPONSIVE STUDIO ──────────────────────────────────────── */
 @media (max-width: 768px) {
   .studio-main-inner {
-    padding: 12px !important;
+    padding: 0 !important;
   }
   /* Dashboard stat cards: 2-column */
   .dashboard-stats-grid {
