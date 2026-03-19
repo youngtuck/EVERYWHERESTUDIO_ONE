@@ -1,10 +1,14 @@
 import { supabase } from "../supabase";
 import { PIPELINE_CONFIG } from "./config";
 import type { GateResult, PipelineContext } from "./types";
+import { PROMPTS } from "./prompts/index";
 
-async function loadPrompt(filename: string): Promise<string> {
-  const module = await import(`./prompts/${filename}?raw`);
-  return module.default as string;
+function loadPrompt(filename: string): string {
+  const prompt = PROMPTS[filename];
+  if (!prompt) {
+    throw new Error(`Prompt file not found: ${filename}. Available: ${Object.keys(PROMPTS).join(", ")}`);
+  }
+  return prompt;
 }
 
 function buildUserMessage(

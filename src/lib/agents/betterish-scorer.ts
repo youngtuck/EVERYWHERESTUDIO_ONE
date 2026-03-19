@@ -1,10 +1,10 @@
 import { supabase } from "../supabase";
 import { PIPELINE_CONFIG } from "./config";
 import type { BetterishScore, PipelineContext } from "./types";
+import { PROMPTS } from "./prompts/index";
 
-async function loadBetterishPrompt(): Promise<string> {
-  const module = await import("./prompts/betterish.md?raw");
-  return module.default as string;
+function loadBetterishPrompt(): string {
+  return PROMPTS["betterish.md"];
 }
 
 export async function scoreBetterish(
