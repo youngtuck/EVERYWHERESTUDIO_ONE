@@ -18,174 +18,48 @@ import SpecialistPanel from "../../components/studio/SpecialistPanel";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WATSON ORB MINI - minimal 2D system glyph (message bubble / thinking state)
-// thinking=false: calm, slow inner waveform.
-// thinking=true:  slightly brighter, more active wave + glow.
+// WATSON ORB MINI - lightweight CSS orb for chat bubbles (no canvas)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function WatsonOrbMini({ size, thinking }: { size: number; thinking?: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef(0);
-  const energyRef = useRef(0);
-  const thinkingRef = useRef(!!thinking);
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-  const isMobile = useMobile();
-
-  useEffect(() => {
-    thinkingRef.current = !!thinking;
-  }, [thinking]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const r = size / 2;
-    const cx = r;
-    const cy = r;
-
-    const drawFrame = (ts: number) => {
-      // Ease energy toward target based on thinking
-      const target = thinkingRef.current ? 1 : 0;
-      energyRef.current += (target - energyRef.current) * 0.06;
-      const energy = energyRef.current;
-
-      ctx.clearRect(0, 0, size, size);
-      ctx.save();
-      ctx.translate(cx, cy);
-
-      // Clip to circle
-      ctx.beginPath();
-      ctx.arc(0, 0, r - 1, 0, Math.PI * 2);
-      ctx.clip();
-
-      // Background disc
-      const bgGrad = ctx.createRadialGradient(0, -r * 0.3, r * 0.1, 0, 0, r);
-      if (isDark) {
-        bgGrad.addColorStop(0, "rgba(12,16,40,1)");
-        bgGrad.addColorStop(1, "rgba(4,6,20,1)");
-      } else {
-        bgGrad.addColorStop(0, "rgba(246,246,244,1)");
-        bgGrad.addColorStop(1, "rgba(225,225,220,1)");
-      }
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(-r, -r, size, size);
-
-      // Subtle concentric ring
-      ctx.beginPath();
-      ctx.arc(0, 0, r - 3, 0, Math.PI * 2);
-      ctx.strokeStyle = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Waveform path (inside circle, horizontal)
-      const waveHeight = r * (0.20 + energy * 0.10);
-      const waveY = 0;
-      const baseFreq = 2.2;
-      const t = ts * 0.001 * (isMobile ? 0.5 : 1);
-
-      ctx.beginPath();
-      const steps = 80;
-      for (let i = 0; i <= steps; i++) {
-        const u = i / steps;
-        const x = (u - 0.5) * (r * 1.7);
-        const env = Math.cos(u * Math.PI); // center emphasis
-        const y =
-          waveY +
-          Math.sin(u * baseFreq * Math.PI * 2 + t * 1.2) * waveHeight * env * 0.8 +
-          Math.sin(u * (baseFreq * 0.6) * Math.PI * 2 - t * 0.8) * waveHeight * env * 0.35;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-
-      const waveGrad = ctx.createLinearGradient(-r, 0, r, 0);
-      if (isDark) {
-        waveGrad.addColorStop(0, "rgba(74,144,245,0.0)");
-        waveGrad.addColorStop(0.25, "rgba(74,144,245,0.55)");
-        waveGrad.addColorStop(0.5, "rgba(200,150,26,0.9)");
-        waveGrad.addColorStop(0.75, "rgba(160,128,245,0.65)");
-        waveGrad.addColorStop(1, "rgba(160,128,245,0.0)");
-      } else {
-        waveGrad.addColorStop(0, "rgba(74,144,245,0.15)");
-        waveGrad.addColorStop(0.5, "rgba(200,150,26,0.6)");
-        waveGrad.addColorStop(1, "rgba(160,128,245,0.15)");
-      }
-      ctx.strokeStyle = waveGrad;
-      ctx.lineWidth = isMobile ? 1.1 : 1.4;
-      ctx.lineCap = "round";
-      ctx.stroke();
-
-      // Small center dot
-      ctx.beginPath();
-      ctx.arc(0, 0, 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = isDark ? "rgba(232,232,230,0.85)" : "rgba(12,12,10,0.9)";
-      ctx.fill();
-
-      ctx.restore();
-
-      if (!isMobile) {
-        rafRef.current = requestAnimationFrame(drawFrame);
-      }
-    };
-
-    // Initial static frame
-    drawFrame(performance.now());
-    if (!isMobile) {
-      rafRef.current = requestAnimationFrame(drawFrame);
-    }
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [size, isDark, isMobile]);
-
-  const glowSize = size * (thinking ? 1.5 : 1.3);
-  const glowOpacity = thinking ? 0.5 : 0.28;
-
   return (
-    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
-      {/* Soft outer glow */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: glowSize,
-          height: glowSize,
-          marginLeft: -glowSize / 2,
-          marginTop: -glowSize / 2,
-          borderRadius: "50%",
-          background: isDark
-            ? "radial-gradient(circle at 50% 35%, rgba(200,150,26,0.35), transparent 70%)"
-            : "radial-gradient(circle at 50% 35%, rgba(200,150,26,0.25), transparent 70%)",
-          opacity: glowOpacity,
-          filter: "blur(16px)",
-          pointerEvents: "none",
-          transition: "opacity 0.4s ease, transform 0.4s ease",
-          transform: thinking ? "scale(1.02)" : "scale(1)",
-        }}
-      />
-      <canvas
-        ref={canvasRef}
-        style={{
-          width: size,
-          height: size,
-          display: "block",
-          borderRadius: "50%",
-          position: "relative",
-          zIndex: 1,
-          boxShadow: isDark
-            ? "0 14px 40px rgba(0,0,0,0.65)"
-            : "0 10px 30px rgba(0,0,0,0.18)",
-        }}
-      />
+    <div style={{
+      width: size,
+      height: size,
+      borderRadius: "50%",
+      background: "radial-gradient(circle at 40% 35%, rgba(74,144,217,0.85) 0%, rgba(13,27,42,0.95) 65%)",
+      boxShadow: thinking
+        ? "0 0 12px rgba(74,144,217,0.4), inset 0 -2px 6px rgba(245,198,66,0.25), inset 0 2px 4px rgba(74,144,217,0.3)"
+        : "0 0 6px rgba(74,144,217,0.2), inset 0 -2px 4px rgba(245,198,66,0.15)",
+      flexShrink: 0,
+      position: "relative",
+      overflow: "hidden",
+      animation: thinking ? "orbMiniPulse 2s ease-in-out infinite" : "none",
+      transition: "box-shadow 0.3s ease",
+    }}>
+      {/* Inner highlight dot */}
+      <div style={{
+        position: "absolute",
+        top: "30%",
+        left: "35%",
+        width: size * 0.22,
+        height: size * 0.22,
+        borderRadius: "50%",
+        background: "rgba(255,255,255,0.45)",
+        filter: "blur(1px)",
+      }} />
+      {/* Gold accent at bottom */}
+      <div style={{
+        position: "absolute",
+        bottom: "15%",
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: size * 0.35,
+        height: size * 0.12,
+        borderRadius: "50%",
+        background: "rgba(245,198,66,0.25)",
+        filter: "blur(2px)",
+      }} />
     </div>
   );
 }
@@ -1585,6 +1459,10 @@ export default function WorkSession() {
         @keyframes orbPulse {
           0%, 100% { transform: scale(1); opacity: 0.9; }
           50%      { transform: scale(1.05); opacity: 1; }
+        }
+        @keyframes orbMiniPulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 6px rgba(74,144,217,0.2); }
+          50%      { transform: scale(1.06); box-shadow: 0 0 14px rgba(74,144,217,0.5); }
         }
         @keyframes watsonDot {
           0%, 80%, 100% { transform: translateY(0); opacity: .4; }
