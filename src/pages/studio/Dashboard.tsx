@@ -74,10 +74,9 @@ interface OutputRow {
 export default function Dashboard() {
   const nav = useNavigate();
   const isMobile = useMobile();
-  const { user } = useAuth();
+  const { user, displayName } = useAuth();
 
   const [outputs, setOutputs] = useState<OutputRow[]>([]);
-  const [profileName, setProfileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [hasWatchTopics, setHasWatchTopics] = useState(false);
@@ -102,9 +101,7 @@ export default function Dashboard() {
       .then(([outRes, profileRes, briefingRes]) => {
         if (outRes.error) throw outRes.error;
         setOutputs((outRes.data as OutputRow[]) || []);
-        if (profileRes.data?.full_name)
-          setProfileName((profileRes.data.full_name as string).split(" ")[0] || null);
-        else if (user.email) setProfileName(user.email.split("@")[0]);
+        // Name now comes from AuthContext displayName
         setHasWatchTopics(Array.isArray(profileRes.data?.sentinel_topics) && profileRes.data.sentinel_topics.length > 0);
         setSignalCount(briefingRes?.data?.signals_count ?? null);
       })
@@ -112,7 +109,7 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const firstName = profileName || "there";
+  const firstName = displayName ? displayName.split(" ")[0] : "there";
   const inProgress = outputs.filter((o) => (o.score ?? 0) < 900);
   const vault = outputs.filter((o) => (o.score ?? 0) >= 900);
   const recentThree = outputs.slice(0, 3);

@@ -74,7 +74,7 @@ function SectionHeader({ label }: { label: string }) {
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, displayName: ctxDisplayName } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const [loading, setLoading] = useState(true);
@@ -103,12 +103,7 @@ export default function Settings() {
           .eq("id", user.id)
           .single();
         if (data) {
-          setFullName(
-            data.full_name
-            || (user.user_metadata?.full_name as string)
-            || (user.user_metadata?.name as string)
-            || ""
-          );
+          setFullName(data.full_name || ctxDisplayName || "");
           setVoiceComplete(!!data.voice_dna_completed);
           setWatchTopics(Array.isArray(data.sentinel_topics) ? data.sentinel_topics : []);
         }

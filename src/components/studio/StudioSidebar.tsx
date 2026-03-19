@@ -41,7 +41,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
   const nav = useNavigate();
   const loc = useLocation();
   const { theme } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, signOut, displayName } = useAuth();
 
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -440,15 +440,11 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 14, fontWeight: 600, color: "var(--fg)",
           }}>
-            {(user?.user_metadata?.full_name || user?.email || "?")[0].toUpperCase()}
+            {(displayName || user?.email || "?")[0].toUpperCase()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {!collapsed && (user?.user_metadata?.full_name
-                ? titleCase(user.user_metadata.full_name as string)
-                : user?.email
-                  ? titleCase(user.email.split("@")[0])
-                  : "Signed in")}
+              {!collapsed && (displayName || "Signed in")}
             </div>
             {!collapsed && <div style={{ fontSize: 13, color: "var(--fg-3)" }}>{user?.email || ""}</div>}
           </div>

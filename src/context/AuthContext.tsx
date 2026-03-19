@@ -13,8 +13,25 @@ interface AuthContextType {
   loading: boolean;
   profile: ProfileOnboarding;
   profileLoaded: boolean;
+  displayName: string;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
+}
+
+function titleCase(str: string): string {
+  return str.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+}
+
+function resolveDisplayName(user: User | null, dbFullName: string | null): string {
+  if (dbFullName) return dbFullName;
+  const meta = user?.user_metadata;
+  if (meta?.full_name) return String(meta.full_name);
+  if (meta?.name) return String(meta.name);
+  if (user?.email) {
+    const local = user.email.split("@")[0];
+    return titleCase(local.replace(/[._]/g, " "));
+  }
+  return "there";
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   profile: null,
   profileLoaded: false,
+  displayName: "",
   refreshProfile: async () => {},
   signOut: async () => {},
 });
@@ -33,15 +51,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileOnboarding>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [displayName, setDisplayName] = useState("");
   const hasRoutedRef = useRef(false);
+  const nameFixedRef = useRef(false);
 
   const refreshProfile = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("voice_dna_completed, onboarding_complete")
+      .select("voice_dna_completed, onboarding_complete, full_name")
       .eq("id", user.id)
       .single();
+
     setProfile(
       data
         ? {
@@ -51,6 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         : null
     );
     setProfileLoaded(true);
+
+    // Resolve display name with fallback chain
+    const resolved = resolveDisplayName(user, data?.full_name ?? null);
+    setDisplayName(resolved);
+
+    // Auto-save name to profiles if it was resolved from auth metadata but missing in DB
+    if (!data?.full_name && resolved && resolved !== "there" && !nameFixedRef.current) {
+      nameFixedRef.current = true;
+      supabase.from("profiles").update({ full_name: resolved }).eq("id", user.id);
+    }
   }, [user?.id]);
 
   useEffect(() => {
@@ -67,12 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Only route once per session, on initial sign-in. Do not redirect away from /onboarding mid-flow.
       if (event === "SIGNED_IN" && session?.user && !hasRoutedRef.current) {
         const pathname = window.location.pathname;
         const retrainParam = new URLSearchParams(window.location.search).get("retrain");
         if (retrainParam && pathname === "/onboarding") {
-          return; // Never redirect away from /onboarding when retrain param is present
+          return;
         }
         hasRoutedRef.current = true;
         if (pathname === "/auth") {
@@ -96,26 +126,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch profile when user is set (initial load and after sign-in)
   useEffect(() => {
     if (!user) {
       setProfile(null);
       setProfileLoaded(false);
+      setDisplayName("");
+      nameFixedRef.current = false;
       return;
     }
     setProfileLoaded(false);
+    // Set immediate display name from auth metadata while profile loads
+    setDisplayName(resolveDisplayName(user, null));
     refreshProfile();
   }, [user?.id, refreshProfile]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     hasRoutedRef.current = false;
+    nameFixedRef.current = false;
     setProfile(null);
     setProfileLoaded(false);
+    setDisplayName("");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, profile, profileLoaded, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, profileLoaded, displayName, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );
