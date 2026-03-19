@@ -4,10 +4,11 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../lib/supabase";
 import Logo from "../Logo";
-import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, Plus, LogOut, Package, Archive, Loader2, Shield } from "lucide-react";
+import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, Plus, LogOut, Package, Archive, Loader2, Shield, LayoutDashboard } from "lucide-react";
 
-// ── Nav structure: Watch > Work > Wrap (primary), then utility at bottom ──
+// ── Nav structure: Dashboard > Watch > Work > Wrap (primary), then utility at bottom ──
 const PRIMARY_NAV = [
+  { path: "/studio/dashboard", label: "Dashboard",  icon: LayoutDashboard, tooltip: "Your command center. Overview of all activity.", primary: true },
   { path: "/studio/watch",   label: "Watch",       icon: Eye,        tooltip: "Intelligence monitoring. What's happening in your category.", primary: true },
   { path: "/studio/lot",     label: "The Lot",     icon: Bookmark,   tooltip: "Parked ideas. Right idea, wrong time.", sub: true },
   { path: "/studio/work",    label: "Work",        icon: PenLine,    tooltip: "Start a Watson session to produce content.", primary: true },
