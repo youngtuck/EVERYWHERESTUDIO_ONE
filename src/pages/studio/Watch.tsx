@@ -334,8 +334,14 @@ export default function Watch() {
     return () => clearTimeout(t);
   }, [loadingFadeOut]);
 
-  const openWorkWithPrompt = (ctaPrompt: string) => {
-    navigate(`/studio/work?prompt=${encodeURIComponent(ctaPrompt)}`);
+  const openWorkWithPrompt = (ctaPrompt: string, context?: { headline: string; summary: string; angle: string }) => {
+    if (context) {
+      navigate("/studio/work", {
+        state: { watchTrigger: { headline: context.headline, summary: context.summary, angle: context.angle, prompt: ctaPrompt } },
+      });
+    } else {
+      navigate(`/studio/work?prompt=${encodeURIComponent(ctaPrompt)}`);
+    }
   };
 
   if (loading) {
@@ -751,7 +757,7 @@ export default function Watch() {
                   <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 12px" }}>{item.summary}</p>
                   <button
                     type="button"
-                    onClick={() => openWorkWithPrompt(item.cta_prompt)}
+                    onClick={() => openWorkWithPrompt(item.cta_prompt, { headline: item.title, summary: item.summary, angle: item.cta_prompt })}
                     style={{
                       background: "#3A9A5C",
                       color: "#fff",
@@ -778,7 +784,7 @@ export default function Watch() {
                   <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 12px" }}>{item.angle}</p>
                   <button
                     type="button"
-                    onClick={() => openWorkWithPrompt(item.angle)}
+                    onClick={() => openWorkWithPrompt(item.angle, { headline: item.title, summary: item.angle, angle: item.angle })}
                     style={{
                       background: "transparent",
                       color: "#0D8C9E",

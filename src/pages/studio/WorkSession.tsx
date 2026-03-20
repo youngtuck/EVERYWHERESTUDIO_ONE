@@ -1052,7 +1052,25 @@ export default function WorkSession() {
       reviseTitle?: string;
       reviseType?: string;
       reviseScore?: number;
+      watchTrigger?: {
+        headline: string;
+        summary: string;
+        angle: string;
+        prompt: string;
+      };
     } | null;
+
+    if (state?.watchTrigger) {
+      const { headline, angle, prompt } = state.watchTrigger;
+      setMessages([{
+        id: "w0",
+        role: "assistant",
+        content: `I see you're interested in "${headline}". Here's an angle we could explore: ${angle}. Which direction feels right, or would you like to take it somewhere else?`,
+        ts: Date.now(),
+      }]);
+      setInput(prompt);
+      return;
+    }
 
     if (state?.reviseOutputId) {
       setRevisionMode(true);
