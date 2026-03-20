@@ -1155,6 +1155,7 @@ export default function WorkSession() {
 
   // Watch/Sentinel integration: auto-send prompt from search params
   const promptParamHandled = useRef(false);
+  const generateLockRef = useRef(false);
   useEffect(() => {
     const promptParam = searchParams.get("prompt");
     if (promptParam && !promptParamHandled.current) {
@@ -1165,6 +1166,8 @@ export default function WorkSession() {
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMakeTheThing = async () => {
+    if (generateLockRef.current) return;
+    generateLockRef.current = true;
     setApiError(null);
     setPhase("generating");
     setPipelineStatus("IDLE");
@@ -1312,6 +1315,8 @@ export default function WorkSession() {
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Generation failed.");
       setPhase("input");
+    } finally {
+      generateLockRef.current = false;
     }
   };
 
@@ -1694,7 +1699,14 @@ export default function WorkSession() {
                   type="button"
                   className="btn-ghost"
                   style={{ padding: "10px 20px", fontSize: 14, borderRadius: 8, border: "1px solid var(--border-subtle)", background: "transparent" }}
-                  onClick={() => { setPhase("input"); setShowCheckpointSequence(false); }}
+                  onClick={() => {
+                    setPhase("input");
+                    setShowCheckpointSequence(false);
+                    if (generatedOutputId && generatedOutputId !== "new") {
+                      setRevisionMode(true);
+                      setRevisionOutputId(generatedOutputId);
+                    }
+                  }}
                 >
                   Revise with Watson
                 </button>
