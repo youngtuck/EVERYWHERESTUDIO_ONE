@@ -1408,7 +1408,7 @@ export default function ExplorePage() {
         <section
           id="checkpoints"
           style={{
-            padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
+            padding: isMobile ? "80px 24px 40px" : "140px 48px 60px",
             background:"#07090f",
           }}
         >
@@ -1441,7 +1441,7 @@ export default function ExplorePage() {
         {/* ══ SLOP DETECTOR ══════════════════════════════════════════════════ */}
         <section
           style={{
-            padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
+            padding: isMobile ? "40px 24px 80px" : "60px 48px 140px",
             background: "#07090f",
           }}
         >
