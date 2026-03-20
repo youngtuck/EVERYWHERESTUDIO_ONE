@@ -103,7 +103,13 @@ export default function Settings() {
           .eq("id", user.id)
           .single();
         if (data) {
-          setFullName(data.full_name || ctxDisplayName || "");
+          setFullName(
+            data.full_name
+            || ctxDisplayName
+            || user?.user_metadata?.full_name
+            || user?.user_metadata?.name
+            || (user?.email ? user.email.split("@")[0] : "")
+          );
           setVoiceComplete(!!data.voice_dna_completed);
           setWatchTopics(Array.isArray(data.sentinel_topics) ? data.sentinel_topics : []);
         }
