@@ -8,70 +8,50 @@ interface LogoProps {
   onClick?: () => void;
 }
 
+const SIZE_MAP = { sm: 20, md: 28, lg: 42 } as const;
+const TM_MAP = { sm: 10, md: 14, lg: 22 } as const;
+
 const Logo = ({ size = "md", onDark, variant, onClick }: LogoProps) => {
   const { theme } = useTheme();
 
-  // If variant is explicitly set, use it. Otherwise auto-detect from theme.
   const isDark = variant
     ? variant === "dark"
     : onDark !== undefined
       ? onDark
       : theme === "dark";
 
+  // Map named sizes; numeric sizes interpolate TM proportionally
   const fs = typeof size === "number"
     ? size
-    : { sm: 13, md: 15, lg: 22 }[size];
+    : SIZE_MAP[size];
 
-  const studioFs = fs * 0.65;
+  const tmFs = typeof size === "number"
+    ? Math.round(size * 0.52)
+    : TM_MAP[size];
+
   const studioColor = isDark ? "#F5C642" : "#0D1B2A";
-  const gap = Math.max(2, Math.round(fs * 0.15));
-  const showTM = fs >= 16;
-  const tmFs = studioFs * 0.5;
 
   return (
-    <div
+    <span
       style={{
+        letterSpacing: "-1px",
+        fontFamily: "'Afacad Flux', sans-serif",
         display: "inline-flex",
         alignItems: "baseline",
-        fontFamily: "'Afacad Flux', sans-serif",
-        userSelect: "none",
         cursor: onClick ? "pointer" : "default",
+        userSelect: "none",
         whiteSpace: "nowrap",
       }}
       onClick={onClick}
     >
-      <span style={{
-        fontSize: fs,
-        fontWeight: 700,
-        color: "#4A90D9",
-        textTransform: "uppercase",
-        letterSpacing: "-0.02em",
-      }}>
+      <span style={{ color: "#4A90D9", fontWeight: 700, fontSize: fs, lineHeight: 1, textTransform: "uppercase" }}>
         EVERYWHERE
       </span>
-      <span style={{
-        fontSize: studioFs,
-        fontWeight: 300,
-        color: studioColor,
-        textTransform: "uppercase",
-        letterSpacing: "0.06em",
-        marginLeft: gap,
-      }}>
+      <span style={{ color: studioColor, fontWeight: 300, fontSize: fs, lineHeight: 1, textTransform: "uppercase" }}>
         STUDIO
+        <span style={{ color: studioColor, fontSize: tmFs, verticalAlign: "top", marginLeft: 2 }}>™</span>
       </span>
-      {showTM && (
-        <sup style={{
-          fontSize: tmFs,
-          fontWeight: 300,
-          color: studioColor,
-          marginLeft: 1,
-          lineHeight: 1,
-          verticalAlign: "super",
-        }}>
-          ™
-        </sup>
-      )}
-    </div>
+    </span>
   );
 };
 
