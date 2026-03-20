@@ -9,6 +9,18 @@ import { CheckpointResultsPanel } from "../../components/pipeline/CheckpointResu
 import { BetterishScoreCard } from "../../components/pipeline/BetterishScoreCard";
 import { PipelineBlockedAlert } from "../../components/pipeline/PipelineBlockedAlert";
 
+function renderMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^### (.+)$/gm, '<h3 style="font-size:18px;font-weight:700;margin:24px 0 8px;color:var(--fg)">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 style="font-size:22px;font-weight:700;margin:28px 0 12px;color:var(--fg)">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 style="font-size:26px;font-weight:700;margin:32px 0 16px;color:var(--fg)">$1</h1>')
+    .replace(/^> (.+)$/gm, '<blockquote style="border-left:3px solid var(--cornflower);padding-left:16px;margin:16px 0;color:var(--fg-2);font-style:italic">$1</blockquote>')
+    .replace(/\n\n/g, '</p><p style="margin:0 0 16px">')
+    .replace(/\n/g, '<br/>');
+}
+
 interface Output {
   id: string;
   title: string;
@@ -962,19 +974,15 @@ export default function OutputDetail() {
           </>
         ) : (
           <div className="card" style={{ padding: isMobile ? "20px 16px" : "32px 36px" }}>
-            <pre
+            <div
               style={{
                 fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: isMobile ? 14 : 15,
-                lineHeight: 1.25,
+                lineHeight: 1.7,
                 color: "var(--text-primary)",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                margin: 0,
               }}
-            >
-              {output!.content}
-            </pre>
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(output!.content) }}
+            />
           </div>
         )}
 
