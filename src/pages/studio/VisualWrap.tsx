@@ -313,7 +313,15 @@ export default function VisualWrap() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${filename.replace(/[^\w\s-]/g, "")}.png`;
+    const clean = filename
+      .toLowerCase()
+      .slice(0, 50)
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]/g, "")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      || "everywhere-visual";
+    a.download = `${clean}.png`;
     a.click();
     URL.revokeObjectURL(url);
   };
