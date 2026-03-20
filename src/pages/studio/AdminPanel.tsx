@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
-import { Copy, Shield, Users, Key, BarChart3 } from "lucide-react";
+import { Check, Copy, Shield, Users, Key, BarChart3 } from "lucide-react";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
@@ -183,8 +183,8 @@ function InviteTab() {
                     background: c.used_by ? "rgba(74,144,217,0.08)" : c.is_active ? "rgba(80,200,160,0.08)" : "rgba(200,100,100,0.08)",
                     color: c.used_by ? "#4A90D9" : c.is_active ? "#50c8a0" : "#E53935",
                   }}>{c.used_by ? "Redeemed" : c.is_active ? "Available" : "Inactive"}</span>
-                  <button onClick={() => { copyToClipboard(c.code); setCopied(c.id); setTimeout(() => setCopied(""), 1500); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fg-3)", padding: 4 }}>
-                    <Copy size={12} />
+                  <button onClick={() => { copyToClipboard(c.code); setCopied(c.id); setTimeout(() => setCopied(""), 1500); }} style={{ background: "none", border: "none", cursor: "pointer", color: copied === c.id ? "#50c8a0" : "var(--fg-3)", padding: 4, transition: "color 0.15s" }}>
+                    {copied === c.id ? <Check size={12} /> : <Copy size={12} />}
                   </button>
                 </div>
               </div>
