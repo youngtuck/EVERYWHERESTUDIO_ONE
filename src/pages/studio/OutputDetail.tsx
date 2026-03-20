@@ -740,7 +740,7 @@ export default function OutputDetail() {
             gap: 16,
             fontSize: 14,
             color: "var(--fg-2)",
-            lineHeight: 1.6,
+            lineHeight: 1.25,
             fontFamily: "'Afacad Flux', sans-serif",
           }}
         >
@@ -955,7 +955,7 @@ export default function OutputDetail() {
                 padding: isMobile ? "20px 16px" : "32px 36px",
                 fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 15,
-                lineHeight: 1.7,
+                lineHeight: 1.25,
                 color: "var(--fg)",
                 background: "var(--surface-white)",
                 border: "1px solid var(--cornflower)",
@@ -978,7 +978,7 @@ export default function OutputDetail() {
               style={{
                 fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: isMobile ? 14 : 15,
-                lineHeight: 1.7,
+                lineHeight: 1.25,
                 color: "var(--text-primary)",
               }}
               dangerouslySetInnerHTML={{ __html: renderMarkdown(output!.content) }}

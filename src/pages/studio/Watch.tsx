@@ -634,7 +634,7 @@ export default function Watch() {
             <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
               Sentinel runs daily at 7:00 AM. Check back then.
             </p>
-            <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
+            <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto", lineHeight: 1.25 }}>
               Sentinel scans your industry for signals, threats, and opportunities. Each briefing surfaces what moved overnight and connects it to content angles you can act on.
             </p>
             <button
@@ -679,7 +679,7 @@ export default function Watch() {
                     </span>
                   </div>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 8px" }}>{item.summary}</p>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 8px" }}>{item.summary}</p>
                   <p style={{ fontSize: 13, color: "var(--text-tertiary)", fontStyle: "italic", margin: "0 0 8px" }}>{item.implication}</p>
                   {item.sources?.length ? (
                     <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
@@ -698,7 +698,7 @@ export default function Watch() {
                 <Card key={i} style={{ marginBottom: 16, borderLeft: "4px solid #D64545" }}>
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#D64545", textTransform: "uppercase" }}>{item.severity}</span>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 8px" }}>{item.summary}</p>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 8px" }}>{item.summary}</p>
                   <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0 }}>{item.recommended_action}</p>
                 </Card>
               ))}
@@ -714,7 +714,7 @@ export default function Watch() {
                     <span>Impact: {item.impact}</span>
                   </div>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 12px" }}>{item.summary}</p>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 12px" }}>{item.summary}</p>
                   <button
                     type="button"
                     onClick={() => openWorkWithPrompt(item.cta_prompt)}
@@ -741,7 +741,7 @@ export default function Watch() {
                 <Card key={i} style={{ marginBottom: 16 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "#0D8C9E", textTransform: "uppercase", letterSpacing: "0.06em" }}>{item.format}</span>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, margin: "0 0 12px" }}>{item.angle}</p>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 12px" }}>{item.angle}</p>
                   <button
                     type="button"
                     onClick={() => openWorkWithPrompt(item.angle)}

@@ -185,14 +185,14 @@ export default function SpecialistPanel({
           </div>
         )}
 
-        <p style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.6, marginBottom: 16 }}>
+        <p style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.25, marginBottom: 16 }}>
           {selectedInfo.detail}
         </p>
 
         {selected.feedback ? (
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>Feedback</div>
-            <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>
+            <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.25, margin: 0, whiteSpace: "pre-wrap" }}>
               {selected.feedback}
             </p>
           </div>
@@ -207,7 +207,7 @@ export default function SpecialistPanel({
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>Issues Found</div>
             <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 4 }}>
               {selected.issues.map((issue, i) => (
-                <li key={i} style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.5 }}>{issue}</li>
+                <li key={i} style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.25 }}>{issue}</li>
               ))}
             </ul>
           </div>
@@ -221,7 +221,7 @@ export default function SpecialistPanel({
       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "#4A90D9", marginBottom: 16 }}>
         QUALITY PIPELINE
       </div>
-      <p style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 16, marginTop: -8 }}>
+      <p style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.25, marginBottom: 16, marginTop: -8 }}>
         Your content was reviewed by 7 AI specialists. Click any to see their evaluation.
       </p>
       <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 12, color: "var(--fg-3)" }}>
