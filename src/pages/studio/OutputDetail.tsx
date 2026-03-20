@@ -588,9 +588,9 @@ export default function OutputDetail() {
     : [];
 
   const gateBarColor = (v: number) => {
-    if (v >= 80) return "#10b981";
-    if (v >= 65) return "#3A7BD5";
-    return "#C8961A";
+    if (v >= 80) return "#50c8a0";
+    if (v >= 60) return "#4A90D9";
+    return "#E53935";
   };
 
   return (
@@ -1051,6 +1051,20 @@ export default function OutputDetail() {
               {gates.summary}
             </p>
           )}
+          <div style={{ display: "flex", gap: 16, marginBottom: 14, fontSize: 11, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: "#50c8a0", flexShrink: 0 }} />
+              80+ Strong
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: "#4A90D9", flexShrink: 0 }} />
+              60-79 Developing
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: "#E53935", flexShrink: 0 }} />
+              Below 60 Needs work
+            </span>
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {gateEntries.map(({ key, label, value }) => {
               const v = value as number;
