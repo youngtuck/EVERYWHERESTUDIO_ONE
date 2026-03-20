@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bookmark, Plus } from "lucide-react";
+import { Bookmark, Plus, Trash2 } from "lucide-react";
 import "./shared.css";
 
 const PROJECTS = [
@@ -53,6 +53,11 @@ export default function TheLot() {
   const handlePickUp = (idea: Idea) => {
     setIdeas((prev) => prev.filter((i) => i.id !== idea.id));
     navigate("/studio/work", { state: { ideaTitle: idea.title, ideaDescription: idea.note } });
+  };
+
+  const handleDiscard = (idea: Idea) => {
+    if (!window.confirm("Discard this idea?")) return;
+    setIdeas((prev) => prev.filter((i) => i.id !== idea.id));
   };
 
   const isEmpty = ideas.length === 0;
@@ -219,32 +224,55 @@ export default function TheLot() {
                 <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
                   {idea.projectName !== "My Studio" ? idea.projectName : "Parked"}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handlePickUp(idea)}
-                  style={{
-                    background: "transparent",
-                    color: "var(--text-primary)",
-                    border: "1px solid var(--border-default)",
-                    padding: "6px 14px",
-                    borderRadius: 8,
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    transition,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(0,0,0,0.02)";
-                    e.currentTarget.style.borderColor = "var(--text-tertiary)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.borderColor = "var(--border-default)";
-                  }}
-                >
-                  Pick Up
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleDiscard(idea)}
+                    title="Discard idea"
+                    style={{
+                      background: "transparent",
+                      color: "var(--text-tertiary)",
+                      border: "none",
+                      padding: 6,
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "#E53935"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-tertiary)"; }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePickUp(idea)}
+                    style={{
+                      background: "transparent",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border-default)",
+                      padding: "6px 14px",
+                      borderRadius: 8,
+                      fontFamily: "'Afacad Flux', sans-serif",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(0,0,0,0.02)";
+                      e.currentTarget.style.borderColor = "var(--text-tertiary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.borderColor = "var(--border-default)";
+                    }}
+                  >
+                    Pick Up
+                  </button>
+                </div>
               </div>
             </div>
           ))}
