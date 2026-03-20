@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { FileText, Sparkles, ArrowLeft, Mic, Check, Loader2 } from "lucide-react";
+import { FileText, Sparkles, ArrowLeft, Mic, Check, Loader2, Plus } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -2078,18 +2078,48 @@ export default function WorkSession() {
         background: "linear-gradient(transparent, var(--bg-light) 20%)",
       }}>
         <div style={{ maxWidth: 800, margin: "0 auto", width: "100%", padding: "0 24px", boxSizing: "border-box" }}>
-          <SessionInputBox
-            input={input}
-            setInput={setInput}
-            sendMessage={sendMessage}
-            loading={loading}
-            inputRef={inputRef}
-            isSupported={isSupported}
-            toggleListening={toggleListening}
-            isListening={isListening}
-            apiError={apiError ?? ""}
-            setApiError={setApiError}
-          />
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+            {messages.length > 1 && (
+              <button
+                type="button"
+                title="New session"
+                onClick={() => { clearSession(); navigate("/studio/work?type=" + outputType); window.location.reload(); }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "rgba(0,0,0,0.04)",
+                  cursor: "pointer",
+                  color: "#64748B",
+                  transition: "background 0.15s ease",
+                  flexShrink: 0,
+                  marginBottom: 12,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.08)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
+              >
+                <Plus size={18} strokeWidth={2} />
+              </button>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <SessionInputBox
+                input={input}
+                setInput={setInput}
+                sendMessage={sendMessage}
+                loading={loading}
+                inputRef={inputRef}
+                isSupported={isSupported}
+                toggleListening={toggleListening}
+                isListening={isListening}
+                apiError={apiError ?? ""}
+                setApiError={setApiError}
+              />
+            </div>
+          </div>
           {!isReady && !loading && messages.filter(m => m.role === "user").length >= 2 && (
             <div style={{ textAlign: "right", marginTop: 8, maxWidth: 760, marginLeft: "auto", marginRight: "auto" }}>
               <button
