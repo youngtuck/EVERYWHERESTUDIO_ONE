@@ -7,53 +7,43 @@ interface VoiceDNAReviewProps {
   onUploadMore?: () => void;
 }
 
-export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: VoiceDNAReviewProps) {
-  const fidelity = data.voice_fidelity ?? 0;
+const TRAIT_ENTRIES: { key: keyof VoiceDNA["traits"]; label: string; strengthPhrase: string; distinctionPhrase: string }[] = [
+  { key: "vocabulary_and_syntax", label: "Vocabulary and Syntax", strengthPhrase: "precise, intentional word choice", distinctionPhrase: "instinct over ornamentation in vocabulary" },
+  { key: "tonal_register", label: "Tonal Register", strengthPhrase: "a distinctive tonal identity", distinctionPhrase: "tonal range that shifts with context" },
+  { key: "rhythm_and_cadence", label: "Rhythm and Cadence", strengthPhrase: "strong rhythmic patterns that carry ideas forward", distinctionPhrase: "content-first pacing over musical rhythm" },
+  { key: "metaphor_patterns", label: "Metaphor Patterns", strengthPhrase: "vivid metaphor to make abstract ideas tangible", distinctionPhrase: "direct language over figurative expression" },
+  { key: "structural_habits", label: "Structural Habits", strengthPhrase: "structurally driven writing with clear architecture", distinctionPhrase: "organic flow over rigid structure" },
+];
 
-  const traitEntries: { key: keyof VoiceDNA["traits"]; label: string }[] = [
-    { key: "vocabulary_and_syntax", label: "Vocabulary and Syntax" },
-    { key: "tonal_register", label: "Tonal Register" },
-    { key: "rhythm_and_cadence", label: "Rhythm and Cadence" },
-    { key: "metaphor_patterns", label: "Metaphor Patterns" },
-    { key: "structural_habits", label: "Structural Habits" },
+function scoreToLabel(score: number): string {
+  if (score <= 20) return "Minimal";
+  if (score <= 40) return "Light";
+  if (score <= 60) return "Moderate";
+  if (score <= 80) return "Strong";
+  return "Dominant";
+}
+
+function buildNarrativeSummary(traits: VoiceDNA["traits"]): string {
+  const scored = TRAIT_ENTRIES
+    .map(t => ({ ...t, score: traits?.[t.key] ?? 0 }))
+    .sort((a, b) => b.score - a.score);
+
+  const highest = scored[0];
+  const lowest = scored[scored.length - 1];
+  const secondHighest = scored[1];
+
+  const sentences = [
+    `Your writing leans on ${highest.strengthPhrase}.`,
+    secondHighest.score > 40
+      ? `You also show ${scoreToLabel(secondHighest.score).toLowerCase()} ${secondHighest.label.toLowerCase()}, giving your voice a layered quality.`
+      : `That single dominant trait gives your voice a focused, recognizable quality.`,
+    `Where others rely on ${lowest.label.toLowerCase()}, you favor ${lowest.distinctionPhrase} — and that's part of what makes your voice yours.`,
   ];
 
-  const layerCard = (title: string, score: number, description: string) => (
-    <div
-      style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 12,
-        padding: 20,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          fontFamily: "'Afacad Flux', sans-serif",
-          fontSize: 15,
-          fontWeight: 600,
-          color: "#ffffff",
-        }}
-      >
-        <span>{title}</span>
-        <span>{Math.round(score)}%</span>
-      </div>
-      <p
-        style={{
-          marginTop: 4,
-          fontFamily: "'Afacad Flux', sans-serif",
-          fontSize: 13,
-          color: "rgba(255,255,255,0.6)",
-        }}
-      >
-        {description}
-      </p>
-    </div>
-  );
+  return sentences.join(" ");
+}
 
+export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: VoiceDNAReviewProps) {
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", color: "#ffffff" }}>
       <h1
@@ -67,56 +57,30 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
         Your Voice DNA
       </h1>
 
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <span
-            style={{
-              fontFamily: "'Cormorant Garamond', 'Times New Roman', serif",
-              fontSize: 64,
-              fontWeight: 600,
-              color: "#C8961A",
-              lineHeight: 1,
-            }}
-          >
-            {fidelity.toFixed(1)}
-          </span>
-          <span
-            style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 16,
-              color: "rgba(255,255,255,0.4)",
-            }}
-          >
-            / 100
-          </span>
-        </div>
-        <div
+      {/* Narrative summary */}
+      <div
+        style={{
+          marginBottom: 32,
+          padding: "20px 24px",
+          background: "rgba(200,150,26,0.08)",
+          border: "1px solid rgba(200,150,26,0.2)",
+          borderRadius: 12,
+        }}
+      >
+        <p
           style={{
-            marginTop: 12,
-            width: "100%",
-            height: 6,
-            borderRadius: 999,
-            background: "rgba(255,255,255,0.12)",
-            overflow: "hidden",
+            fontFamily: "'Afacad Flux', sans-serif",
+            fontSize: 15,
+            lineHeight: 1.5,
+            color: "rgba(255,255,255,0.85)",
+            margin: 0,
           }}
         >
-          <div
-            style={{
-              height: "100%",
-              width: `${Math.max(0, Math.min(100, fidelity))}%`,
-              background: "#C8961A",
-              transition: "width 0.6s ease",
-            }}
-          />
-        </div>
+          {buildNarrativeSummary(data.traits)}
+        </p>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
-        {layerCard("Voice Layer", data.voice_layer ?? 0, data.voice_description || "How you sound on the page: sentence length, rhythm, vocabulary, punctuation.")}
-        {layerCard("Value Layer", data.value_layer ?? 0, data.value_description || "What you stand for professionally: principles, non-negotiables, beliefs.")}
-        {layerCard("Personality Layer", data.personality_layer ?? 0, data.personality_description || "The texture of your presence: humor, warmth, edge, register.")}
-      </div>
-
+      {/* Trait profile */}
       <div style={{ marginBottom: 32 }}>
         <div
           style={{
@@ -132,8 +96,9 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
           Trait profile
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {traitEntries.map((item, index) => {
+          {TRAIT_ENTRIES.map((item, index) => {
             const score = data.traits?.[item.key] ?? 0;
+            const label = scoreToLabel(score);
             return (
               <div key={item.key} style={{ display: "flex", alignItems: "center", gap: 16 }}>
                 <div
@@ -168,15 +133,15 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
                 </div>
                 <div
                   style={{
-                    width: 40,
+                    width: 72,
                     textAlign: "right",
                     fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: 600,
                     color: "#C8961A",
                   }}
                 >
-                  {Math.round(score)}%
+                  {label}
                 </div>
               </div>
             );
@@ -253,4 +218,3 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
     </div>
   );
 }
-

@@ -3,13 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Plus, RefreshCw } from "lucide-react";
 import "./shared.css";
 
-const FIDELITY_SCORE = 94.7;
-const TRAITS: { label: string; score: number }[] = [
-  { label: "Vocabulary and Syntax", score: 88 },
-  { label: "Tonal Register", score: 94 },
-  { label: "Rhythm and Cadence", score: 91 },
-  { label: "Metaphor Patterns", score: 87 },
-  { label: "Structural Habits", score: 96 },
+const TRAITS: { label: string; score: number; strengthPhrase: string; distinctionPhrase: string }[] = [
+  { label: "Vocabulary and Syntax", score: 88, strengthPhrase: "precise, intentional word choice", distinctionPhrase: "instinct over ornamentation in vocabulary" },
+  { label: "Tonal Register", score: 94, strengthPhrase: "a distinctive tonal identity", distinctionPhrase: "tonal range that shifts with context" },
+  { label: "Rhythm and Cadence", score: 91, strengthPhrase: "strong rhythmic patterns that carry ideas forward", distinctionPhrase: "content-first pacing over musical rhythm" },
+  { label: "Metaphor Patterns", score: 87, strengthPhrase: "vivid metaphor to make abstract ideas tangible", distinctionPhrase: "direct language over figurative expression" },
+  { label: "Structural Habits", score: 96, strengthPhrase: "structurally driven writing with clear architecture", distinctionPhrase: "organic flow over rigid structure" },
 ];
 
 const WRITING_SAMPLES = [
@@ -17,6 +16,29 @@ const WRITING_SAMPLES = [
   { title: "Interview before the essay", wordCount: 890, dateAdded: "Mar 2, 2026" },
   { title: "Delegation and trust", wordCount: 624, dateAdded: "Feb 28, 2026" },
 ];
+
+function scoreToLabel(score: number): string {
+  if (score <= 20) return "Minimal";
+  if (score <= 40) return "Light";
+  if (score <= 60) return "Moderate";
+  if (score <= 80) return "Strong";
+  return "Dominant";
+}
+
+function buildNarrativeSummary(traits: typeof TRAITS): string {
+  const sorted = [...traits].sort((a, b) => b.score - a.score);
+  const highest = sorted[0];
+  const lowest = sorted[sorted.length - 1];
+  const secondHighest = sorted[1];
+
+  return [
+    `Your writing leans on ${highest.strengthPhrase}.`,
+    secondHighest.score > 40
+      ? `You also show ${scoreToLabel(secondHighest.score).toLowerCase()} ${secondHighest.label.toLowerCase()}, giving your voice a layered quality.`
+      : `That single dominant trait gives your voice a focused, recognizable quality.`,
+    `Where others rely on ${lowest.label.toLowerCase()}, you favor ${lowest.distinctionPhrase} — and that's part of what makes your voice yours.`,
+  ].join(" ");
+}
 
 function TraitBar({ label, score, delay }: { label: string; score: number; delay: number }) {
   return (
@@ -37,7 +59,7 @@ function TraitBar({ label, score, delay }: { label: string; score: number; delay
           />
         </div>
       </div>
-      <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 600, color: "var(--gold-dark)", width: 48, textAlign: "right" }}>{score}%</div>
+      <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 600, color: "var(--gold-dark)", width: 72, textAlign: "right" }}>{scoreToLabel(score)}</div>
     </div>
   );
 }
@@ -94,36 +116,20 @@ export default function VoiceDnaSettings() {
             marginBottom: 10,
           }}
         >
-          VOICE FIDELITY
+          YOUR VOICE
         </div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 14 }}>
-          <span
-            style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 48,
-              fontWeight: 700,
-              color: "var(--gold-dark)",
-              letterSpacing: "-0.03em",
-              lineHeight: 1,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {FIDELITY_SCORE}
-          </span>
-          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 16, fontWeight: 400, color: "var(--text-tertiary)" }}>/ 100</span>
-        </div>
-        <div style={{ height: 6, borderRadius: 3, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
-          <div
-            style={{
-              height: "100%",
-              borderRadius: 3,
-              width: `${FIDELITY_SCORE}%`,
-              background: "var(--gold-dark)",
-              transition: "width 0.6s ease",
-            }}
-          />
-        </div>
-        <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 10 }}>
+        <p
+          style={{
+            fontFamily: "'Afacad Flux', sans-serif",
+            fontSize: 15,
+            lineHeight: 1.5,
+            color: "var(--text-primary)",
+            margin: "0 0 12px",
+          }}
+        >
+          {buildNarrativeSummary(TRAITS)}
+        </p>
+        <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
           Last trained: Mar 4, 2026
         </div>
       </section>
