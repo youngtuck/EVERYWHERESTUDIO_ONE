@@ -1531,7 +1531,7 @@ export default function WorkSession() {
             title="Start new session"
             onMouseEnter={e => e.currentTarget.style.opacity = ".88"}
             onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            onClick={() => { clearSession(); navigate("/studio/work?type=" + outputType); }}
+            onClick={() => { clearSession(); window.location.href = "/studio/work"; }}
           >New Session</button>
         </div>
       </div>

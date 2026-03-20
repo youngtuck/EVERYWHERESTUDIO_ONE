@@ -219,7 +219,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       {/* ── New Session ──────────────────────────── */}
       <div style={{ padding: collapsed ? "8px 8px 6px" : "12px 14px 10px" }}>
         <button
-          onClick={() => nav("/studio/work")}
+          onClick={() => { window.location.href = "/studio/work"; }}
           title="Start a new Watson session"
           style={{
             width: "100%",
