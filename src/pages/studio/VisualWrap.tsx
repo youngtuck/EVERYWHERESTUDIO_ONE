@@ -74,11 +74,14 @@ function Lightbox({ image, alt, onClose }: { image: string; alt: string; onClose
         src={`data:image/png;base64,${image}`}
         alt={alt}
         onClick={(e) => e.stopPropagation()}
+        onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "1"; }}
         style={{
           maxWidth: "90vw",
           maxHeight: "85vh",
           objectFit: "contain",
           borderRadius: 8,
+          opacity: 0,
+          transition: "opacity 0.4s ease-out",
         }}
       />
     </div>
@@ -792,9 +795,10 @@ export default function VisualWrap() {
                       inset: 0,
                       width: "100%",
                       height: "100%",
+                      maxWidth: "100%",
                       objectFit: "contain",
                       borderRadius: 12,
-                      opacity: resultRevealPhase === "complete" ? 1 : resultRevealPhase === "revealing" ? 0 : 0,
+                      opacity: resultRevealPhase === "complete" ? 1 : 0,
                       transition: "opacity 0.8s ease-out 0.2s",
                       cursor: resultRevealPhase === "complete" ? "pointer" : "default",
                     }}
@@ -1084,13 +1088,15 @@ export default function VisualWrap() {
                             <img
                               src={`data:${data.mimeType};base64,${data.image}`}
                               alt={vibe}
+                              onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "1"; }}
                               style={{
                                 width: "100%",
                                 height: "100%",
-                                objectFit: "cover",
+                                maxWidth: "100%",
+                                objectFit: "contain",
                                 borderRadius: 12,
-                                opacity: 1,
-                                transition: "opacity 0.8s ease-out 0.2s",
+                                opacity: 0,
+                                transition: "opacity 0.5s ease-out",
                               }}
                             />
                           </button>
