@@ -85,7 +85,7 @@ export default function OnboardingPage() {
     return () => clearTimeout(id);
   }, [overlayComplete, overlayType]);
 
-  // Retrain param takes precedence: stay on onboarding and go to the right step. Otherwise redirect if already complete.
+  // Retrain param takes precedence: stay on onboarding and go to the right step. Otherwise resume from saved progress.
   useEffect(() => {
     if (!user) return;
     // Pre-fill profile name from auth metadata
@@ -104,13 +104,31 @@ export default function OnboardingPage() {
     }
     supabase
       .from("profiles")
-      .select("voice_dna_completed, onboarding_complete")
+      .select("voice_dna_completed, brand_dna_completed, onboarding_complete, voice_dna, full_name, sentinel_topics")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
-        if (data?.onboarding_complete || data?.voice_dna_completed) {
+        if (!data) return;
+        if (data.onboarding_complete) {
           window.location.href = "/studio/dashboard";
+          return;
         }
+        // Resume from the furthest completed step
+        if (data.voice_dna_completed && data.voice_dna) {
+          setVoiceDNA(data.voice_dna as VoiceDNA);
+          if (data.brand_dna_completed) {
+            // Voice + Brand done, resume at Watch topics (step 5)
+            setStep(5);
+          } else {
+            // Voice done, show review (step 3) so user can continue to Brand
+            setStep(3);
+          }
+        } else if (data.full_name) {
+          // Profile saved, resume at method selection (step 1)
+          setProfileName(data.full_name);
+          setStep(1);
+        }
+        // else: start from step 0
       });
   }, [user, searchParams]);
 
