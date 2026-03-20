@@ -915,10 +915,7 @@ export default function WorkSession() {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
-    setInput((prev) => {
-      const separator = prev && !prev.endsWith(" ") ? " " : "";
-      return prev + separator + text;
-    });
+    setInput(text);
   });
 
   // Load projects for project selector
