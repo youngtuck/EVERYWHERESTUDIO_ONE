@@ -1469,14 +1469,15 @@ export default function WorkSession() {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button onClick={() => navigate("/studio/dashboard")} style={{
             background: "none", border: "none", cursor: "pointer",
-            padding: "5px 6px", borderRadius: 6, color: "var(--text-secondary)",
-            display: "flex", alignItems: "center", transition: "color .15s",
+            padding: "5px 8px", borderRadius: 6, color: "var(--text-secondary)",
+            display: "flex", alignItems: "center", gap: 4, transition: "color .15s",
+            fontSize: 12, fontFamily: "'Afacad Flux', sans-serif",
           }}
-            title="Back to Dashboard"
             onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
             onMouseLeave={e => e.currentTarget.style.color = "var(--text-secondary)"}
           >
-            <ArrowLeft size={20} strokeWidth={1.5} />
+            <ArrowLeft size={16} strokeWidth={1.5} />
+            <span>Dashboard</span>
           </button>
           {projects.length > 1 ? (
             <select
