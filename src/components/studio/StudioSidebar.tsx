@@ -200,22 +200,6 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         </div>
       )}
 
-      {/* ── Project label ────────────────────── */}
-      {!collapsed && (
-        <div style={{ padding: "14px 14px 0" }}>
-          <div style={{
-            width: "100%",
-            background: "var(--bg-2)",
-            border: "1px solid var(--line)",
-            borderRadius: "var(--studio-radius)",
-            padding: "10px 12px",
-            fontFamily: "var(--font)",
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>My Studio</div>
-          </div>
-        </div>
-      )}
-
       {/* ── New Session ──────────────────────────── */}
       <div style={{ padding: collapsed ? "8px 8px 6px" : "12px 14px 10px" }}>
         <button
