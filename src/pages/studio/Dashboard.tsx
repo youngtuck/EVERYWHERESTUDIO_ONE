@@ -223,7 +223,7 @@ export default function Dashboard() {
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
-            + New Idea
+            + New Session
           </button>
         </div>
       </div>
