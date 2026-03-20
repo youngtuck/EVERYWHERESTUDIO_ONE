@@ -453,6 +453,29 @@ export default function OnboardingPage() {
         </div>
       )}
 
+      <div style={{ width: "100%", maxWidth: 640, marginBottom: 16 }}>
+        <button
+          onClick={() => nav("/studio/dashboard")}
+          style={{
+            background: "none",
+            border: "none",
+            color: "rgba(255,255,255,0.45)",
+            fontSize: 13,
+            fontFamily: "'Afacad Flux', sans-serif",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: 0,
+            transition: "color 0.15s ease",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = "rgba(255,255,255,0.8)"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.45)"; }}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1 }}>&larr;</span> Back to Studio
+        </button>
+      </div>
+
       <ProgressIndicator currentStep={Math.min(step, 5)} totalSteps={5} />
 
       <main style={{ width: "100%", maxWidth: 640, flex: 1 }}>
