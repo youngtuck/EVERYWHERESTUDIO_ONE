@@ -532,8 +532,10 @@ function EmptyState({
         paddingRight: 24,
       }}
     >
-      <WatsonOrb size={isMobile ? 56 : 80} />
-      <span style={{ fontSize: 11, color: "var(--fg-3)", letterSpacing: "2px", textTransform: "uppercase", marginTop: -20, fontFamily: "'Afacad Flux', sans-serif", fontWeight: 500 }}>Watson</span>
+      <div style={{ width: isMobile ? 56 : 80, height: isMobile ? 56 : 80, overflow: "visible", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+        <WatsonOrb size={isMobile ? 56 : 80} />
+      </div>
+      <span style={{ fontSize: 11, color: "var(--fg-3)", letterSpacing: "2px", textTransform: "uppercase", marginTop: 0, fontFamily: "'Afacad Flux', sans-serif", fontWeight: 500 }}>Watson</span>
       <h1
         style={{
           fontSize: isMobile ? 28 : 42,
