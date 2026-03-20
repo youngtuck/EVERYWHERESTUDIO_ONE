@@ -11,6 +11,33 @@ const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 const WATCH_BLUE = "#4A90F5";
 const HEADER_BG = "#0D1B2A";
+
+const SEVERITY_PILL_STYLES: Record<string, { background: string; color: string }> = {
+  high:   { background: "#E53935", color: "#fff" },
+  medium: { background: "#F5C642", color: "#0D1B2A" },
+  low:    { background: "var(--bg-3)", color: "var(--fg-2)" },
+};
+
+function SeverityPill({ label }: { label: string }) {
+  const key = label.toLowerCase();
+  const colors = SEVERITY_PILL_STYLES[key] ?? SEVERITY_PILL_STYLES.low;
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "2px 10px",
+      borderRadius: 999,
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      background: colors.background,
+      color: colors.color,
+      lineHeight: 1.6,
+    }}>
+      {label}
+    </span>
+  );
+}
 const SENTINEL_LOADING_MESSAGES = [
   "Scanning your category...",
   "Monitoring competitor signals...",
@@ -683,9 +710,7 @@ export default function Watch() {
               {(sections.whats_moving ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: WATCH_BLUE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      {item.priority}
-                    </span>
+                    <SeverityPill label={item.priority} />
                   </div>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
                   <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 8px" }}>{item.summary}</p>
@@ -705,7 +730,7 @@ export default function Watch() {
               {(sections.threats?.length ?? 0) > 0 && <SectionTitle label="Threats" color="#D64545" style={{ marginTop: 32 }} tooltip="Risks and competitive moves to watch." />}
               {(sections.threats ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16, borderLeft: "4px solid #D64545" }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#D64545", textTransform: "uppercase" }}>{item.severity}</span>
+                  <SeverityPill label={item.severity} />
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
                   <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 8px" }}>{item.summary}</p>
                   <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0 }}>{item.recommended_action}</p>
