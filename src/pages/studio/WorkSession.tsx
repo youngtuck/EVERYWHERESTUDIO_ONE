@@ -526,8 +526,7 @@ function EmptyState({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
-        paddingTop: "calc((100vh - 60px) * 0.12)",
+        justifyContent: "center",
         paddingLeft: 24,
         paddingRight: 24,
       }}
