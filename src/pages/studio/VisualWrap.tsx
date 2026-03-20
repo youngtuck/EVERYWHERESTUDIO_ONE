@@ -377,12 +377,12 @@ export default function VisualWrap() {
   return (
     <div
       style={{
-        maxWidth: 860,
+        width: "100%",
+        maxWidth: 800,
         margin: "0 auto",
         padding: isMobile ? "24px 16px" : "40px 32px",
         fontFamily: "'Afacad Flux', sans-serif",
         background: "var(--surface-primary)",
-        
       }}
     >
       {/* Top bar */}
