@@ -618,45 +618,54 @@ export default function Watch() {
             <LoadingAnimation variant="sentinel" message={SENTINEL_LOADING_MESSAGES[statusIndex]} />
           </div>
         )}
-        {!needsSetup && !hasTodayBriefing && !showSentinelLoading && (
-          <div
-            style={{
-              background: "var(--surface-white)",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: 16,
-              padding: 40,
-              textAlign: "center",
-            }}
-          >
-            <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
-              Your morning briefing is being prepared
-            </h2>
-            <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
-              Sentinel runs daily at 7:00 AM. Check back then.
-            </p>
-            <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto", lineHeight: 1.25 }}>
-              Sentinel scans your industry for signals, threats, and opportunities. Each briefing surfaces what moved overnight and connects it to content angles you can act on.
-            </p>
-            <button
-              type="button"
-              onClick={handleGenerateNow}
-              disabled={generating}
+        {!needsSetup && !hasTodayBriefing && !showSentinelLoading && (() => {
+          const now = new Date();
+          const cronHourUTC = 15; // 7 AM PT = 15:00 UTC
+          const isAfterCron = now.getUTCHours() >= cronHourUTC;
+          return (
+            <div
               style={{
-                background: WATCH_BLUE,
-                color: "#fff",
-                border: "none",
-                borderRadius: 10,
-                padding: "12px 24px",
-                fontFamily: "'Afacad Flux', sans-serif",
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: generating ? "wait" : "pointer",
+                background: "var(--surface-white)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 16,
+                padding: 40,
+                textAlign: "center",
               }}
             >
-              Generate Now
-            </button>
-          </div>
-        )}
+              <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
+                {isAfterCron ? "No briefing available yet" : "Your briefing will be ready at 7:00 AM"}
+              </h2>
+              <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
+                {isAfterCron
+                  ? "Click Generate Now to create your first intelligence briefing."
+                  : "Sentinel scans your industry for signals, threats, and opportunities. Each briefing surfaces what moved overnight and connects it to content angles you can act on."}
+              </p>
+              <button
+                type="button"
+                onClick={handleGenerateNow}
+                disabled={generating}
+                style={{
+                  background: "#F5C642",
+                  color: "#0D1B2A",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "12px 28px",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: "0.02em",
+                  cursor: generating ? "wait" : "pointer",
+                  boxShadow: "0 2px 12px rgba(245,198,66,0.25)",
+                  transition: "opacity 0.15s ease, box-shadow 0.15s ease",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(245,198,66,0.35)"; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(245,198,66,0.25)"; }}
+              >
+                {isAfterCron ? "Generate Now" : "Or generate one now"}
+              </button>
+            </div>
+          );
+        })()}
         {!needsSetup && hasTodayBriefing && (
           <div
             style={{
