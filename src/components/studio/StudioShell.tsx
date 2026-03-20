@@ -64,8 +64,10 @@ export default function StudioShell() {
       flexShrink: 0,
       borderTop: "1px solid var(--line)",
     }}>
-      <span>EVERYWHERE STUDIO</span>
-      <span style={{ margin: "0 2px" }}>™</span>
+      <span style={{ letterSpacing: "-1px", fontFamily: "'Afacad Flux', sans-serif", display: "inline-flex", alignItems: "baseline" }}>
+        <span style={{ color: "#4A90D9", fontWeight: 700 }}>EVERYWHERE</span>
+        <span style={{ color: "var(--gold-dark)", fontWeight: 300 }}>STUDIO<span style={{ fontSize: "0.52em", verticalAlign: "top", marginLeft: 2 }}>™</span></span>
+      </span>
       <span> 2026, Mixed Grill, LLC, v6.5 Alpha</span>
     </footer>
   );

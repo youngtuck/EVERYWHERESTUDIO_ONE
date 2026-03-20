@@ -406,9 +406,10 @@ export default function OutputDetail() {
     * { box-sizing: border-box; }
     body { font-family: 'Afacad Flux', -apple-system, sans-serif; background: #0D1B2A; color: #F0F0EE; line-height: 1.7; margin: 0; padding: 0; }
     .header { padding: 32px 24px 0; max-width: 720px; margin: 0 auto; }
-    .wordmark { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 40px; }
+    .wordmark { font-size: 12px; letter-spacing: -1px; text-transform: uppercase; margin-bottom: 40px; display: inline-flex; align-items: baseline; }
     .wordmark .ew { color: #4A90D9; font-weight: 700; }
     .wordmark .st { color: #F5C642; font-weight: 300; }
+    .wordmark .tm { color: #F5C642; font-size: 6px; vertical-align: top; margin-left: 2px; }
     h1 { font-size: 32px; font-weight: 700; margin: 0 0 12px; letter-spacing: -0.02em; color: #fff; }
     .meta { font-size: 14px; color: rgba(240,240,238,0.4); margin-bottom: 32px; }
     .content-wrap { max-width: 720px; margin: 0 auto; padding: 0 24px 48px; }
@@ -423,7 +424,7 @@ export default function OutputDetail() {
 </head>
 <body>
   <div class="header">
-    <div class="wordmark"><span class="ew">EVERYWHERE</span> <span class="st">STUDIO</span></div>
+    <div class="wordmark"><span class="ew">EVERYWHERE</span><span class="st">STUDIO<span class="tm">™</span></span></div>
     <h1>${titleEscaped}</h1>
     <div class="meta">${authorName ? escapeHtml(String(authorName)) + " &middot; " : ""}${dateStr}</div>
   </div>

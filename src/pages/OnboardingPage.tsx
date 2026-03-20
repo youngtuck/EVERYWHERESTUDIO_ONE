@@ -420,11 +420,10 @@ export default function OnboardingPage() {
             }}
           >
             <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.12em", color: "#C8961A" }}>EVERY</span>
-                <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.12em", color: "rgba(0,0,0,0.4)" }}>WHERE</span>
-              </div>
-              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.2em", color: "rgba(0,0,0,0.35)", textTransform: "uppercase", marginTop: 4 }}>Studio</div>
+              <span style={{ letterSpacing: "-1px", fontFamily: "'Afacad Flux', sans-serif", display: "inline-flex", alignItems: "baseline" }}>
+                <span style={{ color: "#4A90D9", fontWeight: 700, fontSize: 14, lineHeight: 1, textTransform: "uppercase" }}>EVERYWHERE</span>
+                <span style={{ color: "#0D1B2A", fontWeight: 300, fontSize: 14, lineHeight: 1, textTransform: "uppercase" }}>STUDIO<span style={{ color: "#0D1B2A", fontSize: 7, verticalAlign: "top", marginLeft: 2 }}>™</span></span>
+              </span>
             </div>
             <div
               style={{

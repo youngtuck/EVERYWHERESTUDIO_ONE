@@ -327,10 +327,12 @@ export default function Index() {
 
         {/* Minimal footer */}
         <footer style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingBottom: 26, gap: 8, ...fi(.95), pointerEvents: zoomingToExplore ? "none" : "auto" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 11, letterSpacing: ".12em", color: "rgba(255,255,255,.30)", fontWeight: 400, fontFamily: "'Afacad Flux', sans-serif" }}>
-              EVERYWHERE STUDIO · Ideas to Impact
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, fontFamily: "'Afacad Flux', sans-serif", fontSize: 11, color: "rgba(255,255,255,.30)" }}>
+            <span style={{ letterSpacing: "-1px", display: "inline-flex", alignItems: "baseline" }}>
+              <span style={{ color: "rgba(74,144,217,0.5)", fontWeight: 700 }}>EVERYWHERE</span>
+              <span style={{ fontWeight: 300 }}>STUDIO</span>
             </span>
+            <span>· Ideas to Impact</span>
           </div>
         </footer>
       </div>

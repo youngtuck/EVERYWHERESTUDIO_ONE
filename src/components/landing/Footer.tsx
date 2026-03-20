@@ -13,7 +13,13 @@ export default function Footer() {
               onMouseLeave={e=>(e.currentTarget.style.color="rgba(255,255,255,0.5)")}>{l}</button>
           ))}
         </div>
-        <p style={{ fontSize:11, color:"rgba(255,255,255,0.5)", fontFamily:"'Afacad Flux', sans-serif" }}>EVERYWHERE STUDIO &trade; 2026, Mixed Grill, LLC, v6.5 Alpha</p>
+        <p style={{ fontSize:11, color:"rgba(255,255,255,0.5)", fontFamily:"'Afacad Flux', sans-serif" }}>
+          <span style={{ letterSpacing: "-1px", display: "inline-flex", alignItems: "baseline" }}>
+            <span style={{ color: "#4A90D9", fontWeight: 700 }}>EVERYWHERE</span>
+            <span style={{ color: "#F5C642", fontWeight: 300 }}>STUDIO<span style={{ fontSize: "0.52em", verticalAlign: "top", marginLeft: 2 }}>™</span></span>
+          </span>
+          {" "}2026, Mixed Grill, LLC, v6.5 Alpha
+        </p>
       </div>
     </footer>
   );
