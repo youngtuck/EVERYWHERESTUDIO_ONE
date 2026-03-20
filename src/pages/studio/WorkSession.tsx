@@ -1496,7 +1496,7 @@ export default function WorkSession() {
             onMouseLeave={e => e.currentTarget.style.color = "var(--text-secondary)"}
           >
             <ArrowLeft size={16} strokeWidth={1.5} />
-            <span>Dashboard</span>
+            <span>Home</span>
           </button>
           {projects.length > 1 ? (
             <select
