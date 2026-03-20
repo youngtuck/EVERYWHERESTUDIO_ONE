@@ -49,6 +49,14 @@ function buildPrompt(content, vibe, title, author, context, brandColors, voiceSt
 
   let prompt = vibePrompt + "\n\n";
 
+  const ASPECT_DIMENSIONS = {
+    "16:9": { w: 1280, h: 720, desc: "wide landscape format, significantly wider than tall" },
+    "9:16": { w: 720, h: 1280, desc: "tall portrait format, significantly taller than wide" },
+    "1:1": { w: 1024, h: 1024, desc: "perfect square format, equal width and height" },
+  };
+  const dims = ASPECT_DIMENSIONS[aspectRatio] || ASPECT_DIMENSIONS["16:9"];
+  prompt += `CRITICAL: The output image MUST be in ${ratioLabel} format (${dims.desc}). Target dimensions: ${dims.w}x${dims.h} pixels. Do NOT generate a square image unless 1:1 is specified.\n\n`;
+
   // Title handling: the raw title may be the user's unedited input.
   // Instruct the model to create a polished headline from the content.
   prompt += `HEADLINE INSTRUCTIONS: The working title is "${title}". Do NOT use this raw title as-is. Instead, create a compelling, concise headline (maximum 8 words) that captures the core message of the content below. Place this polished headline in the top banner in bold.\n`;
