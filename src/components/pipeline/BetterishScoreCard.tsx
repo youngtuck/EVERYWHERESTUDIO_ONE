@@ -152,6 +152,12 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
         </span>
       </div>
 
+      <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 11, color: "var(--text-tertiary)" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#50c8a0" }} /> 120+ Strong</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#4A90D9" }} /> 60-119 Developing</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#E53935" }} /> Below 60 Needs work</span>
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
         {DIMENSIONS.map((key) => {
           const value = score.breakdown[key] ?? 0;
