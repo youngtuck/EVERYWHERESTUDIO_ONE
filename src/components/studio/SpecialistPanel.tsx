@@ -197,9 +197,9 @@ export default function SpecialistPanel({
             </p>
           </div>
         ) : selected.score !== undefined ? (
-          <div style={{ fontSize: 13, color: "var(--fg-3)", fontStyle: "italic" }}>
-            Run the full pipeline for detailed specialist feedback.
-          </div>
+          <p style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 8 }}>
+            Detailed feedback is available after the full quality pipeline completes.
+          </p>
         ) : null}
 
         {selected.issues && selected.issues.length > 0 && (
@@ -221,8 +221,16 @@ export default function SpecialistPanel({
       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "#4A90D9", marginBottom: 16 }}>
         QUALITY PIPELINE
       </div>
+      <p style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 16, marginTop: -8 }}>
+        Your content was reviewed by 7 AI specialists. Click any to see their evaluation.
+      </p>
+      <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 12, color: "var(--fg-3)" }}>
+        <span><span style={{ color: "#50c8a0", fontWeight: 700 }}>80+</span> Strong</span>
+        <span><span style={{ color: "#F5C642", fontWeight: 700 }}>60-79</span> Needs work</span>
+        <span><span style={{ color: "#E53935", fontWeight: 700 }}>&lt;60</span> Needs attention</span>
+      </div>
 
-      <div style={{ display: isMobile ? "flex" : "grid", gridTemplateColumns: "1fr 0.7fr", flexDirection: "column", gap: 16, marginBottom: showTotal ? 24 : 0 }}>
+      <div style={{ display: isMobile ? "flex" : "grid", gridTemplateColumns: "1fr 360px", flexDirection: "column", gap: 16, marginBottom: showTotal ? 24 : 0 }}>
         {/* Left: Specialist cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {gates.map((g, i) => {
@@ -311,7 +319,16 @@ export default function SpecialistPanel({
             Publication threshold: {threshold}
           </div>
           <div style={{ fontSize: 14, fontWeight: 600, color: totalScore >= threshold ? "#50c8a0" : "var(--fg-2)", marginTop: 8 }}>
-            {totalScore >= threshold ? "Ready to publish" : "Below threshold. Revisions recommended."}
+            {totalScore >= threshold ? "Ready to publish" : (() => {
+              const scored = gates.filter(g => g.score !== undefined).sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+              const lowest = scored.slice(0, 2);
+              if (lowest.length === 0) return "Below threshold. Revisions recommended.";
+              const names = lowest.map(g => {
+                const info = SPECIALIST_INFO[g.index];
+                return info ? `${info.name} (${info.role})` : null;
+              }).filter(Boolean);
+              return `Focus on improving ${names.join(" and ")} to reach the publication threshold.`;
+            })()}
           </div>
         </div>
       )}

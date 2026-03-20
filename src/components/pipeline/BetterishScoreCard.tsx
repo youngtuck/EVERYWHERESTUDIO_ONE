@@ -5,6 +5,19 @@ interface BetterishScoreCardProps {
   compact?: boolean;
 }
 
+const DIMENSION_LABELS: Record<string, string> = {
+  voiceAuthenticity: "Voice",
+  researchDepth: "Research",
+  hookStrength: "Hook",
+  slopScore: "AI Tells",
+  editorialQuality: "Accuracy",
+  perspective: "Audience",
+  engagement: "Engagement",
+  platformFit: "Platform",
+  strategicValue: "Strategy",
+  nvcCompliance: "Impact",
+};
+
 const DIMENSIONS: Array<keyof BetterishScore["breakdown"]> = [
   "voiceAuthenticity",
   "researchDepth",
@@ -86,6 +99,9 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
           >
             Betterish Score
           </div>
+          <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 2 }}>
+            How your content performed across 10 quality dimensions. Each scored out of ~150.
+          </div>
           <div
             style={{
               display: "flex",
@@ -139,6 +155,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
         {DIMENSIONS.map((key) => {
           const value = score.breakdown[key] ?? 0;
+          const barColor = value >= 120 ? "#50c8a0" : value >= 80 ? "#F5C642" : value < 60 ? "#E53935" : "#4A90D9";
           return (
             <div
               key={key}
@@ -157,7 +174,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
                   letterSpacing: "0.06em",
                 }}
               >
-                {key}
+                {DIMENSION_LABELS[key] || key}
               </span>
               <div
                 style={{
@@ -172,7 +189,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
                   style={{
                     height: "100%",
                     width: `${Math.max(0, Math.min(100, (value / 150) * 100))}%`,
-                    background: color,
+                    background: barColor,
                     borderRadius: 3,
                   }}
                 />
