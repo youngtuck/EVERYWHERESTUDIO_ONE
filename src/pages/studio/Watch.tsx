@@ -634,6 +634,9 @@ export default function Watch() {
             <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
               Sentinel runs daily at 7:00 AM. Check back then.
             </p>
+            <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
+              Sentinel scans your industry for signals, threats, and opportunities. Each briefing surfaces what moved overnight and connects it to content angles you can act on.
+            </p>
             <button
               type="button"
               onClick={handleGenerateNow}
