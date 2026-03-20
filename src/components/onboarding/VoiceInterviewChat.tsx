@@ -35,12 +35,39 @@ const QUESTION_SEQUENCE: string[] = [
   "Last one. Read this sentence in your head: \"Innovation requires us to leverage synergies across our ecosystem.\" How does it make you feel, and why",
 ];
 
+function validateResponse(text: string): boolean {
+  const words = text.split(/\s+/).filter(w => w.length > 0);
+  if (words.length < 5) return false;
+
+  // Check word-to-character ratio (random strings have very long "words")
+  const avgWordLen = text.replace(/\s+/g, "").length / words.length;
+  if (avgWordLen > 12) return false;
+
+  // Check consonant density — real English has ~40-60% consonants
+  const letters = text.replace(/[^a-zA-Z]/g, "");
+  if (letters.length > 0) {
+    const vowels = letters.replace(/[^aeiouAEIOU]/g, "").length;
+    const vowelRatio = vowels / letters.length;
+    if (vowelRatio < 0.15) return false;
+  }
+
+  // Check that at least 60% of words look like real words (2+ letters, contain a vowel)
+  const realWordCount = words.filter(w => {
+    const cleaned = w.replace(/[^a-zA-Z]/g, "");
+    return cleaned.length >= 2 && /[aeiouAEIOU]/.test(cleaned);
+  }).length;
+  if (realWordCount / words.length < 0.6) return false;
+
+  return true;
+}
+
 export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatProps) {
   const [messages, setMessages] = useState<QA[]>([
     { id: "sys-0", role: "system", content: INITIAL_PROMPT },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [validationWarning, setValidationWarning] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const questionIndexRef = useRef(0);
@@ -130,6 +157,13 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
   const handleSend = async () => {
     const text = input.trim();
     if (!text || loading) return;
+
+    if (!validateResponse(text)) {
+      setValidationWarning(true);
+      return;
+    }
+
+    setValidationWarning(false);
     setInput("");
     const userMsg: QA = { id: `u-${Date.now()}`, role: "user", content: text };
     setMessages(prev => [...prev, userMsg]);
@@ -306,7 +340,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
               <textarea
                 ref={inputRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
+                onChange={e => { setInput(e.target.value); if (validationWarning) setValidationWarning(false); }}
                 onKeyDown={e => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -355,6 +389,21 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                 />
               </button>
             </div>
+            {validationWarning && (
+              <p style={{
+                margin: "8px 0 0",
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "rgba(200,150,26,0.1)",
+                border: "1px solid rgba(200,150,26,0.25)",
+                fontFamily: "'Afacad Flux', sans-serif",
+                fontSize: 13,
+                color: "rgba(255,255,255,0.7)",
+                lineHeight: 1.4,
+              }}>
+                That doesn't look like a typical response. Voice DNA works best with real answers that reflect how you naturally communicate. Want to try again?
+              </p>
+            )}
             <div
               style={{
                 marginTop: 8,
