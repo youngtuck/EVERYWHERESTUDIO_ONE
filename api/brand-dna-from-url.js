@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { callWithRetry } from "./_retry.js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -85,13 +86,17 @@ export default async function handler(req, res) {
 
     // Send to Claude for analysis
     const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4000,
-      system: SYSTEM_PROMPT,
-      messages: [{
-        role: "user",
-        content: `Analyze this website and produce a Brand DNA profile:\n\nURL: ${url}\n\nExtracted text content:\n"""\n${textContent}\n"""`
+    const response = await callWithRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        system: SYSTEM_PROMPT,
+        messages: [{
+          role: "user",
+          content: `Analyze this website and produce a Brand DNA profile:\n\nURL: ${url}\n\nExtracted text content:\n"""\n${textContent}\n"""`
+        }],
+      })
+    );
       }],
     });
 

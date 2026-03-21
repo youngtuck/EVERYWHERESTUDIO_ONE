@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { generateBrandDNAFromConversation } from "../../utils/brandDNAProcessor";
 import type { BrandDNAResponse } from "../../utils/brandDNAProcessor";
+import { fetchWithRetry } from "../../lib/retry";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
@@ -75,7 +76,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
         role: m.role === "assistant" ? "watson" : "user",
         content: m.content,
       }));
-      const res = await fetch(`${API_BASE}/api/chat`, {
+      const res = await fetchWithRetry(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

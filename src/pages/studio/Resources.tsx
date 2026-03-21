@@ -4,6 +4,7 @@ import { MoreVertical, Upload, Plus, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
+import { fetchWithRetry } from "../../lib/retry";
 import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import "./shared.css";
 
@@ -588,7 +589,7 @@ function AddResourceModal({
     setUrlLoading(true);
     try {
       if (resourceType === "brand_dna") {
-        const res = await fetch(`${API_BASE}/api/brand-dna-from-url`, {
+        const res = await fetchWithRetry(`${API_BASE}/api/brand-dna-from-url`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: url.trim() }),
@@ -626,7 +627,7 @@ function AddResourceModal({
     setUploadLoading(true);
     try {
       const base64 = await fileToBase64(uploadFile);
-      const res = await fetch(`${API_BASE}/api/upload-resource`, {
+      const res = await fetchWithRetry(`${API_BASE}/api/upload-resource`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -11,6 +11,7 @@ import { BrandDNAChat } from "../components/onboarding/BrandDNAChat";
 import type { VoiceDNA, VoiceDNAResponse } from "../utils/voiceDNAProcessor";
 import { generateVoiceDNAFromInterview, generateVoiceDNAFromUploads } from "../utils/voiceDNAProcessor";
 import type { BrandDNAResponse } from "../utils/brandDNAProcessor";
+import { fetchWithRetry } from "../lib/retry";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
@@ -311,7 +312,7 @@ export default function OnboardingPage() {
     setStatusIndex(0);
     setBrandUrlLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/brand-dna-from-url`, {
+      const res = await fetchWithRetry(`${API_BASE}/api/brand-dna-from-url`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: brandUrl.trim() }),

@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { callWithRetry } from "./_retry.js";
 
 export async function scoreContent({
   apiKey,
@@ -37,12 +38,14 @@ For "total": weight * 1000. Use weights: strategy 0.12, voice 0.22, accuracy 0.1
 `;
 
   const client = new Anthropic({ apiKey });
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 512,
-    system,
-    messages: [{ role: "user", content: userPrompt }],
-  });
+  const response = await callWithRetry(() =>
+    client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 512,
+      system,
+      messages: [{ role: "user", content: userPrompt }],
+    })
+  );
 
   const text =
     response.content?.[0]?.type === "text" ? response.content[0].text : "{}";

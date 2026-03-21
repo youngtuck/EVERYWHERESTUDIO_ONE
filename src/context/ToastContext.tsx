@@ -1,6 +1,16 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 
 export type ToastType = "success" | "error" | "info";
+
+/**
+ * Global toast function callable from non-React code (e.g., retry utility).
+ * Set by ToastProvider on mount.
+ */
+let _globalToast: ((message: string, type?: ToastType) => void) | null = null;
+
+export function showGlobalToast(message: string, type: ToastType = "info") {
+  if (_globalToast) _globalToast(message, type);
+}
 
 export interface ToastItem {
   id: number;
@@ -35,6 +45,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     },
     [nextId, dismiss]
   );
+
+  // Register global toast so non-React code can fire toasts
+  useEffect(() => {
+    _globalToast = toast;
+    return () => { _globalToast = null; };
+  }, [toast]);
 
   return (
     <ToastContext.Provider value={{ toasts, toast, dismiss }}>

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { callWithRetry } from "./_retry.js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -108,12 +109,14 @@ export default async function handler(req, res) {
 
   try {
     const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4000,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildUserMessage(userName ?? "User", topics ?? [], dateLabel) }],
-    });
+    const response = await callWithRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: buildUserMessage(userName ?? "User", topics ?? [], dateLabel) }],
+      })
+    );
 
     const block = response.content?.[0];
     let text = block?.type === "text" ? block.text : "";

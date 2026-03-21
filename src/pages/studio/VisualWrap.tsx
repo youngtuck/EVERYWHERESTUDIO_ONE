@@ -20,6 +20,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useMobile } from "../../hooks/useMobile";
+import { fetchWithRetry } from "../../lib/retry";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
@@ -238,20 +239,24 @@ export default function VisualWrap() {
   const generateVisual = useCallback(
     async (vibe: VibeKey) => {
       if (!output) return;
-      const res = await fetch(`${API_BASE}/api/visual`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: output.content,
-          title: output.title,
-          author: typeof author === "string" ? author : "EVERYWHERE Studio",
-          context,
-          vibe,
-          brandColors: brandColors.trim() || null,
-          voiceStyle,
-          aspectRatio,
-        }),
-      });
+      const res = await fetchWithRetry(
+        `${API_BASE}/api/visual`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: output.content,
+            title: output.title,
+            author: typeof author === "string" ? author : "EVERYWHERE Studio",
+            context,
+            vibe,
+            brandColors: brandColors.trim() || null,
+            voiceStyle,
+            aspectRatio,
+          }),
+        },
+        { timeout: 60000 } // visual generation takes longer
+      );
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Generation failed");
       return data as { image: string; mimeType: string };

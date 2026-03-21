@@ -1254,19 +1254,23 @@ export default function WorkSession() {
         setRevealedCheckpointCount(0);
 
         try {
-          const pipelineRes = await fetch(`${API_BASE}/api/run-pipeline`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              draft: content,
-              outputType: outputTypeApi,
-              voiceDnaMd,
-              brandDnaMd,
-              methodDnaMd,
-              userId: user.id,
-              outputId,
-            }),
-          });
+          const pipelineRes = await requestWithRetry(
+            `${API_BASE}/api/run-pipeline`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                draft: content,
+                outputType: outputTypeApi,
+                voiceDnaMd,
+                brandDnaMd,
+                methodDnaMd,
+                userId: user.id,
+                outputId,
+              }),
+            },
+            120000 // pipeline takes longer
+          );
 
           if (!pipelineRes.ok) throw new Error("Pipeline API failed");
           const result = await pipelineRes.json();
@@ -1347,19 +1351,23 @@ export default function WorkSession() {
     setPipelineResult(null);
 
     try {
-      const pipelineRes = await fetch(`${API_BASE}/api/run-pipeline`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft: generatedContent,
-          outputType: outputTypeApi,
-          voiceDnaMd,
-          brandDnaMd,
-          methodDnaMd,
-          userId: user.id,
-          outputId: generatedOutputId,
-        }),
-      });
+      const pipelineRes = await requestWithRetry(
+        `${API_BASE}/api/run-pipeline`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            draft: generatedContent,
+            outputType: outputTypeApi,
+            voiceDnaMd,
+            brandDnaMd,
+            methodDnaMd,
+            userId: user.id,
+            outputId: generatedOutputId,
+          }),
+        },
+        120000 // pipeline takes longer
+      );
 
       if (!pipelineRes.ok) throw new Error("Pipeline API failed");
       const result = await pipelineRes.json();

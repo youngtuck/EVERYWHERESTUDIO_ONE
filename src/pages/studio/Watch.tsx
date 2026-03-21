@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
+import { fetchWithRetry } from "../../lib/retry";
 import Tooltip from "../../components/Tooltip";
 import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import "./shared.css";
@@ -164,7 +165,7 @@ export default function Watch() {
     setSeedError("");
     setSeedLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/sentinel-seed`, {
+      const res = await fetchWithRetry(`${API_BASE}/api/sentinel-seed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ linkedInUrl: setupLinkedInUrl.trim() }),
@@ -199,7 +200,7 @@ export default function Watch() {
         setSeedLoading(false);
         return;
       }
-      const res = await fetch(`${API_BASE}/api/sentinel-seed`, {
+      const res = await fetchWithRetry(`${API_BASE}/api/sentinel-seed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ voiceDnaContent, userName: profile?.full_name || "there" }),
@@ -227,15 +228,19 @@ export default function Watch() {
       setProfile((p) => (p ? { ...p, sentinel_topics: suggestedTopics } : null));
       setSuggestedTopics([]);
       setGenerating(true);
-      const res = await fetch(`${API_BASE}/api/sentinel-generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          userName: profile?.full_name || "there",
-          topics: suggestedTopics,
-        }),
-      });
+      const res = await fetchWithRetry(
+        `${API_BASE}/api/sentinel-generate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            userName: profile?.full_name || "there",
+            topics: suggestedTopics,
+          }),
+        },
+        { timeout: 60000 }
+      );
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       const now = new Date().toISOString();
@@ -271,15 +276,19 @@ export default function Watch() {
     setGenerating(true);
     try {
       const url = `${API_BASE}/api/sentinel-generate`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          userName: profile?.full_name || "there",
-          topics,
-        }),
-      });
+      const res = await fetchWithRetry(
+        url,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            userName: profile?.full_name || "there",
+            topics,
+          }),
+        },
+        { timeout: 60000 }
+      );
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       const now = new Date().toISOString();

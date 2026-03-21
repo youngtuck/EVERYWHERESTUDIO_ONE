@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { getUserResources } from "./_resources.js";
+import { callWithRetry } from "./_retry.js";
 
 const READY_MARKER = "READY_TO_GENERATE";
 
@@ -204,12 +205,14 @@ export default async function handler(req, res) {
         content: m.content,
       }));
 
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2048,
-        system: modeSystemPrompt,
-        messages: claudeMessages,
-      });
+      const response = await callWithRetry(() =>
+        client.messages.create({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2048,
+          system: modeSystemPrompt,
+          messages: claudeMessages,
+        })
+      );
 
       const text = response.content?.[0]?.type === "text" ? response.content[0].text : "";
       const readyToGenerate = text.includes(READY_MARKER);
@@ -239,12 +242,14 @@ export default async function handler(req, res) {
       content: m.content,
     }));
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: claudeMessages,
-    });
+    const response = await callWithRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: claudeMessages,
+      })
+    );
 
     const text = response.content?.[0]?.type === "text" ? response.content[0].text : "";
     const readyToGenerate = text.includes(READY_MARKER);

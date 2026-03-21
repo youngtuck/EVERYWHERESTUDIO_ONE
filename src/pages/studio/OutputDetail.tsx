@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
+import { fetchWithRetry } from "../../lib/retry";
 import { ArrowLeft, Globe, FileText, Pencil, Clipboard } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";
 import { useAuth } from "../../context/AuthContext";
@@ -291,7 +292,7 @@ export default function OutputDetail() {
     setRescoring(true);
     try {
       const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
-      const res = await fetch(`${API_BASE}/api/generate`, {
+      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversationSummary: output.content, outputType: output.output_type, userId: user.id }),
@@ -495,7 +496,7 @@ export default function OutputDetail() {
     setReformatType(selectedType);
     try {
       const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
-      const res = await fetch(`${API_BASE}/api/generate`, {
+      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

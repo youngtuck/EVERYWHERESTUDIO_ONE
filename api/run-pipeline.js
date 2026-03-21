@@ -9,6 +9,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
+import { callWithRetry } from "./_retry.js";
 
 const GATE_FILES = [
   { name: "Echo", file: "gate-0-echo.md", label: "Deduplication" },
@@ -144,12 +145,14 @@ export default async function handler(req, res) {
         `\nRespond with your evaluation. Include STATUS: PASS/FAIL/FLAG, SCORE: 0-100, and detailed FEEDBACK.`,
       ].filter(Boolean).join("\n\n");
 
-      const response = await client.messages.create({
-        model,
-        max_tokens: 4096,
-        system: prompt,
-        messages: [{ role: "user", content: userMessage }],
-      });
+      const response = await callWithRetry(() =>
+        client.messages.create({
+          model,
+          max_tokens: 4096,
+          system: prompt,
+          messages: [{ role: "user", content: userMessage }],
+        })
+      );
 
       const text = response.content[0]?.type === "text" ? response.content[0].text : "";
       const parsed = parseGateResponse(text);
@@ -187,12 +190,14 @@ export default async function handler(req, res) {
   if (betterishPrompt) {
     try {
       console.log("[run-pipeline] Running Betterish scorer");
-      const response = await client.messages.create({
-        model,
-        max_tokens: 4096,
-        system: betterishPrompt,
-        messages: [{ role: "user", content: `Score this content on the Betterish scale (0-1000):\n\n${currentDraft}` }],
-      });
+      const response = await callWithRetry(() =>
+        client.messages.create({
+          model,
+          max_tokens: 4096,
+          system: betterishPrompt,
+          messages: [{ role: "user", content: `Score this content on the Betterish scale (0-1000):\n\n${currentDraft}` }],
+        })
+      );
       const text = response.content[0]?.type === "text" ? response.content[0].text : "";
       betterishScore = parseBetterishResponse(text);
     } catch (err) {

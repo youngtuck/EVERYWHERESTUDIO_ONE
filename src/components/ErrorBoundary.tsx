@@ -19,7 +19,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(_error: Error, _errorInfo: ErrorInfo) {
-    // Error captured in state; UI shows fallback. Omit console in production.
+    // Error captured in state; UI shows fallback.
   }
 
   render() {
@@ -33,32 +33,72 @@ export default class ErrorBoundary extends Component<Props, State> {
             alignItems: "center",
             justifyContent: "center",
             padding: 24,
-            background: "linear-gradient(180deg, #1c2c9e 0%, #111f88 100%)",
-            color: "#fff",
-            fontFamily: "system-ui, sans-serif",
+            background: "var(--bg-primary, #0a0a0a)",
+            color: "var(--text-primary, #fff)",
+            fontFamily: "'Afacad Flux', system-ui, sans-serif",
             textAlign: "center",
           }}
         >
-          <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Something went wrong</h1>
-          <p style={{ fontSize: 14, opacity: 0.9, marginBottom: 24, maxWidth: 400 }}>
-            The app hit an error. Try refreshing the page.
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase" as const,
+              color: "var(--gold-dark, #C8961A)",
+              marginBottom: 24,
+            }}
+          >
+            EVERYWHERE STUDIO
+          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
+            Something went wrong
+          </h1>
+          <p
+            style={{
+              fontSize: 14,
+              opacity: 0.7,
+              marginBottom: 28,
+              maxWidth: 380,
+              lineHeight: 1.6,
+            }}
+          >
+            This usually resolves itself. Try refreshing.
           </p>
           <button
             type="button"
             onClick={() => window.location.reload()}
             style={{
-              padding: "12px 24px",
+              padding: "12px 28px",
               fontSize: 14,
               fontWeight: 600,
-              background: "#fff",
-              color: "#1e2da0",
+              background: "var(--gold-dark, #C8961A)",
+              color: "#fff",
               border: "none",
               borderRadius: 8,
               cursor: "pointer",
+              fontFamily: "'Afacad Flux', system-ui, sans-serif",
+              transition: "opacity 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.88";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
             }}
           >
-            Refresh page
+            Refresh
           </button>
+          <p
+            style={{
+              fontSize: 12,
+              opacity: 0.4,
+              marginTop: 32,
+              maxWidth: 300,
+            }}
+          >
+            If this keeps happening, contact support.
+          </p>
         </div>
       );
     }

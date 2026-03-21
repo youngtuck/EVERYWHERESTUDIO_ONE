@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { callWithRetry } from "./_retry.js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -56,15 +57,17 @@ export default async function handler(req, res) {
 
   try {
     const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      system: "You analyze professional profiles and voice patterns to identify what topics, industries, people, and trends a person would want to monitor. Return ONLY a JSON object.",
-      messages: [{
-        role: "user",
-        content: `Based on this person's profile and voice, suggest Watch/monitoring topics for their Sentinel intelligence system.\n\n${sourceContent}\n\nReturn this exact JSON:\n{\n  "industries": ["3-5 industries they operate in or care about"],\n  "topics": ["8-12 specific topics they would want to monitor"],\n  "people": ["3-5 specific people or thought leaders they would want to track"],\n  "competitors": ["3-5 companies or individuals competing in their space"],\n  "contentTriggers": ["3-5 types of events that should trigger content creation"]\n}`
-      }],
-    });
+    const response = await callWithRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: "You analyze professional profiles and voice patterns to identify what topics, industries, people, and trends a person would want to monitor. Return ONLY a JSON object.",
+        messages: [{
+          role: "user",
+          content: `Based on this person's profile and voice, suggest Watch/monitoring topics for their Sentinel intelligence system.\n\n${sourceContent}\n\nReturn this exact JSON:\n{\n  "industries": ["3-5 industries they operate in or care about"],\n  "topics": ["8-12 specific topics they would want to monitor"],\n  "people": ["3-5 specific people or thought leaders they would want to track"],\n  "competitors": ["3-5 companies or individuals competing in their space"],\n  "contentTriggers": ["3-5 types of events that should trigger content creation"]\n}`
+        }],
+      })
+    );
 
     const text = response.content?.[0]?.type === "text" ? response.content[0].text : "{}";
     const clean = text.replace(/```json|```/g, "").trim();

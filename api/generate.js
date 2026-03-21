@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { scoreContent } from "./_score.js";
 import { getUserResources } from "./_resources.js";
+import { callWithRetry } from "./_retry.js";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -44,15 +45,17 @@ export default async function handler(req, res) {
       system += "\n\nREFERENCE MATERIALS:\n" + resources.references;
     }
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system,
-      messages: [{
-        role: "user",
-        content: `Conversation summary:\n${conversationSummary}\n\nProduce the ${outputType} now.`
-      }],
-    });
+    const response = await callWithRetry(() =>
+      client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system,
+        messages: [{
+          role: "user",
+          content: `Conversation summary:\n${conversationSummary}\n\nProduce the ${outputType} now.`
+        }],
+      })
+    );
 
     const content = response.content?.[0]?.type === "text" ? response.content[0].text : "";
 
