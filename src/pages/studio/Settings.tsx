@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useToast } from "../../context/ToastContext";
 import { supabase } from "../../lib/supabase";
 import "./shared.css";
 
@@ -74,8 +75,9 @@ function SectionHeader({ label }: { label: string }) {
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { user, signOut, displayName: ctxDisplayName } = useAuth();
+  const { user, signOut, displayName: ctxDisplayName, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState("");
@@ -131,8 +133,12 @@ export default function Settings() {
         .eq("id", user.id);
       if (error) throw error;
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), 3000);
+      toast("Profile saved");
+      // Update AuthContext so dashboard greeting reflects the change immediately
+      await refreshProfile();
     } catch (err: any) {
+      toast("Failed to save: " + (err.message || "Unknown error"), "error");
       setSaveError(err.message || "Save failed.");
     }
   };
@@ -152,7 +158,10 @@ export default function Settings() {
       .eq("id", user.id);
     if (!error) {
       setWatchSaved(true);
-      setTimeout(() => setWatchSaved(false), 2000);
+      setTimeout(() => setWatchSaved(false), 3000);
+      toast("Watch topics saved. Your next briefing will use these topics.");
+    } else {
+      toast("Failed to save topics: " + (error.message || "Unknown error"), "error");
     }
   };
 
@@ -323,8 +332,8 @@ export default function Settings() {
             value={watchInput}
             onChange={(e) => setWatchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddWatchTopic(); } }}
-            placeholder="Add a topic"
-            style={{ width: 180, padding: "8px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, outline: "none" }}
+            placeholder="Add a topic (e.g., AI governance, content marketing)"
+            style={{ width: 280, padding: "8px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, outline: "none" }}
           />
           <button
             type="button"
@@ -334,6 +343,24 @@ export default function Settings() {
             Add
           </button>
         </div>
+        {["AI", "Leadership", "Content Strategy", "Public Speaking", "Executive Coaching", "Industry Trends"].filter(s => !watchTopics.includes(s)).length > 0 && (
+          <div style={{ marginTop: -4, marginBottom: 16, fontSize: 12, color: "var(--fg-3)" }}>
+            Suggestions:{" "}
+            {["AI", "Leadership", "Content Strategy", "Public Speaking", "Executive Coaching", "Industry Trends"]
+              .filter(s => !watchTopics.includes(s))
+              .slice(0, 4)
+              .map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setWatchTopics(prev => [...prev, s])}
+                  style={{ background: "none", border: "none", color: "var(--cornflower)", cursor: "pointer", fontSize: 12, textDecoration: "underline", marginLeft: 8, fontFamily: "'Afacad Flux', sans-serif", padding: 0 }}
+                >
+                  {s}
+                </button>
+              ))}
+          </div>
+        )}
         <button
           type="button"
           onClick={handleSaveWatch}
