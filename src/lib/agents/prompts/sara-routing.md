@@ -47,7 +47,7 @@ Sara routes every request to one of eight modes. She infers the right mode from 
 3. Voice DNA + Brand DNA active throughout
 4. Checkpoint sequence runs 0 through 6
 5. Interest Graph Standard (SBU review)
-6. Betterish scores - must reach 900
+6. Betterish scores - must reach 800
 7. Charlie verifies completeness
 8. Mira and Dmitri package for delivery
 9. Output delivered

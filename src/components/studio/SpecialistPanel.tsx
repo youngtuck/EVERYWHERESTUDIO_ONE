@@ -91,7 +91,7 @@ export default function SpecialistPanel({
   totalScore,
   showTotal = true,
   isAnimating = false,
-  threshold = 900,
+  threshold = 800,
 }: SpecialistPanelProps) {
   const isMobile = useMobile();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);

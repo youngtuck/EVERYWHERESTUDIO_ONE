@@ -862,7 +862,7 @@ function checkpointScoreColor(score: number): { text: string; bg: string } {
 }
 
 function totalScoreColor(total: number): string {
-  if (total >= 900) return "#50c8a0";
+  if (total >= 800) return "#50c8a0";
   if (total >= 700) return "#C8961A";
   return "#E53935";
 }
@@ -1787,9 +1787,9 @@ export default function WorkSession() {
                   <span style={{
                     fontSize: 14,
                     fontWeight: 600,
-                    color: generatedScore >= 900 ? "#50c8a0" : "var(--text-secondary)",
+                    color: generatedScore >= 800 ? "#50c8a0" : "var(--text-secondary)",
                   }}>
-                    {generatedScore >= 900 ? "Ready to publish" : "Needs revision"}
+                    {generatedScore >= 800 ? "Ready to publish" : "Needs revision"}
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -1816,7 +1816,7 @@ export default function WorkSession() {
                   >
                     Edit and refine
                   </button>
-                  {generatedScore >= 900 && (
+                  {generatedScore >= 800 && (
                     <button
                       type="button"
                       onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
@@ -1838,7 +1838,7 @@ export default function WorkSession() {
                       Move to Wrap
                     </button>
                   )}
-                  {generatedScore < 900 && (
+                  {generatedScore < 800 && (
                     <button
                       type="button"
                       onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
@@ -1901,7 +1901,7 @@ export default function WorkSession() {
                 </div>
               ) : (
                 <div style={{ marginBottom: 16 }}>
-                  {generatedScore < 900 && pipelineStatus === "IDLE" && (
+                  {generatedScore < 800 && pipelineStatus === "IDLE" && (
                     <div style={{
                       padding: "12px 16px",
                       background: "rgba(245,198,66,0.06)",

@@ -72,7 +72,7 @@ export default function OutputLibrary() {
   }, [user]);
 
   const baseOutputs = isInProgressView
-    ? outputs.filter((o) => (o.score ?? 0) < 900)
+    ? outputs.filter((o) => (o.score ?? 0) < 800)
     : outputs;
   const filtered = baseOutputs.filter((o) => {
     const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());

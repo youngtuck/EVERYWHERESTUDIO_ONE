@@ -568,7 +568,7 @@ export default function OutputDetail() {
     );
 
   const scoreColor =
-    output!.score >= 900
+    output!.score >= 800
       ? "#10b981"
       : output!.score >= 700
         ? "#3A7BD5"

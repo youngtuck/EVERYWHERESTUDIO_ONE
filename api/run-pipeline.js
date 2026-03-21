@@ -82,7 +82,7 @@ function parseBetterishResponse(text) {
   const totalMatch = text.match(/TOTAL:\s*(\d+)/i) || text.match(/\*\*Total\*\*:\s*(\d+)/i) || text.match(/composite.*?(\d{3,4})/i);
   if (totalMatch) total = Math.min(1000, Math.max(0, parseInt(totalMatch[1])));
 
-  let verdict = total >= 900 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
+  let verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
   const verdictMatch = text.match(/VERDICT:\s*(PUBLISH|REVISE|REJECT)/i);
   if (verdictMatch) verdict = verdictMatch[1].toUpperCase();
 

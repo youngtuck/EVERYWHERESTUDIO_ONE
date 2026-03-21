@@ -36,7 +36,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 function scoreColor(s: number) {
-  return s >= 900 ? "#50c8a0" : s >= 800 ? "#4A90D9" : "#F5C642";
+  return s >= 800 ? "#50c8a0" : s >= 600 ? "#4A90D9" : "#F5C642";
 }
 
 function timeAgo(dateStr: string) {

@@ -54,7 +54,7 @@ export default function Workbench() {
       .select("id, title, output_type, score, updated_at, published_at")
       .eq("user_id", user.id)
       .is("published_at", null)
-      .lt("score", 900)
+      .lt("score", 800)
       .order("updated_at", { ascending: false })
       .then(({ data, error }) => {
         if (error) console.error(error);
@@ -70,7 +70,7 @@ export default function Workbench() {
       .select("id, title, output_type, score, updated_at, published_at")
       .eq("user_id", user.id)
       .is("published_at", null)
-      .lt("score", 900)
+      .lt("score", 800)
       .order("updated_at", { ascending: false })
       .then(({ data }) => setOutputs((data as OutputRow[]) ?? []));
   };

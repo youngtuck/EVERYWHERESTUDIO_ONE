@@ -38,7 +38,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
   const verdict = score.verdict;
 
   const color =
-    total >= 900 ? "#16a34a" : total >= 600 ? "var(--gold-dark)" : "#b91c1c";
+    total >= 800 ? "#16a34a" : total >= 600 ? "var(--gold-dark)" : "#b91c1c";
 
   if (compact) {
     return (

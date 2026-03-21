@@ -110,8 +110,8 @@ export default function Dashboard() {
   }, [user]);
 
   const firstName = displayName ? displayName.split(" ")[0] : "there";
-  const inProgress = outputs.filter((o) => (o.score ?? 0) < 900);
-  const vault = outputs.filter((o) => (o.score ?? 0) >= 900);
+  const inProgress = outputs.filter((o) => (o.score ?? 0) < 800);
+  const vault = outputs.filter((o) => (o.score ?? 0) >= 800);
   const recentThree = outputs.slice(0, 3);
   const outputsCreated = outputs.length;
   const avgBetterish =
@@ -261,14 +261,14 @@ export default function Dashboard() {
               subtitle:
                 avgBetterish == null
                   ? "Complete a session"
-                  : avgBetterish >= 900
+                  : avgBetterish >= 800
                     ? "Publication ready"
                     : avgBetterish >= 700
                       ? "Getting close"
                       : "Room to improve",
               accent: "#F5C642",
               color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
-              tooltip: "Average Betterish quality score. 900 is publication threshold.",
+              tooltip: "Average Betterish quality score. 800 is publication threshold.",
             },
             {
               key: "voice",

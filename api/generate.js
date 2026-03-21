@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     const content = response.content?.[0]?.type === "text" ? response.content[0].text : "";
 
     let gates = null;
-    let score = 900;
+    let score = 800;
     try {
       const scores = await scoreContent({ apiKey, content, outputType, voiceProfile });
       gates = scores;

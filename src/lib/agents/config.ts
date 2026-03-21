@@ -3,7 +3,7 @@ export const PIPELINE_CONFIG = {
   maxTokensPerGate: 8192,
   maxTokensForBetterish: 4096,
   maxTokensForWrap: 8192,
-  betterishThreshold: 900, // Must match MARKETING_NUMBERS.betterishThreshold in src/lib/constants.ts
+  betterishThreshold: 800, // Must match MARKETING_NUMBERS.betterishThreshold in src/lib/constants.ts
   maxAutoFixAttempts: 1,
 } as const;
 
