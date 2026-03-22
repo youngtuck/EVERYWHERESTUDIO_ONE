@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const { data: profiles, error: queryError } = await supabase
       .from("profiles")
       .select("id, full_name, sentinel_topics")
-      .eq("onboarding_complete", true);
+      .or("onboarding_complete.eq.true,sentinel_topics.neq.null");
 
     if (queryError) {
       console.error("[api/sentinel-cron] profiles query error", queryError);
