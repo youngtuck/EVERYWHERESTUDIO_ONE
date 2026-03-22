@@ -47,9 +47,10 @@ const Logo = ({ size = "md", onDark, variant, onClick }: LogoProps) => {
       <span style={{ color: "#4A90D9", fontWeight: 700, fontSize: fs, lineHeight: 1, textTransform: "uppercase" }}>
         EVERYWHERE
       </span>
+      <span style={{ display: "inline-block", width: Math.max(2, Math.round(fs * 0.15)) }} />
       <span style={{ color: studioColor, fontWeight: 300, fontSize: fs, lineHeight: 1, textTransform: "uppercase" }}>
         STUDIO
-        <span style={{ color: studioColor, fontSize: tmFs, verticalAlign: "top", marginLeft: 2 }}>™</span>
+        <span style={{ color: studioColor, fontSize: tmFs, verticalAlign: "top", marginLeft: 1 }}>™</span>
       </span>
     </span>
   );

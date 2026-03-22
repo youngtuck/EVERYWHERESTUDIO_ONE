@@ -130,7 +130,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             }} />
           </div>
           {!collapsed && (
-            <Logo size={18} />
+            <Logo size={16} />
           )}
         </button>
         {!collapsed && onToggleCollapsed && (
@@ -287,7 +287,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                   background: active ? "rgba(0,0,0,0.04)" : "transparent",
                   cursor: "pointer",
                   fontFamily: "var(--font)",
-                  fontSize: primary ? 15 : 13,
+                  fontSize: primary ? 16 : 14,
                   fontWeight: primary ? 600 : 400,
                   textAlign: collapsed ? "center" : "left",
                   opacity: active ? 1 : 0.7,
@@ -351,7 +351,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                   background: active ? "rgba(0,0,0,0.04)" : "transparent",
                   cursor: "pointer",
                   fontFamily: "var(--font)",
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: 400,
                   textAlign: "left",
                   color: "rgba(0,0,0,0.45)",

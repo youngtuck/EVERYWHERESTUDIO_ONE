@@ -660,11 +660,7 @@ export default function Watch() {
             <LoadingAnimation variant="sentinel" message={SENTINEL_LOADING_MESSAGES[statusIndex]} />
           </div>
         )}
-        {!needsSetup && !hasTodayBriefing && !showSentinelLoading && (() => {
-          const now = new Date();
-          const cronHourUTC = 15; // 7 AM PT = 15:00 UTC
-          const isAfterCron = now.getUTCHours() >= cronHourUTC;
-          return (
+        {!needsSetup && !hasTodayBriefing && !showSentinelLoading && (
             <div
               style={{
                 background: "var(--surface-white)",
@@ -675,12 +671,10 @@ export default function Watch() {
               }}
             >
               <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
-                {isAfterCron ? "No briefing available yet" : "Your briefing will be ready at 7:00 AM"}
+                Ready to generate your briefing
               </h2>
               <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: "0 0 24px", maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
-                {isAfterCron
-                  ? "Click Generate Now to create your first intelligence briefing."
-                  : "Sentinel scans your industry for signals, threats, and opportunities. Each briefing surfaces what moved overnight and connects it to content angles you can act on."}
+                Sentinel will scan your category for signals, threats, and opportunities, then connect everything to content angles you can act on.
               </p>
               <button
                 type="button"
@@ -703,11 +697,10 @@ export default function Watch() {
                 onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(245,198,66,0.35)"; }}
                 onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(245,198,66,0.25)"; }}
               >
-                {isAfterCron ? "Generate Now" : "Or generate one now"}
+                Generate Now
               </button>
             </div>
-          );
-        })()}
+        )}
         {!needsSetup && hasTodayBriefing && (
           <div
             style={{
@@ -717,10 +710,29 @@ export default function Watch() {
             }}
           >
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 32, alignItems: "start" }}>
-            {/* Left: What's Moving + Threats */}
+            {/* Left: Threats + What's Moving */}
             <div>
+              {(sections.threats?.length ?? 0) > 0 && <SectionTitle label="Threats" color="#D64545" tooltip="Risks and competitive moves to watch." />}
+              {(sections.threats ?? []).map((item, i) => {
+                const sevKey = item.severity?.toLowerCase() ?? "low";
+                const sevColor = sevKey === "high" ? "#D64545" : sevKey === "medium" ? "#F5C642" : "var(--fg-3)";
+                return (
+                  <Card key={i} style={{ marginBottom: 16, borderLeft: `4px solid ${sevColor}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <SeverityPill label={item.severity} />
+                    </div>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
+                    <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.45, margin: "0 0 12px" }}>{item.summary}</p>
+                    <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(214,69,69,0.06)", border: "1px solid rgba(214,69,69,0.12)" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#D64545" }}>Recommended action</span>
+                      <p style={{ fontSize: 13, color: "var(--text-primary)", margin: "4px 0 0", lineHeight: 1.45 }}>{item.recommended_action}</p>
+                    </div>
+                  </Card>
+                );
+              })}
+
               {(sections.whats_moving?.length ?? 0) > 0 && (
-                <SectionTitle label="What's Moving" color={WATCH_BLUE} tooltip="Key shifts in your category and what they mean." />
+                <SectionTitle label="What's Moving" color={WATCH_BLUE} style={{ marginTop: 32 }} tooltip="Key shifts in your category and what they mean." />
               )}
               {(sections.whats_moving ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
@@ -728,10 +740,11 @@ export default function Watch() {
                     <SeverityPill label={item.priority} />
                   </div>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 8px" }}>{item.summary}</p>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.45, margin: "0 0 8px" }}>{item.summary}</p>
                   <p style={{ fontSize: 13, color: "var(--text-tertiary)", fontStyle: "italic", margin: "0 0 8px" }}>{item.implication}</p>
                   {item.sources?.length ? (
-                    <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", paddingTop: 8, borderTop: "1px solid var(--border-subtle)" }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginRight: 8 }}>Sources</span>
                       {item.sources.map((s, j) => (
                         <a key={j} href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: WATCH_BLUE, marginRight: 12 }}>
                           {s.name}
@@ -741,34 +754,71 @@ export default function Watch() {
                   ) : null}
                 </Card>
               ))}
-
-              {(sections.threats?.length ?? 0) > 0 && <SectionTitle label="Threats" color="#D64545" style={{ marginTop: 32 }} tooltip="Risks and competitive moves to watch." />}
-              {(sections.threats ?? []).map((item, i) => (
-                <Card key={i} style={{ marginBottom: 16, borderLeft: "4px solid #D64545" }}>
-                  <SeverityPill label={item.severity} />
-                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 8px" }}>{item.summary}</p>
-                  <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0 }}>{item.recommended_action}</p>
-                </Card>
-              ))}
             </div>
 
-            {/* Right: Opportunities + Content Triggers + Event Radar */}
+            {/* Right: Event Radar + Opportunities + Content Triggers */}
             <div>
-              {(sections.opportunities?.length ?? 0) > 0 && <SectionTitle label="Opportunities" color="#3A9A5C" tooltip="Content and growth opportunities to act on." />}
-              {(sections.opportunities ?? []).map((item, i) => (
+              {(sections.event_radar?.length ?? 0) > 0 && (
+                <SectionTitle label="Event Radar" color="#A080F5" tooltip="Upcoming events relevant to your focus." />
+              )}
+              {(sections.event_radar ?? []).map((item, i) => (
                 <Card key={i} style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", gap: 12, marginBottom: 8, fontSize: 14, color: "var(--text-tertiary)" }}>
-                    <span>Effort: {item.effort}</span>
-                    <span>Impact: {item.impact}</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{item.title}</h3>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#A080F5", flexShrink: 0, background: "rgba(160,128,245,0.08)", padding: "2px 8px", borderRadius: 4 }}>{item.date}</span>
                   </div>
-                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 12px" }}>{item.summary}</p>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px", lineHeight: 1.45 }}>{item.relevance}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: 0 }}>{item.action}</p>
+                </Card>
+              ))}
+
+              {(sections.opportunities?.length ?? 0) > 0 && <SectionTitle label="Opportunities" color="#3A9A5C" style={(sections.event_radar?.length ?? 0) > 0 ? { marginTop: 32 } : {}} tooltip="Content and growth opportunities to act on." />}
+              {(sections.opportunities ?? []).map((item, i) => {
+                const effortLabel = item.effort <= 3 ? "Low effort" : item.effort <= 6 ? "Medium effort" : "High effort";
+                const impactLabel = item.impact <= 3 ? "Low impact" : item.impact <= 6 ? "Medium impact" : "High impact";
+                const effortColor = item.effort <= 3 ? "#3A9A5C" : item.effort <= 6 ? "#F5C642" : "#D64545";
+                const impactColor = item.impact >= 7 ? "#3A9A5C" : item.impact >= 4 ? "#F5C642" : "var(--text-tertiary)";
+                return (
+                  <Card key={i} style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: `${effortColor}14`, color: effortColor }}>{effortLabel}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: `${impactColor}14`, color: impactColor }}>{impactLabel}</span>
+                    </div>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 8px" }}>{item.title}</h3>
+                    <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.45, margin: "0 0 12px" }}>{item.summary}</p>
+                    <button
+                      type="button"
+                      onClick={() => openWorkWithPrompt(item.cta_prompt, { headline: item.title, summary: item.summary, angle: item.cta_prompt })}
+                      style={{
+                        background: "#3A9A5C",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "8px 16px",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {item.cta_label || "Write about this"}
+                    </button>
+                  </Card>
+                );
+              })}
+
+              {(sections.content_triggers?.length ?? 0) > 0 && (
+                <SectionTitle label="Content Triggers" color="#0D8C9E" style={{ marginTop: 32 }} tooltip="Moments that warrant a piece of content." />
+              )}
+              {(sections.content_triggers ?? []).map((item, i) => (
+                <Card key={i} style={{ marginBottom: 16 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#0D8C9E", textTransform: "uppercase", letterSpacing: "0.06em" }}>{item.format}</span>
+                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
+                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.45, margin: "0 0 12px" }}>{item.angle}</p>
                   <button
                     type="button"
-                    onClick={() => openWorkWithPrompt(item.cta_prompt, { headline: item.title, summary: item.summary, angle: item.cta_prompt })}
+                    onClick={() => openWorkWithPrompt(item.angle, { headline: item.title, summary: item.angle, angle: item.angle })}
                     style={{
-                      background: "#3A9A5C",
+                      background: "#0D8C9E",
                       color: "#fff",
                       border: "none",
                       borderRadius: 8,
@@ -778,49 +828,8 @@ export default function Watch() {
                       cursor: "pointer",
                     }}
                   >
-                    {item.cta_label}
+                    {item.cta_label || "Explore this angle"}
                   </button>
-                </Card>
-              ))}
-
-              {(sections.content_triggers?.length ?? 0) > 0 && (
-                <SectionTitle label="Content Triggers" color="#0D8C9E" style={{ marginTop: 32 }} tooltip="Moments that warrant a piece of content." />
-              )}
-              {(sections.content_triggers ?? []).map((item, i) => (
-                <Card key={i} style={{ marginBottom: 16 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#0D8C9E", textTransform: "uppercase", letterSpacing: "0.06em" }}>{item.format}</span>
-                  <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", margin: "8px 0" }}>{item.title}</h3>
-                  <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.25, margin: "0 0 12px" }}>{item.angle}</p>
-                  <button
-                    type="button"
-                    onClick={() => openWorkWithPrompt(item.angle, { headline: item.title, summary: item.angle, angle: item.angle })}
-                    style={{
-                      background: "transparent",
-                      color: "#0D8C9E",
-                      border: "1px solid #0D8C9E",
-                      borderRadius: 8,
-                      padding: "8px 16px",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {item.cta_label}
-                  </button>
-                </Card>
-              ))}
-
-              {(sections.event_radar?.length ?? 0) > 0 && (
-                <SectionTitle label="Event Radar" color="#A080F5" style={{ marginTop: 32 }} tooltip="Upcoming events relevant to your focus." />
-              )}
-              {(sections.event_radar ?? []).map((item, i) => (
-                <Card key={i} style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>{item.title}</h3>
-                    <span style={{ fontSize: 12, color: "var(--text-tertiary)", flexShrink: 0 }}>{item.date}</span>
-                  </div>
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 6px" }}>{item.relevance}</p>
-                  <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: 0 }}>{item.action}</p>
                 </Card>
               ))}
             </div>

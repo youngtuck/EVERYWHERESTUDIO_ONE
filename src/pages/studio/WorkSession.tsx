@@ -205,11 +205,11 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
     }}>
       <div style={{
         maxWidth: isMobile ? "95%" : isUser ? "85%" : "85%",
-        background: isUser ? "var(--text-primary)" : "var(--surface-white)",
+        background: isUser ? "#0D1B2A" : "var(--surface-white)",
         border: isUser ? "none" : "1px solid var(--border-subtle)",
         borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
         padding: "14px 18px",
-        boxShadow: isUser ? "none" : "0 1px 2px rgba(0,0,0,0.04)",
+        boxShadow: isUser ? "0 1px 4px rgba(0,0,0,0.08)" : "0 1px 2px rgba(0,0,0,0.04)",
       }}>
         {msg.typing ? (
           <TypingIndicator />
@@ -217,7 +217,7 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
           <p style={{
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14, lineHeight: 1.6,
-            color: isUser ? "#FFFFFF" : "var(--text-primary)",
+            color: isUser ? "#F0F0F0" : "var(--text-primary)",
             fontWeight: 400,
             margin: 0, whiteSpace: "pre-wrap",
           }}>{msg.content}</p>
@@ -1523,7 +1523,7 @@ export default function WorkSession() {
             </select>
           ) : (
             <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 400, color: "var(--text-tertiary)", display: isMobile ? "none" : "inline-block" }}>
-              {projects[0]?.name || "My Studio"}
+              {projects[0]?.name || "Studio"}
             </span>
           )}
           <span style={{ color: "var(--text-tertiary)", fontSize: 12, display: isMobile ? "none" : "inline-block" }}>/</span>

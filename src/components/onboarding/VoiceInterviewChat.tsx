@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Send } from "lucide-react";
+import { Mic, MicOff, Send } from "lucide-react";
 import type { VoiceDNA } from "../../utils/voiceDNAProcessor";
+import { useVoiceInput } from "../../hooks/useVoiceInput";
 
 interface QA {
   id: string;
@@ -36,27 +37,46 @@ const QUESTION_SEQUENCE: string[] = [
 ];
 
 function validateResponse(text: string): boolean {
-  const words = text.split(/\s+/).filter(w => w.length > 0);
+  const trimmed = text.trim();
+  const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+
+  // Must have at least 5 words
   if (words.length < 5) return false;
 
   // Check word-to-character ratio (random strings have very long "words")
-  const avgWordLen = text.replace(/\s+/g, "").length / words.length;
+  const avgWordLen = trimmed.replace(/\s+/g, "").length / words.length;
   if (avgWordLen > 12) return false;
 
-  // Check consonant density — real English has ~40-60% consonants
-  const letters = text.replace(/[^a-zA-Z]/g, "");
+  // Check consonant density: real English has ~40-60% consonants
+  const letters = trimmed.replace(/[^a-zA-Z]/g, "");
   if (letters.length > 0) {
     const vowels = letters.replace(/[^aeiouAEIOU]/g, "").length;
     const vowelRatio = vowels / letters.length;
-    if (vowelRatio < 0.15) return false;
+    if (vowelRatio < 0.2) return false;
   }
 
-  // Check that at least 60% of words look like real words (2+ letters, contain a vowel)
+  // Reject if the same character repeats 4+ times in a row (keyboard mashing)
+  if (/(.)\1{3,}/i.test(trimmed)) return false;
+
+  // Reject if more than 40% of characters are non-alphanumeric/space (random symbols)
+  const alphaNum = trimmed.replace(/[^a-zA-Z0-9\s]/g, "").length;
+  if (alphaNum / trimmed.length < 0.6) return false;
+
+  // Require at least 3 unique words (not just "yes yes yes yes yes")
+  const unique = new Set(words.map(w => w.toLowerCase()));
+  if (unique.size < 3) return false;
+
+  // Check that at least 70% of words look like real words (2+ letters, contain a vowel)
   const realWordCount = words.filter(w => {
     const cleaned = w.replace(/[^a-zA-Z]/g, "");
     return cleaned.length >= 2 && /[aeiouAEIOU]/.test(cleaned);
   }).length;
-  if (realWordCount / words.length < 0.6) return false;
+  if (realWordCount / words.length < 0.7) return false;
+
+  // Require at least one common English word as a basic coherence check
+  const COMMON = new Set(["i", "the", "a", "an", "is", "it", "my", "to", "and", "of", "in", "that", "for", "on", "with", "as", "at", "but", "not", "or", "be", "was", "are", "have", "had", "do", "so", "if", "no", "yes", "we", "they", "you", "me", "he", "she", "this", "from", "when", "what", "how", "about", "more", "like", "just", "would", "think", "really", "people", "because", "know", "want"]);
+  const hasCommon = words.some(w => COMMON.has(w.toLowerCase().replace(/[^a-z]/g, "")));
+  if (!hasCommon) return false;
 
   return true;
 }
@@ -71,6 +91,10 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const questionIndexRef = useRef(0);
+
+  const { isListening, isSupported: voiceSupported, toggleListening } = useVoiceInput((transcript) => {
+    setInput(transcript);
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -186,25 +210,11 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
     <div style={containerStyle}>
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
           marginBottom: 18,
         }}
       >
         <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
           Building your voice profile
-        </div>
-        <div style={{ width: 120, height: 2, borderRadius: 999, background: "rgba(255,255,255,0.12)", overflow: "hidden" }}>
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              background: "#C8961A",
-              transformOrigin: "left",
-              transform: "scaleX(0.5)",
-            }}
-          />
         </div>
       </div>
 
@@ -370,8 +380,9 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                 disabled={!input.trim() || loading}
                 style={{
                   position: "absolute",
-                  right: 8,
-                  bottom: 8,
+                  right: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
                   width: 36,
                   height: 36,
                   borderRadius: "50%",
@@ -381,6 +392,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: input.trim() && !loading ? "pointer" : "default",
+                  transition: "background 0.15s ease",
                 }}
               >
                 <Send
@@ -412,24 +424,29 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                 alignItems: "center",
               }}
             >
-              <button
-                type="button"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  fontSize: 12,
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  color: "rgba(255,255,255,0.3)",
-                  cursor: "pointer",
-                }}
-              >
-                <Mic size={14} />
-                <span>Switch to voice</span>
-              </button>
+              {voiceSupported && (
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: isListening ? "rgba(214,69,69,0.12)" : "none",
+                    border: isListening ? "1px solid rgba(214,69,69,0.3)" : "none",
+                    borderRadius: 6,
+                    padding: isListening ? "4px 10px" : 0,
+                    fontSize: 12,
+                    fontFamily: "'Afacad Flux', sans-serif",
+                    color: isListening ? "#D64545" : "rgba(255,255,255,0.45)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+                  <span>{isListening ? "Stop recording" : "Switch to voice"}</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleAnalyzeNow}

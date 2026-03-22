@@ -386,9 +386,9 @@ export default function VisualWrap() {
     <div
       style={{
         width: "100%",
-        maxWidth: 800,
+        maxWidth: 1000,
         margin: "0 auto",
-        padding: isMobile ? "24px 16px" : "40px 32px",
+        padding: isMobile ? "24px 16px" : "40px 40px",
         fontFamily: "'Afacad Flux', sans-serif",
         background: "var(--surface-primary)",
       }}
@@ -419,17 +419,17 @@ export default function VisualWrap() {
         >
           <ArrowLeft size={16} /> Back
         </button>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em", flex: 1, fontFamily: "'Afacad Flux', sans-serif" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em", flex: 1, fontFamily: "'Afacad Flux', sans-serif" }}>
           Visual Intelligence
         </h1>
         <span
           style={{
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 600,
             letterSpacing: "0.06em",
             color: "var(--fg-3)",
             textTransform: "uppercase",
-            padding: "4px 10px",
+            padding: "5px 12px",
             background: "rgba(0,0,0,0.06)",
             borderRadius: 6,
           }}
@@ -448,13 +448,13 @@ export default function VisualWrap() {
           marginBottom: 28,
         }}
       >
-        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{output.title}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>{output.title}</div>
         <div
           style={{
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 15,
             color: "var(--text-primary)",
-            lineHeight: 1.25,
+            lineHeight: 1.5,
             marginBottom: 8,
             overflow: "hidden",
             display: "-webkit-box",
@@ -469,28 +469,27 @@ export default function VisualWrap() {
       </div>
 
       {/* Section 2: Visual Style */}
-      <div ref={vibeRef} style={{ marginBottom: 28 }}>
+      <div ref={vibeRef} style={{ marginBottom: 32 }}>
         <div
           style={{
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 600,
             letterSpacing: "0.1em",
             color: "var(--fg-3)",
-            marginBottom: 4,
+            marginBottom: 6,
             textTransform: "uppercase",
           }}
         >
           VISUAL STYLE
         </div>
-        <p style={{ fontSize: 13, color: "var(--fg-3)", marginBottom: 16 }}>
+        <p style={{ fontSize: 15, color: "var(--fg-3)", marginBottom: 20 }}>
           Each style is a completely different illustration approach
         </p>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${gridCols}, minmax(0, 140px))`,
-            gap: 12,
-            justifyContent: "start",
+            gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+            gap: 14,
           }}
         >
           {VIBE_KEYS.map((key) => {
@@ -504,8 +503,7 @@ export default function VisualWrap() {
                 onClick={() => setSelectedVibe(key)}
                 style={{
                   width: "100%",
-                  maxWidth: 140,
-                  padding: 16,
+                  padding: 20,
                   border: selected ? "2px solid #C8961A" : "1px solid var(--border-subtle)",
                   borderRadius: 12,
                   background: selected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
@@ -527,8 +525,8 @@ export default function VisualWrap() {
                   }
                 }}
               >
-                <Icon size={24} style={{ color: "var(--fg-2)", marginBottom: 8 }} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 2 }}>{config.label}</div>
+                <Icon size={28} style={{ color: "var(--fg-2)", marginBottom: 10 }} />
+                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 3 }}>{config.label}</div>
                 <div style={{ fontSize: 14, color: "var(--fg-3)" }}>{config.descriptor}</div>
               </button>
             );
@@ -540,7 +538,7 @@ export default function VisualWrap() {
       <div style={{ marginBottom: 28 }}>
         <div
           style={{
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 600,
             letterSpacing: "0.1em",
             color: "var(--fg-3)",
@@ -550,7 +548,7 @@ export default function VisualWrap() {
         >
           ASPECT RATIO
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 10 }}>
           {([
             { value: "16:9" as const, label: "16:9", subtitle: "Landscape" },
             { value: "9:16" as const, label: "9:16", subtitle: "Portrait" },
@@ -563,7 +561,7 @@ export default function VisualWrap() {
                 type="button"
                 onClick={() => setAspectRatio(opt.value)}
                 style={{
-                  padding: "10px 18px",
+                  padding: "12px 24px",
                   border: selected ? "2px solid #C8961A" : "1px solid var(--border-subtle)",
                   borderRadius: 10,
                   background: selected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
@@ -575,8 +573,8 @@ export default function VisualWrap() {
                 onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--border-default)"; }}
                 onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
               >
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{opt.label}</div>
-                <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{opt.subtitle}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>{opt.label}</div>
+                <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 2 }}>{opt.subtitle}</div>
               </button>
             );
           })}
@@ -592,7 +590,7 @@ export default function VisualWrap() {
             background: "none",
             border: "none",
             cursor: "pointer",
-            fontSize: 13,
+            fontSize: 14,
             color: "var(--fg-2)",
             display: "flex",
             alignItems: "center",

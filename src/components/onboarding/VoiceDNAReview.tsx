@@ -7,12 +7,12 @@ interface VoiceDNAReviewProps {
   onUploadMore?: () => void;
 }
 
-const TRAIT_ENTRIES: { key: keyof VoiceDNA["traits"]; label: string; strengthPhrase: string; distinctionPhrase: string }[] = [
-  { key: "vocabulary_and_syntax", label: "Vocabulary and Syntax", strengthPhrase: "precise, intentional word choice", distinctionPhrase: "instinct over ornamentation in vocabulary" },
-  { key: "tonal_register", label: "Tonal Register", strengthPhrase: "a distinctive tonal identity", distinctionPhrase: "tonal range that shifts with context" },
-  { key: "rhythm_and_cadence", label: "Rhythm and Cadence", strengthPhrase: "strong rhythmic patterns that carry ideas forward", distinctionPhrase: "content-first pacing over musical rhythm" },
-  { key: "metaphor_patterns", label: "Metaphor Patterns", strengthPhrase: "vivid metaphor to make abstract ideas tangible", distinctionPhrase: "direct language over figurative expression" },
-  { key: "structural_habits", label: "Structural Habits", strengthPhrase: "structurally driven writing with clear architecture", distinctionPhrase: "organic flow over rigid structure" },
+const TRAIT_ENTRIES: { key: keyof VoiceDNA["traits"]; label: string; description: string; strengthPhrase: string; distinctionPhrase: string }[] = [
+  { key: "vocabulary_and_syntax", label: "Vocabulary and Syntax", description: "Your word choice patterns: formal vs. casual, specialized vs. accessible, complex vs. simple.", strengthPhrase: "precise, intentional word choice", distinctionPhrase: "instinct over ornamentation in vocabulary" },
+  { key: "tonal_register", label: "Tonal Register", description: "The emotional temperature of your writing: warm, authoritative, conversational, or analytical.", strengthPhrase: "a distinctive tonal identity", distinctionPhrase: "tonal range that shifts with context" },
+  { key: "rhythm_and_cadence", label: "Rhythm and Cadence", description: "How your sentences flow: short punches, long builds, or a mix that creates momentum.", strengthPhrase: "strong rhythmic patterns that carry ideas forward", distinctionPhrase: "content-first pacing over musical rhythm" },
+  { key: "metaphor_patterns", label: "Metaphor Patterns", description: "Whether you reach for imagery to explain ideas or keep it concrete and direct.", strengthPhrase: "vivid metaphor to make abstract ideas tangible", distinctionPhrase: "direct language over figurative expression" },
+  { key: "structural_habits", label: "Structural Habits", description: "How you organize thoughts: lead with the point, build to it, or layer ideas progressively.", strengthPhrase: "structurally driven writing with clear architecture", distinctionPhrase: "organic flow over rigid structure" },
 ];
 
 function scoreToLabel(score: number): string {
@@ -51,11 +51,22 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
           fontFamily: "'Cormorant Garamond', 'Times New Roman', serif",
           fontSize: 36,
           fontWeight: 300,
-          margin: "0 0 24px",
+          margin: "0 0 8px",
         }}
       >
         Your Voice DNA
       </h1>
+      <p
+        style={{
+          fontFamily: "'Afacad Flux', sans-serif",
+          fontSize: 14,
+          color: "rgba(255,255,255,0.5)",
+          margin: "0 0 24px",
+          lineHeight: 1.5,
+        }}
+      >
+        This profile captures how you communicate: your patterns, rhythms, and instincts. It's what the system uses to make every piece of content sound like you wrote it.
+      </p>
 
       {/* Narrative summary */}
       <div
@@ -95,27 +106,49 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
         >
           Trait profile
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {TRAIT_ENTRIES.map((item, index) => {
             const score = data.traits?.[item.key] ?? 0;
             const label = scoreToLabel(score);
             return (
-              <div key={item.key} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div
-                  style={{
-                    width: 180,
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 14,
-                    color: "rgba(255,255,255,0.8)",
-                  }}
-                >
-                  {item.label}
+              <div key={item.key}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      fontFamily: "'Afacad Flux', sans-serif",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "rgba(255,255,255,0.85)",
+                    }}
+                  >
+                    {item.label}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "'Afacad Flux', sans-serif",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#C8961A",
+                    }}
+                  >
+                    {label}
+                  </div>
                 </div>
                 <div
                   style={{
-                    flex: 1,
-                    height: 8,
-                    borderRadius: 4,
+                    fontFamily: "'Afacad Flux', sans-serif",
+                    fontSize: 12,
+                    color: "rgba(255,255,255,0.4)",
+                    marginBottom: 8,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {item.description}
+                </div>
+                <div
+                  style={{
+                    height: 6,
+                    borderRadius: 3,
                     background: "rgba(255,255,255,0.08)",
                     overflow: "hidden",
                   }}
@@ -130,18 +163,6 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
                       animationDelay: `${index * 80}ms`,
                     }}
                   />
-                </div>
-                <div
-                  style={{
-                    width: 72,
-                    textAlign: "right",
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "#C8961A",
-                  }}
-                >
-                  {label}
                 </div>
               </div>
             );

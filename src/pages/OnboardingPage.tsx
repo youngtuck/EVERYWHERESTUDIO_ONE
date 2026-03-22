@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { MessageSquare, FileUp } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { ProgressIndicator } from "../components/onboarding/ProgressIndicator";
@@ -36,6 +36,7 @@ const BRAND_STATUS_MESSAGES = [
 export default function OnboardingPage() {
   const { user, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
+  const nav = useNavigate();
 
   const [step, setStep] = useState<Step>(0);
   const [method, setMethod] = useState<Method>(null);
