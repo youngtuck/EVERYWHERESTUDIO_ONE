@@ -913,6 +913,7 @@ export default function WorkSession() {
   const [revisionMode, setRevisionMode] = useState(false);
   const [revisionOutputId, setRevisionOutputId] = useState<string | null>(null);
   const [revisionContent, setRevisionContent] = useState<string | null>(null);
+  const [revisionPipelineContext, setRevisionPipelineContext] = useState<string | null>(null);
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
@@ -1052,6 +1053,8 @@ export default function WorkSession() {
       reviseTitle?: string;
       reviseType?: string;
       reviseScore?: number;
+      reviseGates?: Record<string, unknown> | null;
+      revisePipelineRun?: { gate_results?: Array<{ gate: string; status: string; score: number; feedback: string }>; betterish_score?: { total: number } | null } | null;
       watchTrigger?: {
         headline: string;
         summary: string;
@@ -1080,10 +1083,73 @@ export default function WorkSession() {
       if (state.reviseType) setOutputType(state.reviseType);
       setSessionTitle(`Revising: ${state.reviseTitle || "Untitled"}`);
       const typeLabel = state.reviseType ? (OUTPUT_TYPES[state.reviseType]?.label || state.reviseType) : "content";
+      const score = state.reviseScore;
+
+      // Build smart Watson message from gate scores and pipeline feedback
+      let watsonMsg = `I have your ${typeLabel} titled "${state.reviseTitle || "Untitled"}"`;
+      const gateScores = state.reviseGates as Record<string, number | string> | null;
+      const pipelineRun = state.revisePipelineRun;
+      let pipelineCtx = "";
+
+      if (score != null) {
+        watsonMsg += ` (scored ${score}).`;
+      } else {
+        watsonMsg += `.`;
+      }
+
+      // Try to extract specialist scores from pipeline run first, then gates
+      const specialistMap: Record<string, { score: number; feedback?: string }> = {};
+      if (pipelineRun?.gate_results && pipelineRun.gate_results.length > 0) {
+        for (const g of pipelineRun.gate_results) {
+          specialistMap[g.gate] = { score: g.score, feedback: g.feedback };
+        }
+      } else if (gateScores) {
+        const gateLabels: Record<string, string> = { strategy: "Strategy", voice: "Voice", accuracy: "Accuracy", ai_tells: "AI Tells", audience: "Audience", platform: "Platform", impact: "Impact" };
+        for (const [k, label] of Object.entries(gateLabels)) {
+          if (typeof gateScores[k] === "number") {
+            specialistMap[label] = { score: gateScores[k] as number };
+          }
+        }
+      }
+
+      const specialists = Object.entries(specialistMap).filter(([, v]) => typeof v.score === "number");
+      if (specialists.length > 0) {
+        const sorted = [...specialists].sort((a, b) => b[1].score - a[1].score);
+        const strongest = sorted[0];
+        const weakest = sorted[sorted.length - 1];
+
+        watsonMsg += ` Here's what stood out:\n- Strongest: ${strongest[0]} (${strongest[1].score})\n- Needs work: ${weakest[0]} (${weakest[1].score})`;
+
+        // Build revision options from actual weak areas
+        const weakAreas = sorted.filter(([, v]) => v.score < 75).slice(-3);
+        if (weakAreas.length > 0) {
+          watsonMsg += `\n\nI can help you:`;
+          weakAreas.forEach(([name, data], i) => {
+            const letter = String.fromCharCode(65 + i);
+            const feedbackSnippet = data.feedback ? ` (${data.feedback.slice(0, 80)}${data.feedback.length > 80 ? "..." : ""})` : "";
+            watsonMsg += `\n${letter}) Strengthen ${name}${feedbackSnippet}`;
+          });
+          watsonMsg += `\n${String.fromCharCode(65 + weakAreas.length)}) Something else — tell me what you want to change`;
+        } else {
+          watsonMsg += `\n\nWhat would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`;
+        }
+
+        // Build pipeline context string for the chat API
+        pipelineCtx = "\n\n[PIPELINE RESULTS FOR REVISION CONTEXT:]\n";
+        for (const [name, data] of sorted) {
+          pipelineCtx += `- ${name}: ${data.score}/100`;
+          if (data.feedback) pipelineCtx += ` — ${data.feedback.slice(0, 200)}`;
+          pipelineCtx += "\n";
+        }
+      } else {
+        watsonMsg += ` What would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`;
+      }
+
+      setRevisionPipelineContext(pipelineCtx || null);
       setMessages([{
         id: "w0",
         role: "assistant",
-        content: `I have your ${typeLabel} titled "${state.reviseTitle || "Untitled"}" (scored ${state.reviseScore ?? "unscored"}). What would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`,
+        content: watsonMsg,
         ts: Date.now(),
       }]);
       return;
@@ -1147,9 +1213,13 @@ export default function WorkSession() {
     let chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
     // In revision mode, prepend the original content as context
     if (revisionMode && revisionContent && chatHistory.length <= 3) {
+      let contextMsg = `[REVISION CONTEXT - Original content being revised:]\n\n${revisionContent.slice(0, 3000)}`;
+      if (revisionPipelineContext) {
+        contextMsg += revisionPipelineContext;
+      }
       chatHistory = [
-        { role: "user" as const, content: `[REVISION CONTEXT - Original content being revised:]\n\n${revisionContent.slice(0, 3000)}` },
-        { role: "assistant" as const, content: "I've reviewed the original content. Let me know what you'd like to change." },
+        { role: "user" as const, content: contextMsg },
+        { role: "assistant" as const, content: "I've reviewed the original content and the quality pipeline results. I can see the strengths and areas to improve. Let me know what you'd like to change." },
         ...chatHistory,
       ];
     }
@@ -1733,6 +1803,51 @@ export default function WorkSession() {
                     if (generatedOutputId && generatedOutputId !== "new") {
                       setRevisionMode(true);
                       setRevisionOutputId(generatedOutputId);
+                      setRevisionContent(generatedContent);
+
+                      // Build smart revision message from available gate data
+                      const specialists: Array<[string, { score: number; feedback?: string }]> = [];
+                      if (pipelineGateResults.length > 0) {
+                        for (const g of pipelineGateResults) {
+                          specialists.push([g.gate, { score: g.score, feedback: g.feedback }]);
+                        }
+                      } else if (generatedGates) {
+                        const labels: Record<string, string> = { strategy: "Strategy", voice: "Voice", accuracy: "Accuracy", ai_tells: "AI Tells", audience: "Audience", platform: "Platform", impact: "Impact" };
+                        for (const [k, label] of Object.entries(labels)) {
+                          const v = (generatedGates as any)[k];
+                          if (typeof v === "number") specialists.push([label, { score: v }]);
+                        }
+                      }
+
+                      if (specialists.length > 0) {
+                        const sorted = [...specialists].sort((a, b) => b[1].score - a[1].score);
+                        const strongest = sorted[0];
+                        const weakest = sorted[sorted.length - 1];
+                        const weakAreas = sorted.filter(([, v]) => v.score < 75).slice(-3);
+                        let msg = `Your ${outputType || "content"} scored ${generatedScore}. Here's what stood out:\n- Strongest: ${strongest[0]} (${strongest[1].score})\n- Needs work: ${weakest[0]} (${weakest[1].score})`;
+                        if (weakAreas.length > 0) {
+                          msg += `\n\nI can help you:`;
+                          weakAreas.forEach(([name, data], i) => {
+                            const letter = String.fromCharCode(65 + i);
+                            const snippet = data.feedback ? ` (${data.feedback.slice(0, 80)}${data.feedback.length > 80 ? "..." : ""})` : "";
+                            msg += `\n${letter}) Strengthen ${name}${snippet}`;
+                          });
+                          msg += `\n${String.fromCharCode(65 + weakAreas.length)}) Something else — tell me what you want to change`;
+                        } else {
+                          msg += `\n\nWhat would you like to improve?`;
+                        }
+                        // Build pipeline context for chat API
+                        let ctx = "\n\n[PIPELINE RESULTS FOR REVISION CONTEXT:]\n";
+                        for (const [name, data] of sorted) {
+                          ctx += `- ${name}: ${data.score}/100`;
+                          if (data.feedback) ctx += ` — ${data.feedback.slice(0, 200)}`;
+                          ctx += "\n";
+                        }
+                        setRevisionPipelineContext(ctx);
+                        setMessages(prev => [...prev, { id: `w-rev-${Date.now()}`, role: "assistant" as const, content: msg, ts: Date.now() }]);
+                      } else {
+                        setMessages(prev => [...prev, { id: `w-rev-${Date.now()}`, role: "assistant" as const, content: `Your ${outputType || "content"} scored ${generatedScore}. What would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`, ts: Date.now() }]);
+                      }
                     }
                   }}
                 >
