@@ -151,11 +151,11 @@ function InviteTab() {
               {result.code}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button onClick={() => handleCopy(result.code, "code")} style={btnOutline}>
-                <Copy size={14} /> {copied === "code" ? "Copied!" : "Copy Code"}
+              <button onClick={() => handleCopy(result.code, "code")} style={{ ...btnOutline, color: copied === "code" ? "#50c8a0" : undefined }}>
+                {copied === "code" ? <Check size={14} /> : <Copy size={14} />} {copied === "code" ? "Copied!" : "Copy Code"}
               </button>
-              <button onClick={() => handleCopy(inviteMessage, "msg")} style={btnOutline}>
-                <Copy size={14} /> {copied === "msg" ? "Copied!" : "Copy Invite Message"}
+              <button onClick={() => handleCopy(inviteMessage, "msg")} style={{ ...btnOutline, color: copied === "msg" ? "#50c8a0" : undefined }}>
+                {copied === "msg" ? <Check size={14} /> : <Copy size={14} />} {copied === "msg" ? "Copied!" : "Copy Invite Message"}
               </button>
               {email && (
                 <a href={`mailto:${email}?subject=Your EVERYWHERE Studio Invite&body=${encodeURIComponent(inviteMessage)}`} style={{ ...btnOutline, textDecoration: "none", textAlign: "center" }}>

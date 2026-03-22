@@ -586,14 +586,6 @@ export default function OutputDetail() {
               {userProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           )}
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: font, padding: 0, display: "inline-flex", alignItems: "center", gap: 4, transition: "color 0.15s" }}
-            onMouseEnter={e => { e.currentTarget.style.color = "var(--danger)"; }}
-            onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
-          >
-            <Trash2 size={12} /> Delete
-          </button>
         </div>
       </div>
 
@@ -801,6 +793,18 @@ export default function OutputDetail() {
           />
         </div>
       )}
+
+      {/* ── Delete (bottom of page, subtle) ──────────────────────── */}
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 32px 48px", textAlign: "center" }}>
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: font, padding: "8px 16px", transition: "color 0.15s", opacity: 0.6 }}
+          onMouseEnter={e => { e.currentTarget.style.color = "var(--danger)"; e.currentTarget.style.opacity = "1"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; e.currentTarget.style.opacity = "0.6"; }}
+        >
+          Delete this output
+        </button>
+      </div>
 
       {/* ── Delete confirmation modal ─────────────────────────────── */}
       {showDeleteConfirm && (
