@@ -134,6 +134,15 @@ interface Output {
   created_at: string;
 }
 
+interface SavedVisual {
+  id: string;
+  vibe: string;
+  aspect_ratio: string;
+  image_base64: string;
+  mime_type: string;
+  created_at: string;
+}
+
 export default function VisualWrap() {
   const { outputId } = useParams();
   const navigate = useNavigate();
@@ -166,6 +175,50 @@ export default function VisualWrap() {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [cardExpanded, setCardExpanded] = useState(false);
+  const [savedVisuals, setSavedVisuals] = useState<SavedVisual[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(false);
+
+  /** Persist a generated visual to Supabase so it survives navigation. */
+  const saveVisual = useCallback(
+    async (vibe: string, imageBase64: string, mimeType: string, ar: string) => {
+      if (!user?.id || !outputId || outputId === "new") return;
+      const { data, error: insertErr } = await supabase
+        .from("output_visuals")
+        .insert({
+          output_id: outputId,
+          user_id: user.id,
+          vibe,
+          aspect_ratio: ar,
+          image_base64: imageBase64,
+          mime_type: mimeType,
+        })
+        .select("id, vibe, aspect_ratio, image_base64, mime_type, created_at")
+        .single();
+      if (!insertErr && data) {
+        setSavedVisuals((prev) => {
+          // Replace any existing visual with same vibe + aspect_ratio
+          const filtered = prev.filter(
+            (v) => !(v.vibe === vibe && v.aspect_ratio === ar)
+          );
+          return [data as SavedVisual, ...filtered];
+        });
+      }
+    },
+    [user?.id, outputId]
+  );
+
+  /** Load previously generated visuals for this output. */
+  const loadSavedVisuals = useCallback(async () => {
+    if (!outputId || outputId === "new") return;
+    setLoadingSaved(true);
+    const { data } = await supabase
+      .from("output_visuals")
+      .select("id, vibe, aspect_ratio, image_base64, mime_type, created_at")
+      .eq("output_id", outputId)
+      .order("created_at", { ascending: false });
+    if (data) setSavedVisuals(data as SavedVisual[]);
+    setLoadingSaved(false);
+  }, [outputId]);
 
   useEffect(() => {
     if (generating && !generatingAll) setCardExpanded(false);
@@ -219,9 +272,11 @@ export default function VisualWrap() {
           .single();
         setVoiceProfile(profile?.voice_profile || null);
       }
+      // Load any previously saved visuals for this output
+      await loadSavedVisuals();
       setLoading(false);
     })();
-  }, [outputId, user?.id]);
+  }, [outputId, user?.id, loadSavedVisuals]);
 
   const author =
     authorOverride ||
@@ -281,6 +336,8 @@ export default function VisualWrap() {
         resultRef.current?.scrollIntoView({ behavior: "smooth" });
         setTimeout(() => setResultRevealPhase("complete"), 800);
         setTimeout(() => setResultActionsVisible(true), 1800);
+        // Persist to Supabase in the background
+        saveVisual(selectedVibe, data.image, data.mimeType, aspectRatio);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
@@ -305,8 +362,13 @@ export default function VisualWrap() {
     const promises = VIBE_KEYS.map(async (vibe) => {
       try {
         const data = await generateVisual(vibe);
-        if (data) setGallery((prev) => ({ ...prev, [vibe]: { image: data.image, mimeType: data.mimeType } }));
-        else setGallery((prev) => ({ ...prev, [vibe]: "error" }));
+        if (data) {
+          setGallery((prev) => ({ ...prev, [vibe]: { image: data.image, mimeType: data.mimeType } }));
+          // Persist each visual as it completes
+          saveVisual(vibe, data.image, data.mimeType, aspectRatio);
+        } else {
+          setGallery((prev) => ({ ...prev, [vibe]: "error" }));
+        }
       } catch {
         setGallery((prev) => ({ ...prev, [vibe]: "error" }));
       }
@@ -1128,6 +1190,116 @@ export default function VisualWrap() {
           </div>
         ) : null}
       </div>
+
+      {/* Section: Previously Generated Visuals */}
+      {savedVisuals.length > 0 && (
+        <div style={{ marginTop: 48 }}>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              color: "var(--fg-3)",
+              marginBottom: 6,
+              textTransform: "uppercase",
+            }}
+          >
+            Previously Generated
+          </div>
+          <p style={{ fontSize: 15, color: "var(--fg-3)", marginBottom: 20 }}>
+            Visuals saved from earlier sessions
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+              gap: 16,
+            }}
+          >
+            {savedVisuals.map((sv) => {
+              const vibeConfig = VIBES[sv.vibe as VibeKey];
+              return (
+                <div
+                  key={sv.id}
+                  style={{
+                    background: "var(--surface-white)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    padding: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)" }}>
+                      {vibeConfig?.label || sv.vibe}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--fg-3)" }}>
+                      {sv.aspect_ratio}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLightbox({ image: sv.image_base64, vibe: sv.vibe })}
+                    style={{
+                      width: "100%",
+                      aspectRatio: sv.aspect_ratio.replace(":", "/"),
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: 12,
+                      background: "#FAFAF8",
+                      overflow: "hidden",
+                      cursor: "pointer",
+                      padding: 0,
+                      display: "block",
+                      position: "relative",
+                    }}
+                  >
+                    <img
+                      src={`data:${sv.mime_type};base64,${sv.image_base64}`}
+                      alt={`${sv.vibe} visual`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        borderRadius: 12,
+                      }}
+                    />
+                  </button>
+                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      style={{ fontSize: 13, padding: "5px 10px", display: "flex", alignItems: "center", gap: 5 }}
+                      onClick={() => downloadPng(sv.image_base64, sv.mime_type, `${output.title}-${sv.vibe}`)}
+                    >
+                      <Download size={13} /> Download
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      style={{ fontSize: 13, padding: "5px 10px", display: "flex", alignItems: "center", gap: 5 }}
+                      onClick={() => copyToClipboard(sv.image_base64, sv.mime_type)}
+                    >
+                      <Copy size={13} /> Copy
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 6 }}>
+                    {new Date(sv.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {loadingSaved && savedVisuals.length === 0 && (
+        <div style={{ textAlign: "center", padding: 32, color: "var(--fg-3)", fontSize: 13 }}>
+          Loading saved visuals...
+        </div>
+      )}
 
       {/* Lightbox */}
       {lightbox && (
