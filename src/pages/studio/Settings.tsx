@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -86,7 +86,9 @@ export default function Settings() {
 
   const [watchTopics, setWatchTopics] = useState<string[]>([]);
   const [watchInput, setWatchInput] = useState("");
-  const [watchSaved, setWatchSaved] = useState(false);
+  const [watchAutoSaved, setWatchAutoSaved] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const watchTopicsInitialized = useRef(false);
 
   const [voiceComplete, setVoiceComplete] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -114,6 +116,8 @@ export default function Settings() {
           );
           setVoiceComplete(!!data.voice_dna_completed);
           setWatchTopics(Array.isArray(data.sentinel_topics) ? data.sentinel_topics : []);
+          // Mark initialized after state is set so auto-save doesn't fire on load
+          setTimeout(() => { watchTopicsInitialized.current = true; }, 0);
         }
       } catch (err) {
         console.error("[Settings] Failed to load profile:", err);
@@ -150,20 +154,26 @@ export default function Settings() {
     setWatchInput("");
   };
 
-  const handleSaveWatch = async () => {
-    if (!user) return;
-    const { error } = await supabase
-      .from("profiles")
-      .update({ sentinel_topics: watchTopics })
-      .eq("id", user.id);
-    if (!error) {
-      setWatchSaved(true);
-      setTimeout(() => setWatchSaved(false), 3000);
-      toast("Watch topics saved. Your next briefing will use these topics.");
-    } else {
-      toast("Failed to save topics: " + (error.message || "Unknown error"), "error");
-    }
-  };
+  // Auto-save watch topics with 1s debounce
+  useEffect(() => {
+    if (!user || !watchTopicsInitialized.current) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    setWatchAutoSaved(false);
+    saveTimeoutRef.current = setTimeout(async () => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ sentinel_topics: watchTopics })
+        .eq("id", user.id);
+      if (!error) {
+        setWatchAutoSaved(true);
+        toast("Topics saved");
+        setTimeout(() => setWatchAutoSaved(false), 3000);
+      } else {
+        toast("Failed to save topics: " + (error.message || "Unknown error"), "error");
+      }
+    }, 1000);
+    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+  }, [watchTopics]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -361,15 +371,11 @@ export default function Settings() {
               ))}
           </div>
         )}
-        <button
-          type="button"
-          onClick={handleSaveWatch}
-          style={{ background: "var(--gold-dark)", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-        >
-          {watchSaved ? "Saved" : "Save"}
-        </button>
+        {watchAutoSaved && (
+          <span style={{ fontSize: 12, color: "var(--fg-3)", fontStyle: "italic" }}>
+            Auto-saved
+          </span>
+        )}
       </SectionCard>
 
       {/* Appearance */}
