@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { FileText, Sparkles, ArrowLeft, Mic, Check, Loader2, Plus } from "lucide-react";
+import { FileText, Sparkles, ArrowLeft, Mic, Check, Loader2, Plus, Clipboard } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -909,6 +909,7 @@ export default function WorkSession() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("Writing your draft...");
   const loadingStartRef = useRef(Date.now());
+  const [contentCopied, setContentCopied] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [revisionMode, setRevisionMode] = useState(false);
   const [revisionOutputId, setRevisionOutputId] = useState<string | null>(null);
@@ -1874,6 +1875,7 @@ export default function WorkSession() {
             <div style={{ maxWidth: 680, width: "100%", marginBottom: 24 }}>
               <div
                 style={{
+                  position: "relative",
                   fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: isMobile ? 14 : 15,
                   lineHeight: 1.7,
@@ -1883,8 +1885,45 @@ export default function WorkSession() {
                   borderRadius: 12,
                   padding: isMobile ? "20px 16px" : "32px 36px",
                 }}
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(generatedContent) }}
-              />
+              >
+                {/* Copy button */}
+                <button
+                  onClick={async () => {
+                    const plain = generatedContent
+                      .replace(/^#{1,6}\s+/gm, "")
+                      .replace(/\*\*(.+?)\*\*/g, "$1")
+                      .replace(/\*(.+?)\*/g, "$1")
+                      .replace(/_(.+?)_/g, "$1")
+                      .replace(/`(.+?)`/g, "$1");
+                    await navigator.clipboard.writeText(plain);
+                    setContentCopied(true);
+                    setTimeout(() => setContentCopied(false), 2000);
+                  }}
+                  title="Copy to clipboard"
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    right: 12,
+                    width: 36,
+                    height: 36,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 8,
+                    border: "1px solid var(--border-subtle)",
+                    background: contentCopied ? "#50c8a0" : "var(--surface-white)",
+                    color: contentCopied ? "#fff" : "var(--fg-3)",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    zIndex: 2,
+                  }}
+                  onMouseEnter={e => { if (!contentCopied) { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--fg)"; } }}
+                  onMouseLeave={e => { if (!contentCopied) { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--fg-3)"; } }}
+                >
+                  {contentCopied ? <Check size={16} /> : <Clipboard size={16} />}
+                </button>
+                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(generatedContent) }} />
+              </div>
             </div>
 
             {/* Score summary + action buttons */}

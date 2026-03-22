@@ -1,4 +1,41 @@
+import { useState } from "react";
 import type { GateResult } from "../../lib/agents/types";
+
+function CopyFeedbackButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={async (e) => {
+        e.stopPropagation();
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      title="Copy feedback"
+      style={{
+        width: 28,
+        height: 28,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 6,
+        border: "1px solid var(--border-subtle)",
+        background: copied ? "#50c8a0" : "transparent",
+        color: copied ? "#fff" : "var(--fg-3)",
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        flexShrink: 0,
+        padding: 0,
+      }}
+    >
+      {copied ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      )}
+    </button>
+  );
+}
 
 interface CheckpointResultsPanelProps {
   results: GateResult[];
@@ -146,9 +183,15 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
                   fontSize: 13,
                   color: "var(--text-secondary)",
                   whiteSpace: "pre-wrap",
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "flex-start",
                 }}
               >
-                {result.feedback}
+                <div style={{ flex: 1 }}>{result.feedback}</div>
+                {result.feedback && (
+                  <CopyFeedbackButton text={`${result.gate} (${result.score}/100 — ${result.status})\n\n${result.feedback}${result.issues?.length ? "\n\nIssues:\n" + result.issues.map(i => `- ${i}`).join("\n") : ""}`} />
+                )}
               </div>
               {result.issues && result.issues.length > 0 && (
                 <ul
