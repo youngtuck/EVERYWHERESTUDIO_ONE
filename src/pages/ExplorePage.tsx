@@ -24,38 +24,6 @@ function useScrollReveal(threshold = 0.15) {
   return { ref, isVisible };
 }
 
-// ── Animated counter ────────────────────────────────────────────────────────
-function CountUp({ to, duration = 400 }: { to: number; duration?: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [visible, setVisible] = useState(false);
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.3 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!visible) return;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setValue(Math.round(eased * to));
-      if (t < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [visible, to, duration]);
-
-  return <span ref={ref}>{visible ? value : 0}</span>;
-}
-
 // ── Reveal wrapper ──────────────────────────────────────────────────────────
 function Reveal({
   children,
@@ -306,7 +274,7 @@ const CSS = `
   border-bottom: 1px solid var(--divider);
   line-height: 1.6;
 }
-.xp-cp:first-child { border-top: 1px solid var(--divider); }
+/* border-top applied inline to first checkpoint when wrapped in StaggerReveal */
 .xp-cp-num {
   font-size: 12px;
   font-weight: 700;
@@ -403,7 +371,7 @@ export default function ExplorePage() {
     ref.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  const sectionPad = isMobile ? "80px 0" : "120px 0";
+  const sectionPad = isMobile ? "56px 0" : "80px 0";
 
   return (
     <div className="xp">
@@ -419,6 +387,7 @@ export default function ExplorePage() {
               <button className="xp-nav-link" onClick={() => scrollTo(standardRef)}>The Standard</button>
             </div>
           )}
+          <button className="xp-nav-link" onClick={() => navigate("/auth")}>Sign In</button>
           <a href={CTA_MAILTO} className="xp-btn-gold" style={{ padding: "8px 22px", fontSize: 12, letterSpacing: "0.08em" }}>
             Let's Talk
           </a>
@@ -482,7 +451,7 @@ export default function ExplorePage() {
             display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
             animation: `xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both`,
           }}>
-            <a href={CTA_MAILTO} className="xp-btn-gold">Let's Talk</a>
+            <button className="xp-btn-gold" onClick={() => navigate("/auth")} style={{ border: "none" }}>Get Early Access</button>
             <a href="#how" className="xp-btn-outline" onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}>
               See How It Works
             </a>
@@ -523,13 +492,11 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 03: LEVERAGE STRIP ───────────────────────── */}
-      <section style={{ padding: isMobile ? "60px 0" : "80px 0" }}>
+      <section style={{ padding: isMobile ? "48px 0" : "64px 0", background: "rgba(212, 168, 50, 0.08)", borderTop: "1px solid rgba(212, 168, 50, 0.25)", borderBottom: "1px solid rgba(212, 168, 50, 0.25)" }}>
         <Reveal scale>
           <div className="xp-inner">
             <div style={{
-              borderTop: "1px solid var(--gold)",
-              borderBottom: "1px solid var(--gold)",
-              padding: isMobile ? "48px 0" : "64px 0",
+              padding: isMobile ? "16px 0" : "24px 0",
               textAlign: "center",
             }}>
               <p style={{
@@ -614,14 +581,14 @@ export default function ExplorePage() {
             </p>
             <div style={{ display: "flex", gap: isMobile ? 32 : 64, justifyContent: "center", flexWrap: "wrap", marginTop: 56 }}>
               {[
-                { to: MARKETING_NUMBERS.specialistCount, label: "Specialists" },
-                { to: MARKETING_NUMBERS.qualityCheckpoints, label: "Checkpoints" },
-                { to: MARKETING_NUMBERS.betterishThreshold, label: "Min. Quality Score" },
-                { to: 0, label: "Left for you to finish" },
+                { value: MARKETING_NUMBERS.specialistCount, label: "Specialists" },
+                { value: MARKETING_NUMBERS.qualityCheckpoints, label: "Checkpoints" },
+                { value: MARKETING_NUMBERS.betterishThreshold, label: "Min. Quality Score" },
+                { value: 0, label: "Left for you to finish" },
               ].map((s) => (
                 <div key={s.label} style={{ textAlign: "center" }}>
                   <div style={{ fontSize: "clamp(36px, 5vw, 52px)", fontWeight: 700, color: "var(--gold)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
-                    {s.to === 0 ? "0" : <CountUp to={s.to} />}
+                    {s.value}
                   </div>
                   <div style={{ fontSize: 13, color: "var(--white-dim)", marginTop: 8 }}>{s.label}</div>
                 </div>
@@ -632,7 +599,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 06: SOCIAL PROOF ─────────────────────────── */}
-      <section style={{ padding: isMobile ? "80px 0" : "120px 0" }}>
+      <section style={{ padding: sectionPad }}>
         <Reveal>
           <div className="xp-inner" style={{ maxWidth: 720, textAlign: "center" }}>
             <blockquote style={{ margin: 0, padding: 0, border: "none" }}>
@@ -654,12 +621,9 @@ export default function ExplorePage() {
                 textTransform: "uppercase" as const,
                 color: "var(--white-dim)",
               }}>
-                — [Client Name] · [Title]
+                — Early Access User
               </footer>
             </blockquote>
-            <p style={{ fontSize: 12, color: "var(--white-dim)", marginTop: 28, opacity: 0.4, fontStyle: "italic" }}>
-              [ Replace with one real named result before launch ]
-            </p>
           </div>
         </Reveal>
       </section>
@@ -796,7 +760,7 @@ export default function ExplorePage() {
                 { num: "07", name: "Marcus + Marshall", desc: "Cultural sensitivity and nonviolent communication review." },
               ].map((cp, i) => (
                 <StaggerReveal key={cp.num} index={i} parentVisible={checkpointReveal.isVisible}>
-                  <div className="xp-cp">
+                  <div className="xp-cp" style={i === 0 ? { borderTop: "1px solid var(--divider)" } : undefined}>
                     <span className="xp-cp-num">{cp.num}</span>
                     <span className="xp-cp-name">{cp.name}</span>
                     <span className="xp-cp-desc">— {cp.desc}</span>
@@ -824,15 +788,20 @@ export default function ExplorePage() {
             }}>
               Your thinking deserves to <em>be heard.</em>
             </h2>
-            <p style={{ color: "var(--white-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "left" }}>
+            <p style={{ color: "var(--white-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
               You don't need more discipline. You need a system that carries the idea from your head to your audience — every week, without it sitting on your to-do list.
             </p>
-            <p style={{ color: "var(--gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "left", fontWeight: 500 }}>
+            <p style={{ color: "var(--gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
             </p>
-            <a href={CTA_MAILTO} className="xp-btn-gold" style={{ fontSize: 15, padding: "16px 44px" }}>
-              Let's Talk
-            </a>
+            <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+              <button className="xp-btn-gold" onClick={() => navigate("/auth")} style={{ border: "none", fontSize: 15, padding: "16px 44px" }}>
+                Get Early Access
+              </button>
+              <a href={CTA_MAILTO} className="xp-btn-outline" style={{ fontSize: 15, padding: "16px 44px" }}>
+                Let's Talk
+              </a>
+            </div>
           </div>
         </Reveal>
       </section>
