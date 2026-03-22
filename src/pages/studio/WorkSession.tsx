@@ -1931,12 +1931,20 @@ export default function WorkSession() {
                     style={{
                       padding: "12px 20px",
                       borderRadius: 8,
-                      border: "2px solid var(--gold-dark)",
-                      background: pipelineStatus === "RUNNING" ? "rgba(245,198,66,0.04)" : "var(--surface-white)",
+                      border: pipelineGateResults.length === 0 ? "none" : "2px solid var(--gold-dark)",
+                      background: pipelineStatus === "RUNNING"
+                        ? "rgba(245,198,66,0.04)"
+                        : pipelineGateResults.length === 0
+                          ? "var(--gold-dark)"
+                          : "var(--surface-white)",
                       fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 14,
-                      fontWeight: 600,
-                      color: pipelineStatus === "RUNNING" ? "var(--text-tertiary)" : "var(--gold-dark)",
+                      fontWeight: 700,
+                      color: pipelineStatus === "RUNNING"
+                        ? "var(--text-tertiary)"
+                        : pipelineGateResults.length === 0
+                          ? "#0D1B2A"
+                          : "var(--gold-dark)",
                       cursor: pipelineStatus === "RUNNING" ? "default" : "pointer",
                       transition: "all 0.15s ease",
                       display: "flex",
@@ -1947,10 +1955,16 @@ export default function WorkSession() {
                     onMouseLeave={(e) => { if (pipelineStatus !== "RUNNING") { e.currentTarget.style.background = "var(--surface-white)"; } }}
                   >
                     <Sparkles size={16} />
-                    {pipelineStatus === "RUNNING" ? "Re-running pipeline..." : "Re-run Quality Pipeline"}
+                    {pipelineStatus === "RUNNING"
+                      ? "Running pipeline..."
+                      : pipelineGateResults.length === 0
+                        ? "Run Full Quality Pipeline"
+                        : "Re-run Quality Pipeline"}
                   </button>
                   <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
-                    Run all 7 specialist checkpoints with detailed feedback
+                    {pipelineGateResults.length === 0
+                      ? "7 AI specialists will review voice, accuracy, engagement, and more"
+                      : "Run all 7 specialist checkpoints again with detailed feedback"}
                   </div>
                   {pipelineStatus !== "IDLE" && (
                     <div style={{ marginTop: 12 }}>

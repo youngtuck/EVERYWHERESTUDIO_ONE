@@ -151,7 +151,8 @@ export default async function handler(req, res) {
           max_tokens: 4096,
           system: prompt,
           messages: [{ role: "user", content: userMessage }],
-        })
+        }),
+        1 // Only 1 retry per gate — 8 sequential calls must fit within maxDuration
       );
 
       const text = response.content[0]?.type === "text" ? response.content[0].text : "";
@@ -196,7 +197,8 @@ export default async function handler(req, res) {
           max_tokens: 4096,
           system: betterishPrompt,
           messages: [{ role: "user", content: `Score this content on the Betterish scale (0-1000):\n\n${currentDraft}` }],
-        })
+        }),
+        1
       );
       const text = response.content[0]?.type === "text" ? response.content[0].text : "";
       betterishScore = parseBetterishResponse(text);
