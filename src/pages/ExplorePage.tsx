@@ -1,1755 +1,540 @@
-import { useEffect, useRef, useState, createContext, useContext, Children } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import { MARKETING_NUMBERS } from "../lib/constants";
 
-// ─── Theme context ─────────────────────────────────────────────────────────────
-const ThemeCtx = createContext<{ dark: boolean; toggle: () => void }>({ dark: true, toggle: () => {} });
-const useTheme = () => useContext(ThemeCtx);
+const CTA_MAILTO = "mailto:mark@mixedgrill.studio?subject=EVERYWHERE%20Studio%20—%20Let's%20Talk";
 
-// ─── WebGL Siri Orb - glass sphere + interior energy field (Apple-level) ───────
-const VERT = `attribute vec2 a; void main(){ gl_Position=vec4(a,0,1); }`;
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
 
-const ORB_FRAG = `
-precision highp float;
-uniform float u_t;
-uniform float u_energy;
-uniform vec2  u_res;
-uniform vec2  u_mouse;
-uniform vec2  u_idle;
-uniform vec3  u_c1;
-uniform vec3  u_c2;
-uniform vec3  u_c3;
-uniform vec3  u_c4;
-uniform float u_light;
-
-mat2 rot2(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
-
-void main(){
-  vec2 uv=(gl_FragCoord.xy/u_res)*2.0-1.0;
-  uv.x*=u_res.x/u_res.y;
-  vec3 ro=vec3(0.,0.,2.4);
-  vec3 rd=normalize(vec3(uv,-1.7));
-  float R=0.78,b=dot(ro,rd),c2=dot(ro,ro)-R*R;
-  float disc=b*b-c2;
-  if(disc<0.0){ gl_FragColor=vec4(0.); return; }
-  float sqD=sqrt(disc);
-  float t1=max(-b-sqD,0.0),t2=-b+sqD;
-  if(t2<0.0){ gl_FragColor=vec4(0.); return; }
-  vec3 pF=ro+rd*t1;
-  vec3 N=normalize(pF);
-  vec3 V=-rd;
-  float NoV=max(dot(N,V),0.0);
-
-  float rx=u_mouse.y*.9+u_idle.x;
-  float ry=u_mouse.x*.9+u_idle.y;
-  vec3 Nrot=N;
-  Nrot.yz=rot2(rx)*N.yz;
-  Nrot.xz=rot2(ry)*Nrot.xz;
-  float phi=atan(Nrot.z,Nrot.x);
-  float theta=acos(clamp(Nrot.y,-1.0,1.0));
-
-  float breath = 0.86 + 0.10*sin(u_t*1.1)*sin(u_t*0.73) + 0.04*sin(u_t*2.3 + 0.8);
-  float spd=1.0+u_energy*2.2;
-  float orbRot = u_t * 0.055;
-  float crr = cos(orbRot), srr = sin(orbRot);
-  float t=u_t*spd*breath;
-
-  float span=t2-t1;
-  vec3 energyAcc=vec3(0.);
-  float denAcc=0.0;
-  const int steps=12;
-  for(int i=0;i<steps;i++){
-    float fi=float(i)/float(steps-1);
-    float ti=t1+span*(fi*0.88+0.06);
-    vec3 p=ro+rd*ti;
-    p.xz = vec2(crr*p.x - srr*p.z, srr*p.x + crr*p.z);
-    p.yz=rot2(rx)*p.yz;
-    p.xz=rot2(ry)*p.xz;
-    float r=length(p)/R;
-    float phiP=atan(p.z,p.x);
-    float thetaP=acos(clamp(p.y/(length(p)+1e-4),-1.0,1.0));
-
-    float core=exp(-r*r*3.2)*(0.7+0.3*sin(t*0.9+1.2));
-    float flowA=sin(phiP*2.5+t*1.1)*cos(thetaP*2.0-t*0.7)*0.5+0.5;
-    float flowB=cos(phiP*3.5-t*0.9)*sin(thetaP*3.0+t*1.0)*0.5+0.5;
-    float band=sin(phiP*5.0+thetaP*4.0+t*0.8)*0.5+0.5;
-    float thread1 = sin(phiP*8.0 + thetaP*5.0 + u_t*1.8)*0.5 + 0.5;
-    float thread2 = cos(phiP*6.0 - thetaP*7.0 - u_t*1.3)*0.5 + 0.5;
-    float threads = thread1 * thread2 * smoothstep(0.3, 0.7, r) * smoothstep(1.0, 0.55, r);
-    float layer2=(0.4+0.4*flowA)*(0.5+0.4*flowB)*smoothstep(0.2,0.85,r);
-    float layer3=(0.35+0.35*band)*smoothstep(0.0,0.6,r)*smoothstep(1.0,0.5,r);
-
-    vec3 coreCol=u_c1*1.2;
-    vec3 midCol=mix(u_c2,u_c3,flowA);
-    vec3 outerCol=mix(u_c4,u_c1,band*0.5+0.5);
-
-    vec3 layerCol=coreCol*core+midCol*layer2*0.85+outerCol*layer3*0.6;
-    float deepPulse = sin(r*4.0 - u_t*0.35 + phiP*1.5)*0.5 + 0.5;
-    float deepGlow = exp(-r*r*1.8)*deepPulse*(0.5 + 0.3*sin(u_t*0.22));
-    layerCol += u_c2 * deepGlow * 0.7;
-    layerCol += mix(u_c3, u_c4, thread1) * threads * 0.45;
-    float density=(core*1.2+layer2+layer3*0.7)*(1.0-fi*0.35)*(1.0+u_energy*0.4)*0.065;
-    energyAcc+=layerCol*density;
-    denAcc+=density;
-  }
-  energyAcc/=max(denAcc,0.001);
-  energyAcc*=breath;
-  energyAcc=pow(max(energyAcc,0.0),vec3(0.95));
-
-  float wave1=sin(phi*3.0+t*1.4)*cos(theta*2.0-t*0.9);
-  float wave2=sin(phi*5.0-t*1.1)*sin(theta*3.0+t*0.7);
-  float wave3=cos(phi*2.0+t*0.8)*cos(theta*4.0-t*1.2);
-  float wave=(wave1*0.5+wave2*0.35+wave3*0.25)*0.5+0.5;
-  float flow=sin(phi*4.0+t*1.6)*0.5+0.5;
-  float band=sin(theta*6.0+phi*2.0+t*1.0)*0.5+0.5;
-
-  vec3 waveTint=mix(u_c1,u_c2,flow)*0.6+mix(u_c3,u_c4,band)*0.4;
-  vec3 surfaceGlow=waveTint*(0.12+wave*0.18)*(1.0+u_energy*0.5)*breath;
-
-  float fresnel=pow(1.0-NoV,2.6);
-  float rim=pow(1.0-NoV,4.2);
-  vec3 shellDark=mix(vec3(0.38,0.52,0.82),u_c1,0.35);
-  vec3 shellLight=mix(vec3(0.85,0.90,0.98),u_c1,0.15);
-  vec3 shell=mix(shellDark,shellLight,u_light);
-  vec3 glassRim = shell*fresnel*1.65 + u_c1*rim*1.2 + u_c2*pow(1.0-NoV,6.0)*0.5;
-
-  vec3 L1=normalize(vec3(-.5,.9,.6)),H1=normalize(L1+V);
-  float s1=pow(max(dot(N,H1),0.0),240.)*1.6;
-  vec3 L2=normalize(vec3(.6,.3,.85)),H2=normalize(L2+V);
-  float s2=pow(max(dot(N,H2),0.0),90.)*0.45;
-  vec3 spec=vec3(1.,0.98,0.96)*(s1+s2);
-
-  float interiorMix=0.72*(1.0-fresnel*0.5)+0.15*NoV;
-  vec3 col=energyAcc*interiorMix+surfaceGlow+glassRim+spec;
-  float centerGlow=exp(-dot(uv,uv)*2.0)*breath*(0.45+u_energy*0.35);
-  col += mix(u_c1, u_c2, 0.5) * centerGlow * 1.6;
-  col += u_c1 * exp(-dot(uv,uv)*5.5) * breath * 0.35;
-
-  col=mix(col,col*1.08,u_light);
-  col=col/(col+0.88);
-  col=pow(max(col,0.0),vec3(0.94));
-
-  float edgeSoft=smoothstep(0.0,0.014,sqD);
-  float alpha=(0.48+fresnel*0.35+rim*0.18+min(denAcc*4.0,0.12))*(1.0+u_energy*0.12);
-  alpha=clamp(alpha*edgeSoft,0.0,0.94);
-  gl_FragColor=vec4(col,alpha);
-}`;
-
-type OrbPalette = { c1:[number,number,number]; c2:[number,number,number]; c3:[number,number,number]; c4:[number,number,number]; glow:string; glowLight:string };
-
-const PALETTES: Record<string, OrbPalette> = {
-  hero:  { c1:[.98,.68,.08], c2:[1.0,.42,.04], c3:[.88,.58,.00], c4:[1.0,.82,.28], glow:"rgba(200,150,26,0.38)", glowLight:"rgba(180,120,10,0.28)" },
-  watch: { c1:[74/255,144/255,245/255], c2:[.12,.58,.98], c3:[.35,.45,1.0], c4:[.50,.72,1.0], glow:"rgba(74,144,245,0.40)", glowLight:"rgba(50,100,220,0.22)" },
-  work:  { c1:[13/255,140/255,158/255], c2:[.08,.62,.92], c3:[.00,.78,.70], c4:[.22,.72,.96], glow:"rgba(13,140,158,0.40)", glowLight:"rgba(8,110,125,0.22)" },
-  wrap:  { c1:[160/255,128/255,245/255], c2:[.72,.22,.92], c3:[.42,.22,1.0], c4:[.82,.52,1.0], glow:"rgba(160,128,245,0.40)", glowLight:"rgba(120,90,220,0.22)" },
-};
-
-class Spring { x=0;y=0;vx=0;vy=0;tx=0;ty=0;
-  step(k=.058,d=.84){ this.vx+=(this.tx-this.x)*k;this.vy+=(this.ty-this.y)*k;this.vx*=d;this.vy*=d;this.x+=this.vx;this.y+=this.vy; }
+:root {
+  --navy: #07091A;
+  --navy-mid: #0D1230;
+  --navy-card: #111830;
+  --gold: #D4A832;
+  --gold-dim: rgba(212, 168, 50, 0.12);
+  --blue: #6B8FD4;
+  --white: #F0F2F8;
+  --white-dim: rgba(240, 242, 248, 0.55);
+  --divider: rgba(240, 242, 248, 0.07);
+  --font: 'Afacad Flux', sans-serif;
 }
 
-function SiriOrb({ size, energy, palette, dark }: { size:number; energy:number; palette:OrbPalette; dark:boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const spring = useRef(new Spring());
-  const raf = useRef(0);
-  const eRef = useRef(energy); const pRef = useRef(palette); const lRef = useRef(dark ? 0.0 : 1.0);
-  const mouseRef = useRef({x:0,y:0});
-  useEffect(()=>{ eRef.current=energy; },[energy]);
-  useEffect(()=>{ pRef.current=palette; },[palette]);
-  useEffect(()=>{ lRef.current=dark?0.0:1.0; },[dark]);
-  useEffect(()=>{
-    const canvas=canvasRef.current!; const dpr=window.devicePixelRatio||1;
-    canvas.width=size*dpr; canvas.height=size*dpr;
-    const gl=canvas.getContext("webgl",{alpha:true,premultipliedAlpha:false}); if(!gl)return;
-    const mkS=(type:number,src:string)=>{ const s=gl.createShader(type)!;gl.shaderSource(s,src);gl.compileShader(s);return s; };
-    const prog=gl.createProgram()!;
-    gl.attachShader(prog,mkS(gl.VERTEX_SHADER,VERT));gl.attachShader(prog,mkS(gl.FRAGMENT_SHADER,ORB_FRAG));
-    gl.linkProgram(prog);gl.useProgram(prog);
-    gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
-    const al=gl.getAttribLocation(prog,"a");gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);
-    gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
-    const uT=gl.getUniformLocation(prog,"u_t"),uR=gl.getUniformLocation(prog,"u_res"),
-      uM=gl.getUniformLocation(prog,"u_mouse"),uE=gl.getUniformLocation(prog,"u_energy"),
-      uIdle=gl.getUniformLocation(prog,"u_idle"),
-      uC1=gl.getUniformLocation(prog,"u_c1"),uC2=gl.getUniformLocation(prog,"u_c2"),
-      uC3=gl.getUniformLocation(prog,"u_c3"),uC4=gl.getUniformLocation(prog,"u_c4"),
-      uL=gl.getUniformLocation(prog,"u_light");
-    const onMove=(e:MouseEvent)=>{ const r=canvas.getBoundingClientRect(); mouseRef.current={x:((e.clientX-r.left)/size)*2-1,y:-((e.clientY-r.top)/size)*2+1}; };
-    window.addEventListener("mousemove",onMove);
-    const start=performance.now();
-    const loop=()=>{
-      spring.current.tx=mouseRef.current.x*.32; spring.current.ty=mouseRef.current.y*.32; spring.current.step();
-      const t=(performance.now()-start)*.001;
-      const idleX=Math.sin(t*0.42)*0.16;
-      const idleY=Math.cos(t*0.38)*0.16;
-      gl.viewport(0,0,canvas.width,canvas.height); gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform1f(uT,t); gl.uniform1f(uE,eRef.current); gl.uniform1f(uL,lRef.current);
-      gl.uniform2f(uR,canvas.width,canvas.height); gl.uniform2f(uM,spring.current.x,spring.current.y);
-      gl.uniform2f(uIdle!,idleX,idleY);
-      const p=pRef.current; gl.uniform3f(uC1,...p.c1);gl.uniform3f(uC2,...p.c2);gl.uniform3f(uC3,...p.c3);gl.uniform3f(uC4,...p.c4);
-      gl.drawArrays(gl.TRIANGLE_STRIP,0,4); raf.current=requestAnimationFrame(loop);
-    };
-    raf.current=requestAnimationFrame(loop);
-    return()=>{ cancelAnimationFrame(raf.current); window.removeEventListener("mousemove",onMove); };
-  },[size]);
-  return <canvas ref={canvasRef} style={{width:size,height:size,display:"block"}} />;
-}
-// ─── UI Primitives ─────────────────────────────────────────────────────────────
-function FadeUp({ children, delay=0 }: { children:React.ReactNode; delay?:number }) {
-  const ref=useRef<HTMLDivElement>(null); const [vis,setVis]=useState(false);
-  useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.1}); ob.observe(el);return()=>ob.disconnect(); },[]);
-  return <div ref={ref} style={{opacity:vis?1:0,transform:vis?"none":"translateY(14px)",transition:`opacity .6s ${delay}s cubic-bezier(.16,1,.3,1), transform .6s ${delay}s cubic-bezier(.16,1,.3,1)`}}>{children}</div>;
+.explore-page {
+  background: var(--navy);
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
 }
 
-function WordReveal({ text, size, weight=700, color, lh=1.1, delay=0, center=false }:{text:string;size:string|number;weight?:number;color:string;lh?:number;delay?:number;center?:boolean}) {
-  const ref=useRef<HTMLDivElement>(null); const [vis,setVis]=useState(false);
-  useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.06}); ob.observe(el);return()=>ob.disconnect(); },[]);
-  return <div ref={ref} style={{textAlign:center?"center":"left",overflowWrap:"break-word",wordBreak:"break-word"}}>
-    {text.split(" ").map((w,i)=>(
-      <span key={i} style={{display:"inline-block",marginRight:"0.24em",opacity:vis?1:0,transform:vis?"none":"translateY(10px)",transition:`opacity .48s ${delay+i*.05}s ease, transform .48s ${delay+i*.05}s cubic-bezier(.16,1,.3,1)`,fontSize:size,fontWeight:weight,color,lineHeight:lh}}>{w}</span>
-    ))}
-  </div>;
+.explore-page em {
+  font-style: normal;
+  color: var(--gold);
 }
 
-// Simple centered divider between major sections
-const SectionDivider = () => (
-  <div style={{
-    maxWidth: 1200,
-    margin: "0 auto",
-    padding: "0 48px",
-  }}>
-    <div style={{
-      height: 1,
-      background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)",
-    }} />
-  </div>
-);
+.explore-page a { color: inherit; text-decoration: none; }
 
-function FadeInSection({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const items = Children.toArray(children);
-
-  return (
-    <div ref={ref} style={style}>
-      {items.map((child, index) => (
-        <div
-          key={index}
-          style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(30px)",
-            transition:
-              "opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1)",
-            transitionDelay: visible ? `${index * 0.1}s` : "0s",
-          }}
-        >
-          {child}
-        </div>
-      ))}
-    </div>
-  );
+.ex-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: rgba(7, 9, 26, 0.82);
+  border-bottom: 1px solid var(--divider);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-function Counter({ target, suffix="", label, accent }:{target:number;suffix?:string;label:string;accent:string}) {
-  const ref=useRef<HTMLDivElement>(null); const [val,setVal]=useState(0); const [vis,setVis]=useState(false);
-  const { dark } = useTheme();
-  const lc = dark ? "#E8E8E6" : "#1a1a1a";
-  useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.3}); ob.observe(el);return()=>ob.disconnect(); },[]);
-  useEffect(()=>{ if(!vis)return; let start:number|null=null; const dur=1500;
-    const step=(ts:number)=>{ if(!start)start=ts; const p=Math.min((ts-start)/dur,1),e=1-Math.pow(1-p,3); setVal(Math.round(e*target)); if(p<1)requestAnimationFrame(step); };
-    requestAnimationFrame(step); },[vis,target]);
-  return <div ref={ref} style={{textAlign:"center"}}>
-    <div style={{fontSize:"clamp(44px,5vw,72px)",fontWeight:800,letterSpacing:"-.05em",lineHeight:1,fontVariantNumeric:"tabular-nums"}}>
-      <span style={{color:accent}}>{val}</span><span style={{color:lc,opacity:.5}}>{suffix}</span>
-    </div>
-    <div style={{fontSize:12,letterSpacing:".16em",color:lc,opacity:.28,textTransform:"uppercase",marginTop:10,fontWeight:600}}>{label}</div>
-  </div>;
+.ex-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--white-dim);
 }
 
-function FeatureLine({num,title,desc,accent,delay=0,lc,bc}:{num:string;title:string;desc:string;accent:string;delay?:number;lc:string;bc:string}) {
-  return <FadeUp delay={delay}>
-    <div style={{display:"grid",gridTemplateColumns:"26px 1fr",gap:"0 16px",paddingBottom:13,paddingTop:2,borderBottom:`1px solid ${bc}`}}>
-      <span style={{fontSize:13,fontWeight:700,color:accent,opacity:.5,letterSpacing:".06em",paddingTop:1}}>{num}</span>
-      <div><span style={{fontSize:13,fontWeight:600,color:lc}}>{title}</span><span style={{fontSize:12,color:lc,opacity:.36,lineHeight:1.6,marginLeft:7}}>{desc}</span></div>
-    </div>
-  </FadeUp>;
+.ex-nav-links a:hover { color: var(--white); }
+
+.ex-section {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 80px 32px;
 }
 
-function CheckpointRow({num,name,desc,color,delay,lc,bc,last=false}:{num:string;name:string;desc:string;color:string;delay:number;lc:string;bc:string;last?:boolean}) {
-  const ref=useRef<HTMLDivElement>(null); const [vis,setVis]=useState(false);
-  useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.1}); ob.observe(el);return()=>ob.disconnect(); },[]);
-  return <div ref={ref} style={{display:"grid",gridTemplateColumns:"36px 150px 1fr",gap:"0 18px",padding:"20px 0",borderBottom:last?"none":"1px solid rgba(255,255,255,0.04)",opacity:vis?1:0,transform:vis?"none":"translateX(-10px)",transition:`opacity .45s ${delay}s ease, transform .45s ${delay}s cubic-bezier(.16,1,.3,1)`}}>
-    <span style={{fontSize:13,fontWeight:700,color:"#C8961A",letterSpacing:".08em"}}>{num}</span>
-    <span style={{fontSize:13,fontWeight:600,color:"#ffffff"}}>{name}</span>
-    <span style={{fontSize:12,color:lc,opacity:.36,lineHeight:1.65}}>{desc}</span>
-  </div>;
+.ex-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
 }
 
-function DnaBar({label,score,delay=0,accent,lc}:{label:string;score:number;delay?:number;accent:string;lc:string}) {
-  const ref=useRef<HTMLDivElement>(null); const [vis,setVis]=useState(false);
-  useEffect(()=>{ const el=ref.current;if(!el)return; const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting)setVis(true);},{threshold:.2}); ob.observe(el);return()=>ob.disconnect(); },[]);
-  return <div ref={ref} style={{display:"flex",alignItems:"center",gap:12,opacity:vis?1:0,transform:vis?"none":"translateX(-8px)",transition:`opacity .6s ${delay}s ease, transform .6s ${delay}s cubic-bezier(.16,1,.3,1)`}}>
-    <div style={{fontSize:14,color:lc,opacity:.28,width:155,flexShrink:0}}>{label}</div>
-    <div style={{flex:1,height:1,background:`${lc}14`,position:"relative"}}>
-      <div style={{position:"absolute",left:0,top:0,height:"100%",background:`linear-gradient(90deg,${accent},${accent}55)`,width:vis?`${score}%`:"0%",transition:`width 1.2s ${delay+.1}s cubic-bezier(.16,1,.3,1)`}} />
-    </div>
-    <div style={{fontSize:13,fontWeight:700,color:lc,opacity:.45,width:22,textAlign:"right"}}>{score}</div>
-  </div>;
+.ex-h1 {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  margin: 0 0 20px;
+  color: var(--white);
 }
 
-function Ticker({ lc }:{lc:string}) {
-  const fs=["LinkedIn Post","Newsletter","Sunday Story","Podcast Script","Twitter Thread","Essay","Short Video","Substack Note","Talk Outline","Email Campaign","Blog Post","Executive Brief"];
-  const d=[...fs,...fs];
-  return <div style={{overflow:"hidden",maskImage:"linear-gradient(90deg,transparent,black 8%,black 92%,transparent)",WebkitMaskImage:"linear-gradient(90deg,transparent,black 8%,black 92%,transparent)"}}>
-    <style>{`@keyframes ew-t{from{transform:translateX(0)}to{transform:translateX(-50%)}}.ew-t{display:flex;width:max-content;animation:ew-t 30s linear infinite}.ew-t:hover{animation-play-state:paused}`}</style>
-    <div className="ew-t">
-      {d.map((f,i)=><span key={i} style={{display:"inline-flex",alignItems:"center",fontSize:14,fontWeight:500,color:lc,opacity:.20,padding:"4px 18px",whiteSpace:"nowrap",letterSpacing:".03em"}}>{f}<span style={{display:"inline-block",width:1,height:8,background:`${lc}20`,margin:"0 0 0 18px"}}/></span>)}
-    </div>
-  </div>;
+.ex-h2 {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 20px;
+  color: var(--white);
 }
 
-function Wordmark({ lc }:{lc:string}) {
-  const ws=["Studio","Intelligence","System"]; const [idx,setIdx]=useState(0); const [fading,setFading]=useState(false);
-  useEffect(()=>{ const t=setInterval(()=>{ setFading(true);setTimeout(()=>{setIdx(i=>(i+1)%3);setFading(false);},380); },2800); return()=>clearInterval(t); },[]);
-  return <span style={{opacity:fading?0:.32,transform:fading?"translateY(-3px)":"none",transition:"opacity .38s, transform .38s",color:lc,fontWeight:300}}>{ws[idx]}</span>;
+.ex-body {
+  color: var(--white-dim);
+  max-width: 640px;
+  margin-bottom: 16px;
 }
 
-function ThemeToggle({ lc }:{lc:string}) {
-  const { dark, toggle } = useTheme();
-  const baseBg = "rgba(255,255,255,0.06)";
-  const hoverBg = "rgba(255,255,255,0.12)";
-  const baseColor = "rgba(255,255,255,0.3)";
-  const hoverColor = "rgba(255,255,255,0.9)";
-  return (
-    <button
-      onClick={toggle}
-      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-      title={dark ? "Switch to light mode" : "Switch to dark mode"}
-      style={{
-        position: "fixed",
-        bottom: 16,
-        left: 16,
-        zIndex: 50,
-        width: 32,
-        height: 32,
-        borderRadius: "50%",
-        background: baseBg,
-        border: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: baseColor,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        transition: "background 0.2s ease, color 0.2s ease, transform 0.18s ease",
-      }}
-      onMouseEnter={e => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.background = hoverBg;
-        el.style.color = hoverColor;
-        el.style.transform = "translateY(-1px)";
-      }}
-      onMouseLeave={e => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.background = baseBg;
-        el.style.color = baseColor;
-        el.style.transform = "translateY(0)";
-      }}
-    >
-      {dark ? (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="4" stroke={lc} strokeWidth="2" />
-          <path
-            stroke={lc}
-            strokeWidth="2"
-            strokeLinecap="round"
-            d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-          />
-        </svg>
-      ) : (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path
-            stroke={lc}
-            strokeWidth="2"
-            strokeLinecap="round"
-            d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-          />
-        </svg>
-      )}
-    </button>
-  );
+.ex-btn-gold {
+  display: inline-block;
+  padding: 14px 32px;
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  text-decoration: none;
 }
-// ─── Continuous Rooms Section: single sticky left, stacked right panels ──────
-function RoomsSection({ dark, T, lc, bc, orbSection, orbEnergy, watchRef, workRef, wrapRef }: {
-  dark: boolean;
-  T: Record<string,string>;
-  lc: string; bc: string;
-  orbSection: string; orbEnergy: number;
-  watchRef: React.RefObject<HTMLElement | null>;
-  workRef: React.RefObject<HTMLElement | null>;
-  wrapRef: React.RefObject<HTMLElement | null>;
-}) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [scrollPct, setScrollPct] = useState(0); // 0→1 across all three rooms
-  const [revealProgress, setRevealProgress] = useState(0); // 0→1 as section enters viewport
-  const isMobile = useMobile();
+.ex-btn-gold:hover { opacity: 0.88; }
 
-  useEffect(() => {
-    const onScroll = () => {
-      const el = wrapperRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      // pct: 0 when top of wrapper hits viewport top, 1 when bottom exits
-      const totalScroll = el.offsetHeight - vh;
-      const scrolled = Math.max(0, -rect.top);
-      setScrollPct(totalScroll > 0 ? Math.min(1, scrolled / totalScroll) : 0);
-      // Reveal: section slowly appears as it enters from below (Apple-style scroll-linked)
-      // 0 when section top is at 85% of viewport, 1 when section top is at 25%
-      const rawReveal = (rect.top <= vh * 1.1) ? (vh * 1.1 - rect.top) / (vh * 0.4) : 0;
-      setRevealProgress(Math.max(0, Math.min(1, rawReveal)));
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+.ex-btn-outline {
+  display: inline-block;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--white);
+  border: 1px solid rgba(240, 242, 248, 0.2);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  text-decoration: none;
+}
+.ex-btn-outline:hover { border-color: rgba(240, 242, 248, 0.5); }
 
-  // Interpolate bg color across three zones: 0–0.33 (watch), 0.33–0.66 (work), 0.66–1 (wrap)
-  const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.max(0, Math.min(1, t));
-  const eased = scrollPct < 0.5 ? 2 * scrollPct * scrollPct : 1 - Math.pow(-2 * scrollPct + 2, 2) / 2;
-
-  // Dark mode colors per zone
-  const ZONES_DARK = [
-    { bg: [4,12,26],   accent: [74,144,245],  glow: "rgba(74,144,245,0.35)"  }, // watch blue
-    { bg: [3,14,16],   accent: [13,140,158],  glow: "rgba(13,140,158,0.35)"  }, // work teal
-    { bg: [8,4,18],    accent: [160,128,245], glow: "rgba(160,128,245,0.35)" }, // wrap violet
-  ];
-  const ZONES_LIGHT = [
-    { bg: [228,235,250], accent: [74,144,245],  glow: "rgba(74,144,245,0.20)"  },
-    { bg: [216,239,242], accent: [13,140,158],  glow: "rgba(13,140,158,0.20)"  },
-    { bg: [232,226,250], accent: [160,128,245], glow: "rgba(160,128,245,0.20)" },
-  ];
-  const ZONES = dark ? ZONES_DARK : ZONES_LIGHT;
-
-  // Which zone and how far through it
-  const zoneCount = ZONES.length;
-  const rawZone = eased * (zoneCount - 1);
-  const zoneIdx = Math.min(Math.floor(rawZone), zoneCount - 2);
-  const zonePct = rawZone - zoneIdx;
-  const zA = ZONES[zoneIdx], zB = ZONES[zoneIdx + 1];
-
-  const bgR = Math.round(lerp(zA.bg[0], zB.bg[0], zonePct));
-  const bgG = Math.round(lerp(zA.bg[1], zB.bg[1], zonePct));
-  const bgB = Math.round(lerp(zA.bg[2], zB.bg[2], zonePct));
-  const acR = Math.round(lerp(zA.accent[0], zB.accent[0], zonePct));
-  const acG = Math.round(lerp(zA.accent[1], zB.accent[1], zonePct));
-  const acB = Math.round(lerp(zA.accent[2], zB.accent[2], zonePct));
-
-  const leftBg = `rgb(${bgR},${bgG},${bgB})`;
-  const accentColor = `rgb(${acR},${acG},${acB})`;
-  const glowColor = `rgba(${acR},${acG},${acB},${dark ? 0.38 : 0.22})`;
-
-  // Current room label + name based on scroll position
-  const roomIdx = scrollPct < 0.38 ? 0 : scrollPct < 0.72 ? 1 : 2;
-  const roomNames  = ["WATCH", "WORK", "WRAP"];
-  const roomNums   = ["Room One", "Room Two", "Room Three"];
-  const roomSubs   = ["The Signal Room", "The Engine Room", "The Distribution Room"];
-  const roomPals   = [PALETTES.watch, PALETTES.work, PALETTES.wrap];
-
-  // For orb - smoothly blend palette based on scroll
-  const currentPal = roomPals[roomIdx];
-  const textColor = dark ? "#E8E8E6" : "#1a1a1a";
-
-  // Apple-style ease-out for scroll reveal (smooth, refined)
-  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-  const easedReveal = easeOutCubic(revealProgress);
-  // Slight stagger: orb side leads, copy side follows (adds depth)
-  const revealRight = easeOutCubic(Math.max(0, (revealProgress - 0.08) / 0.92));
-  // Nav pill (sticky left) visible as soon as section enters viewport, independent of main content fade
-  const navOpacity = revealProgress > 0.02 ? 1 : revealProgress / 0.02;
-
-  return (
-    <div
-      id="rooms"
-      ref={wrapperRef}
-      className="rooms-wrapper"
-      style={{
-        display: "flex",
-        position: "relative",
-        overflowX: "clip",
-        transform: `translateY(${(1 - easedReveal) * 36}px) scale(${0.987 + 0.013 * easedReveal})`,
-        transformOrigin: "center top",
-        willChange: revealProgress < 1 ? "opacity, transform" : "auto",
-      }}
-    >
-      {/* Full-width gradient canvas: one background for the whole section, shifts with scroll (no container) — fade applied here so nav can stay independent */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: "none",
-          opacity: easedReveal,
-          background: `
-            radial-gradient(
-              ellipse 70% 60% at 28% 50%,
-              ${glowColor.replace("0.38", "0.08").replace("0.22", "0.08")} 0%,
-              rgba(${acR},${acG},${acB},${dark ? 0.03 : 0.02}) 35%,
-              transparent 70%
-            ),
-            linear-gradient(180deg, rgb(${bgR},${bgG},${bgB}) 0%, ${T.bg} 100%)
-          `,
-          boxShadow: "inset 0 80px 60px -40px rgba(7,9,15,0.6), inset 0 -80px 60px -40px rgba(7,9,15,0.6)",
-          transition: "background 0.35s ease, box-shadow 0.35s ease",
-        }}
-      />
-      {/* Sticky left column on desktop; hidden on mobile — own opacity so nav appears as soon as section enters */}
-      <div style={{
-        position: "sticky",
-        top: 0,
-        height: "100vh",
-        width: isMobile ? "100%" : "32vw",
-        flexShrink: 0,
-        display: isMobile ? "none" : "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2,
-        opacity: navOpacity,
-      }}>
-        {/* Inner glow layer - orb aura only (soft halo around orb) */}
-        <div style={{
-          position: "absolute",
-          inset: "-15%",
-          background: `radial-gradient(ellipse 75% 75% at 50% 50%, ${glowColor} 0%, ${glowColor} 18%, rgba(${acR},${acG},${acB},${dark ? 0.1 : 0.05}) 40%, transparent 62%)`,
-          pointerEvents: "none",
-          transition: "background 0.4s ease",
-        }} />
-        <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ fontSize: 12, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 14, fontWeight: 700, opacity: .7, transition: "color 0.4s ease" }}>
-            {roomNums[roomIdx]}
-          </div>
-          <div style={{ filter: `drop-shadow(0 0 52px ${glowColor})`, marginBottom: 16, transition: "filter 0.4s ease" }}>
-            {isMobile ? (
-              <div
-                style={{
-                  width: 200,
-                  height: 200,
-                  borderRadius: "50%",
-                  background:
-                    "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
-                }}
-              />
-            ) : (
-              <div className="orb-breathe-rooms">
-                <SiriOrb
-                  size={isMobile ? 160 : 240}
-                  energy={
-                    orbSection === "watch" ||
-                    orbSection === "work" ||
-                    orbSection === "wrap"
-                      ? orbEnergy
-                      : 0.1
-                  }
-                  palette={currentPal}
-                  dark={dark}
-                />
-              </div>
-            )}
-          </div>
-          <div style={{ fontSize: "clamp(52px,6.5vw,84px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .88, color: textColor, textAlign: "center", transition: "opacity 0.3s", marginTop: 24 }}>
-            {roomNames[roomIdx]}
-          </div>
-          <div style={{ fontSize: 12, letterSpacing: ".15em", color: textColor, opacity: .20, textTransform: "uppercase", marginTop: 8, fontWeight: 500 }}>
-            {roomSubs[roomIdx]}
-          </div>
-          <div style={{ width: 28, height: 1, background: `linear-gradient(90deg,transparent,${accentColor},transparent)`, marginTop: 18, transition: "background 0.4s ease" }} />
-        </div>
-      </div>
-
-        {/* ── Right panels: stacked, normal flow; subtle stagger so copy follows orb ── */}
-      <div
-        style={{
-          flex: isMobile ? 1 : "0 0 68vw",
-          width: isMobile ? "100%" : "68vw",
-          minWidth: 0,
-          position: "relative",
-          zIndex: 1,
-          opacity: easedReveal,
-          transform: `translateY(${(1 - revealRight) * 18}px)`,
-          willChange: revealProgress < 1 ? "transform" : "auto",
-        }}
-      >
-
-        {/* WATCH right */}
-        <section ref={watchRef} id="room-watch" style={{
-          minHeight: "130vh",
-          padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 32,
-          justifyContent: "center",
-          position: "relative",
-          maxWidth: isMobile ? "100%" : 680,
-          margin: "0 auto",
-          background: "transparent",
-          overflow: "hidden",
-        }}>
-          {isMobile && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ fontSize: 12, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
-                Room One
-              </div>
-              <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
-                <div
-                  style={{
-                    width: 160,
-                    height: 160,
-                    borderRadius: "50%",
-                    background:
-                      "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
-                  }}
-                />
-              </div>
-              <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
-                WATCH
-              </div>
-              <div style={{ fontSize: 13, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
-                The Signal Room
-              </div>
-            </div>
-          )}
-          <WordReveal text="Before you write a single word, the system scans your category for what's moving." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
-          <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>You get structured intelligence, not a reading list. Every briefing is built for action, not review.</p></FadeUp>
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            <FeatureLine num="01" title="What's Moving" desc="Developments shaping your category right now" accent={T.watchA} delay={0} lc={lc} bc={bc} />
-            <FeatureLine num="02" title="Threats" desc="Items requiring defensive positioning or response" accent={T.watchA} delay={.06} lc={lc} bc={bc} />
-            <FeatureLine num="03" title="Opportunities" desc="Scored by effort-to-impact ratio, highest leverage first" accent={T.watchA} delay={.12} lc={lc} bc={bc} />
-            <FeatureLine num="04" title="Content Triggers" desc="Angles ready to hand directly to the production engine" accent={T.watchA} delay={.18} lc={lc} bc={bc} />
-            <FeatureLine num="05" title="Event Radar" desc="Upcoming events filtered by proximity and relevance" accent={T.watchA} delay={.24} lc={lc} bc={bc} />
-          </div>
-          <FadeUp delay={0.12}>
-            <div style={{ borderLeft: `2px solid ${T.watchA}45`, paddingLeft: 18 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: textColor, marginBottom: 5, letterSpacing: ".02em" }}>Source Verification</div>
-              <p style={{ fontSize: 12, color: T.textSub, lineHeight: 1.74 }}>Every claim requires two or more independent, credible sources. Unverified intelligence never ships. This is a protocol, not a preference.</p>
-            </div>
-          </FadeUp>
-          <FadeUp delay={0.18}>
-            <div style={{ maxWidth: 420, marginLeft: "auto", marginTop: 32, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20, transform: "rotate(1deg)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "#4A90D9", marginBottom: 12 }}>WHAT'S MOVING</div>
-              <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, marginBottom: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: "#E53935", textTransform: "uppercase", letterSpacing: "1px" }}>High</span>
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginBottom: 6 }}>AI content detection tools reaching enterprise adoption</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>Three major platforms announced native detection. Your differentiation strategy needs to account for this shift.</div>
-              </div>
-              <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: "#F5C642", textTransform: "uppercase", letterSpacing: "1px" }}>Medium</span>
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginBottom: 4 }}>Newsletter open rates shifting toward story-led formats</div>
-                <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", marginTop: 6 }} />
-              </div>
-            </div>
-          </FadeUp>
-        </section>
-
-        {/* WORK right */}
-        <section ref={workRef} id="room-work" style={{
-          minHeight: "145vh",
-          padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 32,
-          justifyContent: "center",
-          position: "relative",
-          maxWidth: isMobile ? "100%" : 680,
-          margin: "0 auto",
-          background: "transparent",
-          overflow: "hidden",
-        }}>
-          {isMobile && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ fontSize: 12, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
-                Room Two
-              </div>
-              <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
-                <div
-                  style={{
-                    width: 160,
-                    height: 160,
-                    borderRadius: "50%",
-                    background:
-                      "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
-                  }}
-                />
-              </div>
-              <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
-                WORK
-              </div>
-              <div style={{ fontSize: 13, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
-                The Engine Room
-              </div>
-            </div>
-          )}
-          <WordReveal text="A coordinated team of forty specialists transforms your raw thinking into publication-grade content." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
-          <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Not a single prompt. A system of roles working in sequence. Voice DNA ensures every word sounds like you.</p></FadeUp>
-          <FadeUp delay={0.12}>
-            <div>
-              <div style={{ fontSize: 12, letterSpacing: ".18em", color: T.textFaint, textTransform: "uppercase", marginBottom: 10, fontWeight: 500 }}>Output formats</div>
-              <Ticker lc={lc} />
-            </div>
-          </FadeUp>
-          <FadeUp delay={0.18}>
-            <div style={{ borderTop: `1px solid ${bc}`, paddingTop: 28 }}>
-              <div style={{ fontSize: 12, letterSpacing: ".2em", color: T.workA, textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>Voice DNA</div>
-              <div style={{ marginBottom: 20 }}><WordReveal text="Every output sounds exactly like you." size={18} weight={700} color={textColor} lh={1.2} /></div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-                {[["Vocabulary and Syntax", 88], ["Tonal Register", 94], ["Rhythm and Cadence", 91], ["Metaphor Patterns", 87], ["Structural Habits", 96]].map(([l, s], i) => (
-                  <DnaBar key={i} label={l as string} score={s as number} delay={i * .06} accent={T.workA} lc={lc} />
-                ))}
-              </div>
-            </div>
-          </FadeUp>
-          <FadeUp delay={0.24}>
-            <div style={{ maxWidth: 420, marginLeft: "auto", marginTop: 32, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20, transform: "rotate(-1deg)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
-                  <div style={{ marginLeft: "auto", maxWidth: "75%", background: "rgba(13,27,42,0.8)", borderRadius: "12px 12px 4px 12px", padding: "10px 14px", fontSize: 12, color: "rgba(255,255,255,0.9)", lineHeight: 1.5 }}>
-                    I want to write about why most leadership advice is backwards. The people giving it have never actually led through chaos.
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg, #4A90D9, #1B263B)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.8)" }} />
-                  </div>
-                  <div style={{ maxWidth: "75%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px 12px 12px 4px", padding: "10px 14px", fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>
-                    Sharp take. What was the specific moment that crystallized this for you?
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                {["Essay", "Newsletter", "Podcast"].map(f => (
-                  <span key={f} style={{ padding: "4px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", fontSize: 10, color: "rgba(255,255,255,0.5)", fontFamily: "'Afacad Flux', sans-serif" }}>{f}</span>
-                ))}
-                <span style={{ padding: "4px 10px", borderRadius: 12, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>+7</span>
-              </div>
-              <div style={{ display: "inline-flex", padding: "6px 16px", borderRadius: 6, background: "#F5C642", color: "#0D1B2A", fontSize: 11, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                Produce it
-              </div>
-            </div>
-          </FadeUp>
-        </section>
-
-        {/* WRAP right */}
-        <section ref={wrapRef} id="room-wrap" style={{
-          minHeight: "120vh",
-          padding: isMobile ? "48px 24px" : "64px max(48px, 5vw) 64px 64px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 32,
-          justifyContent: "center",
-          position: "relative",
-          maxWidth: isMobile ? "100%" : 680,
-          margin: "0 auto",
-          background: "transparent",
-          overflow: "hidden",
-        }}>
-          {isMobile && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
-              <div style={{ fontSize: 12, letterSpacing: ".22em", color: accentColor, textTransform: "uppercase", marginBottom: 10, fontWeight: 700, opacity: .7 }}>
-                Room Three
-              </div>
-              <div style={{ marginBottom: 14, filter: `drop-shadow(0 0 36px ${glowColor})` }}>
-                <div
-                  style={{
-                    width: 160,
-                    height: 160,
-                    borderRadius: "50%",
-                    background:
-                      "radial-gradient(circle, rgba(200,150,26,0.35) 0%, rgba(200,150,26,0.1) 50%, transparent 70%)",
-                  }}
-                />
-              </div>
-              <div style={{ fontSize: "clamp(36px,8vw,44px)", fontWeight: 800, letterSpacing: "-.05em", lineHeight: .9, color: textColor, textAlign: "center" }}>
-                WRAP
-              </div>
-              <div style={{ fontSize: 13, letterSpacing: ".16em", color: textColor, opacity: .26, textTransform: "uppercase", marginTop: 8 }}>
-                The Distribution Room
-              </div>
-            </div>
-          )}
-          <WordReveal text="One idea becomes a complete publishing event." size="clamp(18px,2vw,24px)" weight={700} lh={1.22} color={textColor} />
-          <FadeUp delay={0.08}><p style={{ fontSize: 13, lineHeight: 1.82, color: T.textSub }}>Articles, social posts, email sequences, video scripts. Formatted for every channel. Ready to ship. Nothing left for you to finish.</p></FadeUp>
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            <FeatureLine num="01" title="Content Calendar" desc="Visual scheduling across all channels from a single canvas." accent={T.wrapA} delay={0} lc={lc} bc={bc} />
-            <FeatureLine num="02" title="One-Click Deploy" desc="Publish to LinkedIn, newsletter, Substack, social simultaneously." accent={T.wrapA} delay={.06} lc={lc} bc={bc} />
-            <FeatureLine num="03" title="Performance Loop" desc="Engagement data flows back to sharpen your next strategy." accent={T.wrapA} delay={.12} lc={lc} bc={bc} />
-            <FeatureLine num="04" title="The Flywheel" desc="Every post makes the next one better. Ideas compound over time." accent={T.wrapA} delay={.18} lc={lc} bc={bc} />
-          </div>
-          <FadeUp delay={0.24}>
-            <div style={{ maxWidth: 420, marginLeft: "auto", marginTop: 32, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20, transform: "rotate(0.5deg)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12 }}>WRAP AS</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-                {["Web Page", "Google Doc", "Word Doc", "Visual", "Copy Text"].map(f => (
-                  <span key={f} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.6)", fontFamily: "'Afacad Flux', sans-serif" }}>{f}</span>
-                ))}
-              </div>
-              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "14px 16px" }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>Why Most Leadership Advice Is Backwards</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
-                  The people giving leadership advice have never actually led through chaos. They led through structure someone else built...
-                </div>
-                <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#4A90D9" }}>Betterish: 912</span>
-                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Ready to publish</span>
-                </div>
-              </div>
-            </div>
-          </FadeUp>
-        </section>
-
-      </div>
-    </div>
-  );
+.ex-stats-row {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+  margin-top: 40px;
 }
 
-// ─── Main Page ──────────────────────────────────────────────────────────────────
+.ex-stat {
+  text-align: center;
+}
+.ex-stat-num {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+.ex-stat-label {
+  font-size: 13px;
+  color: var(--white-dim);
+  margin-top: 6px;
+}
+
+.ex-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.ex-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+}
+
+.ex-room-card {
+  background: var(--navy-card);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  padding: 28px;
+}
+.ex-room-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 12px;
+}
+.ex-room-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--white);
+}
+.ex-room-body {
+  font-size: 15px;
+  color: var(--white-dim);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.ex-room-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  color: var(--white-dim);
+}
+.ex-room-items li {
+  padding: 6px 0;
+  border-top: 1px solid var(--divider);
+}
+
+.ex-checkpoint {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.ex-checkpoint-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-right: 8px;
+}
+.ex-checkpoint-name {
+  font-weight: 700;
+  color: var(--white);
+  margin-right: 8px;
+}
+.ex-checkpoint-desc {
+  color: var(--white-dim);
+  font-size: 15px;
+}
+
+.ex-moment {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.ex-moment-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.ex-moment-text {
+  color: var(--white-dim);
+  font-size: 16px;
+}
+
+.ex-footer {
+  border-top: 1px solid var(--divider);
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 980px;
+  margin: 0 auto;
+  font-size: 13px;
+  color: var(--white-dim);
+}
+
+@media (max-width: 900px) {
+  .ex-nav { padding: 0 20px; }
+  .ex-nav-links-desktop { display: none !important; }
+  .ex-section { padding: 56px 20px; }
+  .ex-h1 { font-size: 34px; }
+  .ex-h2 { font-size: 26px; }
+  .ex-grid-2 { grid-template-columns: 1fr; gap: 40px; }
+  .ex-grid-3 { grid-template-columns: 1fr; }
+  .ex-stats-row { gap: 32px; }
+  .ex-footer { flex-direction: column; gap: 16px; text-align: center; }
+}
+`;
+
 export default function ExplorePage() {
-  const nav = useNavigate();
-  const location = useLocation();
-  const [dark, setDark] = useState(true);
-  const [mounted, setMounted] = useState(false);
-  const [orbSection] = useState<"watch">("watch"); // kept for RoomsSection compat
-  const [orbEnergy] = useState(0.35);
-  const fromLandingZoom = location.state?.fromLandingZoom === true;
-  const [entranceDone, setEntranceDone] = useState(false);
+  const navigate = useNavigate();
   const isMobile = useMobile();
-  const [navScrolled, setNavScrolled] = useState(false);
-  const [showScrollHint, setShowScrollHint] = useState(true);
-  const [scrollPct, setScrollPct] = useState(0);
-  const [roomsVisible, setRoomsVisible] = useState(false);
-  const [roomsZoneInView, setRoomsZoneInView] = useState(false);
-  const [activeRoom, setActiveRoom] = useState<"watch" | "work" | "wrap">("watch");
-  const roomsSentinelRef = useRef<HTMLDivElement | null>(null);
-  const watchRef = useRef<HTMLElement | null>(null);
-  const workRef = useRef<HTMLElement | null>(null);
-  const wrapRef = useRef<HTMLElement | null>(null);
+  const howRef = useRef<HTMLDivElement>(null);
+  const standardRef = useRef<HTMLDivElement>(null);
 
-  const toggle = () => setDark(d => !d);
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 80);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Lazy-load RoomsSection when its sentinel approaches the viewport
-  useEffect(() => {
-    if (roomsVisible) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setRoomsVisible(true);
-      return;
-    }
-    const el = roomsSentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      entries => {
-        const entry = entries[0];
-        if (entry.isIntersecting) {
-          setRoomsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { root: null, rootMargin: "1200px 0px 1200px 0px", threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [roomsVisible]);
-
-  // Pills visible when any room section (WATCH / WORK / WRAP) is in view; activeRoom = section with most visibility
-  const roomIntersectionRef = useRef({ watch: false, work: false, wrap: false, watchRatio: 0, workRatio: 0, wrapRatio: 0 });
-  useEffect(() => {
-    if (!roomsVisible || typeof IntersectionObserver === "undefined") return;
-    let observer: IntersectionObserver | null = null;
-    const frameId = requestAnimationFrame(() => {
-      const elements = [watchRef.current, workRef.current, wrapRef.current].filter(Boolean) as HTMLElement[];
-      if (elements.length === 0) return;
-      observer = new IntersectionObserver(
-        (entries) => {
-          const state = roomIntersectionRef.current;
-          entries.forEach((entry) => {
-            const targetId = entry.target.id;
-            const key = targetId === "room-watch" ? "watch" : targetId === "room-work" ? "work" : targetId === "room-wrap" ? "wrap" : null;
-            if (key) {
-              state[key as "watch" | "work" | "wrap"] = entry.isIntersecting;
-              (state as Record<string, number>)[key + "Ratio"] = entry.intersectionRatio;
-            }
-          });
-          const anyInView = state.watch || state.work || state.wrap;
-          setRoomsZoneInView(anyInView);
-          if (anyInView) {
-            const best = (["watch", "work", "wrap"] as const).reduce((a, b) =>
-              (state as Record<string, number>)[b + "Ratio"] > (state as Record<string, number>)[a + "Ratio"] ? b : a
-            );
-            setActiveRoom(best);
-          }
-        },
-        { root: null, rootMargin: "0px", threshold: 0.1 }
-      );
-      elements.forEach((el) => observer!.observe(el));
-    });
-    return () => {
-      cancelAnimationFrame(frameId);
-      observer?.disconnect();
-    };
-  }, [roomsVisible]);
-  useEffect(() => {
-    document.body.setAttribute("data-explore-theme", dark ? "dark" : "light");
-  }, [dark]);
-
-  // Own document background for Explore: use backgroundColor only (never shorthand) and clear gradient. Clean up on unmount so studio/landing get a clean body.
-  useEffect(() => {
-    document.body.style.backgroundImage = "none";
-    document.documentElement.style.backgroundImage = "none";
-    document.body.style.backgroundColor = dark ? "#07090f" : "#F4F2ED";
-    document.documentElement.style.backgroundColor = dark ? "#07090f" : "#F4F2ED";
-    return () => {
-      document.body.style.background = "";
-      document.body.style.backgroundImage = "none";
-      document.body.style.backgroundColor = "#F4F2ED";
-      document.documentElement.style.background = "";
-      document.documentElement.style.backgroundImage = "none";
-      document.documentElement.style.backgroundColor = "#F4F2ED";
-    };
-  }, [dark]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setNavScrolled(window.scrollY > 20);
-       setShowScrollHint(window.scrollY <= 100);
-    };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const handler = () => {
-      const el = document.documentElement;
-      const denom = el.scrollHeight - el.clientHeight;
-      if (denom <= 0) {
-        setScrollPct(0);
-        return;
-      }
-      setScrollPct(el.scrollTop / denom);
-    };
-    window.addEventListener("scroll", handler, { passive: true });
-    handler();
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
-
-  // Room pills: which room is in view (when rooms section is loaded)
-  useEffect(() => {
-    if (!roomsVisible) return;
-    const ids: ("watch" | "work" | "wrap")[] = ["watch", "work", "wrap"];
-    const check = () => {
-      const vh = window.innerHeight;
-      const center = vh * 0.4;
-      let best: "watch" | "work" | "wrap" = "watch";
-      let bestDist = Infinity;
-      ids.forEach((room) => {
-        const el = document.getElementById("room-" + room);
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const mid = rect.top + rect.height / 2;
-        const dist = Math.abs(mid - center);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = room;
-        }
-      });
-      setActiveRoom(best);
-    };
-    check();
-    window.addEventListener("scroll", check, { passive: true });
-    return () => window.removeEventListener("scroll", check);
-  }, [roomsVisible]);
-
-  // Fade in from dark when arriving from landing zoom transition
-  useEffect(() => {
-    if (!fromLandingZoom) {
-      setEntranceDone(true);
-      return;
-    }
-    setEntranceDone(false);
-    let frameId = 0;
-    let timeoutId: number | undefined;
-    frameId = requestAnimationFrame(() => {
-      timeoutId = window.setTimeout(() => {
-        setEntranceDone(true);
-      }, 50);
-    });
-    return () => {
-      if (frameId) cancelAnimationFrame(frameId);
-      if (timeoutId) window.clearTimeout(timeoutId);
-    };
-  }, [fromLandingZoom]);
-
-  // After the landing zoom fade-in completes, ensure no gradient lingers and document uses backgroundColor only
-  useEffect(() => {
-    if (!fromLandingZoom || !entranceDone) return;
-    document.documentElement.style.background = "";
-    document.documentElement.style.backgroundImage = "none";
-    document.documentElement.style.backgroundColor = dark ? "#07090f" : "#F4F2ED";
-    document.body.style.background = "";
-    document.body.style.backgroundImage = "none";
-    document.body.style.backgroundColor = dark ? "#07090f" : "#F4F2ED";
-  }, [fromLandingZoom, entranceDone, dark]);
-
-  // Theme tokens
-  const T = {
-    bg:        dark ? "#07090f" : "#F4F2ED",
-    bgAlt:     dark ? "#09101e" : "#ECE9E2",
-    text:      dark ? "#E8E8E6" : "#1C1C1A",
-    textSub:   dark ? "rgba(232,232,230,0.44)" : "rgba(28,28,26,0.52)",
-    textFaint: dark ? "rgba(232,232,230,0.20)" : "rgba(28,28,26,0.28)",
-    gold:      dark ? "#C8961A" : "#996A00",
-    line:      dark ? "rgba(255,255,255,0.065)" : "rgba(0,0,0,0.09)",
-    navBg:     dark ? "rgba(7,9,15,0.92)" : "rgba(244,242,237,0.92)",
-    ctaBg:     dark ? "#E8E8E6" : "#1C1C1A",
-    ctaText:   dark ? "#07090f" : "#F4F2ED",
-    watchBg:   dark ? "linear-gradient(170deg,#040c1a 0%,#030d0f 100%)" : "linear-gradient(170deg,#E8EEFA 0%,#DCF0F3 100%)",
-    workBg:    dark ? "linear-gradient(170deg,#030d0f 0%,#080412 100%)" : "linear-gradient(170deg,#DCF0F3 0%,#EAE4F8 100%)",
-    wrapBg:    dark ? "linear-gradient(170deg,#080412 0%,#07090f 100%)" : "linear-gradient(170deg,#EAE4F8 0%,#F4F2ED 100%)",
-    watchA:    "#4A90F5",
-    workA:     "#0D8C9E",
-    wrapA:     "#A080F5",
+  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const lc = T.text;
-  const bc = T.line;
-  const hPal = PALETTES.hero;
-  const pal = PALETTES[orbSection];
-  const heroGlow = dark ? hPal.glow : hPal.glowLight;
-
   return (
-    <ThemeCtx.Provider value={{ dark, toggle }}>
-      <div
-        className="noise-overlay"
-        style={{
-          background:"#07090f",
-          fontFamily:"'Afacad Flux', sans-serif",
-          color:T.text,
-          backgroundColor:T.bg,
-          overflowX:"clip",
-          transition:"background .45s ease, color .3s ease" + (fromLandingZoom ? ", opacity 0.6s ease-out" : ""),
-          opacity: fromLandingZoom ? (entranceDone ? 1 : 0) : 1,
-        }}
-      >
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&family=DM+Sans:wght@400;500;600&display=swap');
-          *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-          html{scroll-behavior:smooth;}
-          [id]{scroll-margin-top:60px;}
-          ::selection{background:${T.gold}40;}
-          ${!dark ? "*, *::before, *::after { cursor: auto !important; } a, button, [role='button'], [style*='cursor:pointer'], [style*='cursor: pointer'] { cursor: pointer !important; }" : ""}
-          .noise-overlay::before{
-            content:"";
-            position:fixed;
-            top:0;
-            left:0;
-            width:100%;
-            height:100%;
-            pointer-events:none;
-            z-index:2;
-            opacity:0.018;
-            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            background-repeat:repeat;
-          }
-          .rooms-wrapper::before{
-            content:"";
-            position:absolute;
-            top:0;
-            left:0;
-            width:100%;
-            height:120px;
-            pointer-events:none;
-            z-index:1;
-            background:linear-gradient(180deg,#07090f 0%,transparent 100%);
-          }
-          .rooms-wrapper::after{
-            content:"";
-            position:absolute;
-            bottom:0;
-            left:0;
-            width:100%;
-            height:120px;
-            pointer-events:none;
-            z-index:1;
-            background:linear-gradient(0deg,#07090f 0%,transparent 100%);
-          }
-          @keyframes orbBreatheRooms {
-            0%, 100% { transform: scale(1); }
-            50%      { transform: scale(1.04); }
-          }
-          .orb-breathe-rooms { display: inline-block; animation: orbBreatheRooms 2.6s ease-in-out infinite; }
-          @keyframes float {
-            0%, 100% { transform: translateY(0); opacity: 0.4; }
-            50%      { transform: translateY(6px); opacity: 0.6; }
-          }
-        `}</style>
+    <div className="explore-page">
+      <style>{CSS}</style>
 
-        {/* Scroll progress indicator */}
-        <div
-          style={{
-            position: "fixed",
-            right: 0,
-            top: 0,
-            width: 2,
-            height: "100vh",
-            zIndex: 100,
-            background: "rgba(255,255,255,0.06)",
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              height: `${scrollPct * 100}%`,
-              background: "linear-gradient(to bottom, #4A90F5, #0D8C9E, #a080f5)",
-              transition: "height 0.1s linear",
-            }}
-          />
+      {/* ── NAV ──────────────────────────────────────────── */}
+      <nav className="ex-nav">
+        <Logo size="sm" variant="dark" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+        <div className="ex-nav-links">
+          <div className="ex-nav-links-desktop" style={{ display: "flex", gap: 28, alignItems: "center" }}>
+            <a href="#how" onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}>How It Works</a>
+            <a href="#standard" onClick={(e) => { e.preventDefault(); scrollTo(standardRef); }}>The Standard</a>
+          </div>
+          <a href={CTA_MAILTO} className="ex-btn-gold" style={{ padding: "8px 20px", fontSize: 13 }}>
+            Let's Talk
+          </a>
         </div>
+      </nav>
 
-        {/* NAV */}
-        <nav style={{
-          position:"fixed",
-          top:0,
-          left:0,
-          right:0,
-          width:"100%",
-          zIndex:200,
-          height:54,
-          padding:"0 36px",
-          display:"flex",
-          alignItems:"center",
-          justifyContent:"space-between",
-          background: navScrolled ? "rgba(7,9,15,0.92)" : "rgba(7,9,15,0.6)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderBottom: navScrolled ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255,255,255,0.03)",
-          transition:"background 0.3s ease, border-color 0.3s ease",
-        }}>
-          <button onClick={()=>nav("/")} style={{background:"none",border:"none",display:"flex",alignItems:"baseline",cursor:"pointer",gap:0}}>
-            <Logo size={15} variant={dark ? "dark" : "light"} />
-          </button>
-          {!isMobile && (
-            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <a href="#problem" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Problem</a>
-              <a href="#fw" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Framework</a>
-              <a href="#rooms" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Rooms</a>
-              <a href="#checkpoints" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Checkpoints</a>
-              <a href="#cta" style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.6)", transition: "color .2s" }} onMouseEnter={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.95)"; }} onMouseLeave={e=>{ e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>Contact</a>
-            </div>
-          )}
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"7px 22px",color:T.ctaText,fontSize:12,fontWeight:600,fontFamily:"'Afacad Flux', sans-serif",cursor:"pointer",transition:"opacity .2s"}}
-              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".80"}
-              onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>
-              Get Early Access
-            </button>
-          </div>
-        </nav>
-
-        {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
-        <section style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"110px 40px 72px",position:"relative",overflow:"hidden"}}>
-          {/* Cool blue ambient glow */}
-          <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:0,background:dark?"radial-gradient(ellipse 70% 50% at 50% 52%, rgba(58,123,213,0.10) 0%, transparent 68%)":"radial-gradient(ellipse 70% 50% at 50% 52%, rgba(120,160,240,0.07) 0%, transparent 68%)"}} />
-          {/* Warm brand halo behind headline */}
-          <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:0,background:"radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,150,26,0.03) 0%, transparent 70%)"}} />
-
-          {/* Eyebrow: primary category label */}
-          <div
-            style={{
-              position:"relative",
-              zIndex:2,
-              fontSize:13,
-              letterSpacing:".25em",
-              color:"#C8961A",
-              textTransform:"uppercase",
-              marginBottom:18,
-              fontWeight:600,
-              opacity:mounted?1:0,
-              transform:mounted?"none":"translateY(4px)",
-              transition:"opacity .8s .3s ease, transform .8s .3s cubic-bezier(.16,1,.3,1)",
-            }}
-          >
-            COMPOSED INTELLIGENCE
-          </div>
-
-          {/* Headline */}
-          <div style={{position:"relative",zIndex:2,textAlign:"center",opacity:mounted?1:0,transform:mounted?"none":"translateY(14px)",transition:"opacity .8s .35s ease, transform .8s .35s cubic-bezier(.16,1,.3,1)"}}>
-            <div style={{fontSize:"clamp(48px,8vw,106px)",fontWeight:800,letterSpacing:"-.045em",lineHeight:.92,color:T.text,marginBottom:4}}>Your thinking.</div>
-            <div style={{fontSize:"clamp(48px,8vw,106px)",fontWeight:800,letterSpacing:"-.045em",lineHeight:.92,color:T.gold,marginBottom:32}}>Composed.</div>
-          </div>
-
-          {/* Value prop tagline */}
-          <div style={{position:"relative",zIndex:2,textAlign:"center",marginBottom:16,opacity:mounted?1:0,transform:mounted?"none":"translateY(8px)",transition:"opacity .8s .48s ease, transform .8s .48s cubic-bezier(.16,1,.3,1)"}}>
-            <p style={{fontSize:"clamp(18px,2.2vw,24px)",fontWeight:600,letterSpacing:"-.02em",color:T.textSub,margin:0}}>
-              One idea in. <span style={{color:T.gold}}>Publication-ready content out.</span>
-            </p>
-          </div>
-
-          {/* Subhead */}
-          <div style={{position:"relative",zIndex:2,maxWidth:500,textAlign:"center",marginBottom:38,opacity:mounted?1:0,transition:"opacity .8s .6s ease"}}>
-            <p style={{fontSize:"clamp(13px,1.4vw,15px)",lineHeight:1.74,color:T.textFaint,fontWeight:400}}>
-              You have the ideas, the expertise, and the point of view. What you don't have is the system to turn all of that into content that actually lands.
-            </p>
-          </div>
-
-          {/* CTAs */}
-          <div style={{position:"relative",zIndex:2,display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",opacity:mounted?1:0,transition:"opacity .8s .68s ease"}}>
-            <button onClick={()=>nav("/auth")} style={{background:T.ctaBg,border:"none",borderRadius:100,padding:"12px 38px",fontSize:13,fontWeight:700,color:T.ctaText,fontFamily:"'Afacad Flux', sans-serif",cursor:"pointer",transition:"opacity .2s"}}
-              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.opacity=".82"}
-              onMouseLeave={e=>(e.currentTarget as HTMLElement).style.opacity="1"}>
-              Get Early Access
-            </button>
-            <button
-              onClick={()=>document.getElementById("fw")?.scrollIntoView({behavior:"smooth"})}
-              style={{
-                background:"transparent",
-                border:"1px solid rgba(255,255,255,0.2)",
-                borderRadius:100,
-                padding:"16px 36px",
-                fontSize:13,
-                fontWeight:500,
-                color:"rgba(255,255,255,0.75)",
-                fontFamily:"'Afacad Flux', sans-serif",
-                cursor:"pointer",
-                transition:"all 0.25s ease",
-              }}
-              onMouseEnter={e=>{ const el = e.currentTarget as HTMLElement; el.style.borderColor="rgba(255,255,255,0.4)"; el.style.color="rgba(255,255,255,0.95)"; el.style.background="rgba(255,255,255,0.06)"; }}
-              onMouseLeave={e=>{ const el = e.currentTarget as HTMLElement; el.style.borderColor="rgba(255,255,255,0.2)"; el.style.color="rgba(255,255,255,0.75)"; el.style.background="transparent"; }}>
+      {/* ── SECTION 01: HERO ─────────────────────────────── */}
+      <section style={{ background: "var(--navy)" }}>
+        <div className="ex-section" style={{ paddingTop: isMobile ? 64 : 100, paddingBottom: isMobile ? 64 : 100 }}>
+          <div className="ex-eyebrow">EVERYWHERE Studio™</div>
+          <h1 className="ex-h1">
+            You know what you want to say.<br />
+            <em>It's still in your head.</em>
+          </h1>
+          <p className="ex-body" style={{ fontSize: 19, marginBottom: 32 }}>
+            Sunday night. Another week where your best thinking didn't make it out into the world. That ends here.
+          </p>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <a href={CTA_MAILTO} className="ex-btn-gold">Let's Talk</a>
+            <a href="#how" className="ex-btn-outline" onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}>
               See How It Works
-            </button>
+            </a>
           </div>
-
-          {/* Scroll cue */}
-          <button
-            type="button"
-            onClick={() => document.getElementById("problem")?.scrollIntoView({ behavior: "smooth" })}
-            style={{
-              position: "absolute",
-              bottom: 32,
-              left: "50%",
-              transform: "translateX(-50%)",
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              opacity: showScrollHint ? 1 : 0,
-              transition: "opacity 0.4s ease",
-            }}
-            aria-label="Scroll down"
-          >
-            <svg
-              width="20"
-              height="12"
-              viewBox="0 0 20 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{
-                display: "block",
-                animation: "float 2.5s ease-in-out infinite",
-                stroke: "rgba(255,255,255,0.4)",
-              }}
-              onMouseEnter={e => { (e.currentTarget as SVGElement).style.stroke = "rgba(255,255,255,0.8)"; }}
-              onMouseLeave={e => { (e.currentTarget as SVGElement).style.stroke = "rgba(255,255,255,0.4)"; }}
-            >
-              <path
-                d="M3 3L10 9L17 3"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </section>
-
-        {/* ══ SOCIAL PROOF BAR ════════════════════════════════════════════════ */}
-        <section
-          style={{
-            padding: "20px 0",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-            background: "rgba(255,255,255,0.03)",
-          }}
-        >
-          <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 40px" }}>
-            <p
-              style={{
-                margin: 0,
-                fontSize: 13,
-                color: "rgba(255,255,255,0.4)",
-                letterSpacing: "0.04em",
-                fontWeight: 400,
-                textAlign: "center",
-                textTransform: "uppercase",
-              }}
-            >
-              Used by executive coaches, consultants, and keynote speakers who charge $10K+ per engagement
-            </p>
-            <FadeUp delay={0.1}>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12, marginTop: 32, maxWidth: 800, marginLeft: "auto", marginRight: "auto" }}>
-                {[
-                  { title: "Executive Coaches", desc: "Turn frameworks into a publishing engine" },
-                  { title: "Keynote Speakers", desc: "Extend every talk into lasting content" },
-                  { title: "Management Consultants", desc: "Scale thought leadership across clients" },
-                  { title: "Published Authors", desc: "Keep your ideas in circulation everywhere" },
-                ].map((p) => (
-                  <div key={p.title} style={{
-                    padding: "16px 14px",
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    borderRadius: 8,
-                    textAlign: "center",
-                  }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.7)", marginBottom: 4, fontFamily: "'Afacad Flux', sans-serif" }}>{p.title}</div>
-                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", lineHeight: 1.5, fontFamily: "'Afacad Flux', sans-serif" }}>{p.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </FadeUp>
-          </div>
-        </section>
-
-        {/* ══ PROBLEM ═══════════════════════════════════════════════════════════ */}
-        <section
-          id="problem"
-          style={{
-            padding: isMobile ? "80px 24px 80px" : "140px 48px 140px",
-          }}
-        >
-          <div style={{maxWidth:880,margin:"0 auto"}}>
-            <FadeInSection>
-              <WordReveal text="You already know what to say." size="clamp(32px,4.5vw,54px)" weight={700} lh={1.04} color={T.text} />
-              <div style={{marginTop:10,marginBottom:36}}>
-                <WordReveal text="The hard part is everything after that." size="clamp(15px,1.7vw,20px)" weight={400} color={T.textSub} lh={1.4} delay={0.08} />
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:isMobile ? "24px" : "0 64px",maxWidth:800}}>
-                <FadeUp delay={0.04}><p style={{fontSize:14,lineHeight:1.8,color:T.textSub}}>Every thought leader faces the same bottleneck. You have insights worth sharing, but turning them into polished, multi-format content takes a team you don't have and time you can't spare.</p></FadeUp>
-                <FadeUp delay={0.10}><p style={{fontSize:14,lineHeight:1.8,color:T.textSub}}>AI tools move fast but flatten your voice into something generic. Ghostwriters get tone right but cost thousands a month and still need you to do half the work.</p></FadeUp>
-              </div>
-            </FadeInSection>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* ══ FRAMEWORK ════════════════════════════════════════════════════════ */}
-        <section
-          id="fw"
-          style={{
-            padding: isMobile ? "80px 24px 80px" : "160px 48px 160px",
-            background: "#07090f",
-          }}
-        >
-          <div style={{maxWidth:920,margin:"0 auto"}}>
-            <FadeInSection>
-              <div style={{textAlign:"center",marginBottom:16}}>
-                <div style={{fontSize:14,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:18,fontWeight:500}}>The Framework</div>
-                <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.text,marginBottom:4}}>One idea in.</div>
-                <div style={{fontSize:"clamp(36px,5vw,68px)",fontWeight:800,letterSpacing:"-.04em",lineHeight:.94,color:T.gold,marginBottom:20}}>Communications out.</div>
-                <p style={{fontSize:14,color:T.textSub,maxWidth:420,margin:"0 auto",lineHeight:1.72}}><Logo size={14} variant={dark ? "dark" : "light"} /> bridges what you know and what the world sees.</p>
-              </div>
-            </FadeInSection>
-            {/* Counters */}
-            <FadeInSection style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",marginTop:48,borderTop:`1px solid ${bc}`}}>
-              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={MARKETING_NUMBERS.specialistCount} suffix="+" label="AI Specialists" accent={T.watchA} /></div>
-              <div style={{padding:isMobile ? "24px 16px" : "36px 28px",borderRight:`1px solid ${bc}`}}><Counter target={MARKETING_NUMBERS.outputFormatCount} label="Output Formats" accent={T.workA} /></div>
-              <div style={{padding:isMobile ? "24px 16px" : "36px 28px"}}><Counter target={MARKETING_NUMBERS.qualityCheckpoints} label="Quality Checkpoints" accent={T.wrapA} /></div>
-            </FadeInSection>
-          </div>
-        </section>
-
-        {/* ══ ROOMS: single continuous left column (lazy-loaded) ═══════════════ */}
-        <div ref={roomsSentinelRef}>
-          {roomsVisible ? (
-            <RoomsSection dark={dark} T={T} lc={lc} bc={bc} orbSection={orbSection} orbEnergy={orbEnergy} watchRef={watchRef} workRef={workRef} wrapRef={wrapRef} />
-          ) : (
-            <div style={{ minHeight: "300vh", background: "#07090f" }} />
-          )}
         </div>
+      </section>
 
-        <SectionDivider />
+      {/* ── SECTION 02: RECOGNITION ──────────────────────── */}
+      <section style={{ background: "var(--navy-mid)" }}>
+        <div className="ex-section">
+          <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: 28 }}>
+            <h2 className="ex-h2" style={{ maxWidth: 700 }}>
+              You have years of thinking that the world hasn't heard yet.{" "}
+              <em>That's not a discipline problem.</em>
+            </h2>
+            <p className="ex-body">
+              It's an infrastructure problem. Getting ideas from your head — through drafting, editing, formatting, and publishing, across every channel, in your voice, at the quality they deserve — is a full operation.
+            </p>
+            <p className="ex-body">
+              You've been trying to run that operation alone. Most thought leaders are. The ones who aren't are the ones you see everywhere.
+            </p>
+          </div>
+        </div>
+      </section>
 
-        {/* ══ QUALITY CHECKPOINTS ════════════════════════════════════════════════════ */}
-        <section
-          id="checkpoints"
-          style={{
-            padding: isMobile ? "80px 24px 40px" : "140px 48px 60px",
-            background:"#07090f",
-          }}
-        >
-          <div style={{maxWidth:800,margin:"0 auto"}}>
-            <FadeInSection>
-              <div style={{display:"grid",gridTemplateColumns:isMobile ? "1fr" : "1fr 1fr",gap:"36px 60px",alignItems:"end",marginBottom:44}}>
-                <div>
-                  <FadeUp>
-                    <div style={{display:"inline-flex",alignItems:"center",fontSize:14,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:14,fontWeight:500,borderLeft:"2px solid #C8961A",paddingLeft:12}}>
-                      Quality Checkpoints
-                    </div>
-                  </FadeUp>
-                  <WordReveal text="Nothing ships without passing the checkpoints." size="clamp(24px,3.2vw,40px)" weight={700} lh={1.08} color={T.text} />
+      {/* ── SECTION 03: LEVERAGE STRIP ───────────────────── */}
+      <section style={{ background: "var(--gold-dim)" }}>
+        <div className="ex-section" style={{ paddingTop: 48, paddingBottom: 48, textAlign: "center" }}>
+          <p style={{ fontSize: isMobile ? 20 : 24, fontWeight: 600, color: "var(--gold)", margin: 0, maxWidth: 700, marginInline: "auto", lineHeight: 1.4 }}>
+            The people in your market who show up everywhere aren't better thinkers. They have better infrastructure.
+          </p>
+        </div>
+      </section>
+
+      {/* ── SECTION 04: IDENTITY SHIFT ───────────────────── */}
+      <section style={{ background: "var(--navy)" }}>
+        <div className="ex-section">
+          <div className="ex-grid-2">
+            <div>
+              <div className="ex-eyebrow">You know this feeling</div>
+              <h2 className="ex-h2">The idea is in your head. Not in the world.</h2>
+              <p className="ex-body">
+                You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out — in your voice, at the quality it deserves, on every channel that matters.
+              </p>
+            </div>
+            <div>
+              {[
+                { label: "Sunday night", text: "The week is ending. You had three ideas worth writing about. None of them made it out." },
+                { label: "On a plane", text: "You write two pages of thinking in a notebook. It never becomes anything." },
+                { label: "Watching someone else", text: "You see someone on stage or in your feed saying something you've thought for years. They just got it out first." },
+                { label: "After the conversation", text: "You just explained something perfectly to a client. Room changed. No one else will ever hear that version of it." },
+              ].map((m) => (
+                <div key={m.label} className="ex-moment">
+                  <div className="ex-moment-label">{m.label}</div>
+                  <div className="ex-moment-text">{m.text}</div>
                 </div>
-                <FadeUp delay={0.1}><p style={{fontSize:13,lineHeight:1.75,color:T.textSub}}>7 checks before anything reaches your audience. No AI tells. No off-brand moments. No weak writing.</p></FadeUp>
-              </div>
-            </FadeInSection>
-            <div style={{borderTop:`1px solid ${bc}`}}>
-              <FadeInSection>
-                {[["01","Echo","Catches repeated concepts and structural patterns","#4A90D9"],["02","Priya","Verifies every claim against independent sources","#C8961A"],["03","Jordan","Matches Voice DNA above 95% fidelity","#0D8C9E"],["04","David","7-second hook test with clear stakes","#A080F5"],["05","Elena","SLOP Detection: zero AI tells, zero em dashes","#e8506a"],["06","Natasha","Publication-grade editorial standard","#4ab8f5"],["07","Marcus + Marshall","Cultural sensitivity and perspective check","#10b981"]].map(([num,name,desc,color],i,arr)=>(
-                  <CheckpointRow key={i} num={num} name={name} desc={desc} color={color} delay={0.03+i*.05} lc={lc} bc={bc} last={i===arr.length-1} />
-                ))}
-              </FadeInSection>
+              ))}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <SectionDivider />
-
-        {/* ══ SLOP DETECTOR ══════════════════════════════════════════════════ */}
-        <section
-          style={{
-            padding: isMobile ? "40px 24px 80px" : "60px 48px 140px",
-            background: "#07090f",
-          }}
-        >
-          <div style={{ maxWidth: 800, margin: "0 auto" }}>
-            <FadeInSection>
-              <div style={{ marginBottom: 44 }}>
-                <FadeUp>
-                  <div style={{ display: "inline-flex", alignItems: "center", fontSize: 14, letterSpacing: ".15em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", marginBottom: 14, fontWeight: 500, borderLeft: "2px solid #e8506a", paddingLeft: 12 }}>
-                    The SLOP Detector
-                  </div>
-                </FadeUp>
-                <WordReveal text="If AI wrote it, Elena catches it." size="clamp(28px,3.8vw,48px)" weight={700} lh={1.08} color={T.text} />
-                <FadeUp delay={0.1}>
-                  <p style={{ fontSize: 15, lineHeight: 1.78, color: T.textSub, marginTop: 24, maxWidth: 600 }}>
-                    SLOP stands for four failure patterns that mark content as machine-generated. Our detection system maintains a living database of AI tells, updated weekly. One em dash in prose? Automatic block.
-                  </p>
-                </FadeUp>
-              </div>
-            </FadeInSection>
-
-            <FadeInSection>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
-                {[
-                  { letter: "S", title: "SUPERFLUITY", desc: "More words than the content earns. Paragraphs that restate their opening. Transitions that summarize before advancing." },
-                  { letter: "L", title: "LOOPS", desc: "Arguments that circle back without advancing. The impression of development without substance." },
-                  { letter: "O", title: "OVERWROUGHT", desc: "Language that tries harder than the content requires. Metaphors strained past their limit. Vocabulary one register too formal." },
-                  { letter: "P", title: "PRETENSION", desc: "Complexity for its own sake. Hedging dressed as nuance. Abstract language where concrete examples would serve." },
-                ].map((item, i) => (
-                  <FadeUp key={item.letter} delay={0.06 + i * 0.06}>
-                    <div style={{
-                      background: "rgba(232,80,106,0.04)",
-                      border: "1px solid rgba(232,80,106,0.12)",
-                      borderRadius: 8,
-                      padding: isMobile ? "20px 16px" : "24px 20px",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                        <span style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 6,
-                          background: "rgba(232,80,106,0.12)",
-                          color: "#e8506a",
-                          fontSize: 18,
-                          fontWeight: 700,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontFamily: "'Afacad Flux', sans-serif",
-                          flexShrink: 0,
-                        }}>
-                          {item.letter}
-                        </span>
-                        <span style={{
-                          fontSize: 13,
-                          fontWeight: 700,
-                          letterSpacing: "1px",
-                          textTransform: "uppercase",
-                          color: "#e8506a",
-                          fontFamily: "'Afacad Flux', sans-serif",
-                        }}>
-                          {item.title}
-                        </span>
-                      </div>
-                      <p style={{
-                        fontSize: 14,
-                        lineHeight: 1.7,
-                        color: "rgba(255,255,255,0.55)",
-                        margin: 0,
-                        fontFamily: "'Afacad Flux', sans-serif",
-                      }}>
-                        {item.desc}
-                      </p>
-                    </div>
-                  </FadeUp>
-                ))}
-              </div>
-            </FadeInSection>
-
-            <FadeUp delay={0.36}>
-              <div style={{
-                marginTop: 32,
-                background: "rgba(232,80,106,0.06)",
-                border: "1px solid rgba(232,80,106,0.15)",
-                borderLeft: "4px solid #e8506a",
-                borderRadius: 6,
-                padding: isMobile ? "16px" : "16px 20px",
-              }}>
-                <div style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: "2px",
-                  textTransform: "uppercase",
-                  color: "#e8506a",
-                  marginBottom: 8,
-                  fontFamily: "'Afacad Flux', sans-serif",
-                }}>
-                  The em dash rule
-                </div>
-                <p style={{
-                  fontSize: 14,
-                  lineHeight: 1.7,
-                  color: "rgba(255,255,255,0.6)",
-                  margin: 0,
-                  fontFamily: "'Afacad Flux', sans-serif",
-                }}>
-                  One em dash in prose output is an automatic block. This is the single most reliable AI tell in 2026. No exceptions.
-                </p>
-              </div>
-            </FadeUp>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* ══ COMPOUND ═════════════════════════════════════════════════════════ */}
-        <section
-          style={{
-            padding: isMobile ? "80px 24px 80px" : "140px 48px 80px",
-          }}
-        >
-          <div style={{maxWidth:680,margin:"0 auto"}}>
-            <FadeInSection>
-              <div style={{fontSize:12,letterSpacing:".2em",color:T.textFaint,textTransform:"uppercase",marginBottom:16,fontWeight:500}}>Compound Advantage</div>
-              <WordReveal text="Why It Compounds" size="clamp(34px,4.5vw,58px)" weight={700} lh={1.0} color={T.text} />
-              <div style={{display:"flex",flexDirection:"column",gap:16,marginTop:32}}>
-                <FadeUp delay={0.06}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Most tools make content faster. <Logo size={15} variant={dark ? "dark" : "light"} /> makes it better, and the difference grows with every piece you publish.</p></FadeUp>
-                <FadeUp delay={0.12}><p style={{fontSize:15,lineHeight:1.78,color:T.textSub}}>Your Voice DNA sharpens. Quality checkpoints calibrate. The intelligence layer learns the contours of your category with increasing precision.</p></FadeUp>
-              </div>
-              <FadeUp delay={0.24}>
-                <div style={{marginTop:44, textAlign:"center"}}>
-                  <div
-                    style={{
-                      height:1,
-                      maxWidth:500,
-                      margin:"40px auto",
-                      background:"linear-gradient(90deg, transparent, rgba(200,150,26,0.25), transparent)",
-                    }}
-                  />
-                  <div
-                    style={{
-                      maxWidth:700,
-                      margin:"64px auto 0 auto",
-                      fontSize:"clamp(24px,3vw,32px)",
-                      fontFamily:"'Cormorant Garamond', serif",
-                      fontStyle:"italic",
-                      color:"#C8961A",
-                      lineHeight:1.5,
-                      letterSpacing:"0.01em",
-                      textAlign:"center",
-                    }}
-                  >
-                    Competitors can copy the output format. They cannot copy the system underneath it.
-                  </div>
-                  <div
-                    style={{
-                      height:1,
-                      maxWidth:500,
-                      margin:"40px auto",
-                      background:"linear-gradient(90deg, transparent, rgba(200,150,26,0.25), transparent)",
-                    }}
-                  />
-                </div>
-              </FadeUp>
-            </FadeInSection>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* ══ CTA ══════════════════════════════════════════════════════════════ */}
-        <section
-          id="cta"
-          style={{
-            padding: isMobile ? "100px 24px 80px" : "180px 48px 120px",
-            textAlign:"center",
-            background:dark?"linear-gradient(180deg,#07090f 0%,#08102a 100%)":"linear-gradient(180deg,#F4F2ED 0%,#E8ECF8 100%)",
-          }}
-        >
-          <div style={{maxWidth:540,margin:"0 auto"}}>
-            <FadeInSection>
-              <div style={{fontSize:14,letterSpacing:".15em",color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:24,fontWeight:500}}>Let's Talk</div>
-              <WordReveal text="Your ideas deserve a system built to carry them." size="clamp(28px,4vw,52px)" weight={700} lh={1.02} color={T.text} center />
-              <FadeUp delay={0.18}><p style={{fontSize:15,lineHeight:1.68,color:T.textSub,marginTop:18,marginBottom:44}}>If you're ready to stop carrying the mountain alone, let's have a conversation.</p></FadeUp>
-              <FadeUp delay={0.26}>
-                <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:48,flexWrap:"wrap"}}>
-                  <button
-                    onClick={()=>{ window.location.href = "mailto:mark@everywhereStudio.com"; }}
-                    style={{
-                      background:"#C8961A",
-                      border:"none",
-                      borderRadius:100,
-                      padding:"16px 40px",
-                      fontSize:15,
-                      fontWeight:600,
-                      color:"#07090f",
-                      fontFamily:"'Afacad Flux', sans-serif",
-                      cursor:"pointer",
-                      transition:"all 0.25s ease",
-                    }}
-                    onMouseEnter={e=>{
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.background = "#d4a52e";
-                      el.style.transform = "translateY(-2px)";
-                      el.style.boxShadow = "0 8px 30px rgba(200,150,26,0.3)";
-                    }}
-                    onMouseLeave={e=>{
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.background = "#C8961A";
-                      el.style.transform = "translateY(0)";
-                      el.style.boxShadow = "none";
-                    }}
-                  >
-                    Let's Talk
-                  </button>
-                  <button
-                    onClick={()=>nav("/studio/dashboard")}
-                    style={{
-                      background:"transparent",
-                      border:"1px solid rgba(255,255,255,0.2)",
-                      borderRadius:100,
-                      padding:"16px 40px",
-                      fontSize:15,
-                      fontWeight:500,
-                      color:"rgba(255,255,255,0.7)",
-                      fontFamily:"'Afacad Flux', sans-serif",
-                      cursor:"pointer",
-                      transition:"all 0.25s ease",
-                    }}
-                    onMouseEnter={e=>{
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.borderColor = "rgba(255,255,255,0.4)";
-                      el.style.color = "#ffffff";
-                      el.style.background = "rgba(255,255,255,0.05)";
-                    }}
-                    onMouseLeave={e=>{
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.borderColor = "rgba(255,255,255,0.2)";
-                      el.style.color = "rgba(255,255,255,0.7)";
-                      el.style.background = "transparent";
-                    }}
-                  >
-                    Open Studio
-                  </button>
-                </div>
-              </FadeUp>
-            </FadeInSection>
-          </div>
-        </section>
-
-        {/* FOOTER */}
-        <footer
-          style={{
-            background:"#07090f",
-            borderTop:"1px solid rgba(255,255,255,0.06)",
-          }}
-        >
-          <div
-            style={{
-              maxWidth:1200,
-              margin:"0 auto",
-              padding:"48px 64px",
-              display:"flex",
-              flexDirection:"column",
-              gap:24,
-              fontFamily:"'Afacad Flux', sans-serif",
-            }}
-          >
-            <div
-              style={{
-                display:"flex",
-                justifyContent:"space-between",
-                alignItems:"center",
-                flexWrap:"wrap",
-                rowGap:12,
-              }}
-            >
-              <Logo size={14} variant="dark" />
-              <div style={{ fontSize:12, fontWeight:500, letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.7)" }}>
-                Composed Intelligence
-              </div>
+      {/* ── SECTION 05: WHAT IT IS ───────────────────────── */}
+      <section style={{ background: "var(--navy-mid)" }}>
+        <div className="ex-section" style={{ textAlign: "center" }}>
+          <div className="ex-eyebrow">EVERYWHERE Studio</div>
+          <h2 className="ex-h2" style={{ maxWidth: 700, marginInline: "auto" }}>
+            Your thinking. Out in the world. In your voice. Every week.
+          </h2>
+          <p className="ex-body" style={{ marginInline: "auto" }}>
+            A coordinated team of {MARKETING_NUMBERS.specialistCount} specialists takes the idea in your head and turns it into publication-ready content across every format and channel you need.
+          </p>
+          <p className="ex-body" style={{ marginInline: "auto" }}>
+            You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
+          </p>
+          <div className="ex-stats-row" style={{ justifyContent: "center" }}>
+            <div className="ex-stat">
+              <div className="ex-stat-num">{MARKETING_NUMBERS.specialistCount}</div>
+              <div className="ex-stat-label">Specialists</div>
             </div>
-
-            <div
-              style={{
-                height:1,
-                borderTop:"1px solid rgba(255,255,255,0.04)",
-                margin:"24px 0",
-              }}
-            />
-
-            <div
-              style={{
-                display:"flex",
-                justifyContent:"space-between",
-                alignItems:"center",
-                flexWrap:"wrap",
-                rowGap:8,
-              }}
-            >
-              <span style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>2026 Mixed Grill LLC</span>
-              <span style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>Santa Barbara, CA</span>
+            <div className="ex-stat">
+              <div className="ex-stat-num">{MARKETING_NUMBERS.qualityCheckpoints}</div>
+              <div className="ex-stat-label">Checkpoints</div>
+            </div>
+            <div className="ex-stat">
+              <div className="ex-stat-num">{MARKETING_NUMBERS.betterishThreshold}</div>
+              <div className="ex-stat-label">Min. Quality Score</div>
+            </div>
+            <div className="ex-stat">
+              <div className="ex-stat-num">0</div>
+              <div className="ex-stat-label">Left for you to finish</div>
             </div>
           </div>
-        </footer>
+        </div>
+      </section>
 
-        {/* Subtle global theme toggle: bottom-left icon-only */}
-        <ThemeToggle lc={T.text} />
-      </div>
-    </ThemeCtx.Provider>
+      {/* ── SECTION 06: SOCIAL PROOF ─────────────────────── */}
+      <section style={{ background: "var(--navy-card)" }}>
+        <div className="ex-section" style={{ textAlign: "center", maxWidth: 700, marginInline: "auto" }}>
+          <blockquote style={{ margin: 0, padding: 0, border: "none" }}>
+            <p style={{ fontSize: isMobile ? 20 : 24, fontWeight: 500, lineHeight: 1.5, color: "var(--white)", fontStyle: "italic", marginBottom: 20 }}>
+              "I had a decade of thinking that had never made it out. Now it does — every week — and it sounds like me. Better than what I was writing myself."
+            </p>
+            <footer style={{ fontSize: 14, color: "var(--white-dim)" }}>
+              — [Client Name] · [Title]
+            </footer>
+          </blockquote>
+          <p style={{ fontSize: 12, color: "var(--white-dim)", marginTop: 24, opacity: 0.5, fontStyle: "italic" }}>
+            [ Replace with one real named result before launch ]
+          </p>
+        </div>
+      </section>
+
+      {/* ── SECTION 07: HOW IT WORKS ─────────────────────── */}
+      <section ref={howRef} style={{ background: "var(--navy)" }}>
+        <div className="ex-section">
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <div className="ex-eyebrow">Three rooms. One idea.</div>
+            <h2 className="ex-h2">Watch. Work. Wrap.</h2>
+          </div>
+          <div className="ex-grid-3">
+            {/* Room One */}
+            <div className="ex-room-card">
+              <div className="ex-room-tag">Room One — WATCH</div>
+              <div className="ex-room-title">The Intelligence Room</div>
+              <p className="ex-room-body">
+                Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing — so your thinking lands in context, not into noise.
+              </p>
+              <ul className="ex-room-items">
+                <li>Real-time market signal tracking</li>
+                <li>Conversation and gap mapping</li>
+                <li>Your idea meets the moment</li>
+              </ul>
+            </div>
+            {/* Room Two */}
+            <div className="ex-room-card">
+              <div className="ex-room-tag">Room Two — WORK</div>
+              <div className="ex-room-title">The Production Room</div>
+              <p className="ex-room-body">
+                A coordinated team transforms what's in your head into publication-grade content. In your voice. Every claim verified. Seven checkpoints before it touches you.
+              </p>
+              <ul className="ex-room-items">
+                <li>Voice DNA — sounds exactly like you</li>
+                <li>100% verified claims</li>
+                <li>Zero AI fingerprints</li>
+                <li>7-second hook on every piece</li>
+              </ul>
+            </div>
+            {/* Room Three */}
+            <div className="ex-room-card">
+              <div className="ex-room-tag">Room Three — WRAP</div>
+              <div className="ex-room-title">The Distribution Room</div>
+              <p className="ex-room-body">
+                One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack — simultaneously.
+              </p>
+              <ul className="ex-room-items">
+                <li>Every channel, formatted natively</li>
+                <li>One-click to publish</li>
+                <li>Every piece makes the next one better</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 08: QUALITY CHECKPOINTS ──────────────── */}
+      <section ref={standardRef} style={{ background: "var(--navy-mid)" }}>
+        <div className="ex-section">
+          <div className="ex-grid-2">
+            <div>
+              <div className="ex-eyebrow">Quality Checkpoints</div>
+              <h2 className="ex-h2">Nothing ships without passing all seven.</h2>
+              <p className="ex-body">
+                Every piece of content runs through {MARKETING_NUMBERS.qualityCheckpoints} independent quality gates before it reaches you. Not style checks. Substantive evaluation by specialists who know what publication-ready means.
+              </p>
+            </div>
+            <div>
+              {[
+                { num: "01", name: "Echo", desc: "Catches repeated concepts and structural patterns." },
+                { num: "02", name: "Priya", desc: "Verifies every factual claim. 100% accuracy standard." },
+                { num: "03", name: "Jordan", desc: `Voice DNA fidelity. Greater than ${MARKETING_NUMBERS.voiceDnaTarget}% match. Zero AI tells.` },
+                { num: "04", name: "David", desc: "7-second hook test. Doesn't earn the read, doesn't ship." },
+                { num: "05", name: "Elena", desc: "SLOP detection. One em dash in prose is an automatic block." },
+                { num: "06", name: "Natasha", desc: "Publication-grade standard plus the Stranger Test." },
+                { num: "07", name: "Marcus + Marshall", desc: "Cultural sensitivity and nonviolent communication review." },
+              ].map((cp) => (
+                <div key={cp.num} className="ex-checkpoint">
+                  <span className="ex-checkpoint-num">{cp.num}</span>
+                  <span className="ex-checkpoint-name">{cp.name}</span>
+                  <span className="ex-checkpoint-desc">— {cp.desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 09: FINAL CTA ────────────────────────── */}
+      <section style={{ background: "var(--navy)" }}>
+        <div className="ex-section" style={{ textAlign: "center", paddingTop: isMobile ? 64 : 100, paddingBottom: isMobile ? 64 : 100 }}>
+          <div className="ex-eyebrow">Let's Talk</div>
+          <h2 className="ex-h2" style={{ maxWidth: 640, marginInline: "auto" }}>
+            Your thinking deserves to <em>be heard.</em>
+          </h2>
+          <p className="ex-body" style={{ marginInline: "auto", marginBottom: 12 }}>
+            You don't need more discipline. You need a system that carries the idea from your head to your audience — every week, without it sitting on your to-do list.
+          </p>
+          <p className="ex-body" style={{ marginInline: "auto", marginBottom: 36 }}>
+            There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
+          </p>
+          <a href={CTA_MAILTO} className="ex-btn-gold" style={{ fontSize: 16, padding: "16px 40px" }}>
+            Let's Talk
+          </a>
+        </div>
+      </section>
+
+      {/* ── FOOTER ───────────────────────────────────────── */}
+      <footer style={{ background: "var(--navy)" }}>
+        <div className="ex-footer">
+          <Logo size="sm" variant="dark" />
+          <span>Composed Intelligence · Santa Barbara, CA · 2026 Mixed Grill LLC</span>
+        </div>
+      </footer>
+    </div>
   );
 }
