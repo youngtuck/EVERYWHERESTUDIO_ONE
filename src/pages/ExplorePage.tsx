@@ -1,18 +1,123 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import { MARKETING_NUMBERS } from "../lib/constants";
 
 const CTA_MAILTO = "mailto:mark@mixedgrill.studio?subject=EVERYWHERE%20Studio%20—%20Let's%20Talk";
+const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
+// ── Scroll reveal hook ──────────────────────────────────────────────────────
+function useScrollReveal(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
+      { threshold },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return { ref, isVisible };
+}
+
+// ── Animated counter ────────────────────────────────────────────────────────
+function CountUp({ to, duration = 400 }: { to: number; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(eased * to));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [visible, to, duration]);
+
+  return <span ref={ref}>{visible ? value : 0}</span>;
+}
+
+// ── Reveal wrapper ──────────────────────────────────────────────────────────
+function Reveal({
+  children,
+  delay = 0,
+  threshold = 0.15,
+  scale,
+  style,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  threshold?: number;
+  scale?: boolean;
+  style?: React.CSSProperties;
+}) {
+  const { ref, isVisible } = useScrollReveal(threshold);
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible
+          ? "translateY(0) scale(1)"
+          : `translateY(30px) scale(${scale ? 0.95 : 1})`,
+        transition: `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── Staggered checkpoint reveal ─────────────────────────────────────────────
+function StaggerReveal({
+  children,
+  index,
+  parentVisible,
+}: {
+  children: React.ReactNode;
+  index: number;
+  parentVisible: boolean;
+}) {
+  return (
+    <div
+      style={{
+        opacity: parentVisible ? 1 : 0,
+        transform: parentVisible ? "translateY(0)" : "translateY(16px)",
+        transition: `opacity 0.6s ${EASE} ${index * 100}ms, transform 0.6s ${EASE} ${index * 100}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── CSS ─────────────────────────────────────────────────────────────────────
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
 
 :root {
   --navy: #07091A;
   --navy-mid: #0D1230;
-  --navy-card: #111830;
   --gold: #D4A832;
   --gold-dim: rgba(212, 168, 50, 0.12);
   --blue: #6B8FD4;
@@ -22,473 +127,665 @@ const CSS = `
   --font: 'Afacad Flux', sans-serif;
 }
 
-.explore-page {
+.xp {
   background: var(--navy);
   color: var(--white);
   font-family: var(--font);
   font-size: 17px;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  position: relative;
 }
 
-.explore-page em {
-  font-style: normal;
-  color: var(--gold);
+/* Subtle noise grain overlay */
+.xp::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.018;
+  pointer-events: none;
+  z-index: 9999;
 }
 
-.explore-page a { color: inherit; text-decoration: none; }
+.xp em { font-style: normal; color: var(--gold); }
+.xp a { color: inherit; text-decoration: none; }
 
-.ex-nav {
-  position: sticky;
-  top: 0;
+/* Nav */
+.xp-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
   z-index: 100;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  background: rgba(7, 9, 26, 0.82);
-  border-bottom: 1px solid var(--divider);
-  padding: 0 32px;
   height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 40px;
+  transition: background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease;
 }
-
-.ex-nav-links {
+.xp-nav.scrolled {
+  background: rgba(7, 9, 26, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--divider);
+}
+.xp-nav-links {
   display: flex;
   align-items: center;
-  gap: 28px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--white-dim);
+  gap: 32px;
 }
-
-.ex-nav-links a:hover { color: var(--white); }
-
-.ex-section {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 80px 32px;
-}
-
-.ex-eyebrow {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
+.xp-nav-link {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 16px;
-}
-
-.ex-h1 {
-  font-size: 52px;
-  font-weight: 700;
-  line-height: 1.12;
-  letter-spacing: -0.03em;
-  margin: 0 0 20px;
-  color: var(--white);
-}
-
-.ex-h2 {
-  font-size: 36px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  margin: 0 0 20px;
-  color: var(--white);
-}
-
-.ex-body {
   color: var(--white-dim);
-  max-width: 640px;
-  margin-bottom: 16px;
+  transition: color 0.2s ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font);
+  padding: 0;
 }
+.xp-nav-link:hover { color: var(--white); }
 
-.ex-btn-gold {
+/* Buttons */
+.xp-btn-gold {
   display: inline-block;
-  padding: 14px 32px;
+  padding: 14px 36px;
   background: var(--gold);
   color: var(--navy);
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 700;
   font-family: var(--font);
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.25s ${EASE}, transform 0.25s ${EASE};
   text-decoration: none;
 }
-.ex-btn-gold:hover { opacity: 0.88; }
-
-.ex-btn-outline {
+.xp-btn-gold:hover { opacity: 0.88; transform: translateY(-1px); }
+.xp-btn-outline {
   display: inline-block;
-  padding: 14px 32px;
+  padding: 14px 36px;
   background: transparent;
   color: var(--white);
-  border: 1px solid rgba(240, 242, 248, 0.2);
-  border-radius: 8px;
-  font-size: 15px;
+  border: 1px solid rgba(240, 242, 248, 0.15);
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 600;
   font-family: var(--font);
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.25s ${EASE}, transform 0.25s ${EASE};
   text-decoration: none;
 }
-.ex-btn-outline:hover { border-color: rgba(240, 242, 248, 0.5); }
+.xp-btn-outline:hover { border-color: rgba(240, 242, 248, 0.4); transform: translateY(-1px); }
 
-.ex-stats-row {
-  display: flex;
-  gap: 48px;
-  flex-wrap: wrap;
-  margin-top: 40px;
-}
-
-.ex-stat {
-  text-align: center;
-}
-.ex-stat-num {
-  font-size: 42px;
-  font-weight: 700;
-  color: var(--gold);
-  line-height: 1;
-}
-.ex-stat-label {
-  font-size: 13px;
-  color: var(--white-dim);
-  margin-top: 6px;
+/* Section container */
+.xp-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 40px;
 }
 
-.ex-grid-2 {
+/* Grid */
+.xp-grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
+  grid-template-columns: 5fr 6fr;
+  gap: 80px;
   align-items: start;
 }
 
-.ex-grid-3 {
+/* Rooms */
+.xp-rooms {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 32px;
+  grid-template-columns: 1fr 1px 1fr 1px 1fr;
+  gap: 0;
 }
-
-.ex-room-card {
-  background: var(--navy-card);
-  border: 1px solid var(--divider);
-  border-radius: 12px;
-  padding: 28px;
+.xp-room-divider {
+  background: var(--divider);
+  width: 1px;
+  align-self: stretch;
 }
-.ex-room-tag {
-  display: inline-block;
+.xp-room { padding: 0 36px; }
+.xp-room:first-child { padding-left: 0; }
+.xp-room:last-child { padding-right: 0; }
+.xp-room-name {
+  font-size: clamp(36px, 4vw, 56px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--white);
+  margin: 0 0 8px;
+}
+.xp-room-tag {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--blue);
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
-.ex-room-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 12px;
-  color: var(--white);
-}
-.ex-room-body {
+.xp-room-body {
   font-size: 15px;
   color: var(--white-dim);
-  line-height: 1.6;
-  margin-bottom: 16px;
+  line-height: 1.65;
+  margin-bottom: 24px;
 }
-.ex-room-items {
+.xp-room-items {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+.xp-room-items li {
   font-size: 14px;
   color: var(--white-dim);
+  padding: 8px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
-.ex-room-items li {
-  padding: 6px 0;
-  border-top: 1px solid var(--divider);
+.xp-room-items li::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+  position: relative;
+  top: -2px;
 }
 
-.ex-checkpoint {
-  padding: 14px 0;
+/* Checkpoints */
+.xp-cp {
+  padding: 18px 0;
   border-bottom: 1px solid var(--divider);
+  line-height: 1.6;
 }
-.ex-checkpoint-num {
+.xp-cp:first-child { border-top: 1px solid var(--divider); }
+.xp-cp-num {
   font-size: 12px;
   font-weight: 700;
   color: var(--gold);
-  margin-right: 8px;
+  margin-right: 10px;
+  font-variant-numeric: tabular-nums;
 }
-.ex-checkpoint-name {
+.xp-cp-name {
   font-weight: 700;
   color: var(--white);
-  margin-right: 8px;
+  margin-right: 6px;
 }
-.ex-checkpoint-desc {
+.xp-cp-desc {
   color: var(--white-dim);
   font-size: 15px;
 }
 
-.ex-moment {
-  padding: 20px 0;
+/* Moments */
+.xp-moment {
+  padding: 24px 0;
   border-bottom: 1px solid var(--divider);
 }
-.ex-moment-label {
-  font-size: 13px;
+.xp-moment:first-child { border-top: 1px solid var(--divider); }
+.xp-moment-label {
+  font-size: 12px;
   font-weight: 700;
   color: var(--gold);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin-bottom: 6px;
 }
-.ex-moment-text {
+.xp-moment-text {
   color: var(--white-dim);
   font-size: 16px;
+  line-height: 1.6;
 }
 
-.ex-footer {
+/* Footer */
+.xp-footer {
   border-top: 1px solid var(--divider);
-  padding: 32px;
+  padding: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 980px;
+  max-width: 1080px;
   margin: 0 auto;
   font-size: 13px;
   color: var(--white-dim);
 }
 
-@media (max-width: 900px) {
-  .ex-nav { padding: 0 20px; }
-  .ex-nav-links-desktop { display: none !important; }
-  .ex-section { padding: 56px 20px; }
-  .ex-h1 { font-size: 34px; }
-  .ex-h2 { font-size: 26px; }
-  .ex-grid-2 { grid-template-columns: 1fr; gap: 40px; }
-  .ex-grid-3 { grid-template-columns: 1fr; }
-  .ex-stats-row { gap: 32px; }
-  .ex-footer { flex-direction: column; gap: 16px; text-align: center; }
+/* Mobile */
+@media (max-width: 768px) {
+  .xp-nav { padding: 0 20px; }
+  .xp-nav-links-desktop { display: none !important; }
+  .xp-inner { padding: 0 24px; }
+  .xp-grid-2 { grid-template-columns: 1fr; gap: 48px; }
+  .xp-rooms { grid-template-columns: 1fr; gap: 0; }
+  .xp-room-divider { width: 100%; height: 1px; align-self: auto; }
+  .xp-room { padding: 32px 0; }
+  .xp-room:first-child { padding-left: 0; padding-top: 0; }
+  .xp-room:last-child { padding-right: 0; }
+  .xp-footer { flex-direction: column; gap: 16px; text-align: center; padding: 32px 24px; }
 }
 `;
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function ExplorePage() {
   const navigate = useNavigate();
   const isMobile = useMobile();
   const howRef = useRef<HTMLDivElement>(null);
   const standardRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [heroParallax, setHeroParallax] = useState({ y: 0, opacity: 1 });
+  const [navScrolled, setNavScrolled] = useState(false);
+  const checkpointReveal = useScrollReveal(0.1);
 
-  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) => {
+  // Hero parallax + nav background
+  useEffect(() => {
+    const onScroll = () => {
+      const sy = window.scrollY;
+      const vh = window.innerHeight;
+      setHeroParallax({
+        y: sy * -0.3,
+        opacity: Math.max(0, 1 - sy / (vh * 0.55)),
+      });
+      setNavScrolled(sy > 50);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollTo = useCallback((ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
+
+  const sectionPad = isMobile ? "80px 0" : "120px 0";
 
   return (
-    <div className="explore-page">
+    <div className="xp">
       <style>{CSS}</style>
 
-      {/* ── NAV ──────────────────────────────────────────── */}
-      <nav className="ex-nav">
+      {/* ── NAV ──────────────────────────────────────────────── */}
+      <nav className={`xp-nav ${navScrolled ? "scrolled" : ""}`}>
         <Logo size="sm" variant="dark" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
-        <div className="ex-nav-links">
-          <div className="ex-nav-links-desktop" style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            <a href="#how" onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}>How It Works</a>
-            <a href="#standard" onClick={(e) => { e.preventDefault(); scrollTo(standardRef); }}>The Standard</a>
-          </div>
-          <a href={CTA_MAILTO} className="ex-btn-gold" style={{ padding: "8px 20px", fontSize: 13 }}>
+        <div className="xp-nav-links">
+          {!isMobile && (
+            <div className="xp-nav-links-desktop" style={{ display: "flex", gap: 32, alignItems: "center" }}>
+              <button className="xp-nav-link" onClick={() => scrollTo(howRef)}>How It Works</button>
+              <button className="xp-nav-link" onClick={() => scrollTo(standardRef)}>The Standard</button>
+            </div>
+          )}
+          <a href={CTA_MAILTO} className="xp-btn-gold" style={{ padding: "8px 22px", fontSize: 12, letterSpacing: "0.08em" }}>
             Let's Talk
           </a>
         </div>
       </nav>
 
-      {/* ── SECTION 01: HERO ─────────────────────────────── */}
-      <section style={{ background: "var(--navy)" }}>
-        <div className="ex-section" style={{ paddingTop: isMobile ? 64 : 100, paddingBottom: isMobile ? 64 : 100 }}>
-          <div className="ex-eyebrow">EVERYWHERE Studio™</div>
-          <h1 className="ex-h1">
-            You know what you want to say.<br />
-            <em>It's still in your head.</em>
+      {/* ── SECTION 01: HERO ─────────────────────────────────── */}
+      <section
+        ref={heroRef}
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          background: "radial-gradient(ellipse at 50% 0%, rgba(107,143,212,0.06) 0%, transparent 60%)",
+        }}
+      >
+        <div
+          style={{
+            textAlign: "center",
+            maxWidth: 900,
+            padding: "0 32px",
+            transform: `translateY(${heroParallax.y}px)`,
+            opacity: heroParallax.opacity,
+            willChange: "transform, opacity",
+          }}
+        >
+          <h1 style={{
+            fontSize: "clamp(42px, 7vw, 88px)",
+            fontWeight: 700,
+            lineHeight: 1.08,
+            letterSpacing: "-0.035em",
+            margin: "0 0 28px",
+            color: "var(--white)",
+          }}>
+            <span style={{
+              display: "block",
+              animation: "xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both",
+            }}>
+              You know what you want to say.
+            </span>
+            <em style={{
+              display: "block",
+              animation: "xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both",
+            }}>
+              It's still in your head.
+            </em>
           </h1>
-          <p className="ex-body" style={{ fontSize: 19, marginBottom: 32 }}>
+          <p style={{
+            fontSize: isMobile ? 17 : 20,
+            color: "var(--white-dim)",
+            maxWidth: 540,
+            margin: "0 auto 40px",
+            lineHeight: 1.6,
+            animation: `xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both`,
+          }}>
             Sunday night. Another week where your best thinking didn't make it out into the world. That ends here.
           </p>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <a href={CTA_MAILTO} className="ex-btn-gold">Let's Talk</a>
-            <a href="#how" className="ex-btn-outline" onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}>
+          <div style={{
+            display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
+            animation: `xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both`,
+          }}>
+            <a href={CTA_MAILTO} className="xp-btn-gold">Let's Talk</a>
+            <a href="#how" className="xp-btn-outline" onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}>
               See How It Works
             </a>
           </div>
         </div>
+        <style>{`
+          @keyframes xpFadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </section>
 
-      {/* ── SECTION 02: RECOGNITION ──────────────────────── */}
-      <section style={{ background: "var(--navy-mid)" }}>
-        <div className="ex-section">
-          <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: 28 }}>
-            <h2 className="ex-h2" style={{ maxWidth: 700 }}>
-              You have years of thinking that the world hasn't heard yet.{" "}
-              <em>That's not a discipline problem.</em>
-            </h2>
-            <p className="ex-body">
-              It's an infrastructure problem. Getting ideas from your head — through drafting, editing, formatting, and publishing, across every channel, in your voice, at the quality they deserve — is a full operation.
-            </p>
-            <p className="ex-body">
-              You've been trying to run that operation alone. Most thought leaders are. The ones who aren't are the ones you see everywhere.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 03: LEVERAGE STRIP ───────────────────── */}
-      <section style={{ background: "var(--gold-dim)" }}>
-        <div className="ex-section" style={{ paddingTop: 48, paddingBottom: 48, textAlign: "center" }}>
-          <p style={{ fontSize: isMobile ? 20 : 24, fontWeight: 600, color: "var(--gold)", margin: 0, maxWidth: 700, marginInline: "auto", lineHeight: 1.4 }}>
-            The people in your market who show up everywhere aren't better thinkers. They have better infrastructure.
-          </p>
-        </div>
-      </section>
-
-      {/* ── SECTION 04: IDENTITY SHIFT ───────────────────── */}
-      <section style={{ background: "var(--navy)" }}>
-        <div className="ex-section">
-          <div className="ex-grid-2">
-            <div>
-              <div className="ex-eyebrow">You know this feeling</div>
-              <h2 className="ex-h2">The idea is in your head. Not in the world.</h2>
-              <p className="ex-body">
-                You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out — in your voice, at the quality it deserves, on every channel that matters.
+      {/* ── SECTION 02: RECOGNITION ──────────────────────────── */}
+      <section style={{ padding: sectionPad }}>
+        <Reveal>
+          <div className="xp-inner" style={{ maxWidth: 760 }}>
+            <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: isMobile ? 20 : 32 }}>
+              <h2 style={{
+                fontSize: "clamp(28px, 4vw, 42px)",
+                fontWeight: 700,
+                lineHeight: 1.18,
+                letterSpacing: "-0.02em",
+                margin: "0 0 28px",
+              }}>
+                You have years of thinking that the world hasn't heard yet.{" "}
+                <em>That's not a discipline problem.</em>
+              </h2>
+              <p style={{ color: "var(--white-dim)", maxWidth: 580, marginBottom: 16 }}>
+                It's an infrastructure problem. Getting ideas from your head — through drafting, editing, formatting, and publishing, across every channel, in your voice, at the quality they deserve — is a full operation.
+              </p>
+              <p style={{ color: "var(--white-dim)", maxWidth: 580 }}>
+                You've been trying to run that operation alone. Most thought leaders are. The ones who aren't are the ones you see everywhere.
               </p>
             </div>
-            <div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── SECTION 03: LEVERAGE STRIP ───────────────────────── */}
+      <section style={{ padding: isMobile ? "60px 0" : "80px 0" }}>
+        <Reveal scale>
+          <div className="xp-inner">
+            <div style={{
+              borderTop: "1px solid var(--gold)",
+              borderBottom: "1px solid var(--gold)",
+              padding: isMobile ? "48px 0" : "64px 0",
+              textAlign: "center",
+            }}>
+              <p style={{
+                fontSize: "clamp(20px, 3vw, 28px)",
+                fontWeight: 600,
+                color: "var(--gold)",
+                margin: 0,
+                maxWidth: 720,
+                marginInline: "auto",
+                lineHeight: 1.4,
+                letterSpacing: "-0.01em",
+              }}>
+                The people in your market who show up everywhere aren't better thinkers. They have better infrastructure.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── SECTION 04: IDENTITY SHIFT ───────────────────────── */}
+      <section style={{ padding: sectionPad }}>
+        <Reveal>
+          <div className="xp-inner">
+            <div className="xp-grid-2">
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+                  You know this feeling
+                </div>
+                <h2 style={{
+                  fontSize: "clamp(28px, 3.5vw, 40px)",
+                  fontWeight: 700,
+                  lineHeight: 1.15,
+                  letterSpacing: "-0.02em",
+                  margin: "0 0 24px",
+                }}>
+                  The idea is in your head. Not in the world.
+                </h2>
+                <p style={{ color: "var(--white-dim)", maxWidth: 440 }}>
+                  You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out — in your voice, at the quality it deserves, on every channel that matters.
+                </p>
+              </div>
+              <div>
+                {[
+                  { label: "Sunday night", text: "The week is ending. You had three ideas worth writing about. None of them made it out." },
+                  { label: "On a plane", text: "You write two pages of thinking in a notebook. It never becomes anything." },
+                  { label: "Watching someone else", text: "You see someone on stage or in your feed saying something you've thought for years. They just got it out first." },
+                  { label: "After the conversation", text: "You just explained something perfectly to a client. Room changed. No one else will ever hear that version of it." },
+                ].map((m) => (
+                  <div key={m.label} className="xp-moment">
+                    <div className="xp-moment-label">{m.label}</div>
+                    <div className="xp-moment-text">{m.text}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── SECTION 05: WHAT IT IS ───────────────────────────── */}
+      <section style={{ padding: sectionPad, background: "var(--navy-mid)" }}>
+        <Reveal>
+          <div className="xp-inner" style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+              EVERYWHERE Studio
+            </div>
+            <h2 style={{
+              fontSize: "clamp(28px, 4vw, 44px)",
+              fontWeight: 700,
+              lineHeight: 1.15,
+              letterSpacing: "-0.02em",
+              margin: "0 auto 28px",
+              maxWidth: 700,
+            }}>
+              Your thinking. Out in the world. In your voice. Every week.
+            </h2>
+            <p style={{ color: "var(--white-dim)", maxWidth: 600, margin: "0 auto 16px", textAlign: "left" }}>
+              A coordinated team of {MARKETING_NUMBERS.specialistCount} specialists takes the idea in your head and turns it into publication-ready content across every format and channel you need.
+            </p>
+            <p style={{ color: "var(--white-dim)", maxWidth: 600, margin: "0 auto 0", textAlign: "left" }}>
+              You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
+            </p>
+            <div style={{ display: "flex", gap: isMobile ? 32 : 64, justifyContent: "center", flexWrap: "wrap", marginTop: 56 }}>
               {[
-                { label: "Sunday night", text: "The week is ending. You had three ideas worth writing about. None of them made it out." },
-                { label: "On a plane", text: "You write two pages of thinking in a notebook. It never becomes anything." },
-                { label: "Watching someone else", text: "You see someone on stage or in your feed saying something you've thought for years. They just got it out first." },
-                { label: "After the conversation", text: "You just explained something perfectly to a client. Room changed. No one else will ever hear that version of it." },
-              ].map((m) => (
-                <div key={m.label} className="ex-moment">
-                  <div className="ex-moment-label">{m.label}</div>
-                  <div className="ex-moment-text">{m.text}</div>
+                { to: MARKETING_NUMBERS.specialistCount, label: "Specialists" },
+                { to: MARKETING_NUMBERS.qualityCheckpoints, label: "Checkpoints" },
+                { to: MARKETING_NUMBERS.betterishThreshold, label: "Min. Quality Score" },
+                { to: 0, label: "Left for you to finish" },
+              ].map((s) => (
+                <div key={s.label} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: "clamp(36px, 5vw, 52px)", fontWeight: 700, color: "var(--gold)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                    {s.to === 0 ? "0" : <CountUp to={s.to} />}
+                  </div>
+                  <div style={{ fontSize: 13, color: "var(--white-dim)", marginTop: 8 }}>{s.label}</div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      {/* ── SECTION 05: WHAT IT IS ───────────────────────── */}
-      <section style={{ background: "var(--navy-mid)" }}>
-        <div className="ex-section" style={{ textAlign: "center" }}>
-          <div className="ex-eyebrow">EVERYWHERE Studio</div>
-          <h2 className="ex-h2" style={{ maxWidth: 700, marginInline: "auto" }}>
-            Your thinking. Out in the world. In your voice. Every week.
-          </h2>
-          <p className="ex-body" style={{ marginInline: "auto" }}>
-            A coordinated team of {MARKETING_NUMBERS.specialistCount} specialists takes the idea in your head and turns it into publication-ready content across every format and channel you need.
-          </p>
-          <p className="ex-body" style={{ marginInline: "auto" }}>
-            You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
-          </p>
-          <div className="ex-stats-row" style={{ justifyContent: "center" }}>
-            <div className="ex-stat">
-              <div className="ex-stat-num">{MARKETING_NUMBERS.specialistCount}</div>
-              <div className="ex-stat-label">Specialists</div>
-            </div>
-            <div className="ex-stat">
-              <div className="ex-stat-num">{MARKETING_NUMBERS.qualityCheckpoints}</div>
-              <div className="ex-stat-label">Checkpoints</div>
-            </div>
-            <div className="ex-stat">
-              <div className="ex-stat-num">{MARKETING_NUMBERS.betterishThreshold}</div>
-              <div className="ex-stat-label">Min. Quality Score</div>
-            </div>
-            <div className="ex-stat">
-              <div className="ex-stat-num">0</div>
-              <div className="ex-stat-label">Left for you to finish</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 06: SOCIAL PROOF ─────────────────────── */}
-      <section style={{ background: "var(--navy-card)" }}>
-        <div className="ex-section" style={{ textAlign: "center", maxWidth: 700, marginInline: "auto" }}>
-          <blockquote style={{ margin: 0, padding: 0, border: "none" }}>
-            <p style={{ fontSize: isMobile ? 20 : 24, fontWeight: 500, lineHeight: 1.5, color: "var(--white)", fontStyle: "italic", marginBottom: 20 }}>
-              "I had a decade of thinking that had never made it out. Now it does — every week — and it sounds like me. Better than what I was writing myself."
+      {/* ── SECTION 06: SOCIAL PROOF ─────────────────────────── */}
+      <section style={{ padding: isMobile ? "80px 0" : "120px 0" }}>
+        <Reveal>
+          <div className="xp-inner" style={{ maxWidth: 720, textAlign: "center" }}>
+            <blockquote style={{ margin: 0, padding: 0, border: "none" }}>
+              <p style={{
+                fontSize: "clamp(22px, 3vw, 30px)",
+                fontWeight: 400,
+                lineHeight: 1.5,
+                color: "var(--white)",
+                fontStyle: "italic",
+                margin: "0 0 24px",
+                letterSpacing: "-0.01em",
+              }}>
+                "I had a decade of thinking that had never made it out. Now it does — every week — and it <em>sounds like me</em>. Better than what I was writing myself."
+              </p>
+              <footer style={{
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase" as const,
+                color: "var(--white-dim)",
+              }}>
+                — [Client Name] · [Title]
+              </footer>
+            </blockquote>
+            <p style={{ fontSize: 12, color: "var(--white-dim)", marginTop: 28, opacity: 0.4, fontStyle: "italic" }}>
+              [ Replace with one real named result before launch ]
             </p>
-            <footer style={{ fontSize: 14, color: "var(--white-dim)" }}>
-              — [Client Name] · [Title]
-            </footer>
-          </blockquote>
-          <p style={{ fontSize: 12, color: "var(--white-dim)", marginTop: 24, opacity: 0.5, fontStyle: "italic" }}>
-            [ Replace with one real named result before launch ]
-          </p>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── SECTION 07: HOW IT WORKS ─────────────────────────── */}
+      <section ref={howRef} style={{ padding: sectionPad }}>
+        <div className="xp-inner">
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: isMobile ? 48 : 72 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+                Three rooms. One idea.
+              </div>
+              <h2 style={{
+                fontSize: "clamp(32px, 5vw, 56px)",
+                fontWeight: 700,
+                lineHeight: 1.08,
+                letterSpacing: "-0.03em",
+                margin: 0,
+              }}>
+                Watch. Work. Wrap.
+              </h2>
+            </div>
+          </Reveal>
+
+          <Reveal delay={150}>
+            {isMobile ? (
+              /* Mobile: stacked with horizontal dividers */
+              <div>
+                {[
+                  {
+                    name: "Watch",
+                    tag: "Room One — The Intelligence Room",
+                    body: "Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing — so your thinking lands in context, not into noise.",
+                    items: ["Real-time market signal tracking", "Conversation and gap mapping", "Your idea meets the moment"],
+                  },
+                  {
+                    name: "Work",
+                    tag: "Room Two — The Production Room",
+                    body: "A coordinated team transforms what's in your head into publication-grade content. In your voice. Every claim verified. Seven checkpoints before it touches you.",
+                    items: ["Voice DNA — sounds exactly like you", "100% verified claims", "Zero AI fingerprints", "7-second hook on every piece"],
+                  },
+                  {
+                    name: "Wrap",
+                    tag: "Room Three — The Distribution Room",
+                    body: "One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack — simultaneously.",
+                    items: ["Every channel, formatted natively", "One-click to publish", "Every piece makes the next one better"],
+                  },
+                ].map((room, i) => (
+                  <div key={room.name}>
+                    {i > 0 && <div style={{ height: 1, background: "var(--divider)", margin: "8px 0" }} />}
+                    <div className="xp-room">
+                      <div className="xp-room-name">{room.name}</div>
+                      <div className="xp-room-tag">{room.tag}</div>
+                      <p className="xp-room-body">{room.body}</p>
+                      <ul className="xp-room-items">
+                        {room.items.map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Desktop: three columns with vertical dividers */
+              <div className="xp-rooms">
+                {[
+                  {
+                    name: "Watch",
+                    tag: "Room One — The Intelligence Room",
+                    body: "Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing — so your thinking lands in context, not into noise.",
+                    items: ["Real-time market signal tracking", "Conversation and gap mapping", "Your idea meets the moment"],
+                  },
+                  {
+                    name: "Work",
+                    tag: "Room Two — The Production Room",
+                    body: "A coordinated team transforms what's in your head into publication-grade content. In your voice. Every claim verified. Seven checkpoints before it touches you.",
+                    items: ["Voice DNA — sounds exactly like you", "100% verified claims", "Zero AI fingerprints", "7-second hook on every piece"],
+                  },
+                  {
+                    name: "Wrap",
+                    tag: "Room Three — The Distribution Room",
+                    body: "One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack — simultaneously.",
+                    items: ["Every channel, formatted natively", "One-click to publish", "Every piece makes the next one better"],
+                  },
+                ].flatMap((room, i) => {
+                  const el = (
+                    <div key={room.name} className="xp-room">
+                      <div className="xp-room-name">{room.name}</div>
+                      <div className="xp-room-tag">{room.tag}</div>
+                      <p className="xp-room-body">{room.body}</p>
+                      <ul className="xp-room-items">
+                        {room.items.map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    </div>
+                  );
+                  return i < 2 ? [el, <div key={`div-${i}`} className="xp-room-divider" />] : [el];
+                })}
+              </div>
+            )}
+          </Reveal>
         </div>
       </section>
 
-      {/* ── SECTION 07: HOW IT WORKS ─────────────────────── */}
-      <section ref={howRef} style={{ background: "var(--navy)" }}>
-        <div className="ex-section">
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div className="ex-eyebrow">Three rooms. One idea.</div>
-            <h2 className="ex-h2">Watch. Work. Wrap.</h2>
-          </div>
-          <div className="ex-grid-3">
-            {/* Room One */}
-            <div className="ex-room-card">
-              <div className="ex-room-tag">Room One — WATCH</div>
-              <div className="ex-room-title">The Intelligence Room</div>
-              <p className="ex-room-body">
-                Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing — so your thinking lands in context, not into noise.
-              </p>
-              <ul className="ex-room-items">
-                <li>Real-time market signal tracking</li>
-                <li>Conversation and gap mapping</li>
-                <li>Your idea meets the moment</li>
-              </ul>
-            </div>
-            {/* Room Two */}
-            <div className="ex-room-card">
-              <div className="ex-room-tag">Room Two — WORK</div>
-              <div className="ex-room-title">The Production Room</div>
-              <p className="ex-room-body">
-                A coordinated team transforms what's in your head into publication-grade content. In your voice. Every claim verified. Seven checkpoints before it touches you.
-              </p>
-              <ul className="ex-room-items">
-                <li>Voice DNA — sounds exactly like you</li>
-                <li>100% verified claims</li>
-                <li>Zero AI fingerprints</li>
-                <li>7-second hook on every piece</li>
-              </ul>
-            </div>
-            {/* Room Three */}
-            <div className="ex-room-card">
-              <div className="ex-room-tag">Room Three — WRAP</div>
-              <div className="ex-room-title">The Distribution Room</div>
-              <p className="ex-room-body">
-                One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack — simultaneously.
-              </p>
-              <ul className="ex-room-items">
-                <li>Every channel, formatted natively</li>
-                <li>One-click to publish</li>
-                <li>Every piece makes the next one better</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 08: QUALITY CHECKPOINTS ──────────────── */}
-      <section ref={standardRef} style={{ background: "var(--navy-mid)" }}>
-        <div className="ex-section">
-          <div className="ex-grid-2">
-            <div>
-              <div className="ex-eyebrow">Quality Checkpoints</div>
-              <h2 className="ex-h2">Nothing ships without passing all seven.</h2>
-              <p className="ex-body">
-                Every piece of content runs through {MARKETING_NUMBERS.qualityCheckpoints} independent quality gates before it reaches you. Not style checks. Substantive evaluation by specialists who know what publication-ready means.
-              </p>
-            </div>
-            <div>
+      {/* ── SECTION 08: QUALITY CHECKPOINTS ──────────────────── */}
+      <section ref={standardRef} style={{ padding: sectionPad, background: "var(--navy-mid)" }}>
+        <div className="xp-inner">
+          <div className="xp-grid-2">
+            <Reveal>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+                  Quality Checkpoints
+                </div>
+                <h2 style={{
+                  fontSize: "clamp(28px, 3.5vw, 40px)",
+                  fontWeight: 700,
+                  lineHeight: 1.15,
+                  letterSpacing: "-0.02em",
+                  margin: "0 0 24px",
+                }}>
+                  Nothing ships without passing all seven.
+                </h2>
+                <p style={{ color: "var(--white-dim)", maxWidth: 400 }}>
+                  Every piece of content runs through {MARKETING_NUMBERS.qualityCheckpoints} independent quality gates before it reaches you. Not style checks. Substantive evaluation by specialists who know what publication-ready means.
+                </p>
+              </div>
+            </Reveal>
+            <div ref={checkpointReveal.ref}>
               {[
                 { num: "01", name: "Echo", desc: "Catches repeated concepts and structural patterns." },
                 { num: "02", name: "Priya", desc: "Verifies every factual claim. 100% accuracy standard." },
@@ -497,40 +794,52 @@ export default function ExplorePage() {
                 { num: "05", name: "Elena", desc: "SLOP detection. One em dash in prose is an automatic block." },
                 { num: "06", name: "Natasha", desc: "Publication-grade standard plus the Stranger Test." },
                 { num: "07", name: "Marcus + Marshall", desc: "Cultural sensitivity and nonviolent communication review." },
-              ].map((cp) => (
-                <div key={cp.num} className="ex-checkpoint">
-                  <span className="ex-checkpoint-num">{cp.num}</span>
-                  <span className="ex-checkpoint-name">{cp.name}</span>
-                  <span className="ex-checkpoint-desc">— {cp.desc}</span>
-                </div>
+              ].map((cp, i) => (
+                <StaggerReveal key={cp.num} index={i} parentVisible={checkpointReveal.isVisible}>
+                  <div className="xp-cp">
+                    <span className="xp-cp-num">{cp.num}</span>
+                    <span className="xp-cp-name">{cp.name}</span>
+                    <span className="xp-cp-desc">— {cp.desc}</span>
+                  </div>
+                </StaggerReveal>
               ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── SECTION 09: FINAL CTA ────────────────────────── */}
-      <section style={{ background: "var(--navy)" }}>
-        <div className="ex-section" style={{ textAlign: "center", paddingTop: isMobile ? 64 : 100, paddingBottom: isMobile ? 64 : 100 }}>
-          <div className="ex-eyebrow">Let's Talk</div>
-          <h2 className="ex-h2" style={{ maxWidth: 640, marginInline: "auto" }}>
-            Your thinking deserves to <em>be heard.</em>
-          </h2>
-          <p className="ex-body" style={{ marginInline: "auto", marginBottom: 12 }}>
-            You don't need more discipline. You need a system that carries the idea from your head to your audience — every week, without it sitting on your to-do list.
-          </p>
-          <p className="ex-body" style={{ marginInline: "auto", marginBottom: 36 }}>
-            There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
-          </p>
-          <a href={CTA_MAILTO} className="ex-btn-gold" style={{ fontSize: 16, padding: "16px 40px" }}>
-            Let's Talk
-          </a>
-        </div>
+      {/* ── SECTION 09: FINAL CTA ────────────────────────────── */}
+      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Reveal>
+          <div style={{ textAlign: "center", maxWidth: 720, padding: "0 32px" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 20 }}>
+              Let's Talk
+            </div>
+            <h2 style={{
+              fontSize: "clamp(36px, 6vw, 72px)",
+              fontWeight: 700,
+              lineHeight: 1.08,
+              letterSpacing: "-0.03em",
+              margin: "0 0 28px",
+            }}>
+              Your thinking deserves to <em>be heard.</em>
+            </h2>
+            <p style={{ color: "var(--white-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "left" }}>
+              You don't need more discipline. You need a system that carries the idea from your head to your audience — every week, without it sitting on your to-do list.
+            </p>
+            <p style={{ color: "var(--gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "left", fontWeight: 500 }}>
+              There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
+            </p>
+            <a href={CTA_MAILTO} className="xp-btn-gold" style={{ fontSize: 15, padding: "16px 44px" }}>
+              Let's Talk
+            </a>
+          </div>
+        </Reveal>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────── */}
+      {/* ── FOOTER ───────────────────────────────────────────── */}
       <footer style={{ background: "var(--navy)" }}>
-        <div className="ex-footer">
+        <div className="xp-footer">
           <Logo size="sm" variant="dark" />
           <span>Composed Intelligence · Santa Barbara, CA · 2026 Mixed Grill LLC</span>
         </div>
