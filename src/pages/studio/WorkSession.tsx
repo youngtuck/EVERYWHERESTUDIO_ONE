@@ -1764,7 +1764,7 @@ export default function WorkSession() {
                 100% { background-position: 200% center; }
               }
             `}</style>
-            <WatsonOrb size={48} thinking />
+            <WatsonOrb size={48} breathing={false} />
             <div style={{ marginTop: 24, width: "100%", maxWidth: 400 }}>
               {/* Progress bar */}
               <div style={{ height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>

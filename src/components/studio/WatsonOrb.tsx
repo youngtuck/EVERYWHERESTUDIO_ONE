@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export default function WatsonOrb({ size = 90 }: { size?: number }) {
+export default function WatsonOrb({ size = 90, breathing = true }: { size?: number; breathing?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -22,7 +22,11 @@ export default function WatsonOrb({ size = 90 }: { size?: number }) {
       ctx!.clearRect(0, 0, dim, dim);
       const cx = dim / 2;
       const cy = dim / 2;
-      t += 0.006;
+      t += breathing ? 0.006 : 0.015;
+
+      // Breathing opacity modulation (slow sine wave, 80%-100%)
+      const breathAlpha = breathing ? 0.8 + 0.2 * Math.sin(t * 0.5) : 1;
+      ctx!.globalAlpha = breathAlpha;
 
       const baseR = size * 0.42;
 
@@ -128,12 +132,13 @@ export default function WatsonOrb({ size = 90 }: { size?: number }) {
       ctx!.arc(cx, cy, ring2R, 0, Math.PI * 2);
       ctx!.stroke();
 
+      ctx!.globalAlpha = 1;
       animId = requestAnimationFrame(draw);
     }
 
     draw();
     return () => cancelAnimationFrame(animId);
-  }, [size]);
+  }, [size, breathing]);
 
   return (
     <canvas
