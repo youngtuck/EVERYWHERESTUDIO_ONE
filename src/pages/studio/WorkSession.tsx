@@ -2013,7 +2013,7 @@ export default function WorkSession() {
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
                   >
-                    Edit and refine
+                    Edit
                   </button>
                   {generatedScore >= 800 && (
                     <button
