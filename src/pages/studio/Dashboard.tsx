@@ -81,6 +81,9 @@ export default function Dashboard() {
   const [error, setError] = useState(false);
   const [hasWatchTopics, setHasWatchTopics] = useState(false);
   const [signalCount, setSignalCount] = useState<number | null>(null);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(() => {
+    try { return localStorage.getItem("ew-welcome-dismissed") === "true"; } catch { return false; }
+  });
 
   useEffect(() => {
     if (!user) {
@@ -227,6 +230,59 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Welcome section for first-run users */}
+      {!loading && outputs.length === 0 && !welcomeDismissed && (
+        <div style={{
+          background: "var(--surface-white)",
+          border: "1px solid var(--border-subtle)",
+          borderRadius: 12,
+          padding: 24,
+          marginBottom: 24,
+        }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
+            Welcome to your Studio, {firstName}.
+          </h2>
+          <p style={{ fontSize: 14, color: "var(--fg-3)", margin: "0 0 20px" }}>
+            Three things to get started.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
+            {[
+              { title: "Train Your Voice", desc: "Upload writing samples so every output sounds like you.", href: "/onboarding?retrain=1" },
+              { title: "Start a Session", desc: "Talk to Watson. One idea becomes publication-ready content.", href: "/studio/work" },
+              { title: "Explore Resources", desc: "See what's already in your studio.", href: "/studio/resources" },
+            ].map((card) => (
+              <button
+                key={card.title}
+                onClick={() => nav(card.href)}
+                style={{
+                  background: "var(--bg-2)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 10,
+                  padding: 16,
+                  textAlign: "left",
+                  cursor: "pointer",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.transform = "translateY(0)"; }}
+              >
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>{card.title}</div>
+                <div style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.5 }}>{card.desc}</div>
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => { localStorage.setItem("ew-welcome-dismissed", "true"); setWelcomeDismissed(true); }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif", padding: 0, transition: "color 0.15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-primary)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-3)"; }}
+          >
+            I'll explore on my own
+          </button>
+        </div>
+      )}
 
       <div
         className="dashboard-stats-grid"
