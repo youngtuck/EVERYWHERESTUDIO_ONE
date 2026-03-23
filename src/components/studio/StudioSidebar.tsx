@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../lib/supabase";
 import Logo from "../Logo";
-import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, Plus, LogOut, Package, Archive, Loader2, Shield, Home } from "lucide-react";
+import { PenLine, Eye, Bookmark, BookOpen, FolderOpen, Settings, LogOut, Package, Archive, Loader2, Shield, Home } from "lucide-react";
 
 // ── Nav structure: Home > Watch > Work > Wrap (primary), then utility at bottom ──
 const PRIMARY_NAV = [
@@ -199,39 +199,6 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           </button>
         </div>
       )}
-
-      {/* ── New Session ──────────────────────────── */}
-      <div style={{ padding: collapsed ? "8px 8px 6px" : "12px 14px 10px" }}>
-        <button
-          onClick={() => { window.location.href = "/studio/work"; }}
-          title="Start a new Watson session"
-          style={{
-            width: "100%",
-            background: "var(--fg)",
-            color: "var(--bg)",
-            border: "none",
-            borderRadius: collapsed ? 8 : "var(--studio-radius)",
-            padding: collapsed ? "10px 0" : "10px 14px",
-            fontSize: 13,
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: collapsed ? 0 : 8,
-            letterSpacing: "-0.02em",
-            cursor: "pointer",
-            fontFamily: "var(--font)",
-            transition: "opacity 0.15s ease",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-          </svg>
-          {!collapsed && "New Session"}
-        </button>
-      </div>
 
       {/* Onboarding progress */}
       {onboardingComplete === false && !collapsed && (
