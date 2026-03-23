@@ -35,6 +35,26 @@ function renderMarkdown(text: string): string {
     .replace(/\n/g, '<br/>');
 }
 
+function generateTitle(userInput: string, generatedContent: string): string {
+  // Try to extract a strong opening line from the generated content
+  const firstLine = generatedContent?.split("\n").find(l => {
+    const t = l.replace(/^[#*>\s]+/, "").trim();
+    return t.length > 10 && t.length <= 80;
+  });
+  if (firstLine) {
+    return firstLine.replace(/[*#_>]/g, "").trim().slice(0, 72);
+  }
+  // Fallback: clean up the user input
+  const cleaned = userInput
+    .replace(/^I want to (write|talk|make|create|tell|comment|do) (about |on |a )?/i, "")
+    .replace(/^(help me |please |can you )/i, "")
+    .trim();
+  if (cleaned.length > 5) {
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1, 72);
+  }
+  return userInput.slice(0, 72);
+}
+
 const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: string }> = {
   essay: {
     label: "Sunday Story (Essay)",
@@ -1290,7 +1310,10 @@ export default function WorkSession() {
       setGeneratedGates(gatesData);
 
       // Save draft to Supabase
-      const title = sessionTitle.startsWith("Revising:") ? sessionTitle.replace("Revising: ", "") : (sessionTitle !== "New Session" ? sessionTitle : `${type.label} - ${new Date().toLocaleDateString()}`);
+      const firstUserMsg = messages.find(m => m.role === "user")?.content || "";
+      const title = sessionTitle.startsWith("Revising:")
+        ? sessionTitle.replace("Revising: ", "")
+        : generateTitle(firstUserMsg, content) || `${type.label} - ${new Date().toLocaleDateString()}`;
       let outputId: string;
 
       if (revisionMode && revisionOutputId) {
