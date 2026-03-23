@@ -213,14 +213,24 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
       }}>
         {msg.typing ? (
           <TypingIndicator />
-        ) : (
+        ) : isUser ? (
           <p style={{
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14, lineHeight: 1.6,
-            color: isUser ? "#F0F0F0" : "var(--text-primary)",
+            color: "#F0F0F0",
             fontWeight: 400,
             margin: 0, whiteSpace: "pre-wrap",
           }}>{msg.content}</p>
+        ) : (
+          <div
+            style={{
+              fontFamily: "'Afacad Flux', sans-serif",
+              fontSize: 14, lineHeight: 1.6,
+              color: "var(--text-primary)",
+              fontWeight: 400,
+            }}
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+          />
         )}
       </div>
     </div>
