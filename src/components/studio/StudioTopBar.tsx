@@ -24,7 +24,7 @@ export default function StudioTopBar({ onToggleSidebar }: Props) {
 
   return (
     <div className="studio-topbar">
-      <div onClick={() => navigate("/")} style={{ cursor:"pointer" }} title="Go to homepage">
+      <div onClick={() => navigate("/studio/dashboard")} style={{ cursor:"pointer" }} title="Go to dashboard">
         <Logo size="sm" />
       </div>
 

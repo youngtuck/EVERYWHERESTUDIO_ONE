@@ -104,8 +104,8 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         }}
       >
         <button
-          onClick={() => nav("/studio")}
-          title="Go to studio home"
+          onClick={() => nav("/studio/dashboard")}
+          title="Go to dashboard"
           style={{
             background: "none",
             border: "none",
