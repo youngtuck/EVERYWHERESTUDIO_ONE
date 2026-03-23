@@ -506,7 +506,7 @@ export default function OutputDetail() {
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
               padding: "8px 16px", borderRadius: 8,
-              background: copied ? "#50c8a0" : "var(--fg)", color: "#fff",
+              background: copied ? "#50c8a0" : "var(--fg)", color: "var(--bg)",
               border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: font,
               transition: "all 0.2s ease", minWidth: 90, justifyContent: "center",
             }}
