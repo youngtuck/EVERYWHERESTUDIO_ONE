@@ -4,7 +4,7 @@ import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import { MARKETING_NUMBERS } from "../lib/constants";
 
-const CTA_MAILTO = "mailto:mark@mixedgrill.studio?subject=EVERYWHERE%20Studio%20—%20Let's%20Talk";
+const CTA_MAILTO = "mailto:mark@mixedgrill.studio?subject=EVERYWHERE%20Studio%3A%20Let's%20Talk";
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 // ── Scroll reveal hook ──────────────────────────────────────────────────────
@@ -481,7 +481,7 @@ export default function ExplorePage() {
                 <em>That's not a discipline problem.</em>
               </h2>
               <p style={{ color: "var(--white-dim)", maxWidth: 580, marginBottom: 16 }}>
-                It's an infrastructure problem. Getting ideas from your head — through drafting, editing, formatting, and publishing, across every channel, in your voice, at the quality they deserve — is a full operation.
+                It's an infrastructure problem. Getting ideas from your head, through drafting, editing, formatting, and publishing, across every channel, in your voice, at the quality they deserve: that is a full operation.
               </p>
               <p style={{ color: "var(--white-dim)", maxWidth: 580 }}>
                 You've been trying to run that operation alone. Most thought leaders are. The ones who aren't are the ones you see everywhere.
@@ -535,7 +535,7 @@ export default function ExplorePage() {
                   The idea is in your head. Not in the world.
                 </h2>
                 <p style={{ color: "var(--white-dim)", maxWidth: 440 }}>
-                  You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out — in your voice, at the quality it deserves, on every channel that matters.
+                  You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out. In your voice, at the quality it deserves, on every channel that matters.
                 </p>
               </div>
               <div>
@@ -612,7 +612,7 @@ export default function ExplorePage() {
                 margin: "0 0 24px",
                 letterSpacing: "-0.01em",
               }}>
-                "I had a decade of thinking that had never made it out. Now it does — every week — and it <em>sounds like me</em>. Better than what I was writing myself."
+                "I had a decade of thinking that had never made it out. Now it does, every week, and it <em>sounds like me</em>. Better than what I was writing myself."
               </p>
               <footer style={{
                 fontSize: 12,
@@ -621,7 +621,7 @@ export default function ExplorePage() {
                 textTransform: "uppercase" as const,
                 color: "var(--white-dim)",
               }}>
-                — Early Access User
+                Early Access User
               </footer>
             </blockquote>
           </div>
@@ -655,20 +655,20 @@ export default function ExplorePage() {
                 {[
                   {
                     name: "Watch",
-                    tag: "Room One — The Intelligence Room",
-                    body: "Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing — so your thinking lands in context, not into noise.",
+                    tag: "Room One: The Intelligence Room",
+                    body: "Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing, so your thinking lands in context, not into noise.",
                     items: ["Real-time market signal tracking", "Conversation and gap mapping", "Your idea meets the moment"],
                   },
                   {
                     name: "Work",
-                    tag: "Room Two — The Production Room",
+                    tag: "Room Two: The Production Room",
                     body: "A coordinated team transforms what's in your head into publication-grade content. In your voice. Every claim verified. Seven checkpoints before it touches you.",
-                    items: ["Voice DNA — sounds exactly like you", "100% verified claims", "Zero AI fingerprints", "7-second hook on every piece"],
+                    items: ["Voice DNA: sounds exactly like you", "100% verified claims", "Zero AI fingerprints", "7-second hook on every piece"],
                   },
                   {
                     name: "Wrap",
-                    tag: "Room Three — The Distribution Room",
-                    body: "One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack — simultaneously.",
+                    tag: "Room Three: The Distribution Room",
+                    body: "One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack. Simultaneously.",
                     items: ["Every channel, formatted natively", "One-click to publish", "Every piece makes the next one better"],
                   },
                 ].map((room, i) => (
@@ -691,20 +691,20 @@ export default function ExplorePage() {
                 {[
                   {
                     name: "Watch",
-                    tag: "Room One — The Intelligence Room",
-                    body: "Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing — so your thinking lands in context, not into noise.",
+                    tag: "Room One: The Intelligence Room",
+                    body: "Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing, so your thinking lands in context, not into noise.",
                     items: ["Real-time market signal tracking", "Conversation and gap mapping", "Your idea meets the moment"],
                   },
                   {
                     name: "Work",
-                    tag: "Room Two — The Production Room",
+                    tag: "Room Two: The Production Room",
                     body: "A coordinated team transforms what's in your head into publication-grade content. In your voice. Every claim verified. Seven checkpoints before it touches you.",
-                    items: ["Voice DNA — sounds exactly like you", "100% verified claims", "Zero AI fingerprints", "7-second hook on every piece"],
+                    items: ["Voice DNA: sounds exactly like you", "100% verified claims", "Zero AI fingerprints", "7-second hook on every piece"],
                   },
                   {
                     name: "Wrap",
-                    tag: "Room Three — The Distribution Room",
-                    body: "One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack — simultaneously.",
+                    tag: "Room Three: The Distribution Room",
+                    body: "One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack. Simultaneously.",
                     items: ["Every channel, formatted natively", "One-click to publish", "Every piece makes the next one better"],
                   },
                 ].flatMap((room, i) => {
@@ -763,7 +763,7 @@ export default function ExplorePage() {
                   <div className="xp-cp" style={i === 0 ? { borderTop: "1px solid var(--divider)" } : undefined}>
                     <span className="xp-cp-num">{cp.num}</span>
                     <span className="xp-cp-name">{cp.name}</span>
-                    <span className="xp-cp-desc">— {cp.desc}</span>
+                    <span className="xp-cp-desc">{cp.desc}</span>
                   </div>
                 </StaggerReveal>
               ))}
@@ -789,7 +789,7 @@ export default function ExplorePage() {
               Your thinking deserves to <em>be heard.</em>
             </h2>
             <p style={{ color: "var(--white-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
-              You don't need more discipline. You need a system that carries the idea from your head to your audience — every week, without it sitting on your to-do list.
+              You don't need more discipline. You need a system that carries the idea from your head to your audience, every week, without it sitting on your to-do list.
             </p>
             <p style={{ color: "var(--gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
