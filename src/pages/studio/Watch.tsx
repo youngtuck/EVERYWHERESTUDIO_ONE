@@ -425,17 +425,17 @@ export default function Watch() {
                 style={{
                   padding: "6px 14px",
                   borderRadius: 6,
-                  border: "1px solid rgba(255,255,255,0.15)",
+                  border: "1px solid rgba(255,255,255,0.25)",
                   background: "transparent",
-                  color: "rgba(255,255,255,0.6)",
+                  color: "rgba(255,255,255,0.75)",
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: "pointer",
                   fontFamily: "'Afacad Flux', sans-serif",
                   transition: "all 0.15s ease",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}
               >
                 Refresh briefing
               </button>
