@@ -312,7 +312,7 @@ export default function Dashboard() {
             },
             {
               key: "avg",
-              label: "AVG BETTERISH",
+              label: "AVG SCORE",
               value: avgBetterish ?? "—",
               subtitle:
                 avgBetterish == null
@@ -324,7 +324,7 @@ export default function Dashboard() {
                       : "Room to improve",
               accent: "#F5C642",
               color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
-              tooltip: "Average Betterish quality score. 800 is publication threshold.",
+              tooltip: "Average Betterish Score. 800 is publication threshold.",
             },
             {
               key: "voice",
