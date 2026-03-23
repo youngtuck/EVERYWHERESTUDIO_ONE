@@ -2322,6 +2322,7 @@ export default function WorkSession() {
               <button
                 type="button"
                 title="New session"
+                aria-label="Start a new session"
                 onClick={() => { clearSession(); navigate("/studio/work?type=" + outputType); window.location.reload(); }}
                 style={{
                   display: "flex",
