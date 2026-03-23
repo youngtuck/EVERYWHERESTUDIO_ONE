@@ -641,12 +641,14 @@ export default function Dashboard() {
                 transition: "all 0.15s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(0,0,0,0.16)";
-                e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.04)";
+                e.currentTarget.style.borderColor = "var(--border-default)";
+                e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
+                e.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
+                e.currentTarget.style.borderColor = "var(--border-subtle)";
                 e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.transform = "translateY(0)";
               }}
             >
               <div
