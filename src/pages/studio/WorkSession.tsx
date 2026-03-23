@@ -349,6 +349,8 @@ function SessionInputBox({
   setApiError: (v: string) => void;
 }) {
   const [focusWithin, setFocusWithin] = useState(false);
+  const { theme } = useTheme();
+  const dark = theme === "dark";
   const hasText = !!input.trim();
   const sendEnabled = hasText && !loading;
 
@@ -366,7 +368,9 @@ function SessionInputBox({
         boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
         transition: "border-color 0.15s ease, box-shadow 0.15s ease",
         ...(focusWithin
-          ? { borderColor: "#4A90D9", boxShadow: "0 2px 20px rgba(74,144,217,0.12)" }
+          ? dark
+            ? { borderColor: "rgba(245,198,66,0.4)", boxShadow: "0 2px 20px rgba(245,198,66,0.08)" }
+            : { borderColor: "#4A90D9", boxShadow: "0 2px 20px rgba(74,144,217,0.12)" }
           : {}),
       }}
       onFocus={() => setFocusWithin(true)}
