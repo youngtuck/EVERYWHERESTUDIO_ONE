@@ -465,6 +465,94 @@ export default function ExplorePage() {
         `}</style>
       </section>
 
+      {/* ── WATSON DEMO WIDGET ─────────────────────────────────── */}
+      <section style={{ padding: isMobile ? "40px 0 0" : "48px 0 0" }}>
+        <Reveal>
+          <div className="xp-inner" style={{ maxWidth: 520, margin: "0 auto" }}>
+            <div style={{
+              background: "#0E0E0C",
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.07)",
+              overflow: "hidden",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
+            }}>
+              {/* Header */}
+              <div style={{
+                padding: "14px 20px",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--gold)", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>Watson is listening</span>
+              </div>
+              {/* Chat area */}
+              <div style={{ padding: "20px 20px 16px" }}>
+                {/* User message */}
+                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+                  <div style={{
+                    background: "#1B263B",
+                    borderRadius: "14px 14px 4px 14px",
+                    padding: "10px 16px",
+                    maxWidth: "80%",
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.85)",
+                    lineHeight: 1.5,
+                  }}>
+                    The best content creators aren't the loudest voices. They're the ones who got their infrastructure right.
+                  </div>
+                </div>
+                {/* Watson response */}
+                <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+                  <div style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: "14px 14px 14px 4px",
+                    padding: "10px 16px",
+                    maxWidth: "85%",
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.7)",
+                    lineHeight: 1.5,
+                  }}>
+                    <strong style={{ color: "rgba(255,255,255,0.9)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
+                    Who specifically needs to hear this?
+                  </div>
+                </div>
+                {/* Score + format row */}
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingTop: 12,
+                  borderTop: "1px solid rgba(255,255,255,0.06)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>861</span>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Betterish Score</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
+                      <span key={f} style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        padding: "4px 10px",
+                        borderRadius: 20,
+                        background: i < 2 ? "rgba(212,168,50,0.15)" : "rgba(255,255,255,0.04)",
+                        color: i < 2 ? "var(--gold)" : "rgba(255,255,255,0.25)",
+                        letterSpacing: "0.02em",
+                      }}>
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ── SECTION 02: RECOGNITION ──────────────────────────── */}
       <section style={{ padding: sectionPad }}>
         <Reveal>
