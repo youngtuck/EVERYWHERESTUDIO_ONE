@@ -152,10 +152,17 @@ export default function Watch() {
 
   const hasTodayBriefing = briefing && isToday(briefing.generated_at);
   const sections = briefing?.briefing?.sections ?? {};
-  const defaultTopics = ["AI and technology", "thought leadership", "executive communication", "content strategy"];
-  const usingDefaultTopics = !profile?.sentinel_topics?.length;
-  const topics = (profile?.sentinel_topics?.length ? profile.sentinel_topics : defaultTopics) as string[];
-  const needsSetup = profile != null && (!profile.sentinel_topics || profile.sentinel_topics.length === 0);
+  const DEFAULT_SENTINEL_TOPICS = ["AI and technology", "thought leadership", "executive communication", "content strategy"];
+
+  function isUsingDefaults(t: string[] | null | undefined): boolean {
+    if (!t || t.length === 0) return true;
+    if (t.length !== DEFAULT_SENTINEL_TOPICS.length) return false;
+    return t.every(topic => DEFAULT_SENTINEL_TOPICS.includes(topic));
+  }
+
+  const usingDefaultTopics = isUsingDefaults(profile?.sentinel_topics);
+  const topics = profile?.sentinel_topics?.length ? profile.sentinel_topics : DEFAULT_SENTINEL_TOPICS;
+  const needsSetup = profile != null && usingDefaultTopics;
 
   const handleAnalyzeLinkedIn = async () => {
     if (!setupLinkedInUrl.trim() || !setupLinkedInUrl.includes("linkedin.com")) {
@@ -445,6 +452,123 @@ export default function Watch() {
       </header>
 
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px 60px", position: "relative" }}>
+        {/* Current Topics Bar */}
+        {!needsSetup && !generating && !completing && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 24,
+            padding: "12px 16px",
+            background: "var(--surface-white)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 10,
+            flexWrap: "wrap",
+          }}>
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase" as const,
+              color: "var(--text-tertiary)",
+              flexShrink: 0,
+            }}>
+              Watching
+            </span>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
+              {topics.map((topic, i) => (
+                <span
+                  key={`${topic}-${i}`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "4px 10px",
+                    background: "rgba(74,144,217,0.08)",
+                    border: "1px solid rgba(74,144,217,0.15)",
+                    borderRadius: 16,
+                    fontSize: 12,
+                    color: "var(--text-primary)",
+                    fontWeight: 500,
+                  }}
+                >
+                  {topic}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const updated = topics.filter((_, idx) => idx !== i);
+                      setProfile(p => p ? { ...p, sentinel_topics: updated } : null);
+                      if (user) {
+                        await supabase.from("profiles").update({ sentinel_topics: updated }).eq("id", user.id);
+                      }
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      color: "var(--text-tertiary)",
+                      fontSize: 14,
+                      lineHeight: 1,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    aria-label={`Remove ${topic}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+              <input
+                type="text"
+                value={newTopicInput}
+                onChange={(e) => setNewTopicInput(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter" && newTopicInput.trim()) {
+                    e.preventDefault();
+                    const updated = [...topics, newTopicInput.trim()];
+                    setProfile(p => p ? { ...p, sentinel_topics: updated } : null);
+                    setNewTopicInput("");
+                    if (user) {
+                      await supabase.from("profiles").update({ sentinel_topics: updated }).eq("id", user.id);
+                    }
+                  }
+                }}
+                placeholder="Add topic..."
+                style={{
+                  width: 140,
+                  padding: "6px 10px",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: 6,
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  fontSize: 12,
+                  background: "var(--bg-2)",
+                  color: "var(--text-primary)",
+                  outline: "none",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => navigate("/studio/settings")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-tertiary)",
+                  fontSize: 12,
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+              >
+                Manage
+              </button>
+            </div>
+          </div>
+        )}
+
         {needsSetup && (
           <div
             style={{
