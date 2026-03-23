@@ -275,11 +275,13 @@ export default function SpecialistPanel({
                   <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{info.role}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  {isRevealed && g.score !== undefined && (
+                  {isRevealed && g.score !== undefined ? (
                     <span style={{ fontSize: 14, fontWeight: 700, color: scoreColor(g.score), fontVariantNumeric: "tabular-nums" }}>
                       {g.score}
                     </span>
-                  )}
+                  ) : isRevealed && g.status === "pass" ? (
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#50c8a0" }}>Pass</span>
+                  ) : null}
                   {statusIcon(g)}
                 </div>
               </button>
