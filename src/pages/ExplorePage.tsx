@@ -612,7 +612,7 @@ export default function ExplorePage() {
       <section style={{ padding: sectionPad }}>
         <Reveal>
           <div className="xp-inner">
-            <div className="xp-grid-2">
+            <div className="xp-grid-2" style={{ alignItems: "center" }}>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
                   You know this feeling
