@@ -1377,7 +1377,7 @@ export default function WorkSession() {
                 outputId,
               }),
             },
-            120000 // pipeline takes longer
+            180000 // pipeline takes longer — generous to avoid racing Vercel's 120s limit
           );
 
           if (!pipelineRes.ok) throw new Error("Pipeline API failed");

@@ -298,7 +298,7 @@ export default function OutputDetail() {
             outputId: output.id,
           }),
         },
-        { timeout: 120000 },
+        { timeout: 180000 },
       );
       if (!res.ok) throw new Error("Pipeline API failed");
       const result = await res.json();

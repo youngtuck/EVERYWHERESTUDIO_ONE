@@ -134,6 +134,19 @@ export default async function handler(req, res) {
       continue;
     }
 
+    // Time budget check: skip remaining gates if approaching Vercel's 120s hard limit
+    if (Date.now() - startTime > 100000) {
+      console.log(`[run-pipeline] Time budget exceeded at gate ${i}, returning partial results`);
+      gateResults.push({
+        gate: gate.name,
+        status: "FLAG",
+        score: 0,
+        feedback: "Skipped: pipeline time budget exceeded.",
+        issues: ["TIME_BUDGET"],
+      });
+      continue;
+    }
+
     try {
       console.log(`[run-pipeline] Gate ${i}: ${gate.name}`);
 
@@ -188,7 +201,7 @@ export default async function handler(req, res) {
   let betterishScore = { total: 0, verdict: "REJECT" };
   const betterishPrompt = getPrompt("betterish.md");
 
-  if (betterishPrompt) {
+  if (betterishPrompt && (Date.now() - startTime) < 105000) {
     try {
       console.log("[run-pipeline] Running Betterish scorer");
       const response = await callWithRetry(() =>
