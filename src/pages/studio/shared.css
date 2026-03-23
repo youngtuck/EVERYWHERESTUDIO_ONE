@@ -1,3 +1,13 @@
+/* ─── SPACING SYSTEM ──────────────────────────────────
+ * Base unit: 8px
+ * Scale: 4, 8, 12, 16, 24, 32, 48, 64
+ *
+ * Page padding: 32px (desktop), 16px (mobile)
+ * Section gap: 32px
+ * Card padding: 24px (large), 16px (compact)
+ * Element gap: 12px (tight), 16px (standard), 24px (relaxed)
+ * ─────────────────────────────────────────────────── */
+
 /* Shared keyframes for studio pages */
 @keyframes fadeUp {
   from {
