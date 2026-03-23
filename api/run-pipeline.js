@@ -1,23 +1,7 @@
-/**
- * Quality Pipeline API - runs all 7 gates + Betterish scorer on a draft.
- * POST body: { draft, outputType, voiceDnaMd, brandDnaMd, methodDnaMd, userId, outputId }
- * Returns: { status, gateResults, betterishScore, finalDraft, blockedAt }
- *
- * This replaces the client-side pipeline that relied on Supabase Edge Functions.
- * Each gate runs sequentially using the Anthropic API directly.
- */
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { callWithRetry } from "./_retry.js";
-
-function sanitizeContent(text) {
-  if (!text) return text;
-  let result = text.replace(/\s*\u2014\s*/g, ", ");
-  result = result.replace(/\s+\u2013\s+/g, ", ");
-  result = result.replace(/, ,/g, ",").replace(/,\./g, ".").replace(/,\s*,/g, ",");
-  return result;
-}
 
 const GATE_FILES = [
   { name: "Echo", file: "gate-0-echo.md", label: "Deduplication" },
@@ -29,24 +13,25 @@ const GATE_FILES = [
   { name: "Marcus + Marshall", file: "gate-6-perspective.md", label: "Perspective" },
 ];
 
-// Load prompts from filesystem (available in Vercel serverless)
+// Prompt loading with detailed error reporting
 function loadPrompt(filename) {
-  // Try multiple paths (Vercel deployment structure varies)
   const paths = [
     path.join(process.cwd(), "src", "lib", "agents", "prompts", filename),
-    path.join(__dirname, "..", "src", "lib", "agents", "prompts", filename),
     path.join("/var/task", "src", "lib", "agents", "prompts", filename),
   ];
+  if (typeof __dirname !== "undefined") {
+    paths.push(path.join(__dirname, "..", "src", "lib", "agents", "prompts", filename));
+  }
   for (const p of paths) {
     try {
-      return fs.readFileSync(p, "utf-8");
+      const content = fs.readFileSync(p, "utf-8");
+      if (content) return content;
     } catch {}
   }
-  console.error(`[run-pipeline] Could not load prompt: ${filename}`);
+  console.error(`[run-pipeline] PROMPT NOT FOUND: ${filename}. Tried: ${paths.join(", ")}`);
   return null;
 }
 
-// Cache loaded prompts
 const promptCache = {};
 function getPrompt(filename) {
   if (!promptCache[filename]) {
@@ -58,18 +43,18 @@ function getPrompt(filename) {
 function parseGateResponse(text) {
   let status = "PASS";
   let score = 75;
-  let feedback = text;
+  let feedback = text || "";
   let issues = [];
 
-  // Try JSON first (agents sometimes return JSON even when asked for plaintext)
+  // Try JSON first
   try {
-    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const cleaned = (text || "").replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       if (parsed.status) {
-        const s = parsed.status.toUpperCase();
-        status = (s === "PASS" || s === "CLEAR") ? "PASS" : (s === "FAIL" || s.includes("BLOCK")) ? "FAIL" : "FLAG";
+        const s = String(parsed.status).toUpperCase();
+        status = s === "PASS" ? "PASS" : (s === "FAIL" || s.includes("BLOCK")) ? "FAIL" : "FLAG";
       }
       if (typeof parsed.score === "number") score = Math.min(100, Math.max(0, parsed.score));
       if (parsed.feedback) feedback = String(parsed.feedback).slice(0, 500);
@@ -79,74 +64,59 @@ function parseGateResponse(text) {
     }
   } catch {}
 
-  // Regex fallback for plaintext responses
-  const statusMatch = text.match(/STATUS:\s*(PASS|FAIL|FLAG|REVISE|AUTOMATIC BLOCK|BLOCKED|BLOCK|CLEAR)/i)
-    || text.match(/\*\*Status\*\*:\s*(PASS|FAIL|FLAG|REVISE|AUTOMATIC BLOCK|BLOCKED|CLEAR)/i)
-    || text.match(/CHECKPOINT\s*\d+\s*STATUS:\s*(PASS|FAIL|FLAG|REVISE|AUTOMATIC BLOCK|BLOCKED|CLEAR)/i);
+  // Regex fallback
+  const statusMatch = (text || "").match(/STATUS:\s*(PASS|FAIL|FLAG|REVISE|AUTOMATIC BLOCK|BLOCKED|BLOCK|CLEAR)/i)
+    || (text || "").match(/CHECKPOINT\s*\d+\s*STATUS:\s*(PASS|FAIL|FLAG|REVISE|AUTOMATIC BLOCK|BLOCKED|CLEAR)/i);
   if (statusMatch) {
     const s = statusMatch[1].toUpperCase();
     status = (s === "PASS" || s === "CLEAR") ? "PASS" : (s === "FAIL" || s.includes("BLOCK")) ? "FAIL" : "FLAG";
   }
 
-  // Check for "REVISE" which some agents use
-  if (!statusMatch && /\bREVISE\b/i.test(text) && !/\bPASS\b/i.test(text)) {
-    status = "FLAG";
-  }
-
-  const scoreMatch = text.match(/SCORE:\s*(\d+)/i) || text.match(/\*\*Score\*\*:\s*(\d+)/i) || text.match(/(\d+)\/100/);
+  const scoreMatch = (text || "").match(/SCORE:\s*(\d+)/i) || (text || "").match(/(\d+)\/100/);
   if (scoreMatch) score = Math.min(100, Math.max(0, parseInt(scoreMatch[1])));
 
-  const issuesMatch = text.match(/(?:ISSUES|FINDINGS|PROBLEMS|FLAGS):\s*\n([\s\S]*?)(?:\n\n|\n---|\n##|$)/i);
-  if (issuesMatch) {
-    issues = issuesMatch[1].split("\n").map(l => l.replace(/^[-*•]\s*/, "").trim()).filter(Boolean).slice(0, 10);
-  }
-
-  const lines = text.split("\n").filter(l => l.trim() && !l.startsWith("#") && !l.startsWith("|"));
+  const lines = (text || "").split("\n").filter(l => l.trim() && !l.startsWith("#") && !l.startsWith("|"));
   feedback = lines.slice(0, 5).join("\n").trim().slice(0, 500);
-
   if (status === "FAIL") score = Math.min(score, 50);
-
   return { status, score, feedback, issues };
 }
 
 function parseBetterishResponse(text) {
-  let total = 0;
-  let verdict = "REJECT";
-  const emptyBreakdown = { voiceAuthenticity: 0, researchDepth: 0, hookStrength: 0, slopScore: 0, editorialQuality: 0, perspective: 0, engagement: 0, platformFit: 0, strategicValue: 0, nvcCompliance: 0 };
-  let breakdown = emptyBreakdown;
-  let topIssue = "";
-  let gutCheck = "";
+  const emptyBreakdown = {
+    voiceAuthenticity: 0, researchDepth: 0, hookStrength: 0, slopScore: 0,
+    editorialQuality: 0, perspective: 0, engagement: 0, platformFit: 0,
+    strategicValue: 0, nvcCompliance: 0,
+  };
 
   // Try JSON first
   try {
-    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const cleaned = (text || "").replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      total = parsed.total || parsed.totalScore || 0;
-      if (parsed.verdict) verdict = parsed.verdict.toUpperCase();
-      else verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
-      breakdown = (parsed.breakdown && Object.keys(parsed.breakdown).length > 0) ? parsed.breakdown : emptyBreakdown;
-      topIssue = parsed.topIssue || "";
-      gutCheck = parsed.gutCheck || "";
-      return { total, verdict, breakdown, topIssue, gutCheck };
+      const total = parsed.total || parsed.totalScore || 0;
+      const verdict = parsed.verdict
+        ? String(parsed.verdict).toUpperCase()
+        : total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
+      return {
+        total,
+        verdict,
+        breakdown: parsed.breakdown || emptyBreakdown,
+        topIssue: parsed.topIssue || "",
+        gutCheck: parsed.gutCheck || "",
+      };
     }
   } catch {}
 
   // Regex fallback
-  const totalMatch = text.match(/TOTAL:\s*(\d+)/i) || text.match(/\*\*Total\*\*:\s*(\d+)/i) || text.match(/composite.*?(\d{3,4})/i);
+  let total = 0;
+  const totalMatch = (text || "").match(/TOTAL:\s*(\d+)/i) || (text || "").match(/composite.*?(\d{3,4})/i);
   if (totalMatch) total = Math.min(1000, Math.max(0, parseInt(totalMatch[1])));
-
-  verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
-  const verdictMatch = text.match(/VERDICT:\s*(PUBLISH|REVISE|REJECT)/i);
-  if (verdictMatch) verdict = verdictMatch[1].toUpperCase();
-
-  return { total, verdict, breakdown, topIssue, gutCheck };
+  const verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
+  return { total, verdict, breakdown: emptyBreakdown, topIssue: "", gutCheck: "" };
 }
 
-export const config = {
-  maxDuration: 120,
-};
+export const config = { maxDuration: 120 };
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -156,142 +126,176 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
-  }
+  if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
 
   const { draft, outputType, voiceDnaMd, brandDnaMd, methodDnaMd, userId, outputId } = req.body || {};
   if (!draft) return res.status(400).json({ error: "draft is required" });
 
-  const gateResults = new Array(GATE_FILES.length).fill(null);
+  const gateResults = [];
+  let betterishScore = { total: 0, verdict: "REJECT", breakdown: { voiceAuthenticity: 0, researchDepth: 0, hookStrength: 0, slopScore: 0, editorialQuality: 0, perspective: 0, engagement: 0, platformFit: 0, strategicValue: 0, nvcCompliance: 0 }, topIssue: "", gutCheck: "" };
   let currentDraft = draft;
   let blockedAt = null;
-  let betterishScore = { total: 0, verdict: "REJECT" };
   const startTime = Date.now();
 
-  // Wrap entire pipeline in try/catch so we ALWAYS return 200 with whatever we have
   try {
     const client = new Anthropic({ apiKey });
     const model = "claude-sonnet-4-20250514";
 
-    console.log(`[run-pipeline] Starting pipeline for output ${outputId}`);
+    console.log(`[run-pipeline] Starting for output ${outputId}`);
 
-    // Build user message template (shared across gates)
-    const userMessage = [
-      "Evaluate this draft. Return ONLY valid JSON matching this exact structure:",
-      '{ "status": "PASS" or "FAIL", "score": 0-100, "feedback": "specific issues found, or why it passed", "issues": ["list", "of", "specific", "problems"] }',
-      "Do not include any text outside the JSON object.",
-      "",
-      `OUTPUT TYPE: ${outputType || "essay"}`,
-      voiceDnaMd ? `VOICE DNA:\n${voiceDnaMd.slice(0, 2000)}` : "",
-      brandDnaMd ? `BRAND DNA:\n${brandDnaMd.slice(0, 1000)}` : "",
-      `\nCONTENT TO EVALUATE:\n\n${currentDraft}`,
-    ].filter(Boolean).join("\n\n");
-
-    // Run a single gate and return its result
-    async function runGate(i) {
-      const gate = GATE_FILES[i];
+    // runGate is defined HERE inside the handler so it has closure access
+    // to client, model, currentDraft, outputType, voiceDnaMd, brandDnaMd
+    async function runGate(gate, index) {
       const prompt = getPrompt(gate.file);
       if (!prompt) {
-        return { gate: gate.name, status: "FLAG", score: 0, feedback: `Prompt file ${gate.file} not available.`, issues: ["PROMPT_NOT_LOADED"] };
+        return {
+          gate: gate.name,
+          status: "FLAG",
+          score: 0,
+          feedback: `Prompt file ${gate.file} could not be loaded from the serverless filesystem.`,
+          issues: ["PROMPT_NOT_LOADED"],
+        };
       }
+
+      const userMessage = [
+        "Evaluate this draft. Return ONLY valid JSON matching this structure:",
+        '{ "status": "PASS" or "FAIL", "score": 0-100, "feedback": "specific issues or why it passed", "issues": ["list", "of", "problems"] }',
+        "",
+        "Do not include any text outside the JSON object.",
+        "",
+        `OUTPUT TYPE: ${outputType || "essay"}`,
+        voiceDnaMd ? `VOICE DNA:\n${voiceDnaMd.slice(0, 2000)}` : "",
+        brandDnaMd ? `BRAND DNA:\n${brandDnaMd.slice(0, 1000)}` : "",
+        `\nCONTENT TO EVALUATE:\n\n${currentDraft}`,
+      ].filter(Boolean).join("\n\n");
+
       try {
-        console.log(`[run-pipeline] Gate ${i}: ${gate.name}`);
-        const response = await callWithRetry(() =>
-          client.messages.create({ model, max_tokens: 4096, system: prompt, messages: [{ role: "user", content: userMessage }] }),
-          0 // No retries per gate in parallel mode. Failures are caught gracefully.
-        );
-        const text = response.content[0]?.type === "text" ? response.content[0].text : "";
-        const parsed = parseGateResponse(text);
-        return { gate: gate.name, status: parsed.status, score: parsed.score, feedback: parsed.feedback, issues: parsed.issues };
-      } catch (err) {
-        console.error(`[run-pipeline] Gate ${i} (${gate.name}) failed:`, err.message);
-        return { gate: gate.name, status: "FLAG", score: 0, feedback: `Gate evaluation failed: ${err.message || "Unknown error"}`, issues: ["API_ERROR"] };
-      }
-    }
-
-    // Run gates in parallel batches: [0,1,2] then [3,4,5,6]
-    // This cuts total time roughly in half vs sequential
-    const batch1 = await Promise.allSettled([runGate(0), runGate(1), runGate(2)]);
-    for (let i = 0; i < 3; i++) {
-      const r = batch1[i];
-      gateResults[i] = r.status === "fulfilled" ? r.value : { gate: GATE_FILES[i].name, status: "FLAG", score: 0, feedback: "Gate failed unexpectedly.", issues: ["PROMISE_ERROR"] };
-    }
-
-    // Time budget check before batch 2
-    if (Date.now() - startTime < 55000) {
-      const batch2 = await Promise.allSettled([runGate(3), runGate(4), runGate(5), runGate(6)]);
-      for (let j = 0; j < 4; j++) {
-        const r = batch2[j];
-        gateResults[3 + j] = r.status === "fulfilled" ? r.value : { gate: GATE_FILES[3 + j].name, status: "FLAG", score: 0, feedback: "Gate failed unexpectedly.", issues: ["PROMISE_ERROR"] };
-      }
-    } else {
-      console.log(`[run-pipeline] Time budget: skipping batch 2 (${Date.now() - startTime}ms elapsed)`);
-      for (let j = 3; j < 7; j++) {
-        gateResults[j] = { gate: GATE_FILES[j].name, status: "FLAG", score: 0, feedback: "Skipped: pipeline time budget exceeded.", issues: ["TIME_BUDGET"] };
-      }
-    }
-
-    // Check for blocking failures
-    for (const g of gateResults) {
-      if (g && g.status === "FAIL" && !blockedAt) blockedAt = g.gate;
-    }
-
-    // Run Betterish scorer if we have time
-    const betterishPrompt = getPrompt("betterish.md");
-    if (betterishPrompt && (Date.now() - startTime) < 95000) {
-      try {
-        console.log("[run-pipeline] Running Betterish scorer");
+        console.log(`[run-pipeline] Gate ${index}: ${gate.name} - calling API`);
         const response = await callWithRetry(() =>
           client.messages.create({
             model,
             max_tokens: 4096,
-            system: betterishPrompt,
-            messages: [{ role: "user", content: [
-              `Score this ${outputType || "essay"} on a 0-1000 scale.`,
-              'Return ONLY valid JSON matching this structure:',
-              '{ "total": <number 0-1000>, "verdict": "PUBLISH" or "REVISE" or "REJECT", "breakdown": { "voiceAuthenticity": <0-100>, "researchDepth": <0-100>, "hookStrength": <0-100>, "slopScore": <0-100>, "editorialQuality": <0-100>, "perspective": <0-100>, "engagement": <0-100> }, "topIssue": "the single biggest issue", "gutCheck": "one sentence gut reaction" }',
-              'Do not include any text outside the JSON object.',
-              '',
-              voiceDnaMd ? `VOICE DNA:\n${voiceDnaMd.slice(0, 2000)}` : '',
-              `\nCONTENT TO SCORE:\n\n${currentDraft}`,
-            ].filter(Boolean).join('\n\n') }],
+            system: prompt,
+            messages: [{ role: "user", content: userMessage }],
           }),
-          0
+          1
         );
         const text = response.content[0]?.type === "text" ? response.content[0].text : "";
-        betterishScore = parseBetterishResponse(text);
+        console.log(`[run-pipeline] Gate ${index}: ${gate.name} - got response (${text.length} chars)`);
+        const parsed = parseGateResponse(text);
+        return { ...parsed, gate: gate.name };
       } catch (err) {
-        console.error("[run-pipeline] Betterish scorer failed:", err.message);
+        console.error(`[run-pipeline] Gate ${index} (${gate.name}) API ERROR:`, err.message, err.status || "");
+        return {
+          gate: gate.name,
+          status: "FLAG",
+          score: 0,
+          feedback: `API call failed: ${err.message || "Unknown error"}`,
+          issues: ["API_ERROR"],
+        };
+      }
+    }
+
+    // Batch 1: gates 0-3 in parallel
+    console.log("[run-pipeline] Batch 1: Echo, Priya, Jordan, David");
+    const batch1Results = await Promise.allSettled(
+      GATE_FILES.slice(0, 4).map((gate, i) => runGate(gate, i))
+    );
+    for (const settled of batch1Results) {
+      const r = settled.status === "fulfilled"
+        ? settled.value
+        : { gate: "Unknown", status: "FLAG", score: 0, feedback: `Promise rejected: ${settled.reason}`, issues: ["CRASH"] };
+      gateResults.push(r);
+      if (r.status === "FAIL" && !blockedAt) blockedAt = r.gate;
+    }
+
+    // Time check before batch 2
+    const elapsed1 = Date.now() - startTime;
+    console.log(`[run-pipeline] Batch 1 done in ${elapsed1}ms`);
+
+    if (elapsed1 > 90000) {
+      console.log("[run-pipeline] Time budget critical, skipping batch 2");
+      for (let i = 4; i < GATE_FILES.length; i++) {
+        gateResults.push({ gate: GATE_FILES[i].name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
       }
     } else {
-      console.log(`[run-pipeline] Skipping Betterish scorer (${Date.now() - startTime}ms elapsed)`);
-    }
-
-  } catch (err) {
-    // Catastrophic error: return whatever we have
-    console.error("[run-pipeline] Catastrophic error:", err.message);
-    // Fill any null gate slots
-    for (let i = 0; i < gateResults.length; i++) {
-      if (!gateResults[i]) {
-        gateResults[i] = { gate: GATE_FILES[i].name, status: "FLAG", score: 0, feedback: "Pipeline error before this gate ran.", issues: ["PIPELINE_ERROR"] };
+      // Batch 2: gates 4-6 in parallel
+      console.log("[run-pipeline] Batch 2: Elena, Natasha, Marcus+Marshall");
+      const batch2Results = await Promise.allSettled(
+        GATE_FILES.slice(4).map((gate, i) => runGate(gate, i + 4))
+      );
+      for (const settled of batch2Results) {
+        const r = settled.status === "fulfilled"
+          ? settled.value
+          : { gate: "Unknown", status: "FLAG", score: 0, feedback: `Promise rejected: ${settled.reason}`, issues: ["CRASH"] };
+        gateResults.push(r);
+        if (r.status === "FAIL" && !blockedAt) blockedAt = r.gate;
       }
     }
+
+    // Betterish scorer
+    const elapsed2 = Date.now() - startTime;
+    if (elapsed2 < 100000) {
+      const betterishPrompt = getPrompt("betterish.md");
+      if (betterishPrompt) {
+        try {
+          console.log("[run-pipeline] Running Betterish scorer");
+          const response = await callWithRetry(() =>
+            client.messages.create({
+              model,
+              max_tokens: 4096,
+              system: betterishPrompt,
+              messages: [{
+                role: "user",
+                content: [
+                  `Score this ${outputType || "essay"} on a 0-1000 scale.`,
+                  "Return ONLY valid JSON:",
+                  '{ "total": <0-1000>, "verdict": "PUBLISH"/"REVISE"/"REJECT", "breakdown": { "voiceAuthenticity": <0-100>, "researchDepth": <0-100>, "hookStrength": <0-100>, "slopScore": <0-100>, "editorialQuality": <0-100>, "perspective": <0-100>, "engagement": <0-100>, "platformFit": <0-100>, "strategicValue": <0-100>, "nvcCompliance": <0-100> }, "topIssue": "biggest issue", "gutCheck": "one sentence" }',
+                  "",
+                  "Do not include any text outside the JSON object.",
+                  "",
+                  `CONTENT TO SCORE:\n\n${currentDraft}`,
+                ].join("\n"),
+              }],
+            }),
+            1
+          );
+          const text = response.content[0]?.type === "text" ? response.content[0].text : "";
+          console.log(`[run-pipeline] Betterish response (${text.length} chars)`);
+          betterishScore = parseBetterishResponse(text);
+        } catch (err) {
+          console.error("[run-pipeline] Betterish scorer failed:", err.message);
+        }
+      } else {
+        console.error("[run-pipeline] betterish.md prompt not found");
+      }
+    } else {
+      console.log("[run-pipeline] Skipping Betterish scorer (time budget)");
+    }
+
+    const durationMs = Date.now() - startTime;
+    const anyFailed = gateResults.some(g => g.status === "FAIL");
+    const status = anyFailed ? "BLOCKED" : "PASSED";
+    console.log(`[run-pipeline] Done. Status: ${status}, Score: ${betterishScore.total}, Duration: ${durationMs}ms`);
+
+    return res.status(200).json({
+      status,
+      gateResults,
+      betterishScore,
+      finalDraft: currentDraft,
+      blockedAt,
+      totalDurationMs: durationMs,
+    });
+
+  } catch (fatalErr) {
+    console.error("[run-pipeline] FATAL:", fatalErr.message, fatalErr.stack);
+    return res.status(200).json({
+      status: "BLOCKED",
+      gateResults,
+      betterishScore,
+      finalDraft: currentDraft || draft,
+      blockedAt: blockedAt || `Fatal: ${fatalErr.message}`,
+      totalDurationMs: Date.now() - startTime,
+    });
   }
-
-  const durationMs = Date.now() - startTime;
-  const anyFailed = gateResults.some(g => g && g.status === "FAIL");
-  const status = anyFailed ? "BLOCKED" : "PASSED";
-
-  console.log(`[run-pipeline] Complete. Status: ${status}, Score: ${betterishScore.total}, Duration: ${durationMs}ms`);
-
-  // ALWAYS return 200 with whatever results we have
-  return res.status(200).json({
-    status,
-    gateResults: gateResults.filter(Boolean),
-    betterishScore,
-    finalDraft: sanitizeContent(currentDraft),
-    blockedAt,
-    totalDurationMs: durationMs,
-  });
 }

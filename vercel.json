@@ -43,6 +43,10 @@
       "maxDuration": 120,
       "includeFiles": "src/lib/agents/prompts/*.md"
     },
+    "api/pipeline-health.js": {
+      "maxDuration": 30,
+      "includeFiles": "src/lib/agents/prompts/*.md"
+    },
     "api/admin-data.js": {
       "maxDuration": 30
     }
