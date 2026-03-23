@@ -371,7 +371,9 @@ export default function Settings() {
           <button
             type="button"
             onClick={handleAddWatchTopic}
-            style={{ background: "transparent", color: "var(--gold-dark)", border: "1px solid var(--gold-dark)", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" }}
+            style={{ background: "var(--gold-dark)", color: "#0D1B2A", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
             Add
           </button>
