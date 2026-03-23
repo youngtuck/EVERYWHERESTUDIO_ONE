@@ -453,24 +453,28 @@ export default function OutputLibrary() {
                 >
                   {o.score}
                 </span>
-                <span
-                  style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    textTransform: "uppercase",
-                    padding: "3px 10px",
-                    borderRadius: 4,
-                    background: "rgba(58, 154, 92, 0.1)",
-                    color: "#3A9A5C",
-                    width: 56,
-                    textAlign: "center",
-                    flexShrink: 0,
-                    marginLeft: 8,
-                  }}
-                >
-                  saved
-                </span>
+                {(Date.now() - new Date(o.created_at).getTime()) < 5 * 60 * 1000 ? (
+                  <span
+                    style={{
+                      fontFamily: "'Afacad Flux', sans-serif",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      textTransform: "uppercase",
+                      padding: "3px 10px",
+                      borderRadius: 4,
+                      background: "rgba(58, 154, 92, 0.1)",
+                      color: "#3A9A5C",
+                      width: 56,
+                      textAlign: "center" as const,
+                      flexShrink: 0,
+                      marginLeft: 8,
+                    }}
+                  >
+                    saved
+                  </span>
+                ) : (
+                  <span style={{ width: 56, marginLeft: 8, flexShrink: 0 }} />
+                )}
                 <span
                   style={{
                     fontFamily: "'Afacad Flux', sans-serif",
