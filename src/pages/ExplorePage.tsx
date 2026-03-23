@@ -338,6 +338,9 @@ const CSS = `
   .xp-room:last-child { padding-right: 0; }
   .xp-footer { flex-direction: column; gap: 16px; text-align: center; padding: 32px 24px; }
 }
+@media (max-width: 820px) {
+  .xp-problem-grid { grid-template-columns: 1fr !important; gap: 40px !important; padding: 0 24px !important; }
+}
 @media (max-width: 400px) {
   .xp-hero-ctas { flex-direction: column !important; width: 100% !important; }
   .xp-hero-ctas > * { width: 100% !important; text-align: center !important; }
@@ -469,98 +472,19 @@ export default function ExplorePage() {
         `}</style>
       </section>
 
-      {/* ── WATSON DEMO WIDGET ─────────────────────────────────── */}
-      <section style={{ padding: isMobile ? "40px 0 0" : "48px 0 0" }}>
-        <Reveal>
-          <div className="xp-inner" style={{ maxWidth: 520, margin: "0 auto" }}>
-            <div style={{
-              background: "#0E0E0C",
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.07)",
-              overflow: "hidden",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
-            }}>
-              {/* Header */}
-              <div style={{
-                padding: "14px 20px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-              }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--gold)", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>Watson is listening</span>
-              </div>
-              {/* Chat area */}
-              <div style={{ padding: "20px 20px 16px" }}>
-                {/* User message */}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
-                  <div style={{
-                    background: "#1B263B",
-                    borderRadius: "14px 14px 4px 14px",
-                    padding: "10px 16px",
-                    maxWidth: "80%",
-                    fontSize: 13,
-                    color: "rgba(255,255,255,0.85)",
-                    lineHeight: 1.5,
-                  }}>
-                    The best content creators aren't the loudest voices. They're the ones who got their infrastructure right.
-                  </div>
-                </div>
-                {/* Watson response */}
-                <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
-                  <div style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: "14px 14px 14px 4px",
-                    padding: "10px 16px",
-                    maxWidth: "85%",
-                    fontSize: 13,
-                    color: "rgba(255,255,255,0.7)",
-                    lineHeight: 1.5,
-                  }}>
-                    <strong style={{ color: "rgba(255,255,255,0.9)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
-                    Who specifically needs to hear this?
-                  </div>
-                </div>
-                {/* Score + format row */}
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingTop: 12,
-                  borderTop: "1px solid rgba(255,255,255,0.06)",
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>861</span>
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Betterish Score</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
-                      <span key={f} style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        padding: "4px 10px",
-                        borderRadius: 20,
-                        background: i < 2 ? "rgba(212,168,50,0.15)" : "rgba(255,255,255,0.04)",
-                        color: i < 2 ? "var(--gold)" : "rgba(255,255,255,0.25)",
-                        letterSpacing: "0.02em",
-                      }}>
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ── SECTION 02: RECOGNITION ──────────────────────────── */}
+      {/* ── SECTION 02: RECOGNITION + WATSON DEMO ─────────────── */}
       <section style={{ padding: sectionPad }}>
         <Reveal>
-          <div className="xp-inner" style={{ maxWidth: 760 }}>
+          <div className="xp-problem-grid" style={{
+            display: "grid",
+            gridTemplateColumns: "1.1fr 1fr",
+            gap: 60,
+            alignItems: "center",
+            maxWidth: 1120,
+            margin: "0 auto",
+            padding: "0 40px",
+          }}>
+            {/* Left: Text content */}
             <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: isMobile ? 20 : 32 }}>
               <h2 style={{
                 fontSize: "clamp(28px, 4vw, 42px)",
@@ -578,6 +502,88 @@ export default function ExplorePage() {
               <p style={{ color: "var(--white-dim)", maxWidth: 580 }}>
                 You've been trying to run that operation alone. Most thought leaders are. The ones who aren't are the ones you see everywhere.
               </p>
+            </div>
+            {/* Right: Watson demo widget */}
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+              <div style={{
+                background: "#0E0E0C",
+                borderRadius: 14,
+                border: "1px solid rgba(255,255,255,0.07)",
+                overflow: "hidden",
+                boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
+                maxWidth: 440,
+                width: "100%",
+              }}>
+                {/* Header */}
+                <div style={{
+                  padding: "14px 20px",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--gold)", flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>Watson is listening</span>
+                </div>
+                {/* Chat area */}
+                <div style={{ padding: "20px 20px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+                    <div style={{
+                      background: "#1B263B",
+                      borderRadius: "14px 14px 4px 14px",
+                      padding: "10px 16px",
+                      maxWidth: "80%",
+                      fontSize: 13,
+                      color: "rgba(255,255,255,0.85)",
+                      lineHeight: 1.5,
+                    }}>
+                      The best content creators aren't the loudest voices. They're the ones who got their infrastructure right.
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+                    <div style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: "14px 14px 14px 4px",
+                      padding: "10px 16px",
+                      maxWidth: "85%",
+                      fontSize: 13,
+                      color: "rgba(255,255,255,0.7)",
+                      lineHeight: 1.5,
+                    }}>
+                      <strong style={{ color: "rgba(255,255,255,0.9)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
+                      Who specifically needs to hear this?
+                    </div>
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingTop: 12,
+                    borderTop: "1px solid rgba(255,255,255,0.06)",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>861</span>
+                      <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Betterish Score</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
+                        <span key={f} style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          padding: "4px 10px",
+                          borderRadius: 20,
+                          background: i < 2 ? "rgba(212,168,50,0.15)" : "rgba(255,255,255,0.04)",
+                          color: i < 2 ? "var(--gold)" : "rgba(255,255,255,0.25)",
+                          letterSpacing: "0.02em",
+                        }}>
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Reveal>
