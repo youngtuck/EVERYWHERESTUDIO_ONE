@@ -145,6 +145,27 @@ body {
 [data-theme="dark"] .watson-input::placeholder {
   color: rgba(240,240,238,0.3) !important;
 }
+
+/* Global dark mode form inputs (scoped to studio shell) */
+[data-theme="dark"] .studio-main-inner input,
+[data-theme="dark"] .studio-main-inner textarea,
+[data-theme="dark"] .studio-main-inner select {
+  background: var(--bg-2) !important;
+  color: var(--fg) !important;
+  border-color: var(--line) !important;
+}
+[data-theme="dark"] .studio-main-inner input::placeholder,
+[data-theme="dark"] .studio-main-inner textarea::placeholder {
+  color: var(--fg-3) !important;
+}
+[data-theme="dark"] .studio-main-inner input:focus,
+[data-theme="dark"] .studio-main-inner textarea:focus,
+[data-theme="dark"] .studio-main-inner select:focus {
+  border-color: rgba(245, 198, 66, 0.4) !important;
+  box-shadow: 0 0 0 2px rgba(245, 198, 66, 0.08) !important;
+  outline: none !important;
+}
+
 a { text-decoration: none; color: inherit; }
 button { font-family: var(--font); }
 ::selection { background: var(--deep-navy); color: #fff; }
