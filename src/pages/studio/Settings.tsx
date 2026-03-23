@@ -127,6 +127,13 @@ export default function Settings() {
     })();
   }, [user?.id]);
 
+  // Fill fullName from AuthContext if it resolved after the profile query
+  useEffect(() => {
+    if (!fullName && ctxDisplayName && ctxDisplayName !== "there") {
+      setFullName(ctxDisplayName);
+    }
+  }, [ctxDisplayName]);
+
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaveError("");
