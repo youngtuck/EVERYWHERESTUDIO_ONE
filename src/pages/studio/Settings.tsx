@@ -211,7 +211,7 @@ export default function Settings() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, border: "1px solid var(--border-default)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
+              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, background: "var(--bg-2)", color: "var(--text-primary)", border: "1px solid var(--border-default)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
               onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
             />
@@ -366,7 +366,7 @@ export default function Settings() {
             onChange={(e) => setWatchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddWatchTopic(); } }}
             placeholder="Add a topic (e.g., AI governance, content marketing)"
-            style={{ width: 280, padding: "8px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, outline: "none" }}
+            style={{ width: 280, padding: "8px 12px", background: "var(--bg-2)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, outline: "none" }}
           />
           <button
             type="button"
@@ -472,7 +472,7 @@ export default function Settings() {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type DELETE"
-              style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--border-subtle)", borderRadius: 8, fontSize: 14, fontFamily: "'Afacad Flux', sans-serif", marginBottom: 16, outline: "none" }}
+              style={{ width: "100%", padding: "10px 12px", background: "var(--bg-2)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 8, fontSize: 14, fontFamily: "'Afacad Flux', sans-serif", marginBottom: 16, outline: "none" }}
             />
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
