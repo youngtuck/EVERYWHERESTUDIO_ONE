@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bookmark, Plus, Trash2 } from "lucide-react";
+import { timeAgo } from "../../utils/timeAgo";
 import "./shared.css";
 
 const PROJECTS = [
@@ -15,12 +16,13 @@ type Idea = {
   note: string;
   projectId: string;
   projectName: string;
+  createdAt: string;
 };
 
 const PLACEHOLDER_IDEAS: Idea[] = [
-  { id: "1", title: "Essay on delegation and trust", note: "Angle: most advice is about systems, not the relationship. Parked until I have a clear thesis.", projectId: "1", projectName: "My Studio" },
-  { id: "2", title: "TEDx opener: the question that changed my view", note: "Personal story hook. Need to refine the question before writing.", projectId: "2", projectName: "TEDx Content" },
-  { id: "3", title: "Book chapter: composed intelligence", note: "Define the term and contrast with artificial intelligence. Parked for deeper research.", projectId: "3", projectName: "Book Project" },
+  { id: "1", title: "Essay on delegation and trust", note: "Angle: most advice is about systems, not the relationship. Parked until I have a clear thesis.", projectId: "1", projectName: "My Studio", createdAt: "2026-03-10T00:00:00Z" },
+  { id: "2", title: "TEDx opener: the question that changed my view", note: "Personal story hook. Need to refine the question before writing.", projectId: "2", projectName: "TEDx Content", createdAt: "2026-03-14T00:00:00Z" },
+  { id: "3", title: "Book chapter: composed intelligence", note: "Define the term and contrast with artificial intelligence. Parked for deeper research.", projectId: "3", projectName: "Book Project", createdAt: "2026-03-18T00:00:00Z" },
 ];
 
 const transition = "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)";
@@ -43,6 +45,7 @@ export default function TheLot() {
         note: newIdeaText.trim(),
         projectId: project.id,
         projectName: project.name,
+        createdAt: new Date().toISOString(),
       },
     ]);
     setNewIdeaText("");
@@ -219,10 +222,13 @@ export default function TheLot() {
                 >
                   {idea.note}
                 </p>
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 8 }}>
+                  Parked {timeAgo(idea.createdAt)}
+                </div>
               </div>
               <div style={{ marginTop: "auto", paddingTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
                 <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
-                  {idea.projectName !== "My Studio" ? idea.projectName : "Parked"}
+                  {idea.projectName !== "My Studio" ? idea.projectName : ""}
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button
