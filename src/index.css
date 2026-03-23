@@ -166,6 +166,45 @@ body {
   outline: none !important;
 }
 
+/* ─── TYPE SCALE ────────────────────────────────────────────── */
+.ts-page-title {
+  font-family: var(--font);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+}
+.ts-section-header {
+  font-family: var(--font);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+.ts-section-label {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.ts-body {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.ts-caption {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
 a { text-decoration: none; color: inherit; }
 button { font-family: var(--font); }
 ::selection { background: var(--deep-navy); color: #fff; }
