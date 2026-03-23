@@ -112,7 +112,8 @@ function parseGateResponse(text) {
 function parseBetterishResponse(text) {
   let total = 0;
   let verdict = "REJECT";
-  let breakdown = {};
+  const emptyBreakdown = { voiceAuthenticity: 0, researchDepth: 0, hookStrength: 0, slopScore: 0, editorialQuality: 0, perspective: 0, engagement: 0, platformFit: 0, strategicValue: 0, nvcCompliance: 0 };
+  let breakdown = emptyBreakdown;
   let topIssue = "";
   let gutCheck = "";
 
@@ -125,7 +126,7 @@ function parseBetterishResponse(text) {
       total = parsed.total || parsed.totalScore || 0;
       if (parsed.verdict) verdict = parsed.verdict.toUpperCase();
       else verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
-      breakdown = parsed.breakdown || {};
+      breakdown = (parsed.breakdown && Object.keys(parsed.breakdown).length > 0) ? parsed.breakdown : emptyBreakdown;
       topIssue = parsed.topIssue || "";
       gutCheck = parsed.gutCheck || "";
       return { total, verdict, breakdown, topIssue, gutCheck };

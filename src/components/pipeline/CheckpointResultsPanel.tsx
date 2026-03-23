@@ -99,7 +99,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
                 : "var(--gold-dark)";
           return (
             <details
-              key={result.timestamp + result.gate}
+              key={`${result.gate}-${result.score}-${result.status}`}
               style={{
                 borderRadius: 8,
                 border: "1px solid var(--border-subtle)",

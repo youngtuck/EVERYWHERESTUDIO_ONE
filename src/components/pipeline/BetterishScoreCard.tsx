@@ -40,6 +40,20 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
   const color =
     total >= 800 ? "#16a34a" : total >= 600 ? "var(--gold-dark)" : "#b91c1c";
 
+  // Guard: if no breakdown dimensions, show total-only view
+  if (!score.breakdown || typeof score.breakdown !== "object" || Object.keys(score.breakdown).length === 0) {
+    return (
+      <div style={{ padding: 20, borderRadius: 12, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", fontFamily: "'Afacad Flux', sans-serif" }}>
+        <div style={{ fontSize: 14, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 4 }}>Betterish Score</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 28, fontWeight: 600, color }}>{total}</span>
+          <span style={{ fontSize: 13, color: "var(--text-tertiary)" }}>/ 1000</span>
+        </div>
+        {(score as any).topIssue && <div style={{ fontSize: 13, color: "var(--text-primary)", marginTop: 8 }}><strong>Top issue:</strong> {(score as any).topIssue}</div>}
+      </div>
+    );
+  }
+
   if (compact) {
     return (
       <span
@@ -160,7 +174,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
         {DIMENSIONS.map((key) => {
-          const value = score.breakdown[key] ?? 0;
+          const value = score.breakdown?.[key] ?? 0;
           const barColor = value >= 120 ? "#50c8a0" : value >= 80 ? "#F5C642" : value < 60 ? "#E53935" : "#4A90D9";
           return (
             <div
