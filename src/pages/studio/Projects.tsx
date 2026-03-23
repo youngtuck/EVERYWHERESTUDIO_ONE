@@ -22,6 +22,7 @@ type ProjectRow = {
 type ScoreRow = {
   project_id: string | null;
   score: number | null;
+  title?: string;
 };
 
 const transition = "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)";
@@ -70,9 +71,10 @@ export default function Projects() {
               .order("sort_order", { ascending: true }),
             supabase
               .from("outputs")
-              .select("project_id, score")
+              .select("project_id, score, title")
               .eq("user_id", user.id)
-              .gt("score", 0),
+              .gt("score", 0)
+              .order("created_at", { ascending: false }),
           ]);
 
         if (projError) throw projError;
@@ -118,6 +120,29 @@ export default function Projects() {
       result.set(key, Math.round(sum / count));
     }
     return result;
+  }, [scores]);
+
+  const recentTitlesByProject = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const row of scores) {
+      if (!row.project_id || !row.title) continue;
+      const titles = map.get(row.project_id) || [];
+      if (titles.length < 3) titles.push(row.title);
+      map.set(row.project_id, titles);
+    }
+    return map;
+  }, [scores]);
+
+  const pubReadyByProject = useMemo(() => {
+    const map = new Map<string, { ready: number; total: number }>();
+    for (const row of scores) {
+      if (!row.project_id || typeof row.score !== "number") continue;
+      const entry = map.get(row.project_id) || { ready: 0, total: 0 };
+      entry.total += 1;
+      if (row.score >= 800) entry.ready += 1;
+      map.set(row.project_id, entry);
+    }
+    return map;
   }, [scores]);
 
   const sortedProjects = useMemo(() => {
@@ -582,6 +607,30 @@ export default function Projects() {
                 )}
               </div>
             )}
+            {/* Recent outputs + publication readiness */}
+            {(() => {
+              const titles = recentTitlesByProject.get(p.id);
+              const pub = pubReadyByProject.get(p.id);
+              if (!titles?.length && !pub) return null;
+              return (
+                <div style={{ marginTop: 12, borderTop: "1px solid var(--border-subtle)", paddingTop: 10 }}>
+                  {pub && pub.total > 0 && (
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: titles?.length ? 6 : 0 }}>
+                      {pub.ready}/{pub.total} publication-ready
+                    </div>
+                  )}
+                  {titles && titles.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      {titles.map((t, i) => (
+                        <div key={i} style={{ fontSize: 12, color: "var(--text-tertiary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {t}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
             <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 12 }}>
               {lastActive ? `Last active: ${lastActive}` : "No activity yet"}
             </div>
