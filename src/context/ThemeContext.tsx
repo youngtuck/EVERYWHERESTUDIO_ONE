@@ -5,7 +5,8 @@ const ThemeContext = createContext<ThemeCtx>({ theme: "light", toggleTheme: () =
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     try { const s = localStorage.getItem("ew-theme"); if (s === "light" || s === "dark") return s; } catch {}
-    return "light"; // default to light
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) return "dark";
+    return "light";
   });
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
