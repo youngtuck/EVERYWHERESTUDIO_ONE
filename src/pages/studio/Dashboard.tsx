@@ -319,7 +319,7 @@ export default function Dashboard() {
             {
               key: "avg",
               label: "AVG SCORE",
-              value: avgBetterish ?? "—",
+              value: avgBetterish ?? "--",
               subtitle:
                 avgBetterish == null
                   ? "Complete a session"
@@ -335,7 +335,7 @@ export default function Dashboard() {
             {
               key: "voice",
               label: "VOICE MATCH",
-              value: voicePct != null ? `${voicePct}%` : "—",
+              value: voicePct != null ? `${voicePct}%` : "--",
               subtitle:
                 voicePct == null
                   ? "Complete onboarding"
@@ -349,7 +349,7 @@ export default function Dashboard() {
             {
               key: "signals",
               label: "SIGNALS",
-              value: signalCount != null ? signalCount : "—",
+              value: signalCount != null ? signalCount : "--",
               subtitle: !hasWatchTopics
                 ? "Set up Watch topics"
                 : signalCount != null

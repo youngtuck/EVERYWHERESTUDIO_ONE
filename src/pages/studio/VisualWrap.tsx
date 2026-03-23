@@ -1,5 +1,5 @@
 /**
- * Visual Intelligence — Wrap As Visual. Picks a style, generates an illustrated image via Gemini.
+ * Visual Intelligence: Wrap As Visual. Picks a style, generates an illustrated image via Gemini.
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -781,7 +781,7 @@ export default function VisualWrap() {
         </button>
       </div>
 
-      {/* Kai rendering card — single generation */}
+      {/* Kai rendering card: single generation */}
       {((generating && !generatingAll) || (result && !generatingAll && (resultRevealPhase === "revealing" || resultRevealPhase === "complete")) || (generateError && !generatingAll)) && (
         <div
           style={{
@@ -999,7 +999,7 @@ export default function VisualWrap() {
         }
       `}</style>
 
-      {/* Section 5: Result (single — only when not shown in card) */}
+      {/* Section 5: Result (single, only when not shown in card) */}
       <div ref={resultRef}>
         {result && !(resultRevealPhase === "complete" && resultActionsVisible) && (
           <div style={{ marginBottom: 32 }}>
@@ -1044,7 +1044,7 @@ export default function VisualWrap() {
           </div>
         )}
 
-        {/* Gallery (all 6) — Kai mini rendering cards */}
+        {/* Gallery (all 6): Kai mini rendering cards */}
         {generatingAll || Object.keys(gallery).length > 0 ? (
           <div style={{ marginTop: 24 }}>
             <div

@@ -52,7 +52,7 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
       }
 
       const combined = finalRef.current + interimTranscript;
-      console.log("[VoiceInput] onresult — final so far:", finalRef.current, "interim:", interimTranscript);
+      console.log("[VoiceInput] onresult: final so far:", finalRef.current, "interim:", interimTranscript);
       setTranscript(combined);
       if (callbackRef.current) callbackRef.current(combined);
     };
@@ -65,7 +65,7 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
     };
 
     recognition.onend = () => {
-      console.log("[VoiceInput] onend — shouldListen:", recognitionRef.current?._shouldListen);
+      console.log("[VoiceInput] onend: shouldListen:", recognitionRef.current?._shouldListen);
       if (recognitionRef.current?._shouldListen) {
         try {
           recognition.start();

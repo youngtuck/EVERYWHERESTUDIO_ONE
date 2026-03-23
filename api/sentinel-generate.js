@@ -8,7 +8,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-const SYSTEM_PROMPT = `You are Sentinel, the intelligence monitoring system for EVERYWHERE Studio. You scan categories, industries, and platforms to deliver actionable intelligence to thought leaders. You never summarize news. You deliver intelligence — what it means, what it threatens, and what it makes possible. Every claim requires two or more independent sources.
+const SYSTEM_PROMPT = `You are Sentinel, the intelligence monitoring system for EVERYWHERE Studio. You scan categories, industries, and platforms to deliver actionable intelligence to thought leaders. You never summarize news. You deliver intelligence: what it means, what it threatens, and what it makes possible. Every claim requires two or more independent sources.
 Respond with ONLY a raw JSON object. No markdown, no preamble. Pure JSON.`;
 
 function buildUserMessage(userName, topics, dateLabel) {
@@ -21,7 +21,7 @@ Return this exact JSON structure:
 {
   "date_label": "THURSDAY, FEBRUARY 19, 2026",
   "generated_at": "ISO timestamp string",
-  "verified_by": "Priya Protocol — all claims require 2+ independent sources",
+  "verified_by": "Priya Protocol: all claims require 2+ independent sources",
   "sections": {
     "whats_moving": [
       {

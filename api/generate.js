@@ -3,6 +3,14 @@ import { scoreContent } from "./_score.js";
 import { getUserResources } from "./_resources.js";
 import { callWithRetry } from "./_retry.js";
 
+function sanitizeContent(text) {
+  if (!text) return text;
+  let result = text.replace(/\s*\u2014\s*/g, ", ");
+  result = result.replace(/\s+\u2013\s+/g, ", ");
+  result = result.replace(/, ,/g, ",").replace(/,\./g, ".").replace(/,\s*,/g, ",");
+  return result;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -28,7 +36,7 @@ export default async function handler(req, res) {
   try {
     const client = new Anthropic({ apiKey });
 
-    let system = `You are producing a single piece of content for EVERYWHERE Studio. Use the captured conversation to write in the user's voice. Output only the final content — no meta-commentary, no preamble, no "Here is your essay:" headers. Format appropriately for the type: ${outputType}.`;
+    let system = `You are producing a single piece of content for EVERYWHERE Studio. Use the captured conversation to write in the user's voice. Output only the final content. No meta-commentary, no preamble, no "Here is your essay:" headers. Format appropriately for the type: ${outputType}.`;
     if (voiceProfile) {
       system += `\n\nUSER VOICE PROFILE:\n- Role: ${voiceProfile.role}\n- Audience: ${voiceProfile.audience}\n- Tone: ${voiceProfile.tone}\n- Writing sample: "${voiceProfile.writing_sample?.slice(0, 600)}"\n\nMatch this person's voice exactly.`;
     }
@@ -45,6 +53,8 @@ export default async function handler(req, res) {
       system += "\n\nREFERENCE MATERIALS:\n" + resources.references;
     }
 
+    system += "\n\nCRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead. This is non-negotiable.";
+
     const response = await callWithRetry(() =>
       client.messages.create({
         model: "claude-sonnet-4-20250514",
@@ -57,7 +67,7 @@ export default async function handler(req, res) {
       })
     );
 
-    const content = response.content?.[0]?.type === "text" ? response.content[0].text : "";
+    const content = sanitizeContent(response.content?.[0]?.type === "text" ? response.content[0].text : "");
 
     let gates = null;
     let score = 800;

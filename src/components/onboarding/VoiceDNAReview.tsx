@@ -37,7 +37,7 @@ function buildNarrativeSummary(traits: VoiceDNA["traits"]): string {
     secondHighest.score > 40
       ? `You also show ${scoreToLabel(secondHighest.score).toLowerCase()} ${secondHighest.label.toLowerCase()}, giving your voice a layered quality.`
       : `That single dominant trait gives your voice a focused, recognizable quality.`,
-    `Where others rely on ${lowest.label.toLowerCase()}, you favor ${lowest.distinctionPhrase} — and that's part of what makes your voice yours.`,
+    `Where others rely on ${lowest.label.toLowerCase()}, you favor ${lowest.distinctionPhrase}, and that's part of what makes your voice yours.`,
   ];
 
   return sentences.join(" ");

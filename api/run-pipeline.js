@@ -11,6 +11,14 @@ import fs from "fs";
 import path from "path";
 import { callWithRetry } from "./_retry.js";
 
+function sanitizeContent(text) {
+  if (!text) return text;
+  let result = text.replace(/\s*\u2014\s*/g, ", ");
+  result = result.replace(/\s+\u2013\s+/g, ", ");
+  result = result.replace(/, ,/g, ",").replace(/,\./g, ".").replace(/,\s*,/g, ",");
+  return result;
+}
+
 const GATE_FILES = [
   { name: "Echo", file: "gate-0-echo.md", label: "Deduplication" },
   { name: "Priya", file: "gate-1-priya.md", label: "Research" },
@@ -213,7 +221,7 @@ export default async function handler(req, res) {
           system: prompt,
           messages: [{ role: "user", content: userMessage }],
         }),
-        1 // Only 1 retry per gate — 8 sequential calls must fit within maxDuration
+        1 // Only 1 retry per gate . 8 sequential calls must fit within maxDuration
       );
 
       const text = response.content[0]?.type === "text" ? response.content[0].text : "";
@@ -286,7 +294,7 @@ export default async function handler(req, res) {
     status,
     gateResults,
     betterishScore,
-    finalDraft: currentDraft,
+    finalDraft: sanitizeContent(currentDraft),
     blockedAt,
     totalDurationMs: durationMs,
   });

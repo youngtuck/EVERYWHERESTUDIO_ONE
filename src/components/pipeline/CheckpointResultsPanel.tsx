@@ -190,7 +190,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
               >
                 <div style={{ flex: 1 }}>{result.feedback}</div>
                 {result.feedback && (
-                  <CopyFeedbackButton text={`${result.gate} (${result.score}/100 — ${result.status})\n\n${result.feedback}${result.issues?.length ? "\n\nIssues:\n" + result.issues.map(i => `- ${i}`).join("\n") : ""}`} />
+                  <CopyFeedbackButton text={`${result.gate} (${result.score}/100, ${result.status})\n\n${result.feedback}${result.issues?.length ? "\n\nIssues:\n" + result.issues.map(i => `- ${i}`).join("\n") : ""}`} />
                 )}
               </div>
               {result.issues && result.issues.length > 0 && (

@@ -1164,7 +1164,7 @@ export default function WorkSession() {
             const feedbackSnippet = data.feedback ? ` (${data.feedback.slice(0, 80)}${data.feedback.length > 80 ? "..." : ""})` : "";
             watsonMsg += `\n${letter}) Strengthen ${name}${feedbackSnippet}`;
           });
-          watsonMsg += `\n${String.fromCharCode(65 + weakAreas.length)}) Something else — tell me what you want to change`;
+          watsonMsg += `\n${String.fromCharCode(65 + weakAreas.length)}) Something else: tell me what you want to change`;
         } else {
           watsonMsg += `\n\nWhat would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`;
         }
@@ -1173,7 +1173,7 @@ export default function WorkSession() {
         pipelineCtx = "\n\n[PIPELINE RESULTS FOR REVISION CONTEXT:]\n";
         for (const [name, data] of sorted) {
           pipelineCtx += `- ${name}: ${data.score}/100`;
-          if (data.feedback) pipelineCtx += ` — ${data.feedback.slice(0, 200)}`;
+          if (data.feedback) pipelineCtx += `. ${data.feedback.slice(0, 200)}`;
           pipelineCtx += "\n";
         }
       } else {
@@ -1377,7 +1377,7 @@ export default function WorkSession() {
                 outputId,
               }),
             },
-            180000 // pipeline takes longer — generous to avoid racing Vercel's 120s limit
+            180000 // pipeline takes longer. Generous to avoid racing Vercel's 120s limit
           );
 
           if (!pipelineRes.ok) throw new Error("Pipeline API failed");
@@ -1870,7 +1870,7 @@ export default function WorkSession() {
                             const snippet = data.feedback ? ` (${data.feedback.slice(0, 80)}${data.feedback.length > 80 ? "..." : ""})` : "";
                             msg += `\n${letter}) Strengthen ${name}${snippet}`;
                           });
-                          msg += `\n${String.fromCharCode(65 + weakAreas.length)}) Something else — tell me what you want to change`;
+                          msg += `\n${String.fromCharCode(65 + weakAreas.length)}) Something else: tell me what you want to change`;
                         } else {
                           msg += `\n\nWhat would you like to improve?`;
                         }
@@ -1878,7 +1878,7 @@ export default function WorkSession() {
                         let ctx = "\n\n[PIPELINE RESULTS FOR REVISION CONTEXT:]\n";
                         for (const [name, data] of sorted) {
                           ctx += `- ${name}: ${data.score}/100`;
-                          if (data.feedback) ctx += ` — ${data.feedback.slice(0, 200)}`;
+                          if (data.feedback) ctx += `. ${data.feedback.slice(0, 200)}`;
                           ctx += "\n";
                         }
                         setRevisionPipelineContext(ctx);

@@ -400,7 +400,7 @@ export default function Watch() {
         }
         .sentinel-status-text { animation: sentinel-status-fadein 0.5s ease-out forwards; }
       `}</style>
-      {/* Header — exact layout */}
+      {/* Header */}
       <header
         style={{
           background: HEADER_BG,
@@ -423,7 +423,7 @@ export default function Watch() {
           </h1>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
             <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: 0 }}>
-              Verified by Priya Protocol — all claims require 2+ independent sources
+              Verified by Priya Protocol. All claims require 2+ independent sources
             </p>
             {!needsSetup && !generating && (
               <button

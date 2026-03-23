@@ -327,7 +327,7 @@ export default function OutputDetail() {
         blocked_at: result.blockedAt || null,
       });
 
-      toast(result.status === "PASSED" ? "All 7 checkpoints passed" : "Pipeline complete — review results below");
+      toast(result.status === "PASSED" ? "All 7 checkpoints passed" : "Pipeline complete. Review results below.");
     } catch (err: any) {
       console.error("[Pipeline] Error:", err);
       const msg = err?.message || "Unknown error";

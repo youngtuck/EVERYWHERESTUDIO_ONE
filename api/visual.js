@@ -1,5 +1,5 @@
 /**
- * Visual Intelligence — Gemini image generation proxy.
+ * Visual Intelligence: Gemini image generation proxy.
  * POST body: { content, title, author, context, vibe, brandColors, voiceStyle }
  * Returns: { success: true, image: base64, mimeType } or { success: false, error }
  * Env: GEMINI_API_KEY (required). Optional: GEMINI_MODEL (default: gemini-2.5-flash-image).
@@ -18,15 +18,15 @@ const VIBES = {
   },
   Poster: {
     label: "Poster",
-    prompt: `Bold editorial poster design, 16:9 landscape. Stark contrast, strong typographic hierarchy. One dominant headline taking up top third in massive bold type. Content below in clean structured zones separated by thick rules. Risograph print aesthetic — slightly misaligned colors, textured fills. Two or three strong accent colors max. Icon-forward: one large illustrative icon per section. Feels like a conference keynote poster or vintage propaganda poster reinterpreted for business.`,
+    prompt: `Bold editorial poster design, 16:9 landscape. Stark contrast, strong typographic hierarchy. One dominant headline taking up top third in massive bold type. Content below in clean structured zones separated by thick rules. Risograph print aesthetic, slightly misaligned colors, textured fills. Two or three strong accent colors max. Icon-forward: one large illustrative icon per section. Feels like a conference keynote poster or vintage propaganda poster reinterpreted for business.`,
   },
   FieldNotes: {
     label: "Field Notes",
-    prompt: `Scientist's field notebook, 16:9 landscape. Cream ruled paper with red margin line on left. Dense handwritten observations in small neat script. Content structured like research notes — numbered observations, asterisked insights, bracketed asides. Tiny precise diagrams and specimen-style illustrations. Margin annotations pointing to key insights. Underlines and circles in red pen for emphasis. Feels like Darwin's notebook or a researcher's active working document. Minimal color — black ink, red pen, occasional yellow highlight.`,
+    prompt: `Scientist's field notebook, 16:9 landscape. Cream ruled paper with red margin line on left. Dense handwritten observations in small neat script. Content structured like research notes, numbered observations, asterisked insights, bracketed asides. Tiny precise diagrams and specimen-style illustrations. Margin annotations pointing to key insights. Underlines and circles in red pen for emphasis. Feels like Darwin's notebook or a researcher's active working document. Minimal color, black ink, red pen, occasional yellow highlight.`,
   },
   Storyboard: {
     label: "Storyboard",
-    prompt: `Cinematic storyboard panels, 16:9 landscape. 6 sequential comic-style panels in a 3x2 grid, each with a scene that illustrates one key idea. Black ink on white with subtle wash tones. Each panel has a caption below in typewriter font. Narrative flow — panels tell the story of the content from problem to solution. Simple expressive character sketches where appropriate. Panel borders are hand-drawn, slightly imperfect. Feels like a film pre-production document or graphic novel. Bold title above the panel grid.`,
+    prompt: `Cinematic storyboard panels, 16:9 landscape. 6 sequential comic-style panels in a 3x2 grid, each with a scene that illustrates one key idea. Black ink on white with subtle wash tones. Each panel has a caption below in typewriter font. Narrative flow: panels tell the story of the content from problem to solution. Simple expressive character sketches where appropriate. Panel borders are hand-drawn, slightly imperfect. Feels like a film pre-production document or graphic novel. Bold title above the panel grid.`,
   },
   Boardroom: {
     label: "Boardroom",
