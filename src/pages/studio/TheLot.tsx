@@ -93,13 +93,13 @@ export default function TheLot() {
           type="button"
           onClick={() => setModalOpen(true)}
           style={{
-            background: "var(--text-primary)",
-            color: "#fff",
+            background: "#F5C642",
+            color: "#0D1B2A",
             padding: "10px 20px",
             borderRadius: 8,
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14,
-            fontWeight: 500,
+            fontWeight: 600,
             border: "none",
             cursor: "pointer",
             display: "flex",
