@@ -445,7 +445,7 @@ export default function ExplorePage() {
             lineHeight: 1.6,
             animation: `xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both`,
           }}>
-            Sunday night. Another week where your best thinking didn't make it out into the world. That ends here.
+            Sunday night. Another week where your best thinking didn't make it out into the world. Not this time.
           </p>
           <div style={{
             display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
