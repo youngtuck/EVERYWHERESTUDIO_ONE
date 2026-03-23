@@ -709,7 +709,7 @@ export default function ExplorePage() {
                 textTransform: "uppercase" as const,
                 color: "var(--white-dim)",
               }}>
-                Early Access User
+                Doug C., Executive Coach
               </footer>
             </blockquote>
           </div>
