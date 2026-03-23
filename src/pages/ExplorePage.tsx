@@ -451,7 +451,7 @@ export default function ExplorePage() {
             display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
             animation: `xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both`,
           }}>
-            <button className="xp-btn-gold" onClick={() => navigate("/auth")} style={{ border: "none" }}>Get Early Access</button>
+            <button className="xp-btn-gold" onClick={() => navigate("/auth?mode=signup")} style={{ border: "none" }}>Get Early Access</button>
             <a href="#how" className="xp-btn-outline" onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}>
               See How It Works
             </a>
@@ -795,7 +795,7 @@ export default function ExplorePage() {
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
             </p>
             <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="xp-btn-gold" onClick={() => navigate("/auth")} style={{ border: "none", fontSize: 15, padding: "16px 44px" }}>
+              <button className="xp-btn-gold" onClick={() => navigate("/auth?mode=signup")} style={{ border: "none", fontSize: 15, padding: "16px 44px" }}>
                 Get Early Access
               </button>
               <a href={CTA_MAILTO} className="xp-btn-outline" style={{ fontSize: 15, padding: "16px 44px" }}>

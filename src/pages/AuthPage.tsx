@@ -12,7 +12,9 @@ import Logo from "../components/Logo";
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 const AuthPage = () => {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(() =>
+    new URLSearchParams(window.location.search).get("mode") === "signup" ? "signup" : "signin"
+  );
   const [reveal, setReveal] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
