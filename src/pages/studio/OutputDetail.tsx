@@ -616,38 +616,11 @@ export default function OutputDetail() {
           </>
         ) : (
           <div style={{
-            position: "relative",
             padding: isMobile ? "24px 16px" : "36px 40px",
             background: "var(--surface-white)",
             border: "1px solid var(--border-subtle)",
             borderRadius: 10,
           }}>
-            {/* Floating copy button */}
-            <button
-              onClick={copyText}
-              title="Copy to clipboard"
-              style={{
-                position: "absolute",
-                top: 12,
-                right: 12,
-                width: 36,
-                height: 36,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 8,
-                border: "1px solid var(--border-subtle)",
-                background: copied ? "#50c8a0" : "var(--surface-white)",
-                color: copied ? "#fff" : "var(--fg-3)",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                zIndex: 2,
-              }}
-              onMouseEnter={e => { if (!copied) { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--fg)"; } }}
-              onMouseLeave={e => { if (!copied) { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--fg-3)"; } }}
-            >
-              {copied ? <Check size={16} /> : <Clipboard size={16} />}
-            </button>
             <div
               style={{ fontFamily: font, fontSize: isMobile ? 15 : 16, lineHeight: 1.75, color: "var(--text-primary)" }}
               dangerouslySetInnerHTML={{ __html: renderMarkdown(output!.content) }}
