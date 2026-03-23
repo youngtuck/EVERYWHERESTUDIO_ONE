@@ -378,7 +378,7 @@ export default function ExplorePage() {
     ref.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  const sectionPad = isMobile ? "56px 0" : "80px 0";
+  const sectionPad = isMobile ? "64px 0" : "120px 0";
 
   return (
     <div className="xp">
@@ -590,7 +590,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 03: LEVERAGE STRIP ───────────────────────── */}
-      <section style={{ padding: isMobile ? "48px 0" : "64px 0", background: "rgba(212, 168, 50, 0.08)", borderTop: "1px solid rgba(212, 168, 50, 0.25)", borderBottom: "1px solid rgba(212, 168, 50, 0.25)" }}>
+      <section style={{ padding: isMobile ? "56px 0" : "100px 0", background: "rgba(212, 168, 50, 0.08)", borderTop: "1px solid rgba(212, 168, 50, 0.25)", borderBottom: "1px solid rgba(212, 168, 50, 0.25)" }}>
         <Reveal scale>
           <div className="xp-inner">
             <div style={{
