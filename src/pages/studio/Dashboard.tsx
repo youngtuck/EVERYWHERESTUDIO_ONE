@@ -328,7 +328,7 @@ export default function Dashboard() {
                     : avgBetterish >= 700
                       ? "Getting close"
                       : "Room to improve",
-              accent: "#F5C642",
+              accent: "#4A90D9",
               color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
               tooltip: "Average Betterish Score. 800 is publication threshold.",
             },
@@ -464,7 +464,7 @@ export default function Dashboard() {
               fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 12,
               fontWeight: 500,
-              color: "var(--gold-dark)",
+              color: "var(--cornflower)",
               background: "none",
               border: "none",
               cursor: "pointer",
@@ -502,7 +502,7 @@ export default function Dashboard() {
                 fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 13,
                 fontWeight: 500,
-                color: "var(--gold-dark)",
+                color: "var(--cornflower)",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
