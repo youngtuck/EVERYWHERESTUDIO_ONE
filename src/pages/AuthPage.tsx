@@ -431,7 +431,7 @@ const AuthPage = () => {
                     <input
                       className="auth-input"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••••"
+                      placeholder={mode === "signin" ? "Enter your password" : "Create a password"}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       required
@@ -477,7 +477,7 @@ const AuthPage = () => {
                       <input
                         className="auth-input"
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="••••••••••"
+                        placeholder="Confirm your password"
                         value={confirmPassword}
                         onChange={e => setConfirmPassword(e.target.value)}
                         required
