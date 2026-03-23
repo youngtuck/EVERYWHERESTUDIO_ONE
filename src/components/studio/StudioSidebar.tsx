@@ -233,7 +233,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       {/* ── Primary nav: Watch, Work, Wrap ─────── */}
       <nav style={{ flex: 1, padding: collapsed ? "6px 4px" : "6px 10px", overflowY: "auto" }} aria-label="Studio navigation">
         <div style={{ paddingBottom: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-          {PRIMARY_NAV.map(({ path, label, icon: Icon, tooltip, primary, sub }) => {
+          {(onMobileClose
+            ? PRIMARY_NAV.filter(item => item.sub) // Mobile: only sub-items (The Lot, In Progress, The Vault)
+            : PRIMARY_NAV
+          ).map(({ path, label, icon: Icon, tooltip, primary, sub }) => {
             const active = isActive(path);
             return (
               <button
@@ -299,7 +302,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
 
         {/* ── Utility divider + items ──────────── */}
         <div style={{ marginTop: 16, borderTop: "1px solid var(--border-subtle)", paddingTop: 12 }}>
-          {UTILITY_NAV.map(({ path, label, icon: Icon, tooltip }) => {
+          {(onMobileClose
+            ? UTILITY_NAV.filter(item => item.path !== "/studio/settings") // Settings is in bottom nav
+            : UTILITY_NAV
+          ).map(({ path, label, icon: Icon, tooltip }) => {
             const active = isActive(path);
             return (
               <button
