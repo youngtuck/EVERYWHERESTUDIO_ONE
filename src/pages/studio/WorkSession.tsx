@@ -1734,6 +1734,11 @@ export default function WorkSession() {
               onMouseEnter={(e) => { if (clickable) e.currentTarget.style.color = "var(--text-primary)"; }}
               onMouseLeave={(e) => { if (clickable) e.currentTarget.style.color = step.done ? "var(--gold-dark)" : step.active ? "var(--text-primary)" : "var(--text-tertiary)"; }}
             >
+              {step.key === "watson" && messages.length > 0 && (
+                <span style={{ display: "inline-flex", marginRight: 4, verticalAlign: "middle" }}>
+                  <WatsonOrb size={18} />
+                </span>
+              )}
               {step.label}
             </span>
             {i < 3 && (
