@@ -237,32 +237,55 @@ export default function Settings() {
       {/* Voice DNA */}
       <SectionCard>
         <SectionHeader label="Voice DNA" />
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 12px" }}>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 12px", lineHeight: 1.6 }}>
           {voiceComplete
-            ? "Voice DNA is trained. You can retrain it anytime."
-            : "Not completed. Complete onboarding to train your voice."}
+            ? "Voice DNA active. Your content is being matched to your writing patterns."
+            : "Your Voice DNA hasn't been configured yet. Content is being generated with a general voice profile. Add your Voice DNA to increase voice match accuracy from ~75% to 95%+."}
         </p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button
-            type="button"
-            onClick={() => navigate("/onboarding?retrain=1")}
-            style={{
-              background: "transparent",
-              color: "var(--gold-dark)",
-              border: "1px solid var(--gold-dark)",
-              borderRadius: 8,
-              padding: "10px 20px",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "'Afacad Flux', sans-serif",
-              transition: "all 0.15s ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
-            {voiceComplete ? "Retrain Voice DNA" : "Start Voice DNA"}
-          </button>
+          {voiceComplete ? (
+            <button
+              type="button"
+              onClick={() => navigate("/onboarding?retrain=1")}
+              style={{
+                background: "transparent",
+                color: "var(--gold-dark)",
+                border: "1px solid var(--gold-dark)",
+                borderRadius: 8,
+                padding: "10px 20px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'Afacad Flux', sans-serif",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              Retrain Voice DNA
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate("/onboarding?retrain=1")}
+              style={{
+                background: "var(--gold-dark)",
+                color: "#0D1B2A",
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 20px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "'Afacad Flux', sans-serif",
+                transition: "opacity 0.15s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+            >
+              Start Voice DNA
+            </button>
+          )}
           {voiceComplete && (
             <button
               type="button"
