@@ -321,19 +321,19 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                   fontSize: 14,
                   fontWeight: 400,
                   textAlign: "left",
-                  color: "rgba(0,0,0,0.45)",
+                  color: active ? "var(--fg)" : "var(--fg-2)",
                   transition: "background 0.15s ease, color 0.15s ease, opacity 0.15s ease",
                 }}
                 onMouseEnter={e => {
                   if (!active) {
                     e.currentTarget.style.background = "rgba(0,0,0,0.04)";
-                    e.currentTarget.style.color = "rgba(0,0,0,0.65)";
+                    e.currentTarget.style.color = "var(--fg)";
                   }
                 }}
                 onMouseLeave={e => {
                   if (!active) {
                     e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "rgba(0,0,0,0.45)";
+                    e.currentTarget.style.color = "var(--fg-2)";
                   }
                 }}
               >
