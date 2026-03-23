@@ -338,6 +338,10 @@ const CSS = `
   .xp-room:last-child { padding-right: 0; }
   .xp-footer { flex-direction: column; gap: 16px; text-align: center; padding: 32px 24px; }
 }
+@media (max-width: 400px) {
+  .xp-hero-ctas { flex-direction: column !important; width: 100% !important; }
+  .xp-hero-ctas > * { width: 100% !important; text-align: center !important; }
+}
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -447,7 +451,7 @@ export default function ExplorePage() {
           }}>
             Sunday night. Another week where your best thinking didn't make it out into the world. Not this time.
           </p>
-          <div style={{
+          <div className="xp-hero-ctas" style={{
             display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
             animation: `xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both`,
           }}>
@@ -882,7 +886,7 @@ export default function ExplorePage() {
             <p style={{ color: "var(--gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
             </p>
-            <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <div className="xp-hero-ctas" style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
               <button className="xp-btn-gold" onClick={() => navigate("/auth?mode=signup")} style={{ border: "none", fontSize: 15, padding: "16px 44px" }}>
                 Get Early Access
               </button>
