@@ -68,7 +68,7 @@ export default function StudioShell() {
         <span style={{ color: "#4A90D9", fontWeight: 700 }}>EVERYWHERE</span>
         <span style={{ color: "var(--gold-dark)", fontWeight: 300 }}>STUDIO<span style={{ fontSize: "0.52em", verticalAlign: "top", marginLeft: 2 }}>™</span></span>
       </span>
-      <span> 2026, Mixed Grill, LLC, v6.5 Alpha</span>
+      <span> 2026, Mixed Grill, LLC</span>{/* v6.5 Alpha */}
     </footer>
   );
 
