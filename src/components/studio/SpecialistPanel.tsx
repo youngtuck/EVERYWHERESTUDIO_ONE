@@ -198,7 +198,7 @@ export default function SpecialistPanel({
           </div>
         ) : selected.score !== undefined ? (
           <p style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 8 }}>
-            Detailed feedback is available after the full quality pipeline completes.
+            Run the full quality pipeline below for detailed specialist feedback on this checkpoint.
           </p>
         ) : null}
 
