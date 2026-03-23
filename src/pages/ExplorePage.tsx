@@ -384,7 +384,7 @@ export default function ExplorePage() {
           {!isMobile && (
             <div className="xp-nav-links-desktop" style={{ display: "flex", gap: 32, alignItems: "center" }}>
               <button className="xp-nav-link" onClick={() => scrollTo(howRef)}>How It Works</button>
-              <button className="xp-nav-link" onClick={() => scrollTo(standardRef)}>The Standard</button>
+              <button className="xp-nav-link" onClick={() => scrollTo(standardRef)}>Quality Gates</button>
             </div>
           )}
           <button className="xp-nav-link" onClick={() => navigate("/auth")}>Sign In</button>
