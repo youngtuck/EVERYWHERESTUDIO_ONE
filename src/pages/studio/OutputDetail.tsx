@@ -328,8 +328,14 @@ export default function OutputDetail() {
       });
 
       toast(result.status === "PASSED" ? "All 7 checkpoints passed" : "Pipeline complete — review results below");
-    } catch (err) {
-      toast("Pipeline failed. Try again.", "error");
+    } catch (err: any) {
+      console.error("[Pipeline] Error:", err);
+      const msg = err?.message || "Unknown error";
+      if (msg.includes("timed out") || msg.includes("abort")) {
+        toast("Pipeline timed out. Your content may be too long. Try again or shorten the draft.", "error");
+      } else {
+        toast("Pipeline encountered an error. Try again.", "error");
+      }
     } finally {
       setPipelineRunning(false);
     }

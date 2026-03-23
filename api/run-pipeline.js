@@ -48,27 +48,51 @@ function getPrompt(filename) {
 }
 
 function parseGateResponse(text) {
-  // Gate agents return structured responses. Try to extract key fields.
   let status = "PASS";
   let score = 75;
   let feedback = text;
   let issues = [];
 
-  // Look for explicit status markers
-  const statusMatch = text.match(/STATUS:\s*(PASS|FAIL|FLAG)/i) || text.match(/\*\*Status\*\*:\s*(PASS|FAIL|FLAG)/i);
-  if (statusMatch) status = statusMatch[1].toUpperCase();
+  // Try JSON first (agents sometimes return JSON even when asked for plaintext)
+  try {
+    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.status) {
+        const s = parsed.status.toUpperCase();
+        status = (s === "PASS" || s === "CLEAR") ? "PASS" : (s === "FAIL" || s.includes("BLOCK")) ? "FAIL" : "FLAG";
+      }
+      if (typeof parsed.score === "number") score = Math.min(100, Math.max(0, parsed.score));
+      if (parsed.feedback) feedback = String(parsed.feedback).slice(0, 500);
+      if (Array.isArray(parsed.issues)) issues = parsed.issues.map(String).slice(0, 10);
+      if (status === "FAIL") score = Math.min(score, 50);
+      return { status, score, feedback, issues };
+    }
+  } catch {}
 
-  // Look for score
+  // Regex fallback for plaintext responses
+  const statusMatch = text.match(/STATUS:\s*(PASS|FAIL|FLAG|REVISE|AUTOMATIC BLOCK|BLOCKED|BLOCK|CLEAR)/i)
+    || text.match(/\*\*Status\*\*:\s*(PASS|FAIL|FLAG|REVISE|AUTOMATIC BLOCK|BLOCKED|CLEAR)/i)
+    || text.match(/CHECKPOINT\s*\d+\s*STATUS:\s*(PASS|FAIL|FLAG|REVISE|AUTOMATIC BLOCK|BLOCKED|CLEAR)/i);
+  if (statusMatch) {
+    const s = statusMatch[1].toUpperCase();
+    status = (s === "PASS" || s === "CLEAR") ? "PASS" : (s === "FAIL" || s.includes("BLOCK")) ? "FAIL" : "FLAG";
+  }
+
+  // Check for "REVISE" which some agents use
+  if (!statusMatch && /\bREVISE\b/i.test(text) && !/\bPASS\b/i.test(text)) {
+    status = "FLAG";
+  }
+
   const scoreMatch = text.match(/SCORE:\s*(\d+)/i) || text.match(/\*\*Score\*\*:\s*(\d+)/i) || text.match(/(\d+)\/100/);
   if (scoreMatch) score = Math.min(100, Math.max(0, parseInt(scoreMatch[1])));
 
-  // Look for issues/findings
   const issuesMatch = text.match(/(?:ISSUES|FINDINGS|PROBLEMS|FLAGS):\s*\n([\s\S]*?)(?:\n\n|\n---|\n##|$)/i);
   if (issuesMatch) {
     issues = issuesMatch[1].split("\n").map(l => l.replace(/^[-*•]\s*/, "").trim()).filter(Boolean).slice(0, 10);
   }
 
-  // Extract feedback (first substantive paragraph)
   const lines = text.split("\n").filter(l => l.trim() && !l.startsWith("#") && !l.startsWith("|"));
   feedback = lines.slice(0, 5).join("\n").trim().slice(0, 500);
 
@@ -78,16 +102,37 @@ function parseGateResponse(text) {
 }
 
 function parseBetterishResponse(text) {
-  // Betterish scorer returns a composite 0-1000 score
   let total = 0;
+  let verdict = "REJECT";
+  let breakdown = {};
+  let topIssue = "";
+  let gutCheck = "";
+
+  // Try JSON first
+  try {
+    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      total = parsed.total || parsed.totalScore || 0;
+      if (parsed.verdict) verdict = parsed.verdict.toUpperCase();
+      else verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
+      breakdown = parsed.breakdown || {};
+      topIssue = parsed.topIssue || "";
+      gutCheck = parsed.gutCheck || "";
+      return { total, verdict, breakdown, topIssue, gutCheck };
+    }
+  } catch {}
+
+  // Regex fallback
   const totalMatch = text.match(/TOTAL:\s*(\d+)/i) || text.match(/\*\*Total\*\*:\s*(\d+)/i) || text.match(/composite.*?(\d{3,4})/i);
   if (totalMatch) total = Math.min(1000, Math.max(0, parseInt(totalMatch[1])));
 
-  let verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
+  verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
   const verdictMatch = text.match(/VERDICT:\s*(PUBLISH|REVISE|REJECT)/i);
   if (verdictMatch) verdict = verdictMatch[1].toUpperCase();
 
-  return { total, verdict, raw: text.slice(0, 1000) };
+  return { total, verdict, breakdown, topIssue, gutCheck };
 }
 
 export const config = {
@@ -151,11 +196,14 @@ export default async function handler(req, res) {
       console.log(`[run-pipeline] Gate ${i}: ${gate.name}`);
 
       const userMessage = [
+        "Evaluate this draft. Return ONLY valid JSON matching this exact structure:",
+        '{ "status": "PASS" or "FAIL", "score": 0-100, "feedback": "specific issues found, or why it passed", "issues": ["list", "of", "specific", "problems"] }',
+        "Do not include any text outside the JSON object.",
+        "",
         `OUTPUT TYPE: ${outputType || "essay"}`,
         voiceDnaMd ? `VOICE DNA:\n${voiceDnaMd.slice(0, 2000)}` : "",
         brandDnaMd ? `BRAND DNA:\n${brandDnaMd.slice(0, 1000)}` : "",
         `\nCONTENT TO EVALUATE:\n\n${currentDraft}`,
-        `\nRespond with your evaluation. Include STATUS: PASS/FAIL/FLAG, SCORE: 0-100, and detailed FEEDBACK.`,
       ].filter(Boolean).join("\n\n");
 
       const response = await callWithRetry(() =>
@@ -209,7 +257,15 @@ export default async function handler(req, res) {
           model,
           max_tokens: 4096,
           system: betterishPrompt,
-          messages: [{ role: "user", content: `Score this content on the Betterish scale (0-1000):\n\n${currentDraft}` }],
+          messages: [{ role: "user", content: [
+            `Score this ${outputType || "essay"} on a 0-1000 scale.`,
+            'Return ONLY valid JSON matching this structure:',
+            '{ "total": <number 0-1000>, "verdict": "PUBLISH" or "REVISE" or "REJECT", "breakdown": { "voiceAuthenticity": <0-100>, "researchDepth": <0-100>, "hookStrength": <0-100>, "slopScore": <0-100>, "editorialQuality": <0-100>, "perspective": <0-100>, "engagement": <0-100> }, "topIssue": "the single biggest issue", "gutCheck": "one sentence gut reaction" }',
+            'Do not include any text outside the JSON object.',
+            '',
+            voiceDnaMd ? `VOICE DNA:\n${voiceDnaMd.slice(0, 2000)}` : '',
+            `\nCONTENT TO SCORE:\n\n${currentDraft}`,
+          ].filter(Boolean).join('\n\n') }],
         }),
         1
       );
