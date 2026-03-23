@@ -372,6 +372,22 @@ const AuthPage = () => {
                       onChange={e => setAccessCode(e.target.value)}
                       required
                     />
+                    <p style={{
+                      fontSize: 11,
+                      color: "rgba(255,255,255,0.35)",
+                      marginTop: 4,
+                      marginBottom: 0,
+                      lineHeight: 1.5,
+                      fontFamily: "'Afacad Flux', sans-serif",
+                    }}>
+                      Access codes are provided during onboarding.{" "}
+                      <a
+                        href="mailto:mark@mixedgrill.studio?subject=EVERYWHERE%20Studio%20Access%20Code%20Request"
+                        style={{ color: "#F5C642", textDecoration: "none" }}
+                      >
+                        Request one here.
+                      </a>
+                    </p>
                   </div>
                 )}
                 <div>
