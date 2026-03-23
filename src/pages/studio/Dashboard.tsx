@@ -132,6 +132,8 @@ export default function Dashboard() {
     voiceFidelity != null && !Number.isNaN(voiceFidelity)
       ? Math.round(voiceFidelity)
       : null;
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  const outputsThisWeek = outputs.filter((o) => o.created_at > weekAgo).length;
   const hasSignals = false; // no Watch data yet
 
   const transition = "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)";
@@ -305,7 +307,11 @@ export default function Dashboard() {
               label: "OUTPUTS",
               value: outputsCreated,
               subtitle:
-                outputsCreated > 0 ? `${Math.min(outputsCreated, 99)} recent` : "Get started below",
+                outputsCreated > 0
+                  ? outputsThisWeek > 0
+                    ? `+${outputsThisWeek} this week`
+                    : "None this week"
+                  : "Get started below",
               accent: "#4A90D9",
               color: "var(--text-primary)",
               tooltip: "Total pieces of content produced.",
