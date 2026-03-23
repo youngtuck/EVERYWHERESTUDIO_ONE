@@ -234,7 +234,7 @@ export default function TheLot() {
                   <button
                     type="button"
                     onClick={() => handleDiscard(idea)}
-                    title="Discard idea"
+                    title="Delete idea"
                     style={{
                       background: "transparent",
                       color: "var(--text-tertiary)",
@@ -245,10 +245,11 @@ export default function TheLot() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      opacity: 0.3,
                       transition,
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#E53935"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-tertiary)"; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.color = "#E53935"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.3"; e.currentTarget.style.color = "var(--text-tertiary)"; }}
                   >
                     <Trash2 size={14} />
                   </button>
