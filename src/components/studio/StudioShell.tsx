@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
 import { CommandPalette } from "./CommandPalette";
 import MobileBottomNav from "./MobileBottomNav";
@@ -8,7 +8,6 @@ import { useMobile } from "../../hooks/useMobile";
 import Logo from "../Logo";
 
 export default function StudioShell() {
-  const location = useLocation();
   const isMobile = useMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -103,7 +102,7 @@ export default function StudioShell() {
 
         {/* Page content */}
         <div className="studio-main-inner" style={{ flex: 1, paddingBottom: isMobile ? 80 : 0 }}>
-          <div key={location.pathname} className="studio-page-transition">
+          <div>
             <Outlet />
           </div>
         </div>
