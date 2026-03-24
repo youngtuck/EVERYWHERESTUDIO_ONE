@@ -18,6 +18,10 @@ import SpecialistPanel from "../../components/studio/SpecialistPanel";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 import MeetTheTeam from "../../components/studio/MeetTheTeam";
 import RoomLoadingAnimation from "../../components/studio/RoomLoadingAnimation";
+import OutlineLoadingAnimation from "../../components/studio/OutlineLoadingAnimation";
+import DraftLoadingAnimation from "../../components/studio/DraftLoadingAnimation";
+import PolishLoadingAnimation from "../../components/studio/PolishLoadingAnimation";
+import OnboardingOverlay from "../../components/studio/OnboardingOverlay";
 import { fetchWithRetry } from "../../lib/retry";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -966,6 +970,9 @@ export default function WorkSession() {
   const [saraSynthesis, setSaraSynthesis] = useState<{ summary: string; actionItems: string[] }>({ summary: "", actionItems: [] });
   const [acceptedItems, setAcceptedItems] = useState<boolean[]>([]);
   const [showMeetTeam, setShowMeetTeam] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return localStorage.getItem("everywhere_onboarding_seen") !== "true"; } catch { return false; }
+  });
   const [writersRoomLoading, setWritersRoomLoading] = useState(false);
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
@@ -2153,11 +2160,8 @@ export default function WorkSession() {
         {/* ── STRUCTURE PHASE: Beat sheet ─────────────────────── */}
         {phase === "structure" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
-            {writersRoomLoading ? (
-              <div style={{ textAlign: "center" }}>
-                <WatsonOrb size={48} breathing={false} />
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Building your outline...</p>
-              </div>
+            {writersRoomLoading && outline.length === 0 ? (
+              <OutlineLoadingAnimation />
             ) : (
               <div style={{ maxWidth: 760, width: "100%" }}>
                 <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Beat Sheet</h2>
@@ -2228,10 +2232,7 @@ export default function WorkSession() {
         {phase === "drafting" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading && !draftContent ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
             {writersRoomLoading && !draftContent ? (
-              <div style={{ textAlign: "center" }}>
-                <WatsonOrb size={48} breathing={false} />
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Writing your draft...</p>
-              </div>
+              <DraftLoadingAnimation />
             ) : (
               <div style={{ maxWidth: 760, width: "100%", display: "flex", flexDirection: "column", gap: 20 }}>
                 {/* Draft content */}
@@ -2240,14 +2241,44 @@ export default function WorkSession() {
                 </div>
                 {/* Layer 1 checkpoint results */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 4 }}>Layer 1 Checkpoints</div>
-                  {layer1Results.map((r) => (
-                    <div key={r.gate} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.status === "pass" ? "#50c8a0" : r.status === "fail" ? "#E53935" : r.status === "running" ? "var(--gold-dark)" : "var(--bg-3)", flexShrink: 0, animation: r.status === "running" ? "pulse 2s ease-in-out infinite" : "none" }} />
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{r.gate}</span>
-                      {r.score > 0 && <span style={{ fontSize: 13, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "#C8961A" : "#E53935" }}>{r.score}</span>}
-                    </div>
-                  ))}
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 2 }}>Quality Checkpoints</div>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>
+                    Each specialist scores your draft 0-100. <span style={{ color: "#50c8a0", fontWeight: 600 }}>80+ Strong</span> | <span style={{ color: "#C8961A", fontWeight: 600 }}>60-79 Needs work</span> | <span style={{ color: "#E53935", fontWeight: 600 }}>&lt;60 Needs attention</span>
+                  </div>
+                  {layer1Results.map((r, idx) => {
+                    const descriptions: Record<string, { title: string; desc: string }> = {
+                      Echo: { title: "Deduplication", desc: "Catches repeated concepts and structural patterns" },
+                      Priya: { title: "Research Accuracy", desc: "Verifies every factual claim against independent sources" },
+                      Jordan: { title: "Voice Authenticity", desc: "Matches output to your Voice DNA. 95%+ required" },
+                      David: { title: "Engagement", desc: "Tests the hook. 7 seconds to earn the read or it doesn't ship" },
+                      Elena: { title: "SLOP Detection", desc: "Zero tolerance for AI fingerprints, filler, and false sophistication" },
+                      Natasha: { title: "Editorial Excellence", desc: "Publication-grade quality. Would a stranger understand this?" },
+                      "Marcus + Marshall": { title: "Perspective + Impact", desc: "Cultural sensitivity and nonviolent communication review" },
+                      Betterish: { title: "Final Gut Check", desc: "Would you click on this? Would you share it?" },
+                    };
+                    const info = descriptions[r.gate] || { title: "", desc: "" };
+                    return (
+                      <div
+                        key={r.gate}
+                        style={{
+                          display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border-subtle)",
+                          opacity: r.status === "running" ? 0.7 : 1, transition: "opacity 0.3s",
+                          animation: idx > 0 && r.status !== "running" ? `fadeUp 0.4s ease ${idx * 0.15}s both` : "none",
+                        }}
+                      >
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 5, background: r.status === "pass" ? "#50c8a0" : r.status === "fail" ? "#E53935" : r.status === "running" ? "var(--gold-dark)" : "var(--bg-3)", flexShrink: 0, animation: r.status === "running" ? "pulse 2s ease-in-out infinite" : "none" }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{r.gate}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{info.title}: {info.desc}</div>
+                          {r.feedback && r.status !== "running" && (
+                            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4, lineHeight: 1.4 }}>{r.gate}: "{r.feedback.slice(0, 150)}{r.feedback.length > 150 ? "..." : ""}"</div>
+                          )}
+                        </div>
+                        {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "#C8961A" : "#E53935", flexShrink: 0 }}>{r.score}</span>}
+                        {r.status === "pass" && r.score === 0 && <span style={{ fontSize: 12, fontWeight: 600, color: "#50c8a0" }}>Pass</span>}
+                      </div>
+                    );
+                  })}
                 </div>
                 <button
                   onClick={handleEnterEditing}
@@ -2353,14 +2384,13 @@ export default function WorkSession() {
         {/* ── POLISH PHASE: Layer 2 checkpoints ───────────────── */}
         {phase === "polish" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
-            <WatsonOrb size={48} breathing={false} />
-            <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Running final quality polish...</p>
-            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>Elena, Jordan, and Marcus + Marshall are reviewing.</p>
+            <PolishLoadingAnimation />
           </div>
         )}
 
         {/* ── MEET THE TEAM OVERLAY ───────────────────────────── */}
         {showMeetTeam && <MeetTheTeam onClose={() => setShowMeetTeam(false)} />}
+        {showOnboarding && phase === "input" && <OnboardingOverlay onClose={() => setShowOnboarding(false)} />}
 
         {phase === "drafting" && <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>}
 

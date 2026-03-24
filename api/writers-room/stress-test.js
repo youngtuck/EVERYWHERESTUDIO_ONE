@@ -102,14 +102,21 @@ export default async function handler(req, res) {
         return { agent: agent.name, lens: agent.lens, verdict: "pass", feedback: text.slice(0, 300), suggestion: "" };
       } catch (err) {
         console.error(`[stress-test] ${agent.name} failed:`, err.message);
-        return { agent: agent.name, lens: agent.lens, verdict: "flag", feedback: `Evaluation failed: ${err.message}`, suggestion: "" };
+        return { agent: agent.name, lens: agent.lens, verdict: "flag", feedback: "This specialist couldn't complete their review. You can re-run the pipeline to try again.", suggestion: "" };
       }
     }
 
-    console.log("[stress-test] Running 6 SBU agents in parallel");
-    const settled = await Promise.allSettled(SBU_AGENTS.map(a => runAgent(a)));
-    for (const s of settled) {
-      results.push(s.status === "fulfilled" ? s.value : { agent: "Unknown", lens: "", verdict: "flag", feedback: "Agent crashed", suggestion: "" });
+    // Run SBU agents in staggered pairs to avoid rate limits
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const pairs = [[0,1],[2,3],[4,5]]; // Josh+Guy, Ward+Scott, Dana+Betterish
+    for (const [a, b] of pairs) {
+      const agents = [SBU_AGENTS[a], SBU_AGENTS[b]].filter(Boolean);
+      console.log(`[stress-test] Pair: ${agents.map(a => a.name).join(" + ")}`);
+      const settled = await Promise.allSettled(agents.map(a => runAgent(a)));
+      for (const s of settled) {
+        results.push(s.status === "fulfilled" ? s.value : { agent: "Unknown", lens: "", verdict: "flag", feedback: "This specialist couldn't complete their review due to high demand.", suggestion: "" });
+      }
+      if (b < SBU_AGENTS.length - 1) await delay(2000);
     }
 
     // Sara synthesis

@@ -191,55 +191,48 @@ export default async function handler(req, res) {
         return { ...parsed, gate: gate.name };
       } catch (err) {
         console.error(`[run-pipeline] Gate ${index} (${gate.name}) API ERROR:`, err.message, err.status || "");
+        const isRateLimit = err.status === 429 || (err.message || "").includes("rate_limit");
         return {
           gate: gate.name,
           status: "FLAG",
           score: 0,
-          feedback: `API call failed: ${err.message || "Unknown error"}`,
+          feedback: isRateLimit
+            ? "This specialist couldn't complete their review due to high demand. You can re-run the pipeline in a moment."
+            : "This specialist couldn't complete their review. You can re-run the pipeline to try again.",
           issues: ["API_ERROR"],
         };
       }
     }
 
-    // Split gates into two batches and run in parallel
-    const midpoint = Math.ceil(gatesToRun.length / 2);
-    const batch1Gates = gatesToRun.slice(0, midpoint);
-    const batch2Gates = gatesToRun.slice(midpoint);
+    // Run gates in staggered pairs with delays to avoid rate limits
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    console.log(`[run-pipeline] Batch 1 (${batch1Gates.length} gates): ${batch1Gates.map(g => g.name).join(", ")}`);
-    const batch1Results = await Promise.allSettled(
-      batch1Gates.map((gate, i) => runGate(gate, i))
-    );
-    for (const settled of batch1Results) {
-      const r = settled.status === "fulfilled"
-        ? settled.value
-        : { gate: "Unknown", status: "FLAG", score: 0, feedback: `Promise rejected: ${settled.reason}`, issues: ["CRASH"] };
-      gateResults.push(r);
-      if (r.status === "FAIL" && !blockedAt) blockedAt = r.gate;
-    }
-
-    // Time check before batch 2
-    const elapsed1 = Date.now() - startTime;
-    console.log(`[run-pipeline] Batch 1 done in ${elapsed1}ms`);
-
-    if (elapsed1 > 90000 || batch2Gates.length === 0) {
-      if (batch2Gates.length > 0) {
-        console.log("[run-pipeline] Time budget critical, skipping batch 2");
-        for (const gate of batch2Gates) {
-          gateResults.push({ gate: gate.name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
-        }
-      }
-    } else {
-      console.log(`[run-pipeline] Batch 2 (${batch2Gates.length} gates): ${batch2Gates.map(g => g.name).join(", ")}`);
-      const batch2Results = await Promise.allSettled(
-        batch2Gates.map((gate, i) => runGate(gate, i + midpoint))
-      );
-      for (const settled of batch2Results) {
+    async function runPairAndCollect(gates, startIdx) {
+      const results = await Promise.allSettled(gates.map((g, i) => runGate(g, startIdx + i)));
+      for (const settled of results) {
         const r = settled.status === "fulfilled"
           ? settled.value
-          : { gate: "Unknown", status: "FLAG", score: 0, feedback: `Promise rejected: ${settled.reason}`, issues: ["CRASH"] };
+          : { gate: "Unknown", status: "FLAG", score: 0, feedback: "This specialist couldn't complete their review due to high demand. You can re-run the pipeline in a moment.", issues: ["CRASH"] };
         gateResults.push(r);
         if (r.status === "FAIL" && !blockedAt) blockedAt = r.gate;
+      }
+    }
+
+    // Chunk gates into pairs and run with 2s delay between each pair
+    for (let i = 0; i < gatesToRun.length; i += 2) {
+      if (Date.now() - startTime > 95000) {
+        // Time budget: skip remaining gates
+        for (let j = i; j < gatesToRun.length; j++) {
+          gateResults.push({ gate: gatesToRun[j].name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
+        }
+        break;
+      }
+      const pair = gatesToRun.slice(i, Math.min(i + 2, gatesToRun.length));
+      console.log(`[run-pipeline] Pair ${Math.floor(i/2)+1}: ${pair.map(g => g.name).join(" + ")}`);
+      await runPairAndCollect(pair, i);
+      // Delay between pairs (skip after the last pair)
+      if (i + 2 < gatesToRun.length) {
+        await delay(2000);
       }
     }
 
