@@ -14,6 +14,29 @@ function sanitizeContent(text) {
 
 const READY_MARKER = "READY_TO_GENERATE";
 
+function detectFormat(text) {
+  if (!text) return null;
+  const formatMatch = text.match(/Format:\s*(.+?)(?:\.|$)/im);
+  if (!formatMatch) return null;
+  const detected = formatMatch[1].trim().toLowerCase();
+  const formatMap = {
+    "essay": "essay", "sunday story": "essay",
+    "linkedin post": "socials", "linkedin": "socials", "social post": "socials", "social": "socials", "socials": "socials", "signal sweep": "socials",
+    "newsletter": "newsletter", "field notes": "newsletter",
+    "podcast": "podcast", "podcast script": "podcast", "get current": "podcast",
+    "book": "book", "book chapter": "book",
+    "video script": "video_script", "video": "video_script",
+    "presentation": "presentation", "keynote": "presentation", "speech": "presentation",
+    "business": "business", "proposal": "business",
+    "freestyle": "freestyle",
+  };
+  if (formatMap[detected]) return formatMap[detected];
+  for (const [key, value] of Object.entries(formatMap)) {
+    if (detected.includes(key)) return value;
+  }
+  return null;
+}
+
 /** Human-readable labels for placeholder replies (modes 3-8). */
 const SYSTEM_MODE_LABELS = {
   CONTENT_PRODUCTION: "Content Production",
@@ -276,7 +299,8 @@ export default async function handler(req, res) {
       const readyToGenerate = text.includes(READY_MARKER);
       const reply = sanitizeContent(text.replace(READY_MARKER, "").replace(/\n+$/, "").trim());
 
-      return res.json({ reply, readyToGenerate });
+      const detectedFormat = readyToGenerate ? detectFormat(reply) : null;
+      return res.json({ reply, readyToGenerate, detectedFormat });
     } catch (err) {
       console.error(`[api/chat][${systemMode}]`, err);
       return res.status(err.status === 401 ? 401 : 502).json({ error: err.message || "Something went wrong." });
@@ -313,7 +337,8 @@ export default async function handler(req, res) {
     const readyToGenerate = text.includes(READY_MARKER);
     const reply = sanitizeContent(text.replace(READY_MARKER, "").replace(/\n+$/, "").trim());
 
-    return res.json({ reply, readyToGenerate });
+    const detectedFormat = readyToGenerate ? detectFormat(reply) : null;
+      return res.json({ reply, readyToGenerate, detectedFormat });
   } catch (err) {
     console.error("[api/chat]", err);
     const status = err.status === 401 ? 401 : 502;

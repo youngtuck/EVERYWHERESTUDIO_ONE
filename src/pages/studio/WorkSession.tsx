@@ -825,7 +825,7 @@ async function chatWithWatson(
   voiceDnaMd: string,
   systemMode: SystemMode,
   userId: string | undefined
-): Promise<{ reply: string; readyToGenerate: boolean }> {
+): Promise<{ reply: string; readyToGenerate: boolean; detectedFormat?: string | null }> {
   const url = `${API_BASE}/api/chat`;
   const body: Record<string, unknown> = {
     messages: messages.map((m) => ({
@@ -1287,7 +1287,7 @@ export default function WorkSession() {
     }
 
     try {
-      const { reply, readyToGenerate } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd, inferredMode, user?.id);
+      const { reply, readyToGenerate, detectedFormat } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd, inferredMode, user?.id);
       setMessages(prev => [...prev, {
         id: "w-" + Date.now(),
         role: "assistant",
@@ -1296,6 +1296,9 @@ export default function WorkSession() {
       }]);
       if (readyToGenerate) {
         setIsReady(true);
+        if (detectedFormat) {
+          setOutputType(detectedFormat);
+        }
       }
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Something went wrong.");
