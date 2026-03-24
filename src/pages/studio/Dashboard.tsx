@@ -151,11 +151,12 @@ export default function Dashboard() {
 
       {/* Welcome section for first-time users */}
       {!loading && outputs.length === 0 && !welcomeDismissed && (
-        <div style={{ marginBottom: 48, padding: 24, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", margin: "0 0 6px" }}>
-            Welcome to your Studio, {firstName}.
+        <div style={{ position: "relative", marginBottom: 48, padding: 32, background: "linear-gradient(135deg, rgba(200, 150, 26, 0.04) 0%, rgba(107, 127, 242, 0.03) 100%)", border: "1px solid var(--line)", borderRadius: 12 }}>
+          <button onClick={() => { localStorage.setItem("ew-welcome-dismissed", "true"); setWelcomeDismissed(true); }} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>x</button>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", margin: "0 0 8px" }}>
+            Welcome to EVERYWHERE Studio.
           </h2>
-          <p style={{ fontSize: 14, color: "var(--fg-3)", margin: "0 0 20px" }}>Three things to get started.</p>
+          <p style={{ fontSize: 15, color: "var(--fg-2)", lineHeight: 1.6, maxWidth: 560, margin: "0 0 20px" }}>You talk. Watson listens. Then 40 specialists turn what you said into publication-ready content. Every word yours. Every claim verified.</p>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
             {[
               { title: "Train Your Voice", desc: "Upload writing samples so every output sounds like you.", href: "/onboarding?retrain=1" },

@@ -22,6 +22,8 @@ import OutlineLoadingAnimation from "../../components/studio/OutlineLoadingAnima
 import DraftLoadingAnimation from "../../components/studio/DraftLoadingAnimation";
 import PolishLoadingAnimation from "../../components/studio/PolishLoadingAnimation";
 import OnboardingOverlay from "../../components/studio/OnboardingOverlay";
+import AnimatedWalkthrough from "../../components/studio/AnimatedWalkthrough";
+import WorkAmbientCanvas from "../../components/studio/WorkAmbientCanvas";
 import { fetchWithRetry } from "../../lib/retry";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -565,36 +567,37 @@ function SessionInputBox({
 function EmptyState({
   children,
   isMobile,
+  displayName,
 }: {
   outputType: string;
   onSuggestion: (s: string) => void;
   isMobile: boolean;
   children?: React.ReactNode;
+  displayName?: string;
 }) {
-  return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-end",
-        padding: "24px 24px",
-        maxWidth: 680,
-        width: "100%",
-        margin: "0 auto",
-      }}
-    >
-      {/* Watson speaks first as a message, no splash screen */}
+  const firstName = displayName ? displayName.split(" ")[0] : "there";
+  const h = new Date().getHours();
+  const greeting = h < 12 ? `Good morning, ${firstName}.` : h < 17 ? `Afternoon, ${firstName}.` : `Evening, ${firstName}.`;
 
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 760,
-          margin: "0 auto",
-        }}
-      >
+  return (
+    <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+      <WorkAmbientCanvas />
+      <div style={{
+        position: "relative", zIndex: 1, textAlign: "center",
+        maxWidth: 680, width: "100%", padding: "0 24px",
+        animation: "emptyFadeIn 0.6s ease both",
+      }}>
+        <h1 style={{ fontSize: 28, fontWeight: 600, color: "var(--fg)", margin: "0 0 8px", fontFamily: "'Afacad Flux', sans-serif" }}>
+          {greeting}
+        </h1>
+        <p style={{ fontSize: 16, color: "var(--fg-3)", margin: "0 0 32px", fontFamily: "'Afacad Flux', sans-serif" }}>
+          Watson is listening. Tell him what\'s on your mind.
+        </p>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 680, padding: "0 24px" }}>
         {children}
       </div>
+      <style>{`@keyframes emptyFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
 }
@@ -909,7 +912,7 @@ export default function WorkSession() {
   const location = useLocation();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, displayName } = useAuth();
   const { toast } = useToast();
   const isMobile = useMobile();
   const { theme } = useTheme();
@@ -967,8 +970,12 @@ export default function WorkSession() {
   const [acceptedItems, setAcceptedItems] = useState<boolean[]>([]);
   const [showMeetTeam, setShowMeetTeam] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => {
-    try { return localStorage.getItem("everywhere_onboarding_seen") !== "true"; } catch { return false; }
+    try { return localStorage.getItem("ew_work_intro_seen") !== "true"; } catch { return false; }
   });
+  const dismissWalkthrough = () => {
+    localStorage.setItem("ew_work_intro_seen", "true");
+    setShowOnboarding(false);
+  };
   const [writersRoomLoading, setWritersRoomLoading] = useState(false);
   const [editingParaIndex, setEditingParaIndex] = useState<number | null>(null);
   const [editingParaText, setEditingParaText] = useState("");
@@ -2057,6 +2064,7 @@ export default function WorkSession() {
           outputType={outputType}
           onSuggestion={(s) => sendMessage(s)}
           isMobile={isMobile}
+          displayName={displayName}
         >
           <SessionInputBox
             input={input}
@@ -2463,7 +2471,7 @@ export default function WorkSession() {
 
         {/* ── MEET THE TEAM OVERLAY ───────────────────────────── */}
         {showMeetTeam && <MeetTheTeam onClose={() => setShowMeetTeam(false)} />}
-        {showOnboarding && phase === "input" && <OnboardingOverlay onClose={() => setShowOnboarding(false)} />}
+        {showOnboarding && phase === "input" && messages.length <= 1 && <AnimatedWalkthrough onComplete={dismissWalkthrough} />}
 
         {phase === "drafting" && <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>}
 
