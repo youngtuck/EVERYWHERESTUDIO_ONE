@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import Logo from "../Logo";
+import EverywhereMarkIcon from "./EverywhereMarkIcon";
 import { PenLine, Eye, Home, Package, Bookmark, Archive, BookOpen, FolderOpen, Settings, Shield, LogOut } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -99,7 +100,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           title="Go to dashboard"
         >
           {collapsed ? (
-            <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--cornflower)", opacity: 0.8 }} />
+            <EverywhereMarkIcon size={20} />
           ) : (
             <Logo size={14} />
           )}

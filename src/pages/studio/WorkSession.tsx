@@ -11,7 +11,7 @@ import type { PipelineStatus } from "../../lib/agents/types";
 import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
 import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
-import WatsonOrb from "../../components/studio/WatsonOrb";
+import EverywhereMarkIcon from "../../components/studio/EverywhereMarkIcon";
 import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import { MARKETING_NUMBERS } from "../../lib/constants";
 import SpecialistPanel from "../../components/studio/SpecialistPanel";
@@ -23,7 +23,7 @@ import DraftLoadingAnimation from "../../components/studio/DraftLoadingAnimation
 import PolishLoadingAnimation from "../../components/studio/PolishLoadingAnimation";
 import OnboardingOverlay from "../../components/studio/OnboardingOverlay";
 import AnimatedWalkthrough from "../../components/studio/AnimatedWalkthrough";
-import WorkAmbientCanvas from "../../components/studio/WorkAmbientCanvas";
+// WorkAmbientCanvas removed, replaced by EverywhereMarkIcon
 import { fetchWithRetry } from "../../lib/retry";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -234,15 +234,9 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
       gap: 10,
       maxWidth: "100%",
     }}>
-      {/* Watson icon (small dot) */}
+      {/* Living mark icon */}
       {!isUser && !msg.typing && (
-        <div style={{
-          width: 20, height: 20, borderRadius: 999,
-          background: "var(--cornflower)",
-          opacity: 0.7,
-          flexShrink: 0,
-          marginTop: 2,
-        }} />
+        <EverywhereMarkIcon size={20} style={{ marginTop: 2 }} />
       )}
       <div style={{
         maxWidth: isMobile ? "90%" : "75%",
@@ -581,7 +575,7 @@ function EmptyState({
 
   return (
     <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-      <WorkAmbientCanvas />
+      <EverywhereMarkIcon size={48} style={{ marginBottom: 20 }} />
       <div style={{
         position: "relative", zIndex: 1, textAlign: "center",
         maxWidth: 680, width: "100%", padding: "0 24px",
@@ -2403,7 +2397,7 @@ export default function WorkSession() {
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
             {writersRoomLoading ? (
               <div style={{ textAlign: "center" }}>
-                <WatsonOrb size={48} breathing={false} />
+                <EverywhereMarkIcon size={48} style={{ marginBottom: 16 }} />
                 <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Running the stress test...</p>
               </div>
             ) : (
@@ -2486,7 +2480,7 @@ export default function WorkSession() {
                 100% { background-position: 200% center; }
               }
             `}</style>
-            <WatsonOrb size={48} breathing={false} />
+            <EverywhereMarkIcon size={48} style={{ marginBottom: 16 }} />
             <div style={{ marginTop: 24, width: "100%", maxWidth: 400 }}>
               {/* Progress bar */}
               <div style={{ height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
