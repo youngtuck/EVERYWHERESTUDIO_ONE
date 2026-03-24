@@ -169,7 +169,7 @@ export default function LoadingAnimation({ variant = 'watson', progress, message
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14,
             fontWeight: 600,
-            color: '#4A90D9',
+            color: 'var(--cornflower)',
             fontVariantNumeric: 'tabular-nums',
           }}>
             {displayProgress}%
@@ -179,7 +179,7 @@ export default function LoadingAnimation({ variant = 'watson', progress, message
           <span style={{
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 13,
-            color: '#64748B',
+            color: 'var(--fg-3)',
           }}>
             {message}
           </span>
@@ -188,7 +188,7 @@ export default function LoadingAnimation({ variant = 'watson', progress, message
           <span style={{
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 12,
-            color: '#4A90D9',
+            color: 'var(--cornflower)',
             fontWeight: 600,
           }}>
             {agentName}

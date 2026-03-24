@@ -45,7 +45,7 @@ export default function OutlineLoadingAnimation() {
             style={{
               height: 3,
               borderRadius: 2,
-              background: "var(--gold-dark)",
+              background: "var(--gold)",
               width: `${w}%`,
               animation: `outlineBarGrow 0.6s ease-out ${i * 0.4}s both, outlineBarFade 4s ease ${i * 0.4 + 0.6}s both`,
             }}

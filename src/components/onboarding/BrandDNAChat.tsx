@@ -268,14 +268,14 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                   height: 36,
                   borderRadius: "50%",
                   border: "none",
-                  background: input.trim() && !loading ? "#C8961A" : "rgba(255,255,255,0.08)",
+                  background: input.trim() && !loading ? "var(--gold)" : "rgba(255,255,255,0.08)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: input.trim() && !loading ? "pointer" : "default",
                 }}
               >
-                <Send size={18} color={input.trim() && !loading ? "#07090f" : "rgba(255,255,255,0.4)"} />
+                <Send size={18} color={input.trim() && !loading ? "var(--bg)" : "rgba(255,255,255,0.4)"} />
               </button>
             </div>
             <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
@@ -290,7 +290,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                   letterSpacing: "0.16em",
                   border: "none",
                   background: canBuild ? "rgba(200,150,26,0.2)" : "transparent",
-                  color: canBuild ? "#C8961A" : "rgba(255,255,255,0.3)",
+                  color: canBuild ? "var(--gold)" : "rgba(255,255,255,0.3)",
                   cursor: canBuild ? "pointer" : "default",
                   padding: "8px 12px",
                   borderRadius: 8,

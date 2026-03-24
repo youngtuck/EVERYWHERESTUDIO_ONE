@@ -44,7 +44,7 @@ export default function DraftLoadingAnimation() {
       <div
         style={{
           width: 300, height: 180, borderRadius: 12,
-          background: "var(--surface-white)", border: "1px solid var(--border-subtle)",
+          background: "var(--surface)", border: "1px solid var(--line)",
           padding: 20, display: "flex", flexDirection: "column", gap: 8,
           overflow: "hidden",
           animation: `draftBlockFade 14s ease infinite`,
@@ -67,7 +67,7 @@ export default function DraftLoadingAnimation() {
             {i === Math.floor((Date.now() / 1300) % LINE_WIDTHS.length) && (
               <div style={{
                 position: "absolute", top: 0, right: `${100 - w}%`,
-                width: 2, height: "100%", background: "var(--gold-dark)",
+                width: 2, height: "100%", background: "var(--gold)",
                 animation: "draftCursorBlink 0.8s step-end infinite",
               }} />
             )}

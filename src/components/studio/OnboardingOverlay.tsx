@@ -49,7 +49,7 @@ export default function OnboardingOverlay({ onClose }: { onClose: () => void }) 
           transform: "translate(-50%, -50%)",
           width: "100%", maxWidth: 600, maxHeight: "85vh",
           overflow: "auto",
-          background: "var(--surface-white)",
+          background: "var(--surface)",
           borderRadius: 16,
           boxShadow: "0 24px 48px rgba(0,0,0,0.25)",
           zIndex: 9999,
@@ -86,8 +86,8 @@ export default function OnboardingOverlay({ onClose }: { onClose: () => void }) 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, justifyContent: "center" }}>
               {PHASE_LABELS.map((label, i) => (
                 <span key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--gold-dark)" }}>{label}</span>
-                  {i < PHASE_LABELS.length - 1 && <span style={{ width: 16, height: 1, background: "var(--border-subtle)" }} />}
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--gold)" }}>{label}</span>
+                  {i < PHASE_LABELS.length - 1 && <span style={{ width: 16, height: 1, background: "var(--line)" }} />}
                 </span>
               ))}
             </div>
@@ -103,7 +103,7 @@ export default function OnboardingOverlay({ onClose }: { onClose: () => void }) 
                 key={i}
                 style={{
                   width: 8, height: 8, borderRadius: "50%",
-                  background: i === step ? "var(--gold-dark)" : "var(--border-subtle)",
+                  background: i === step ? "var(--gold)" : "var(--line)",
                   transition: "background 0.2s",
                 }}
               />
@@ -124,7 +124,7 @@ export default function OnboardingOverlay({ onClose }: { onClose: () => void }) 
                   onClick={dismiss}
                   style={{
                     padding: "12px 24px", borderRadius: 8, border: "none",
-                    background: "var(--gold-dark)", color: "#fff",
+                    background: "var(--gold)", color: "#fff",
                     fontSize: 14, fontWeight: 700, cursor: "pointer",
                     fontFamily: "'Afacad Flux', sans-serif",
                   }}
@@ -137,7 +137,7 @@ export default function OnboardingOverlay({ onClose }: { onClose: () => void }) 
                 onClick={() => setStep(s => s + 1)}
                 style={{
                   padding: "12px 24px", borderRadius: 8, border: "none",
-                  background: "var(--gold-dark)", color: "#fff",
+                  background: "var(--gold)", color: "#fff",
                   fontSize: 14, fontWeight: 700, cursor: "pointer",
                   fontFamily: "'Afacad Flux', sans-serif",
                 }}

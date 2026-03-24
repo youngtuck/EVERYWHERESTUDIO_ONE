@@ -118,7 +118,7 @@ export default function NotificationBell() {
               width: 14,
               height: 14,
               borderRadius: "50%",
-              background: "#4A90D9",
+              background: "var(--cornflower)",
               color: "#fff",
               fontSize: 9,
               fontWeight: 700,
@@ -142,8 +142,8 @@ export default function NotificationBell() {
             width: 320,
             maxHeight: 420,
             overflowY: "auto",
-            background: "var(--surface-white)",
-            border: "1px solid var(--border-subtle)",
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
             borderRadius: 8,
             boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             zIndex: 100,
@@ -153,7 +153,7 @@ export default function NotificationBell() {
           <div
             style={{
               padding: "12px 16px",
-              borderBottom: "1px solid var(--border-subtle)",
+              borderBottom: "1px solid var(--line)",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -168,7 +168,7 @@ export default function NotificationBell() {
                   background: "none",
                   border: "none",
                   fontSize: 12,
-                  color: "#4A90D9",
+                  color: "var(--cornflower)",
                   cursor: "pointer",
                   fontFamily: "'Afacad Flux', sans-serif",
                 }}
@@ -195,7 +195,7 @@ export default function NotificationBell() {
                   padding: "10px 16px",
                   background: n.read ? "transparent" : "rgba(74,144,217,0.04)",
                   border: "none",
-                  borderBottom: "1px solid var(--border-subtle)",
+                  borderBottom: "1px solid var(--line)",
                   cursor: n.link ? "pointer" : "default",
                   textAlign: "left",
                   fontFamily: "'Afacad Flux', sans-serif",
@@ -221,7 +221,7 @@ export default function NotificationBell() {
                   </div>
                 </div>
                 {!n.read && (
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4A90D9", flexShrink: 0, marginTop: 6 }} />
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--cornflower)", flexShrink: 0, marginTop: 6 }} />
                 )}
               </button>
             ))

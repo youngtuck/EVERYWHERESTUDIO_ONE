@@ -8,8 +8,8 @@ const MESSAGES = [
 ];
 
 const ORBS = [
-  { color: "#4A90D9", duration: "3.5s", radius: 40, delay: "0s" },
-  { color: "#F5C642", duration: "4.2s", radius: 50, delay: "0.3s" },
+  { color: "var(--cornflower)", duration: "3.5s", radius: 40, delay: "0s" },
+  { color: "var(--gold)", duration: "4.2s", radius: 50, delay: "0.3s" },
   { color: "#50c8a0", duration: "2.8s", radius: 35, delay: "0.6s" },
   { color: "#E8506A", duration: "5.0s", radius: 45, delay: "0.9s" },
 ];
@@ -77,7 +77,7 @@ export default function RoomLoadingAnimation({ isLoading }: { isLoading: boolean
           width: 24,
           height: 24,
           borderRadius: "50%",
-          background: "#4A90D9",
+          background: "var(--cornflower)",
           animation: isLoading ? "roomPulse 4s ease-in-out infinite" : "roomConverge 0.8s ease forwards",
         }} />
         {/* Orbiting orbs */}

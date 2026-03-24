@@ -102,12 +102,12 @@ const toolbarBtn = (active = false): React.CSSProperties => ({
   alignItems: "center",
   gap: 6,
   padding: "8px 16px",
-  border: "1px solid var(--border-subtle)",
+  border: "1px solid var(--line)",
   borderRadius: 8,
-  background: active ? "var(--gold-dark)" : "var(--surface-white)",
+  background: active ? "var(--gold)" : "var(--surface)",
   fontSize: 13,
   fontWeight: active ? 700 : 500,
-  color: active ? "#0D1B2A" : "var(--fg-2)",
+  color: active ? "var(--fg)" : "var(--fg-2)",
   cursor: "pointer",
   transition: "all 0.15s ease",
   fontFamily: font,
@@ -368,7 +368,7 @@ export default function OutputDetail() {
       : "";
     const authorName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
     const dateStr = new Date(output.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    const htmlString = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${titleEscaped}</title><link href="https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@300;400;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}body{font-family:'Afacad Flux',-apple-system,sans-serif;background:#0D1B2A;color:#F0F0EE;line-height:1.7;margin:0;padding:0}.header{padding:32px 24px 0;max-width:720px;margin:0 auto}.wordmark{font-size:12px;letter-spacing:-1px;text-transform:uppercase;margin-bottom:40px;display:inline-flex;align-items:baseline}.wordmark .ew{color:#4A90D9;font-weight:700}.wordmark .st{color:var(--gold);font-weight:300}.wordmark .tm{color:var(--gold);font-size:6px;vertical-align:top;margin-left:2px}h1{font-size:32px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;color:#fff}.meta{font-size:14px;color:rgba(240,240,238,0.4);margin-bottom:32px}.content-wrap{max-width:720px;margin:0 auto;padding:0 24px 48px}.content{font-size:16px;line-height:1.7;color:rgba(240,240,238,0.85)}.content h2{font-size:22px;font-weight:600;margin:36px 0 16px;color:#fff}.content h3{font-size:18px;font-weight:600;margin:28px 0 12px;color:#fff}.content p{margin:0 0 18px}.footer{max-width:720px;margin:0 auto;padding:32px 24px;border-top:1px solid rgba(255,255,255,0.08);font-size:12px;color:rgba(240,240,238,0.3)}@media(max-width:640px){h1{font-size:24px}.content{font-size:15px}}</style></head><body><div class="header"><div class="wordmark"><span class="ew">EVERYWHERE</span><span class="st">STUDIO<span class="tm">™</span></span></div><h1>${titleEscaped}</h1><div class="meta">${authorName ? escapeHtml(String(authorName)) + " &middot; " : ""}${dateStr}</div></div>${navHtml}<div class="content-wrap"><div class="content">${contentHtml}</div></div><div class="footer">Made with EVERYWHERE Studio</div></body></html>`;
+    const htmlString = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${titleEscaped}</title><link href="https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@300;400;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}body{font-family:'Afacad Flux',-apple-system,sans-serif;background:var(--fg);color:#F0F0EE;line-height:1.7;margin:0;padding:0}.header{padding:32px 24px 0;max-width:720px;margin:0 auto}.wordmark{font-size:12px;letter-spacing:-1px;text-transform:uppercase;margin-bottom:40px;display:inline-flex;align-items:baseline}.wordmark .ew{color:var(--cornflower);font-weight:700}.wordmark .st{color:var(--gold);font-weight:300}.wordmark .tm{color:var(--gold);font-size:6px;vertical-align:top;margin-left:2px}h1{font-size:32px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;color:#fff}.meta{font-size:14px;color:rgba(240,240,238,0.4);margin-bottom:32px}.content-wrap{max-width:720px;margin:0 auto;padding:0 24px 48px}.content{font-size:16px;line-height:1.7;color:rgba(240,240,238,0.85)}.content h2{font-size:22px;font-weight:600;margin:36px 0 16px;color:#fff}.content h3{font-size:18px;font-weight:600;margin:28px 0 12px;color:#fff}.content p{margin:0 0 18px}.footer{max-width:720px;margin:0 auto;padding:32px 24px;border-top:1px solid rgba(255,255,255,0.08);font-size:12px;color:rgba(240,240,238,0.3)}@media(max-width:640px){h1{font-size:24px}.content{font-size:15px}}</style></head><body><div class="header"><div class="wordmark"><span class="ew">EVERYWHERE</span><span class="st">STUDIO<span class="tm">™</span></span></div><h1>${titleEscaped}</h1><div class="meta">${authorName ? escapeHtml(String(authorName)) + " &middot; " : ""}${dateStr}</div></div>${navHtml}<div class="content-wrap"><div class="content">${contentHtml}</div></div><div class="footer">Made with EVERYWHERE Studio</div></body></html>`;
     setPreviewHtml(htmlString);
   }, [output, user]);
 
@@ -440,7 +440,7 @@ export default function OutputDetail() {
     </div>
   );
 
-  const scoreColor = output!.score >= 900 ? "#50c8a0" : output!.score >= 700 ? "#4A90D9" : "#C8961A";
+  const scoreColor = output!.score >= 900 ? "#50c8a0" : output!.score >= 700 ? "var(--cornflower)" : "#C8961A";
   const gates = output!.gates && typeof output!.gates === "object" ? output!.gates : null;
   const gateEntries = gates
     ? [
@@ -453,7 +453,7 @@ export default function OutputDetail() {
         { key: "impact", label: "Impact", value: gates.impact as number | undefined },
       ].filter((g) => typeof g.value === "number")
     : [];
-  const gateBarColor = (v: number) => v >= 80 ? "#50c8a0" : v >= 60 ? "#4A90D9" : "#E53935";
+  const gateBarColor = (v: number) => v >= 80 ? "#50c8a0" : v >= 60 ? "var(--cornflower)" : "#E53935";
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -463,7 +463,7 @@ export default function OutputDetail() {
       {/* ── TOP BAR (sticky) ──────────────────────────────────────── */}
       <div style={{
         position: "sticky", top: 0, zIndex: 50,
-        background: "var(--surface-white)", borderBottom: "1px solid var(--border-subtle)",
+        background: "var(--surface)", borderBottom: "1px solid var(--line)",
         padding: isMobile ? "0 16px" : "0 32px", height: 60,
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
       }}>
@@ -482,7 +482,7 @@ export default function OutputDetail() {
               onChange={(e) => setTitleDraft(e.target.value)}
               onBlur={saveTitle}
               onKeyDown={(e) => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-              style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", fontFamily: font, border: "none", borderBottom: "2px solid var(--gold-dark)", outline: "none", background: "transparent", padding: "2px 0", width: "100%", maxWidth: 400 }}
+              style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", fontFamily: font, border: "none", borderBottom: "2px solid var(--gold)", outline: "none", background: "transparent", padding: "2px 0", width: "100%", maxWidth: 400 }}
             />
           ) : (
             <h1
@@ -539,7 +539,7 @@ export default function OutputDetail() {
               <button
                 onClick={saveEdits}
                 disabled={saving || !hasUnsavedChanges}
-                style={{ ...toolbarBtn(hasUnsavedChanges), border: hasUnsavedChanges ? "none" : "1px solid var(--border-subtle)", opacity: hasUnsavedChanges ? 1 : 0.5 }}
+                style={{ ...toolbarBtn(hasUnsavedChanges), border: hasUnsavedChanges ? "none" : "1px solid var(--line)", opacity: hasUnsavedChanges ? 1 : 0.5 }}
               >
                 {saving ? "Saving..." : "Save edits"}
               </button>
@@ -551,7 +551,7 @@ export default function OutputDetail() {
       {/* ── TOOLBAR (sticky below top bar) ────────────────────────── */}
       <div style={{
         position: "sticky", top: 60, zIndex: 40,
-        background: "var(--surface-white)", borderBottom: "1px solid var(--border-subtle)",
+        background: "var(--surface)", borderBottom: "1px solid var(--line)",
         padding: isMobile ? "10px 16px" : "10px 32px",
       }}>
         <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -567,7 +567,7 @@ export default function OutputDetail() {
             disabled={pipelineRunning}
             style={{
               ...toolbarBtn(!pipelineRun),
-              border: pipelineRun ? "1px solid var(--border-subtle)" : "none",
+              border: pipelineRun ? "1px solid var(--line)" : "none",
               marginLeft: "auto",
             }}
           >
@@ -586,7 +586,7 @@ export default function OutputDetail() {
             <select
               value={output!.project_id || ""}
               onChange={(e) => moveToProject(e.target.value)}
-              style={{ fontSize: 12, fontFamily: font, color: "var(--fg-2)", background: "transparent", border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", outline: "none" }}
+              style={{ fontSize: 12, fontFamily: font, color: "var(--fg-2)", background: "transparent", border: "1px solid var(--line)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", outline: "none" }}
             >
               <option value="">Unassigned</option>
               {userProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -600,7 +600,7 @@ export default function OutputDetail() {
         {editing ? (
           <>
             {hasUnsavedChanges && (
-              <div style={{ fontSize: 12, color: "var(--gold-dark)", fontStyle: "italic", marginBottom: 8 }}>Unsaved changes</div>
+              <div style={{ fontSize: 12, color: "var(--gold)", fontStyle: "italic", marginBottom: 8 }}>Unsaved changes</div>
             )}
             <textarea
               ref={editRef}
@@ -610,7 +610,7 @@ export default function OutputDetail() {
                 width: "100%", minHeight: 500,
                 padding: isMobile ? "20px 16px" : "32px 36px",
                 fontFamily: font, fontSize: 16, lineHeight: 1.75,
-                color: "var(--fg)", background: "var(--surface-white)",
+                color: "var(--fg)", background: "var(--surface)",
                 border: "1px solid var(--cornflower)", borderRadius: 8,
                 resize: "vertical", outline: "none", whiteSpace: "pre-wrap", wordBreak: "break-word" as const,
               }}
@@ -623,8 +623,8 @@ export default function OutputDetail() {
         ) : (
           <div style={{
             padding: isMobile ? "24px 16px" : "36px 40px",
-            background: "var(--surface-white)",
-            border: "1px solid var(--border-subtle)",
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
             borderRadius: 10,
           }}>
             <div
@@ -658,7 +658,7 @@ export default function OutputDetail() {
           onClick={() => setQualityOpen(!qualityOpen)}
           style={{
             display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
-            background: "none", border: "none", borderTop: "1px solid var(--border-subtle)",
+            background: "none", border: "none", borderTop: "1px solid var(--line)",
             padding: "16px 0", cursor: "pointer", fontFamily: font,
           }}
         >
@@ -678,7 +678,7 @@ export default function OutputDetail() {
                   onClick={handleRunPipeline}
                   style={{
                     padding: "14px 32px", borderRadius: 8, border: "none",
-                    background: "var(--gold-dark)", color: "#0D1B2A",
+                    background: "var(--gold)", color: "var(--fg)",
                     fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font,
                     transition: "opacity 0.15s ease",
                   }}
@@ -693,7 +693,7 @@ export default function OutputDetail() {
             {/* Pipeline running */}
             {pipelineRunning && (
               <div style={{ textAlign: "center", padding: "32px 16px", color: "var(--fg-2)", fontSize: 14 }}>
-                <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid var(--gold-dark)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+                <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid var(--gold)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
                 Running 7 quality checkpoints...
               </div>
             )}
@@ -718,7 +718,7 @@ export default function OutputDetail() {
                 {gates?.summary && <p style={{ fontSize: 13, color: "var(--fg-2)", marginBottom: 14 }}>{gates.summary}</p>}
                 <div style={{ display: "flex", gap: 16, marginBottom: 14, fontSize: 11, color: "var(--fg-3)" }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#50c8a0" }} /> 80+ Strong</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#4A90D9" }} /> 60-79 Developing</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "var(--cornflower)" }} /> 60-79 Developing</span>
                   <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#E53935" }} /> Below 60</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -757,7 +757,7 @@ export default function OutputDetail() {
                   URL.revokeObjectURL(url);
                   toast("HTML file downloaded");
                 }}
-                style={{ background: "none", border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: font }}
+                style={{ background: "none", border: "1px solid var(--line)", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: font }}
               >
                 Download HTML
               </button>
@@ -767,7 +767,7 @@ export default function OutputDetail() {
           <iframe
             srcDoc={previewHtml}
             title="Output preview"
-            style={{ width: "100%", height: 600, border: "1px solid var(--border-subtle)", borderRadius: 12, background: "var(--surface-white)" }}
+            style={{ width: "100%", height: 600, border: "1px solid var(--line)", borderRadius: 12, background: "var(--surface)" }}
             sandbox="allow-same-origin"
           />
         </div>
@@ -788,11 +788,11 @@ export default function OutputDetail() {
       {/* ── Delete confirmation modal ─────────────────────────────── */}
       {showDeleteConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }} onClick={() => setShowDeleteConfirm(false)}>
-          <div style={{ background: "var(--surface-white)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: "var(--surface)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
             <p style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Delete this output?</p>
             <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20 }}>This cannot be undone.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setShowDeleteConfirm(false)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", cursor: "pointer", fontSize: 14, fontFamily: font }}>Cancel</button>
+              <button onClick={() => setShowDeleteConfirm(false)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", cursor: "pointer", fontSize: 14, fontFamily: font }}>Cancel</button>
               <button onClick={handleDeleteOutput} style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: "var(--danger)", color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: font }}>Delete</button>
             </div>
           </div>

@@ -38,12 +38,12 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
   const verdict = score.verdict;
 
   const color =
-    total >= 900 ? "#16a34a" : total >= 600 ? "var(--gold-dark)" : "#b91c1c";
+    total >= 900 ? "#16a34a" : total >= 600 ? "var(--gold)" : "#b91c1c";
 
   // Guard: if no breakdown dimensions, show total-only view
   if (!score.breakdown || typeof score.breakdown !== "object" || Object.keys(score.breakdown).length === 0) {
     return (
-      <div style={{ padding: 20, borderRadius: 12, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", fontFamily: "'Afacad Flux', sans-serif" }}>
+      <div style={{ padding: 20, borderRadius: 12, border: "1px solid var(--line)", background: "var(--surface)", fontFamily: "'Afacad Flux', sans-serif" }}>
         <div style={{ fontSize: 14, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 4 }}>Betterish Score</div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
           <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 28, fontWeight: 600, color }}>{total}</span>
@@ -88,8 +88,8 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
       style={{
         padding: 20,
         borderRadius: 12,
-        border: "1px solid var(--border-subtle)",
-        background: "var(--surface-white)",
+        border: "1px solid var(--line)",
+        background: "var(--surface)",
         fontFamily: "'Afacad Flux', sans-serif",
       }}
     >
@@ -168,14 +168,14 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
 
       <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 11, color: "var(--text-tertiary)" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#50c8a0" }} /> 120+ Strong</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#4A90D9" }} /> 60-119 Developing</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "var(--cornflower)" }} /> 60-119 Developing</span>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#E53935" }} /> Below 60 Needs work</span>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
         {DIMENSIONS.map((key) => {
           const value = score.breakdown?.[key] ?? 0;
-          const barColor = value >= 120 ? "#50c8a0" : value >= 80 ? "#F5C642" : value < 60 ? "#E53935" : "#4A90D9";
+          const barColor = value >= 120 ? "#50c8a0" : value >= 80 ? "var(--gold)" : value < 60 ? "#E53935" : "var(--cornflower)";
           return (
             <div
               key={key}

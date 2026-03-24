@@ -19,7 +19,7 @@ function CopyFeedbackButton({ text }: { text: string }) {
         alignItems: "center",
         justifyContent: "center",
         borderRadius: 6,
-        border: "1px solid var(--border-subtle)",
+        border: "1px solid var(--line)",
         background: copied ? "#50c8a0" : "transparent",
         color: copied ? "#fff" : "var(--fg-3)",
         cursor: "pointer",
@@ -51,8 +51,8 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
         marginTop: 24,
         padding: 20,
         borderRadius: 12,
-        background: "var(--surface-white)",
-        border: "1px solid var(--border-subtle)",
+        background: "var(--surface)",
+        border: "1px solid var(--line)",
         fontFamily: "'Afacad Flux', sans-serif",
       }}
     >
@@ -96,13 +96,13 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
               ? "var(--work-teal)"
               : isFail
                 ? "#b91c1c"
-                : "var(--gold-dark)";
+                : "var(--gold)";
           return (
             <details
               key={`${result.gate}-${result.score}-${result.status}`}
               style={{
                 borderRadius: 8,
-                border: "1px solid var(--border-subtle)",
+                border: "1px solid var(--line)",
                 padding: "8px 10px",
                 background: "rgba(0,0,0,0.01)",
               }}

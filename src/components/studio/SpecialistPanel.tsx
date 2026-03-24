@@ -6,7 +6,7 @@ const SPECIALIST_INFO: Record<number, { name: string; role: string; color: strin
   0: {
     name: "Echo",
     role: "Deduplication",
-    color: "#4A90D9",
+    color: "var(--cornflower)",
     detail: "Echo scans for conceptual repetition, not just word-for-word duplicates. If your piece restates the same argument in different words across sections, Echo catches it.",
   },
   1: {
@@ -18,7 +18,7 @@ const SPECIALIST_INFO: Record<number, { name: string; role: string; color: strin
   2: {
     name: "Jordan",
     role: "Voice Authenticity",
-    color: "#4A90D9",
+    color: "var(--cornflower)",
     detail: "Jordan compares every sentence against your Voice DNA profile. Vocabulary, rhythm, tonal register, metaphor patterns, and structural habits all get scored. The target is 95% fidelity.",
   },
   3: {
@@ -36,7 +36,7 @@ const SPECIALIST_INFO: Record<number, { name: string; role: string; color: strin
   5: {
     name: "Natasha",
     role: "Editorial Excellence",
-    color: "#4A90D9",
+    color: "var(--cornflower)",
     detail: "Natasha applies publication-grade editorial standards. Every term must be explained for a cold reader. If a stranger cannot follow your argument without context, it fails.",
   },
   6: {
@@ -218,7 +218,7 @@ export default function SpecialistPanel({
 
   return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "#4A90D9", marginBottom: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: "var(--cornflower)", marginBottom: 16 }}>
         QUALITY PIPELINE
       </div>
       <p style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.25, marginBottom: 16, marginTop: -8 }}>
@@ -252,19 +252,19 @@ export default function SpecialistPanel({
                   alignItems: "center",
                   gap: 12,
                   padding: "12px 16px",
-                  background: isSelected ? "var(--surface-white)" : "transparent",
+                  background: isSelected ? "var(--surface)" : "transparent",
                   border: "1px solid",
-                  borderColor: isSelected ? info.color : "var(--border-subtle)",
-                  borderLeft: isSelected ? `3px solid ${info.color}` : "1px solid var(--border-subtle)",
+                  borderColor: isSelected ? info.color : "var(--line)",
+                  borderLeft: isSelected ? `3px solid ${info.color}` : "1px solid var(--line)",
                   borderRadius: 8,
                   cursor: "pointer",
                   fontFamily: "'Afacad Flux', sans-serif",
                   textAlign: "left",
                   transition: "all 0.15s ease",
-                  boxShadow: isSelected ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
+                  boxShadow: "none",
                   animation: isAnimating && g.status === "processing" ? "pulse 2s ease-in-out infinite" : "none",
                 }}
-                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--surface-white)"; }}
+                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--surface)"; }}
                 onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
               >
                 <span style={{ width: 28, height: 28, borderRadius: 6, background: info.color + "18", color: info.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
@@ -292,7 +292,7 @@ export default function SpecialistPanel({
               return (
                 <div key={i}>
                   {card}
-                  <div style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderTop: "none", borderRadius: "0 0 8px 8px", marginTop: -1 }}>
+                  <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderTop: "none", borderRadius: "0 0 8px 8px", marginTop: -1 }}>
                     {renderDetailPanel()}
                   </div>
                 </div>
@@ -305,7 +305,7 @@ export default function SpecialistPanel({
 
         {/* Right: Detail panel (desktop only) */}
         {!isMobile && (
-          <div style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, minHeight: 200, position: "sticky", top: 80, alignSelf: "start" }}>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, minHeight: 200, position: "sticky", top: 80, alignSelf: "start" }}>
             {renderDetailPanel()}
           </div>
         )}
@@ -313,7 +313,7 @@ export default function SpecialistPanel({
 
       {/* Total score */}
       {showTotal && totalScore !== undefined && (
-        <div style={{ textAlign: "center", padding: "24px 0", borderTop: "1px solid var(--border-subtle)" }}>
+        <div style={{ textAlign: "center", padding: "24px 0", borderTop: "1px solid var(--line)" }}>
           <div style={{ fontSize: 48, fontWeight: 700, color: totalScore >= threshold ? "#50c8a0" : totalScore >= 700 ? "var(--gold)" : "#E53935", fontVariantNumeric: "tabular-nums", lineHeight: 1.1 }}>
             {totalScore}
           </div>

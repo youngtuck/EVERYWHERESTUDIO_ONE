@@ -128,7 +128,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
                       fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "#C8961A",
+                      color: "var(--gold)",
                     }}
                   >
                     {label}
@@ -157,7 +157,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
                     style={{
                       height: "100%",
                       width: `${Math.max(0, Math.min(100, score))}%`,
-                      background: "#C8961A",
+                      background: "var(--gold)",
                       transformOrigin: "left",
                       animation: "barFill 0.7s ease forwards",
                       animationDelay: `${index * 80}ms`,
@@ -187,8 +187,8 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
             border: "none",
             borderRadius: 999,
             padding: "14px 18px",
-            background: "#C8961A",
-            color: "#07090f",
+            background: "var(--gold)",
+            color: "var(--bg)",
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 14,
             fontWeight: 600,

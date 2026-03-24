@@ -96,7 +96,7 @@ export function CommandPalette() {
         style={{
           width: "100%",
           maxWidth: 420,
-          background: "var(--surface-white, #fff)",
+          background: "var(--surface)",
           borderRadius: 12,
           boxShadow: "0 24px 48px rgba(0,0,0,0.18)",
           border: "1px solid var(--line)",
@@ -158,7 +158,7 @@ export function CommandPalette() {
               >
                 <span>{link.label}</span>
                 {location.pathname === link.path && (
-                  <span style={{ fontSize: 13, color: "var(--gold-dark)", marginLeft: "auto" }}>Current</span>
+                  <span style={{ fontSize: 13, color: "var(--gold)", marginLeft: "auto" }}>Current</span>
                 )}
               </button>
             ))

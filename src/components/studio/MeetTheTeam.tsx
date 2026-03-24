@@ -16,7 +16,7 @@ interface Division {
 const DIVISIONS: Division[] = [
   {
     title: "Watch Division",
-    color: "#4A90D9",
+    color: "var(--cornflower)",
     agents: [
       { name: "Watson", role: "First Listener", description: "Every idea is heard here first." },
       { name: "Sentinel", role: "Category Intelligence", description: "Always monitoring your market." },
@@ -25,7 +25,7 @@ const DIVISIONS: Division[] = [
   },
   {
     title: "Strategic Business Unit",
-    color: "#F5C642",
+    color: "var(--gold)",
     agents: [
       { name: "Victor", role: "Results Architect", description: "Frames every decision with Outcome, Purpose, Action, Timing." },
       { name: "Evan", role: "Design Thinking", description: "Who is this for and what job does it do?" },
@@ -106,8 +106,8 @@ export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamP
           position: "fixed", left: "50%", top: "50%",
           transform: "translate(-50%, -50%)",
           width: "100%", maxWidth: 640, maxHeight: "85vh",
-          overflow: "auto", background: "var(--surface-white)",
-          borderRadius: 16, border: "1px solid var(--border-subtle)",
+          overflow: "auto", background: "var(--surface)",
+          borderRadius: 16, border: "1px solid var(--line)",
           boxShadow: "0 24px 48px rgba(0,0,0,0.25)",
           zIndex: 9999, fontFamily: "'Afacad Flux', sans-serif",
           padding: "28px 32px",

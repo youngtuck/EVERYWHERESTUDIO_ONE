@@ -60,8 +60,8 @@ export default function PolishLoadingAnimation({ currentIndex = 0, completedScor
               style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "10px 14px", borderRadius: 8,
-                border: "1px solid var(--border-subtle)",
-                background: running ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
+                border: "1px solid var(--line)",
+                background: running ? "rgba(200,150,26,0.04)" : "var(--surface)",
                 opacity: pending ? 0.4 : 1,
                 transition: "all 0.4s ease",
               }}
@@ -71,7 +71,7 @@ export default function PolishLoadingAnimation({ currentIndex = 0, completedScor
                 width: 20, height: 20, borderRadius: "50%",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0,
-                border: completed ? "none" : running ? "2px solid var(--gold-dark)" : "2px solid var(--border-subtle)",
+                border: completed ? "none" : running ? "2px solid var(--gold)" : "2px solid var(--line)",
                 background: completed ? "#50c8a0" : "transparent",
                 animation: running ? "polishSpin 1s linear infinite" : completed ? "polishCheck 0.3s ease" : "none",
               }}>
@@ -84,7 +84,7 @@ export default function PolishLoadingAnimation({ currentIndex = 0, completedScor
               </div>
               {/* Score */}
               {score !== undefined && (
-                <span style={{ fontSize: 14, fontWeight: 700, color: score >= 80 ? "#50c8a0" : score >= 60 ? "#C8961A" : "#E53935" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: score >= 80 ? "#50c8a0" : score >= 60 ? "var(--gold)" : "#E53935" }}>
                   {score}
                 </span>
               )}
