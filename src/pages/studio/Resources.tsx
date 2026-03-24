@@ -36,7 +36,7 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
 ];
 
 const BADGE_COLOR: Record<ResourceType, string> = {
-  voice_dna: "#4A90D9",
+  voice_dna: "var(--cornflower)",
   brand_dna: "#E8956A",
   method_dna: "#3A6644",
   reference: "#6B7280",
@@ -190,9 +190,9 @@ export default function Resources() {
                   alignItems: "center",
                   gap: 8,
                   padding: "10px 18px",
-                  borderRadius: 10,
-                  border: "1px solid var(--border-default, rgba(0,0,0,0.12))",
-                  background: "var(--surface-white, #fff)",
+                  borderRadius: 8,
+                  border: "1px solid var(--line)",
+                  background: "var(--surface)",
                   fontSize: 13,
                   fontWeight: 600,
                   color: "var(--text-primary)",
@@ -211,10 +211,10 @@ export default function Resources() {
                   alignItems: "center",
                   gap: 8,
                   padding: "10px 18px",
-                  borderRadius: 10,
+                  borderRadius: 8,
                   border: "none",
-                  background: "var(--gold-dark, #C8961A)",
-                  color: "#0A0A0A",
+                  background: "var(--gold)",
+                  color: "white",
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -239,8 +239,8 @@ export default function Resources() {
                 padding: "8px 16px",
                 borderRadius: 8,
                 border: "none",
-                background: filter === tab.key ? "var(--fg)" : "transparent",
-                color: filter === tab.key ? "var(--bg)" : "var(--fg-2)",
+                background: filter === tab.key ? "rgba(0,0,0,0.05)" : "transparent",
+                color: filter === tab.key ? "var(--fg)" : "var(--fg-2)",
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: "pointer",
@@ -274,23 +274,21 @@ export default function Resources() {
                 onClick={() => setEditResource(r)}
                 onKeyDown={(e) => e.key === "Enter" && setEditResource(r)}
                 style={{
-                  background: "var(--surface-white, #fff)",
-                  border: "1px solid var(--border-subtle, rgba(0,0,0,0.08))",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
                   borderRadius: 12,
-                  padding: 24,
+                  padding: "20px 24px",
                   cursor: "pointer",
                   position: "relative",
-                  transition: "border-color 0.2s, box-shadow 0.2s, transform 0.2s",
+                  transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-default, rgba(0,0,0,0.12))";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)";
-                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.borderColor = "var(--line)";
+                  e.currentTarget.style.background = "var(--bg-2)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-subtle, rgba(0,0,0,0.08))";
-                  e.currentTarget.style.boxShadow = "none";
-                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.borderColor = "var(--line)";
+                  e.currentTarget.style.background = "var(--surface)";
                 }}
               >
                 <div style={{ position: "absolute", top: 20, right: 20, display: "flex", alignItems: "center", gap: 8 }}>
@@ -335,8 +333,8 @@ export default function Resources() {
                       position: "absolute",
                       top: 44,
                       right: 20,
-                      background: "var(--surface-white)",
-                      border: "1px solid var(--border-subtle)",
+                      background: "var(--surface)",
+                      border: "1px solid var(--line)",
                       borderRadius: 8,
                       boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                       zIndex: 10,
@@ -398,20 +396,20 @@ export default function Resources() {
           onClick={() => { setAddModalDefaultType(filter !== "all" ? filter as ResourceType : undefined); setAddModalOpen(true); }}
           onKeyDown={(e) => { if (e.key === "Enter") { setAddModalDefaultType(filter !== "all" ? filter as ResourceType : undefined); setAddModalOpen(true); } }}
           style={{
-            border: "2px dashed var(--border-default, rgba(0,0,0,0.12))",
+            border: "2px dashed var(--line)",
             borderRadius: 12,
             padding: 32,
             textAlign: "center",
             cursor: "pointer",
             background: "transparent",
-            transition: "border-color 0.2s, background 0.2s",
+            transition: "all 0.15s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--gold-dark, #C8961A)";
-            e.currentTarget.style.background = "rgba(200,150,26,0.04)";
+            e.currentTarget.style.borderColor = "var(--gold)";
+            e.currentTarget.style.background = "rgba(0,0,0,0.03)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "var(--border-default, rgba(0,0,0,0.12))";
+            e.currentTarget.style.borderColor = "var(--line)";
             e.currentTarget.style.background = "transparent";
           }}
         >
@@ -466,7 +464,7 @@ export default function Resources() {
         >
           <div
             style={{
-              background: "var(--surface-white)",
+              background: "var(--surface)",
               borderRadius: 12,
               padding: 24,
               maxWidth: 400,
@@ -486,8 +484,8 @@ export default function Resources() {
                 style={{
                   padding: "10px 18px",
                   borderRadius: 8,
-                  border: "1px solid var(--border-subtle)",
-                  background: "var(--surface-white)",
+                  border: "1px solid var(--line)",
+                  background: "var(--surface)",
                   cursor: "pointer",
                   fontSize: 14,
                   fontFamily: "inherit",
@@ -699,7 +697,7 @@ function AddResourceModal({
     >
       <div
         style={{
-          background: "var(--surface-white)",
+          background: "var(--surface)",
           borderRadius: 16,
           padding: 32,
           maxWidth: 560,
@@ -728,7 +726,7 @@ function AddResourceModal({
               width: "100%",
               padding: "10px 12px",
               borderRadius: 8,
-              border: "1px solid var(--border-subtle)",
+              border: "1px solid var(--line)",
               fontSize: 14,
               fontFamily: "inherit",
             }}
@@ -752,7 +750,7 @@ function AddResourceModal({
               width: "100%",
               padding: "10px 12px",
               borderRadius: 8,
-              border: "1px solid var(--border-subtle)",
+              border: "1px solid var(--line)",
               fontSize: 14,
               fontFamily: "inherit",
             }}
@@ -772,7 +770,7 @@ function AddResourceModal({
               width: "100%",
               padding: "10px 12px",
               borderRadius: 8,
-              border: "1px solid var(--border-subtle)",
+              border: "1px solid var(--line)",
               fontSize: 14,
               fontFamily: "inherit",
             }}
@@ -816,7 +814,7 @@ function AddResourceModal({
                 minHeight: 200,
                 padding: 12,
                 borderRadius: 8,
-                border: "1px solid var(--border-subtle)",
+                border: "1px solid var(--line)",
                 fontSize: 14,
                 fontFamily: "inherit",
                 resize: "vertical",
@@ -836,7 +834,7 @@ function AddResourceModal({
                   minWidth: 200,
                   padding: "10px 12px",
                   borderRadius: 8,
-                  border: "1px solid var(--border-subtle)",
+                  border: "1px solid var(--line)",
                   fontSize: 14,
                   fontFamily: "inherit",
                 }}
@@ -849,8 +847,8 @@ function AddResourceModal({
                   padding: "10px 18px",
                   borderRadius: 8,
                   border: "none",
-                  background: "var(--gold-dark)",
-                  color: "#0A0A0A",
+                  background: "var(--gold)",
+                  color: "white",
                   fontSize: 14,
                   fontWeight: 600,
                   cursor: urlLoading ? "default" : "pointer",
@@ -884,7 +882,7 @@ function AddResourceModal({
         {error && <p style={{ fontSize: 13, color: "#b91c1c", marginBottom: 16 }}>{error}</p>}
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <button type="button" onClick={onClose} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
+          <button type="button" onClick={onClose} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
             Cancel
           </button>
           <button
@@ -953,7 +951,7 @@ function EditResourceModal({
     >
       <div
         style={{
-          background: "var(--surface-white)",
+          background: "var(--surface)",
           borderRadius: 16,
           padding: 32,
           maxWidth: 640,
@@ -983,7 +981,7 @@ function EditResourceModal({
               width: "100%",
               padding: "10px 12px",
               borderRadius: 8,
-              border: "1px solid var(--border-subtle)",
+              border: "1px solid var(--line)",
               fontSize: 14,
               fontFamily: "inherit",
             }}
@@ -1002,7 +1000,7 @@ function EditResourceModal({
               width: "100%",
               padding: "10px 12px",
               borderRadius: 8,
-              border: "1px solid var(--border-subtle)",
+              border: "1px solid var(--line)",
               fontSize: 14,
               fontFamily: "inherit",
             }}
@@ -1028,7 +1026,7 @@ function EditResourceModal({
               minHeight: 300,
               padding: 12,
               borderRadius: 8,
-              border: "1px solid var(--border-subtle)",
+              border: "1px solid var(--line)",
               fontSize: 14,
               fontFamily: "inherit",
               resize: "vertical",
@@ -1037,7 +1035,7 @@ function EditResourceModal({
         </div>
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <button type="button" onClick={onClose} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
+          <button type="button" onClick={onClose} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}>
             Cancel
           </button>
           <button

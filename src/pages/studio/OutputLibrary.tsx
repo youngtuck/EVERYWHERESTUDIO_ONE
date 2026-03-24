@@ -86,7 +86,7 @@ export default function OutputLibrary() {
     <div
       className="studio-page-transition"
       style={{
-        maxWidth: 960,
+        maxWidth: 800,
         margin: "0 auto",
         padding: "32px 24px",
         fontFamily: "var(--font)",
@@ -184,8 +184,8 @@ export default function OutputLibrary() {
               fontFamily: "'Afacad Flux', sans-serif",
               fontSize: 14,
               color: "var(--text-primary)",
-              background: "var(--bg-2)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
               borderRadius: 8,
               outline: "none",
               transition,
@@ -194,7 +194,7 @@ export default function OutputLibrary() {
               e.currentTarget.style.borderColor = "var(--gold-dark)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--border-subtle)";
+              e.currentTarget.style.borderColor = "var(--line)";
             }}
           />
         </div>
@@ -207,8 +207,8 @@ export default function OutputLibrary() {
             fontFamily: "var(--font)",
             fontSize: 14,
             color: "var(--text-primary)",
-            background: "var(--bg-2)",
-            border: "1px solid var(--border-subtle)",
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
             borderRadius: 8,
             appearance: "none",
             cursor: "pointer",
@@ -229,9 +229,9 @@ export default function OutputLibrary() {
           onClick={() => setViewMode((m) => (m === "list" ? "card" : "list"))}
           style={{
             padding: "8px 12px",
-            border: "1px solid var(--border-subtle)",
+            border: "1px solid var(--line)",
             borderRadius: 8,
-            background: "var(--bg-2)",
+            background: "var(--surface)",
             cursor: "pointer",
             fontSize: 12,
             fontWeight: 500,
@@ -254,7 +254,7 @@ export default function OutputLibrary() {
               style={{
                 height: 56,
                 marginBottom: 0,
-                borderBottom: "1px solid var(--border-subtle)",
+                borderBottom: "1px solid var(--line)",
                 animationDelay: `${i * 50}ms`,
               }}
             />
@@ -331,10 +331,10 @@ export default function OutputLibrary() {
                     padding: 20,
                     textAlign: "left",
                     cursor: "pointer",
-                    border: "1px solid var(--border-subtle)",
+                    border: "1px solid var(--line)",
                     borderRadius: 12,
-                    background: "var(--surface-white)",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    background: "var(--surface)",
+                    transition: "all 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
@@ -355,6 +355,7 @@ export default function OutputLibrary() {
                     {o.title}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+
                     <span style={{ fontSize: 18, fontWeight: 700, color: sc.text, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{timeAgo(o.created_at)}</span>
@@ -384,8 +385,8 @@ export default function OutputLibrary() {
                 onClick={() => navigate(`/studio/outputs/${o.id}`)}
                 style={{
                   padding: "16px 0",
-                  borderBottom: "1px solid var(--border-subtle)",
-                  borderTop: filtered[0]?.id === o.id ? "1px solid var(--border-subtle)" : "none",
+                  borderBottom: "1px solid var(--line)",
+                  borderTop: filtered[0]?.id === o.id ? "1px solid var(--line)" : "none",
                   display: "flex",
                   alignItems: "center",
                   cursor: "pointer",
@@ -398,7 +399,7 @@ export default function OutputLibrary() {
                   transition,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(0,0,0,0.015)";
+                  e.currentTarget.style.background = "var(--bg-2)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent";
@@ -506,11 +507,11 @@ export default function OutputLibrary() {
       {/* Delete confirmation */}
       {deleteTarget && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }} onClick={() => setDeleteTarget(null)}>
-          <div style={{ background: "var(--surface-white)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ background: "var(--surface)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }} onClick={(e) => e.stopPropagation()}>
             <p style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Delete this output?</p>
             <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20 }}>"{deleteTarget.title}" will be permanently removed.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => setDeleteTarget(null)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", cursor: "pointer", fontSize: 14, fontFamily: "'Afacad Flux', sans-serif" }}>Cancel</button>
+              <button type="button" onClick={() => setDeleteTarget(null)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", cursor: "pointer", fontSize: 14, fontFamily: "'Afacad Flux', sans-serif" }}>Cancel</button>
               <button type="button" onClick={handleDelete} style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: "var(--danger)", color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: "'Afacad Flux', sans-serif" }}>Delete</button>
             </div>
           </div>

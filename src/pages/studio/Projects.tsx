@@ -25,8 +25,8 @@ type ScoreRow = {
   title?: string;
 };
 
-const transition = "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)";
-const PROJECT_ACCENTS = ["#4A90D9", "#F5C642", "#E8B4A0", "#64748B", "#50c8a0"];
+const transition = "all 0.15s ease";
+const PROJECT_ACCENTS = ["var(--cornflower)", "var(--gold)", "#E8B4A0", "#64748B", "#50c8a0"];
 
 export default function Projects() {
   const navigate = useNavigate();
@@ -39,7 +39,7 @@ export default function Projects() {
   const [createLoading, setCreateLoading] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
-  const [newColor, setNewColor] = useState("#4A90D9");
+  const [newColor, setNewColor] = useState("var(--cornflower)");
   const [error, setError] = useState<string | null>(null);
 
   // Menu / rename / archive state
@@ -360,11 +360,11 @@ export default function Projects() {
           <div
             key={p.id}
             style={{
-              background: "var(--surface-white)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
               borderLeft: `3px solid ${accentColor}`,
               borderRadius: 12,
-              padding: 24,
+              padding: "20px 24px",
               cursor: "pointer",
               textAlign: "left",
               fontFamily: "inherit",
@@ -372,14 +372,10 @@ export default function Projects() {
               position: "relative",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--border-default)";
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
+              e.currentTarget.style.background = "var(--bg-2)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border-subtle)";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.background = "var(--surface)";
             }}
             onClick={() => {
               if (!isRenaming && menuOpenId !== p.id) {
@@ -421,10 +417,10 @@ export default function Projects() {
                   position: "absolute",
                   top: 48,
                   right: 20,
-                  background: "var(--surface-white)",
-                  border: "1px solid var(--border-subtle)",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
                   borderRadius: 8,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                   zIndex: 10,
                   padding: "4px 0",
                   minWidth: 140,
@@ -494,7 +490,7 @@ export default function Projects() {
                     flex: 1,
                     padding: "6px 8px",
                     borderRadius: 6,
-                    border: "1px solid var(--border-default)",
+                    border: "1px solid var(--line)",
                     fontSize: 15,
                     fontWeight: 600,
                     fontFamily: "'Afacad Flux', sans-serif",
@@ -531,7 +527,7 @@ export default function Projects() {
                   style={{
                     padding: "6px 10px",
                     borderRadius: 6,
-                    border: "1px solid var(--border-subtle)",
+                    border: "1px solid var(--line)",
                     background: "none",
                     fontSize: 12,
                     cursor: "pointer",
@@ -613,7 +609,7 @@ export default function Projects() {
               const pub = pubReadyByProject.get(p.id);
               if (!titles?.length && !pub) return null;
               return (
-                <div style={{ marginTop: 12, borderTop: "1px solid var(--border-subtle)", paddingTop: 10 }}>
+                <div style={{ marginTop: 12, borderTop: "1px solid var(--line)", paddingTop: 10 }}>
                   {pub && pub.total > 0 && (
                     <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: titles?.length ? 6 : 0 }}>
                       {pub.ready}/{pub.total} publication-ready
@@ -685,7 +681,7 @@ export default function Projects() {
               maxWidth: 420,
               width: "100%",
               background: "var(--surface-primary)",
-              borderRadius: 16,
+              borderRadius: 12,
               padding: 24,
               boxShadow: "0 18px 40px rgba(0,0,0,0.28)",
               fontFamily: "'Afacad Flux', sans-serif",
@@ -732,7 +728,7 @@ export default function Projects() {
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: 8,
-                    border: "1px solid var(--border-default)",
+                    border: "1px solid var(--line)",
                     fontSize: 13,
                     fontFamily: "'Afacad Flux', sans-serif",
                     outline: "none",
@@ -752,7 +748,7 @@ export default function Projects() {
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: 8,
-                    border: "1px solid var(--border-default)",
+                    border: "1px solid var(--line)",
                     fontSize: 13,
                     fontFamily: "'Afacad Flux', sans-serif",
                     outline: "none",
@@ -762,7 +758,7 @@ export default function Projects() {
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 8, color: "var(--fg-2)" }}>Color</label>
                 <div style={{ display: "flex", gap: 8 }}>
-                  {["#4A90D9", "#F5C642", "#E8B4A0", "#50c8a0", "#A080F5", "#64748B"].map((c) => (
+                  {["var(--cornflower)", "var(--gold)", "#E8B4A0", "#50c8a0", "#A080F5", "#64748B"].map((c) => (
                     <button
                       key={c}
                       type="button"
@@ -783,7 +779,7 @@ export default function Projects() {
                   background: "var(--text-primary)",
                   color: "#fff",
                   padding: "10px 16px",
-                  borderRadius: 10,
+                  borderRadius: 8,
                   border: "none",
                   fontSize: 14,
                   fontWeight: 600,

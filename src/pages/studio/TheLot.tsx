@@ -25,7 +25,7 @@ const PLACEHOLDER_IDEAS: Idea[] = [
   { id: "3", title: "Book chapter: composed intelligence", note: "Define the term and contrast with artificial intelligence. Parked for deeper research.", projectId: "3", projectName: "Book Project", createdAt: "2026-03-18T00:00:00Z" },
 ];
 
-const transition = "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)";
+const transition = "all 0.15s ease";
 
 export default function TheLot() {
   const navigate = useNavigate();
@@ -97,7 +97,7 @@ export default function TheLot() {
           onClick={() => setModalOpen(true)}
           style={{
             background: "var(--gold)",
-            color: "#0D1B2A",
+            color: "var(--fg)",
             padding: "10px 20px",
             borderRadius: 8,
             fontFamily: "'Afacad Flux', sans-serif",
@@ -168,10 +168,10 @@ export default function TheLot() {
             <div
               key={idea.id}
               style={{
-                background: "var(--surface-white)",
-                border: "1px solid var(--border-subtle)",
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
                 borderRadius: 12,
-                padding: 24,
+                padding: "20px 24px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
@@ -179,14 +179,10 @@ export default function TheLot() {
                 transition,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-default)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.06)";
+                e.currentTarget.style.background = "var(--bg-2)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-subtle)";
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.background = "var(--surface)";
               }}
             >
               <div>
@@ -259,7 +255,7 @@ export default function TheLot() {
                     style={{
                       background: "transparent",
                       color: "var(--text-primary)",
-                      border: "1px solid var(--border-default)",
+                      border: "1px solid var(--line)",
                       padding: "6px 14px",
                       borderRadius: 8,
                       fontFamily: "'Afacad Flux', sans-serif",
@@ -269,12 +265,12 @@ export default function TheLot() {
                       transition,
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(0,0,0,0.02)";
+                      e.currentTarget.style.background = "rgba(0,0,0,0.03)";
                       e.currentTarget.style.borderColor = "var(--text-tertiary)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.borderColor = "var(--border-default)";
+                      e.currentTarget.style.borderColor = "var(--line)";
                     }}
                   >
                     Pick Up
@@ -306,8 +302,7 @@ export default function TheLot() {
               maxWidth: 420,
               background: "var(--bg-light)",
               borderRadius: 12,
-              border: "1px solid var(--border-subtle)",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.12)",
+              border: "1px solid var(--line)",
               zIndex: 9999,
               fontFamily: "'Afacad Flux', sans-serif",
               padding: "24px 28px",
@@ -333,17 +328,17 @@ export default function TheLot() {
                   fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 14,
                   padding: "10px 14px",
-                  border: "1px solid var(--border-subtle)",
+                  border: "1px solid var(--line)",
                   borderRadius: 8,
                   outline: "none",
                 }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
               />
             </div>
             {/* Project assignment removed - all ideas go to default project until multi-project support is live */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-              <button type="button" onClick={() => setModalOpen(false)} style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-default)", padding: "10px 20px", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+              <button type="button" onClick={() => setModalOpen(false)} style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--line)", padding: "10px 20px", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
                 Cancel
               </button>
               <button type="button" onClick={handleParkIt} disabled={!newIdeaText.trim()} style={{ background: "var(--gold-dark)", color: "#fff", border: "none", padding: "10px 20px", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, cursor: newIdeaText.trim() ? "pointer" : "default", opacity: newIdeaText.trim() ? 1 : 0.6 }}>

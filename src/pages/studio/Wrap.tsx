@@ -108,14 +108,14 @@ export default function Wrap() {
               style={{
                 flex: "1 1 200px",
                 padding: "12px 14px",
-                background: "var(--surface-white)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 8,
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
+                borderRadius: 12,
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{s.name}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "#4A90D9" }}>{s.role}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "var(--cornflower)" }}>{s.role}</span>
               </div>
               <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
             </div>
@@ -130,8 +130,8 @@ export default function Wrap() {
       ) : outputs.length === 0 ? (
         <div
           style={{
-            background: "var(--surface-white)",
-            border: "1px solid var(--border-subtle)",
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
             borderRadius: 12,
             padding: "60px 24px",
             textAlign: "center",
@@ -191,19 +191,17 @@ export default function Wrap() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "16px 20px",
-                  background: "var(--surface-white)",
-                  border: "1px solid var(--border-subtle)",
+                  padding: "20px 24px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
                   borderRadius: 12,
                   transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-default)";
-                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)";
+                  e.currentTarget.style.background = "var(--bg-2)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-subtle)";
-                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.background = "var(--surface)";
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>

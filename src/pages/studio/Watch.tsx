@@ -10,12 +10,12 @@ import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
-const WATCH_BLUE = "#4A90F5";
+const WATCH_BLUE = "var(--cornflower)";
 const HEADER_BG = "#0D1B2A";
 
 const SEVERITY_PILL_STYLES: Record<string, { background: string; color: string }> = {
   high:   { background: "#E53935", color: "#fff" },
-  medium: { background: "var(--gold)", color: "#0D1B2A" },
+  medium: { background: "var(--gold)", color: "var(--fg)" },
   low:    { background: "var(--bg-3)", color: "var(--fg-2)" },
 };
 
@@ -410,7 +410,7 @@ export default function Watch() {
         }}
       >
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#C8961A", marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", marginBottom: 8 }}>
             INTELLIGENCE BRIEFING
           </div>
           <h1 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: "clamp(24px,4vw,36px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -460,9 +460,9 @@ export default function Watch() {
             gap: 12,
             marginBottom: 24,
             padding: "12px 16px",
-            background: "var(--surface-white)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: 10,
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
+            borderRadius: 12,
             flexWrap: "wrap",
           }}>
             <span style={{
@@ -540,7 +540,7 @@ export default function Watch() {
                 style={{
                   width: 140,
                   padding: "6px 10px",
-                  border: "1px solid var(--border-subtle)",
+                  border: "1px solid var(--line)",
                   borderRadius: 6,
                   fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 12,
@@ -572,8 +572,8 @@ export default function Watch() {
         {needsSetup && (
           <div
             style={{
-              background: "var(--surface-white)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
               borderRadius: 12,
               padding: 24,
               marginBottom: 24,
@@ -601,7 +601,7 @@ export default function Watch() {
                         flex: 1,
                         minWidth: 200,
                         padding: "10px 12px",
-                        border: "1px solid var(--border-subtle)",
+                        border: "1px solid var(--line)",
                         borderRadius: 8,
                         fontFamily: "'Afacad Flux', sans-serif",
                         fontSize: 14,
@@ -667,7 +667,7 @@ export default function Watch() {
                         gap: 6,
                         padding: "6px 12px",
                         background: "var(--surface-secondary)",
-                        border: "1px solid var(--border-subtle)",
+                        border: "1px solid var(--line)",
                         borderRadius: 20,
                         fontSize: 13,
                         color: "var(--text-primary)",
@@ -711,7 +711,7 @@ export default function Watch() {
                     style={{
                       width: 180,
                       padding: "8px 12px",
-                      border: "1px solid var(--border-subtle)",
+                      border: "1px solid var(--line)",
                       borderRadius: 8,
                       fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 13,
@@ -747,7 +747,7 @@ export default function Watch() {
                     background: WATCH_BLUE,
                     color: "#fff",
                     border: "none",
-                    borderRadius: 10,
+                    borderRadius: 8,
                     padding: "12px 24px",
                     fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 14,
@@ -768,7 +768,7 @@ export default function Watch() {
           <div
             style={{
               background: "#07090F",
-              borderRadius: 16,
+              borderRadius: 12,
               minHeight: 420,
               display: "flex",
               flexDirection: "column",
@@ -787,9 +787,9 @@ export default function Watch() {
         {!needsSetup && !hasTodayBriefing && !showSentinelLoading && (
             <div
               style={{
-                background: "var(--surface-white)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 16,
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
+                borderRadius: 12,
                 padding: 40,
                 textAlign: "center",
               }}
@@ -806,9 +806,9 @@ export default function Watch() {
                 disabled={generating}
                 style={{
                   background: "var(--gold)",
-                  color: "#0D1B2A",
+                  color: "var(--fg)",
                   border: "none",
-                  borderRadius: 10,
+                  borderRadius: 8,
                   padding: "12px 28px",
                   fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 14,
@@ -867,7 +867,7 @@ export default function Watch() {
                   <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.45, margin: "0 0 8px" }}>{item.summary}</p>
                   <p style={{ fontSize: 13, color: "var(--text-tertiary)", fontStyle: "italic", margin: "0 0 8px" }}>{item.implication}</p>
                   {item.sources?.length ? (
-                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", paddingTop: 8, borderTop: "1px solid var(--border-subtle)" }}>
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", paddingTop: 8, borderTop: "1px solid var(--line)" }}>
                       <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-tertiary)", marginRight: 8 }}>Sources</span>
                       {item.sources.map((s, j) => (
                         <a key={j} href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: WATCH_BLUE, marginRight: 12 }}>
@@ -984,7 +984,7 @@ function SectionTitle({
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, ...style }}>
       {tooltip ? <Tooltip text={tooltip} position="top">{labelEl}</Tooltip> : labelEl}
-      <div style={{ flex: 1, height: 1, background: "var(--border-subtle)" }} />
+      <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
     </div>
   );
 }
@@ -993,8 +993,8 @@ function Card({ children, style = {} }: { children: React.ReactNode; style?: Rea
   return (
     <div
       style={{
-        background: "var(--surface-white)",
-        border: "1px solid var(--border-subtle)",
+        background: "var(--surface)",
+        border: "1px solid var(--line)",
         borderRadius: 12,
         padding: 20,
         ...style,

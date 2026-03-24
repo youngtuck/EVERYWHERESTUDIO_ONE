@@ -19,8 +19,8 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         background: value ? "var(--text-primary)" : "var(--surface-elevated)",
         cursor: "pointer",
         position: "relative",
-        transition: "background 0.2s ease",
-        border: "1px solid var(--border-subtle)",
+        transition: "background 0.15s ease",
+        border: "1px solid var(--line)",
         flexShrink: 0,
       }}
     >
@@ -29,11 +29,11 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
           width: 16,
           height: 16,
           borderRadius: "50%",
-          background: value ? "var(--surface-white)" : "var(--text-tertiary)",
+          background: value ? "var(--surface)" : "var(--text-tertiary)",
           position: "absolute",
           top: 2,
           left: value ? 20 : 2,
-          transition: "left 0.2s ease",
+          transition: "left 0.15s ease",
         }}
       />
     </div>
@@ -44,10 +44,10 @@ function SectionCard({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        background: "var(--surface-white)",
-        border: "1px solid var(--border-subtle)",
+        background: "var(--surface)",
+        border: "1px solid var(--line)",
         borderRadius: 12,
-        padding: 24,
+        padding: "20px 24px",
         marginBottom: 32,
       }}
     >
@@ -218,9 +218,9 @@ export default function Settings() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, background: "var(--bg-2)", color: "var(--text-primary)", border: "1px solid var(--border-default)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
+              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, background: "var(--surface)", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
               onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
             />
           </div>
           <div>
@@ -232,7 +232,7 @@ export default function Settings() {
           {saveError && <p style={{ fontSize: 13, color: "#D64545", margin: 0 }}>{saveError}</p>}
           <button
             onClick={handleSaveProfile}
-            style={{ alignSelf: "flex-start", background: "#C8961A", color: "#0D1B2A", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
+            style={{ alignSelf: "flex-start", background: "var(--gold)", color: "white", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
@@ -277,7 +277,7 @@ export default function Settings() {
               onClick={() => navigate("/onboarding?retrain=1")}
               style={{
                 background: "var(--gold-dark)",
-                color: "#0D1B2A",
+                color: "white",
                 border: "none",
                 borderRadius: 8,
                 padding: "10px 20px",
@@ -300,7 +300,7 @@ export default function Settings() {
               style={{
                 background: "transparent",
                 color: "var(--text-secondary)",
-                border: "1px solid var(--border-subtle)",
+                border: "1px solid var(--line)",
                 borderRadius: 8,
                 padding: "10px 20px",
                 fontSize: 13,
@@ -309,8 +309,8 @@ export default function Settings() {
                 fontFamily: "'Afacad Flux', sans-serif",
                 transition: "all 0.15s ease",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
             >
               View Voice Profile
             </button>
@@ -328,7 +328,7 @@ export default function Settings() {
           <div style={{
             padding: "10px 14px",
             background: "rgba(74,144,217,0.06)",
-            borderLeft: "3px solid #4A90D9",
+            borderLeft: "3px solid var(--cornflower)",
             borderRadius: 4,
             marginBottom: 16,
             fontSize: 13,
@@ -348,7 +348,7 @@ export default function Settings() {
                 gap: 6,
                 padding: "6px 12px",
                 background: "var(--bg-2)",
-                border: "1px solid var(--border-subtle)",
+                border: "1px solid var(--line)",
                 borderRadius: 20,
                 fontSize: 13,
                 color: "var(--text-primary)",
@@ -373,12 +373,12 @@ export default function Settings() {
             onChange={(e) => setWatchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddWatchTopic(); } }}
             placeholder="Add a topic (e.g., AI governance, content marketing)"
-            style={{ width: 280, padding: "8px 12px", background: "var(--bg-2)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, outline: "none" }}
+            style={{ width: 280, padding: "8px 12px", background: "var(--surface)", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, outline: "none" }}
           />
           <button
             type="button"
             onClick={handleAddWatchTopic}
-            style={{ background: "var(--gold-dark)", color: "#0D1B2A", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
+            style={{ background: "var(--gold)", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
@@ -445,9 +445,9 @@ export default function Settings() {
           <button
             type="button"
             onClick={handleSignOut}
-            style={{ alignSelf: "flex-start", background: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease" }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+            style={{ alignSelf: "flex-start", background: "transparent", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
           >
             Sign out
           </button>
@@ -467,7 +467,7 @@ export default function Settings() {
           onClick={() => setDeleteModalOpen(false)}
         >
           <div
-            style={{ background: "var(--surface-white)", borderRadius: 16, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}
+            style={{ background: "var(--surface)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 18, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
@@ -481,13 +481,13 @@ export default function Settings() {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type DELETE"
-              style={{ width: "100%", padding: "10px 12px", background: "var(--bg-2)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)", borderRadius: 8, fontSize: 14, fontFamily: "'Afacad Flux', sans-serif", marginBottom: 16, outline: "none" }}
+              style={{ width: "100%", padding: "10px 12px", background: "var(--surface)", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 14, fontFamily: "'Afacad Flux', sans-serif", marginBottom: 16, outline: "none" }}
             />
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 type="button"
                 onClick={() => { setDeleteModalOpen(false); setDeleteConfirmText(""); }}
-                style={{ background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                style={{ background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
               >
                 Cancel
               </button>
