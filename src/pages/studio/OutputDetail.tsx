@@ -672,7 +672,7 @@ export default function OutputDetail() {
             {!pipelineRun && !pipelineRunning && (
               <div style={{ textAlign: "center", padding: "32px 16px" }}>
                 <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20, maxWidth: 480, marginInline: "auto" }}>
-                  7 AI specialists will review your content for voice authenticity, research accuracy, engagement, and more.
+                  7 specialists will review your content for voice authenticity, research accuracy, engagement, and more.
                 </p>
                 <button
                   onClick={handleRunPipeline}

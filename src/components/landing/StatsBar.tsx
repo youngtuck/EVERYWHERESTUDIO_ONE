@@ -1,5 +1,5 @@
 const STATS = [
-  { num:"40", label:"AI Specialists" },
+  { num:"40", label:"Specialists" },
   { num:"10", label:"Output Formats" },
   { num:"8", label:"Quality Checkpoints" },
   { num:"1000", label:"Betterish Maximum" },

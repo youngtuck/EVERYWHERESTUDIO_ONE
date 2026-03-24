@@ -970,6 +970,8 @@ export default function WorkSession() {
     try { return localStorage.getItem("everywhere_onboarding_seen") !== "true"; } catch { return false; }
   });
   const [writersRoomLoading, setWritersRoomLoading] = useState(false);
+  const [editingParaIndex, setEditingParaIndex] = useState<number | null>(null);
+  const [editingParaText, setEditingParaText] = useState("");
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
@@ -1520,6 +1522,55 @@ export default function WorkSession() {
       toast("Stress test encountered an error.", "error");
     } finally {
       setWritersRoomLoading(false);
+    }
+  };
+
+  const handleImproveCheckpoint = async (gateName: string, feedback: string) => {
+    try {
+      // Revise draft to address this specific checkpoint
+      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: getConversationSummary(),
+          originalDraft: draftContent || generatedContent,
+          revisionNotes: `Address the following checkpoint feedback from ${gateName}: ${feedback}. Fix the specific issues identified. Maintain the same voice, structure, and length. Only change what is needed to pass this checkpoint.`,
+          outputType: outputTypeApi,
+          voiceProfile,
+          userId: user?.id,
+          voiceDnaMd,
+        }),
+      });
+      if (!res.ok) throw new Error("Revision failed");
+      const data = await res.json();
+      setDraftContent(data.content || "");
+      setGeneratedContent(data.content || "");
+
+      // Re-run just that one gate
+      const pipelineRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft: data.content,
+          outputType: outputTypeApi,
+          voiceDnaMd, brandDnaMd, methodDnaMd,
+          userId: user?.id,
+          gateSubset: [gateName],
+        }),
+      }, { timeout: 60000 });
+      if (pipelineRes.ok) {
+        const result = await pipelineRes.json();
+        const newGate = result.gateResults?.[0];
+        if (newGate) {
+          setLayer1Results(prev => prev.map(r => r.gate === gateName ? {
+            gate: newGate.gate, status: newGate.status === "PASS" ? "pass" : newGate.status === "FAIL" ? "fail" : "flag",
+            score: newGate.score, feedback: newGate.feedback,
+          } : r));
+        }
+      }
+      toast(`${gateName} checkpoint improved.`);
+    } catch (err) {
+      toast("Improvement failed. Try again.", "error");
     }
   };
 
@@ -2198,11 +2249,22 @@ export default function WorkSession() {
             {writersRoomLoading && !draftContent ? (
               <DraftLoadingAnimation />
             ) : (
-              <div style={{ maxWidth: 760, width: "100%", display: "flex", flexDirection: "column", gap: 20 }}>
-                {/* Draft content */}
-                <div style={{ position: "relative", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: isMobile ? "20px 16px" : "32px 36px" }}>
-                  <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
+              <div style={{ display: "flex", gap: 24, maxWidth: 1100, width: "100%", margin: "0 auto", flexDirection: isMobile ? "column" : "row" }}>
+                {/* Draft content (left column) */}
+                <div style={{ flex: isMobile ? "1" : "0 0 63%", minWidth: 0 }}>
+                  <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.7, color: "var(--fg)", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: isMobile ? "20px 16px" : "28px 32px" }}>
+                    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
+                  </div>
+                  <button
+                    onClick={handleEnterEditing}
+                    disabled={writersRoomLoading}
+                    style={{ marginTop: 16, padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                  >
+                    Review your draft
+                  </button>
                 </div>
+                {/* Checkpoints sidebar (right column) */}
+                <div style={{ flex: isMobile ? "1" : "0 0 35%", position: isMobile ? "static" as const : "sticky" as const, top: 80, alignSelf: "flex-start", maxHeight: isMobile ? "none" : "calc(100vh - 120px)", overflowY: isMobile ? "visible" as const : "auto" as const }}>
                 {/* Layer 1 checkpoint results */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 2 }}>Quality Checkpoints</div>
@@ -2238,55 +2300,95 @@ export default function WorkSession() {
                             <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4, lineHeight: 1.4 }}>{r.gate}: "{r.feedback.slice(0, 150)}{r.feedback.length > 150 ? "..." : ""}"</div>
                           )}
                         </div>
-                        {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "#C8961A" : "#E53935", flexShrink: 0 }}>{r.score}</span>}
-                        {r.status === "pass" && r.score === 0 && <span style={{ fontSize: 12, fontWeight: 600, color: "#50c8a0" }}>Pass</span>}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                          {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "var(--gold)" : "#E53935" }}>{r.score}</span>}
+                          {r.status === "pass" && r.score === 0 && <span style={{ fontSize: 12, fontWeight: 600, color: "#50c8a0" }}>Pass</span>}
+                          {r.score > 0 && r.score < 80 && r.status !== "running" && r.feedback && (
+                            <button
+                              onClick={() => handleImproveCheckpoint(r.gate, r.feedback)}
+                              style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "transparent", fontSize: 11, fontWeight: 500, color: "var(--fg-2)", cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease" }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+                            >
+                              Improve
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-                <button
-                  onClick={handleEnterEditing}
-                  disabled={writersRoomLoading}
-                  style={{ alignSelf: "flex-start", padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                >
-                  Review your draft
-                </button>
+                </div>{/* end sidebar */}
               </div>
             )}
           </div>
         )}
 
         {/* ── EDITING PHASE: User edit pass ────────────────────── */}
-        {phase === "editing" && (
+        {phase === "editing" && (() => {
+          const paragraphs = (draftContent || generatedContent).split(/\n\n+/).filter(p => p.trim());
+          const saveParagraph = () => {
+            if (editingParaIndex === null) return;
+            const updated = paragraphs.map((p, i) => i === editingParaIndex ? editingParaText : p).join("\n\n");
+            setDraftContent(updated);
+            setEditingParaIndex(null);
+            setEditingParaText("");
+          };
+          return (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
             <div style={{ maxWidth: 760, width: "100%" }}>
-              <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Edit your draft</h2>
-              <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 20px" }}>Read through, make edits, then send it to the stress test.</p>
-              <textarea
-                value={draftContent || generatedContent}
-                onChange={(e) => setDraftContent(e.target.value)}
-                style={{ width: "100%", minHeight: 400, padding: 24, borderRadius: 12, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", resize: "vertical", outline: "none" }}
-              />
-              <div style={{ marginTop: 16 }}>
-                <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6 }}>Notes for revision</label>
+              <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 18, fontWeight: 600, color: "var(--fg)", margin: "0 0 6px" }}>Edit your draft</h2>
+              <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "0 0 20px" }}>Click any paragraph to edit. Add general notes below.</p>
+              {/* Paragraph-by-paragraph rendered view */}
+              <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: isMobile ? "20px 16px" : "28px 32px", marginBottom: 20 }}>
+                {paragraphs.map((para, i) => (
+                  editingParaIndex === i ? (
+                    <div key={i} style={{ marginBottom: 12 }}>
+                      <textarea
+                        autoFocus
+                        value={editingParaText}
+                        onChange={(e) => setEditingParaText(e.target.value)}
+                        style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--gold)", background: "var(--surface)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.6, color: "var(--fg)", resize: "vertical", minHeight: 80, outline: "none", boxShadow: "0 0 0 3px rgba(200,150,26,0.08)" }}
+                      />
+                      <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                        <button onClick={saveParagraph} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: "var(--gold)", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}>Save</button>
+                        <button onClick={() => setEditingParaIndex(null)} style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid var(--line)", background: "transparent", fontSize: 12, color: "var(--fg-3)", cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      key={i}
+                      onClick={() => { setEditingParaIndex(i); setEditingParaText(para); }}
+                      style={{ padding: "6px 8px", marginBottom: 8, borderRadius: 6, cursor: "pointer", transition: "background 0.15s ease", lineHeight: 1.6, fontSize: 15, color: "var(--fg)" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-2)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                      dangerouslySetInnerHTML={{ __html: renderMarkdown(para) }}
+                    />
+                  )
+                ))}
+              </div>
+              {/* General revision notes */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6 }}>Notes for revision</label>
                 <textarea
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
                   placeholder="General feedback, things to strengthen, areas to cut..."
-                  style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--bg-2)", color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, resize: "vertical", minHeight: 60, outline: "none" }}
+                  style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, resize: "vertical", minHeight: 60, outline: "none" }}
                 />
               </div>
-              <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-                <button
-                  onClick={editNotes.trim() ? handleRevisionFromEdits : () => handleEnterStressTest()}
-                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                >
-                  {editNotes.trim() ? "Revise and stress test" : "Send to stress test"}
-                </button>
-              </div>
+              <button
+                onClick={editNotes.trim() ? handleRevisionFromEdits : () => handleEnterStressTest()}
+                style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+              >
+                {editNotes.trim() ? "Revise and stress test" : "Send to stress test"}
+              </button>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ── STRESS TEST PHASE: SBU feedback ─────────────────── */}
         {phase === "stress-test" && (
@@ -2297,49 +2399,56 @@ export default function WorkSession() {
                 <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Running the stress test...</p>
               </div>
             ) : (
-              <div style={{ maxWidth: 760, width: "100%" }}>
-                <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Stress Test</h2>
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 24px" }}>Six specialists evaluated your draft from different angles.</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-                  {stressResults.map((r) => (
-                    <div key={r.agent} style={{ padding: 16, border: "1px solid var(--border-subtle)", borderRadius: 10, background: "var(--surface-white)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.verdict === "pass" ? "#50c8a0" : "#C8961A" }} />
-                        <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{r.agent}</span>
-                        <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{r.lens}</span>
-                      </div>
-                      <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 4px", lineHeight: 1.5 }}>{r.feedback}</p>
-                      {r.suggestion && r.verdict === "flag" && (
-                        <p style={{ fontSize: 13, color: "var(--gold)", margin: 0, fontStyle: "italic" }}>Suggestion: {r.suggestion}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {saraSynthesis.summary && (
-                  <div style={{ padding: 20, border: "1px solid var(--border-subtle)", borderRadius: 12, background: "var(--surface-white)", marginBottom: 24 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--cornflower)", marginBottom: 8 }}>Sara's Synthesis</div>
-                    <p style={{ fontSize: 14, color: "var(--text-primary)", margin: "0 0 12px", lineHeight: 1.5 }}>{saraSynthesis.summary}</p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {saraSynthesis.actionItems.map((item, i) => (
-                        <label key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: 8, borderRadius: 6, background: acceptedItems[i] ? "rgba(200,150,26,0.06)" : "transparent" }}>
-                          <input
-                            type="checkbox"
-                            checked={acceptedItems[i] || false}
-                            onChange={() => setAcceptedItems(prev => prev.map((v, j) => j === i ? !v : v))}
-                            style={{ marginTop: 2 }}
-                          />
-                          <span style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.5 }}>{item}</span>
-                        </label>
-                      ))}
-                    </div>
+              <div style={{ display: "flex", gap: 24, maxWidth: 1100, width: "100%", margin: "0 auto", flexDirection: isMobile ? "column" : "row" }}>
+                {/* Left: Draft reference */}
+                <div style={{ flex: isMobile ? "1" : "0 0 53%", minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Your Draft</div>
+                  <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: "24px 28px", maxHeight: isMobile ? "none" : "calc(100vh - 160px)", overflowY: "auto", fontSize: 14, lineHeight: 1.6, color: "var(--fg)" }}>
+                    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
                   </div>
-                )}
-                <button
-                  onClick={handleEnterPolish}
-                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                >
-                  Apply and polish
-                </button>
+                </div>
+                {/* Right: Agent feedback */}
+                <div style={{ flex: isMobile ? "1" : "0 0 45%", position: isMobile ? "static" as const : "sticky" as const, top: 80, alignSelf: "flex-start", maxHeight: isMobile ? "none" : "calc(100vh - 120px)", overflowY: isMobile ? "visible" as const : "auto" as const }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Stress Test Results</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                    {stressResults.map((r) => (
+                      <div key={r.agent} style={{ padding: "14px 16px", border: "1px solid var(--line)", borderRadius: 8, background: "var(--surface)" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{r.agent}</span>
+                            <span style={{ fontSize: 12, color: "var(--fg-3)" }}>{r.lens}</span>
+                          </div>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.verdict === "pass" ? "#50c8a0" : "var(--gold)" }} />
+                        </div>
+                        <p style={{ fontSize: 13, color: "var(--fg-2)", margin: 0, lineHeight: 1.5 }}>{r.feedback}</p>
+                        {r.suggestion && r.verdict === "flag" && (
+                          <p style={{ fontSize: 12, color: "var(--gold)", margin: "6px 0 0", fontStyle: "italic" }}>{r.suggestion}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Sara's Synthesis */}
+                  {saraSynthesis.summary && (
+                    <div style={{ padding: "16px 18px", borderRadius: 8, background: "var(--surface)", border: "1px solid var(--line)", borderLeft: "3px solid var(--gold)", marginBottom: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 6 }}>Sara's Synthesis</div>
+                      <p style={{ fontSize: 13, color: "var(--fg)", margin: "0 0 10px", lineHeight: 1.5 }}>{saraSynthesis.summary}</p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {saraSynthesis.actionItems.map((item, i) => (
+                          <label key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", padding: 6, borderRadius: 4, background: acceptedItems[i] ? "rgba(200,150,26,0.06)" : "transparent" }}>
+                            <input type="checkbox" checked={acceptedItems[i] || false} onChange={() => setAcceptedItems(prev => prev.map((v, j) => j === i ? !v : v))} style={{ marginTop: 2 }} />
+                            <span style={{ fontSize: 13, color: "var(--fg)", lineHeight: 1.5 }}>{item}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={handleEnterPolish}
+                    style={{ width: "100%", padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                  >
+                    Apply and polish
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -2759,7 +2868,7 @@ export default function WorkSession() {
                   </button>
                   <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
                     {pipelineGateResults.length === 0
-                      ? "7 AI specialists will review voice, accuracy, engagement, and more"
+                      ? "7 specialists will review voice, accuracy, engagement, and more"
                       : "Run all 7 specialist checkpoints again with detailed feedback"}
                   </div>
                   {pipelineStatus !== "IDLE" && (

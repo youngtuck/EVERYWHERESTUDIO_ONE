@@ -222,7 +222,7 @@ export default function SpecialistPanel({
         QUALITY PIPELINE
       </div>
       <p style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.25, marginBottom: 16, marginTop: -8 }}>
-        Your content was reviewed by 7 AI specialists. Click any to see their evaluation.
+        Your content was reviewed by 7 specialists. Click any to see their evaluation.
       </p>
       <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 12, color: "var(--fg-3)" }}>
         <span><span style={{ color: "#50c8a0", fontWeight: 700 }}>80+</span> Strong</span>
