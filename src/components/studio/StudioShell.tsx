@@ -7,8 +7,6 @@ import NotificationBell from "./NotificationBell";
 import { useMobile } from "../../hooks/useMobile";
 import Logo from "../Logo";
 
-/** Studio layout: sidebar + main outlet; full-bleed for work session. No transition on tab switch to avoid flash. */
-
 export default function StudioShell() {
   const location = useLocation();
   const isMobile = useMobile();
@@ -19,93 +17,39 @@ export default function StudioShell() {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
-  // Lock studio background and disable transitions on root/body to prevent black flash on tab switch
-  useEffect(() => {
-    const root = document.getElementById("root");
-    document.body.style.background = "";
-    document.body.style.backgroundImage = "none";
-    document.body.style.backgroundColor = "";
-    document.body.style.transition = "none";
-    document.documentElement.style.background = "";
-    document.documentElement.style.backgroundImage = "none";
-    document.documentElement.style.backgroundColor = "";
-    document.documentElement.style.transition = "none";
-    if (root) {
-      root.style.background = "";
-      root.style.backgroundImage = "none";
-      root.style.backgroundColor = "";
-      root.style.transition = "none";
-    }
-    return () => {
-      document.body.style.background = "";
-      document.body.style.backgroundImage = "";
-      document.body.style.backgroundColor = "";
-      document.body.style.transition = "";
-      document.documentElement.style.background = "";
-      document.documentElement.style.backgroundImage = "";
-      document.documentElement.style.backgroundColor = "";
-      document.documentElement.style.transition = "";
-      if (root) {
-        root.style.background = "";
-        root.style.backgroundImage = "";
-        root.style.backgroundColor = "";
-        root.style.transition = "";
-      }
-    };
-  }, []);
-
-  const studioFooter = (
-    <footer style={{
-      fontFamily: "var(--font)",
-      fontSize: 12,
-      color: "var(--fg-3)",
-      textAlign: "center",
-      padding: "24px",
-      flexShrink: 0,
-      borderTop: "1px solid var(--line)",
-    }}>
-      <span style={{ letterSpacing: "-1px", fontFamily: "'Afacad Flux', sans-serif", display: "inline-flex", alignItems: "baseline" }}>
-        <span style={{ color: "#4A90D9", fontWeight: 700 }}>EVERYWHERE</span>
-        <span style={{ color: "var(--gold-dark)", fontWeight: 300 }}>STUDIO<span style={{ fontSize: "0.52em", verticalAlign: "top", marginLeft: 2 }}>™</span></span>
-      </span>
-      <span> 2026, Mixed Grill, LLC</span>{/* v6.5 Alpha */}
-    </footer>
-  );
-
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", background: "var(--bg-2)", fontFamily: "'Afacad Flux', sans-serif", position: "relative", overflow: "hidden", transition: "none" }}>
+    <div style={{
+      display: "flex",
+      height: "100vh",
+      background: "var(--bg)",
+      fontFamily: "'Afacad Flux', sans-serif",
+      overflow: "hidden",
+    }}>
       <CommandPalette />
+
+      {/* Mobile sidebar overlay */}
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            zIndex: 39,
-          }}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 39 }}
         />
       )}
+
+      {/* Sidebar */}
       <div
         style={
           isMobile
             ? {
-                position: "fixed",
-                top: 0,
-                left: 0,
-                height: "100vh",
-                width: 240,
+                position: "fixed", top: 0, left: 0, height: "100vh", width: 240,
                 transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
-                transition: "transform 0.3s cubic-bezier(.16,1,.3,1)",
+                transition: "transform 0.15s ease",
                 zIndex: 40,
               }
             : {
-                position: "relative",
-                height: "100vh",
-                width: sidebarCollapsed ? 60 : 240,
-                flexShrink: 0,
-                zIndex: 1,
-                transition: "width 0.2s ease",
+                position: "relative", height: "100vh",
+                width: sidebarCollapsed ? 64 : 240,
+                flexShrink: 0, zIndex: 1,
+                transition: "width 0.15s ease",
               }
         }
       >
@@ -115,37 +59,36 @@ export default function StudioShell() {
           onMobileClose={isMobile ? () => setSidebarOpen(false) : undefined}
         />
       </div>
-      <main style={{ flex: 1, background: "var(--bg-2)", overflowY: "auto", position: "relative", zIndex: 1, padding: 0, transition: "none", display: "flex", flexDirection: "column", minHeight: 0 }}>
+
+      {/* Main content */}
+      <main style={{
+        flex: 1,
+        background: "var(--bg)",
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+      }}>
+        {/* Mobile top bar */}
         {isMobile && (
-          <div
-            style={{
-              padding: "10px 12px",
-              borderBottom: "1px solid var(--line)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              position: "sticky",
-              top: 0,
-              zIndex: 20,
-              background: "var(--bg-2)",
-              backdropFilter: "blur(12px)",
-            }}
-          >
+          <div style={{
+            padding: "10px 16px",
+            borderBottom: "1px solid var(--line)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            position: "sticky",
+            top: 0,
+            zIndex: 20,
+            background: "var(--bg)",
+          }}>
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
               style={{
-                background: "none",
-                border: "1px solid var(--line)",
-                borderRadius: 8,
-                padding: "6px 8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                color: "var(--fg-2)",
-                minHeight: 44,
-                minWidth: 44,
+                background: "none", border: "none", borderRadius: 8,
+                padding: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "var(--fg-2)", minHeight: 44, minWidth: 44,
               }}
               aria-label="Open navigation"
             >
@@ -157,12 +100,14 @@ export default function StudioShell() {
             <NotificationBell />
           </div>
         )}
-        <div className="studio-main-inner" style={{ background: "var(--bg-2)", flex: 1, paddingBottom: isMobile ? 80 : 0 }}>
+
+        {/* Page content */}
+        <div className="studio-main-inner" style={{ flex: 1, paddingBottom: isMobile ? 80 : 0 }}>
           <div key={location.pathname} className="studio-page-transition">
             <Outlet />
           </div>
         </div>
-        {!isMobile && !/^\/studio\/work(\/|$)/.test(location.pathname) && studioFooter}
+
         {isMobile && <MobileBottomNav />}
       </main>
     </div>
