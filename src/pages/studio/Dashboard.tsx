@@ -208,7 +208,7 @@ export default function Dashboard() {
             title="Start a new Watson session with your idea"
             className="btn-gold cta-new-session"
             style={{
-              background: "#F5C642",
+              background: "var(--gold)",
               color: "#0D1B2A",
               padding: "12px 22px",
               borderRadius: 8,
@@ -224,7 +224,7 @@ export default function Dashboard() {
               e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#F5C642";
+              e.currentTarget.style.background = "var(--gold)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -312,7 +312,7 @@ export default function Dashboard() {
                     ? `+${outputsThisWeek} this week`
                     : "None this week"
                   : "Get started below",
-              accent: "#4A90D9",
+              accent: "var(--cornflower)",
               color: "var(--text-primary)",
               tooltip: "Total pieces of content produced.",
             },
@@ -328,7 +328,7 @@ export default function Dashboard() {
                     : avgBetterish >= 700
                       ? "Getting close"
                       : "Room to improve",
-              accent: "#4A90D9",
+              accent: "var(--cornflower)",
               color: avgBetterish != null ? getScoreColor(avgBetterish).text : "var(--text-primary)",
               tooltip: "Average Betterish Score. 900 is publication threshold.",
             },
@@ -342,7 +342,7 @@ export default function Dashboard() {
                   : voicePct >= 80
                     ? "Strong match"
                     : `Avg across ${withVoice.length} output${withVoice.length !== 1 ? "s" : ""}`,
-              accent: "#4A90D9",
+              accent: "var(--cornflower)",
               color: "var(--text-primary)",
               tooltip: "Average voice match score across your generated content. See Voice DNA in Settings for your full voice profile.",
             },
@@ -355,7 +355,7 @@ export default function Dashboard() {
                 : signalCount != null
                   ? `From latest briefing`
                   : "Briefing arrives at 7am",
-              accent: signalCount != null ? "#4A90D9" : "rgba(0,0,0,0.1)",
+              accent: signalCount != null ? "var(--cornflower)" : "rgba(0,0,0,0.1)",
               color: signalCount != null ? "var(--text-primary)" : "var(--text-tertiary)",
               tooltip: !hasWatchTopics
                 ? "Configure Watch topics in Settings to activate Sentinel intelligence."
@@ -410,7 +410,7 @@ export default function Dashboard() {
                     fontSize: 12,
                     color: "var(--fg-3)",
                     marginTop: 6,
-                    ...(stat.key === "signals" && !hasWatchTopics ? { color: "#4A90D9", cursor: "pointer", textDecoration: "underline" } : {}),
+                    ...(stat.key === "signals" && !hasWatchTopics ? { color: "var(--cornflower)", cursor: "pointer", textDecoration: "underline" } : {}),
                   }}
                   onClick={stat.key === "signals" && !hasWatchTopics ? () => nav("/studio/settings") : undefined}
                 >

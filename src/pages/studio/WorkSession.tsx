@@ -70,7 +70,7 @@ const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: strin
   },
   podcast: {
     label: "Get Current (Podcast)",
-    color: "#F5C642",
+    color: "var(--gold)",
     watson: "What is this episode about and who are you talking to? Start with the topic and the listener you have in mind.",
   },
   book: {
@@ -617,7 +617,7 @@ function WatsonThinking() {
       }}>
         {[
           { color: "#4A90D9", delay: "0s" },
-          { color: "#F5C642", delay: "0.15s" },
+          { color: "var(--gold)", delay: "0.15s" },
           { color: "#4A90D9", delay: "0.3s" },
         ].map((dot, i) => (
           <div key={i} style={{
@@ -2413,7 +2413,7 @@ export default function WorkSession() {
                   height: "100%",
                   width: `${loadingProgress}%`,
                   borderRadius: 2,
-                  background: "linear-gradient(90deg, #4A90D9, #F5C642)",
+                  background: "linear-gradient(90deg, #4A90D9, var(--gold))",
                   backgroundSize: "200% 100%",
                   animation: "shimmerBar 2s linear infinite",
                   transition: "width 0.5s ease-out",

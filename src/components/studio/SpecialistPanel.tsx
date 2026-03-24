@@ -12,7 +12,7 @@ const SPECIALIST_INFO: Record<number, { name: string; role: string; color: strin
   1: {
     name: "Priya",
     role: "Research Accuracy",
-    color: "#F5C642",
+    color: "var(--gold)",
     detail: "Priya verifies every factual claim against independent sources. Unverified claims are flagged for revision or removal.",
   },
   2: {
@@ -79,7 +79,7 @@ interface SpecialistPanelProps {
 
 function scoreColor(score: number): string {
   if (score >= 80) return "#50c8a0";
-  if (score >= 60) return "#F5C642";
+  if (score >= 60) return "var(--gold)";
   return "#E53935";
 }
 
@@ -149,7 +149,7 @@ export default function SpecialistPanel({
     if (g.status === "processing") return <Loader2 size={16} style={{ color: "var(--fg-3)", animation: "spin 0.8s linear infinite" }} />;
     if (g.status === "pending") return <span style={{ width: 16, height: 16, borderRadius: "50%", background: "var(--bg-3)", display: "block" }} />;
     if (g.status === "pass") return <Check size={16} strokeWidth={2.5} style={{ color: "#50c8a0" }} />;
-    if (g.status === "flag") return <AlertTriangle size={16} style={{ color: "#F5C642" }} />;
+    if (g.status === "flag") return <AlertTriangle size={16} style={{ color: "var(--gold)" }} />;
     return <XIcon size={16} style={{ color: "#E53935" }} />;
   };
 
@@ -226,7 +226,7 @@ export default function SpecialistPanel({
       </p>
       <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 12, color: "var(--fg-3)" }}>
         <span><span style={{ color: "#50c8a0", fontWeight: 700 }}>80+</span> Strong</span>
-        <span><span style={{ color: "#F5C642", fontWeight: 700 }}>60-79</span> Needs work</span>
+        <span><span style={{ color: "var(--gold)", fontWeight: 700 }}>60-79</span> Needs work</span>
         <span><span style={{ color: "#E53935", fontWeight: 700 }}>&lt;60</span> Needs attention</span>
       </div>
 
@@ -314,7 +314,7 @@ export default function SpecialistPanel({
       {/* Total score */}
       {showTotal && totalScore !== undefined && (
         <div style={{ textAlign: "center", padding: "24px 0", borderTop: "1px solid var(--border-subtle)" }}>
-          <div style={{ fontSize: 48, fontWeight: 700, color: totalScore >= threshold ? "#50c8a0" : totalScore >= 700 ? "#F5C642" : "#E53935", fontVariantNumeric: "tabular-nums", lineHeight: 1.1 }}>
+          <div style={{ fontSize: 48, fontWeight: 700, color: totalScore >= threshold ? "#50c8a0" : totalScore >= 700 ? "var(--gold)" : "#E53935", fontVariantNumeric: "tabular-nums", lineHeight: 1.1 }}>
             {totalScore}
           </div>
           <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 4 }}>

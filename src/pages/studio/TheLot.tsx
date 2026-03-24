@@ -96,7 +96,7 @@ export default function TheLot() {
           type="button"
           onClick={() => setModalOpen(true)}
           style={{
-            background: "#F5C642",
+            background: "var(--gold)",
             color: "#0D1B2A",
             padding: "10px 20px",
             borderRadius: 8,

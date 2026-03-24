@@ -15,7 +15,7 @@ const HEADER_BG = "#0D1B2A";
 
 const SEVERITY_PILL_STYLES: Record<string, { background: string; color: string }> = {
   high:   { background: "#E53935", color: "#fff" },
-  medium: { background: "#F5C642", color: "#0D1B2A" },
+  medium: { background: "var(--gold)", color: "#0D1B2A" },
   low:    { background: "var(--bg-3)", color: "var(--fg-2)" },
 };
 
@@ -416,7 +416,7 @@ export default function Watch() {
           <h1 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: "clamp(24px,4vw,36px)", fontWeight: 700, margin: "0 0 8px", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             {dateLabel}
             {usingDefaultTopics && hasTodayBriefing && (
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "#F5C642", background: "rgba(245,198,66,0.12)", padding: "3px 10px", borderRadius: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "var(--gold)", background: "rgba(245,198,66,0.12)", padding: "3px 10px", borderRadius: 4 }}>
                 Sample
               </span>
             )}
@@ -805,7 +805,7 @@ export default function Watch() {
                 onClick={handleGenerateNow}
                 disabled={generating}
                 style={{
-                  background: "#F5C642",
+                  background: "var(--gold)",
                   color: "#0D1B2A",
                   border: "none",
                   borderRadius: 10,
@@ -839,7 +839,7 @@ export default function Watch() {
               {(sections.threats?.length ?? 0) > 0 && <SectionTitle label="Threats" color="#D64545" tooltip="Risks and competitive moves to watch." />}
               {(sections.threats ?? []).map((item, i) => {
                 const sevKey = item.severity?.toLowerCase() ?? "low";
-                const sevColor = sevKey === "high" ? "#D64545" : sevKey === "medium" ? "#F5C642" : "var(--fg-3)";
+                const sevColor = sevKey === "high" ? "#D64545" : sevKey === "medium" ? "var(--gold)" : "var(--fg-3)";
                 return (
                   <Card key={i} style={{ marginBottom: 16, borderLeft: `4px solid ${sevColor}` }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -900,8 +900,8 @@ export default function Watch() {
               {(sections.opportunities ?? []).map((item, i) => {
                 const effortLabel = item.effort <= 3 ? "Low effort" : item.effort <= 6 ? "Medium effort" : "High effort";
                 const impactLabel = item.impact <= 3 ? "Low impact" : item.impact <= 6 ? "Medium impact" : "High impact";
-                const effortColor = item.effort <= 3 ? "#3A9A5C" : item.effort <= 6 ? "#F5C642" : "#D64545";
-                const impactColor = item.impact >= 7 ? "#3A9A5C" : item.impact >= 4 ? "#F5C642" : "var(--text-tertiary)";
+                const effortColor = item.effort <= 3 ? "#3A9A5C" : item.effort <= 6 ? "var(--gold)" : "#D64545";
+                const impactColor = item.impact >= 7 ? "#3A9A5C" : item.impact >= 4 ? "var(--gold)" : "var(--text-tertiary)";
                 return (
                   <Card key={i} style={{ marginBottom: 16 }}>
                     <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>

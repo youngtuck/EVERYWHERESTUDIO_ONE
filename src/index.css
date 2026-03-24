@@ -2,122 +2,129 @@
 
 /* ─── TOKENS ─────────────────────────────────────────────────── */
 :root {
-  /* Primary */
-  --cornflower: #4A90D9;
-  --deep-navy: #0D1B2A;
-  --rich-navy: #1B263B;
+  /* Backgrounds - warm cream base */
+  --bg: #FFFCF8;
+  --bg-2: #FAF8F5;
+  --bg-3: #F0EDE8;
+  --surface: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --sidebar: #FAF8F5;
 
-  /* Accent */
-  --signal-gold: #F5C642;
-  --warm-coral: #E8B4A0;
+  /* Text */
+  --fg: #1A1A1A;
+  --fg-2: #4A4A4A;
+  --fg-3: #8A8A8A;
 
-  /* Neutrals */
-  --soft-gray: #F7F9FC;
-  --mid-gray: #64748B;
-  --border-light: #E2E8F0;
+  /* Borders - warm */
+  --line: #E8E4DF;
+  --line-2: #D4CFC8;
+  --border-subtle: #E8E4DF;
+  --border-default: #D4CFC8;
 
-  /* Semantic */
-  --text-primary: #0D1B2A;
-  --text-secondary: #1B263B;
-  --text-tertiary: #64748B;
-  --surface-primary: #FFFFFF;
-  --surface-secondary: #F7F9FC;
-  --border-default: #E2E8F0;
-
-  /* Font */
-  --font: 'Afacad Flux', sans-serif;
-  --font-logo: 'Afacad Flux', sans-serif;
-
-  /* Legacy aliases (keep for compatibility) */
-  --gold: #F5C642;
-  --gold-l: #F5C642;
-  --gold-dark: #F5C642;
-  --gold-light: #e5b838;
-  --gold-hover: #e5b838;
-  --gold-pressed: #d4a52e;
-  --teal: #4A90D9;
-  --blue: #4A90D9;
-  --watch-blue: #4A90D9;
-  --work-teal: #4A90D9;
-  --wrap-violet: #E8B4A0;
-
-  --surface-white: #FFFFFF;
-  --surface-elevated: #F7F9FC;
-  --border-subtle: #E2E8F0;
-  --bg-light: #F7F9FC;
+  /* Brand */
+  --gold: #C8961A;
+  --gold-dark: #C8961A;
+  --cornflower: #6B7FF2;
+  --accent: #C8961A;
   --danger: #D64545;
   --success: #3A9A5C;
 
-  /* Light mode */
-  --bg: #FFFFFF;
-  --bg-2: #F7F9FC;
-  --bg-3: #E2E8F0;
-  --fg: #0D1B2A;
-  --fg-2: #1B263B;
-  --fg-3: #64748B;
-  --line: #E2E8F0;
-  --line-2: #CBD5E1;
-  --surface: #FFFFFF;
-  --topbar: rgba(255,255,255,0.95);
-  --sidebar: #F7F9FC;
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 8px 30px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  /* Font */
+  --font: 'Afacad Flux', sans-serif;
 
-  /* Aliases */
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03);
+
+  /* Aliases for backward compatibility */
+  --text-primary: var(--fg);
+  --text-secondary: var(--fg-2);
+  --text-tertiary: var(--fg-3);
+  --surface-white: var(--surface);
+  --surface-primary: var(--surface);
+  --surface-secondary: var(--bg-2);
   --bg-primary: var(--bg);
   --bg-secondary: var(--bg-2);
   --bg-tertiary: var(--bg-3);
-  --text-muted: var(--fg-3);
+  --bg-light: var(--bg-2);
+  --border-light: var(--border-subtle);
   --border: var(--line);
   --border-strong: var(--line-2);
+  --text-muted: var(--fg-3);
+  --topbar: rgba(255,252,248,0.92);
   --topbar-bg: var(--topbar);
-  --bg-inverse: #0D1B2A;
-  --font-serif: 'Afacad Flux', sans-serif;
+  --bg-inverse: #1A1A1A;
+  --signal-gold: var(--gold);
+  --gold-l: var(--gold);
+  --gold-light: #B8880F;
+  --gold-hover: #B8880F;
+  --gold-pressed: #A07A0A;
+  --deep-navy: #1A1A1A;
+  --rich-navy: #2A2A2A;
+  --soft-gray: var(--bg-2);
+  --mid-gray: var(--fg-3);
+  --watch-blue: var(--cornflower);
+  --work-teal: var(--cornflower);
+  --wrap-violet: #A080F5;
+  --teal: var(--cornflower);
+  --blue: var(--cornflower);
+  --warm-coral: #E8B4A0;
+  --font-logo: var(--font);
+  --font-serif: var(--font);
+  --bg-navy: #1A1A1A;
 }
 
 [data-theme="dark"] {
-  --bg: #0D1B2A;
-  --bg-2: #1B263B;
-  --bg-3: #2D3A4A;
-  --fg: #F0F0EE;
-  --fg-2: rgba(240,240,238,0.7);
-  --fg-3: rgba(240,240,238,0.4);
-  --line: rgba(255,255,255,0.1);
-  --line-2: rgba(255,255,255,0.18);
-  --surface: #1B263B;
-  --topbar: rgba(13,27,42,0.95);
-  --sidebar: #0D1B2A;
+  --bg: #1C1C1C;
+  --bg-2: #242424;
+  --bg-3: #2E2E2E;
+  --surface: #2A2A2A;
+  --surface-elevated: #2A2A2A;
+  --sidebar: #1C1C1C;
+  --fg: #ECECEC;
+  --fg-2: #B0B0B0;
+  --fg-3: #707070;
+  --line: #333333;
+  --line-2: #444444;
+  --border-subtle: #333333;
+  --border-default: #444444;
+  --gold: #D4A832;
+  --gold-dark: #D4A832;
+  --cornflower: #8B9DF5;
+  --danger: #FF6B6B;
+  --success: #50C8A0;
+  --topbar: rgba(28,28,28,0.92);
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.35);
   --shadow-md: 0 8px 30px rgba(0,0,0,0.45);
 
+  /* Backward compat aliases */
+  --text-primary: var(--fg);
+  --text-secondary: var(--fg-2);
+  --text-tertiary: var(--fg-3);
+  --surface-white: var(--surface);
+  --surface-primary: var(--bg);
+  --surface-secondary: var(--bg-2);
   --bg-primary: var(--bg);
   --bg-secondary: var(--bg-2);
   --bg-tertiary: var(--bg-3);
-  --text-primary: var(--fg);
-  --text-secondary: var(--fg-2);
-  --text-tertiary: rgba(240,240,238,0.4);
-  --text-muted: var(--fg-3);
+  --bg-light: var(--bg);
+  --border-light: var(--border-subtle);
   --border: var(--line);
   --border-strong: var(--line-2);
+  --text-muted: var(--fg-3);
   --topbar-bg: var(--topbar);
-  --border-subtle: rgba(255,255,255,0.1);
-  --border-default: rgba(255,255,255,0.15);
-  --border-light: rgba(255,255,255,0.1);
-  --surface-white: #1B263B;
-  --surface-primary: #0D1B2A;
-  --surface-secondary: #1B263B;
-  --surface-elevated: #1B263B;
-  --bg-light: #0D1B2A;
-  --bg-inverse: #F7F9FC;
-  --bg-navy: #0D1B2A;
-  --danger: #FF6B6B;
-  --success: #50C8A0;
-  --gold-dark: #F5C642;
-  --cornflower: #4A90D9;
-  --soft-gray: #1B263B;
-  --mid-gray: rgba(240,240,238,0.4);
+  --bg-inverse: #ECECEC;
+  --bg-navy: var(--bg);
+  --signal-gold: var(--gold);
+  --gold-l: var(--gold);
+  --gold-light: var(--gold);
+  --gold-hover: var(--gold);
+  --soft-gray: var(--bg-2);
+  --mid-gray: var(--fg-3);
+  --deep-navy: var(--bg);
+  --rich-navy: var(--bg-2);
 }
 
 /* ─── RESET ──────────────────────────────────────────────────── */
@@ -127,7 +134,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background-color: var(--bg, #0D1B2A);
+  background-color: var(--bg, #FFFCF8);
   transition: none !important;
 }
 body, #root {
@@ -137,8 +144,8 @@ body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--fg);
-  font-size: 16px;
-  line-height: 1.25;
+  font-size: 15px;
+  line-height: 1.6;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -161,8 +168,8 @@ body {
 [data-theme="dark"] .studio-main-inner input:focus,
 [data-theme="dark"] .studio-main-inner textarea:focus,
 [data-theme="dark"] .studio-main-inner select:focus {
-  border-color: rgba(245, 198, 66, 0.4) !important;
-  box-shadow: 0 0 0 2px rgba(245, 198, 66, 0.08) !important;
+  border-color: rgba(200, 150, 26, 0.4) !important;
+  box-shadow: 0 0 0 2px rgba(200, 150, 26, 0.08) !important;
   outline: none !important;
 }
 
@@ -207,10 +214,11 @@ body {
 
 a { text-decoration: none; color: inherit; }
 button { font-family: var(--font); }
-::selection { background: var(--deep-navy); color: #fff; }
-::-webkit-scrollbar { width: 3px; }
+::selection { background: rgba(200, 150, 26, 0.15); color: inherit; }
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--line-2); }
 
 /* ─── SCROLL ANIMATIONS ──────────────────────────────────────── */
 .fade-up {

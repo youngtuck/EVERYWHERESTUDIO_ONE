@@ -363,7 +363,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                 borderLeft: isActive("/studio/admin") ? "3px solid var(--gold-dark)" : "3px solid transparent",
                 background: isActive("/studio/admin") ? "rgba(0,0,0,0.04)" : "transparent",
                 cursor: "pointer", fontFamily: "var(--font)", fontSize: 13, fontWeight: 400,
-                textAlign: "left", color: "#F5C642",
+                textAlign: "left", color: "var(--gold)",
                 transition: "background 0.15s ease, color 0.15s ease",
                 marginTop: 8,
               }}

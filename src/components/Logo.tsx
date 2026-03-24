@@ -29,7 +29,7 @@ const Logo = ({ size = "md", onDark, variant, onClick }: LogoProps) => {
     ? Math.round(size * 0.52)
     : TM_MAP[size];
 
-  const studioColor = isDark ? "#F5C642" : "#0D1B2A";
+  const studioColor = isDark ? "#D4A832" : "#1A1A1A";
 
   return (
     <span
@@ -44,7 +44,7 @@ const Logo = ({ size = "md", onDark, variant, onClick }: LogoProps) => {
       }}
       onClick={onClick}
     >
-      <span style={{ color: "#4A90D9", fontWeight: 700, fontSize: fs, lineHeight: 1, textTransform: "uppercase" }}>
+      <span style={{ color: "#6B7FF2", fontWeight: 700, fontSize: fs, lineHeight: 1, textTransform: "uppercase" }}>
         EVERYWHERE
       </span>
       <span style={{ display: "inline-block", width: Math.max(2, Math.round(fs * 0.15)) }} />
