@@ -221,30 +221,45 @@ function TypingIndicator() {
   );
 }
 
-// Message bubble
+// Message bubble: Claude-style. Watson = plain text left-aligned, no bubble. User = subtle dark pill right-aligned.
 function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
   const isUser = msg.role === "user";
   return (
     <div style={{
       display: "flex",
       flexDirection: isUser ? "row-reverse" : "row",
+      alignItems: "flex-start",
+      gap: 10,
       maxWidth: "100%",
     }}>
+      {/* Watson icon (small dot) */}
+      {!isUser && !msg.typing && (
+        <div style={{
+          width: 20, height: 20, borderRadius: 999,
+          background: "var(--cornflower)",
+          opacity: 0.7,
+          flexShrink: 0,
+          marginTop: 2,
+        }} />
+      )}
       <div style={{
-        maxWidth: isMobile ? "95%" : isUser ? "85%" : "85%",
-        background: isUser ? "#0D1B2A" : "var(--surface-white)",
-        border: isUser ? "none" : "1px solid var(--border-subtle)",
-        borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-        padding: "14px 18px",
-        boxShadow: isUser ? "0 1px 4px rgba(0,0,0,0.08)" : "0 1px 2px rgba(0,0,0,0.04)",
+        maxWidth: isMobile ? "90%" : "75%",
+        ...(isUser ? {
+          background: "var(--fg)",
+          borderRadius: "16px 16px 4px 16px",
+          padding: "10px 16px",
+        } : {
+          background: "transparent",
+          padding: "0",
+        }),
       }}>
         {msg.typing ? (
           <TypingIndicator />
         ) : isUser ? (
           <p style={{
             fontFamily: "'Afacad Flux', sans-serif",
-            fontSize: 14, lineHeight: 1.6,
-            color: "#F0F0F0",
+            fontSize: 15, lineHeight: 1.6,
+            color: "var(--bg)",
             fontWeight: 400,
             margin: 0, whiteSpace: "pre-wrap",
           }}>{msg.content}</p>
@@ -252,8 +267,8 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
           <div
             style={{
               fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 14, lineHeight: 1.6,
-              color: "var(--text-primary)",
+              fontSize: 15, lineHeight: 1.6,
+              color: "var(--fg)",
               fontWeight: 400,
             }}
             dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
@@ -364,20 +379,17 @@ function SessionInputBox({
   return (
     <div
       style={{
-        maxWidth: 760,
+        maxWidth: 680,
         width: "100%",
         margin: "0 auto",
-        background: "var(--surface-white)",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: 24,
-        padding: "14px 20px",
-        minHeight: 56,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        background: "var(--surface)",
+        border: "1px solid var(--line)",
+        borderRadius: 12,
+        padding: "14px 18px",
+        minHeight: 52,
         transition: "border-color 0.15s ease, box-shadow 0.15s ease",
         ...(focusWithin
-          ? dark
-            ? { borderColor: "rgba(245,198,66,0.4)", boxShadow: "0 2px 20px rgba(245,198,66,0.08)" }
-            : { borderColor: "#4A90D9", boxShadow: "0 2px 20px rgba(74,144,217,0.12)" }
+          ? { borderColor: "var(--gold)", boxShadow: "0 0 0 3px rgba(200, 150, 26, 0.08)" }
           : {}),
       }}
       onFocus={() => setFocusWithin(true)}
@@ -562,34 +574,18 @@ function EmptyState({
   return (
     <div
       style={{
-        height: "calc(100vh - 60px)",
-        overflow: "hidden",
+        flex: 1,
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingLeft: 24,
-        paddingRight: 24,
+        justifyContent: "flex-end",
+        padding: "24px 24px",
+        maxWidth: 680,
+        width: "100%",
+        margin: "0 auto",
       }}
     >
-      <div style={{ width: isMobile ? 56 : 80, height: isMobile ? 56 : 80, overflow: "visible", display: "flex", alignItems: "center", justifyContent: "center", marginTop: -40, marginBottom: 12 }}>
-        <WatsonOrb size={isMobile ? 56 : 80} />
-      </div>
-      <span style={{ fontSize: 11, color: "var(--fg-3)", letterSpacing: "2px", textTransform: "uppercase", marginTop: 0, marginBottom: 4, fontFamily: "'Afacad Flux', sans-serif", fontWeight: 500 }}>Watson</span>
-      <h1
-        style={{
-          fontSize: isMobile ? 28 : 42,
-          fontWeight: 700,
-          color: "var(--fg)",
-          fontFamily: "'Afacad Flux', sans-serif",
-          letterSpacing: "-0.5px",
-          textAlign: "center",
-          marginTop: 0,
-          marginBottom: 20,
-        }}
-      >
-        What's on your mind?
-      </h1>
+      {/* Watson speaks first as a message, no splash screen */}
+
       <div
         style={{
           width: "100%",
@@ -2026,13 +2022,10 @@ export default function WorkSession() {
         </EmptyState>
       ) : (
         <>
-      {/* Session progress: Watson > Room > Draft > Edit > Review > Done */}
+      {/* Session progress: Watson · Room · Draft · Edit · Review · Done */}
       <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 24,
-        padding: "12px 24px",
-        borderBottom: "1px solid var(--border-subtle)",
-        background: "var(--surface-white)",
-        position: "relative",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+        padding: "16px 24px",
         flexShrink: 0,
       }}>
         {[
@@ -2042,48 +2035,19 @@ export default function WorkSession() {
           { key: "edit", label: "Edit", done: ["stress-test","polish","complete"].includes(phase), active: phase === "editing" },
           { key: "review", label: "Review", done: phase === "complete", active: phase === "stress-test" || phase === "polish" },
           { key: "done", label: "Done", done: phase === "complete", active: phase === "complete" },
-        ].map((step, i) => {
-          const clickable = false; // Navigation between steps is controlled by buttons, not tab clicks
-
-          const handleStepClick = () => {
-            if (!clickable) return;
-            if (step.key === "watson") {
-              setPhase("input");
-              setShowCheckpointSequence(false);
-            } else if (step.key === "generate") {
-              setShowCheckpointSequence(true);
-            } else if (step.key === "output") {
-              setShowCheckpointSequence(false);
-            }
-          };
-
-          return (
-          <div key={step.key} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span
-              style={{
-                fontSize: 15,
-                fontWeight: step.active ? 700 : step.done ? 600 : 400,
-                letterSpacing: "0.04em",
-                color: step.active ? "var(--text-primary)" : step.done ? "var(--gold-dark)" : "var(--text-tertiary)",
-                opacity: step.active || step.done ? 1 : 0.6,
-                borderBottom: step.active ? "2px solid var(--gold-dark)" : "2px solid transparent",
-                paddingBottom: 4,
-                transition: "all .2s",
-                cursor: "default",
-              }}
-            >
+        ].map((step, i) => (
+          <span key={step.key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{
+              fontSize: 13,
+              fontWeight: step.active ? 600 : 400,
+              color: step.active ? "var(--fg)" : step.done ? "var(--gold)" : "var(--fg-3)",
+              transition: "color 0.15s ease",
+            }}>
               {step.label}
             </span>
-            {i < 5 && (
-              <span style={{
-                width: 40, height: 1,
-                background: step.done ? "var(--gold-dark)" : step.active ? "linear-gradient(90deg, var(--gold-dark), var(--line))" : "var(--line)",
-                opacity: step.done ? 0.6 : 0.3,
-              }} />
-            )}
-          </div>
-          );
-        })}
+            {i < 5 && <span style={{ color: "var(--fg-3)", fontSize: 10, opacity: 0.5 }}>·</span>}
+          </span>
+        ))}
       </div>
 
       {/* ── Messages area ────────────────────────────────────────────── */}
