@@ -973,6 +973,8 @@ export default function WorkSession() {
   const [writersRoomLoading, setWritersRoomLoading] = useState(false);
   const [editingParaIndex, setEditingParaIndex] = useState<number | null>(null);
   const [editingParaText, setEditingParaText] = useState("");
+  const [improvingGate, setImprovingGate] = useState<string | null>(null);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
@@ -1530,6 +1532,8 @@ export default function WorkSession() {
   };
 
   const handleImproveCheckpoint = async (gateName: string, feedback: string) => {
+    if (improvingGate) return;
+    setImprovingGate(gateName);
     try {
       // Revise draft to address this specific checkpoint
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
@@ -1575,6 +1579,8 @@ export default function WorkSession() {
       toast(`${gateName} checkpoint improved.`);
     } catch (err) {
       toast("Improvement failed. Try again.", "error");
+    } finally {
+      setImprovingGate(null);
     }
   };
 
@@ -2277,47 +2283,92 @@ export default function WorkSession() {
                     Each specialist scores your draft 0-100. <span style={{ color: "#50c8a0", fontWeight: 600 }}>80+ Strong</span> | <span style={{ color: "#C8961A", fontWeight: 600 }}>60-79 Needs work</span> | <span style={{ color: "#E53935", fontWeight: 600 }}>&lt;60 Needs attention</span>
                   </div>
                   {layer1Results.map((r, idx) => {
-                    const descriptions: Record<string, { title: string; desc: string }> = {
-                      Echo: { title: "Deduplication", desc: "Catches repeated concepts and structural patterns" },
-                      Priya: { title: "Research Accuracy", desc: "Verifies every factual claim against independent sources" },
-                      Jordan: { title: "Voice Authenticity", desc: "Matches output to your Voice DNA. 95%+ required" },
-                      David: { title: "Engagement", desc: "Tests the hook. 7 seconds to earn the read or it doesn't ship" },
-                      Elena: { title: "SLOP Detection", desc: "Zero tolerance for AI fingerprints, filler, and false sophistication" },
-                      Natasha: { title: "Editorial Excellence", desc: "Publication-grade quality. Would a stranger understand this?" },
-                      "Marcus + Marshall": { title: "Perspective + Impact", desc: "Cultural sensitivity and nonviolent communication review" },
-                      Betterish: { title: "Final Gut Check", desc: "Would you click on this? Would you share it?" },
+                    const descriptions: Record<string, { title: string; runningMsg: string }> = {
+                      Echo: { title: "Deduplication", runningMsg: "Scanning for repeated concepts..." },
+                      Priya: { title: "Research Accuracy", runningMsg: "Verifying factual claims..." },
+                      Jordan: { title: "Voice Authenticity", runningMsg: "Matching your voice DNA..." },
+                      David: { title: "Engagement", runningMsg: "Testing the hook..." },
+                      Elena: { title: "SLOP Detection", runningMsg: "Scanning for AI fingerprints..." },
+                      Natasha: { title: "Editorial Excellence", runningMsg: "Checking editorial quality..." },
+                      "Marcus + Marshall": { title: "Perspective + Impact", runningMsg: "Reviewing perspective..." },
+                      Betterish: { title: "Final Gut Check", runningMsg: "Running final assessment..." },
                     };
-                    const info = descriptions[r.gate] || { title: "", desc: "" };
+                    const info = descriptions[r.gate] || { title: "", runningMsg: "Processing..." };
+                    const isExpanded = expandedCards.has(r.gate);
+                    const feedbackText = r.feedback || "";
+                    const shouldTruncate = feedbackText.length > 120 && !isExpanded;
+                    const displayFeedback = shouldTruncate ? feedbackText.slice(0, 120) + "..." : feedbackText;
+                    const isImproving = improvingGate === r.gate;
+
                     return (
                       <div
                         key={r.gate}
+                        onClick={() => feedbackText.length > 120 ? setExpandedCards(prev => { const n = new Set(prev); n.has(r.gate) ? n.delete(r.gate) : n.add(r.gate); return n; }) : undefined}
                         style={{
-                          display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border-subtle)",
-                          opacity: r.status === "running" ? 0.7 : 1, transition: "opacity 0.3s",
-                          animation: idx > 0 && r.status !== "running" ? `fadeUp 0.4s ease ${idx * 0.15}s both` : "none",
+                          padding: "10px 12px", borderRadius: 8, border: "1px solid var(--line)",
+                          transition: "all 0.15s ease",
+                          cursor: feedbackText.length > 120 ? "pointer" : "default",
                         }}
                       >
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 5, background: r.status === "pass" ? "#50c8a0" : r.status === "fail" ? "#E53935" : r.status === "running" ? "var(--gold)" : "var(--bg-3)", flexShrink: 0, animation: r.status === "running" ? "pulse 2s ease-in-out infinite" : "none" }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{r.gate}</div>
-                          <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{info.title}: {info.desc}</div>
-                          {r.feedback && r.status !== "running" && (
-                            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4, lineHeight: 1.4 }}>{r.gate}: "{r.feedback.slice(0, 150)}{r.feedback.length > 150 ? "..." : ""}"</div>
-                          )}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                          {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "var(--gold)" : "#E53935" }}>{r.score}</span>}
-                          {r.status === "pass" && r.score === 0 && <span style={{ fontSize: 12, fontWeight: 600, color: "#50c8a0" }}>Pass</span>}
-                          {r.score > 0 && r.score < 80 && r.status !== "running" && r.feedback && (
-                            <button
-                              onClick={() => handleImproveCheckpoint(r.gate, r.feedback)}
-                              style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid var(--line)", background: "transparent", fontSize: 11, fontWeight: 500, color: "var(--fg-2)", cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease" }}
-                              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
-                              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
-                            >
-                              Improve
-                            </button>
-                          )}
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                          {/* Status indicator */}
+                          <span style={{
+                            width: 10, height: 10, borderRadius: "50%", marginTop: 4, flexShrink: 0,
+                            background: r.status === "pass" ? "#50c8a0" : r.status === "fail" ? "#E53935" : r.status === "running" ? "var(--gold)" : "transparent",
+                            border: (r.status !== "pass" && r.status !== "fail" && r.status !== "running") ? "1.5px solid var(--fg-3)" : "none",
+                            animation: r.status === "running" ? "checkpointPulse 1.5s ease-in-out infinite" : "none",
+                          }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                              <div>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{r.gate}</span>
+                                <span style={{ fontSize: 11, color: "var(--fg-3)", marginLeft: 6 }}>{info.title}</span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                                {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "var(--gold)" : "#E53935" }}>{r.score}</span>}
+                                {r.status === "pass" && r.score === 0 && <span style={{ fontSize: 12, fontWeight: 600, color: "#50c8a0" }}>Pass</span>}
+                              </div>
+                            </div>
+                            {/* Running state */}
+                            {r.status === "running" && (
+                              <div style={{ fontSize: 13, fontStyle: "italic", color: "var(--fg-3)", marginTop: 4, animation: "fadeInOut 2s ease-in-out infinite" }}>
+                                {info.runningMsg}
+                              </div>
+                            )}
+                            {/* Pending state */}
+                            {r.status !== "running" && r.status !== "pass" && r.status !== "fail" && r.status !== "flag" && (
+                              <div style={{ fontSize: 13, fontStyle: "italic", color: "var(--fg-3)", marginTop: 4 }}>Waiting in queue...</div>
+                            )}
+                            {/* Feedback (completed) */}
+                            {feedbackText && r.status !== "running" && (
+                              <div style={{ fontSize: 12, color: "var(--fg-2)", marginTop: 4, lineHeight: 1.5 }}>
+                                {displayFeedback}
+                                {feedbackText.length > 120 && (
+                                  <span style={{ display: "inline-block", marginLeft: 4, fontSize: 10, color: "var(--fg-3)", transition: "transform 0.15s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
+                                )}
+                              </div>
+                            )}
+                            {/* Improve button */}
+                            {r.score > 0 && r.score < 80 && r.status !== "running" && feedbackText && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleImproveCheckpoint(r.gate, feedbackText); }}
+                                disabled={improvingGate !== null}
+                                style={{
+                                  marginTop: 8, padding: "4px 12px", borderRadius: 6,
+                                  border: "1px solid var(--line)", background: "transparent",
+                                  fontSize: 12, fontWeight: 500,
+                                  color: isImproving ? "var(--fg-3)" : "var(--fg-2)",
+                                  cursor: improvingGate !== null ? "default" : "pointer",
+                                  fontFamily: "'Afacad Flux', sans-serif",
+                                  transition: "all 0.15s ease",
+                                }}
+                                onMouseEnter={e => { if (!improvingGate) { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; } }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = isImproving ? "var(--fg-3)" : "var(--fg-2)"; }}
+                              >
+                                {isImproving ? "Improving..." : "Improve"}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -2470,7 +2521,11 @@ export default function WorkSession() {
         {showMeetTeam && <MeetTheTeam onClose={() => setShowMeetTeam(false)} />}
         {showOnboarding && phase === "input" && messages.length <= 1 && <AnimatedWalkthrough onComplete={dismissWalkthrough} />}
 
-        {phase === "drafting" && <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>}
+        {phase === "drafting" && <style>{`
+          @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+          @keyframes checkpointPulse { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+          @keyframes fadeInOut { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        `}</style>}
 
         {(phase as string) === "generating" && (
           <div style={{
