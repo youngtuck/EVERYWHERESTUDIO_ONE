@@ -591,7 +591,7 @@ function EmptyState({
           {greeting}
         </h1>
         <p style={{ fontSize: 16, color: "var(--fg-3)", margin: "0 0 32px", fontFamily: "'Afacad Flux', sans-serif" }}>
-          Watson is listening. Tell him what\'s on your mind.
+          Watson is listening. Tell him what's on your mind.
         </p>
       </div>
       <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 680, padding: "0 24px" }}>

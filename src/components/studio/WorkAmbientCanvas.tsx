@@ -3,16 +3,19 @@ import { useEffect, useRef } from "react";
 interface Line {
   x: number;
   y: number;
-  vx: number;
-  amp: number;
+  speed: number;
+  amplitude: number;
   period: number;
   phase: number;
-  color: string;
   width: number;
+  color: string;
+  length: number;
 }
 
 export default function WorkAmbientCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const linesRef = useRef<Line[]>([]);
+  const rafRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -20,66 +23,82 @@ export default function WorkAmbientCanvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const dpr = Math.min(window.devicePixelRatio, 2);
+
     const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
-      ctx.scale(dpr, dpr);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     window.addEventListener("resize", resize);
 
-    // Generate lines
+    // Initialize lines
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const lineCount = 24;
     const lines: Line[] = [];
-    for (let i = 0; i < 25; i++) {
-      const isGold = Math.random() > 0.5;
+
+    for (let i = 0; i < lineCount; i++) {
+      const isWarm = Math.random() > 0.4;
       lines.push({
-        x: Math.random() * canvas.offsetWidth,
-        y: Math.random() * canvas.offsetHeight,
-        vx: 0.1 + Math.random() * 0.2,
-        amp: 30 + Math.random() * 30,
-        period: 8 + Math.random() * 4,
+        x: Math.random() * W * 1.5 - W * 0.25,
+        y: Math.random() * H,
+        speed: 0.15 + Math.random() * 0.25,
+        amplitude: 30 + Math.random() * 50,
+        period: 6 + Math.random() * 6,
         phase: Math.random() * Math.PI * 2,
-        color: isGold ? "rgba(200, 150, 26, 0.06)" : "rgba(107, 127, 242, 0.04)",
-        width: 0.5 + Math.random() * 0.5,
+        width: 0.8 + Math.random() * 0.8,
+        color: isWarm
+          ? `rgba(200, 150, 26, ${0.06 + Math.random() * 0.06})`
+          : `rgba(107, 127, 242, ${0.04 + Math.random() * 0.04})`,
+        length: 200 + Math.random() * 300,
       });
     }
+    linesRef.current = lines;
 
-    let animId: number;
-    let t = 0;
+    const draw = (ts: number) => {
+      const t = ts * 0.001;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      ctx.clearRect(0, 0, W, H);
 
-    function draw() {
-      const w = canvas!.offsetWidth;
-      const h = canvas!.offsetHeight;
-      ctx!.clearRect(0, 0, w, h);
-      t += 0.016;
+      for (const line of linesRef.current) {
+        ctx.beginPath();
+        ctx.strokeStyle = line.color;
+        ctx.lineWidth = line.width;
+        ctx.lineCap = "round";
 
-      for (const line of lines) {
-        line.x += line.vx;
-        if (line.x > w + 50) line.x = -50;
+        const steps = 80;
+        for (let s = 0; s <= steps; s++) {
+          const progress = s / steps;
+          const px = line.x + progress * line.length;
+          const py = line.y + Math.sin(
+            (progress * Math.PI * 2) + (t / line.period) + line.phase
+          ) * line.amplitude;
 
-        const baseY = line.y;
-        ctx!.strokeStyle = line.color;
-        ctx!.lineWidth = line.width;
-        ctx!.beginPath();
-
-        for (let px = 0; px < w; px += 4) {
-          const offsetY = Math.sin((px * 0.005) + (t / line.period) + line.phase) * line.amp;
-          const x = px;
-          const y = baseY + offsetY;
-          if (px === 0) ctx!.moveTo(x, y);
-          else ctx!.lineTo(x, y);
+          if (s === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
         }
-        ctx!.stroke();
+        ctx.stroke();
+
+        // Drift
+        line.x += line.speed;
+        if (line.x > W + 100) {
+          line.x = -line.length - 100;
+          line.y = Math.random() * H;
+        }
       }
 
-      animId = requestAnimationFrame(draw);
-    }
+      rafRef.current = requestAnimationFrame(draw);
+    };
 
-    animId = requestAnimationFrame(draw);
+    rafRef.current = requestAnimationFrame(draw);
 
     return () => {
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(rafRef.current);
       window.removeEventListener("resize", resize);
     };
   }, []);
@@ -90,11 +109,8 @@ export default function WorkAmbientCanvas() {
       style={{
         position: "absolute",
         inset: 0,
-        width: "100%",
-        height: "100%",
         zIndex: 0,
         pointerEvents: "none",
-        opacity: 0.7,
       }}
     />
   );
