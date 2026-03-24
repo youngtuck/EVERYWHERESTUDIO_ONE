@@ -65,7 +65,7 @@ function generateTitle(userInput: string, generatedContent: string): string {
 const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: string }> = {
   essay: {
     label: "Sunday Story (Essay)",
-    color: "#4A90D9",
+    color: "var(--cornflower)",
     watson: "What's on your mind? Give me the rough idea and I will ask the questions that pull it into focus.",
   },
   podcast: {
@@ -95,7 +95,7 @@ const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: strin
   },
   socials: {
     label: "Signal Sweep (Socials)",
-    color: "#4A90D9",
+    color: "var(--cornflower)",
     watson: "What is the one idea you want to put into the feed? Tell me the take and where it should show up.",
   },
   presentation: {
@@ -472,7 +472,7 @@ function SessionInputBox({
             height: 36,
             borderRadius: "50%",
             border: "none",
-            background: sendEnabled ? "#0D1B2A" : "rgba(13, 27, 42, 0.3)",
+            background: sendEnabled ? "var(--fg)" : "var(--fg-3)",
             color: "white",
             cursor: sendEnabled ? "pointer" : "default",
             display: "flex",
@@ -485,10 +485,10 @@ function SessionInputBox({
             zIndex: 10,
           }}
           onMouseEnter={(e) => {
-            if (sendEnabled) e.currentTarget.style.background = "#1B263B";
+            if (sendEnabled) e.currentTarget.style.background = "var(--fg-2)";
           }}
           onMouseLeave={(e) => {
-            if (sendEnabled) e.currentTarget.style.background = "#0D1B2A";
+            if (sendEnabled) e.currentTarget.style.background = "var(--fg)";
           }}
         >
           <svg
@@ -612,9 +612,9 @@ function WatsonThinking() {
         border: "1px solid var(--border-subtle)",
       }}>
         {[
-          { color: "#4A90D9", delay: "0s" },
+          { color: "var(--cornflower)", delay: "0s" },
           { color: "var(--gold)", delay: "0.15s" },
-          { color: "#4A90D9", delay: "0.3s" },
+          { color: "var(--cornflower)", delay: "0.3s" },
         ].map((dot, i) => (
           <div key={i} style={{
             width: 8,
@@ -1978,7 +1978,7 @@ export default function WorkSession() {
           <button style={{
             background: "none", border: "none",
             borderRadius: 6, padding: "6px 12px", cursor: "pointer",
-            fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--gold-dark)",
+            fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--gold)",
             transition: "all .15s",
           }}
             title="View outputs"
@@ -2074,14 +2074,14 @@ export default function WorkSession() {
                         onClick={() => setSelectedAngles(prev => prev.includes(angle.id) ? prev.filter(id => id !== angle.id) : [...prev, angle.id])}
                         style={{
                           textAlign: "left", padding: 20, borderRadius: 12,
-                          border: isSelected ? "2px solid var(--gold-dark)" : "1px solid var(--border-subtle)",
+                          border: isSelected ? "2px solid var(--gold)" : "1px solid var(--border-subtle)",
                           background: isSelected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
                           cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease",
                         }}
                       >
                         <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>{angle.title}</div>
                         <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8, lineHeight: 1.5 }}>{angle.description}</div>
-                        <div style={{ fontSize: 13, color: "var(--gold-dark)", fontStyle: "italic" }}>Hook: "{angle.hook}"</div>
+                        <div style={{ fontSize: 13, color: "var(--gold)", fontStyle: "italic" }}>Hook: "{angle.hook}"</div>
                       </button>
                     );
                   })}
@@ -2101,8 +2101,8 @@ export default function WorkSession() {
                     disabled={selectedAngles.length === 0 && !blueSkyNotes.trim()}
                     style={{
                       padding: "12px 24px", borderRadius: 8, border: "none",
-                      background: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "var(--gold-dark)" : "var(--bg-3)",
-                      color: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "#0D1B2A" : "var(--text-tertiary)",
+                      background: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "var(--gold)" : "var(--bg-3)",
+                      color: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "white" : "var(--text-tertiary)",
                       fontSize: 14, fontWeight: 700, cursor: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "pointer" : "default",
                       fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s",
                     }}
@@ -2131,7 +2131,7 @@ export default function WorkSession() {
                 <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Beat Sheet</h2>
                 <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 16px" }}>Edit the outline before we write the draft.</p>
                 {thesis && (
-                  <div style={{ marginBottom: 20, padding: 16, background: "rgba(200,150,26,0.06)", borderLeft: "3px solid var(--gold-dark)", borderRadius: 6 }}>
+                  <div style={{ marginBottom: 20, padding: 16, background: "rgba(200,150,26,0.06)", borderLeft: "3px solid var(--gold)", borderRadius: 6 }}>
                     <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>Thesis</label>
                     <input
                       value={thesis}
@@ -2144,7 +2144,7 @@ export default function WorkSession() {
                   {outline.map((section, idx) => (
                     <div key={section.id} style={{ padding: 16, border: "1px solid var(--border-subtle)", borderRadius: 10, background: "var(--surface-white)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold-dark)", width: 20 }}>{idx + 1}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold)", width: 20 }}>{idx + 1}</span>
                         <input
                           value={section.section}
                           onChange={(e) => setOutline(prev => prev.map((s, i) => i === idx ? { ...s, section: e.target.value } : s))}
@@ -2183,7 +2183,7 @@ export default function WorkSession() {
                 </div>
                 <button
                   onClick={handleEnterDrafting}
-                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold-dark)", color: "#0D1B2A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
                 >
                   Write the draft
                 </button>
@@ -2230,7 +2230,7 @@ export default function WorkSession() {
                           animation: idx > 0 && r.status !== "running" ? `fadeUp 0.4s ease ${idx * 0.15}s both` : "none",
                         }}
                       >
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 5, background: r.status === "pass" ? "#50c8a0" : r.status === "fail" ? "#E53935" : r.status === "running" ? "var(--gold-dark)" : "var(--bg-3)", flexShrink: 0, animation: r.status === "running" ? "pulse 2s ease-in-out infinite" : "none" }} />
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 5, background: r.status === "pass" ? "#50c8a0" : r.status === "fail" ? "#E53935" : r.status === "running" ? "var(--gold)" : "var(--bg-3)", flexShrink: 0, animation: r.status === "running" ? "pulse 2s ease-in-out infinite" : "none" }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{r.gate}</div>
                           <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{info.title}: {info.desc}</div>
@@ -2247,7 +2247,7 @@ export default function WorkSession() {
                 <button
                   onClick={handleEnterEditing}
                   disabled={writersRoomLoading}
-                  style={{ alignSelf: "flex-start", padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold-dark)", color: "#0D1B2A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                  style={{ alignSelf: "flex-start", padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
                 >
                   Review your draft
                 </button>
@@ -2279,7 +2279,7 @@ export default function WorkSession() {
               <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
                 <button
                   onClick={editNotes.trim() ? handleRevisionFromEdits : () => handleEnterStressTest()}
-                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold-dark)", color: "#0D1B2A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
                 >
                   {editNotes.trim() ? "Revise and stress test" : "Send to stress test"}
                 </button>
@@ -2310,7 +2310,7 @@ export default function WorkSession() {
                       </div>
                       <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 4px", lineHeight: 1.5 }}>{r.feedback}</p>
                       {r.suggestion && r.verdict === "flag" && (
-                        <p style={{ fontSize: 13, color: "var(--gold-dark)", margin: 0, fontStyle: "italic" }}>Suggestion: {r.suggestion}</p>
+                        <p style={{ fontSize: 13, color: "var(--gold)", margin: 0, fontStyle: "italic" }}>Suggestion: {r.suggestion}</p>
                       )}
                     </div>
                   ))}
@@ -2336,7 +2336,7 @@ export default function WorkSession() {
                 )}
                 <button
                   onClick={handleEnterPolish}
-                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold-dark)", color: "#0D1B2A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
                 >
                   Apply and polish
                 </button>
@@ -2625,7 +2625,7 @@ export default function WorkSession() {
                       type="button"
                       onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
                       style={{
-                        background: "var(--gold-dark)",
+                        background: "var(--gold)",
                         color: "#fff",
                         border: "none",
                         borderRadius: 8,
@@ -2709,7 +2709,7 @@ export default function WorkSession() {
                     <div style={{
                       padding: "12px 16px",
                       background: "rgba(245,198,66,0.06)",
-                      borderLeft: "3px solid var(--gold-dark)",
+                      borderLeft: "3px solid var(--gold)",
                       borderRadius: 6,
                       marginBottom: 12,
                       fontSize: 13,
@@ -2727,11 +2727,11 @@ export default function WorkSession() {
                     style={{
                       padding: "12px 20px",
                       borderRadius: 8,
-                      border: pipelineGateResults.length === 0 ? "none" : "2px solid var(--gold-dark)",
+                      border: pipelineGateResults.length === 0 ? "none" : "2px solid var(--gold)",
                       background: pipelineStatus === "RUNNING"
                         ? "rgba(245,198,66,0.04)"
                         : pipelineGateResults.length === 0
-                          ? "var(--gold-dark)"
+                          ? "var(--gold)"
                           : "var(--surface-white)",
                       fontFamily: "'Afacad Flux', sans-serif",
                       fontSize: 14,
@@ -2739,8 +2739,8 @@ export default function WorkSession() {
                       color: pipelineStatus === "RUNNING"
                         ? "var(--text-tertiary)"
                         : pipelineGateResults.length === 0
-                          ? "#0D1B2A"
-                          : "var(--gold-dark)",
+                          ? "white"
+                          : "var(--gold)",
                       cursor: pipelineStatus === "RUNNING" ? "default" : "pointer",
                       transition: "all 0.15s ease",
                       display: "flex",
@@ -2870,7 +2870,7 @@ export default function WorkSession() {
                     onClick={handleMakeTheThing}
                     disabled={loading}
                     style={{
-                      background: "var(--gold-dark)",
+                      background: "var(--gold)",
                       color: "#fff",
                       border: "none",
                       borderRadius: 8,
@@ -2975,7 +2975,7 @@ export default function WorkSession() {
                   cursor: "pointer",
                   transition: "color 0.15s ease",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--gold-dark)"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--gold)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-tertiary)"; }}
               >
                 Ready to produce? Skip ahead
