@@ -64,6 +64,27 @@ export default async function handler(req, res) {
 
     system += "\n\nCRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead. This is non-negotiable.";
 
+    // Add outline to system prompt if provided
+    if (outline && Array.isArray(outline) && outline.length > 0) {
+      system += "\n\nSTRUCTURE TO FOLLOW (write each section in order):\n";
+      outline.forEach((section, i) => {
+        system += `\nSection ${i + 1}: ${section.section}\n`;
+        if (section.beats && section.beats.length > 0) {
+          system += "Key points to hit:\n";
+          section.beats.forEach(beat => {
+            system += `- ${beat}\n`;
+          });
+        }
+        if (section.purpose) {
+          system += `Purpose: ${section.purpose}\n`;
+        }
+      });
+    }
+
+    if (thesis) {
+      system += `\n\nCORE THESIS (this is the one thing the piece argues): ${thesis}\n`;
+    }
+
     // Build the user message based on mode: outline-based, revision, or standard
     let userContent;
     if (revisionNotes || originalDraft) {

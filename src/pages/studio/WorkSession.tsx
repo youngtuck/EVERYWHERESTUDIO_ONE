@@ -17,6 +17,7 @@ import { MARKETING_NUMBERS } from "../../lib/constants";
 import SpecialistPanel from "../../components/studio/SpecialistPanel";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 import MeetTheTeam from "../../components/studio/MeetTheTeam";
+import RoomLoadingAnimation from "../../components/studio/RoomLoadingAnimation";
 import { fetchWithRetry } from "../../lib/retry";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1378,13 +1379,7 @@ export default function WorkSession() {
     setApiError(null);
 
     try {
-      const { content, score, gates } = await generateOutput(
-        getConversationSummary(),
-        outputTypeApi,
-        voiceProfile,
-        user?.id,
-      );
-      // Pass outline to generate endpoint by making a direct call
+      // Call generate endpoint with outline and thesis
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2026,8 +2021,8 @@ export default function WorkSession() {
         <>
       {/* Session progress: Watson > Room > Draft > Edit > Review > Done */}
       <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        padding: "8px 24px",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 24,
+        padding: "12px 24px",
         borderBottom: "1px solid var(--border-subtle)",
         background: "var(--surface-white)",
         position: "relative",
@@ -2056,24 +2051,28 @@ export default function WorkSession() {
           };
 
           return (
-          <div key={step.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div key={step.key} style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span
-              onClick={handleStepClick}
               style={{
-                fontSize: 14,
-                fontWeight: 600,
+                fontSize: 15,
+                fontWeight: step.active ? 700 : step.done ? 600 : 400,
                 letterSpacing: "0.04em",
-                color: step.done ? "var(--gold-dark)" : step.active ? "var(--text-primary)" : "var(--text-tertiary)",
-                transition: "color .2s",
-                cursor: clickable ? "pointer" : "default",
+                color: step.active ? "var(--text-primary)" : step.done ? "var(--gold-dark)" : "var(--text-tertiary)",
+                opacity: step.active || step.done ? 1 : 0.6,
+                borderBottom: step.active ? "2px solid var(--gold-dark)" : "2px solid transparent",
+                paddingBottom: 4,
+                transition: "all .2s",
+                cursor: "default",
               }}
-              onMouseEnter={(e) => { if (clickable) e.currentTarget.style.color = "var(--text-primary)"; }}
-              onMouseLeave={(e) => { if (clickable) e.currentTarget.style.color = step.done ? "var(--gold-dark)" : step.active ? "var(--text-primary)" : "var(--text-tertiary)"; }}
             >
               {step.label}
             </span>
-            {i < 3 && (
-              <span style={{ width: 20, height: 1, background: "var(--line)", opacity: step.done ? 0.6 : 0.3 }} />
+            {i < 5 && (
+              <span style={{
+                width: 40, height: 1,
+                background: step.done ? "var(--gold-dark)" : step.active ? "linear-gradient(90deg, var(--gold-dark), var(--line))" : "var(--line)",
+                opacity: step.done ? 0.6 : 0.3,
+              }} />
             )}
           </div>
           );
@@ -2088,11 +2087,8 @@ export default function WorkSession() {
         {/* ── BLUESKY PHASE: Angle selection ──────────────────── */}
         {phase === "bluesky" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
-            {writersRoomLoading ? (
-              <div style={{ textAlign: "center" }}>
-                <WatsonOrb size={48} breathing={false} />
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>The Room is exploring angles...</p>
-              </div>
+            {writersRoomLoading && angles.length === 0 ? (
+              <RoomLoadingAnimation isLoading={true} />
             ) : (
               <div style={{ maxWidth: 760, width: "100%" }}>
                 <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px", letterSpacing: "-0.02em" }}>Choose your angle</h2>
@@ -2869,7 +2865,7 @@ export default function WorkSession() {
                   color: "var(--text-secondary)",
                   margin: 0,
                 }}>
-                  Watson is ready. Choose an output format and let's make the thing.
+                  Watson has what he needs. Let the Room take it from here.
                 </p>
                 <div style={{ marginBottom: 4 }}>
                   <OutputTypePill value={outputType} onChange={setOutputType} />
@@ -2891,7 +2887,7 @@ export default function WorkSession() {
                       cursor: loading ? "default" : "pointer",
                     }}
                   >
-                    Produce it
+                    Take it to the Room
                   </button>
                   <button
                     type="button"
