@@ -139,7 +139,7 @@ export default function Projects() {
       if (!row.project_id || typeof row.score !== "number") continue;
       const entry = map.get(row.project_id) || { ready: 0, total: 0 };
       entry.total += 1;
-      if (row.score >= 800) entry.ready += 1;
+      if (row.score >= 900) entry.ready += 1;
       map.set(row.project_id, entry);
     }
     return map;

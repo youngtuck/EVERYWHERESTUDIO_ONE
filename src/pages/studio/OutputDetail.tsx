@@ -313,7 +313,7 @@ export default function OutputDetail() {
 
       // Update output score
       const finalScore = result.betterishScore?.total ?? output.score;
-      await supabase.from("outputs").update({ score: finalScore, content_state: result.status === "PASSED" ? "vault" : output.score >= 800 ? "vault" : "in_progress" }).eq("id", output.id);
+      await supabase.from("outputs").update({ score: finalScore, content_state: result.status === "PASSED" ? "vault" : output.score >= 900 ? "vault" : "in_progress" }).eq("id", output.id);
       setOutput({ ...output, score: finalScore });
 
       // Save pipeline run
@@ -440,7 +440,7 @@ export default function OutputDetail() {
     </div>
   );
 
-  const scoreColor = output!.score >= 800 ? "#50c8a0" : output!.score >= 700 ? "#4A90D9" : "#C8961A";
+  const scoreColor = output!.score >= 900 ? "#50c8a0" : output!.score >= 700 ? "#4A90D9" : "#C8961A";
   const gates = output!.gates && typeof output!.gates === "object" ? output!.gates : null;
   const gateEntries = gates
     ? [

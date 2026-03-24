@@ -8,7 +8,7 @@ export async function scoreContent({
   voiceProfile = null,
   audience = null,
 }) {
-  const system = `You are the EVERYWHERE Studio Quality Checkpoint evaluator (Betterish scoring). Score the provided content on 7 dimensions, each 0-100. Publication threshold is 800 out of 1000. Return ONLY a JSON object, no commentary.`;
+  const system = `You are the EVERYWHERE Studio Quality Checkpoint evaluator (Betterish scoring). Score the provided content on 7 dimensions, each 0-100. Publication threshold is 900 out of 1000. Return ONLY a JSON object, no commentary.`;
 
   const userPrompt = `
 Evaluate this ${outputType} content against the 7 Quality Checkpoints.
@@ -54,7 +54,7 @@ For "total": weight * 1000. Use weights: strategy 0.12, voice 0.22, accuracy 0.1
   try {
     return JSON.parse(clean);
   } catch {
-    return { total: 800, summary: "Content generated successfully." };
+    return { total: 900, summary: "Content generated successfully." };
   }
 }
 

@@ -294,7 +294,7 @@ function PeopleTab() {
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: sc.bg, color: sc.text }}>{sc.label}</span>
                 <span style={{ fontSize: 13, color: "var(--fg-3)", width: 50, textAlign: "right" }}>{u.outputCount}</span>
-                <span style={{ fontSize: 13, color: u.avgScore >= 800 ? "#50c8a0" : u.avgScore > 0 ? "var(--fg-2)" : "var(--fg-3)", width: 40, textAlign: "right", fontWeight: 600 }}>{u.avgScore || "-"}</span>
+                <span style={{ fontSize: 13, color: u.avgScore >= 900 ? "#50c8a0" : u.avgScore > 0 ? "var(--fg-2)" : "var(--fg-3)", width: 40, textAlign: "right", fontWeight: 600 }}>{u.avgScore || "-"}</span>
                 <span style={{ fontSize: 12, color: "var(--fg-3)", width: 70, textAlign: "right" }}>{u.lastActive ? timeAgo(u.lastActive) : "Never"}</span>
               </button>
               {expanded && detail && (
@@ -306,7 +306,7 @@ function PeopleTab() {
                         <div key={o.id} style={{ fontSize: 13, color: "var(--fg-2)", padding: "4px 0", display: "flex", gap: 8 }}>
                           <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.title}</span>
                           <span style={{ color: "var(--fg-3)" }}>{o.output_type}</span>
-                          <span style={{ fontWeight: 600, color: o.score >= 800 ? "#50c8a0" : "var(--fg-2)" }}>{o.score}</span>
+                          <span style={{ fontWeight: 600, color: o.score >= 900 ? "#50c8a0" : "var(--fg-2)" }}>{o.score}</span>
                         </div>
                       ))}
                     </div>
@@ -427,7 +427,7 @@ function DashboardTab() {
     { label: "Onboarded", value: `${stats.onboarded}/${stats.totalUsers}`, sub: stats.totalUsers > 0 ? `${Math.round(stats.onboarded / stats.totalUsers * 100)}%` : "0%" },
     { label: "Total Outputs", value: stats.totalOutputs, sub: `+${stats.outputsThisWeek} this week` },
     { label: "Avg Score", value: stats.avgScore || "-" },
-    { label: "Published (800+)", value: stats.published },
+    { label: "Published (900+)", value: stats.published },
     { label: "Invite Codes", value: `${stats.availableCodes} available`, sub: `${stats.redeemedCodes} redeemed` },
   ];
 

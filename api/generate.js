@@ -21,7 +21,16 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured." });
 
-  const { conversationSummary = "", outputType = "freestyle", voiceProfile = null } = req.body;
+  const {
+    conversationSummary = "",
+    outputType = "freestyle",
+    voiceProfile = null,
+    outline = null,
+    thesis = "",
+    revisionNotes = "",
+    originalDraft = "",
+    edits = null,
+  } = req.body;
 
   let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
   const userId = req.body?.userId;
@@ -55,22 +64,41 @@ export default async function handler(req, res) {
 
     system += "\n\nCRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead. This is non-negotiable.";
 
+    // Build the user message based on mode: outline-based, revision, or standard
+    let userContent;
+    if (revisionNotes || originalDraft) {
+      // Revision mode: incorporate user edits and notes
+      let revisionParts = [`Original draft:\n${originalDraft.slice(0, 6000)}`];
+      if (edits && Array.isArray(edits) && edits.length > 0) {
+        revisionParts.push(`\nUser edits (apply these exactly, do not blend or paraphrase):\n${edits.map(e => `Paragraph ${e.paragraphIndex}: ${e.newText}`).join("\n")}`);
+      }
+      if (revisionNotes.trim()) {
+        revisionParts.push(`\nRevision notes from the Composer:\n${revisionNotes}`);
+      }
+      revisionParts.push(`\nProduce the revised ${outputType}. Apply all edits exactly as written. Address the revision notes. Maintain the same structure and voice. Do not re-introduce anything the Composer cut.`);
+      userContent = revisionParts.join("\n\n");
+    } else if (outline && Array.isArray(outline) && outline.length > 0) {
+      // Outline-based generation: follow the beat sheet
+      const outlineText = outline.map((s, i) => `Section ${i + 1}: ${s.section}\nBeats: ${(s.beats || []).join("; ")}\nPurpose: ${s.purpose || ""}`).join("\n\n");
+      userContent = `Conversation summary:\n${conversationSummary}\n\n${thesis ? `Thesis: ${thesis}\n\n` : ""}Outline (follow this structure section by section, hit every beat):\n${outlineText}\n\nProduce the ${outputType} now. Follow the outline exactly.`;
+    } else {
+      // Standard generation
+      userContent = `Conversation summary:\n${conversationSummary}\n\nProduce the ${outputType} now.`;
+    }
+
     const response = await callWithRetry(() =>
       client.messages.create({
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
         system,
-        messages: [{
-          role: "user",
-          content: `Conversation summary:\n${conversationSummary}\n\nProduce the ${outputType} now.`
-        }],
+        messages: [{ role: "user", content: userContent }],
       })
     );
 
     const content = sanitizeContent(response.content?.[0]?.type === "text" ? response.content[0].text : "");
 
     let gates = null;
-    let score = 800;
+    let score = 900;
     try {
       const scores = await scoreContent({ apiKey, content, outputType, voiceProfile });
       gates = scores;

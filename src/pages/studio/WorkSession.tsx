@@ -16,6 +16,8 @@ import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import { MARKETING_NUMBERS } from "../../lib/constants";
 import SpecialistPanel from "../../components/studio/SpecialistPanel";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
+import MeetTheTeam from "../../components/studio/MeetTheTeam";
+import { fetchWithRetry } from "../../lib/retry";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EVERYWHERE STUDIO - WORK SESSION
@@ -742,7 +744,7 @@ function OutputTypePill({
 }
 
 // ── Main Work Session ─────────────────────────────────────────────────────────
-type Phase = "input" | "generating" | "complete";
+type Phase = "input" | "bluesky" | "structure" | "drafting" | "editing" | "stress-test" | "polish" | "complete";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const IS_DEV = import.meta.env.DEV;
@@ -896,7 +898,7 @@ function checkpointScoreColor(score: number): { text: string; bg: string } {
 }
 
 function totalScoreColor(total: number): string {
-  if (total >= 800) return "#50c8a0";
+  if (total >= 900) return "#50c8a0";
   if (total >= 700) return "#C8961A";
   return "#E53935";
 }
@@ -949,6 +951,21 @@ export default function WorkSession() {
   const [revisionOutputId, setRevisionOutputId] = useState<string | null>(null);
   const [revisionContent, setRevisionContent] = useState<string | null>(null);
   const [revisionPipelineContext, setRevisionPipelineContext] = useState<string | null>(null);
+
+  // Writer's Room state
+  const [angles, setAngles] = useState<Array<{ id: string; title: string; description: string; hook: string; approach: string }>>([]);
+  const [selectedAngles, setSelectedAngles] = useState<string[]>([]);
+  const [blueSkyNotes, setBlueSkyNotes] = useState("");
+  const [outline, setOutline] = useState<Array<{ id: string; section: string; beats: string[]; purpose: string }>>([]);
+  const [thesis, setThesis] = useState("");
+  const [draftContent, setDraftContent] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [layer1Results, setLayer1Results] = useState<Array<{ gate: string; status: string; score: number; feedback: string }>>([]);
+  const [stressResults, setStressResults] = useState<Array<{ agent: string; lens: string; verdict: string; feedback: string; suggestion: string }>>([]);
+  const [saraSynthesis, setSaraSynthesis] = useState<{ summary: string; actionItems: string[] }>({ summary: "", actionItems: [] });
+  const [acceptedItems, setAcceptedItems] = useState<boolean[]>([]);
+  const [showMeetTeam, setShowMeetTeam] = useState(false);
+  const [writersRoomLoading, setWritersRoomLoading] = useState(false);
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
@@ -994,7 +1011,10 @@ export default function WorkSession() {
         setInput(persisted.input || "");
         setOutputType(persisted.outputType || "freestyle");
         setSessionTitle(persisted.sessionTitle || "New Session");
-        setPhase(persisted.phase === "generating" ? "input" : persisted.phase);
+        // Restore phase, reset transient loading phases back to their start
+        const pp = persisted.phase as string;
+        const restoredPhase = pp === "generating" ? "input" : pp === "polish" ? "stress-test" : pp;
+        setPhase(restoredPhase as Phase);
         setGeneratedContent(persisted.generatedContent || "");
         setGeneratedScore(persisted.generatedScore || 0);
         setGeneratedOutputId(persisted.generatedOutputId || "new");
@@ -1019,7 +1039,7 @@ export default function WorkSession() {
 
   // Progressive loading animation during generation
   useEffect(() => {
-    if (phase !== "generating") {
+    if ((phase as string) !== "generating" && phase !== "drafting") {
       if (loadingProgress > 0) setLoadingProgress(100);
       return;
     }
@@ -1067,7 +1087,7 @@ export default function WorkSession() {
         input,
         outputType,
         sessionTitle,
-        phase,
+        phase: phase as any,
         generatedContent,
         generatedScore,
         generatedOutputId,
@@ -1289,11 +1309,323 @@ export default function WorkSession() {
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Writer's Room Phase Handlers ──────────────────────────────────────────
+
+  const getConversationSummary = () =>
+    messages.map(m => (m.role === "user" ? "User: " : "Watson: ") + m.content).join("\n\n");
+
+  const handleEnterBluesky = async () => {
+    setPhase("bluesky");
+    setWritersRoomLoading(true);
+    setApiError(null);
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/writers-room/bluesky`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: getConversationSummary(),
+          outputType: outputTypeApi,
+          voiceDnaMd,
+          userId: user?.id,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to generate angles");
+      const data = await res.json();
+      setAngles(data.angles || []);
+    } catch (err: any) {
+      setApiError(err.message || "Failed to generate angles");
+      toast("Could not generate angles. Try again.", "error");
+    } finally {
+      setWritersRoomLoading(false);
+    }
+  };
+
+  const handleEnterStructure = async () => {
+    setPhase("structure");
+    setWritersRoomLoading(true);
+    setApiError(null);
+    const selectedAngleData = angles.filter(a => selectedAngles.includes(a.id));
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/writers-room/structure`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: getConversationSummary(),
+          selectedAngles: selectedAngleData.length > 0 ? selectedAngleData : [blueSkyNotes || getConversationSummary().slice(0, 500)],
+          userNotes: blueSkyNotes,
+          outputType: outputTypeApi,
+          voiceDnaMd,
+          userId: user?.id,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to generate outline");
+      const data = await res.json();
+      setOutline(data.outline || []);
+      setThesis(data.thesis || "");
+    } catch (err: any) {
+      setApiError(err.message || "Failed to generate outline");
+      toast("Could not generate outline. Try again.", "error");
+    } finally {
+      setWritersRoomLoading(false);
+    }
+  };
+
+  const handleEnterDrafting = async () => {
+    if (generateLockRef.current) return;
+    generateLockRef.current = true;
+    setPhase("drafting");
+    setWritersRoomLoading(true);
+    setApiError(null);
+
+    try {
+      const { content, score, gates } = await generateOutput(
+        getConversationSummary(),
+        outputTypeApi,
+        voiceProfile,
+        user?.id,
+      );
+      // Pass outline to generate endpoint by making a direct call
+      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: getConversationSummary(),
+          outputType: outputTypeApi,
+          voiceProfile,
+          userId: user?.id,
+          outline: outline.length > 0 ? outline : undefined,
+          thesis: thesis || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error("Draft generation failed");
+      const data = await res.json();
+      setDraftContent(data.content || "");
+      setGeneratedContent(data.content || "");
+      setGeneratedScore(data.score || 0);
+      setGeneratedGates(data.gates || null);
+
+      // Save to Supabase
+      const title = generateTitle(messages.find(m => m.role === "user")?.content || "", data.content || "") || `${type.label} - ${new Date().toLocaleDateString()}`;
+      if (revisionMode && revisionOutputId) {
+        await supabase.from("outputs").update({
+          content: data.content, score: data.score, gates: data.gates,
+          outline: outline.length > 0 ? outline : null,
+          writer_room_phase: "drafting",
+        }).eq("id", revisionOutputId);
+        setGeneratedOutputId(revisionOutputId);
+      } else {
+        const { data: saved } = await supabase.from("outputs").insert({
+          user_id: user!.id, title, content: data.content,
+          output_type: outputType, score: data.score,
+          gates: data.gates, outline: outline.length > 0 ? outline : null,
+          writer_room_phase: "drafting",
+        }).select().single();
+        setGeneratedOutputId(saved?.id ?? "new");
+      }
+
+      // Fire Layer 1 checkpoints in background
+      setLayer1Results([
+        { gate: "Echo", status: "running", score: 0, feedback: "" },
+        { gate: "Priya", status: "running", score: 0, feedback: "" },
+        { gate: "David", status: "running", score: 0, feedback: "" },
+        { gate: "Natasha", status: "running", score: 0, feedback: "" },
+      ]);
+
+      try {
+        const pipelineRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            draft: data.content, outputType: outputTypeApi,
+            voiceDnaMd, brandDnaMd, methodDnaMd,
+            userId: user?.id, outputId: revisionOutputId || "new",
+            gateSubset: ["Echo", "Priya", "David", "Natasha"],
+          }),
+        }, { timeout: 120000 });
+        if (pipelineRes.ok) {
+          const result = await pipelineRes.json();
+          setLayer1Results((result.gateResults || []).map((g: any) => ({
+            gate: g.gate, status: g.status === "PASS" ? "pass" : g.status === "FAIL" ? "fail" : "flag",
+            score: g.score, feedback: g.feedback,
+          })));
+        }
+      } catch (err) {
+        console.error("[WorkSession] Layer 1 checkpoints failed:", err);
+      }
+
+      setWritersRoomLoading(false);
+    } catch (err: any) {
+      setApiError(err.message || "Draft generation failed");
+      toast("Draft generation failed. Try again.", "error");
+      setWritersRoomLoading(false);
+      setPhase("structure");
+    } finally {
+      generateLockRef.current = false;
+    }
+  };
+
+  const handleEnterEditing = () => {
+    setPhase("editing");
+    setEditNotes("");
+  };
+
+  const handleRevisionFromEdits = async () => {
+    setWritersRoomLoading(true);
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: getConversationSummary(),
+          outputType: outputTypeApi,
+          voiceProfile,
+          userId: user?.id,
+          revisionNotes: editNotes,
+          originalDraft: draftContent,
+        }),
+      });
+      if (!res.ok) throw new Error("Revision failed");
+      const data = await res.json();
+      setDraftContent(data.content || "");
+      setGeneratedContent(data.content || "");
+      setGeneratedScore(data.score || 0);
+      toast("Draft revised.");
+      setPhase("stress-test");
+      handleEnterStressTest(data.content || draftContent);
+    } catch (err: any) {
+      toast("Revision failed. Try again.", "error");
+    } finally {
+      setWritersRoomLoading(false);
+    }
+  };
+
+  const handleEnterStressTest = async (draft?: string) => {
+    setPhase("stress-test");
+    setWritersRoomLoading(true);
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/writers-room/stress-test`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft: draft || draftContent,
+          outputType: outputTypeApi,
+          voiceDnaMd, brandDnaMd,
+          userId: user?.id,
+        }),
+      }, { timeout: 90000 });
+      if (!res.ok) throw new Error("Stress test failed");
+      const data = await res.json();
+      setStressResults(data.results || []);
+      setSaraSynthesis(data.synthesis || { summary: "", actionItems: [] });
+      setAcceptedItems(new Array((data.synthesis?.actionItems || []).length).fill(false));
+    } catch (err: any) {
+      toast("Stress test encountered an error.", "error");
+    } finally {
+      setWritersRoomLoading(false);
+    }
+  };
+
+  const handleEnterPolish = async () => {
+    setPhase("polish");
+    setWritersRoomLoading(true);
+    setPipelineStatus("RUNNING");
+
+    // Apply accepted stress-test suggestions
+    const acceptedSuggestions = saraSynthesis.actionItems.filter((_, i) => acceptedItems[i]);
+    let finalDraft = draftContent;
+
+    if (acceptedSuggestions.length > 0) {
+      try {
+        const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversationSummary: getConversationSummary(),
+            outputType: outputTypeApi,
+            voiceProfile,
+            userId: user?.id,
+            revisionNotes: `Apply these specific changes:\n${acceptedSuggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
+            originalDraft: draftContent,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          finalDraft = data.content || draftContent;
+          setDraftContent(finalDraft);
+          setGeneratedContent(finalDraft);
+        }
+      } catch {}
+    }
+
+    // Run Layer 2 checkpoints
+    try {
+      const pipelineRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft: finalDraft,
+          outputType: outputTypeApi,
+          voiceDnaMd, brandDnaMd, methodDnaMd,
+          userId: user?.id,
+          outputId: generatedOutputId,
+          gateSubset: ["Elena", "Jordan", "Marcus + Marshall"],
+        }),
+      }, { timeout: 120000 });
+
+      if (pipelineRes.ok) {
+        const result = await pipelineRes.json();
+        setPipelineGateResults(result.gateResults || []);
+        setPipelineStatus(result.status);
+        setBlockedAt(result.blockedAt);
+
+        const finalScore = result.betterishScore?.total ?? generatedScore;
+        setGeneratedScore(finalScore);
+        setGeneratedContent(finalDraft);
+
+        // Update output in Supabase
+        if (generatedOutputId && generatedOutputId !== "new") {
+          await supabase.from("outputs").update({
+            content: finalDraft,
+            score: finalScore,
+            content_state: result.status === "PASSED" ? "vault" : "in_progress",
+            stress_test_results: stressResults,
+            writer_room_phase: "complete",
+          }).eq("id", generatedOutputId);
+
+          await supabase.from("pipeline_runs").insert({
+            output_id: generatedOutputId,
+            user_id: user?.id,
+            status: result.status,
+            gate_results: result.gateResults,
+            betterish_score: result.betterishScore,
+            betterish_total: result.betterishScore?.total ?? null,
+            blocked_at: result.blockedAt ?? null,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[WorkSession] Layer 2 pipeline failed:", err);
+      toast("Quality polish encountered an error.", "error");
+    } finally {
+      setWritersRoomLoading(false);
+      setPipelineStatus("IDLE");
+      setPhase("complete");
+    }
+  };
+
+  // ── Original Generation Handler (modified to enter Writer's Room) ────────
+
   const handleMakeTheThing = async () => {
     if (generateLockRef.current) return;
     generateLockRef.current = true;
     setApiError(null);
-    setPhase("generating");
+    // Enter Writer's Room flow instead of direct generation
+    generateLockRef.current = false;
+    handleEnterBluesky();
+    return;
+
+    // Legacy direct generation path (kept for reference, unreachable)
+    setPhase("drafting" as Phase);
     setPipelineStatus("IDLE");
     setPipelineGateResults([]);
     setBlockedAt(undefined);
@@ -1692,24 +2024,24 @@ export default function WorkSession() {
         </EmptyState>
       ) : (
         <>
-      {/* Session progress: Input → Watson → Generate → Output */}
+      {/* Session progress: Watson > Room > Draft > Edit > Review > Done */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         padding: "8px 24px",
         borderBottom: "1px solid var(--border-subtle)",
         background: "var(--surface-white)",
+        position: "relative",
         flexShrink: 0,
       }}>
         {[
-          { key: "input", label: "Input", done: phase !== "input" || messages.some(m => m.role === "user"), active: phase === "input" },
-          { key: "watson", label: "Watson", done: phase === "generating" || phase === "complete", active: phase === "input" && messages.some(m => m.role === "user") },
-          { key: "generate", label: "Generate", done: phase === "complete", active: phase === "generating" },
-          { key: "output", label: "Output", done: phase === "complete", active: phase === "complete" },
+          { key: "watson", label: "Watson", done: phase !== "input", active: phase === "input" },
+          { key: "room", label: "Room", done: ["drafting","editing","stress-test","polish","complete"].includes(phase), active: phase === "bluesky" || phase === "structure" },
+          { key: "draft", label: "Draft", done: ["editing","stress-test","polish","complete"].includes(phase), active: phase === "drafting" },
+          { key: "edit", label: "Edit", done: ["stress-test","polish","complete"].includes(phase), active: phase === "editing" },
+          { key: "review", label: "Review", done: phase === "complete", active: phase === "stress-test" || phase === "polish" },
+          { key: "done", label: "Done", done: phase === "complete", active: phase === "complete" },
         ].map((step, i) => {
-          const clickable =
-            (step.key === "watson" && (phase === "generating" || phase === "complete")) ||
-            (step.key === "generate" && phase === "complete" && !!generatedGates) ||
-            (step.key === "output" && phase === "complete");
+          const clickable = false; // Navigation between steps is controlled by buttons, not tab clicks
 
           const handleStepClick = () => {
             if (!clickable) return;
@@ -1753,7 +2085,290 @@ export default function WorkSession() {
         flex: 1, overflowY: "auto", padding: "0 0 8px",
         display: "flex", flexDirection: "column",
       }}>
-        {phase === "generating" && (
+        {/* ── BLUESKY PHASE: Angle selection ──────────────────── */}
+        {phase === "bluesky" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
+            {writersRoomLoading ? (
+              <div style={{ textAlign: "center" }}>
+                <WatsonOrb size={48} breathing={false} />
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>The Room is exploring angles...</p>
+              </div>
+            ) : (
+              <div style={{ maxWidth: 760, width: "100%" }}>
+                <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px", letterSpacing: "-0.02em" }}>Choose your angle</h2>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 24px" }}>The Room generated {angles.length} approaches. Select one or combine ideas.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+                  {angles.map((angle) => {
+                    const isSelected = selectedAngles.includes(angle.id);
+                    return (
+                      <button
+                        key={angle.id}
+                        type="button"
+                        onClick={() => setSelectedAngles(prev => prev.includes(angle.id) ? prev.filter(id => id !== angle.id) : [...prev, angle.id])}
+                        style={{
+                          textAlign: "left", padding: 20, borderRadius: 12,
+                          border: isSelected ? "2px solid var(--gold-dark)" : "1px solid var(--border-subtle)",
+                          background: isSelected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
+                          cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease",
+                        }}
+                      >
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>{angle.title}</div>
+                        <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8, lineHeight: 1.5 }}>{angle.description}</div>
+                        <div style={{ fontSize: 13, color: "var(--gold-dark)", fontStyle: "italic" }}>Hook: "{angle.hook}"</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6 }}>Notes for the Room</label>
+                  <textarea
+                    value={blueSkyNotes}
+                    onChange={(e) => setBlueSkyNotes(e.target.value)}
+                    placeholder="e.g., I like angle 2 but with the hook from angle 1..."
+                    style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--bg-2)", color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, resize: "vertical", minHeight: 60, outline: "none" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <button
+                    onClick={handleEnterStructure}
+                    disabled={selectedAngles.length === 0 && !blueSkyNotes.trim()}
+                    style={{
+                      padding: "12px 24px", borderRadius: 8, border: "none",
+                      background: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "var(--gold-dark)" : "var(--bg-3)",
+                      color: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "#0D1B2A" : "var(--text-tertiary)",
+                      fontSize: 14, fontWeight: 700, cursor: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "pointer" : "default",
+                      fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s",
+                    }}
+                  >
+                    Build the outline
+                  </button>
+                  <button
+                    onClick={() => { setPhase("structure"); handleEnterStructure(); }}
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--text-tertiary)", fontFamily: "'Afacad Flux', sans-serif", textDecoration: "underline" }}
+                  >
+                    Skip to draft
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── STRUCTURE PHASE: Beat sheet ─────────────────────── */}
+        {phase === "structure" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
+            {writersRoomLoading ? (
+              <div style={{ textAlign: "center" }}>
+                <WatsonOrb size={48} breathing={false} />
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Building your outline...</p>
+              </div>
+            ) : (
+              <div style={{ maxWidth: 760, width: "100%" }}>
+                <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Beat Sheet</h2>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 16px" }}>Edit the outline before we write the draft.</p>
+                {thesis && (
+                  <div style={{ marginBottom: 20, padding: 16, background: "rgba(200,150,26,0.06)", borderLeft: "3px solid var(--gold-dark)", borderRadius: 6 }}>
+                    <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>Thesis</label>
+                    <input
+                      value={thesis}
+                      onChange={(e) => setThesis(e.target.value)}
+                      style={{ width: "100%", background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none" }}
+                    />
+                  </div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+                  {outline.map((section, idx) => (
+                    <div key={section.id} style={{ padding: 16, border: "1px solid var(--border-subtle)", borderRadius: 10, background: "var(--surface-white)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold-dark)", width: 20 }}>{idx + 1}</span>
+                        <input
+                          value={section.section}
+                          onChange={(e) => setOutline(prev => prev.map((s, i) => i === idx ? { ...s, section: e.target.value } : s))}
+                          style={{ flex: 1, background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none" }}
+                        />
+                        <button
+                          onClick={() => setOutline(prev => prev.filter((_, i) => i !== idx))}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, padding: 4 }}
+                        >x</button>
+                      </div>
+                      <div style={{ paddingLeft: 28 }}>
+                        {section.beats.map((beat, bi) => (
+                          <div key={bi} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                            <span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>-</span>
+                            <input
+                              value={beat}
+                              onChange={(e) => setOutline(prev => prev.map((s, i) => i === idx ? { ...s, beats: s.beats.map((b, j) => j === bi ? e.target.value : b) } : s))}
+                              style={{ flex: 1, background: "transparent", border: "none", fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none" }}
+                            />
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => setOutline(prev => prev.map((s, i) => i === idx ? { ...s, beats: [...s.beats, ""] } : s))}
+                          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--cornflower)", fontFamily: "'Afacad Flux', sans-serif", padding: "4px 0" }}
+                        >+ Add beat</button>
+                      </div>
+                      {section.purpose && (
+                        <div style={{ paddingLeft: 28, marginTop: 6, fontSize: 12, color: "var(--text-tertiary)", fontStyle: "italic" }}>{section.purpose}</div>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setOutline(prev => [...prev, { id: `section-${Date.now()}`, section: "New Section", beats: [""], purpose: "" }])}
+                    style={{ padding: 12, border: "1px dashed var(--border-subtle)", borderRadius: 10, background: "transparent", cursor: "pointer", fontSize: 13, color: "var(--text-tertiary)", fontFamily: "'Afacad Flux', sans-serif" }}
+                  >+ Add section</button>
+                </div>
+                <button
+                  onClick={handleEnterDrafting}
+                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold-dark)", color: "#0D1B2A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                >
+                  Write the draft
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── DRAFTING PHASE: Draft + Layer 1 checkpoints ──────── */}
+        {phase === "drafting" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading && !draftContent ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
+            {writersRoomLoading && !draftContent ? (
+              <div style={{ textAlign: "center" }}>
+                <WatsonOrb size={48} breathing={false} />
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Writing your draft...</p>
+              </div>
+            ) : (
+              <div style={{ maxWidth: 760, width: "100%", display: "flex", flexDirection: "column", gap: 20 }}>
+                {/* Draft content */}
+                <div style={{ position: "relative", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: isMobile ? "20px 16px" : "32px 36px" }}>
+                  <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
+                </div>
+                {/* Layer 1 checkpoint results */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 4 }}>Layer 1 Checkpoints</div>
+                  {layer1Results.map((r) => (
+                    <div key={r.gate} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.status === "pass" ? "#50c8a0" : r.status === "fail" ? "#E53935" : r.status === "running" ? "var(--gold-dark)" : "var(--bg-3)", flexShrink: 0, animation: r.status === "running" ? "pulse 2s ease-in-out infinite" : "none" }} />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", flex: 1 }}>{r.gate}</span>
+                      {r.score > 0 && <span style={{ fontSize: 13, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "#C8961A" : "#E53935" }}>{r.score}</span>}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={handleEnterEditing}
+                  disabled={writersRoomLoading}
+                  style={{ alignSelf: "flex-start", padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold-dark)", color: "#0D1B2A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                >
+                  Review your draft
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── EDITING PHASE: User edit pass ────────────────────── */}
+        {phase === "editing" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
+            <div style={{ maxWidth: 760, width: "100%" }}>
+              <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Edit your draft</h2>
+              <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 20px" }}>Read through, make edits, then send it to the stress test.</p>
+              <textarea
+                value={draftContent || generatedContent}
+                onChange={(e) => setDraftContent(e.target.value)}
+                style={{ width: "100%", minHeight: 400, padding: 24, borderRadius: 12, border: "1px solid var(--border-subtle)", background: "var(--surface-white)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.7, color: "var(--text-primary)", resize: "vertical", outline: "none" }}
+              />
+              <div style={{ marginTop: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6 }}>Notes for revision</label>
+                <textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="General feedback, things to strengthen, areas to cut..."
+                  style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--bg-2)", color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, resize: "vertical", minHeight: 60, outline: "none" }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+                <button
+                  onClick={editNotes.trim() ? handleRevisionFromEdits : () => handleEnterStressTest()}
+                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold-dark)", color: "#0D1B2A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                >
+                  {editNotes.trim() ? "Revise and stress test" : "Send to stress test"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── STRESS TEST PHASE: SBU feedback ─────────────────── */}
+        {phase === "stress-test" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
+            {writersRoomLoading ? (
+              <div style={{ textAlign: "center" }}>
+                <WatsonOrb size={48} breathing={false} />
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Running the stress test...</p>
+              </div>
+            ) : (
+              <div style={{ maxWidth: 760, width: "100%" }}>
+                <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Stress Test</h2>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 24px" }}>Six specialists evaluated your draft from different angles.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+                  {stressResults.map((r) => (
+                    <div key={r.agent} style={{ padding: 16, border: "1px solid var(--border-subtle)", borderRadius: 10, background: "var(--surface-white)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.verdict === "pass" ? "#50c8a0" : "#C8961A" }} />
+                        <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{r.agent}</span>
+                        <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{r.lens}</span>
+                      </div>
+                      <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 4px", lineHeight: 1.5 }}>{r.feedback}</p>
+                      {r.suggestion && r.verdict === "flag" && (
+                        <p style={{ fontSize: 13, color: "var(--gold-dark)", margin: 0, fontStyle: "italic" }}>Suggestion: {r.suggestion}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {saraSynthesis.summary && (
+                  <div style={{ padding: 20, border: "1px solid var(--border-subtle)", borderRadius: 12, background: "var(--surface-white)", marginBottom: 24 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--cornflower)", marginBottom: 8 }}>Sara's Synthesis</div>
+                    <p style={{ fontSize: 14, color: "var(--text-primary)", margin: "0 0 12px", lineHeight: 1.5 }}>{saraSynthesis.summary}</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {saraSynthesis.actionItems.map((item, i) => (
+                        <label key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: 8, borderRadius: 6, background: acceptedItems[i] ? "rgba(200,150,26,0.06)" : "transparent" }}>
+                          <input
+                            type="checkbox"
+                            checked={acceptedItems[i] || false}
+                            onChange={() => setAcceptedItems(prev => prev.map((v, j) => j === i ? !v : v))}
+                            style={{ marginTop: 2 }}
+                          />
+                          <span style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.5 }}>{item}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={handleEnterPolish}
+                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold-dark)", color: "#0D1B2A", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                >
+                  Apply and polish
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── POLISH PHASE: Layer 2 checkpoints ───────────────── */}
+        {phase === "polish" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
+            <WatsonOrb size={48} breathing={false} />
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Running final quality polish...</p>
+            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>Elena, Jordan, and Marcus + Marshall are reviewing.</p>
+          </div>
+        )}
+
+        {/* ── MEET THE TEAM OVERLAY ───────────────────────────── */}
+        {showMeetTeam && <MeetTheTeam onClose={() => setShowMeetTeam(false)} />}
+
+        {phase === "drafting" && <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>}
+
+        {(phase as string) === "generating" && (
           <div style={{
             flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
             gap: 0, padding: 40,
@@ -1986,9 +2601,9 @@ export default function WorkSession() {
                   <span style={{
                     fontSize: 14,
                     fontWeight: 600,
-                    color: generatedScore >= 800 ? "#50c8a0" : "var(--text-secondary)",
+                    color: generatedScore >= 900 ? "#50c8a0" : "var(--text-secondary)",
                   }}>
-                    {generatedScore >= 800 ? "Ready to publish" : "Needs revision"}
+                    {generatedScore >= 900 ? "Ready to publish" : "Needs revision"}
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -2015,7 +2630,7 @@ export default function WorkSession() {
                   >
                     Edit
                   </button>
-                  {generatedScore >= 800 && (
+                  {generatedScore >= 900 && (
                     <button
                       type="button"
                       onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
@@ -2037,7 +2652,7 @@ export default function WorkSession() {
                       Move to Wrap
                     </button>
                   )}
-                  {generatedScore < 800 && (
+                  {generatedScore < 900 && (
                     <button
                       type="button"
                       onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
@@ -2100,7 +2715,7 @@ export default function WorkSession() {
                 </div>
               ) : (
                 <div style={{ marginBottom: 16 }}>
-                  {generatedScore < 800 && pipelineStatus === "IDLE" && (
+                  {generatedScore < 900 && pipelineStatus === "IDLE" && (
                     <div style={{
                       padding: "12px 16px",
                       background: "rgba(245,198,66,0.06)",

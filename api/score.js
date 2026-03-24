@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     return res.json(scores);
   } catch (err) {
     console.error("[api/score]", err);
-    return res.json({ total: 800, summary: "Content generated successfully." });
+    return res.json({ total: 900, summary: "Content generated successfully." });
   }
 }
 

@@ -125,7 +125,7 @@ export default async function handler(req, res) {
       const totalOutputs = (outputs || []).length;
       const scores = (outputs || []).filter(o => o.score > 0).map(o => o.score);
       const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-      const published = scores.filter(s => s >= 800).length;
+      const published = scores.filter(s => s >= 900).length;
 
       const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
       const newUsersThisWeek = (profiles || []).filter(p => p.created_at > weekAgo).length;

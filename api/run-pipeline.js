@@ -97,7 +97,7 @@ function parseBetterishResponse(text) {
       const total = parsed.total || parsed.totalScore || 0;
       const verdict = parsed.verdict
         ? String(parsed.verdict).toUpperCase()
-        : total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
+        : total >= 900 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
       return {
         total,
         verdict,
@@ -112,7 +112,7 @@ function parseBetterishResponse(text) {
   let total = 0;
   const totalMatch = (text || "").match(/TOTAL:\s*(\d+)/i) || (text || "").match(/composite.*?(\d{3,4})/i);
   if (totalMatch) total = Math.min(1000, Math.max(0, parseInt(totalMatch[1])));
-  const verdict = total >= 800 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
+  const verdict = total >= 900 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
   return { total, verdict, breakdown: emptyBreakdown, topIssue: "", gutCheck: "" };
 }
 
@@ -128,8 +128,13 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-  const { draft, outputType, voiceDnaMd, brandDnaMd, methodDnaMd, userId, outputId } = req.body || {};
+  const { draft, outputType, voiceDnaMd, brandDnaMd, methodDnaMd, userId, outputId, gateSubset } = req.body || {};
   if (!draft) return res.status(400).json({ error: "draft is required" });
+
+  // If gateSubset is provided, only run those specific gates (for Layer 2 runs)
+  const gatesToRun = gateSubset && Array.isArray(gateSubset)
+    ? GATE_FILES.filter(g => gateSubset.includes(g.name))
+    : GATE_FILES;
 
   const gateResults = [];
   let betterishScore = { total: 0, verdict: "REJECT", breakdown: { voiceAuthenticity: 0, researchDepth: 0, hookStrength: 0, slopScore: 0, editorialQuality: 0, perspective: 0, engagement: 0, platformFit: 0, strategicValue: 0, nvcCompliance: 0 }, topIssue: "", gutCheck: "" };
@@ -196,10 +201,14 @@ export default async function handler(req, res) {
       }
     }
 
-    // Batch 1: gates 0-3 in parallel
-    console.log("[run-pipeline] Batch 1: Echo, Priya, Jordan, David");
+    // Split gates into two batches and run in parallel
+    const midpoint = Math.ceil(gatesToRun.length / 2);
+    const batch1Gates = gatesToRun.slice(0, midpoint);
+    const batch2Gates = gatesToRun.slice(midpoint);
+
+    console.log(`[run-pipeline] Batch 1 (${batch1Gates.length} gates): ${batch1Gates.map(g => g.name).join(", ")}`);
     const batch1Results = await Promise.allSettled(
-      GATE_FILES.slice(0, 4).map((gate, i) => runGate(gate, i))
+      batch1Gates.map((gate, i) => runGate(gate, i))
     );
     for (const settled of batch1Results) {
       const r = settled.status === "fulfilled"
@@ -213,16 +222,17 @@ export default async function handler(req, res) {
     const elapsed1 = Date.now() - startTime;
     console.log(`[run-pipeline] Batch 1 done in ${elapsed1}ms`);
 
-    if (elapsed1 > 90000) {
-      console.log("[run-pipeline] Time budget critical, skipping batch 2");
-      for (let i = 4; i < GATE_FILES.length; i++) {
-        gateResults.push({ gate: GATE_FILES[i].name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
+    if (elapsed1 > 90000 || batch2Gates.length === 0) {
+      if (batch2Gates.length > 0) {
+        console.log("[run-pipeline] Time budget critical, skipping batch 2");
+        for (const gate of batch2Gates) {
+          gateResults.push({ gate: gate.name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
+        }
       }
     } else {
-      // Batch 2: gates 4-6 in parallel
-      console.log("[run-pipeline] Batch 2: Elena, Natasha, Marcus+Marshall");
+      console.log(`[run-pipeline] Batch 2 (${batch2Gates.length} gates): ${batch2Gates.map(g => g.name).join(", ")}`);
       const batch2Results = await Promise.allSettled(
-        GATE_FILES.slice(4).map((gate, i) => runGate(gate, i + 4))
+        batch2Gates.map((gate, i) => runGate(gate, i + midpoint))
       );
       for (const settled of batch2Results) {
         const r = settled.status === "fulfilled"

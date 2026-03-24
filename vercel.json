@@ -49,6 +49,16 @@
     },
     "api/admin-data.js": {
       "maxDuration": 30
+    },
+    "api/writers-room/bluesky.js": {
+      "maxDuration": 30
+    },
+    "api/writers-room/structure.js": {
+      "maxDuration": 30
+    },
+    "api/writers-room/stress-test.js": {
+      "maxDuration": 60,
+      "includeFiles": "CLEAN_6_5/*.md"
     }
   },
   "rewrites": [
