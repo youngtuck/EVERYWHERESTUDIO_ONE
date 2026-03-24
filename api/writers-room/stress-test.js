@@ -116,7 +116,7 @@ export default async function handler(req, res) {
       for (const s of settled) {
         results.push(s.status === "fulfilled" ? s.value : { agent: "Unknown", lens: "", verdict: "flag", feedback: "This specialist couldn't complete their review due to high demand.", suggestion: "" });
       }
-      if (b < SBU_AGENTS.length - 1) await delay(2000);
+      if (b < SBU_AGENTS.length - 1) await delay(3000);
     }
 
     // Sara synthesis

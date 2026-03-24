@@ -2450,10 +2450,53 @@ export default function WorkSession() {
         {phase === "stress-test" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
             {writersRoomLoading ? (
-              <div style={{ textAlign: "center" }}>
-                <EverywhereMarkIcon size={48} style={{ marginBottom: 16 }} />
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 16 }}>Running the stress test...</p>
-              </div>
+              (() => {
+                const stressAgents = [
+                  { name: "Josh", role: "Category Designer", msg: "Evaluating your category position..." },
+                  { name: "Guy", role: "Business Development", msg: "Checking conversion architecture..." },
+                  { name: "Ward", role: "Sales", msg: "Testing audience qualification..." },
+                  { name: "Scott", role: "Market Realist", msg: "Assessing market demand..." },
+                  { name: "Dana", role: "Red Team", msg: "Building the case against your piece..." },
+                  { name: "Betterish", role: "Final Gut Check", msg: "Would you click on this?..." },
+                ];
+                const completed = stressResults.map(r => r.agent);
+                const current = stressAgents.find(a => !completed.includes(a.name));
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: 48 }}>
+                    <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {stressAgents.map(agent => {
+                        const isDone = completed.includes(agent.name);
+                        const isRunning = current?.name === agent.name;
+                        return (
+                          <div key={agent.name} style={{
+                            display: "flex", alignItems: "center", gap: 12,
+                            padding: "12px 16px", background: isRunning ? "rgba(200,150,26,0.04)" : "var(--surface)",
+                            border: "1px solid var(--line)", borderRadius: 8,
+                            opacity: isDone || isRunning ? 1 : 0.4, transition: "all 0.3s ease",
+                          }}>
+                            <div style={{
+                              width: 24, height: 24, borderRadius: "50%",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              background: isDone ? "#50c8a0" : isRunning ? "transparent" : "var(--bg-3)",
+                              border: isRunning ? "2px solid var(--gold)" : "none",
+                              animation: isRunning ? "checkpointSpin 1.2s linear infinite" : "none",
+                              flexShrink: 0,
+                            }}>
+                              {isDone && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{agent.name}</div>
+                              <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{agent.role}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {current && <p style={{ fontSize: 14, color: "var(--fg-3)", fontStyle: "italic", animation: "fadeInOut 2s ease-in-out infinite" }}>{current.msg}</p>}
+                    <style>{`@keyframes checkpointSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                  </div>
+                );
+              })()
             ) : (
               <div style={{ display: "flex", gap: 24, maxWidth: 1100, width: "100%", margin: "0 auto", flexDirection: isMobile ? "column" : "row" }}>
                 {/* Left: Draft reference */}

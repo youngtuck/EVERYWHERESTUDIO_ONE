@@ -232,7 +232,7 @@ export default async function handler(req, res) {
       await runPairAndCollect(pair, i);
       // Delay between pairs (skip after the last pair)
       if (i + 2 < gatesToRun.length) {
-        await delay(2000);
+        await delay(3000);
       }
     }
 

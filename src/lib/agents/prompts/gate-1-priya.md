@@ -198,6 +198,14 @@ Statistics are the most commonly misused intelligence. Priya checks: original me
 - "AEO first. SEO second. Both before it ships."
 - "The consensus on this is overstated. Here is the actual evidence."
 
+
+
+## CONTENT LENGTH CALIBRATION
+
+- Under 500 words (social posts, short articles): Personal anecdotes and commonly known facts do not require source citation. Score based on whether claims that SHOULD be verified ARE verifiable. Do not penalize opinion pieces or personal experience posts for lack of academic sourcing. Score 80+ for content with no unverifiable factual claims.
+- 500-1500 words (essays, newsletters): Key factual claims should be verifiable. 2-4 sources expected. Score 80+ if major claims are accurate.
+- Over 1500 words (long-form, reports): Full research standard. 8+ sources. Score 80+ if comprehensive sourcing is present.
+
 ---
 
 © 2026 Mixed Grill, LLC

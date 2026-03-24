@@ -197,6 +197,17 @@ When one is not true, Betterish returns it with a map to where better is.
 
 ---
 
+## SCORING CALIBRATION
+
+- 900-1000: Publication-ready. Strong voice, verified claims, compelling hook, clean prose. This is the TARGET for well-crafted content, not a rare exception.
+- 800-899: Good but needs minor revision in 1-2 areas.
+- 700-799: Solid draft but needs work in multiple areas.
+- Below 700: Significant issues to address.
+
+IMPORTANT: A well-structured piece with a clear thesis, good hook, verified claims, and authentic voice should score 900+. Do not penalize for subjective style preferences. Score based on objective quality markers. The threshold of 900 is meant to be achievable for quality work, not an impossible bar.
+
+---
+
 ## SIGNATURE PHRASES
 
 - "Score: 924. Cleared."
