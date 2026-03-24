@@ -391,7 +391,7 @@ export default function ExplorePage() {
           {!isMobile && (
             <div className="xp-nav-links-desktop" style={{ display: "flex", gap: 32, alignItems: "center" }}>
               <button className="xp-nav-link" onClick={() => scrollTo(howRef)}>How It Works</button>
-              <button className="xp-nav-link" onClick={() => scrollTo(standardRef)}>Quality Gates</button>
+              <button className="xp-nav-link" onClick={() => scrollTo(standardRef)}>Quality</button>
             </div>
           )}
           <button className="xp-nav-link" onClick={() => navigate("/auth")}>Sign In</button>
@@ -472,20 +472,11 @@ export default function ExplorePage() {
         `}</style>
       </section>
 
-      {/* ── SECTION 02: RECOGNITION + WATSON DEMO ─────────────── */}
+      {/* ── SECTION 02: THE PROBLEM ────────────────────────── */}
       <section style={{ padding: sectionPad }}>
         <Reveal>
-          <div className="xp-problem-grid" style={{
-            display: "grid",
-            gridTemplateColumns: "1.1fr 1fr",
-            gap: 60,
-            alignItems: "center",
-            maxWidth: 1120,
-            margin: "0 auto",
-            padding: "0 40px",
-          }}>
-            {/* Left: Text content */}
-            <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: isMobile ? 20 : 32 }}>
+          <div className="xp-inner">
+            <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: isMobile ? 20 : 32, maxWidth: 700 }}>
               <h2 style={{
                 fontSize: "clamp(28px, 4vw, 42px)",
                 fontWeight: 700,
@@ -494,167 +485,179 @@ export default function ExplorePage() {
                 margin: "0 0 28px",
               }}>
                 You have years of thinking that the world hasn't heard yet.{" "}
-                <em>That's not a discipline problem.</em>
+                <em>That's not a discipline problem. It's an infrastructure problem.</em>
               </h2>
               <p style={{ color: "var(--white-dim)", maxWidth: 580, marginBottom: 16 }}>
-                It's an infrastructure problem. Getting ideas from your head, through drafting, editing, formatting, and publishing, across every channel, in your voice, at the quality they deserve: that is a full operation.
+                Getting ideas from your head, through drafting, editing, formatting, and publishing, across every channel, in your voice, at the quality they deserve: that is a full operation.
               </p>
               <p style={{ color: "var(--white-dim)", maxWidth: 580 }}>
                 You've been trying to run that operation alone. Most thought leaders are. The ones who aren't are the ones you see everywhere.
               </p>
             </div>
-            {/* Right: Watson demo widget */}
-            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── SECTION 03: WATSON ────────────────────────────────── */}
+      <section style={{ padding: sectionPad }}>
+        <Reveal>
+          <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+              Watson is listening
+            </div>
+            <p style={{ color: "var(--white-dim)", maxWidth: 640, textAlign: "center", marginBottom: 48 }}>
+              Watson doesn't generate. He interviews. He asks until he fully understands what you're trying to say, in your words, from your experience. That takes as long as it takes. Sometimes 30 minutes. Then the room goes to work.
+            </p>
+            {/* Watson demo widget */}
+            <div style={{
+              background: "#0E0E0C",
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.07)",
+              overflow: "hidden",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
+              maxWidth: 440,
+              width: "100%",
+              marginBottom: 48,
+            }}>
+              {/* Header */}
               <div style={{
-                background: "#0E0E0C",
-                borderRadius: 14,
-                border: "1px solid rgba(255,255,255,0.07)",
-                overflow: "hidden",
-                boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
-                maxWidth: 440,
-                width: "100%",
+                padding: "14px 20px",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
               }}>
-                {/* Header */}
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--gold)", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>Watson is listening</span>
+              </div>
+              {/* Chat area */}
+              <div style={{ padding: "20px 20px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+                  <div style={{
+                    background: "#1B263B",
+                    borderRadius: "14px 14px 4px 14px",
+                    padding: "10px 16px",
+                    maxWidth: "80%",
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.85)",
+                    lineHeight: 1.5,
+                  }}>
+                    The best content creators aren't the loudest voices. They're the ones who got their infrastructure right.
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+                  <div style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: "14px 14px 14px 4px",
+                    padding: "10px 16px",
+                    maxWidth: "85%",
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.7)",
+                    lineHeight: 1.5,
+                  }}>
+                    <strong style={{ color: "rgba(255,255,255,0.9)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
+                    Who specifically needs to hear this?
+                  </div>
+                </div>
                 <div style={{
-                  padding: "14px 20px",
-                  borderBottom: "1px solid rgba(255,255,255,0.06)",
                   display: "flex",
                   alignItems: "center",
-                  gap: 10,
+                  justifyContent: "space-between",
+                  paddingTop: 12,
+                  borderTop: "1px solid rgba(255,255,255,0.06)",
                 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--gold)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>Watson is listening</span>
-                </div>
-                {/* Chat area */}
-                <div style={{ padding: "20px 20px 16px" }}>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
-                    <div style={{
-                      background: "#1B263B",
-                      borderRadius: "14px 14px 4px 14px",
-                      padding: "10px 16px",
-                      maxWidth: "80%",
-                      fontSize: 13,
-                      color: "rgba(255,255,255,0.85)",
-                      lineHeight: 1.5,
-                    }}>
-                      The best content creators aren't the loudest voices. They're the ones who got their infrastructure right.
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>861</span>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Betterish Score</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
-                    <div style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      borderRadius: "14px 14px 14px 4px",
-                      padding: "10px 16px",
-                      maxWidth: "85%",
-                      fontSize: 13,
-                      color: "rgba(255,255,255,0.7)",
-                      lineHeight: 1.5,
-                    }}>
-                      <strong style={{ color: "rgba(255,255,255,0.9)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
-                      Who specifically needs to hear this?
-                    </div>
-                  </div>
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingTop: 12,
-                    borderTop: "1px solid rgba(255,255,255,0.06)",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>861</span>
-                      <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Betterish Score</span>
-                    </div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
-                        <span key={f} style={{
-                          fontSize: 10,
-                          fontWeight: 600,
-                          padding: "4px 10px",
-                          borderRadius: 20,
-                          background: i < 2 ? "rgba(212,168,50,0.15)" : "rgba(255,255,255,0.04)",
-                          color: i < 2 ? "var(--gold)" : "rgba(255,255,255,0.25)",
-                          letterSpacing: "0.02em",
-                        }}>
-                          {f}
-                        </span>
-                      ))}
-                    </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
+                      <span key={f} style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        padding: "4px 10px",
+                        borderRadius: 20,
+                        background: i < 2 ? "rgba(212,168,50,0.15)" : "rgba(255,255,255,0.04)",
+                        color: i < 2 ? "var(--gold)" : "rgba(255,255,255,0.25)",
+                        letterSpacing: "0.02em",
+                      }}>
+                        {f}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ── SECTION 03: LEVERAGE STRIP ───────────────────────── */}
-      <section style={{ padding: isMobile ? "56px 0" : "100px 0", background: "rgba(212, 168, 50, 0.08)", borderTop: "1px solid rgba(212, 168, 50, 0.25)", borderBottom: "1px solid rgba(212, 168, 50, 0.25)" }}>
-        <Reveal scale>
-          <div className="xp-inner">
-            <div style={{
-              padding: isMobile ? "16px 0" : "24px 0",
+            {/* Supporting line */}
+            <p style={{
+              fontSize: "clamp(20px, 3vw, 28px)",
+              fontWeight: 600,
+              color: "var(--gold)",
+              margin: 0,
+              maxWidth: 720,
               textAlign: "center",
+              lineHeight: 1.4,
+              letterSpacing: "-0.01em",
             }}>
-              <p style={{
-                fontSize: "clamp(20px, 3vw, 28px)",
-                fontWeight: 600,
-                color: "var(--gold)",
-                margin: 0,
-                maxWidth: 720,
-                marginInline: "auto",
-                lineHeight: 1.4,
-                letterSpacing: "-0.01em",
-              }}>
-                The people in your market who show up everywhere aren't better thinkers. They have better infrastructure.
-              </p>
-            </div>
+              The people in your market who show up everywhere aren't better thinkers. They have better infrastructure.
+            </p>
           </div>
         </Reveal>
       </section>
 
-      {/* ── SECTION 04: IDENTITY SHIFT ───────────────────────── */}
+      {/* ── SECTION 04: YOU KNOW THIS FEELING ─────────────────── */}
       <section style={{ padding: sectionPad }}>
         <Reveal>
           <div className="xp-inner">
-            <div className="xp-grid-2" style={{ alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
-                  You know this feeling
-                </div>
-                <h2 style={{
-                  fontSize: "clamp(28px, 3.5vw, 40px)",
-                  fontWeight: 700,
-                  lineHeight: 1.15,
-                  letterSpacing: "-0.02em",
-                  margin: "0 0 24px",
+            <div style={{ textAlign: "center", marginBottom: isMobile ? 36 : 56 }}>
+              <h2 style={{
+                fontSize: "clamp(28px, 3.5vw, 40px)",
+                fontWeight: 700,
+                lineHeight: 1.15,
+                letterSpacing: "-0.02em",
+                margin: "0 0 16px",
+              }}>
+                The idea is in your head. Not in the world.
+              </h2>
+              <p style={{ color: "var(--white-dim)", maxWidth: 540, margin: "0 auto" }}>
+                You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out. In your voice, at the quality it deserves, on every channel that matters.
+              </p>
+            </div>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+              gap: 20,
+            }}>
+              {[
+                { label: "Sunday night", text: "The week is ending. You had three ideas worth writing about. None of them made it out." },
+                { label: "On a plane", text: "You write two pages of thinking in a notebook. It never becomes anything." },
+                { label: "Watching someone else", text: "You see someone on stage or in your feed saying something you've thought for years. They just got it out first." },
+                { label: "After the conversation", text: "You just explained something perfectly to a client. Room changed. No one else will ever hear that version of it." },
+              ].map((m) => (
+                <div key={m.label} style={{
+                  background: "rgba(240,242,248,0.03)",
+                  border: "1px solid var(--divider)",
+                  borderRadius: 8,
+                  padding: "28px 32px",
                 }}>
-                  The idea is in your head. Not in the world.
-                </h2>
-                <p style={{ color: "var(--white-dim)", maxWidth: 440 }}>
-                  You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out. In your voice, at the quality it deserves, on every channel that matters.
-                </p>
-              </div>
-              <div>
-                {[
-                  { label: "Sunday night", text: "The week is ending. You had three ideas worth writing about. None of them made it out." },
-                  { label: "On a plane", text: "You write two pages of thinking in a notebook. It never becomes anything." },
-                  { label: "Watching someone else", text: "You see someone on stage or in your feed saying something you've thought for years. They just got it out first." },
-                  { label: "After the conversation", text: "You just explained something perfectly to a client. Room changed. No one else will ever hear that version of it." },
-                ].map((m) => (
-                  <div key={m.label} className="xp-moment">
-                    <div className="xp-moment-label">{m.label}</div>
-                    <div className="xp-moment-text">{m.text}</div>
-                  </div>
-                ))}
-              </div>
+                  <div style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "var(--gold)",
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.1em",
+                    marginBottom: 8,
+                  }}>{m.label}</div>
+                  <div style={{ color: "var(--white-dim)", fontSize: 16, lineHeight: 1.6 }}>{m.text}</div>
+                </div>
+              ))}
             </div>
           </div>
         </Reveal>
       </section>
 
-      {/* ── SECTION 05: WHAT IT IS ───────────────────────────── */}
+      {/* ── SECTION 05: THE SYSTEM ─────────────────────────────── */}
       <section style={{ padding: sectionPad, background: "var(--navy-mid)" }}>
         <Reveal>
           <div className="xp-inner" style={{ textAlign: "center" }}>
@@ -667,14 +670,11 @@ export default function ExplorePage() {
               lineHeight: 1.15,
               letterSpacing: "-0.02em",
               margin: "0 auto 28px",
-              maxWidth: 700,
+              maxWidth: 800,
             }}>
-              Your thinking. Out in the world. In your voice. Every week.
+              You talk. Watson listens until he really gets it. Then {MARKETING_NUMBERS.specialistCount} specialists turn what you said into publication-ready content, in your voice, verified, every word traceable back to you.
             </h2>
-            <p style={{ color: "var(--white-dim)", maxWidth: 600, margin: "0 auto 16px", textAlign: "left" }}>
-              A coordinated team of {MARKETING_NUMBERS.specialistCount} specialists takes the idea in your head and turns it into publication-ready content across every format and channel you need.
-            </p>
-            <p style={{ color: "var(--white-dim)", maxWidth: 600, margin: "0 auto 0", textAlign: "left" }}>
+            <p style={{ color: "var(--white-dim)", maxWidth: 600, margin: "0 auto 0", textAlign: "center" }}>
               You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
             </p>
             <div style={{ display: "flex", gap: isMobile ? 32 : 64, justifyContent: "center", flexWrap: "wrap", marginTop: 56 }}>
@@ -692,41 +692,40 @@ export default function ExplorePage() {
                 </div>
               ))}
             </div>
+            {/* Testimonial */}
+            <div style={{ marginTop: 56, maxWidth: 640, marginInline: "auto", textAlign: "left" }}>
+              <blockquote style={{
+                margin: 0,
+                padding: "0 0 0 24px",
+                borderLeft: "3px solid var(--gold)",
+              }}>
+                <p style={{
+                  fontSize: "clamp(18px, 2.5vw, 22px)",
+                  fontWeight: 400,
+                  lineHeight: 1.5,
+                  color: "var(--white)",
+                  fontStyle: "italic",
+                  margin: "0 0 16px",
+                  letterSpacing: "-0.01em",
+                }}>
+                  "I had a decade of thinking that had never made it out. Now it does, every week, and it <em>sounds like me</em>. Better than what I was writing myself."
+                </p>
+                <footer style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase" as const,
+                  color: "var(--white-dim)",
+                }}>
+                  Doug C., Executive Coach
+                </footer>
+              </blockquote>
+            </div>
           </div>
         </Reveal>
       </section>
 
-      {/* ── SECTION 06: SOCIAL PROOF ─────────────────────────── */}
-      <section style={{ padding: sectionPad }}>
-        <Reveal>
-          <div className="xp-inner" style={{ maxWidth: 720, textAlign: "center" }}>
-            <blockquote style={{ margin: 0, padding: 0, border: "none" }}>
-              <p style={{
-                fontSize: "clamp(22px, 3vw, 30px)",
-                fontWeight: 400,
-                lineHeight: 1.5,
-                color: "var(--white)",
-                fontStyle: "italic",
-                margin: "0 0 24px",
-                letterSpacing: "-0.01em",
-              }}>
-                "I had a decade of thinking that had never made it out. Now it does, every week, and it <em>sounds like me</em>. Better than what I was writing myself."
-              </p>
-              <footer style={{
-                fontSize: 12,
-                fontWeight: 600,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase" as const,
-                color: "var(--white-dim)",
-              }}>
-                Doug C., Executive Coach
-              </footer>
-            </blockquote>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ── SECTION 07: HOW IT WORKS ─────────────────────────── */}
+      {/* ── SECTION 06: WATCH. WORK. WRAP. ────────────────────── */}
       <section ref={howRef} style={{ padding: sectionPad }}>
         <div className="xp-inner">
           <Reveal>
@@ -824,7 +823,7 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* ── SECTION 08: QUALITY CHECKPOINTS ──────────────────── */}
+      {/* ── SECTION 07: QUALITY CHECKPOINTS ──────────────────── */}
       <section ref={standardRef} style={{ padding: sectionPad, background: "var(--navy-mid)" }}>
         <div className="xp-inner">
           <div className="xp-grid-2">
@@ -843,7 +842,7 @@ export default function ExplorePage() {
                   Nothing ships without passing all seven.
                 </h2>
                 <p style={{ color: "var(--white-dim)", maxWidth: 400 }}>
-                  Every piece of content runs through {MARKETING_NUMBERS.qualityCheckpoints} independent quality gates before it reaches you. Not style checks. Substantive evaluation by specialists who know what publication-ready means.
+                  Every piece of content runs through {MARKETING_NUMBERS.qualityCheckpoints} independent quality checkpoints before it reaches you. Not style checks. Substantive evaluation by specialists who know what publication-ready means.
                 </p>
               </div>
             </Reveal>
@@ -870,6 +869,23 @@ export default function ExplorePage() {
         </div>
       </section>
 
+      {/* ── SECTION 08: ANCHOR LINE ──────────────────────────── */}
+      <section style={{ padding: isMobile ? "56px 0" : "100px 0" }}>
+        <Reveal>
+          <div className="xp-inner" style={{ textAlign: "center" }}>
+            <p style={{
+              fontSize: "clamp(28px, 4vw, 48px)",
+              fontWeight: 700,
+              margin: 0,
+              lineHeight: 1.2,
+              letterSpacing: "-0.02em",
+            }}>
+              Most AI writes for you. <em>EVERYWHERE</em> works for you.
+            </p>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ── SECTION 09: FINAL CTA ────────────────────────────── */}
       <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Reveal>
@@ -888,6 +904,9 @@ export default function ExplorePage() {
             </h2>
             <p style={{ color: "var(--white-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
               You don't need more discipline. You need a system that carries the idea from your head to your audience, every week, without it sitting on your to-do list.
+            </p>
+            <p style={{ color: "var(--white-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
+              The output is yours because the input was yours.
             </p>
             <p style={{ color: "var(--gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
@@ -908,7 +927,7 @@ export default function ExplorePage() {
       <footer style={{ background: "var(--navy)" }}>
         <div className="xp-footer">
           <Logo size="sm" variant="dark" />
-          <span>Composed Intelligence · Santa Barbara, CA · 2026 Mixed Grill LLC</span>
+          <span>&copy; 2026 Mixed Grill, LLC</span>
         </div>
       </footer>
     </div>
