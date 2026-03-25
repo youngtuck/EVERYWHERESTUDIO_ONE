@@ -5,3 +5,6 @@ export const MARKETING_NUMBERS = {
   betterishThreshold: 900,
   voiceDnaTarget: 95,
 } as const;
+
+export const APP_VERSION = "0.9.2";
+

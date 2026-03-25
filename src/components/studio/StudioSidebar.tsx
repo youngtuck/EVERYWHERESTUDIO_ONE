@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import Logo from "../Logo";
+import { APP_VERSION } from "../../lib/constants";
 import EverywhereMarkIcon from "./EverywhereMarkIcon";
 import { PenLine, Eye, Home, Package, Bookmark, Archive, BookOpen, FolderOpen, Settings, Shield, LogOut } from "lucide-react";
 
@@ -271,6 +272,13 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           {!collapsed && <LogOut size={14} style={{ color: "var(--fg-3)", flexShrink: 0 }} />}
         </div>
       </div>
+
+      {/* Version */}
+      {!collapsed && (
+        <div style={{ padding: "4px 16px 10px", fontSize: 11, color: "var(--fg-3)", opacity: 0.5 }}>
+          v{APP_VERSION}
+        </div>
+      )}
     </aside>
   );
 }

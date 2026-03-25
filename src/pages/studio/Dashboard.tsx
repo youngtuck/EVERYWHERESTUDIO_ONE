@@ -123,31 +123,8 @@ export default function Dashboard() {
         <span style={{ fontSize: 15, color: "var(--fg-3)" }}>What do you want to work on?</span>
       </div>
 
-      {/* Quick start pills */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 48 }}>
-        {QUICK_START.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => nav(`/studio/work?type=${key}`)}
-            style={{
-              background: "transparent",
-              border: "1px solid var(--line)",
-              borderRadius: 999,
-              padding: "6px 16px",
-              fontSize: 13,
-              fontWeight: 500,
-              color: "var(--fg-3)",
-              cursor: "pointer",
-              fontFamily: "'Afacad Flux', sans-serif",
-              transition: "all 0.15s ease",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-3)"; }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* Spacer below input */}
+      <div style={{ marginBottom: 48 }} />
 
       {/* Welcome section for first-time users */}
       {!loading && outputs.length === 0 && !welcomeDismissed && (
