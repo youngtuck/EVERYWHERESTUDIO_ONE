@@ -6,6 +6,7 @@ import Logo from "../Logo";
 import { APP_VERSION } from "../../lib/constants";
 import EverywhereMarkIcon from "./EverywhereMarkIcon";
 import { PenLine, Eye, Home, Package, Bookmark, Archive, BookOpen, FolderOpen, Settings, Shield, LogOut } from "lucide-react";
+import { clearSession } from "../../lib/sessionPersistence";
 
 const NAV_GROUPS = [
   {
@@ -145,7 +146,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       {!onMobileClose && (
         <div style={{ padding: collapsed ? "8px 8px" : "8px 12px" }}>
           <button
-            onClick={() => nav("/studio/work")}
+            onClick={() => { clearSession(); window.location.href = "/studio/work"; }}
             title="Start a new session"
             style={{
               width: "100%",

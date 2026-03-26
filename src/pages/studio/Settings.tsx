@@ -93,6 +93,9 @@ export default function Settings() {
   const [voiceComplete, setVoiceComplete] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [emailUpdating, setEmailUpdating] = useState(false);
+  const [passwordResetSent, setPasswordResetSent] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -238,6 +241,56 @@ export default function Settings() {
           >
             {saved ? "Saved" : "Save Changes"}
           </button>
+
+          {/* Change Email */}
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
+              Change Email
+            </label>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="New email address"
+                style={{ width: "100%", maxWidth: 280, padding: "10px 14px", fontSize: 15, background: "var(--surface)", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none" }}
+              />
+              <button
+                type="button"
+                disabled={emailUpdating || !newEmail.trim()}
+                onClick={async () => {
+                  setEmailUpdating(true);
+                  const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+                  setEmailUpdating(false);
+                  if (error) { toast("Failed to update email: " + error.message, "error"); }
+                  else { toast("Confirmation email sent to " + newEmail.trim()); setNewEmail(""); }
+                }}
+                style={{ background: "var(--gold)", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 700, cursor: emailUpdating || !newEmail.trim() ? "default" : "pointer", fontFamily: "'Afacad Flux', sans-serif", opacity: emailUpdating || !newEmail.trim() ? 0.5 : 1, transition: "opacity 0.15s ease", whiteSpace: "nowrap" }}
+              >
+                {emailUpdating ? "Updating..." : "Update Email"}
+              </button>
+            </div>
+          </div>
+
+          {/* Change Password */}
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
+              Change Password
+            </label>
+            <button
+              type="button"
+              disabled={passwordResetSent}
+              onClick={async () => {
+                if (!user?.email) return;
+                const { error } = await supabase.auth.resetPasswordForEmail(user.email);
+                if (error) { toast("Failed to send reset email: " + error.message, "error"); }
+                else { setPasswordResetSent(true); toast("Password reset email sent to " + user.email); }
+              }}
+              style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: passwordResetSent ? "default" : "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease", opacity: passwordResetSent ? 0.6 : 1 }}
+            >
+              {passwordResetSent ? "Reset email sent" : "Send Password Reset Email"}
+            </button>
+          </div>
         </div>
       </SectionCard>
 
@@ -272,26 +325,64 @@ export default function Settings() {
               Retrain Voice DNA
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => navigate("/onboarding?retrain=1")}
-              style={{
-                background: "var(--gold-dark)",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                padding: "10px 20px",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-                fontFamily: "'Afacad Flux', sans-serif",
-                transition: "opacity 0.15s ease",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-            >
-              Start Voice DNA
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => navigate("/onboarding?retrain=1")}
+                style={{
+                  background: "var(--gold-dark)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "opacity 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+              >
+                Start Voice DNA
+              </button>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "transparent",
+                  color: "var(--text-secondary)",
+                  border: "1px solid var(--line)",
+                  borderRadius: 8,
+                  padding: "10px 20px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                Upload Voice Sample
+                <input
+                  type="file"
+                  accept=".md,.txt"
+                  style={{ display: "none" }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !user) return;
+                    const text = await file.text();
+                    const { error } = await supabase
+                      .from("profiles")
+                      .update({ voice_dna_md: text })
+                      .eq("id", user.id);
+                    if (error) { toast("Upload failed: " + error.message, "error"); }
+                    else { toast("Voice sample uploaded successfully"); setVoiceComplete(true); }
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </>
           )}
           {voiceComplete && (
             <button

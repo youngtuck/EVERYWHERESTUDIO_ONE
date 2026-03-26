@@ -41,6 +41,7 @@ function renderMarkdown(text: string): string {
     .replace(/^# (.+)$/gm, '<h1 style="font-size:26px;font-weight:700;margin:32px 0 16px;color:var(--fg)">$1</h1>')
     .replace(/^> (.+)$/gm, '<blockquote style="border-left:3px solid var(--cornflower);padding-left:16px;margin:16px 0;color:var(--fg-2);font-style:italic">$1</blockquote>')
     .replace(/\n\n/g, '</p><p style="margin:0 0 16px">')
+    .replace(/([.?!])\n(?=[A-Z])/g, '$1</p><p style="margin:0 0 16px">')
     .replace(/\n/g, '<br/>');
 }
 
@@ -172,6 +173,7 @@ function AutoTextarea({
     if (!el) return;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
+    el.scrollTop = el.scrollHeight;
   }, [value, refToUse]);
 
   return (
@@ -975,7 +977,7 @@ export default function WorkSession() {
   const [thesis, setThesis] = useState("");
   const [draftContent, setDraftContent] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [layer1Results, setLayer1Results] = useState<Array<{ gate: string; status: string; score: number; feedback: string }>>([]);
+  const [layer1Results, setLayer1Results] = useState<Array<{ gate: string; status: string; score: number; feedback: string; startedAt?: number }>>([]);
   const [stressResults, setStressResults] = useState<Array<{ agent: string; lens: string; verdict: string; feedback: string; suggestion: string }>>([]);
   const [saraSynthesis, setSaraSynthesis] = useState<{ summary: string; actionItems: string[] }>({ summary: "", actionItems: [] });
   const [acceptedItems, setAcceptedItems] = useState<boolean[]>([]);
@@ -1009,6 +1011,22 @@ export default function WorkSession() {
         }
       });
   }, [user]);
+
+  // Checkpoint timeout: if any checkpoint is "running" for more than 60s, mark as timeout
+  useEffect(() => {
+    const hasRunning = layer1Results.some(r => r.status === "running");
+    if (!hasRunning) return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setLayer1Results(prev => prev.map(r => {
+        if (r.status === "running" && r.startedAt && now - r.startedAt > 60000) {
+          return { ...r, status: "timeout", feedback: "This specialist could not complete. Click Re-run to try again." };
+        }
+        return r;
+      }));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [layer1Results]);
 
   useEffect(() => {
     if (!user) return;
@@ -1448,10 +1466,10 @@ export default function WorkSession() {
 
       // Fire Layer 1 checkpoints in background
       setLayer1Results([
-        { gate: "Echo", status: "running", score: 0, feedback: "" },
-        { gate: "Priya", status: "running", score: 0, feedback: "" },
-        { gate: "David", status: "running", score: 0, feedback: "" },
-        { gate: "Natasha", status: "running", score: 0, feedback: "" },
+        { gate: "Echo", status: "running", score: 0, feedback: "", startedAt: Date.now() },
+        { gate: "Priya", status: "running", score: 0, feedback: "", startedAt: Date.now() },
+        { gate: "David", status: "running", score: 0, feedback: "", startedAt: Date.now() },
+        { gate: "Natasha", status: "running", score: 0, feedback: "", startedAt: Date.now() },
       ]);
 
       try {
@@ -1928,7 +1946,24 @@ export default function WorkSession() {
     }
   };
 
-  const startOver = () => {
+  const startOver = async () => {
+    if (!window.confirm("Start a new session? Your current draft is saved in The Vault. This clears the conversation.")) return;
+    // Auto-save current content to Supabase before clearing
+    if (user && (generatedContent || draftContent)) {
+      try {
+        const title = sessionTitle || generateTitle(messages.find(m => m.role === "user")?.content || "", generatedContent || draftContent);
+        await supabase.from("outputs").insert({
+          user_id: user.id,
+          title,
+          content: generatedContent || draftContent,
+          output_type: outputType,
+          score: generatedScore || 0,
+          gates: generatedGates,
+        });
+      } catch (err) {
+        console.error("[WorkSession] Auto-save before new session failed:", err);
+      }
+    }
     setPhase("input");
     setGeneratedContent("");
     setGeneratedScore(0);
@@ -2221,13 +2256,15 @@ export default function WorkSession() {
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
                   {outline.map((section, idx) => (
-                    <div key={section.id} style={{ padding: 16, border: "1px solid var(--border-subtle)", borderRadius: 10, background: "var(--surface-white)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold)", width: 20 }}>{idx + 1}</span>
-                        <input
+                    <div key={section.id} data-section={section.id} style={{ padding: 16, border: "1px solid var(--border-subtle)", borderRadius: 10, background: "var(--surface-white)" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold)", width: 20, marginTop: 4 }}>{idx + 1}</span>
+                        <textarea
                           value={section.section}
-                          onChange={(e) => setOutline(prev => prev.map((s, i) => i === idx ? { ...s, section: e.target.value } : s))}
-                          style={{ flex: 1, background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none" }}
+                          onChange={(e) => { setOutline(prev => prev.map((s, i) => i === idx ? { ...s, section: e.target.value } : s)); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
+                          rows={1}
+                          style={{ flex: 1, background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none", resize: "none", overflow: "hidden", lineHeight: 1.4 }}
+                          ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
                         />
                         <button
                           onClick={() => setOutline(prev => prev.filter((_, i) => i !== idx))}
@@ -2236,12 +2273,14 @@ export default function WorkSession() {
                       </div>
                       <div style={{ paddingLeft: 28 }}>
                         {section.beats.map((beat, bi) => (
-                          <div key={bi} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                            <span style={{ color: "var(--text-tertiary)", fontSize: 12 }}>-</span>
-                            <input
+                          <div key={bi} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 4 }}>
+                            <span style={{ color: "var(--text-tertiary)", fontSize: 12, marginTop: 4 }}>-</span>
+                            <textarea
                               value={beat}
-                              onChange={(e) => setOutline(prev => prev.map((s, i) => i === idx ? { ...s, beats: s.beats.map((b, j) => j === bi ? e.target.value : b) } : s))}
-                              style={{ flex: 1, background: "transparent", border: "none", fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none" }}
+                              onChange={(e) => { setOutline(prev => prev.map((s, i) => i === idx ? { ...s, beats: s.beats.map((b, j) => j === bi ? e.target.value : b) } : s)); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
+                              rows={1}
+                              style={{ flex: 1, background: "transparent", border: "none", fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none", resize: "none", overflow: "hidden", lineHeight: 1.4 }}
+                              ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
                             />
                           </div>
                         ))}
@@ -2446,9 +2485,11 @@ export default function WorkSession() {
                 <textarea
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
+                  onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); editNotes.trim() ? handleRevisionFromEdits() : handleEnterStressTest(); } }}
                   placeholder="General feedback, things to strengthen, areas to cut..."
                   style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, resize: "vertical", minHeight: 60, outline: "none" }}
                 />
+                <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4 }}>Cmd+Enter to apply</div>
               </div>
               <button
                 onClick={editNotes.trim() ? handleRevisionFromEdits : () => handleEnterStressTest()}
@@ -3034,7 +3075,7 @@ export default function WorkSession() {
                     transition: "all 0.15s ease",
                   }}
                 >
-                  Start over
+                  New session
                 </button>
               </div>
             </div>
@@ -3146,6 +3187,11 @@ export default function WorkSession() {
         background: "linear-gradient(transparent, var(--bg-light) 20%)",
       }}>
         <div style={{ maxWidth: 800, margin: "0 auto", width: "100%", padding: "0 24px", boxSizing: "border-box" }}>
+          {messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
+            <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px 4px", fontSize: 12, color: "var(--fg-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "'Afacad Flux', sans-serif" }}>
+              Watson: {messages[messages.length - 1].content.slice(0, 100)}...
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
             {messages.length > 1 && (
               <button

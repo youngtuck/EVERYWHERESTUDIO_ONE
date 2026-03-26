@@ -37,8 +37,14 @@ function typeToLabel(outputType: string): string {
 
 const QUICK_START = [
   { key: "essay", label: "Sunday Story" },
+  { key: "podcast", label: "Podcast" },
+  { key: "book", label: "Book" },
+  { key: "website", label: "Website" },
+  { key: "video_script", label: "Video Script" },
   { key: "newsletter", label: "Newsletter" },
   { key: "social", label: "Social Post" },
+  { key: "presentation", label: "Presentation" },
+  { key: "business", label: "Business" },
   { key: "freestyle", label: "Freestyle" },
 ];
 
@@ -121,6 +127,32 @@ export default function Dashboard() {
         onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.boxShadow = "none"; }}
       >
         <span style={{ fontSize: 15, color: "var(--fg-3)" }}>What do you want to work on?</span>
+      </div>
+
+      {/* Output type pills */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+        {QUICK_START.map(qs => (
+          <button
+            key={qs.key}
+            onClick={() => nav(`/studio/work?type=${qs.key}`)}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 20,
+              border: "1px solid var(--line)",
+              background: "transparent",
+              color: "var(--fg-2)",
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: "pointer",
+              fontFamily: "'Afacad Flux', sans-serif",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+          >
+            {qs.label}
+          </button>
+        ))}
       </div>
 
       {/* Spacer below input */}
