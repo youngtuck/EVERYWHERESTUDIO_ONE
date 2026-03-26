@@ -245,7 +245,7 @@ export default function Dashboard() {
                     {typeToBadge(o.output_type)}
                   </span>
                   {/* Title */}
-                  <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                  <span style={{ flex: 1, fontSize: 15, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                     {o.title}
                   </span>
                   {/* Score */}

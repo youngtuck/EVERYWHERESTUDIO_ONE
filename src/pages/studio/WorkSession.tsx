@@ -36,13 +36,14 @@ function renderMarkdown(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^### (.+)$/gm, '<h3 style="font-size:18px;font-weight:700;margin:24px 0 8px;color:var(--fg)">$1</h3>')
+    .replace(/^### (.+)$/gm, '<h3 style="font-size:18px;font-weight:700;margin:24px 0 12px;color:var(--fg)">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 style="font-size:22px;font-weight:700;margin:28px 0 12px;color:var(--fg)">$1</h2>')
     .replace(/^# (.+)$/gm, '<h1 style="font-size:26px;font-weight:700;margin:32px 0 16px;color:var(--fg)">$1</h1>')
     .replace(/^> (.+)$/gm, '<blockquote style="border-left:3px solid var(--cornflower);padding-left:16px;margin:16px 0;color:var(--fg-2);font-style:italic">$1</blockquote>')
     .replace(/\n\n/g, '</p><p style="margin:0 0 16px">')
     .replace(/([.?!])\n(?=[A-Z])/g, '$1</p><p style="margin:0 0 16px">')
-    .replace(/\n/g, '<br/>');
+    .replace(/(Format:[^\n]+)\n/g, '$1</p><p style="margin:0 0 16px">')
+    .replace(/\n/g, '<br style="margin-bottom:8px"/>');
 }
 
 function generateTitle(userInput: string, generatedContent: string): string {
@@ -282,7 +283,7 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
         ) : isUser ? (
           <p style={{
             fontFamily: "'Afacad Flux', sans-serif",
-            fontSize: 15, lineHeight: 1.6,
+            fontSize: 16, lineHeight: 1.65,
             color: "var(--bg)",
             fontWeight: 400,
             margin: 0, whiteSpace: "pre-wrap",
@@ -291,7 +292,7 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
           <div
             style={{
               fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 15, lineHeight: 1.6,
+              fontSize: 16, lineHeight: 1.65,
               color: "var(--fg)",
               fontWeight: 400,
             }}
@@ -1352,6 +1353,36 @@ export default function WorkSession() {
       setLoading(false);
     }
   };
+
+  // Auto-save current work to Supabase
+  const saveCurrentWork = async () => {
+    if (!user || !generatedOutputId || generatedOutputId === "new") return;
+    const content = draftContent || generatedContent;
+    if (!content) return;
+    try {
+      await supabase.from("outputs").update({
+        content,
+        title: sessionTitle !== "New Session" ? sessionTitle : undefined,
+        writer_room_phase: phase as string,
+        updated_at: new Date().toISOString(),
+      }).eq("id", generatedOutputId);
+    } catch (err) {
+      console.error("[WorkSession] Auto-save failed:", err);
+    }
+  };
+
+  // Auto-save on 30-second interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      saveCurrentWork();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [user, generatedOutputId, draftContent, generatedContent, sessionTitle, phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save on phase transitions
+  useEffect(() => {
+    saveCurrentWork();
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Watch/Sentinel integration: auto-send prompt from search params
   const promptParamHandled = useRef(false);

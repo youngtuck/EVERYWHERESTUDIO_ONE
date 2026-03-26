@@ -174,69 +174,61 @@ export default async function handler(req, res) {
         `\nCONTENT TO EVALUATE:\n\n${currentDraft}`,
       ].filter(Boolean).join("\n\n");
 
-      try {
-        console.log(`[run-pipeline] Gate ${index}: ${gate.name} - calling API`);
-        const response = await callWithRetry(() =>
-          client.messages.create({
-            model,
-            max_tokens: 4096,
-            system: prompt,
-            messages: [{ role: "user", content: userMessage }],
-          }),
-          1
-        );
-        const text = response.content[0]?.type === "text" ? response.content[0].text : "";
-        console.log(`[run-pipeline] Gate ${index}: ${gate.name} - got response (${text.length} chars)`);
-        const parsed = parseGateResponse(text);
-        return { ...parsed, gate: gate.name };
-      } catch (err) {
-        console.error(`[run-pipeline] Gate ${index} (${gate.name}) API ERROR:`, err.message, err.status || "");
-        const isRateLimit = err.status === 429 || (err.message || "").includes("rate_limit");
-        return {
-          gate: gate.name,
-          status: "FLAG",
-          score: 0,
-          feedback: isRateLimit
-            ? "This specialist couldn't complete their review due to high demand. You can re-run the pipeline in a moment."
-            : "This specialist couldn't complete their review. You can re-run the pipeline to try again.",
-          issues: ["API_ERROR"],
-        };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          console.log(`[run-pipeline] Gate ${index}: ${gate.name} - calling API (attempt ${attempt + 1})`);
+          const response = await callWithRetry(() =>
+            client.messages.create({
+              model,
+              max_tokens: 4096,
+              system: prompt,
+              messages: [{ role: "user", content: userMessage }],
+            }),
+            1
+          );
+          const text = response.content[0]?.type === "text" ? response.content[0].text : "";
+          console.log(`[run-pipeline] Gate ${index}: ${gate.name} - got response (${text.length} chars)`);
+          const parsed = parseGateResponse(text);
+          return { ...parsed, gate: gate.name };
+        } catch (err) {
+          const isRateLimit = err.status === 429 || (err.message || "").includes("rate_limit");
+          if (isRateLimit && attempt === 0) {
+            console.log(`[run-pipeline] Gate ${index}: ${gate.name} - 429 rate limit, waiting 8s before retry`);
+            await new Promise(resolve => setTimeout(resolve, 8000));
+            continue;
+          }
+          console.error(`[run-pipeline] Gate ${index} (${gate.name}) API ERROR:`, err.message, err.status || "");
+          return {
+            gate: gate.name,
+            status: "FLAG",
+            score: 0,
+            feedback: isRateLimit
+              ? "This specialist couldn't complete their review due to high demand. You can re-run the pipeline in a moment."
+              : "This specialist couldn't complete their review. You can re-run the pipeline to try again.",
+            issues: ["API_ERROR"],
+          };
+        }
       }
     }
 
-    // Run gates in staggered pairs with delays to avoid rate limits
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    async function runPairAndCollect(gates, startIdx) {
-      const results = await Promise.allSettled(gates.map((g, i) => runGate(g, startIdx + i)));
-      for (const settled of results) {
-        const r = settled.status === "fulfilled"
-          ? settled.value
-          : { gate: "Unknown", status: "FLAG", score: 0, feedback: "This specialist couldn't complete their review due to high demand. You can re-run the pipeline in a moment.", issues: ["CRASH"] };
-        gateResults.push(r);
-        if (r.status === "FAIL" && !blockedAt) blockedAt = r.gate;
-      }
-    }
-
-    // Chunk gates into pairs and run with 2s delay between each pair
-    for (let i = 0; i < gatesToRun.length; i += 2) {
-      if (Date.now() - startTime > 95000) {
-        // Time budget: skip remaining gates
+    for (let i = 0; i < gatesToRun.length; i++) {
+      if (Date.now() - startTime > 100000) {
         for (let j = i; j < gatesToRun.length; j++) {
           gateResults.push({ gate: gatesToRun[j].name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
         }
         break;
       }
-      const pair = gatesToRun.slice(i, Math.min(i + 2, gatesToRun.length));
-      console.log(`[run-pipeline] Pair ${Math.floor(i/2)+1}: ${pair.map(g => g.name).join(" + ")}`);
-      await runPairAndCollect(pair, i);
-      // Delay between pairs (skip after the last pair)
-      if (i + 2 < gatesToRun.length) {
-        await delay(3000);
-      }
+      const gate = gatesToRun[i];
+      const result = await runGate(gate, i);
+      gateResults.push(result);
+      if (result.status === "FAIL" && !blockedAt) blockedAt = result.gate;
+      if (i < gatesToRun.length - 1) await delay(4000);
     }
 
     // Betterish scorer
+    await delay(4000);
     const elapsed2 = Date.now() - startTime;
     if (elapsed2 < 100000) {
       const betterishPrompt = getPrompt("betterish.md");

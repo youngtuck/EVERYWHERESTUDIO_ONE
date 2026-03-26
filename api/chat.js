@@ -145,7 +145,7 @@ CORE BEHAVIOR:
    When all four are clear, present them explicitly: "Here's what I'm working with: Thesis: [X]. Audience: [Y]. Hook: [Z]. Format: [W]. Ready to generate, or want to refine anything?"
    If any are missing, ask for that specific piece, not a vague "tell me more." Say exactly what you need: "I have the thesis and the audience. What I'm missing is the hook: what's the opening line or image that would stop someone mid-scroll?"
 
-5. ONE QUESTION PER RESPONSE: Never ask multiple questions. Pick the most important gap and ask about that one thing. Your questions should be sharp and specific:
+5. ONE QUESTION PER RESPONSE: Non-negotiable. Never more than one question per response. If you have three things to ask, pick the most important ONE. Do not chain questions with "and" or "also." ONE question mark per response. Your questions should be sharp and specific:
    - "Who specifically needs to hear this?"
    - "What's the version of this that would make someone uncomfortable?"
    - "What would change for your audience if this idea landed?"
@@ -166,6 +166,10 @@ CORE BEHAVIOR:
    Do not write READY_TO_GENERATE until you genuinely have all four. Rushing to generate with thin material produces generic output. Take the extra turn.
 
 8. POST-GENERATION CONTEXT: If the conversation continues after content was generated (the user comes back with follow-up messages), reference the generated output specifically if you can see context about scores or results. Help them understand what was strong and what could improve. Offer to help strengthen weak areas with specific suggestions, not generic advice.
+
+URL AND ARTICLE HANDLING: When article content appears in brackets like [ARTICLE FROM url], treat it as source material. Read it, extract key insights, and reference specific points. Never say "I can't access links." If no article content appears after a URL, say: "I wasn't able to pull that article. Can you paste the key points?"
+
+FORMATTING: Always use double newlines between paragraphs. Never run paragraphs together with single newlines.
 
 IMPORTANT: Never say "I can't research that" or "I don't have access to external information." If the user asks for research or background information, say: "Let me work with what you know about this topic. Give me your current understanding and I'll help shape it into something compelling. If you need deeper research, we can use the Watch tools before we write." Never refuse to engage with a topic.
 
@@ -239,6 +243,24 @@ function loadModeAgentContext(systemMode) {
   return context;
 }
 
+async function fetchUrlContent(url) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 (compatible; EverywhereStudio/1.0)", "Accept": "text/html,text/plain" } });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    const html = await res.text();
+    let text = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+    if (text.length > 3000) text = text.slice(0, 3000) + "\n\n[Content truncated]";
+    return text;
+  } catch { return null; }
+}
+
+function extractUrls(text) {
+  return (text.match(/https?:\/\/[^\s<>"')\]]+/g) || []).slice(0, 3);
+}
+
 export default async function handler(req, res) {
   // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -288,6 +310,19 @@ export default async function handler(req, res) {
         content: m.content,
       }));
 
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg && (lastMsg.role === "user" || lastMsg.role === "watson" === false)) {
+        const urls = extractUrls(lastMsg.content);
+        if (urls.length > 0) {
+          let urlCtx = "";
+          for (const u of urls) {
+            const c = await fetchUrlContent(u);
+            if (c) urlCtx += `\n\n[ARTICLE FROM ${u}]:\n${c}\n[END ARTICLE]\n`;
+          }
+          if (urlCtx) lastMsg.content += urlCtx;
+        }
+      }
+
       const response = await callWithRetry(() =>
         client.messages.create({
           model: "claude-sonnet-4-20250514",
@@ -325,6 +360,19 @@ export default async function handler(req, res) {
       role: m.role === "watson" ? "assistant" : "user",
       content: m.content,
     }));
+
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && (lastMsg.role === "user" || lastMsg.role === "watson" === false)) {
+      const urls = extractUrls(lastMsg.content);
+      if (urls.length > 0) {
+        let urlCtx = "";
+        for (const u of urls) {
+          const c = await fetchUrlContent(u);
+          if (c) urlCtx += `\n\n[ARTICLE FROM ${u}]:\n${c}\n[END ARTICLE]\n`;
+        }
+        if (urlCtx) lastMsg.content += urlCtx;
+      }
+    }
 
     const response = await callWithRetry(() =>
       client.messages.create({

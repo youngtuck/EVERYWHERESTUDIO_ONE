@@ -382,7 +382,7 @@ const AuthPage = () => {
                     }}>
                       Access codes are provided during onboarding.{" "}
                       <a
-                        href="mailto:mark@mixedgrill.studio?subject=EVERYWHERE%20Studio%20Access%20Code%20Request"
+                        href="mailto:mark@coastalintelligence.ai?subject=EVERYWHERE%20Studio%20Access%20Code%20Request"
                         style={{ color: "#F5C642", textDecoration: "none" }}
                       >
                         Request one here.
@@ -540,7 +540,7 @@ const AuthPage = () => {
                   cursor: "pointer",
                 }}
               >
-                {mode === "signin" ? "Sign In" : "Create Studio"}
+                {mode === "signin" ? "Sign In" : "Join the Studio"}
               </button>
               {submitError && (
                 <p
@@ -569,7 +569,7 @@ const AuthPage = () => {
               >
                 <Logo size={13} variant="dark" /> is in private Alpha.
                 <br />
-                Contact mark@mixedgrill.studio for access.
+                Contact mark@coastalintelligence.ai for access.
               </p>
             )}
 

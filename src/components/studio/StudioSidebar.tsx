@@ -198,7 +198,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                         background: active ? "rgba(0, 0, 0, 0.05)" : "transparent",
                         cursor: "pointer",
                         fontFamily: "'Afacad Flux', sans-serif",
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: active ? 500 : 400,
                         color: active ? "var(--fg)" : "var(--fg-3)",
                         transition: "all 0.15s ease",
