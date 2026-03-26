@@ -46,17 +46,26 @@ function renderMarkdown(text: string): string {
 }
 
 function generateTitle(userInput: string, generatedContent: string): string {
-  // Try to extract a strong opening line from the generated content
-  const firstLine = generatedContent?.split("\n").find(l => {
-    const t = l.replace(/^[#*>\s]+/, "").trim();
-    return t.length > 10 && t.length <= 80;
-  });
-  if (firstLine) {
-    return firstLine.replace(/[*#_>]/g, "").trim().slice(0, 72);
+  if (generatedContent) {
+    // Try to find a heading
+    const headingMatch = generatedContent.match(/^#{1,3}\s+(.+)$/m);
+    if (headingMatch) {
+      return headingMatch[1].replace(/[*#_>]/g, "").trim().slice(0, 72);
+    }
+    // Try first bold text
+    const boldMatch = generatedContent.match(/\*\*(.+?)\*\*/);
+    if (boldMatch && boldMatch[1].length > 10) {
+      return boldMatch[1].trim().slice(0, 72);
+    }
+    // Try first sentence
+    const firstSentence = generatedContent.split(/[.!?]/)[0]?.trim();
+    if (firstSentence && firstSentence.length > 10 && firstSentence.length < 80) {
+      return firstSentence.replace(/^[#*>\s]+/, "").trim();
+    }
   }
-  // Fallback: clean up the user input
+  // Fallback: clean user input
   const cleaned = userInput
-    .replace(/^I want to (write|talk|make|create|tell|comment|do) (about |on |a )?/i, "")
+    .replace(/^(Watson,?\s*)?I('m| am| want to| would like to)\s*/i, "")
     .replace(/^(help me |please |can you )/i, "")
     .trim();
   if (cleaned.length > 5) {
@@ -2256,7 +2265,7 @@ export default function WorkSession() {
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
                   {outline.map((section, idx) => (
-                    <div key={section.id} data-section={section.id} style={{ padding: 16, border: "1px solid var(--border-subtle)", borderRadius: 10, background: "var(--surface-white)" }}>
+                    <div key={section.id} data-section-index={idx} style={{ padding: 16, border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface)" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold)", width: 20, marginTop: 4 }}>{idx + 1}</span>
                         <textarea
@@ -2285,7 +2294,13 @@ export default function WorkSession() {
                           </div>
                         ))}
                         <button
-                          onClick={() => setOutline(prev => prev.map((s, i) => i === idx ? { ...s, beats: [...s.beats, ""] } : s))}
+                          onClick={() => {
+                            setOutline(prev => prev.map((s, i) => i === idx ? { ...s, beats: [...s.beats, ""] } : s));
+                            requestAnimationFrame(() => requestAnimationFrame(() => {
+                              const el = document.querySelector(`[data-section-index="${idx}"]`);
+                              if (el) { const tas = el.querySelectorAll("textarea"); const last = tas[tas.length - 1] as HTMLTextAreaElement; if (last) last.focus(); }
+                            }));
+                          }}
                           style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--cornflower)", fontFamily: "'Afacad Flux', sans-serif", padding: "4px 0" }}
                         >+ Add beat</button>
                       </div>
@@ -3221,6 +3236,12 @@ export default function WorkSession() {
               </button>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Watson question preview */}
+              {messages.length > 0 && messages[messages.length - 1].role === "assistant" && input.length > 0 && (
+                <div style={{ padding: "0 0 4px", fontSize: 12, color: "var(--fg-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, opacity: 0.6 }}>
+                  Watson asked: {messages[messages.length - 1].content.split("\n").pop()?.slice(0, 80)}{((messages[messages.length - 1].content.split("\n").pop()?.length || 0) > 80) ? "..." : ""}
+                </div>
+              )}
               <SessionInputBox
                 input={input}
                 setInput={setInput}

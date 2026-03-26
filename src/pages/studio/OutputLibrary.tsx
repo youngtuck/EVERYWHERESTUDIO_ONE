@@ -60,20 +60,23 @@ export default function OutputLibrary() {
   };
 
   useEffect(() => {
+    if (!user) { setLoading(false); return; }
     let query = supabase
       .from("outputs")
-      .select("id, title, output_type, score, created_at")
+      .select("id, title, output_type, score, created_at, content_state")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-    if (user) query = query.eq("user_id", user.id);
+    // Filter by content_state based on view
+    if (isInProgressView) {
+      query = query.eq("content_state", "in_progress");
+    }
     query.then(({ data }) => {
       setOutputs(data ?? []);
       setLoading(false);
     });
-  }, [user]);
+  }, [user, isInProgressView]);
 
-  const baseOutputs = isInProgressView
-    ? outputs.filter((o) => (o.score ?? 0) < 900)
-    : outputs;
+  const baseOutputs = outputs;
   const filtered = baseOutputs.filter((o) => {
     const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || o.output_type === filter;

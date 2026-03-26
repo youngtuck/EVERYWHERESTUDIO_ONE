@@ -374,7 +374,7 @@ export default function Settings() {
                     const text = await file.text();
                     const { error } = await supabase
                       .from("profiles")
-                      .update({ voice_dna_md: text })
+                      .update({ voice_dna_md: text, voice_dna_completed: true })
                       .eq("id", user.id);
                     if (error) { toast("Upload failed: " + error.message, "error"); }
                     else { toast("Voice sample uploaded successfully"); setVoiceComplete(true); }
