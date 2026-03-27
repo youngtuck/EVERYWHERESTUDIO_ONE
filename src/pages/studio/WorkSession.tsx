@@ -1007,6 +1007,9 @@ export default function WorkSession() {
   const [editingParaText, setEditingParaText] = useState("");
   const [improvingGate, setImprovingGate] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [allCheckpointsPassed, setAllCheckpointsPassed] = useState(false);
+  const [autoImprovingCurrent, setAutoImprovingCurrent] = useState<string | null>(null);
+  const [manualFixNeeded, setManualFixNeeded] = useState<string[]>([]);
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
@@ -1715,6 +1718,44 @@ export default function WorkSession() {
       setImprovingGate(null);
     }
   };
+
+  // Auto-improve blocking gates: when all checkpoints complete, auto-fix failures
+  useEffect(() => {
+    if (phase !== "drafting" || layer1Results.length < 7) return;
+    if (layer1Results.some(r => r.status === "running" || r.status === "pending" || (r as any).status === "timeout")) return;
+    if (autoImprovingCurrent) return; // Already auto-improving
+
+    const failing = layer1Results.filter(r => r.score > 0 && r.score < 60);
+    if (failing.length === 0) {
+      setAllCheckpointsPassed(true);
+      return;
+    }
+
+    // Start auto-improve queue
+    (async () => {
+      for (const gate of failing) {
+        setAutoImprovingCurrent(gate.gate);
+        toast(`Revising to fix: ${gate.gate}...`);
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+          await handleImproveCheckpoint(gate.gate, gate.feedback);
+          await new Promise(r => setTimeout(r, 2000));
+
+          // Check if score improved (read fresh from state via ref pattern)
+          const current = layer1Results.find(r => r.gate === gate.gate);
+          if (current && current.score >= 60) break;
+
+          if (attempt === 1) {
+            setManualFixNeeded(prev => [...prev, gate.gate]);
+          }
+        }
+      }
+
+      setAutoImprovingCurrent(null);
+      const stillFailing = layer1Results.filter(r => r.score > 0 && r.score < 60);
+      setAllCheckpointsPassed(stillFailing.length === 0);
+    })();
+  }, [layer1Results, phase]);
 
   const handleEnterPolish = async () => {
     setPhase("polish");
@@ -2426,14 +2467,46 @@ export default function WorkSession() {
                     <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
                   </div>
                   <div style={{ marginTop: 16 }}>
-                    <button
-                      onClick={handleEnterEditing}
-                      disabled={writersRoomLoading}
-                      style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                    >
-                      Continue to editing
-                    </button>
-                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6, fontFamily: "'Afacad Flux', sans-serif" }}>
+                    {autoImprovingCurrent && (
+                      <div style={{ fontSize: 13, color: "var(--gold)", marginBottom: 12, fontStyle: "italic" }}>
+                        Revising draft to pass quality checkpoints: fixing {autoImprovingCurrent}...
+                      </div>
+                    )}
+                    {manualFixNeeded.length > 0 && !autoImprovingCurrent && (
+                      <div style={{ fontSize: 13, color: "var(--fg-2)", marginBottom: 12 }}>
+                        {layer1Results.filter(r => r.score >= 60 || r.score === 0).length} of 7 checkpoints passed. {manualFixNeeded.length} need your attention.
+                      </div>
+                    )}
+                    {allCheckpointsPassed ? (
+                      <div>
+                        <div style={{ fontSize: 13, color: "#50c8a0", marginBottom: 8, fontWeight: 600 }}>All checkpoints passed. Ready to continue.</div>
+                        <button
+                          onClick={handleEnterEditing}
+                          style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                        >
+                          Continue to editing
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <button
+                          onClick={handleEnterEditing}
+                          disabled={!!autoImprovingCurrent}
+                          style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: autoImprovingCurrent ? "default" : "pointer", fontFamily: "'Afacad Flux', sans-serif", opacity: autoImprovingCurrent ? 0.5 : 1 }}
+                        >
+                          Edit manually
+                        </button>
+                        {!autoImprovingCurrent && (
+                          <button
+                            onClick={handleEnterEditing}
+                            style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", color: "var(--fg-3)", fontSize: 13, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                          >
+                            Continue anyway
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 8 }}>
                       You'll be able to read through, make changes, and run the stress test.
                     </div>
                   </div>
@@ -2797,7 +2870,7 @@ export default function WorkSession() {
           >
             <SpecialistPanel
               pipelineGateResults={pipelineGateResults.length > 0 ? pipelineGateResults : undefined}
-              simpleGates={pipelineGateResults.length === 0 ? generatedGates : undefined}
+              simpleGates={pipelineGateResults.length === 0 && generatedGates ? (({ summary, ...rest }) => rest)(generatedGates) as Record<string, number | undefined> : undefined}
               visibleCount={visibleCheckpointCount}
               revealedCount={revealedCheckpointCount}
               totalScore={showTotalScore ? (generatedScore || undefined) : undefined}
@@ -3158,7 +3231,7 @@ export default function WorkSession() {
                 <div style={{ marginTop: 8 }}>
                   <SpecialistPanel
                     pipelineGateResults={pipelineGateResults.length > 0 ? pipelineGateResults : undefined}
-                    simpleGates={pipelineGateResults.length === 0 ? generatedGates : undefined}
+                    simpleGates={pipelineGateResults.length === 0 && generatedGates ? (({ summary, ...rest }) => rest)(generatedGates) as Record<string, number | undefined> : undefined}
                     totalScore={generatedScore || undefined}
                     showTotal={false}
                     threshold={MARKETING_NUMBERS.betterishThreshold}
