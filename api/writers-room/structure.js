@@ -13,6 +13,15 @@ CRITICAL RULES:
 - Include an opening hook that earns the read in 7 seconds.
 - Include a strong close that leaves the reader with something to do or think about.
 
+SECTION COUNT BY FORMAT (do not over-generate sections):
+- LinkedIn post / Social post: 3-4 sections
+- Newsletter: 4-5 sections
+- Sunday Story / Essay / Long-form essay: 5-7 sections
+- Podcast script: 4-6 sections
+- Freestyle: 3-5 sections
+- Book chapter: 6-8 sections
+Match the section count to the format. A LinkedIn post with 7 sections is wrong. A long essay with 3 sections is too thin.
+
 Return this exact JSON structure:
 {
   "thesis": "One sentence: the core argument or message of this piece",

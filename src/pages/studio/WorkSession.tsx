@@ -46,33 +46,31 @@ function renderMarkdown(text: string): string {
     .replace(/\n/g, '<br style="margin-bottom:8px"/>');
 }
 
-function generateTitle(userInput: string, generatedContent: string): string {
-  if (generatedContent) {
-    // Try to find a heading
-    const headingMatch = generatedContent.match(/^#{1,3}\s+(.+)$/m);
-    if (headingMatch) {
-      return headingMatch[1].replace(/[*#_>]/g, "").trim().slice(0, 72);
-    }
+function generateTitle(userInput: string, content: string): string {
+  if (content) {
+    // Try heading
+    const heading = content.match(/^#{1,3}\s+(.+)$/m);
+    if (heading) return heading[1].replace(/[*#_>]/g, "").trim().slice(0, 72);
+
     // Try first bold text
-    const boldMatch = generatedContent.match(/\*\*(.+?)\*\*/);
-    if (boldMatch && boldMatch[1].length > 10) {
-      return boldMatch[1].trim().slice(0, 72);
-    }
+    const bold = content.match(/\*\*(.+?)\*\*/);
+    if (bold && bold[1].length > 10) return bold[1].trim().slice(0, 72);
+
     // Try first sentence
-    const firstSentence = generatedContent.split(/[.!?]/)[0]?.trim();
-    if (firstSentence && firstSentence.length > 10 && firstSentence.length < 80) {
-      return firstSentence.replace(/^[#*>\s]+/, "").trim();
-    }
+    const first = content.split(/[.!?]/)[0]?.trim();
+    if (first && first.length > 10 && first.length < 80) return first.replace(/^[#*>\s]+/, "").trim();
   }
-  // Fallback: clean user input
+
+  // Fallback: clean the user input
   const cleaned = userInput
-    .replace(/^(Watson,?\s*)?I('m| am| want to| would like to)\s*/i, "")
-    .replace(/^(help me |please |can you )/i, "")
+    .replace(/^(Watson,?\s*)?/i, "")
+    .replace(/^(I('m| am| want to| would like to)\s*)/i, "")
+    .replace(/^(ready to |going to |help me |please |can you )/i, "")
     .trim();
-  if (cleaned.length > 5) {
-    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1, 72);
-  }
-  return userInput.slice(0, 72);
+
+  return cleaned.length > 5
+    ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1, 72)
+    : userInput.slice(0, 72);
 }
 
 const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: string }> = {
@@ -2738,10 +2736,10 @@ export default function WorkSession() {
             {writersRoomLoading ? (
               (() => {
                 const stressAgents = [
-                  { name: "Josh", role: "Category Designer", msg: "Evaluating your category position..." },
+                  { name: "Josh", role: "Category Analysis", msg: "Evaluating your category position..." },
                   { name: "Guy", role: "Business Development", msg: "Checking conversion architecture..." },
-                  { name: "Ward", role: "Sales", msg: "Testing audience qualification..." },
-                  { name: "Scott", role: "Market Realist", msg: "Assessing market demand..." },
+                  { name: "Ward", role: "Sales Qualification", msg: "Testing audience qualification..." },
+                  { name: "Scott", role: "Market Reality Check", msg: "Assessing market demand..." },
                   { name: "Dana", role: "Red Team", msg: "Building the case against your piece..." },
                   { name: "Betterish", role: "Final Gut Check", msg: "Would you click on this?..." },
                 ];
@@ -2771,8 +2769,7 @@ export default function WorkSession() {
                               {isDone && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                             </div>
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{agent.name}</div>
-                              <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{agent.role}</div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{agent.role}</div>
                             </div>
                           </div>
                         );
@@ -2800,8 +2797,7 @@ export default function WorkSession() {
                       <div key={r.agent} style={{ padding: "14px 16px", border: "1px solid var(--line)", borderRadius: 8, background: "var(--surface)" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{r.agent}</span>
-                            <span style={{ fontSize: 12, color: "var(--fg-3)" }}>{r.lens}</span>
+                            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{r.lens || r.agent}</span>
                           </div>
                           <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.verdict === "pass" ? "#50c8a0" : "var(--gold)" }} />
                         </div>
@@ -3076,30 +3072,42 @@ export default function WorkSession() {
                 gap: 16,
                 marginBottom: 16,
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{
                     fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 32,
-                    fontWeight: 700,
-                    color: getScoreColor(generatedScore).text,
+                    fontSize: 48,
+                    fontWeight: 800,
+                    color: "var(--gold)",
                     fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1,
                   }}>
                     {generatedScore}
-                  </span>
-                  <span style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: generatedScore >= 900 ? "#50c8a0" : "var(--text-secondary)",
-                  }}>
-                    {generatedScore >= 900 ? "Ready to publish" : "Needs revision"}
-                  </span>
+                  </div>
+                  <div>
+                    <div style={{
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: generatedScore >= 900 ? "#50c8a0" : "var(--fg)",
+                    }}>
+                      {generatedScore >= 900 ? "Ready to publish" : "Needs revision"}
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 4 }}>
+                      {generatedScore >= 900
+                        ? "This piece meets the Betterish publication threshold."
+                        : `Publication threshold is 900. ${900 - generatedScore} points to go.`
+                      }
+                    </div>
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button
                     type="button"
                     onClick={() => {
-                      setPhase("input");
+                      setPhase("editing");
                       setShowCheckpointSequence(false);
+                      if (!draftContent && generatedContent) {
+                        setDraftContent(generatedContent);
+                      }
                     }}
                     style={{
                       background: "transparent",
@@ -3116,7 +3124,7 @@ export default function WorkSession() {
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
                   >
-                    Edit
+                    Edit draft
                   </button>
                   {generatedScore >= 900 && (
                     <button
@@ -3137,7 +3145,7 @@ export default function WorkSession() {
                       onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
                     >
-                      Move to Wrap
+                      Save and close
                     </button>
                   )}
                   {generatedScore < 900 && (
@@ -3159,7 +3167,7 @@ export default function WorkSession() {
                       onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
                     >
-                      View in Vault
+                      Save and close
                     </button>
                   )}
                 </div>
@@ -3198,12 +3206,12 @@ export default function WorkSession() {
                       fontFamily: "'Afacad Flux', sans-serif",
                     }}
                   >
-                    View in Vault
+                    Save and close
                   </button>
                 </div>
               ) : (
                 <div style={{ marginBottom: 16 }}>
-                  {generatedScore < 900 && pipelineStatus === "IDLE" && (
+                  {generatedScore < 900 && pipelineStatus === "IDLE" && pipelineGateResults.length === 0 && (
                     <div style={{
                       padding: "12px 16px",
                       background: "rgba(245,198,66,0.06)",
@@ -3307,6 +3315,44 @@ export default function WorkSession() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Emergency navigation - always visible in production phases */}
+        {(phase === "drafting" || phase === "editing" || phase === "stress-test" || phase === "polish") && (
+          <div style={{
+            position: "fixed",
+            bottom: 20,
+            right: 20,
+            zIndex: 100,
+            display: "flex",
+            gap: 8,
+          }}>
+            <button
+              onClick={() => {
+                const nextPhase: Record<string, Phase> = {
+                  drafting: "editing",
+                  editing: "stress-test",
+                  "stress-test": "polish",
+                  polish: "complete",
+                };
+                const next = nextPhase[phase];
+                if (next) setPhase(next);
+              }}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 8,
+                border: "1px solid var(--line)",
+                background: "var(--surface)",
+                fontSize: 12,
+                color: "var(--fg-3)",
+                cursor: "pointer",
+                fontFamily: "'Afacad Flux', sans-serif",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            >
+              Skip to next step
+            </button>
           </div>
         )}
 

@@ -88,15 +88,36 @@ export default async function handler(req, res) {
     // Build the user message based on mode: outline-based, revision, or standard
     let userContent;
     if (revisionNotes || originalDraft) {
-      // Revision mode: incorporate user edits and notes
-      let revisionParts = [`Original draft:\n${originalDraft.slice(0, 6000)}`];
+      // Revision mode: surgical editing with voice preservation
+      system = `You are a surgical editor. You are revising an existing draft.
+
+ABSOLUTE RULES:
+1. PRESERVE THE AUTHOR'S VOICE. Do not change the tone, style, or personality. If the original is personal and reflective, the revision must be personal and reflective. If it's casual, keep it casual.
+2. DO NOT ADD NEW CONCEPTS, FRAMEWORKS, PRODUCTS, OR BRAND NAMES that don't exist in the original. If a framework name doesn't appear in the original, don't add it.
+3. DO NOT EXPAND. If the original is 800 words, the revision should be approximately 800 words. Revision means fixing, not growing.
+4. DO NOT SHIFT THE REGISTER. If the original is a personal essay, don't turn it into a white paper. If it's a story, don't turn it into a pitch deck.
+5. ONLY FIX WHAT WAS FLAGGED. Read the revision notes carefully. Fix those specific issues. Leave everything else untouched.
+6. If the revision notes say "fix repetition," CUT the redundant sections. Don't rephrase them.
+7. If the revision notes say "source claims," either add a credible source or soften the claim to "some research suggests" or remove it. Do NOT invent sources.
+8. NEVER add consulting language, sales copy, or strategic frameworks unless they existed in the original.
+
+YOUR JOB: Make the minimum changes necessary to address the specific feedback. A good revision is one where a reader can barely tell what changed, but the flagged issues are gone.
+
+CRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead.
+
+Output ONLY the complete revised draft. No commentary, no explanation.`;
+
+      if (resources.voiceDna) {
+        system += "\n\nVOICE DNA - The revision MUST match this voice:\n" + resources.voiceDna;
+      }
+
+      let revisionParts = [`ORIGINAL DRAFT:\n${originalDraft.slice(0, 8000)}`];
       if (edits && Array.isArray(edits) && edits.length > 0) {
-        revisionParts.push(`\nUser edits (apply these exactly, do not blend or paraphrase):\n${edits.map(e => `Paragraph ${e.paragraphIndex}: ${e.newText}`).join("\n")}`);
+        revisionParts.push(`\nUSER EDITS (apply these exactly, do not blend or paraphrase):\n${edits.map(e => `Paragraph ${e.paragraphIndex}: ${e.newText}`).join("\n")}`);
       }
       if (revisionNotes.trim()) {
-        revisionParts.push(`\nRevision notes from the Composer:\n${revisionNotes}`);
+        revisionParts.push(`\nREVISION NOTES:\n${revisionNotes}`);
       }
-      revisionParts.push(`\nProduce the revised ${outputType}. Apply all edits exactly as written. Address the revision notes. Maintain the same structure and voice. Do not re-introduce anything the Composer cut.`);
       userContent = revisionParts.join("\n\n");
     } else if (outline && Array.isArray(outline) && outline.length > 0) {
       // Outline-based generation: follow the beat sheet
