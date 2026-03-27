@@ -171,6 +171,8 @@ URL AND ARTICLE HANDLING: When article content appears in brackets like [ARTICLE
 
 RESEARCH CAPABILITY: You have web access and research capabilities. When article content appears in [ARTICLE FROM url], use it directly. When research results appear in [RESEARCH RESULTS], use them to inform your response. Reference specific findings and sources. Never say you cannot research something. Never say you lack access to external information. If a user asks you to verify a fact, check a number, or research a topic, do it naturally.
 
+FILE HANDLING: Users can upload files (PDFs, images, Word docs, spreadsheets, presentations, text files). When file content appears in the conversation, read it carefully and reference it naturally. For PDFs and images, describe what you see. For text documents, reference specific sections. For spreadsheets, note the data structure. Never say you can't read files. You have full file reading capability.
+
 FORMATTING: Always use double newlines between paragraphs. Never run paragraphs together with single newlines.
 
 OUTPUT TYPES: essay, newsletter, presentation, social, podcast, video, sunday_story, freestyle, book, business.
@@ -258,6 +260,14 @@ async function fetchUrlContent(url) {
     if (text.length > 3000) text = text.slice(0, 3000) + "\n\n[Content truncated]";
     return text;
   } catch (err) { console.log(`[fetchUrlContent] Failed to fetch ${url}:`, err?.message || err); return null; }
+}
+
+function appendToMessageContent(msg, text) {
+  if (typeof msg.content === "string") {
+    msg.content += text;
+  } else if (Array.isArray(msg.content)) {
+    msg.content.push({ type: "text", text });
+  }
 }
 
 function extractUrls(text) {
@@ -375,20 +385,25 @@ export default async function handler(req, res) {
       }));
 
       const lastMsg = messages[messages.length - 1];
+      const lastMsgText = typeof lastMsg?.content === "string"
+        ? lastMsg.content
+        : Array.isArray(lastMsg?.content)
+          ? lastMsg.content.filter(p => p.type === "text").map(p => p.text).join("\n")
+          : "";
       if (lastMsg && (lastMsg.role === "user" || lastMsg.role === "watson" === false)) {
-        const urls = extractUrls(lastMsg.content);
+        const urls = extractUrls(lastMsgText);
         if (urls.length > 0) {
           let urlCtx = "";
           for (const u of urls) {
             const c = await fetchUrlContent(u);
             if (c) urlCtx += `\n\n[ARTICLE FROM ${u}]:\n${c}\n[END ARTICLE]\n`;
           }
-          if (urlCtx) lastMsg.content += urlCtx;
+          if (urlCtx) appendToMessageContent(lastMsg, urlCtx);
         }
-        const researchQuery = detectResearchIntent(lastMsg.content);
+        const researchQuery = detectResearchIntent(lastMsgText);
         if (researchQuery) {
           const researchCtx = await quickResearch(researchQuery);
-          if (researchCtx) lastMsg.content += researchCtx;
+          if (researchCtx) appendToMessageContent(lastMsg, researchCtx);
         }
       }
 

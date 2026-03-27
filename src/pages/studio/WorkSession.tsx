@@ -384,6 +384,11 @@ function SessionInputBox({
   isListening,
   apiError,
   setApiError,
+  attachedFiles,
+  setAttachedFiles,
+  handleFileUpload,
+  getFileIcon,
+  formatFileSize,
 }: {
   input: string;
   setInput: (v: string) => void;
@@ -395,6 +400,11 @@ function SessionInputBox({
   isListening: boolean;
   apiError: string;
   setApiError: (v: string) => void;
+  attachedFiles?: Array<{ name: string; type: string; base64?: string; textContent?: string; size: number }>;
+  setAttachedFiles?: (fn: (prev: any[]) => any[]) => void;
+  handleFileUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  getFileIcon?: (type: string) => string;
+  formatFileSize?: (bytes: number) => string;
 }) {
   const [focusWithin, setFocusWithin] = useState(false);
   const { theme } = useTheme();
@@ -425,7 +435,30 @@ function SessionInputBox({
         setFocusWithin(false);
       }}
     >
+      {/* Attached file pills */}
+      {attachedFiles && attachedFiles.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+          {attachedFiles.map((file, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", background: "var(--bg-2)", border: "1px solid var(--line)", borderRadius: 6, fontSize: 12, color: "var(--fg-2)" }}>
+              <span style={{ fontWeight: 600 }}>{getFileIcon?.(file.type) || "FILE"}</span>
+              <span>{file.name}</span>
+              <span style={{ color: "var(--fg-3)" }}>({formatFileSize?.(file.size) || ""})</span>
+              <button onClick={() => setAttachedFiles?.(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 14, color: "var(--fg-3)", lineHeight: 1 }}>x</button>
+            </div>
+          ))}
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {/* File upload button */}
+        {handleFileUpload && (
+          <label style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "border-color 0.15s ease", background: "transparent" }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="9" y1="3" x2="9" y2="15" />
+              <line x1="3" y1="9" x2="15" y2="9" />
+            </svg>
+            <input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.txt,.csv,.md,.rtf,.xls,.xlsx,.pptx" style={{ display: "none" }} onChange={handleFileUpload} />
+          </label>
+        )}
         {isSupported && (
           <button
             type="button"
@@ -1008,6 +1041,13 @@ export default function WorkSession() {
   const [allCheckpointsPassed, setAllCheckpointsPassed] = useState(false);
   const [autoImprovingCurrent, setAutoImprovingCurrent] = useState<string | null>(null);
   const [manualFixNeeded, setManualFixNeeded] = useState<string[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<Array<{
+    name: string;
+    type: string;
+    base64?: string;
+    textContent?: string;
+    size: number;
+  }>>([]);
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
   const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
@@ -1317,6 +1357,71 @@ export default function WorkSession() {
     return () => clearTimeout(t);
   }, [visibleCheckpointCount, revealedCheckpointCount]);
 
+  function getFileIcon(mimeType: string): string {
+    if (mimeType.startsWith("image/")) return "IMG";
+    if (mimeType === "application/pdf") return "PDF";
+    if (mimeType.includes("word") || mimeType.includes("docx")) return "DOC";
+    if (mimeType.includes("spreadsheet") || mimeType.includes("xlsx") || mimeType.includes("csv")) return "XLS";
+    if (mimeType.includes("presentation") || mimeType.includes("pptx")) return "PPT";
+    return "TXT";
+  }
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+  }
+
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function extractFileText(file: File): Promise<string | null> {
+    if (file.type === "text/plain" || file.type === "text/csv" || file.type === "text/markdown" ||
+        file.name.endsWith(".md") || file.name.endsWith(".txt") || file.name.endsWith(".csv") || file.name.endsWith(".rtf")) {
+      return await file.text();
+    }
+    if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        file.name.endsWith(".docx") || file.name.endsWith(".doc") ||
+        file.name.endsWith(".xlsx") || file.name.endsWith(".xls") || file.name.endsWith(".pptx")) {
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch(`${API_BASE}/api/extract-text`, { method: "POST", body: formData });
+        if (res.ok) { const data = await res.json(); return data.text || null; }
+      } catch {}
+      return null;
+    }
+    try { return await file.text(); } catch { return null; }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const processed: typeof attachedFiles = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 10 * 1024 * 1024) { toast(`${file.name} is too large. Maximum 10MB.`); continue; }
+      if (file.type === "application/pdf" || file.type.startsWith("image/")) {
+        const base64 = await fileToBase64(file);
+        processed.push({ name: file.name, type: file.type, base64, size: file.size });
+      } else {
+        const text = await extractFileText(file);
+        if (text) { processed.push({ name: file.name, type: file.type, textContent: text, size: file.size }); }
+        else { toast(`Could not read ${file.name}. Try a different format.`); }
+      }
+    }
+    setAttachedFiles(prev => [...prev, ...processed]);
+    e.target.value = "";
+  };
+
   const sendMessage = async (contentOverride?: string) => {
     const text = (contentOverride !== undefined ? contentOverride : input).trim();
     if (!text || loading) return;
@@ -1332,7 +1437,29 @@ export default function WorkSession() {
       setSessionTitle(text.slice(0, 40) + (text.length > 40 ? "..." : ""));
     }
 
-    const userMessage: Message = { id: Date.now().toString(), role: "user", content: text, ts: Date.now() };
+    // Build content with file attachments
+    const currentFiles = [...attachedFiles];
+    let messageContent: string | Array<any> = text;
+    if (currentFiles.length > 0) {
+      const contentParts: any[] = [];
+      for (const file of currentFiles) {
+        if (file.base64 && file.type === "application/pdf") {
+          contentParts.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: file.base64 } });
+        } else if (file.base64 && file.type.startsWith("image/")) {
+          contentParts.push({ type: "image", source: { type: "base64", media_type: file.type, data: file.base64 } });
+        } else if (file.textContent) {
+          contentParts.push({ type: "text", text: `[FILE: ${file.name}]\n${file.textContent.slice(0, 15000)}\n[END FILE]` });
+        }
+      }
+      contentParts.push({ type: "text", text });
+      messageContent = contentParts;
+      setAttachedFiles([]);
+    }
+
+    const fileNames = currentFiles.map(f => f.name);
+    const displayText = fileNames.length > 0 ? `${text}\n\n[Attached: ${fileNames.join(", ")}]` : text;
+
+    const userMessage: Message = { id: Date.now().toString(), role: "user", content: displayText, ts: Date.now() };
     setMessages(prev => [...prev, userMessage]);
     setIsReady(false);
     setLoading(true);
@@ -1340,7 +1467,8 @@ export default function WorkSession() {
     const inferredMode = inferMode(text);
     setCurrentSystemMode(inferredMode);
 
-    let chatHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
+    // Build chat history: use multipart content for the latest message if files attached
+    let chatHistory = [...messages, { ...userMessage, content: messageContent }].map(m => ({ role: m.role, content: m.content }));
     // In revision mode, prepend the original content as context
     if (revisionMode && revisionContent && chatHistory.length <= 3) {
       let contextMsg = `[REVISION CONTEXT - Original content being revised:]\n\n${revisionContent.slice(0, 3000)}`;
@@ -2304,6 +2432,11 @@ export default function WorkSession() {
             isListening={isListening}
             apiError={apiError ?? ""}
             setApiError={setApiError}
+            attachedFiles={attachedFiles}
+            setAttachedFiles={setAttachedFiles}
+            handleFileUpload={handleFileUpload}
+            getFileIcon={getFileIcon}
+            formatFileSize={formatFileSize}
           />
         </EmptyState>
       ) : (
@@ -3542,6 +3675,11 @@ export default function WorkSession() {
                 isListening={isListening}
                 apiError={apiError ?? ""}
                 setApiError={setApiError}
+                attachedFiles={attachedFiles}
+                setAttachedFiles={setAttachedFiles}
+                handleFileUpload={handleFileUpload}
+                getFileIcon={getFileIcon}
+                formatFileSize={formatFileSize}
               />
             </div>
           </div>
