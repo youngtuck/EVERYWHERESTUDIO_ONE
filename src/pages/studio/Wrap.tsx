@@ -249,11 +249,9 @@ export default function Wrap() {
               fontSize: 14,
               lineHeight: 1.6,
               color: "var(--fg)",
-              maxHeight: 400,
-              overflowY: "auto",
               whiteSpace: "pre-wrap",
             }}>
-              {wrapOutput.content.slice(0, 2000)}{wrapOutput.content.length > 2000 ? "..." : ""}
+              {wrapOutput.content}
             </div>
           )}
         </div>
