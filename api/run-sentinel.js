@@ -120,7 +120,7 @@ export default async function handler(req, res) {
   if (!firecrawlKey) return res.status(503).json({ error: "FIRECRAWL_API_KEY not configured." });
   if (!anthropicKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured." });
 
-  const { userId, sentinelConfig, sources } = req.body || {};
+  const { userId, sentinelConfig, sources, forceRefresh } = req.body || {};
   if (!userId) return res.status(400).json({ error: "userId is required." });
 
   const userConfig = sentinelConfig || {
@@ -133,10 +133,16 @@ export default async function handler(req, res) {
   const runDate = new Date().toISOString().slice(0, 10);
   const configHash = hashConfig(userConfig, sources);
 
-  // Check cache
-  const cached = await loadCachedBriefing(supabase, userId, runDate, configHash);
-  if (cached) {
-    return res.json({ ...cached, cached: true });
+  // Check cache (skip if forceRefresh)
+  if (!forceRefresh) {
+    const cached = await loadCachedBriefing(supabase, userId, runDate, configHash);
+    if (cached) {
+      // Don't return cached empty briefings - run fresh instead
+      if (cached.signals && cached.signals.length > 0) {
+        return res.json({ ...cached, cached: true });
+      }
+      console.log("[sentinel] Cached briefing is empty, running fresh");
+    }
   }
 
   try {
@@ -225,10 +231,13 @@ Return ONLY valid JSON:
       })
       .sort((a, b) => (b.scores?.composite || 0) - (a.scores?.composite || 0));
 
-    try {
-      await saveBriefing(supabase, userId, runDate, configHash, briefing);
-    } catch (err) {
-      console.error("[sentinel] Cache save failed:", err.message);
+    // Only cache if we have actual signals
+    if (briefing.signals && briefing.signals.length > 0) {
+      try {
+        await saveBriefing(supabase, userId, runDate, configHash, briefing);
+      } catch (err) {
+        console.error("[sentinel] Cache save failed:", err.message);
+      }
     }
 
     return res.json({ ...briefing, cached: false });

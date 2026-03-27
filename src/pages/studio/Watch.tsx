@@ -172,13 +172,12 @@ export default function Watch() {
 
   const [briefingError, setBriefingError] = useState<string | null>(null);
 
-  const handleGetBriefing = async () => {
+  const handleGetBriefing = async (forceRefresh = false) => {
     if (!user) return;
     setGenerating(true);
     setMsgIdx(0);
     setBriefingError(null);
     try {
-      // Try the new Sentinel engine first, fall back to the old endpoint
       const res = await fetchWithRetry(
         `${API_BASE}/api/run-sentinel`,
         {
@@ -192,6 +191,7 @@ export default function Watch() {
               tracks: config.watchlist || {},
             },
             sources: sources.map(s => ({ type: s.type, name: s.name })),
+            forceRefresh,
           }),
         },
         { timeout: 120000 }
@@ -219,28 +219,58 @@ export default function Watch() {
     }
   };
 
+  const [loadingDefaults, setLoadingDefaults] = useState(false);
+
   const handleLoadDefaultSources = async () => {
-    if (!user) return;
+    if (!user) {
+      toast("You must be logged in to load sources.");
+      return;
+    }
+    setLoadingDefaults(true);
     try {
+      // First check if the table is accessible
+      const { error: testError } = await supabase
+        .from("watch_sources")
+        .select("id")
+        .limit(1);
+
+      if (testError) {
+        console.error("[Watch] Table access error:", testError);
+        toast(`Database error: ${testError.message}. The watch_sources table may not exist yet. Ask your admin to run the migration.`, "error");
+        setLoadingDefaults(false);
+        return;
+      }
+
       const sourcesWithUser = DEFAULT_SOURCES.map(s => ({
         user_id: user.id,
         name: s.name,
-        type: s.type.charAt(0).toUpperCase() + s.type.slice(1), // Capitalize type for DB constraint
-        track: s.track,
+        type: s.type.charAt(0).toUpperCase() + s.type.slice(1),
+        track: s.track || "general",
+        rss_url: "",
+        validation_status: "valid",
       }));
-      const { error } = await supabase.from("watch_sources").insert(sourcesWithUser);
-      if (error) {
-        console.error("[Watch] Failed to load default sources:", error);
-        toast("Failed to load sources. The table may not exist yet.", "error");
-        return;
+
+      // Insert in batches of 20 to avoid payload limits
+      for (let i = 0; i < sourcesWithUser.length; i += 20) {
+        const batch = sourcesWithUser.slice(i, i + 20);
+        const { error } = await supabase.from("watch_sources").insert(batch);
+        if (error) {
+          console.error("[Watch] Insert batch failed:", error);
+          toast(`Failed to insert sources: ${error.message}`, "error");
+          setLoadingDefaults(false);
+          return;
+        }
       }
-      toast("Default sources loaded.");
+
+      toast(`Loaded ${sourcesWithUser.length} default sources.`);
       // Refresh sources
       const { data } = await supabase.from("watch_sources").select("*").eq("user_id", user.id).order("type", { ascending: true });
       if (data) setSources(data);
     } catch (err) {
-      console.error("[Watch] Error loading defaults:", err);
-      toast("Something went wrong loading sources.", "error");
+      console.error("[Watch] Load defaults error:", err);
+      toast(`Failed: ${err instanceof Error ? err.message : "Unknown error"}`, "error");
+    } finally {
+      setLoadingDefaults(false);
     }
   };
 
@@ -295,7 +325,7 @@ export default function Watch() {
           <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--fg)", margin: 0, letterSpacing: "-0.02em" }}>WATCH</h1>
           <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "4px 0 0" }}>{getTodayLabel()}</p>
         </div>
-        <button type="button" onClick={handleGetBriefing} disabled={generating} style={{ ...goldBtn, opacity: generating ? 0.6 : 1, cursor: generating ? "wait" : "pointer" }}>
+        <button type="button" onClick={() => handleGetBriefing()} disabled={generating} style={{ ...goldBtn, opacity: generating ? 0.6 : 1, cursor: generating ? "wait" : "pointer" }}>
           {generating ? "Generating..." : "Get Briefing"}
         </button>
       </div>
@@ -321,15 +351,25 @@ export default function Watch() {
       {tab === "briefing" && !generating && (
         <>
           {briefingError && (
-            <div style={{ padding: "16px 20px", background: "rgba(229,57,53,0.06)", border: "1px solid rgba(229,57,53,0.2)", borderRadius: 8, color: "#D64545", fontSize: 14, marginBottom: 16 }}>
-              {briefingError}
+            <div style={{
+              padding: "16px 20px",
+              margin: "16px 0",
+              background: "rgba(229, 57, 53, 0.06)",
+              border: "1px solid rgba(229, 57, 53, 0.15)",
+              borderRadius: 8,
+              fontSize: 14,
+              color: "#D64545",
+              lineHeight: 1.5,
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Something went wrong</div>
+              <div>{briefingError}</div>
             </div>
           )}
           {!briefing ? (
             <div style={{ ...card, padding: 48, textAlign: "center" }}>
               <EverywhereMarkIcon size={40} style={{ marginBottom: 16 }} />
               <p style={{ fontSize: 15, color: "var(--fg-2)", margin: "0 0 16px" }}>No briefing yet. Generate one to see signals from your sources.</p>
-              <button type="button" onClick={handleGetBriefing} style={goldBtn}>Get Briefing</button>
+              <button type="button" onClick={() => handleGetBriefing()} style={goldBtn}>Get Briefing</button>
             </div>
           ) : (
             <>
@@ -372,7 +412,8 @@ export default function Watch() {
 
               {allSignals().length === 0 && (
                 <div style={{ ...card, padding: 32, textAlign: "center" }}>
-                  <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>This briefing has no signals. Try generating a fresh one.</p>
+                  <p style={{ fontSize: 14, color: "var(--fg-3)", margin: "0 0 16px" }}>This briefing has no signals. Try generating a fresh one.</p>
+                  <button type="button" onClick={() => handleGetBriefing(true)} style={goldBtn}>Generate Fresh Briefing</button>
                 </div>
               )}
             </>
@@ -386,7 +427,7 @@ export default function Watch() {
           {sources.length === 0 ? (
             <div style={{ ...card, padding: 32, textAlign: "center" }}>
               <p style={{ fontSize: 14, color: "var(--fg-2)", margin: "0 0 16px" }}>No sources configured yet.</p>
-              <button type="button" onClick={handleLoadDefaultSources} style={goldBtn}>Load Default Sources</button>
+              <button type="button" onClick={handleLoadDefaultSources} disabled={loadingDefaults} style={{ ...goldBtn, opacity: loadingDefaults ? 0.6 : 1 }}>{loadingDefaults ? "Loading..." : "Load Default Sources"}</button>
             </div>
           ) : (
             SOURCE_TYPES.map(type => {
