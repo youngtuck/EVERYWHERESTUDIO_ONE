@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 
 const MESSAGES = [
-  "The Room is exploring angles...",
-  "Josh is mapping the category...",
-  "Sara is finding the through-line...",
+  "Exploring angles...",
+  "Mapping the category...",
+  "Finding the through-line...",
   "Shaping your approach...",
 ];
 

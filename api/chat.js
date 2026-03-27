@@ -128,7 +128,7 @@ CORE BEHAVIOR:
    - Surface 2-3 hidden gems: angles, tensions, or insights buried in their text that they may not have noticed. These are the phrases, contradictions, or specific details that would make the piece remarkable. Call them out: "This line, '[quote]', is the piece. Everything else is scaffolding around it."
    - Then ask ONE targeted follow-up that deepens the strongest angle.
 
-2. FORMAT DETECTION: You MUST explicitly state the format in your first response. Say exactly: "Format: This is a [essay/LinkedIn post/newsletter/podcast script/Sunday Story]." If the output type was pre-selected via the session, reference it directly: "You're working in [format] mode." Never skip this step. The user needs to confirm or redirect the format before you go deeper.
+2. FORMAT DETECTION: Internally track the format but do NOT announce it. Do not write "Format: This is a..." at the start of your messages. Just proceed with questions. The format will be shown in the UI when ready. If the output type was pre-selected via the session, acknowledge it naturally without a formal declaration.
 
 3. DEEP PARSING OF LONG INPUT: If the user pastes a substantial amount of text (200+ words), treat it as raw material to mine, not a prompt to acknowledge. You must:
    - Summarize the core message in one clear sentence
@@ -167,11 +167,11 @@ CORE BEHAVIOR:
 
 8. POST-GENERATION CONTEXT: If the conversation continues after content was generated (the user comes back with follow-up messages), reference the generated output specifically if you can see context about scores or results. Help them understand what was strong and what could improve. Offer to help strengthen weak areas with specific suggestions, not generic advice.
 
-URL AND ARTICLE HANDLING: When article content appears in brackets like [ARTICLE FROM url], treat it as source material. Read it, extract key insights, and reference specific points. Never say "I can't access links." If no article content appears after a URL, say: "I wasn't able to pull that article. Can you paste the key points?"
+URL AND ARTICLE HANDLING: When article content appears in brackets like [ARTICLE FROM url], treat it as source material. Read it, extract key insights, and reference specific points. If no article content appears after a URL, say: "I was not able to pull that article. Can you paste the key points?"
+
+RESEARCH CAPABILITY: You have access to web research. When research results appear in brackets like [RESEARCH RESULTS], use them as source material. Reference specific findings and sources. When the user asks about current events, trends, or factual background, research will be performed automatically. Integrate findings naturally into your responses.
 
 FORMATTING: Always use double newlines between paragraphs. Never run paragraphs together with single newlines.
-
-IMPORTANT: Never say "I can't research that" or "I don't have access to external information." If the user asks for research or background information, say: "Let me work with what you know about this topic. Give me your current understanding and I'll help shape it into something compelling. If you need deeper research, we can use the Watch tools before we write." Never refuse to engage with a topic.
 
 OUTPUT TYPES: essay, newsletter, presentation, social, podcast, video, sunday_story, freestyle, book, business.
 
@@ -261,6 +261,47 @@ function extractUrls(text) {
   return (text.match(/https?:\/\/[^\s<>"')\]]+/g) || []).slice(0, 3);
 }
 
+async function quickResearch(query) {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch("https://api.firecrawl.dev/v1/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      body: JSON.stringify({ query, limit: 3 }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.data || data.data.length === 0) return null;
+    let context = "\n\n[RESEARCH RESULTS]:\n";
+    for (const item of data.data) {
+      const title = item.title || item.url || "";
+      const snippet = (item.description || item.content || "").slice(0, 500);
+      context += `\nSource: ${title}\nURL: ${item.url || "unknown"}\n${snippet}\n`;
+    }
+    context += "\n[END RESEARCH]\n";
+    return context;
+  } catch { return null; }
+}
+
+function detectResearchIntent(text) {
+  if (!text) return null;
+  const patterns = [
+    /(?:research|look up|find out about|what(?:'s| is) (?:the latest|happening with|going on with)|search for|tell me about)\s+(.+)/i,
+    /(?:what do (?:we|you) know about)\s+(.+)/i,
+    /(?:background on|context on|info on)\s+(.+)/i,
+  ];
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m) return m[1].trim();
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -321,6 +362,11 @@ export default async function handler(req, res) {
           }
           if (urlCtx) lastMsg.content += urlCtx;
         }
+        const researchQuery = detectResearchIntent(lastMsg.content);
+        if (researchQuery) {
+          const researchCtx = await quickResearch(researchQuery);
+          if (researchCtx) lastMsg.content += researchCtx;
+        }
       }
 
       const response = await callWithRetry(() =>
@@ -371,6 +417,11 @@ export default async function handler(req, res) {
           if (c) urlCtx += `\n\n[ARTICLE FROM ${u}]:\n${c}\n[END ARTICLE]\n`;
         }
         if (urlCtx) lastMsg.content += urlCtx;
+      }
+      const researchQuery = detectResearchIntent(lastMsg.content);
+      if (researchQuery) {
+        const researchCtx = await quickResearch(researchQuery);
+        if (researchCtx) lastMsg.content += researchCtx;
       }
     }
 

@@ -2204,7 +2204,7 @@ export default function WorkSession() {
       }}>
         {[
           { key: "watson", label: "Watson", done: phase !== "input", active: phase === "input" },
-          { key: "room", label: "Room", done: ["drafting","editing","stress-test","polish","complete"].includes(phase), active: phase === "bluesky" || phase === "structure" },
+          { key: "room", label: "Outline", done: ["drafting","editing","stress-test","polish","complete"].includes(phase), active: phase === "bluesky" || phase === "structure" },
           { key: "draft", label: "Draft", done: ["editing","stress-test","polish","complete"].includes(phase), active: phase === "drafting" },
           { key: "edit", label: "Edit", done: ["stress-test","polish","complete"].includes(phase), active: phase === "editing" },
           { key: "review", label: "Review", done: phase === "complete", active: phase === "stress-test" || phase === "polish" },
@@ -2227,7 +2227,7 @@ export default function WorkSession() {
       {/* ── Messages area ────────────────────────────────────────────── */}
       <div style={{
         flex: 1, overflowY: "auto", padding: "0 0 8px",
-        display: "flex", flexDirection: "column",
+        display: "flex", flexDirection: "column", minHeight: 0,
       }}>
         {/* ── BLUESKY PHASE: Angle selection ──────────────────── */}
         {phase === "bluesky" && (
@@ -2408,7 +2408,7 @@ export default function WorkSession() {
                     const descriptions: Record<string, { title: string; runningMsg: string }> = {
                       Echo: { title: "Deduplication", runningMsg: "Scanning for repeated concepts..." },
                       Priya: { title: "Research Accuracy", runningMsg: "Verifying factual claims..." },
-                      Jordan: { title: "Voice Authenticity", runningMsg: "Matching your voice DNA..." },
+                      Jordan: { title: "Voice Authenticity", runningMsg: "Matching voice DNA..." },
                       David: { title: "Engagement", runningMsg: "Testing the hook..." },
                       Elena: { title: "SLOP Detection", runningMsg: "Scanning for AI fingerprints..." },
                       Natasha: { title: "Editorial Excellence", runningMsg: "Checking editorial quality..." },
@@ -2443,8 +2443,8 @@ export default function WorkSession() {
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                               <div>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{r.gate}</span>
-                                <span style={{ fontSize: 11, color: "var(--fg-3)", marginLeft: 6 }}>{info.title}</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{info.title}</span>
+                                <span style={{ fontSize: 11, color: "var(--fg-3)", marginLeft: 6 }}>{r.gate}</span>
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                                 {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "var(--gold)" : "#E53935" }}>{r.score}</span>}

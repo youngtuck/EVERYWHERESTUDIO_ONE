@@ -169,8 +169,8 @@ export default function SpecialistPanel({
             {selected.index + 1}
           </span>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{selectedInfo.name}</div>
-            <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{selectedInfo.role}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{selectedInfo.role}</div>
+            <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{selectedInfo.name}</div>
           </div>
         </div>
 
@@ -271,8 +271,8 @@ export default function SpecialistPanel({
                   {i + 1}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{info.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{info.role}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{info.role}</div>
+                  <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{info.name}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                   {isRevealed && g.score !== undefined ? (
