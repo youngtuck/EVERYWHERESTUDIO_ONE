@@ -170,29 +170,77 @@ export default function Watch() {
     }
   };
 
+  const [briefingError, setBriefingError] = useState<string | null>(null);
+
   const handleGetBriefing = async () => {
     if (!user) return;
     setGenerating(true);
     setMsgIdx(0);
+    setBriefingError(null);
     try {
-      const topics = config.keywords.length > 0 ? config.keywords : DEFAULT_KEYWORDS;
+      // Try the new Sentinel engine first, fall back to the old endpoint
       const res = await fetchWithRetry(
-        `${API_BASE}/api/sentinel-generate`,
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: user.id, userName: profile?.full_name || "there", topics }) },
-        { timeout: 90000 }
+        `${API_BASE}/api/run-sentinel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            sentinelConfig: {
+              keywords: config.keywords.length > 0 ? config.keywords : DEFAULT_KEYWORDS,
+              rankingWeights: config.signalRanking || { relevance: 5, actionability: 3, urgency: 2 },
+              tracks: config.watchlist || {},
+            },
+            sources: sources.map(s => ({ type: s.type, name: s.name })),
+          }),
+        },
+        { timeout: 120000 }
       );
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Server error: ${res.status}`);
+      }
       const data = await res.json();
+      if (data.error && !data.signals?.length) throw new Error(data.error);
       const now = new Date().toISOString();
-      const row: BriefingRow = { user_id: user.id, generated_at: now, date_label: data.date_label || getTodayLabel(), briefing: data, signals_count: data.signals_count ?? 0 };
+      const row: BriefingRow = { user_id: user.id, generated_at: now, date_label: getTodayLabel(), briefing: data, signals_count: data.signals?.length ?? 0 };
       setBriefing(row);
-      await supabase.from("sentinel_briefings").insert({ user_id: user.id, generated_at: now, date_label: row.date_label, briefing: data, signals_count: data.signals_count ?? 0 });
-      toast("Briefing generated.", "success");
+      if (!data.cached) {
+        await supabase.from("sentinel_briefings").insert({ user_id: user.id, generated_at: now, date_label: row.date_label, briefing: data, signals_count: data.signals?.length ?? 0 });
+      }
+      toast(data.cached ? "Showing cached briefing." : "Fresh briefing generated.", "success");
     } catch (err) {
-      console.error("[Watch] generate failed", err);
-      toast("Failed to generate briefing.", "error");
+      console.error("[Watch] Briefing failed:", err);
+      const msg = err instanceof Error ? err.message : "Briefing generation failed.";
+      setBriefingError(msg);
+      toast(msg, "error");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleLoadDefaultSources = async () => {
+    if (!user) return;
+    try {
+      const sourcesWithUser = DEFAULT_SOURCES.map(s => ({
+        user_id: user.id,
+        name: s.name,
+        type: s.type.charAt(0).toUpperCase() + s.type.slice(1), // Capitalize type for DB constraint
+        track: s.track,
+      }));
+      const { error } = await supabase.from("watch_sources").insert(sourcesWithUser);
+      if (error) {
+        console.error("[Watch] Failed to load default sources:", error);
+        toast("Failed to load sources. The table may not exist yet.", "error");
+        return;
+      }
+      toast("Default sources loaded.");
+      // Refresh sources
+      const { data } = await supabase.from("watch_sources").select("*").eq("user_id", user.id).order("type", { ascending: true });
+      if (data) setSources(data);
+    } catch (err) {
+      console.error("[Watch] Error loading defaults:", err);
+      toast("Something went wrong loading sources.", "error");
     }
   };
 
@@ -272,6 +320,11 @@ export default function Watch() {
       {/* BRIEFING TAB */}
       {tab === "briefing" && !generating && (
         <>
+          {briefingError && (
+            <div style={{ padding: "16px 20px", background: "rgba(229,57,53,0.06)", border: "1px solid rgba(229,57,53,0.2)", borderRadius: 8, color: "#D64545", fontSize: 14, marginBottom: 16 }}>
+              {briefingError}
+            </div>
+          )}
           {!briefing ? (
             <div style={{ ...card, padding: 48, textAlign: "center" }}>
               <EverywhereMarkIcon size={40} style={{ marginBottom: 16 }} />
@@ -333,7 +386,7 @@ export default function Watch() {
           {sources.length === 0 ? (
             <div style={{ ...card, padding: 32, textAlign: "center" }}>
               <p style={{ fontSize: 14, color: "var(--fg-2)", margin: "0 0 16px" }}>No sources configured yet.</p>
-              <button type="button" onClick={loadDefaults} style={goldBtn}>Load Default Sources</button>
+              <button type="button" onClick={handleLoadDefaultSources} style={goldBtn}>Load Default Sources</button>
             </div>
           ) : (
             SOURCE_TYPES.map(type => {

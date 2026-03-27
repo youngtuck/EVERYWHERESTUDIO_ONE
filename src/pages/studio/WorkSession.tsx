@@ -227,25 +227,31 @@ function TypingIndicator() {
       <style>{`
         @keyframes evThinkMorph {
           0% { border-radius: 50%; transform: rotate(0deg) scale(1); }
-          14% { border-radius: 33% 67% 50% 50% / 43% 39% 61% 57%; transform: rotate(15deg) scale(1.08); }
-          28% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; transform: rotate(-12deg) scale(0.92); }
-          42% { border-radius: 40% 60% 55% 45% / 35% 65% 35% 65%; transform: rotate(20deg) scale(1.06); }
-          57% { border-radius: 65% 35% 45% 55% / 55% 45% 55% 45%; transform: rotate(-18deg) scale(0.94); }
-          71% { border-radius: 45% 55% 65% 35% / 40% 60% 40% 60%; transform: rotate(10deg) scale(1.04); }
-          85% { border-radius: 55% 45% 40% 60% / 60% 40% 60% 40%; transform: rotate(-8deg) scale(0.97); }
+          12% { border-radius: 33% 67% 50% 50% / 43% 39% 61% 57%; transform: rotate(18deg) scale(1.1); }
+          25% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; transform: rotate(-15deg) scale(0.9); }
+          37% { border-radius: 40% 60% 55% 45% / 35% 65% 35% 65%; transform: rotate(22deg) scale(1.08); }
+          50% { border-radius: 65% 35% 45% 55% / 55% 45% 55% 45%; transform: rotate(-20deg) scale(0.92); }
+          62% { border-radius: 45% 55% 65% 35% / 40% 60% 40% 60%; transform: rotate(12deg) scale(1.05); }
+          75% { border-radius: 55% 45% 40% 60% / 60% 40% 60% 40%; transform: rotate(-10deg) scale(0.95); }
+          87% { border-radius: 42% 58% 52% 48% / 48% 52% 42% 58%; transform: rotate(8deg) scale(1.02); }
           100% { border-radius: 50%; transform: rotate(0deg) scale(1); }
         }
         @keyframes evThinkBreathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.12); }
+          0%, 100% { transform: scale(1); opacity: 0.85; }
+          50% { transform: scale(1.15); opacity: 1; }
+        }
+        @keyframes evThinkColor {
+          0%, 100% { background: #C8961A; }
+          33% { background: #D4A832; }
+          66% { background: #BF8A15; }
         }
       `}</style>
       <div style={{ display: "inline-flex", animation: "evThinkBreathe 1.5s ease-in-out infinite" }}>
         <div style={{
-          width: 14, height: 14,
+          width: 24, height: 24,
           background: "#C8961A",
-          animation: "evThinkMorph 2s ease-in-out infinite, evColorShift 3s ease-in-out infinite",
-          boxShadow: "0 0 8px rgba(200, 150, 26, 0.15)",
+          animation: "evThinkMorph 2.5s ease-in-out infinite, evColorShift 3.5s ease-in-out infinite",
+          boxShadow: "0 0 16px rgba(200, 150, 26, 0.25)",
         }} />
       </div>
     </div>
@@ -263,10 +269,7 @@ function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
       gap: 10,
       maxWidth: "100%",
     }}>
-      {/* Living mark icon */}
-      {!isUser && !msg.typing && (
-        <EverywhereMarkIcon size={20} style={{ marginTop: 2 }} />
-      )}
+      {/* No avatar next to Watson messages */}
       <div style={{
         maxWidth: isMobile ? "90%" : "75%",
         ...(isUser ? {
