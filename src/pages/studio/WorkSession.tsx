@@ -1170,7 +1170,24 @@ export default function WorkSession() {
         angle: string;
         prompt: string;
       };
+      watchSignal?: {
+        headline: string;
+        source: string;
+        url?: string;
+        relevance?: string;
+        anglePrompt?: string;
+      };
     } | null;
+
+    if (state?.watchSignal) {
+      const signal = state.watchSignal;
+      const watchPrompt = signal.anglePrompt
+        ? `I want to write about this: "${signal.headline}" (from ${signal.source}). ${signal.anglePrompt}`
+        : `I want to write about this: "${signal.headline}" from ${signal.source}. ${signal.relevance || ""}`;
+      setInput(watchPrompt);
+      setTimeout(() => sendMessage(watchPrompt), 300);
+      return;
+    }
 
     if (state?.watchTrigger) {
       const { headline, angle, prompt } = state.watchTrigger;
