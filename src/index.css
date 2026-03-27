@@ -215,10 +215,11 @@ body {
 a { text-decoration: none; color: inherit; }
 button { font-family: var(--font); }
 ::selection { background: rgba(200, 150, 26, 0.15); color: inherit; }
-::-webkit-scrollbar { width: 6px; }
+* { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--line-2); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--fg-3); }
 
 /* ─── SCROLL ANIMATIONS ──────────────────────────────────────── */
 .fade-up {

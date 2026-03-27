@@ -676,22 +676,9 @@ export default function OutputDetail() {
             {/* Pipeline hasn't been run */}
             {!pipelineRun && !pipelineRunning && (
               <div style={{ textAlign: "center", padding: "32px 16px" }}>
-                <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20, maxWidth: 480, marginInline: "auto" }}>
-                  7 specialists will review your content for voice authenticity, research accuracy, engagement, and more.
+                <p style={{ fontSize: 14, color: "var(--fg-2)", maxWidth: 480, marginInline: "auto" }}>
+                  7 specialists will review your content for voice authenticity, research accuracy, engagement, and more. Use the "Run Quality Pipeline" button in the toolbar above to start.
                 </p>
-                <button
-                  onClick={handleRunPipeline}
-                  style={{
-                    padding: "14px 32px", borderRadius: 8, border: "none",
-                    background: "var(--gold)", color: "var(--fg)",
-                    fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: font,
-                    transition: "opacity 0.15s ease",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; }}
-                  onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
-                >
-                  Run Full Quality Pipeline
-                </button>
               </div>
             )}
 
