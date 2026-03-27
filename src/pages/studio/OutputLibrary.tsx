@@ -23,7 +23,7 @@ const TYPE_LABELS: Record<string, string> = {
   podcast: "Podcast",
   podcast_script: "Podcast Script",
   video: "Video",
-  sunday_story: "Sunday Story",
+  sunday_story: "Essay",
   freestyle: "Freestyle",
   linkedin_post: "LinkedIn Post",
   twitter_thread: "Twitter Thread",

@@ -36,7 +36,7 @@ function typeToLabel(outputType: string): string {
 }
 
 const QUICK_START = [
-  { key: "essay", label: "Sunday Story" },
+  { key: "essay", label: "Essay" },
   { key: "podcast", label: "Podcast" },
   { key: "book", label: "Book" },
   { key: "website", label: "Website" },

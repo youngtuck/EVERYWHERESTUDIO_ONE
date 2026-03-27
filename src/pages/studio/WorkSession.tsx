@@ -75,12 +75,12 @@ function generateTitle(userInput: string, content: string): string {
 
 const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: string }> = {
   essay: {
-    label: "Sunday Story (Essay)",
+    label: "Essay",
     color: "var(--cornflower)",
     watson: "What's on your mind? Give me the rough idea and I will ask the questions that pull it into focus.",
   },
   podcast: {
-    label: "Get Current (Podcast)",
+    label: "Podcast",
     color: "var(--gold)",
     watson: "What is this episode about and who are you talking to? Start with the topic and the listener you have in mind.",
   },
@@ -105,7 +105,7 @@ const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: strin
     watson: "What happened this week that is worth sharing? Start with the story, the shift, or the lesson.",
   },
   socials: {
-    label: "Signal Sweep (Socials)",
+    label: "Social Media",
     color: "var(--cornflower)",
     watson: "What is the one idea you want to put into the feed? Tell me the take and where it should show up.",
   },
