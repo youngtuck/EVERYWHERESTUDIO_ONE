@@ -169,7 +169,7 @@ export default async function handler(req, res) {
         "Do not include any text outside the JSON object.",
         "",
         `OUTPUT TYPE: ${outputType || "essay"}`,
-        voiceDnaMd ? `VOICE DNA:\n${voiceDnaMd.slice(0, 2000)}` : "",
+        voiceDnaMd ? `VOICE DNA:\n${voiceDnaMd.slice(0, 2000)}` : "No Voice DNA available. Evaluate voice based on the content's internal consistency alone. Do not penalize for lack of Voice DNA match.",
         brandDnaMd ? `BRAND DNA:\n${brandDnaMd.slice(0, 1000)}` : "",
         `\nCONTENT TO EVALUATE:\n\n${currentDraft}`,
       ].filter(Boolean).join("\n\n");
