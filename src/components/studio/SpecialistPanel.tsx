@@ -164,22 +164,29 @@ export default function SpecialistPanel({
 
     return (
       <div style={{ padding: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
           <span style={{ width: 32, height: 32, borderRadius: 8, background: selectedInfo.color + "18", color: selectedInfo.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
             {selected.index + 1}
           </span>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{selectedInfo.role}</div>
             <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{selectedInfo.name}</div>
           </div>
+          {selected.score !== undefined && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <span style={{ fontSize: 24, fontWeight: 700, color: scoreColor(selected.score), fontVariantNumeric: "tabular-nums" }}>
+                {selected.score}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: selected.score >= 80 ? "#50c8a0" : selected.score >= 60 ? "var(--gold)" : "#E53935" }}>
+                {selected.score >= 80 ? "Strong" : selected.score >= 60 ? "Needs work" : "Needs attention"}
+              </span>
+            </div>
+          )}
         </div>
 
         {selected.score !== undefined && (
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: "12px 16px", background: "var(--bg-2)", borderRadius: 8 }}>
-            <span style={{ fontSize: 28, fontWeight: 700, color: scoreColor(selected.score), fontVariantNumeric: "tabular-nums" }}>
-              {selected.score}
-            </span>
-            <div style={{ flex: 1, height: 4, borderRadius: 2, background: "var(--bg-3)", overflow: "hidden" }}>
+          <div style={{ marginBottom: 16, padding: "0 0 0 42px" }}>
+            <div style={{ height: 4, borderRadius: 2, background: "var(--bg-3)", overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min(100, selected.score)}%`, background: scoreColor(selected.score), borderRadius: 2 }} />
             </div>
           </div>
@@ -198,7 +205,7 @@ export default function SpecialistPanel({
           </div>
         ) : selected.score !== undefined ? (
           <p style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 8 }}>
-            Run the full quality pipeline below for detailed specialist feedback on this checkpoint.
+            Run the quality pipeline for detailed specialist feedback on this checkpoint.
           </p>
         ) : null}
 

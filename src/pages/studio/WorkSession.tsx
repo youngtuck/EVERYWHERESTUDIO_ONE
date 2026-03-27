@@ -1036,7 +1036,10 @@ export default function WorkSession() {
   const [writersRoomLoading, setWritersRoomLoading] = useState(false);
   const [editingParaIndex, setEditingParaIndex] = useState<number | null>(null);
   const [editingParaText, setEditingParaText] = useState("");
-  const [improvingGate, setImprovingGate] = useState<string | null>(null);
+  const [improvingQueue, setImprovingQueue] = useState<string[]>([]);
+  const [currentlyImproving, setCurrentlyImproving] = useState<string | null>(null);
+  const [continueWritingInput, setContinueWritingInput] = useState("");
+  const [continueWritingLoading, setContinueWritingLoading] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [allCheckpointsPassed, setAllCheckpointsPassed] = useState(false);
   const [autoImprovingCurrent, setAutoImprovingCurrent] = useState<string | null>(null);
@@ -1800,15 +1803,16 @@ export default function WorkSession() {
     }
   };
 
-  const handleImproveCheckpoint = async (gateName: string, feedback: string) => {
-    if (improvingGate) return;
-    setImprovingGate(gateName);
+  const handleImproveCheckpoint = async (gateName: string, _feedback: string) => {
+    // Add to queue instead of blocking
+    setImprovingQueue(prev => prev.includes(gateName) ? prev : [...prev, gateName]);
+  };
+
+  const runImprovement = async (gateName: string, feedback: string) => {
     console.log(`[handleImproveCheckpoint] Starting improvement for gate: "${gateName}"`);
-    // Capture old score for comparison
     const oldScore = layer1Results.find(r => r.gate === gateName)?.score || 0;
     console.log(`[handleImproveCheckpoint] Old score for "${gateName}": ${oldScore}`);
     try {
-      // Revise draft to address this specific checkpoint
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1827,7 +1831,6 @@ export default function WorkSession() {
       setDraftContent(data.content || "");
       setGeneratedContent(data.content || "");
 
-      // Save revised draft to Supabase
       if (generatedOutputId && generatedOutputId !== "new") {
         await supabase.from("outputs").update({
           content: data.content,
@@ -1835,7 +1838,6 @@ export default function WorkSession() {
         console.log(`[handleImproveCheckpoint] Saved revised draft to Supabase for output ${generatedOutputId}`);
       }
 
-      // Re-run just that one gate
       console.log(`[handleImproveCheckpoint] Re-running pipeline for gate: "${gateName}"`);
       const pipelineRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
         method: "POST",
@@ -1876,10 +1878,27 @@ export default function WorkSession() {
       }
     } catch (err) {
       toast("Improvement failed. Try again.", "error");
-    } finally {
-      setImprovingGate(null);
     }
   };
+
+  // Process the improvement queue one at a time
+  useEffect(() => {
+    if (currentlyImproving || improvingQueue.length === 0) return;
+
+    const nextGate = improvingQueue[0];
+    const gateData = layer1Results.find(r => r.gate === nextGate);
+    if (!gateData) {
+      setImprovingQueue(prev => prev.slice(1));
+      return;
+    }
+
+    setCurrentlyImproving(nextGate);
+
+    runImprovement(nextGate, gateData.feedback).finally(() => {
+      setCurrentlyImproving(null);
+      setImprovingQueue(prev => prev.slice(1));
+    });
+  }, [improvingQueue, currentlyImproving]);
 
   // Auto-improve blocking gates: when all checkpoints complete, auto-fix failures
   useEffect(() => {
@@ -2633,6 +2652,95 @@ export default function WorkSession() {
                   <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.7, color: "var(--fg)", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: isMobile ? "20px 16px" : "28px 32px" }}>
                     <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
                   </div>
+
+                  {/* Continue Writing input */}
+                  <div style={{ marginTop: 16, padding: "16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10 }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Tell Watson what to change</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <textarea
+                        value={continueWritingInput}
+                        onChange={(e) => setContinueWritingInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && continueWritingInput.trim() && !continueWritingLoading) {
+                            e.preventDefault();
+                            (async () => {
+                              setContinueWritingLoading(true);
+                              try {
+                                const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    originalDraft: draftContent || generatedContent,
+                                    revisionNotes: continueWritingInput,
+                                    outputType: outputTypeApi,
+                                    voiceProfile,
+                                    userId: user?.id,
+                                    voiceDnaMd,
+                                  }),
+                                });
+                                if (!res.ok) throw new Error("Revision failed");
+                                const data = await res.json();
+                                if (data.content) {
+                                  setDraftContent(data.content);
+                                  setGeneratedContent(data.content);
+                                  setContinueWritingInput("");
+                                  toast("Draft updated.");
+                                }
+                              } catch (err) {
+                                toast("Revision failed. Try again.", "error");
+                              } finally {
+                                setContinueWritingLoading(false);
+                              }
+                            })();
+                          }
+                        }}
+                        placeholder="e.g., Expand section 3, add an example about..."
+                        style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--fg)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, resize: "vertical", minHeight: 40, outline: "none" }}
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!continueWritingInput.trim() || continueWritingLoading) return;
+                          setContinueWritingLoading(true);
+                          try {
+                            const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                originalDraft: draftContent || generatedContent,
+                                revisionNotes: continueWritingInput,
+                                outputType: outputTypeApi,
+                                voiceProfile,
+                                userId: user?.id,
+                                voiceDnaMd,
+                              }),
+                            });
+                            if (!res.ok) throw new Error("Revision failed");
+                            const data = await res.json();
+                            if (data.content) {
+                              setDraftContent(data.content);
+                              setGeneratedContent(data.content);
+                              setContinueWritingInput("");
+                              toast("Draft updated.");
+                            }
+                          } catch (err) {
+                            toast("Revision failed. Try again.", "error");
+                          } finally {
+                            setContinueWritingLoading(false);
+                          }
+                        }}
+                        disabled={!continueWritingInput.trim() || continueWritingLoading}
+                        style={{
+                          padding: "8px 16px", borderRadius: 8, border: "none",
+                          background: continueWritingLoading ? "var(--fg-3)" : "var(--gold)",
+                          color: "white", fontSize: 12, fontWeight: 600, cursor: continueWritingLoading ? "default" : "pointer",
+                          fontFamily: "'Afacad Flux', sans-serif", flexShrink: 0, alignSelf: "flex-end",
+                        }}
+                      >
+                        {continueWritingLoading ? "Revising..." : "Send"}
+                      </button>
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4 }}>Cmd+Enter to send</div>
+                  </div>
                   <div style={{ marginTop: 16 }}>
                     {autoImprovingCurrent && (
                       <div style={{
@@ -2738,7 +2846,8 @@ export default function WorkSession() {
                     const feedbackText = r.feedback || "";
                     const shouldTruncate = feedbackText.length > 120 && !isExpanded;
                     const displayFeedback = shouldTruncate ? feedbackText.slice(0, 120) + "..." : feedbackText;
-                    const isImproving = improvingGate === r.gate;
+                    const isImproving = currentlyImproving === r.gate;
+                    const isQueued = improvingQueue.includes(r.gate) && currentlyImproving !== r.gate;
 
                     return (
                       <div
@@ -2792,20 +2901,20 @@ export default function WorkSession() {
                             {r.score > 0 && r.score < 80 && r.status !== "running" && feedbackText && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleImproveCheckpoint(r.gate, feedbackText); }}
-                                disabled={improvingGate !== null}
+                                disabled={isImproving || isQueued}
                                 style={{
                                   marginTop: 8, padding: "4px 12px", borderRadius: 6,
                                   border: "1px solid var(--line)", background: "transparent",
                                   fontSize: 12, fontWeight: 500,
-                                  color: isImproving ? "var(--fg-3)" : "var(--fg-2)",
-                                  cursor: improvingGate !== null ? "default" : "pointer",
+                                  color: (isImproving || isQueued) ? "var(--fg-3)" : "var(--fg-2)",
+                                  cursor: (isImproving || isQueued) ? "default" : "pointer",
                                   fontFamily: "'Afacad Flux', sans-serif",
                                   transition: "all 0.15s ease",
                                 }}
-                                onMouseEnter={e => { if (!improvingGate) { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; } }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = isImproving ? "var(--fg-3)" : "var(--fg-2)"; }}
+                                onMouseEnter={e => { if (!isImproving && !isQueued) { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; } }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = (isImproving || isQueued) ? "var(--fg-3)" : "var(--fg-2)"; }}
                               >
-                                {isImproving ? "Improving..." : "Improve"}
+                                {isImproving ? "Improving..." : isQueued ? "Queued..." : "Improve"}
                               </button>
                             )}
                           </div>
@@ -3226,6 +3335,96 @@ export default function WorkSession() {
               </div>
             </div>
 
+
+                  {/* Continue Writing input */}
+                  <div style={{ marginTop: 0, marginBottom: 24, padding: "16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10 }}>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Tell Watson what to change</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <textarea
+                        value={continueWritingInput}
+                        onChange={(e) => setContinueWritingInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && continueWritingInput.trim() && !continueWritingLoading) {
+                            e.preventDefault();
+                            (async () => {
+                              setContinueWritingLoading(true);
+                              try {
+                                const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    originalDraft: draftContent || generatedContent,
+                                    revisionNotes: continueWritingInput,
+                                    outputType: outputTypeApi,
+                                    voiceProfile,
+                                    userId: user?.id,
+                                    voiceDnaMd,
+                                  }),
+                                });
+                                if (!res.ok) throw new Error("Revision failed");
+                                const data = await res.json();
+                                if (data.content) {
+                                  setDraftContent(data.content);
+                                  setGeneratedContent(data.content);
+                                  setContinueWritingInput("");
+                                  toast("Draft updated.");
+                                }
+                              } catch (err) {
+                                toast("Revision failed. Try again.", "error");
+                              } finally {
+                                setContinueWritingLoading(false);
+                              }
+                            })();
+                          }
+                        }}
+                        placeholder="e.g., Expand section 3, add an example about..."
+                        style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--fg)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, resize: "vertical", minHeight: 40, outline: "none" }}
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!continueWritingInput.trim() || continueWritingLoading) return;
+                          setContinueWritingLoading(true);
+                          try {
+                            const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                originalDraft: draftContent || generatedContent,
+                                revisionNotes: continueWritingInput,
+                                outputType: outputTypeApi,
+                                voiceProfile,
+                                userId: user?.id,
+                                voiceDnaMd,
+                              }),
+                            });
+                            if (!res.ok) throw new Error("Revision failed");
+                            const data = await res.json();
+                            if (data.content) {
+                              setDraftContent(data.content);
+                              setGeneratedContent(data.content);
+                              setContinueWritingInput("");
+                              toast("Draft updated.");
+                            }
+                          } catch (err) {
+                            toast("Revision failed. Try again.", "error");
+                          } finally {
+                            setContinueWritingLoading(false);
+                          }
+                        }}
+                        disabled={!continueWritingInput.trim() || continueWritingLoading}
+                        style={{
+                          padding: "8px 16px", borderRadius: 8, border: "none",
+                          background: continueWritingLoading ? "var(--fg-3)" : "var(--gold)",
+                          color: "white", fontSize: 12, fontWeight: 600, cursor: continueWritingLoading ? "default" : "pointer",
+                          fontFamily: "'Afacad Flux', sans-serif", flexShrink: 0, alignSelf: "flex-end",
+                        }}
+                      >
+                        {continueWritingLoading ? "Revising..." : "Send"}
+                      </button>
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4 }}>Cmd+Enter to send</div>
+                  </div>
+
             {/* Score summary + action buttons */}
             <div style={{ maxWidth: 680, width: "100%", marginBottom: 24 }}>
               <div style={{
@@ -3374,7 +3573,7 @@ export default function WorkSession() {
                 </div>
               ) : (
                 <div style={{ marginBottom: 16 }}>
-                  {generatedScore < 900 && pipelineStatus === "IDLE" && pipelineGateResults.length === 0 && (
+                  {generatedScore < 900 && pipelineStatus === "IDLE" && (
                     <div style={{
                       padding: "12px 16px",
                       background: "rgba(245,198,66,0.06)",
@@ -3416,8 +3615,16 @@ export default function WorkSession() {
                       alignItems: "center",
                       gap: 8,
                     }}
-                    onMouseEnter={(e) => { if (pipelineStatus !== "RUNNING") { e.currentTarget.style.background = "rgba(245,198,66,0.06)"; } }}
-                    onMouseLeave={(e) => { if (pipelineStatus !== "RUNNING") { e.currentTarget.style.background = "var(--surface-white)"; } }}
+                    onMouseEnter={(e) => {
+                      if (pipelineStatus !== "RUNNING") {
+                        e.currentTarget.style.background = pipelineGateResults.length === 0 ? "rgba(200,150,26,0.85)" : "rgba(245,198,66,0.06)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (pipelineStatus !== "RUNNING") {
+                        e.currentTarget.style.background = pipelineGateResults.length === 0 ? "var(--gold)" : "var(--surface-white)";
+                      }
+                    }}
                   >
                     <Sparkles size={16} />
                     {pipelineStatus === "RUNNING"
@@ -3426,10 +3633,71 @@ export default function WorkSession() {
                         ? "Run Full Quality Pipeline"
                         : "Re-run Quality Pipeline"}
                   </button>
+                  {/* Auto-fix all issues button */}
+                  {pipelineGateResults.length > 0 && generatedScore < 900 && pipelineStatus !== "RUNNING" && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const failingGates = pipelineGateResults.filter((g: any) => g && g.score < 80);
+                        if (failingGates.length === 0) return;
+                        const combinedFeedback = failingGates.map((g: any) => `${g.gate} (score: ${g.score}): ${g.feedback || ""}${g.issues?.length ? "\nIssues: " + g.issues.join("; ") : ""}`).join("\n\n");
+                        setPipelineStatus("RUNNING");
+                        try {
+                          const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              conversationSummary: getConversationSummary(),
+                              originalDraft: generatedContent,
+                              revisionNotes: `FIX ALL ISSUES. Multiple specialists flagged problems in this draft.\n\n${combinedFeedback}\n\nAddress every issue listed above. Cut redundancy, fix voice mismatches, resolve unsupported claims, and strengthen weak sections.`,
+                              outputType: outputTypeApi,
+                              voiceProfile,
+                              userId: user?.id,
+                              voiceDnaMd,
+                            }),
+                          });
+                          if (!res.ok) throw new Error("Auto-fix failed");
+                          const data = await res.json();
+                          if (data.content) {
+                            setGeneratedContent(data.content);
+                            setDraftContent(data.content);
+                            if (generatedOutputId && generatedOutputId !== "new") {
+                              await supabase.from("outputs").update({ content: data.content }).eq("id", generatedOutputId);
+                            }
+                            toast("Draft revised. Re-running quality pipeline...");
+                            setTimeout(() => handleRunPipeline(), 500);
+                          }
+                        } catch (err) {
+                          toast("Auto-fix failed. Try again.", "error");
+                          setPipelineStatus("IDLE");
+                        }
+                      }}
+                      style={{
+                        padding: "12px 20px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: "#E53935",
+                        fontFamily: "'Afacad Flux', sans-serif",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "white",
+                        cursor: "pointer",
+                        transition: "opacity 0.15s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginTop: 10,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                    >
+                      Auto-fix all issues
+                    </button>
+                  )}
                   <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
                     {pipelineGateResults.length === 0
                       ? "7 specialists will review voice, accuracy, engagement, and more"
-                      : "Run all 7 specialist checkpoints again with detailed feedback"}
+                      : "Re-run all 7 specialists for a fresh evaluation"}
                   </div>
                   {pipelineStatus !== "IDLE" && (
                     <div style={{ marginTop: 12 }}>

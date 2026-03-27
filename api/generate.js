@@ -45,18 +45,57 @@ export default async function handler(req, res) {
   try {
     const client = new Anthropic({ apiKey });
 
-    let system = `You are producing a single piece of content for EVERYWHERE Studio. Use the captured conversation to write in the user's voice. Output only the final content. No meta-commentary, no preamble, no "Here is your essay:" headers. Format appropriately for the type: ${outputType}.`;
+    let system = `You are producing a single piece of content for EVERYWHERE Studio. Use the captured conversation to write in the user's voice. Output only the final content. No meta-commentary, no preamble, no "Here is your essay:" headers. Format appropriately for the type: ${outputType}.
+
+GENERATION QUALITY RULES (non-negotiable):
+
+1. PROMISE-DELIVERY: Before completing any piece that promises to reveal, teach, or show something, identify the single specific tactic, example, or scene that delivers on that promise. If you wrote "we're about to break down exactly how it works," the next paragraph MUST contain the actual breakdown, not more setup.
+
+2. FIRST-MENTION ONLY: Once a concept is introduced, it is consumed. Do not restate the same idea in different words. If "meeting prep as intelligence briefing" is established in paragraph 2, do not re-explain it in paragraph 5. Move forward.
+
+3. NO BORROWED LANGUAGE: Do not use LinkedIn-influencer vocabulary: "influence architecture," "code-switching at the highest level," "can't unsee it," "game-changer," "unlock," "leverage." Write in the user's actual voice, not internet-marketing register.
+
+4. VOICE-FIRST GENERATION: If Voice DNA is provided below, write IN that voice from the first word. Do not write generically and then adjust. The voice shapes sentence structure, word choice, and rhythm from the start.
+
+5. HOOK RESOLUTION: If your opening line creates an implicit question (e.g., "Someone just handed me the most honest document"), answer that question in the same paragraph. Never leave a hook's implicit question unresolved.
+
+6. NO SCAFFOLDING: Do not tell the reader how to feel about what you are showing them. No "This is my actual playbook." No "This is influence architecture at its finest." Show the content. Trust it. Remove all metacommentary that explains why the piece is valuable.
+
+7. CTA VOICE MATCH: The closing call-to-action must match the voice of the entire piece. No generic "Ready to build your own framework? Access my complete system." Write the CTA in the same register, personality, and tone as the rest of the draft.
+
+8. NO FILLER EXPANSION: Do not circle back to restate concepts to fill length. If the piece makes its point in 600 words, it is 600 words. Do not pad to reach a word count.`;
     if (voiceProfile) {
       system += `\n\nUSER VOICE PROFILE:\n- Role: ${voiceProfile.role}\n- Audience: ${voiceProfile.audience}\n- Tone: ${voiceProfile.tone}\n- Writing sample: "${voiceProfile.writing_sample?.slice(0, 600)}"\n\nMatch this person's voice exactly.`;
     }
     if (resources.voiceDna) {
-      system += "\n\nVOICE DNA - Match this voice exactly:\n" + resources.voiceDna;
+      system += `\n\nVOICE DNA (ACTIVE CONSTRAINT):
+The following Voice DNA defines how this person writes. This is not a reference. This is the voice you must inhabit from the first sentence.
+
+Before writing each paragraph, internalize:
+- What sentence structures does this person use?
+- What is their typical paragraph length?
+- Do they use questions? Asides? Direct address?
+- What register do they write in: conversational, analytical, narrative, instructional?
+- What words would this person NEVER use?
+
+VOICE DNA:
+${resources.voiceDna}
+
+If you catch yourself writing a sentence this person would never say, delete it and rewrite it in their voice. Voice match is not cosmetic. It is structural.`;
     }
     if (resources.brandDna) {
-      system += "\n\nBRAND DNA - Stay on brand:\n" + resources.brandDna;
+      system += `\n\nBRAND DNA (ACTIVE CONSTRAINT):
+The following Brand DNA defines this person's brand identity. Write content that embodies this brand from the first word. Do not treat this as a checklist to verify after writing. Let it shape your word choice, tone, and framing throughout.
+
+BRAND DNA:
+${resources.brandDna}`;
     }
     if (resources.methodDna) {
-      system += "\n\nMETHOD DNA - Use these frameworks and proprietary terminology exactly as written. Do not paraphrase tool names:\n" + resources.methodDna;
+      system += `\n\nMETHOD DNA (ACTIVE CONSTRAINT):
+Use these proprietary terms exactly as written. Do not paraphrase tool names, framework names, or methodology labels. If the method DNA says "Strategic Meeting Preparation System", use exactly that phrase, not "meeting prep framework" or "strategic preparation process".
+
+METHOD DNA:
+${resources.methodDna}`;
     }
     if (resources.references) {
       system += "\n\nREFERENCE MATERIALS:\n" + resources.references;
@@ -123,7 +162,7 @@ Output ONLY the complete revised draft. No commentary, no explanation.`;
     } else if (outline && Array.isArray(outline) && outline.length > 0) {
       // Outline-based generation: follow the beat sheet
       const outlineText = outline.map((s, i) => `Section ${i + 1}: ${s.section}\nBeats: ${(s.beats || []).join("; ")}\nPurpose: ${s.purpose || ""}`).join("\n\n");
-      userContent = `Conversation summary:\n${conversationSummary}\n\n${thesis ? `Thesis: ${thesis}\n\n` : ""}Outline (follow this structure section by section, hit every beat):\n${outlineText}\n\nProduce the ${outputType} now. Follow the outline exactly.`;
+      userContent = `Conversation summary:\n${conversationSummary}\n\n${thesis ? `Thesis: ${thesis}\n\n` : ""}Outline (follow this structure section by section, hit every beat):\n${outlineText}\n\nProduce the ${outputType} now. Follow the outline exactly.\n\nCRITICAL: Every section that promises to show, teach, or reveal something must contain the specific example, tactic, or scene that delivers on that promise. Setup without payoff is the single most common failure mode. Prioritize concrete delivery over abstract framing.`;
     } else {
       // Standard generation
       userContent = `Conversation summary:\n${conversationSummary}\n\nProduce the ${outputType} now.`;
@@ -138,7 +177,84 @@ Output ONLY the complete revised draft. No commentary, no explanation.`;
       })
     );
 
-    const content = sanitizeContent(response.content?.[0]?.type === "text" ? response.content[0].text : "");
+    let content = sanitizeContent(response.content?.[0]?.type === "text" ? response.content[0].text : "");
+
+    // ── Back-of-house auto-revision pass ──────────────────────
+    // Only run on new generation (not revisions) to avoid double-revising
+    if (!revisionNotes && !originalDraft && content) {
+      try {
+        // Step 1: Internal quality review
+        const reviewResponse = await callWithRetry(() =>
+          client.messages.create({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1024,
+            system: `You are an internal quality reviewer. Read this draft and identify the 3 most critical issues from this checklist:
+- Repeated concepts (same idea restated in different words)
+- Promises without delivery (setup without specific examples/tactics)
+- Borrowed language (LinkedIn-speak, consulting jargon not in the voice DNA)
+- Unresolved hooks (opening creates a question that is never answered)
+- Scaffolding (telling the reader how to feel instead of showing)
+- Generic CTA (closing that sounds like a template, not a person)
+
+Return ONLY valid JSON: { "issues": ["issue 1 description", "issue 2", "issue 3"], "needsRevision": true/false }
+If the draft has no critical issues, return { "issues": [], "needsRevision": false }`,
+            messages: [{ role: "user", content: `Review this draft:\n\n${content.slice(0, 6000)}` }],
+          })
+        );
+
+        const reviewText = reviewResponse.content?.[0]?.type === "text" ? reviewResponse.content[0].text : "";
+        let reviewResult = { issues: [], needsRevision: false };
+        try {
+          // Extract JSON from response (handle markdown code blocks)
+          const jsonMatch = reviewText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) reviewResult = JSON.parse(jsonMatch[0]);
+        } catch (parseErr) {
+          console.error("[api/generate][review-parse]", parseErr);
+        }
+
+        // Step 2: Auto-revise if needed
+        if (reviewResult.needsRevision && reviewResult.issues.length > 0) {
+          // 2-second delay to avoid 429s
+          await new Promise((r) => setTimeout(r, 2000));
+
+          const revisionSystemPrompt = `You are a surgical editor. You are revising an existing draft.
+
+ABSOLUTE RULES:
+1. PRESERVE THE AUTHOR'S VOICE. Do not change the tone, style, or personality.
+2. DO NOT ADD NEW CONCEPTS, FRAMEWORKS, PRODUCTS, OR BRAND NAMES that don't exist in the original.
+3. DO NOT EXPAND. Revision means fixing, not growing.
+4. DO NOT SHIFT THE REGISTER.
+5. ONLY FIX WHAT WAS FLAGGED. Fix these specific issues. Leave everything else untouched.
+6. If the issue is repetition, CUT the redundant sections. Don't rephrase them.
+7. PRESERVE ALL FORMATTING.
+
+CRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead.
+
+Output ONLY the complete revised draft. No commentary, no explanation.`
+            + (resources.voiceDna ? `\n\nVOICE DNA - The revision MUST match this voice:\n${resources.voiceDna}` : "")
+            + (resources.brandDna ? `\n\nBRAND DNA:\n${resources.brandDna}` : "")
+            + (resources.methodDna ? `\n\nMETHOD DNA:\n${resources.methodDna}` : "");
+
+          const revisionResponse = await callWithRetry(() =>
+            client.messages.create({
+              model: "claude-sonnet-4-20250514",
+              max_tokens: 4096,
+              system: revisionSystemPrompt,
+              messages: [{ role: "user", content: `ORIGINAL DRAFT:\n${content}\n\nREVISION NOTES:\nFix these issues identified by internal review:\n${reviewResult.issues.map((issue, i) => `${i + 1}. ${issue}`).join("\n")}` }],
+            })
+          );
+
+          const revisedContent = sanitizeContent(revisionResponse.content?.[0]?.type === "text" ? revisionResponse.content[0].text : "");
+          if (revisedContent && revisedContent.length > content.length * 0.5) {
+            content = revisedContent;
+            console.log("[api/generate] Back-of-house revision applied for issues:", reviewResult.issues);
+          }
+        }
+      } catch (bohErr) {
+        // Non-fatal: if back-of-house review fails, return the original draft
+        console.error("[api/generate][back-of-house]", bohErr);
+      }
+    }
 
     let gates = null;
     let score = 900;
