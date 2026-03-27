@@ -121,6 +121,9 @@ export default function Watch() {
   const [generating, setGenerating] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
   const [sources, setSources] = useState<SourceRow[]>([]);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    new Set(["Blogs", "Newsletters", "Podcasts", "Substacks", "Publications"])
+  );
   const [config, setConfig] = useState<WatchConfig>(DEFAULT_CONFIG);
   const [profile, setProfile] = useState<{ full_name?: string | null; sentinel_topics?: string[] | null } | null>(null);
 
@@ -295,6 +298,31 @@ export default function Watch() {
     toast("Default sources loaded.", "success");
   };
 
+  const toggleSection = (section: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(section)) {
+        next.delete(section);
+      } else {
+        next.add(section);
+      }
+      return next;
+    });
+  };
+
+  const SOURCE_SECTIONS = ["Blog", "Newsletter", "Podcast", "Substack", "Publication"];
+  const SECTION_LABELS: Record<string, string> = {
+    Blog: "Blogs",
+    Newsletter: "Newsletters",
+    Podcast: "Podcasts",
+    Substack: "Substacks",
+    Publication: "Publications",
+  };
+  const groupedSources = SOURCE_SECTIONS.reduce((acc, type) => {
+    acc[type] = sources.filter(s => s.type.toLowerCase() === type.toLowerCase());
+    return acc;
+  }, {} as Record<string, typeof sources>);
+
   const allSignals = (): Signal[] => {
     const s = briefing?.briefing?.sections;
     if (!s) return [];
@@ -430,42 +458,106 @@ export default function Watch() {
               <button type="button" onClick={handleLoadDefaultSources} disabled={loadingDefaults} style={{ ...goldBtn, opacity: loadingDefaults ? 0.6 : 1 }}>{loadingDefaults ? "Loading..." : "Load Default Sources"}</button>
             </div>
           ) : (
-            SOURCE_TYPES.map(type => {
-              const group = sources.filter(s => s.type.toLowerCase() === type.toLowerCase());
-              if (group.length === 0) return null;
-              return (
-                <div key={type} style={{ marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
-                    {type}s
-                  </h3>
-                  {group.map((s, i) => {
-                    const idx = sources.indexOf(s);
-                    return (
-                      <div
-                        key={s.id || i}
-                        style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px" }}
-                        className="watch-source-row"
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <span style={{ fontSize: 14, color: "var(--fg)" }}>{s.name}</span>
-                          <TrackBadge track={s.track} />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeSource(s.id, idx)}
-                          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fg-3)", fontSize: 16, padding: "0 4px", opacity: 0.5, transition: "opacity 0.15s ease" }}
-                          onMouseEnter={e => { e.currentTarget.style.opacity = "1"; }}
-                          onMouseLeave={e => { e.currentTarget.style.opacity = "0.5"; }}
-                          aria-label={`Remove ${s.name}`}
-                        >
-                          x
-                        </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {SOURCE_SECTIONS.map(type => {
+                const label = SECTION_LABELS[type];
+                const sectionSources = groupedSources[type] || [];
+                const isOpen = !collapsedSections.has(label);
+
+                return (
+                  <div key={type} style={{ border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden" }}>
+                    <button
+                      onClick={() => toggleSection(label)}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "14px 18px",
+                        background: "var(--surface)",
+                        border: "none",
+                        cursor: "pointer",
+                        fontFamily: "'Afacad Flux', sans-serif",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-2)" }}>
+                          {label}
+                        </span>
+                        <span style={{ fontSize: 12, color: "var(--fg-3)", fontWeight: 400 }}>
+                          {sectionSources.length}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
-              );
-            })
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                        stroke="var(--fg-3)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        style={{
+                          transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s ease",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <polyline points="2,5 7,10 12,5" />
+                      </svg>
+                    </button>
+
+                    {isOpen && sectionSources.length > 0 && (
+                      <div style={{ borderTop: "1px solid var(--line)" }}>
+                        {sectionSources.map((s, i) => {
+                          const idx = sources.indexOf(s);
+                          return (
+                            <div
+                              key={s.id || i}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "12px 18px",
+                                borderBottom: i < sectionSources.length - 1 ? "1px solid var(--line)" : "none",
+                                background: "var(--bg)",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <span style={{ fontSize: 14, color: "var(--fg)" }}>{s.name}</span>
+                                <TrackBadge track={s.track} />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeSource(s.id, idx)}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  color: "var(--fg-3)",
+                                  fontSize: 14,
+                                  padding: "0 4px",
+                                  lineHeight: 1,
+                                  fontFamily: "'Afacad Flux', sans-serif",
+                                }}
+                              >
+                                x
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {isOpen && sectionSources.length === 0 && (
+                      <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)", fontSize: 13, color: "var(--fg-3)" }}>
+                        No {label.toLowerCase()} added yet.
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
 
           {/* Add source */}

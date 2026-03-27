@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { FileText, Sparkles, ArrowLeft, Mic, Check, Loader2, Plus, Clipboard } from "lucide-react";
+import { FileText, Sparkles, ArrowLeft, Mic, Check, Loader2, Clipboard } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -3892,46 +3892,8 @@ export default function WorkSession() {
         background: "linear-gradient(transparent, var(--bg-light) 20%)",
       }}>
         <div style={{ maxWidth: 800, margin: "0 auto", width: "100%", padding: "0 24px", boxSizing: "border-box" }}>
-          {messages.length > 0 && messages[messages.length - 1].role === "assistant" && (
-            <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px 4px", fontSize: 12, color: "var(--fg-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "'Afacad Flux', sans-serif" }}>
-              Watson: {messages[messages.length - 1].content.slice(0, 100)}...
-            </div>
-          )}
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-            {messages.length > 1 && (
-              <button
-                type="button"
-                title="New session"
-                aria-label="Start a new session"
-                onClick={() => { clearSession(); navigate("/studio/work?type=" + outputType); window.location.reload(); }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  border: "none",
-                  background: "rgba(0,0,0,0.04)",
-                  cursor: "pointer",
-                  color: "#64748B",
-                  transition: "background 0.15s ease",
-                  flexShrink: 0,
-                  marginBottom: 12,
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.08)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
-              >
-                <Plus size={18} strokeWidth={2} />
-              </button>
-            )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Watson question preview */}
-              {messages.length > 0 && messages[messages.length - 1].role === "assistant" && input.length > 0 && (
-                <div style={{ padding: "0 0 4px", fontSize: 12, color: "var(--fg-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, opacity: 0.6 }}>
-                  Watson asked: {messages[messages.length - 1].content.split("\n").pop()?.slice(0, 80)}{((messages[messages.length - 1].content.split("\n").pop()?.length || 0) > 80) ? "..." : ""}
-                </div>
-              )}
               <SessionInputBox
                 input={input}
                 setInput={setInput}
