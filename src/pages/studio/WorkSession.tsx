@@ -1767,7 +1767,7 @@ export default function WorkSession() {
         content,
         output_type: outputType,
         score: generatedScore || 0,
-        content_state: "wrap_ready",
+        content_state: "vault",
         gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
         project_id: activeProjectId || null,
       }).select().single();
@@ -1781,7 +1781,7 @@ export default function WorkSession() {
     } else {
       await supabase.from("outputs").update({
         content,
-        content_state: "wrap_ready",
+        content_state: "vault",
         score: generatedScore || 0,
         gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
       }).eq("id", outputId);
