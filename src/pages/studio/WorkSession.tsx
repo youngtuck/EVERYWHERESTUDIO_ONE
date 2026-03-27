@@ -1485,21 +1485,38 @@ export default function WorkSession() {
     setApiError(null);
 
     try {
-      // Call generate endpoint with outline and thesis
-      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationSummary: getConversationSummary(),
-          outputType: outputTypeApi,
-          voiceProfile,
-          userId: user?.id,
-          outline: outline.length > 0 ? outline : undefined,
-          thesis: thesis || undefined,
-        }),
-      });
-      if (!res.ok) throw new Error("Draft generation failed");
-      const data = await res.json();
+      // 3-second delay before first attempt
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Retry loop: up to 3 attempts with 5s delay between retries
+      let data: any = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              conversationSummary: getConversationSummary(),
+              outputType: outputTypeApi,
+              voiceProfile,
+              userId: user?.id,
+              outline: outline.length > 0 ? outline : undefined,
+              thesis: thesis || undefined,
+            }),
+          });
+          if (!res.ok) throw new Error("Draft generation failed");
+          data = await res.json();
+          break; // Success, exit retry loop
+        } catch (err) {
+          if (attempt < 3) {
+            toast(`Draft generation attempt ${attempt} failed. Retrying...`, "error");
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          } else {
+            throw err; // Final attempt failed
+          }
+        }
+      }
+      if (!data) throw new Error("Draft generation failed after 3 attempts");
       setDraftContent(data.content || "");
       setGeneratedContent(data.content || "");
       setGeneratedScore(data.score || 0);
@@ -1528,8 +1545,11 @@ export default function WorkSession() {
       setLayer1Results([
         { gate: "Echo", status: "running", score: 0, feedback: "", startedAt: Date.now() },
         { gate: "Priya", status: "running", score: 0, feedback: "", startedAt: Date.now() },
+        { gate: "Jordan", status: "running", score: 0, feedback: "", startedAt: Date.now() },
         { gate: "David", status: "running", score: 0, feedback: "", startedAt: Date.now() },
+        { gate: "Elena", status: "running", score: 0, feedback: "", startedAt: Date.now() },
         { gate: "Natasha", status: "running", score: 0, feedback: "", startedAt: Date.now() },
+        { gate: "Marcus + Marshall", status: "running", score: 0, feedback: "", startedAt: Date.now() },
       ]);
 
       try {
@@ -1540,7 +1560,7 @@ export default function WorkSession() {
             draft: data.content, outputType: outputTypeApi,
             voiceDnaMd, brandDnaMd, methodDnaMd,
             userId: user?.id, outputId: revisionOutputId || "new",
-            gateSubset: ["Echo", "Priya", "David", "Natasha"],
+            gateSubset: ["Echo", "Priya", "Jordan", "David", "Elena", "Natasha", "Marcus + Marshall"],
           }),
         }, { timeout: 120000 });
         if (pipelineRes.ok) {
@@ -1629,6 +1649,10 @@ export default function WorkSession() {
   const handleImproveCheckpoint = async (gateName: string, feedback: string) => {
     if (improvingGate) return;
     setImprovingGate(gateName);
+    console.log(`[handleImproveCheckpoint] Starting improvement for gate: "${gateName}"`);
+    // Capture old score for comparison
+    const oldScore = layer1Results.find(r => r.gate === gateName)?.score || 0;
+    console.log(`[handleImproveCheckpoint] Old score for "${gateName}": ${oldScore}`);
     try {
       // Revise draft to address this specific checkpoint
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
@@ -1637,7 +1661,7 @@ export default function WorkSession() {
         body: JSON.stringify({
           conversationSummary: getConversationSummary(),
           originalDraft: draftContent || generatedContent,
-          revisionNotes: `Address the following checkpoint feedback from ${gateName}: ${feedback}. Fix the specific issues identified. Maintain the same voice, structure, and length. Only change what is needed to pass this checkpoint.`,
+          revisionNotes: `MANDATORY REVISION for ${gateName} checkpoint. The following issues MUST be fixed. Do not skip any. Do not soften the changes. Apply every fix directly to the text.\n\nCheckpoint feedback:\n${feedback}\n\nRules:\n1. Fix every issue listed above. No partial fixes.\n2. Maintain the same voice, structure, and approximate length.\n3. Do not add filler or generic transitions.\n4. If the feedback says something is missing, add it. If it says something is wrong, change it.`,
           outputType: outputTypeApi,
           voiceProfile,
           userId: user?.id,
@@ -1649,7 +1673,16 @@ export default function WorkSession() {
       setDraftContent(data.content || "");
       setGeneratedContent(data.content || "");
 
+      // Save revised draft to Supabase
+      if (generatedOutputId && generatedOutputId !== "new") {
+        await supabase.from("outputs").update({
+          content: data.content,
+        }).eq("id", generatedOutputId);
+        console.log(`[handleImproveCheckpoint] Saved revised draft to Supabase for output ${generatedOutputId}`);
+      }
+
       // Re-run just that one gate
+      console.log(`[handleImproveCheckpoint] Re-running pipeline for gate: "${gateName}"`);
       const pipelineRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1664,14 +1697,18 @@ export default function WorkSession() {
       if (pipelineRes.ok) {
         const result = await pipelineRes.json();
         const newGate = result.gateResults?.[0];
+        console.log(`[handleImproveCheckpoint] Pipeline result for "${gateName}":`, newGate);
         if (newGate) {
-          setLayer1Results(prev => prev.map(r => r.gate === gateName ? {
-            gate: newGate.gate, status: newGate.status === "PASS" ? "pass" : newGate.status === "FAIL" ? "fail" : "flag",
-            score: newGate.score, feedback: newGate.feedback,
-          } : r));
+          setLayer1Results(prev => prev.map(r => {
+            console.log(`[handleImproveCheckpoint] Comparing gate "${r.gate}" with target "${gateName}" - match: ${r.gate === gateName}`);
+            return r.gate === gateName ? {
+              gate: newGate.gate, status: newGate.status === "PASS" ? "pass" : newGate.status === "FAIL" ? "fail" : "flag",
+              score: newGate.score, feedback: newGate.feedback,
+            } : r;
+          }));
+          toast(`${gateName}: ${oldScore} -> ${newGate.score}`);
         }
       }
-      toast(`${gateName} checkpoint improved.`);
     } catch (err) {
       toast("Improvement failed. Try again.", "error");
     } finally {
@@ -2388,13 +2425,18 @@ export default function WorkSession() {
                   <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.7, color: "var(--fg)", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: isMobile ? "20px 16px" : "28px 32px" }}>
                     <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
                   </div>
-                  <button
-                    onClick={handleEnterEditing}
-                    disabled={writersRoomLoading}
-                    style={{ marginTop: 16, padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                  >
-                    Review your draft
-                  </button>
+                  <div style={{ marginTop: 16 }}>
+                    <button
+                      onClick={handleEnterEditing}
+                      disabled={writersRoomLoading}
+                      style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
+                    >
+                      Continue to editing
+                    </button>
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6, fontFamily: "'Afacad Flux', sans-serif" }}>
+                      You'll be able to read through, make changes, and run the stress test.
+                    </div>
+                  </div>
                 </div>
                 {/* Checkpoints sidebar (right column) */}
                 <div style={{ flex: isMobile ? "1" : "0 0 35%", position: isMobile ? "static" as const : "sticky" as const, top: 80, alignSelf: "flex-start", maxHeight: isMobile ? "none" : "calc(100vh - 120px)", overflowY: isMobile ? "visible" as const : "auto" as const }}>
@@ -2402,7 +2444,8 @@ export default function WorkSession() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 2 }}>Quality Checkpoints</div>
                   <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>
-                    Each specialist scores your draft 0-100. <span style={{ color: "#50c8a0", fontWeight: 600 }}>80+ Strong</span> | <span style={{ color: "#C8961A", fontWeight: 600 }}>60-79 Needs work</span> | <span style={{ color: "#E53935", fontWeight: 600 }}>&lt;60 Needs attention</span>
+                    <div>Each specialist scores your draft 0-100.</div>
+                    <div style={{ marginTop: 4 }}><span style={{ color: "#50c8a0", fontWeight: 600 }}>80+ Strong</span> | <span style={{ color: "#C8961A", fontWeight: 600 }}>60-79 Needs work</span> | <span style={{ color: "#E53935", fontWeight: 600 }}>&lt;60 Needs attention</span></div>
                   </div>
                   {layer1Results.map((r, idx) => {
                     const descriptions: Record<string, { title: string; runningMsg: string }> = {

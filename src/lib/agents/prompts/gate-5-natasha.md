@@ -1,3 +1,5 @@
+RESPONSE STYLE: Do not begin with 'Strong'. Lead with publication verdict. Authoritative and exacting.
+
 # Natasha Boyko - Principal Editor
 
 **Version:** 6.5

@@ -244,26 +244,32 @@ function loadModeAgentContext(systemMode) {
 }
 
 async function fetchUrlContent(url) {
+  console.log(`[fetchUrlContent] Fetching URL: ${url}`);
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(url, { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 (compatible; EverywhereStudio/1.0)", "Accept": "text/html,text/plain" } });
     clearTimeout(timeout);
+    console.log(`[fetchUrlContent] Response status for ${url}: ${res.status}`);
     if (!res.ok) return null;
     const html = await res.text();
     let text = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+    console.log(`[fetchUrlContent] Extracted ${text.length} chars from ${url}`);
     if (text.length > 3000) text = text.slice(0, 3000) + "\n\n[Content truncated]";
     return text;
-  } catch { return null; }
+  } catch (err) { console.log(`[fetchUrlContent] Failed to fetch ${url}:`, err?.message || err); return null; }
 }
 
 function extractUrls(text) {
-  return (text.match(/https?:\/\/[^\s<>"')\]]+/g) || []).slice(0, 3);
+  const urls = (text.match(/https?:\/\/[^\s<>"')\]]+/g) || []).slice(0, 3);
+  if (urls.length > 0) console.log(`[extractUrls] Found ${urls.length} URL(s):`, urls);
+  return urls;
 }
 
 async function quickResearch(query) {
+  console.log(`[quickResearch] Starting research for query: "${query}"`);
   const apiKey = process.env.FIRECRAWL_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) { console.log("[quickResearch] No FIRECRAWL_API_KEY configured, skipping"); return null; }
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
@@ -274,9 +280,11 @@ async function quickResearch(query) {
       signal: controller.signal,
     });
     clearTimeout(timeout);
+    console.log(`[quickResearch] Firecrawl response status: ${res.status}`);
     if (!res.ok) return null;
     const data = await res.json();
-    if (!data.data || data.data.length === 0) return null;
+    if (!data.data || data.data.length === 0) { console.log("[quickResearch] No results returned"); return null; }
+    console.log(`[quickResearch] Got ${data.data.length} result(s)`);
     let context = "\n\n[RESEARCH RESULTS]:\n";
     for (const item of data.data) {
       const title = item.title || item.url || "";
@@ -285,7 +293,7 @@ async function quickResearch(query) {
     }
     context += "\n[END RESEARCH]\n";
     return context;
-  } catch { return null; }
+  } catch (err) { console.log(`[quickResearch] Research failed:`, err?.message || err); return null; }
 }
 
 function detectResearchIntent(text) {
