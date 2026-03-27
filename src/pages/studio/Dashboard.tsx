@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { timeAgo } from "../../utils/timeAgo";
 import { getScoreColor } from "../../utils/scoreColor";
 import "./shared.css";
@@ -62,6 +63,7 @@ export default function Dashboard() {
   const isMobile = useMobile();
   const { user, displayName } = useAuth();
 
+  const { toast } = useToast();
   const [outputs, setOutputs] = useState<OutputRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -89,6 +91,16 @@ export default function Dashboard() {
   }, [user]);
 
   const firstName = displayName ? displayName.split(" ")[0] : "there";
+
+  const handleClearRecentWork = useCallback(async () => {
+    if (!user) return;
+    const confirmed = window.confirm("Clear all recent work from your home feed? This does not delete your saved outputs from The Vault.");
+    if (!confirmed) return;
+    const idsToDelete = outputs.map(o => o.id);
+    await supabase.from("outputs").delete().in("id", idsToDelete).eq("user_id", user.id);
+    setOutputs([]);
+    toast("Recent work cleared.");
+  }, [user, outputs, toast]);
 
   if (error) {
     return (
@@ -155,6 +167,28 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* Express to Wrap */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
+        <span style={{ fontSize: 12, color: "var(--fg-3)" }}>
+          Just want a visual?
+        </span>
+        <button
+          onClick={() => nav("/studio/wrap?express=true")}
+          style={{
+            background: "none",
+            border: "1px solid var(--line)",
+            borderRadius: 6,
+            padding: "6px 14px",
+            fontSize: 12,
+            color: "var(--fg-2)",
+            cursor: "pointer",
+            fontFamily: "'Afacad Flux', sans-serif",
+          }}
+        >
+          Skip to Wrap
+        </button>
+      </div>
+
       {/* Spacer below input */}
       <div style={{ marginBottom: 48 }} />
 
@@ -206,14 +240,24 @@ export default function Dashboard() {
             <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.04em", textTransform: "uppercase" as const, margin: 0 }}>
               Recent Work
             </h2>
-            <button
-              onClick={() => nav("/studio/outputs")}
-              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif", transition: "color 0.15s" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "var(--fg)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
-            >
-              View all
-            </button>
+            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              <button
+                onClick={handleClearRecentWork}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif", padding: 0, transition: "color 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "var(--fg)"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => nav("/studio/outputs")}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif", transition: "color 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "var(--fg)"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
+              >
+                View all
+              </button>
+            </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {outputs.slice(0, 8).map(o => {

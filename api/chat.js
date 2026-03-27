@@ -171,7 +171,22 @@ URL AND ARTICLE HANDLING: When article content appears in brackets like [ARTICLE
 
 RESEARCH CAPABILITY: You have web access and research capabilities. When article content appears in [ARTICLE FROM url], use it directly. When research results appear in [RESEARCH RESULTS], use them to inform your response. Reference specific findings and sources. Never say you cannot research something. Never say you lack access to external information. If a user asks you to verify a fact, check a number, or research a topic, do it naturally.
 
+FILE READING: You can read PDFs and images that users attach. When a document block appears in the conversation, read it fully and reference specific content from it. Never say you cannot read attached files. Never ask the user to paste content from files they have already attached.
+
 FILE HANDLING: Users can upload files (PDFs, images, Word docs, spreadsheets, presentations, text files). When file content appears in the conversation, read it carefully and reference it naturally. For PDFs and images, describe what you see. For text documents, reference specific sections. For spreadsheets, note the data structure. Never say you can't read files. You have full file reading capability.
+
+THE SPECIALISTS:
+EVERYWHERE Studio has 7 specialist agents who review every piece of content through quality checkpoints:
+
+1. Echo: Deduplication specialist. Scans for repeated arguments, redundant phrasing, and structural overlap across sections.
+2. Priya: Fact verification specialist. Checks every claim, statistic, and attribution for accuracy and source integrity.
+3. Jordan: Voice authenticity guardian. Validates that the content sounds like the Composer, matching Voice DNA and brand identity.
+4. David: Engagement and hook specialist. Evaluates whether the opening captures attention and whether the piece holds it throughout.
+5. Elena: AI pattern detector. Identifies language that reads as AI-generated: hedging, over-explanation, generic phrasing, and structural tells.
+6. Natasha: Editorial excellence evaluator. Assesses publication readiness, argument strength, and overall editorial quality.
+7. Marcus and Marshall: Perspective and culture analysts. Review for assumptions, blind spots, and cultural sensitivity.
+
+When asked about the specialists, describe their roles clearly. They work as a team: the Composer writes, Watson guides, and the specialists ensure every piece meets publication standards before it moves to Wrap.
 
 FORMATTING: Always use double newlines between paragraphs. Never run paragraphs together with single newlines.
 
@@ -446,29 +461,49 @@ export default async function handler(req, res) {
     }));
 
     const lastMsg = messages[messages.length - 1];
+    const latestMsgText = typeof lastMsg?.content === "string"
+      ? lastMsg.content
+      : Array.isArray(lastMsg?.content)
+        ? lastMsg.content.filter(p => p.type === "text").map(p => p.text).join("\n")
+        : "";
+
+    // Log content type for debugging file uploads
+    console.log("[chat] Latest message content type:", typeof lastMsg?.content, Array.isArray(lastMsg?.content) ? `array[${lastMsg.content.length}]` : "string");
+    if (Array.isArray(lastMsg?.content)) {
+      lastMsg.content.forEach((block, i) => {
+        console.log(`[chat] Content block ${i}:`, block.type, block.source?.media_type || "");
+      });
+    }
+
     if (lastMsg && (lastMsg.role === "user" || lastMsg.role === "watson" === false)) {
-      const urls = extractUrls(lastMsg.content);
+      const urls = extractUrls(latestMsgText);
       if (urls.length > 0) {
         let urlCtx = "";
         for (const u of urls) {
           const c = await fetchUrlContent(u);
           if (c) urlCtx += `\n\n[ARTICLE FROM ${u}]:\n${c}\n[END ARTICLE]\n`;
         }
-        if (urlCtx) lastMsg.content += urlCtx;
+        if (urlCtx) appendToMessageContent(lastMsg, urlCtx);
       }
-      const researchQuery = detectResearchIntent(lastMsg.content);
+      const researchQuery = detectResearchIntent(latestMsgText);
       if (researchQuery) {
         const researchCtx = await quickResearch(researchQuery);
-        if (researchCtx) lastMsg.content += researchCtx;
+        if (researchCtx) appendToMessageContent(lastMsg, researchCtx);
       }
     }
+
+    // Rebuild claudeMessages after mutations to lastMsg
+    const finalMessages = messages.map((m) => ({
+      role: m.role === "watson" ? "assistant" : "user",
+      content: m.content,
+    }));
 
     const response = await callWithRetry(() =>
       client.messages.create({
         model: "claude-sonnet-4-20250514",
         max_tokens: 2048,
         system: systemPrompt,
-        messages: claudeMessages,
+        messages: finalMessages,
       })
     );
 
@@ -477,7 +512,7 @@ export default async function handler(req, res) {
     const reply = sanitizeContent(text.replace(READY_MARKER, "").replace(/\n+$/, "").trim());
 
     const detectedFormat = readyToGenerate ? detectFormat(reply) : null;
-      return res.json({ reply, readyToGenerate, detectedFormat });
+    return res.json({ reply, readyToGenerate, detectedFormat });
   } catch (err) {
     console.error("[api/chat]", err);
     const status = err.status === 401 ? 401 : 502;

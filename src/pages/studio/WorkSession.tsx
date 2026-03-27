@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { FileText, Sparkles, ArrowLeft, Mic, Check, Loader2, Clipboard } from "lucide-react";
+import { FileText, Sparkles, Mic, Check, Loader2, Clipboard } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -1101,7 +1101,7 @@ export default function WorkSession() {
   }, [user]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, loading]);
 
   useEffect(() => {
@@ -1617,8 +1617,8 @@ export default function WorkSession() {
     setApiError(null);
 
     try {
-      // 3-second delay before first attempt
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Brief delay before first attempt
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Retry loop: up to 3 attempts with 5s delay between retries
       let data: any = null;
@@ -1708,10 +1708,12 @@ export default function WorkSession() {
 
       setWritersRoomLoading(false);
     } catch (err: any) {
-      setApiError(err.message || "Draft generation failed");
-      toast("Draft generation failed. Try again.", "error");
+      console.error("[WorkSession] Draft generation failed:", err);
       setWritersRoomLoading(false);
       setPhase("structure");
+      setApiError(`Draft generation failed: ${err.message || "Unknown error"}. Check your connection and try again.`);
+      toast("Draft generation failed. Tap to retry.", "error");
+      generateLockRef.current = false;
     } finally {
       generateLockRef.current = false;
     }
@@ -1745,6 +1747,48 @@ export default function WorkSession() {
     }
     clearSession();
     navigate(`/studio/outputs/${outputId}`);
+  };
+
+  const handleMoveToWrap = async () => {
+    if (!user) return;
+    const content = draftContent || generatedContent;
+    if (!content) return;
+
+    let outputId = generatedOutputId;
+
+    if (!outputId || outputId === "new") {
+      const title = generateTitle(
+        messages.find(m => m.role === "user")?.content || "",
+        content
+      );
+      const { data, error } = await supabase.from("outputs").insert({
+        user_id: user.id,
+        title,
+        content,
+        output_type: outputType,
+        score: generatedScore || 0,
+        content_state: "wrap_ready",
+        gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
+        project_id: activeProjectId || null,
+      }).select().single();
+
+      if (error) {
+        toast("Failed to save. Try again.", "error");
+        return;
+      }
+      outputId = data.id;
+      setGeneratedOutputId(data.id);
+    } else {
+      await supabase.from("outputs").update({
+        content,
+        content_state: "wrap_ready",
+        score: generatedScore || 0,
+        gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
+      }).eq("id", outputId);
+    }
+
+    clearSession();
+    navigate(`/studio/wrap?outputId=${outputId}`);
   };
 
   const handleRevisionFromEdits = async () => {
@@ -2354,84 +2398,7 @@ export default function WorkSession() {
         }
       `}</style>
 
-      {/* ── Top bar (fixed 60px) ───────────────────────────────────── */}
-      <div style={{
-        position: "sticky", top: 0, zIndex: 50,
-        height: 60, display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "12px 24px",
-        borderBottom: "1px solid var(--border-subtle)",
-        background: "rgba(244, 242, 237, 0.85)", backdropFilter: "blur(12px)",
-        flexShrink: 0, overflow: "visible",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={() => navigate("/studio/dashboard")} style={{
-            background: "none", border: "none", cursor: "pointer",
-            padding: "5px 8px", borderRadius: 6, color: "var(--text-secondary)",
-            display: "flex", alignItems: "center", gap: 4, transition: "color .15s",
-            fontSize: 12, fontFamily: "'Afacad Flux', sans-serif",
-          }}
-            onMouseEnter={e => e.currentTarget.style.color = "var(--text-primary)"}
-            onMouseLeave={e => e.currentTarget.style.color = "var(--text-secondary)"}
-          >
-            <ArrowLeft size={16} strokeWidth={1.5} />
-            <span>Home</span>
-          </button>
-          {projects.length > 1 ? (
-            <select
-              value={activeProjectId || ""}
-              onChange={(e) => setActiveProjectId(e.target.value || null)}
-              style={{
-                fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 400,
-                color: "var(--text-tertiary)", background: "transparent", border: "none",
-                outline: "none", cursor: "pointer", display: isMobile ? "none" : "inline-block",
-                appearance: "none", padding: "0 12px 0 0",
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 2.5L4 5.5L7 2.5' stroke='%2364748B' strokeWidth='1' strokeLinecap='round'/%3E%3C/svg%3E")`,
-                backgroundRepeat: "no-repeat", backgroundPosition: "right center",
-              }}
-            >
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          ) : (
-            <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 400, color: "var(--text-tertiary)", display: isMobile ? "none" : "inline-block" }}>
-              {projects[0]?.name || "Studio"}
-            </span>
-          )}
-          <span style={{ color: "var(--text-tertiary)", fontSize: 12, display: isMobile ? "none" : "inline-block" }}>/</span>
-          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-.01em", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: isMobile ? "none" : "inline-block" }}>
-            {sessionTitle}
-          </span>
-        </div>
-
-        {/* Center: spacer (output type pill moved to generate step) */}
-        <span style={{ display: "inline-flex" }} />
-
-        {/* Right: actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button style={{
-            background: "none", border: "none",
-            borderRadius: 6, padding: "6px 12px", cursor: "pointer",
-            fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--gold)",
-            transition: "all .15s",
-          }}
-            title="View outputs"
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "none"; }}
-            onClick={() => navigate("/studio/outputs")}
-          >Outputs</button>
-
-          <button style={{
-            background: "var(--text-primary)", border: "none",
-            borderRadius: 8, padding: "10px 20px", cursor: "pointer",
-            fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff",
-            transition: "opacity .15s",
-          }}
-            title="Start new session"
-            onMouseEnter={e => e.currentTarget.style.opacity = ".88"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            onClick={() => { clearSession(); window.location.href = "/studio/work"; }}
-          >New Session</button>
-        </div>
-      </div>
+      {/* Top bar removed (FIX 2) */}
       {/* ── Empty state: perfectly centered ─────────────────────────────── */}
       {phase === "input" && messages.length <= 1 ? (
         <EmptyState
@@ -3491,10 +3458,7 @@ export default function WorkSession() {
                   </button>
                   <button
                     type="button"
-                    onClick={async () => {
-                      await handleSaveAndClose();
-                      navigate(`/studio/wrap?outputId=${generatedOutputId}`);
-                    }}
+                    onClick={handleMoveToWrap}
                     style={{
                       background: "var(--gold)",
                       color: "#fff",

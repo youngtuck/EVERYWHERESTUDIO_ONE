@@ -42,6 +42,8 @@ export default async function handler(req, res) {
     }
   }
 
+  console.log("[generate] Request received:", req.method, Object.keys(req.body || {}));
+
   try {
     const client = new Anthropic({ apiKey });
 
@@ -168,14 +170,21 @@ Output ONLY the complete revised draft. No commentary, no explanation.`;
       userContent = `Conversation summary:\n${conversationSummary}\n\nProduce the ${outputType} now.`;
     }
 
-    const response = await callWithRetry(() =>
-      client.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 4096,
-        system,
-        messages: [{ role: "user", content: userContent }],
-      })
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Generation timed out after 60 seconds")), 60000)
     );
+
+    const response = await Promise.race([
+      callWithRetry(() =>
+        client.messages.create({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: Math.min(req.body.maxTokens || 4096, 8192),
+          system,
+          messages: [{ role: "user", content: userContent }],
+        })
+      ),
+      timeoutPromise,
+    ]);
 
     let content = sanitizeContent(response.content?.[0]?.type === "text" ? response.content[0].text : "");
 
@@ -270,8 +279,11 @@ Output ONLY the complete revised draft. No commentary, no explanation.`
 
     return res.json({ content, score, gates });
   } catch (err) {
-    console.error("[api/generate]", err);
-    const status = err.status === 401 ? 401 : 502;
-    return res.status(status).json({ error: err.message || "Something went wrong." });
+    console.error("[api/generate] Error:", err.message || err);
+    const status = err.status === 401 ? 401 : 500;
+    return res.status(status).json({
+      error: err.message || "Generation failed",
+      content: null,
+    });
   }
 }
