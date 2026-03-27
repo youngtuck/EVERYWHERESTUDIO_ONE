@@ -50,6 +50,12 @@
     "api/admin-data.js": {
       "maxDuration": 30
     },
+    "api/run-sentinel.js": {
+      "maxDuration": 120
+    },
+    "api/firecrawl-search.js": {
+      "maxDuration": 30
+    },
     "api/writers-room/bluesky.js": {
       "maxDuration": 30
     },
