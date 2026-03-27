@@ -604,6 +604,9 @@ export default function OutputDetail() {
       <div style={{ maxWidth: 800, margin: "0 auto", padding: isMobile ? "20px 16px" : "28px 32px" }}>
         {editing ? (
           <>
+            <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>
+              Editing raw text. Markdown formatting (** for bold, ## for headings) will render when you save and exit edit mode.
+            </div>
             {hasUnsavedChanges && (
               <div style={{ fontSize: 12, color: "var(--gold)", fontStyle: "italic", marginBottom: 8 }}>Unsaved changes</div>
             )}
