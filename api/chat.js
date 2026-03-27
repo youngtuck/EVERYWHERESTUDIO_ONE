@@ -169,7 +169,7 @@ CORE BEHAVIOR:
 
 URL AND ARTICLE HANDLING: When article content appears in brackets like [ARTICLE FROM url], treat it as source material. Read it, extract key insights, and reference specific points. If no article content appears after a URL, say: "I was not able to pull that article. Can you paste the key points?"
 
-RESEARCH CAPABILITY: You have access to web research. When research results appear in brackets like [RESEARCH RESULTS], use them as source material. Reference specific findings and sources. When the user asks about current events, trends, or factual background, research will be performed automatically. Integrate findings naturally into your responses.
+RESEARCH CAPABILITY: You have web access and research capabilities. When article content appears in [ARTICLE FROM url], use it directly. When research results appear in [RESEARCH RESULTS], use them to inform your response. Reference specific findings and sources. Never say you cannot research something. Never say you lack access to external information. If a user asks you to verify a fact, check a number, or research a topic, do it naturally.
 
 FORMATTING: Always use double newlines between paragraphs. Never run paragraphs together with single newlines.
 
@@ -298,14 +298,29 @@ async function quickResearch(query) {
 
 function detectResearchIntent(text) {
   if (!text) return null;
-  const patterns = [
+  // Patterns that extract a search query from the message
+  const extractPatterns = [
     /(?:research|look up|find out about|what(?:'s| is) (?:the latest|happening with|going on with)|search for|tell me about)\s+(.+)/i,
     /(?:what do (?:we|you) know about)\s+(.+)/i,
     /(?:background on|context on|info on)\s+(.+)/i,
   ];
-  for (const p of patterns) {
+  for (const p of extractPatterns) {
     const m = text.match(p);
     if (m) return m[1].trim();
+  }
+  // Broader trigger patterns that indicate research intent (use first 100 chars as query)
+  const triggerPatterns = [
+    /check (if|whether|that)/i,
+    /is (that|this) (correct|right|accurate|true)/i,
+    /verify (that|this)/i,
+    /how many/i,
+    /what (is|are) the (latest|current|recent)/i,
+    /find (out|me)/i,
+    /tell me (more )?about/i,
+  ];
+  if (triggerPatterns.some(r => r.test(text))) {
+    console.log("[detectResearchIntent] Broad trigger matched, using first 100 chars as query");
+    return text.slice(0, 100);
   }
   return null;
 }

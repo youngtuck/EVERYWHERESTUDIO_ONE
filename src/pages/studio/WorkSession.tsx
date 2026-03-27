@@ -1664,7 +1664,7 @@ export default function WorkSession() {
         body: JSON.stringify({
           conversationSummary: getConversationSummary(),
           originalDraft: draftContent || generatedContent,
-          revisionNotes: `MANDATORY REVISION for ${gateName} checkpoint. The following issues MUST be fixed. Do not skip any. Do not soften the changes. Apply every fix directly to the text.\n\nCheckpoint feedback:\n${feedback}\n\nRules:\n1. Fix every issue listed above. No partial fixes.\n2. Maintain the same voice, structure, and approximate length.\n3. Do not add filler or generic transitions.\n4. If the feedback says something is missing, add it. If it says something is wrong, change it.`,
+          revisionNotes: `MANDATORY REVISION. The ${gateName} checkpoint scored this draft poorly.\n\nCHECKPOINT FEEDBACK:\n${feedback}\n\nINSTRUCTIONS:\n1. Read the original draft carefully.\n2. Identify every instance of the issues described above.\n3. Rewrite the affected sections to directly address each issue.\n4. The revised draft MUST be noticeably different from the original in the flagged areas.\n5. If the issue is repetition, CUT redundant sections entirely. Do not rephrase them.\n6. If the issue is missing evidence, ADD specific examples or remove unsupported claims.\n7. If the issue is structural, REORGANIZE sections so each one advances the argument.\n8. Maintain the same overall voice, argument, and approximate length.\n9. Do NOT just rephrase the same content. Actually fix the structural and content issues.\n\nOutput ONLY the complete revised draft. No commentary, no preamble.`,
           outputType: outputTypeApi,
           voiceProfile,
           userId: user?.id,
@@ -1700,16 +1700,27 @@ export default function WorkSession() {
       if (pipelineRes.ok) {
         const result = await pipelineRes.json();
         const newGate = result.gateResults?.[0];
-        console.log(`[handleImproveCheckpoint] Pipeline result for "${gateName}":`, newGate);
+        console.log("[Improve] Pipeline response:", JSON.stringify(result));
+        console.log("[Improve] Looking for gate:", gateName);
         if (newGate) {
-          setLayer1Results(prev => prev.map(r => {
-            console.log(`[handleImproveCheckpoint] Comparing gate "${r.gate}" with target "${gateName}" - match: ${r.gate === gateName}`);
-            return r.gate === gateName ? {
-              gate: newGate.gate, status: newGate.status === "PASS" ? "pass" : newGate.status === "FAIL" ? "fail" : "flag",
-              score: newGate.score, feedback: newGate.feedback,
-            } : r;
-          }));
-          toast(`${gateName}: ${oldScore} -> ${newGate.score}`);
+          const matchGate = newGate.gate || gateName;
+          setLayer1Results(prev => {
+            const updated = prev.map(r => {
+              if (r.gate === gateName || r.gate === matchGate) {
+                return {
+                  gate: gateName,
+                  status: newGate.score >= 80 ? "pass" as const : newGate.score >= 60 ? "flag" as const : "fail" as const,
+                  score: newGate.score,
+                  feedback: newGate.feedback,
+                  issues: newGate.issues || [],
+                };
+              }
+              return r;
+            });
+            console.log("[Improve] Updated results:", updated.map(r => `${r.gate}: ${r.score}`));
+            return updated;
+          });
+          toast(`${gateName}: score updated to ${newGate.score}`);
         }
       }
     } catch (err) {
@@ -2468,41 +2479,70 @@ export default function WorkSession() {
                   </div>
                   <div style={{ marginTop: 16 }}>
                     {autoImprovingCurrent && (
-                      <div style={{ fontSize: 13, color: "var(--gold)", marginBottom: 12, fontStyle: "italic" }}>
-                        Revising draft to pass quality checkpoints: fixing {autoImprovingCurrent}...
+                      <div style={{
+                        padding: "12px 16px",
+                        background: "rgba(200, 150, 26, 0.06)",
+                        borderRadius: 8,
+                        marginBottom: 12,
+                        fontSize: 13,
+                        color: "var(--fg-2)",
+                      }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Revising to pass checkpoints...</div>
+                        <div>Currently fixing: {autoImprovingCurrent}</div>
                       </div>
                     )}
                     {manualFixNeeded.length > 0 && !autoImprovingCurrent && (
-                      <div style={{ fontSize: 13, color: "var(--fg-2)", marginBottom: 12 }}>
-                        {layer1Results.filter(r => r.score >= 60 || r.score === 0).length} of 7 checkpoints passed. {manualFixNeeded.length} need your attention.
+                      <div style={{
+                        padding: "12px 16px",
+                        background: "rgba(229, 57, 53, 0.06)",
+                        borderRadius: 8,
+                        marginBottom: 12,
+                        fontSize: 13,
+                      }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4, color: "#E53935" }}>
+                          {manualFixNeeded.length} checkpoint{manualFixNeeded.length > 1 ? "s" : ""} need attention
+                        </div>
+                        <div style={{ color: "var(--fg-2)" }}>
+                          {manualFixNeeded.join(", ")} could not be auto-fixed.
+                        </div>
                       </div>
                     )}
-                    {allCheckpointsPassed ? (
-                      <div>
-                        <div style={{ fontSize: 13, color: "#50c8a0", marginBottom: 8, fontWeight: 600 }}>All checkpoints passed. Ready to continue.</div>
-                        <button
-                          onClick={handleEnterEditing}
-                          style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                        >
-                          Continue to editing
-                        </button>
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        <button
-                          onClick={handleEnterEditing}
-                          disabled={!!autoImprovingCurrent}
-                          style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: autoImprovingCurrent ? "default" : "pointer", fontFamily: "'Afacad Flux', sans-serif", opacity: autoImprovingCurrent ? 0.5 : 1 }}
-                        >
-                          Edit manually
-                        </button>
-                        {!autoImprovingCurrent && (
-                          <button
-                            onClick={handleEnterEditing}
-                            style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", color: "var(--fg-3)", fontSize: 13, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                          >
-                            Continue anyway
-                          </button>
+                    {!autoImprovingCurrent && (
+                      <div style={{ textAlign: "center", marginTop: 16 }}>
+                        {allCheckpointsPassed || (!manualFixNeeded.length && layer1Results.every(r => r.score === 0 || r.score >= 60)) ? (
+                          <>
+                            <button onClick={handleEnterEditing} style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}>
+                              Continue to editing
+                            </button>
+                            <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 8 }}>
+                              {allCheckpointsPassed ? "All checkpoints passed. Ready to continue." : "Read through your draft, make changes, and run the stress test."}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                console.log("[Gates] User overrode blocking gates:", manualFixNeeded);
+                                handleEnterEditing();
+                              }}
+                              style={{
+                                padding: "12px 24px",
+                                borderRadius: 8,
+                                border: "1px solid var(--line)",
+                                background: "transparent",
+                                fontSize: 14,
+                                fontWeight: 500,
+                                color: "var(--fg-3)",
+                                cursor: "pointer",
+                                fontFamily: "'Afacad Flux', sans-serif",
+                              }}
+                            >
+                              Continue anyway
+                            </button>
+                            <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 8 }}>
+                              Some checkpoints are below threshold. You can continue or edit to fix them.
+                            </div>
+                          </>
                         )}
                       </div>
                     )}
@@ -2516,9 +2556,15 @@ export default function WorkSession() {
                 {/* Layer 1 checkpoint results */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 2 }}>Quality Checkpoints</div>
-                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>
-                    <div>Each specialist scores your draft 0-100.</div>
-                    <div style={{ marginTop: 4 }}><span style={{ color: "#50c8a0", fontWeight: 600 }}>80+ Strong</span> | <span style={{ color: "#C8961A", fontWeight: 600 }}>60-79 Needs work</span> | <span style={{ color: "#E53935", fontWeight: 600 }}>&lt;60 Needs attention</span></div>
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 8 }}>
+                      Each specialist scores your draft 0-100.
+                    </div>
+                    <div style={{ display: "flex", gap: 16, fontSize: 13, flexWrap: "wrap" }}>
+                      <span><span style={{ color: "#50c8a0", fontWeight: 600 }}>80+</span> Strong</span>
+                      <span><span style={{ color: "#C8961A", fontWeight: 600 }}>60-79</span> Needs work</span>
+                      <span><span style={{ color: "#E53935", fontWeight: 600 }}>&lt;60</span> Needs attention</span>
+                    </div>
                   </div>
                   {layer1Results.map((r, idx) => {
                     const descriptions: Record<string, { title: string; runningMsg: string }> = {
