@@ -431,7 +431,7 @@ export default function Watch() {
             </div>
           ) : (
             SOURCE_TYPES.map(type => {
-              const group = sources.filter(s => s.type === type);
+              const group = sources.filter(s => s.type.toLowerCase() === type.toLowerCase());
               if (group.length === 0) return null;
               return (
                 <div key={type} style={{ marginBottom: 24 }}>

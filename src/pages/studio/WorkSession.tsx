@@ -1591,6 +1591,31 @@ export default function WorkSession() {
     setEditNotes("");
   };
 
+  const handleSaveAndClose = async () => {
+    const content = generatedContent || draftContent;
+    if (!content || !user) return;
+    let outputId = generatedOutputId;
+    if (!outputId || outputId === "new") {
+      const title = generateTitle(messages.find(m => m.role === "user")?.content || "", content);
+      const { data, error } = await supabase.from("outputs").insert({
+        user_id: user.id, title, content, output_type: outputType,
+        score: generatedScore || 0, content_state: "vault",
+        gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
+        project_id: activeProjectId || null,
+      }).select().single();
+      if (error) { console.error("[Vault] Save failed:", error); toast("Failed to save. Try again."); return; }
+      outputId = data.id;
+      setGeneratedOutputId(data.id);
+    } else {
+      await supabase.from("outputs").update({
+        content, score: generatedScore || 0, content_state: "vault",
+        gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
+      }).eq("id", outputId);
+    }
+    clearSession();
+    navigate(`/studio/outputs/${outputId}`);
+  };
+
   const handleRevisionFromEdits = async () => {
     setWritersRoomLoading(true);
     try {
@@ -2295,7 +2320,7 @@ export default function WorkSession() {
           { key: "draft", label: "Draft", done: ["editing","stress-test","polish","complete"].includes(phase), active: phase === "drafting" },
           { key: "edit", label: "Edit", done: ["stress-test","polish","complete"].includes(phase), active: phase === "editing" },
           { key: "review", label: "Review", done: phase === "complete", active: phase === "stress-test" || phase === "polish" },
-          { key: "done", label: "Done", done: phase === "complete", active: phase === "complete" },
+          { key: "done", label: "Results", done: phase === "complete", active: phase === "complete" },
         ].map((step, i) => (
           <span key={step.key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{
@@ -2838,7 +2863,13 @@ export default function WorkSession() {
         {/* ── POLISH PHASE: Layer 2 checkpoints ───────────────── */}
         {phase === "polish" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
-            <PolishLoadingAnimation />
+            {writersRoomLoading ? (
+              <PolishLoadingAnimation />
+            ) : (
+              <div style={{ textAlign: "center" }}>
+                <p style={{ fontSize: 15, color: "var(--fg-2)", marginBottom: 16, fontFamily: "'Afacad Flux', sans-serif" }}>Quality checks complete. Calculating final score...</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -3089,12 +3120,12 @@ export default function WorkSession() {
                       fontWeight: 600,
                       color: generatedScore >= 900 ? "#50c8a0" : "var(--fg)",
                     }}>
-                      {generatedScore >= 900 ? "Ready to publish" : "Needs revision"}
+                      {generatedScore >= 900 ? "Publication ready" : "Below publication threshold"}
                     </div>
                     <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 4 }}>
                       {generatedScore >= 900
                         ? "This piece meets the Betterish publication threshold."
-                        : `Publication threshold is 900. ${900 - generatedScore} points to go.`
+                        : `Below publication threshold (900). You can edit to improve, or save as-is.`
                       }
                     </div>
                   </div>
@@ -3126,50 +3157,49 @@ export default function WorkSession() {
                   >
                     Edit draft
                   </button>
-                  {generatedScore >= 900 && (
-                    <button
-                      type="button"
-                      onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
-                      style={{
-                        background: "var(--gold)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: "10px 20px",
-                        fontFamily: "'Afacad Flux', sans-serif",
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        transition: "opacity 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                    >
-                      Save and close
-                    </button>
-                  )}
-                  {generatedScore < 900 && (
-                    <button
-                      type="button"
-                      onClick={() => { clearSession(); navigate(`/studio/outputs/${generatedOutputId}`); }}
-                      style={{
-                        background: "var(--text-primary)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: "10px 20px",
-                        fontFamily: "'Afacad Flux', sans-serif",
-                        fontSize: 14,
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        transition: "opacity 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                    >
-                      Save and close
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleSaveAndClose();
+                      navigate(`/studio/wrap?outputId=${generatedOutputId}`);
+                    }}
+                    style={{
+                      background: "var(--gold)",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "10px 20px",
+                      fontFamily: "'Afacad Flux', sans-serif",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "opacity 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                  >
+                    Move to Wrap
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveAndClose}
+                    style={{
+                      background: "transparent",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: 8,
+                      padding: "10px 20px",
+                      fontFamily: "'Afacad Flux', sans-serif",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+                  >
+                    Save and close
+                  </button>
                 </div>
               </div>
 

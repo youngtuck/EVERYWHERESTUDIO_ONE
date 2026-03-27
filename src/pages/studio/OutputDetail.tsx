@@ -434,9 +434,14 @@ export default function OutputDetail() {
   );
 
   if (notFound) return (
-    <div style={{ padding: 48, textAlign: "center" }}>
-      <p style={{ color: "var(--fg-3)", marginBottom: 16 }}>Output not found.</p>
-      <button className="btn-ghost" onClick={() => navigate("/studio/outputs")}>Back to The Vault</button>
+    <div style={{ padding: 48, textAlign: "center", fontFamily: "'Afacad Flux', sans-serif" }}>
+      <div style={{ fontSize: 18, color: "var(--fg-2)", marginBottom: 16 }}>
+        This output may not have been saved yet.
+      </div>
+      <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+        <button className="btn-ghost" onClick={() => navigate("/studio/outputs")} style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", fontSize: 14, cursor: "pointer", color: "var(--fg-2)", fontFamily: "'Afacad Flux', sans-serif" }}>Back to The Vault</button>
+        <button className="btn-ghost" onClick={() => navigate("/studio/work")} style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", fontSize: 14, cursor: "pointer", color: "var(--fg-2)", fontFamily: "'Afacad Flux', sans-serif" }}>Back to Work</button>
+      </div>
     </div>
   );
 
