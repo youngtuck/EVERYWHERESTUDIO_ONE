@@ -59,8 +59,8 @@ type SourceRow = { id?: string; name: string; type: string; track: string };
 
 const TRACK_COLORS: Record<string, { bg: string; fg: string }> = {
   competitor: { bg: "rgba(229,57,53,0.1)", fg: "#E53935" },
-  thought_leader: { bg: "rgba(200,150,26,0.1)", fg: "var(--gold)" },
-  tech_infra: { bg: "rgba(107,127,242,0.1)", fg: "var(--cornflower)" },
+  thoughtLeader: { bg: "rgba(200,150,26,0.1)", fg: "var(--gold)" },
+  techInfra: { bg: "rgba(107,127,242,0.1)", fg: "var(--cornflower)" },
   industry: { bg: "rgba(160,128,245,0.1)", fg: "#A080F5" },
   general: { bg: "var(--bg-2)", fg: "var(--fg-3)" },
 };
@@ -86,7 +86,7 @@ function TrackBadge({ track }: { track: string }) {
   const c = TRACK_COLORS[track] ?? TRACK_COLORS.general;
   return (
     <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", background: c.bg, color: c.fg }}>
-      {track.replace("_", " ")}
+      {track.replace(/([A-Z])/g, " $1").trim()}
     </span>
   );
 }
@@ -378,7 +378,7 @@ export default function Watch() {
                 <div key={i} style={card}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     {sig.track && <TrackBadge track={sig.track} />}
-                    {sig.severity && <TrackBadge track={sig.severity === "High" ? "competitor" : sig.severity === "Medium" ? "thought_leader" : "general"} />}
+                    {sig.severity && <TrackBadge track={sig.severity === "High" ? "competitor" : sig.severity === "Medium" ? "thoughtLeader" : "general"} />}
                     {sig.score != null && <span style={{ fontSize: 11, color: "var(--fg-3)" }}>Score: {sig.score}</span>}
                   </div>
                   <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", margin: "0 0 6px" }}>{sig.title}</h3>
