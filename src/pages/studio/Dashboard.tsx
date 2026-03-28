@@ -294,7 +294,7 @@ export default function Dashboard() {
                   </span>
                   {/* Score */}
                   <span style={{ fontSize: 13, fontWeight: 600, color: sc.text, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>
-                    {o.score}
+                    {o.score ? `${Math.round(o.score / 10)}%` : ""}
                   </span>
                   {/* Time */}
                   <span style={{ fontSize: 12, color: "var(--fg-3)", flexShrink: 0, width: 60, textAlign: "right" as const }}>

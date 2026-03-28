@@ -1025,6 +1025,8 @@ export default function WorkSession() {
   const [stressResults, setStressResults] = useState<Array<{ agent: string; lens: string; verdict: string; feedback: string; suggestion: string }>>([]);
   const [saraSynthesis, setSaraSynthesis] = useState<{ summary: string; actionItems: string[] }>({ summary: "", actionItems: [] });
   const [acceptedItems, setAcceptedItems] = useState<boolean[]>([]);
+  const [showPipelineDetail, setShowPipelineDetail] = useState(false);
+  const pipelineNotificationShown = useRef(false);
   const [showMeetTeam, setShowMeetTeam] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return localStorage.getItem("ew_work_intro_seen") !== "true"; } catch { return false; }
@@ -1083,6 +1085,19 @@ export default function WorkSession() {
       }));
     }, 5000);
     return () => clearInterval(interval);
+  }, [layer1Results]);
+
+  // Pipeline completion notification
+  useEffect(() => {
+    if (layer1Results.length === 0) return;
+    const allDone = layer1Results.every(r => r.status !== "running" && r.status !== "pending");
+    if (allDone && !pipelineNotificationShown.current) {
+      pipelineNotificationShown.current = true;
+      toast("Quality review complete. Your draft is ready.", "success");
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("EVERYWHERE Studio", { body: "Your draft is ready. Quality review complete.", icon: "/favicon.ico" });
+      }
+    }
   }, [layer1Results]);
 
   useEffect(() => {
@@ -1615,6 +1630,8 @@ export default function WorkSession() {
     setPhase("drafting");
     setWritersRoomLoading(true);
     setApiError(null);
+    pipelineNotificationShown.current = false;
+    setShowPipelineDetail(false);
 
     try {
       // Brief delay before first attempt
@@ -2784,17 +2801,46 @@ export default function WorkSession() {
                 </div>
                 {/* Checkpoints sidebar (right column) */}
                 <div style={{ flex: isMobile ? "1" : "0 0 35%", position: isMobile ? "static" as const : "sticky" as const, top: 80, alignSelf: "flex-start", maxHeight: isMobile ? "none" : "calc(100vh - 120px)", overflowY: isMobile ? "visible" as const : "auto" as const }}>
-                {/* Layer 1 checkpoint results */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {/* Pipeline running indicator */}
+                {layer1Results.some(r => r.status === "running") && (
+                  <div style={{
+                    padding: "12px 16px",
+                    background: "var(--surface)",
+                    border: "1px solid var(--line)",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    color: "var(--fg-3)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 12,
+                  }}>
+                    <div style={{
+                      width: 8, height: 8, borderRadius: "50%",
+                      background: "var(--gold)",
+                      animation: "orbPulse 1.5s ease-in-out infinite",
+                    }} />
+                    Quality review running in the background...
+                    <button
+                      onClick={() => setShowPipelineDetail(prev => !prev)}
+                      style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif" }}
+                    >
+                      {showPipelineDetail ? "Hide" : "Show thinking"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Layer 1 checkpoint results (hidden by default) */}
+                {showPipelineDetail && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 2 }}>Quality Checkpoints</div>
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 8 }}>
-                      Each specialist scores your draft 0-100.
+                      Each checkpoint scores your draft 0-100.
                     </div>
                     <div style={{ display: "flex", gap: 16, fontSize: 13, flexWrap: "wrap" }}>
-                      <span><span style={{ color: "#50c8a0", fontWeight: 600 }}>80+</span> Strong</span>
-                      <span><span style={{ color: "#C8961A", fontWeight: 600 }}>60-79</span> Needs work</span>
-                      <span><span style={{ color: "#E53935", fontWeight: 600 }}>&lt;60</span> Needs attention</span>
+                      <span><span style={{ color: "#50c8a0", fontWeight: 600 }}>80%+</span> Strong</span>
+                      <span><span style={{ color: "#C8961A", fontWeight: 600 }}>60-79%</span> Needs work</span>
+                      <span><span style={{ color: "#E53935", fontWeight: 600 }}>Below 60%</span> Needs attention</span>
                     </div>
                   </div>
                   {layer1Results.map((r, idx) => {
@@ -2838,10 +2884,9 @@ export default function WorkSession() {
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                               <div>
                                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{info.title}</span>
-                                <span style={{ fontSize: 11, color: "var(--fg-3)", marginLeft: 6 }}>{r.gate}</span>
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                                {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "var(--gold)" : "#E53935" }}>{r.score}</span>}
+                                {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "var(--gold)" : "#E53935" }}>{Math.round(r.score)}%</span>}
                                 {r.status === "pass" && r.score === 0 && <span style={{ fontSize: 12, fontWeight: 600, color: "#50c8a0" }}>Pass</span>}
                               </div>
                             </div>
@@ -2890,6 +2935,7 @@ export default function WorkSession() {
                     );
                   })}
                 </div>
+                }{/* end showPipelineDetail */}
                 </div>{/* end sidebar */}
               </div>
             )}
@@ -3042,10 +3088,10 @@ export default function WorkSession() {
                       </div>
                     ))}
                   </div>
-                  {/* Sara's Synthesis */}
+                  {/* Strategic Synthesis */}
                   {saraSynthesis.summary && (
                     <div style={{ padding: "16px 18px", borderRadius: 8, background: "var(--surface)", border: "1px solid var(--line)", borderLeft: "3px solid var(--gold)", marginBottom: 16 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 6 }}>Sara's Synthesis</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 6 }}>Strategic Synthesis</div>
                       <p style={{ fontSize: 13, color: "var(--fg)", margin: "0 0 10px", lineHeight: 1.5 }}>{saraSynthesis.summary}</p>
                       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         {saraSynthesis.actionItems.map((item, i) => (
@@ -3201,7 +3247,7 @@ export default function WorkSession() {
                         const strongest = sorted[0];
                         const weakest = sorted[sorted.length - 1];
                         const weakAreas = sorted.filter(([, v]) => v.score < 75).slice(-3);
-                        let msg = `Your ${outputType || "content"} scored ${generatedScore}. Here's what stood out:\n- Strongest: ${strongest[0]} (${strongest[1].score})\n- Needs work: ${weakest[0]} (${weakest[1].score})`;
+                        let msg = `Your ${outputType || "content"} scored ${Math.round(generatedScore / 10)}%. Here's what stood out:\n- Strongest: ${strongest[0]} (${Math.round(strongest[1].score)}%)\n- Needs work: ${weakest[0]} (${Math.round(weakest[1].score)}%)`;
                         if (weakAreas.length > 0) {
                           msg += `\n\nI can help you:`;
                           weakAreas.forEach(([name, data], i) => {
@@ -3223,7 +3269,7 @@ export default function WorkSession() {
                         setRevisionPipelineContext(ctx);
                         setMessages(prev => [...prev, { id: `w-rev-${Date.now()}`, role: "assistant" as const, content: msg, ts: Date.now() }]);
                       } else {
-                        setMessages(prev => [...prev, { id: `w-rev-${Date.now()}`, role: "assistant" as const, content: `Your ${outputType || "content"} scored ${generatedScore}. What would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`, ts: Date.now() }]);
+                        setMessages(prev => [...prev, { id: `w-rev-${Date.now()}`, role: "assistant" as const, content: `Your ${outputType || "content"} scored ${Math.round(generatedScore / 10)}%. What would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`, ts: Date.now() }]);
                       }
                     }
                   }}
@@ -3411,7 +3457,7 @@ export default function WorkSession() {
                     fontVariantNumeric: "tabular-nums",
                     lineHeight: 1,
                   }}>
-                    {generatedScore}
+                    {Math.round(generatedScore / 10)}%
                   </div>
                   <div>
                     <div style={{
@@ -3424,7 +3470,7 @@ export default function WorkSession() {
                     <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 4 }}>
                       {generatedScore >= 900
                         ? "This piece meets the Betterish publication threshold."
-                        : `Below publication threshold (900). You can edit to improve, or save as-is.`
+                        : `Below publication threshold (90%). You can edit to improve, or save as-is.`
                       }
                     </div>
                   </div>
@@ -3498,6 +3544,33 @@ export default function WorkSession() {
                   </button>
                 </div>
               </div>
+
+              {/* Compact quality summary */}
+              {layer1Results.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                  {layer1Results.map(r => {
+                    const roleLabels: Record<string, string> = {
+                      Echo: "Deduplication", Priya: "Research Accuracy", Jordan: "Voice Authenticity",
+                      David: "Engagement", Elena: "SLOP Detection", Natasha: "Editorial Excellence",
+                      "Marcus + Marshall": "Perspective + Impact", Betterish: "Final Gut Check",
+                    };
+                    const label = roleLabels[r.gate] || r.gate;
+                    const pct = Math.round(r.score);
+                    const color = pct >= 80 ? "#50c8a0" : pct >= 60 ? "var(--gold)" : "#E53935";
+                    return (
+                      <div key={r.gate} style={{
+                        padding: "6px 12px", borderRadius: 6,
+                        border: "1px solid var(--line)", background: "var(--surface)",
+                        fontSize: 12, display: "flex", gap: 8, alignItems: "center",
+                      }}>
+                        <span style={{ color: "var(--fg-2)" }}>{label}</span>
+                        {r.score > 0 && <span style={{ fontWeight: 700, color }}>{pct}%</span>}
+                        {r.status === "pass" && r.score === 0 && <span style={{ fontWeight: 700, color: "#50c8a0" }}>Pass</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Quality Pipeline CTA */}
               {pipelineStatus === "PASSED" ? (

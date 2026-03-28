@@ -46,8 +46,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
       <div style={{ padding: 20, borderRadius: 12, border: "1px solid var(--line)", background: "var(--surface)", fontFamily: "'Afacad Flux', sans-serif" }}>
         <div style={{ fontSize: 14, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 4 }}>Betterish Score</div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 28, fontWeight: 600, color }}>{total}</span>
-          <span style={{ fontSize: 13, color: "var(--text-tertiary)" }}>/ 1000</span>
+          <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 28, fontWeight: 600, color }}>{Math.round(total / 10)}%</span>
         </div>
         {(score as any).topIssue && <div style={{ fontSize: 13, color: "var(--text-primary)", marginTop: 8 }}><strong>Top issue:</strong> {(score as any).topIssue}</div>}
       </div>
@@ -67,15 +66,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
           color,
         }}
       >
-        <span>{total}</span>
-        <span
-          style={{
-            fontSize: 13,
-            color: "var(--text-tertiary)",
-          }}
-        >
-          / 1000
-        </span>
+        <span>{Math.round(total / 10)}%</span>
       </span>
     );
   }
@@ -114,7 +105,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
             Betterish Score
           </div>
           <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 2 }}>
-            How your content performed across 10 quality dimensions. Each scored out of ~150.
+            How your content performed across 10 quality dimensions.
           </div>
           <div
             style={{
@@ -132,15 +123,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
                 color,
               }}
             >
-              {total}
-            </span>
-            <span
-              style={{
-                fontSize: 13,
-                color: "var(--text-tertiary)",
-              }}
-            >
-              / 1000
+              {Math.round(total / 10)}%
             </span>
           </div>
         </div>
@@ -167,9 +150,9 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
       </div>
 
       <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 11, color: "var(--text-tertiary)" }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#50c8a0" }} /> 120+ Strong</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "var(--cornflower)" }} /> 60-119 Developing</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#E53935" }} /> Below 60 Needs work</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#50c8a0" }} /> 80%+ Strong</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "var(--cornflower)" }} /> 40-79% Developing</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 2, background: "#E53935" }} /> Below 40% Needs work</span>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
@@ -222,7 +205,7 @@ export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) 
                   color: "var(--text-secondary)",
                 }}
               >
-                {value}
+                {Math.round((value / 150) * 100)}%
               </span>
             </div>
           );

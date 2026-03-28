@@ -586,7 +586,7 @@ export default function OutputDetail() {
         <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 14, color: "var(--fg-2)", flexWrap: "wrap" }}>
           <span style={{ textTransform: "capitalize" }}>{output!.output_type.replace(/_/g, " ")}</span>
           <span>{new Date(output!.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
-          <span style={{ fontWeight: 700, color: scoreColor }}>Score: {output!.score}</span>
+          <span style={{ fontWeight: 700, color: scoreColor }}>Score: {Math.round(output!.score / 10)}%</span>
           {userProjects.length > 1 && (
             <select
               value={output!.project_id || ""}

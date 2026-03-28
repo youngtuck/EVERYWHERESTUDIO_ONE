@@ -42,6 +42,16 @@ interface CheckpointResultsPanelProps {
   blockedAt?: string;
 }
 
+const GATE_ROLE_LABELS: Record<string, string> = {
+  "Echo": "Deduplication",
+  "Priya": "Research Accuracy",
+  "Jordan": "Voice Authenticity",
+  "David": "Engagement",
+  "Elena": "SLOP Detection",
+  "Natasha": "Editorial Excellence",
+  "Marcus + Marshall": "Perspective + Impact",
+};
+
 export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResultsPanelProps) {
   if (!results.length) return null;
 
@@ -145,7 +155,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {result.gate}
+                    {GATE_ROLE_LABELS[result.gate] || result.gate}
                   </span>
                 </div>
                 <div
@@ -163,7 +173,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
                       fontWeight: 600,
                     }}
                   >
-                    {result.score}
+                    {result.score}%
                   </span>
                   <span
                     style={{

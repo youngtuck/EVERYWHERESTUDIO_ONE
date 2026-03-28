@@ -156,8 +156,7 @@ export default function Wrap() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{s.name}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "var(--cornflower)" }}>{s.role}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--fg)" }}>{s.role}</span>
               </div>
               <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
             </div>
@@ -228,7 +227,7 @@ export default function Wrap() {
               <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{wrapOutput.title}</div>
               <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 4 }}>
                 {TYPE_LABELS[wrapOutput.output_type] || wrapOutput.output_type}
-                {wrapOutput.score ? ` · Score: ${wrapOutput.score}` : ""}
+                {wrapOutput.score ? ` · ${Math.round(wrapOutput.score / 10)}%` : ""}
               </div>
             </div>
             <button
@@ -352,7 +351,7 @@ export default function Wrap() {
                           fontVariantNumeric: "tabular-nums",
                         }}
                       >
-                        {o.score}
+                        {Math.round(o.score / 10)}%
                       </span>
                       <button
                         onClick={() => navigate(`/studio/outputs/${o.id}`)}
