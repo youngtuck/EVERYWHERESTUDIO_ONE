@@ -1240,7 +1240,7 @@ export default function WorkSession() {
           userId: user.id,
           outputId: outputId || undefined,
         }),
-      }, { timeout: 180000 });
+      }, { timeout: 175000 });
 
       if (!res.ok) throw new Error(`Pipeline error ${res.status}`);
       const result = await res.json();

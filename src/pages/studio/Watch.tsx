@@ -261,18 +261,42 @@ export default function Watch() {
   useEffect(() => {
     if (!user) { setLoadingBriefing(false); return; }
     (async () => {
+      // run-sentinel writes to watch_briefings with columns: briefing (jsonb), created_at
+      // briefing column shape: { signals: [...], suggestions: [...] }
       const { data } = await supabase
-        .from("sentinel_briefings")
-        .select("generated_at, date_label, briefing, signals_count")
+        .from("watch_briefings")
+        .select("briefing, created_at")
         .eq("user_id", user.id)
-        .order("generated_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(1)
         .single();
 
-      if (data) {
-        setBriefing(data.briefing as BriefingData);
-        setBriefingDate(data.date_label || new Date(data.generated_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }));
-        setBriefingTime(`Updated ${new Date(data.generated_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`);
+      if (data?.briefing) {
+        const b = data.briefing as any;
+        // Transform { signals, suggestions } into BriefingData sections shape
+        setBriefing({
+          sections: {
+            content_triggers: (b.signals || []).map((s: any) => ({
+              title: s.headline || s.title || "",
+              summary: s.relevance || s.description || "",
+              cta_label: s.track === "competitor" ? "Note it" : "Use this",
+            })),
+            opportunities: (b.suggestions || []).map((s: any) => ({
+              title: s.topic || s.title || "",
+              summary: s.oneLiner || s.anglePrompt || "",
+              priority: "High" as const,
+            })),
+            threats: (b.signals || [])
+              .filter((s: any) => s.track === "competitor" || s.track === "thoughtLeader")
+              .map((s: any) => ({
+                title: s.source ? `${s.track === "competitor" ? "Competitor" : "Thought leader"}: ${s.source}` : s.headline || "",
+                summary: s.relevance || "",
+                priority: (s.scores?.composite ?? 0) >= 4 ? "High" as const : "Low" as const,
+              })),
+          },
+        });
+        setBriefingDate(new Date(data.created_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }));
+        setBriefingTime(`Updated ${new Date(data.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`);
       }
       setLoadingBriefing(false);
     })();
@@ -288,18 +312,50 @@ export default function Watch() {
       const res = await fetchWithRetry(`${API_BASE}/api/run-sentinel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, topics: keywords, sources }),
+        body: JSON.stringify({
+          userId: user.id,
+          forceRefresh: true,
+          sentinelConfig: {
+            keywords,
+            rankingWeights: { relevance: 5, actionability: 3, urgency: 2 },
+            tracks: { competitors, thoughtLeaders },
+          },
+          sources: sources.map(s => ({ name: s.name, type: s.type, track: s.track })),
+        }),
       }, { timeout: 120000 });
 
       if (!res.ok) throw new Error(`Sentinel error ${res.status}`);
       const data = await res.json();
 
-      if (data.briefing) {
-        setBriefing(data.briefing);
+      // run-sentinel returns { signals: [...], suggestions: [...], cached: bool }
+      if (data.signals || data.suggestions) {
+        setBriefing({
+          sections: {
+            content_triggers: (data.signals || []).map((s: any) => ({
+              title: s.headline || s.title || "",
+              summary: s.relevance || s.description || "",
+              cta_label: s.track === "competitor" ? "Note it" : "Use this",
+            })),
+            opportunities: (data.suggestions || []).map((s: any) => ({
+              title: s.topic || s.title || "",
+              summary: s.oneLiner || s.anglePrompt || "",
+              priority: "High" as const,
+            })),
+            threats: (data.signals || [])
+              .filter((s: any) => s.track === "competitor" || s.track === "thoughtLeader")
+              .map((s: any) => ({
+                title: s.source ? `${s.track === "competitor" ? "Competitor" : "Thought leader"}: ${s.source}` : s.headline || "",
+                summary: s.relevance || "",
+                priority: (s.scores?.composite ?? 0) >= 4 ? "High" as const : "Low" as const,
+              })),
+          },
+        });
         const now = new Date();
         setBriefingDate(now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }));
         setBriefingTime(`Updated ${now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`);
         toast("Briefing ready.");
+      } else if (data.error) {
+        toast(data.error, "error");
       }
     } catch (err) {
       toast("Could not generate briefing. Try again.", "error");

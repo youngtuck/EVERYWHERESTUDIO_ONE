@@ -4,6 +4,8 @@ export async function getUserResources(userId) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey || !userId) {
+    if (!serviceRoleKey) console.warn("[_resources] SUPABASE_SERVICE_ROLE_KEY not set — Voice/Brand/Method DNA will be empty. Set this in your Vercel environment variables.");
+    if (!supabaseUrl) console.warn("[_resources] SUPABASE_URL not set.");
     return { voiceDna: "", brandDna: "", methodDna: "", references: "" };
   }
 
