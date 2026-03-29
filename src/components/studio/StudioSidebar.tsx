@@ -172,101 +172,124 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         flexShrink: 0,
         height: 50,
       }}>
-        {/* Project block */}
-        {!collapsed && (
-          <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
-            <div
-              onClick={() => projects.length > 1 && setShowProjectMenu(m => !m)}
-              style={{
-                display: "flex", alignItems: "flex-start", flexDirection: "column",
-                gap: 1, background: "rgba(0,0,0,0.05)", borderRadius: 5,
-                padding: "5px 8px", cursor: projects.length > 1 ? "pointer" : "default",
-              }}
-            >
-              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Project</span>
-              <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 4 }}>
-                <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {activeProject?.name ?? "Loading..."}
-                </span>
-                {projects.length > 1 && (
-                  <svg style={{ width: 11, height: 11, stroke: "var(--fg-3)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                )}
-              </div>
-            </div>
-            {showProjectMenu && projects.length > 1 && (
-              <>
-                <div onClick={() => setShowProjectMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 99 }} />
-                <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 7, boxShadow: "var(--shadow-md)", zIndex: 100, overflow: "hidden" }}>
-                  {projects.map(p => (
-                    <div
-                      key={p.id}
-                      onClick={() => { setActiveProjectId(p.id); setShowProjectMenu(false); }}
-                      style={{
-                        padding: "8px 10px", fontSize: 12, cursor: "pointer",
-                        color: p.id === activeProjectId ? "var(--fg)" : "var(--fg-2)",
-                        fontWeight: p.id === activeProjectId ? 600 : 400,
-                        background: p.id === activeProjectId ? "rgba(245,198,66,0.08)" : "transparent",
-                        transition: "background 0.1s",
-                      }}
-                      onMouseEnter={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "var(--bg)"; }}
-                      onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
-                    >
-                      {p.name}
-                      {p.is_default && <span style={{ fontSize: 9, color: "var(--fg-3)", marginLeft: 6 }}>default</span>}
-                    </div>
-                  ))}
+        {/* Expanded: project block + collapse button */}
+        {!collapsed && !onMobileClose && (
+          <>
+            <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
+              <div
+                onClick={() => projects.length > 1 && setShowProjectMenu(m => !m)}
+                style={{
+                  display: "flex", alignItems: "flex-start", flexDirection: "column",
+                  gap: 1, background: "rgba(0,0,0,0.05)", borderRadius: 5,
+                  padding: "5px 8px", cursor: projects.length > 1 ? "pointer" : "default",
+                }}
+              >
+                <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Project</span>
+                <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 4 }}>
+                  <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {activeProject?.name ?? "Loading..."}
+                  </span>
+                  {projects.length > 1 && (
+                    <svg style={{ width: 11, height: 11, stroke: "var(--fg-3)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  )}
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+              {showProjectMenu && projects.length > 1 && (
+                <>
+                  <div onClick={() => setShowProjectMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 99 }} />
+                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 7, boxShadow: "var(--shadow-md)", zIndex: 100, overflow: "hidden" }}>
+                    {projects.map(p => (
+                      <div
+                        key={p.id}
+                        onClick={() => { setActiveProjectId(p.id); setShowProjectMenu(false); }}
+                        style={{
+                          padding: "8px 10px", fontSize: 12, cursor: "pointer",
+                          color: p.id === activeProjectId ? "var(--fg)" : "var(--fg-2)",
+                          fontWeight: p.id === activeProjectId ? 600 : 400,
+                          background: p.id === activeProjectId ? "rgba(245,198,66,0.08)" : "transparent",
+                          transition: "background 0.1s",
+                        }}
+                        onMouseEnter={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "var(--bg)"; }}
+                        onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
+                      >
+                        {p.name}
+                        {p.is_default && <span style={{ fontSize: 9, color: "var(--fg-3)", marginLeft: 6 }}>default</span>}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Collapse button — expanded state */}
+            <button
+              onClick={onToggleCollapsed}
+              title="Collapse sidebar"
+              style={{
+                width: 28, height: 28, borderRadius: 5,
+                border: "1px solid var(--line)",
+                background: "transparent",
+                color: "var(--fg-3)",
+                cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+                transition: "all 0.12s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.05)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--fg-3)"; }}
+            >
+              <svg style={{ width: 13, height: 13, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+          </>
         )}
 
-        {/* Collapsed: just the logo */}
-        {collapsed && (
-          <div
-            onClick={() => nav("/studio/dashboard")}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", cursor: "pointer" }}
-            title="Home"
-          >
-            <EverywhereMarkIcon size={20} />
-          </div>
-        )}
-
-        {/* Collapse toggle */}
-        {!onMobileClose && (
+        {/* Collapsed: entire header is the expand button */}
+        {collapsed && !onMobileClose && (
           <button
             onClick={onToggleCollapsed}
-            title={collapsed ? "Expand" : "Collapse"}
+            title="Expand sidebar"
             style={{
-              width: 32, height: 32, borderRadius: 5,
-              border: "1px solid var(--line)",
-              background: "transparent",
-              color: "var(--fg-3)",
+              width: "100%", height: "100%",
+              background: "transparent", border: "none",
               cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-              transition: "all 0.12s",
+              borderRadius: 0,
+              color: "var(--fg-3)",
+              transition: "background 0.12s, color 0.12s",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.05)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; e.currentTarget.style.color = "var(--fg-2)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--fg-3)"; }}
           >
-            <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none", transform: collapsed ? "rotate(180deg)" : "none", transition: "transform 0.18s" }} viewBox="0 0 24 24">
-              <polyline points="15 18 9 12 15 6" />
+            <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
         )}
 
         {/* Mobile close */}
         {onMobileClose && (
+          <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
+            <div style={{
+              display: "flex", alignItems: "flex-start", flexDirection: "column",
+              gap: 1, background: "rgba(0,0,0,0.05)", borderRadius: 5, padding: "5px 8px",
+            }}>
+              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Project</span>
+              <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {activeProject?.name ?? "Loading..."}
+              </span>
+            </div>
+          </div>
+        )}
+        {onMobileClose && (
           <button
             onClick={onMobileClose}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fg-3)", fontSize: 16, padding: 4 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fg-3)", fontSize: 16, padding: 4, flexShrink: 0 }}
             aria-label="Close menu"
-          >
-            ✕
-          </button>
+          >✕</button>
         )}
       </div>
 
