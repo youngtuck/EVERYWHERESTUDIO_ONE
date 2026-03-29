@@ -11,7 +11,11 @@ import Index from "./pages/Index";
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
-const StudioShell = lazy(() => import("./components/studio/StudioShell"));
+
+// StudioShell must be eagerly imported — all studio pages statically import
+// useShell from it. If StudioShell is lazy, the context is uninitialized when
+// studio pages mount, causing useContext to return the empty default and crash.
+import StudioShell from "./components/studio/StudioShell";
 
 // Eager: all studio pages (instant tab switching, no flash)
 import Dashboard from "./pages/studio/Dashboard";
