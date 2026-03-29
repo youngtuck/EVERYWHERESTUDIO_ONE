@@ -1,3981 +1,1694 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { FileText, Sparkles, Mic, Check, Loader2, Clipboard } from "lucide-react";
-import { supabase } from "../../lib/supabase";
+/**
+ * WorkSession.tsx
+ * Full Work pipeline: Intake → Outline → Edit → Review → Export
+ * Matches wireframe v7.23 exactly.
+ */
+
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
-import { useToast } from "../../context/ToastContext";
-import { useMobile } from "../../hooks/useMobile";
-import { useTheme } from "../../context/ThemeContext";
-import { getScoreColor } from "../../utils/scoreColor";
-import type { PipelineStatus } from "../../lib/agents/types";
-import { inferMode, SYSTEM_MODE_LABELS, type SystemMode } from "../../lib/agents/sara-router";
-import { PipelineProgress } from "../../components/pipeline/PipelineProgress";
-import { useVoiceInput } from "../../hooks/useVoiceInput";
-import EverywhereMarkIcon from "../../components/studio/EverywhereMarkIcon";
-import LoadingAnimation from "../../components/studio/LoadingAnimation";
-import { MARKETING_NUMBERS } from "../../lib/constants";
-import SpecialistPanel from "../../components/studio/SpecialistPanel";
-import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
-import MeetTheTeam from "../../components/studio/MeetTheTeam";
-import RoomLoadingAnimation from "../../components/studio/RoomLoadingAnimation";
-import OutlineLoadingAnimation from "../../components/studio/OutlineLoadingAnimation";
-import DraftLoadingAnimation from "../../components/studio/DraftLoadingAnimation";
-import PolishLoadingAnimation from "../../components/studio/PolishLoadingAnimation";
-import OnboardingOverlay from "../../components/studio/OnboardingOverlay";
-import AnimatedWalkthrough from "../../components/studio/AnimatedWalkthrough";
-// WorkAmbientCanvas removed, replaced by EverywhereMarkIcon
-import { fetchWithRetry } from "../../lib/retry";
+import "./shared.css";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EVERYWHERE STUDIO - WORK SESSION
-// Inspired by the best: ChatGPT, Claude, Perplexity, Grok, Gemini.
-// Clean. Simple. The model is the product.
+// TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-function renderMarkdown(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^### (.+)$/gm, '<h3 style="font-size:18px;font-weight:700;margin:24px 0 12px;color:var(--fg)">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 style="font-size:22px;font-weight:700;margin:28px 0 12px;color:var(--fg)">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="font-size:26px;font-weight:700;margin:32px 0 16px;color:var(--fg)">$1</h1>')
-    .replace(/^> (.+)$/gm, '<blockquote style="border-left:3px solid var(--cornflower);padding-left:16px;margin:16px 0;color:var(--fg-2);font-style:italic">$1</blockquote>')
-    .replace(/\n\n/g, '</p><p style="margin:0 0 16px">')
-    .replace(/([.?!])\n(?=[A-Z])/g, '$1</p><p style="margin:0 0 16px">')
-    .replace(/(Format:[^\n]+)\n/g, '$1</p><p style="margin:0 0 16px">')
-    .replace(/\n/g, '<br style="margin-bottom:8px"/>');
+type WorkStage = "Intake" | "Outline" | "Edit" | "Review" | "Export";
+const STAGES: WorkStage[] = ["Intake", "Outline", "Edit", "Review", "Export"];
+
+type Format =
+  | "LinkedIn" | "Newsletter" | "Podcast" | "Sunday Story"
+  | "Article" | "Email" | "Thread" | "Video Script"
+  | "Case Study" | "One-Pager" | "Presentation" | "Book Chapter";
+
+const DEFAULT_FORMATS: Format[] = ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
+const ALL_FORMATS: Format[] = [
+  "LinkedIn", "Newsletter", "Article", "Podcast",
+  "Email", "Thread", "Video Script", "Case Study",
+  "One-Pager", "Presentation", "Book Chapter", "Sunday Story",
+];
+
+interface ChatMessage {
+  role: "watson" | "user";
+  text: string;
 }
 
-function generateTitle(userInput: string, content: string): string {
-  if (content) {
-    // Try heading
-    const heading = content.match(/^#{1,3}\s+(.+)$/m);
-    if (heading) return heading[1].replace(/[*#_>]/g, "").trim().slice(0, 72);
-
-    // Try first bold text
-    const bold = content.match(/\*\*(.+?)\*\*/);
-    if (bold && bold[1].length > 10) return bold[1].trim().slice(0, 72);
-
-    // Try first sentence
-    const first = content.split(/[.!?]/)[0]?.trim();
-    if (first && first.length > 10 && first.length < 80) return first.replace(/^[#*>\s]+/, "").trim();
-  }
-
-  // Fallback: clean the user input
-  const cleaned = userInput
-    .replace(/^(Watson,?\s*)?/i, "")
-    .replace(/^(I('m| am| want to| would like to)\s*)/i, "")
-    .replace(/^(ready to |going to |help me |please |can you )/i, "")
-    .trim();
-
-  return cleaned.length > 5
-    ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1, 72)
-    : userInput.slice(0, 72);
-}
-
-const OUTPUT_TYPES: Record<string, { label: string; color: string; watson: string }> = {
-  essay: {
-    label: "Essay",
-    color: "var(--cornflower)",
-    watson: "What's on your mind? Give me the rough idea and I will ask the questions that pull it into focus.",
-  },
-  podcast: {
-    label: "Podcast",
-    color: "var(--gold)",
-    watson: "What is this episode about and who are you talking to? Start with the topic and the listener you have in mind.",
-  },
-  book: {
-    label: "Book",
-    color: "#A080F5",
-    watson: "What is the book for and what change do you want it to create? Tell me the working title and the core promise.",
-  },
-  website: {
-    label: "Website",
-    color: "#0D8C9E",
-    watson: "Which page are we shaping and who is landing on it first? Start with the offer and the moment they show up.",
-  },
-  video_script: {
-    label: "Video Script",
-    color: "#E8B4A0",
-    watson: "What is the video about and where will it live? Give me the hook, the viewer, and the outcome you want.",
-  },
-  newsletter: {
-    label: "Newsletter",
-    color: "#50c8a0",
-    watson: "What happened this week that is worth sharing? Start with the story, the shift, or the lesson.",
-  },
-  socials: {
-    label: "Social Media",
-    color: "var(--cornflower)",
-    watson: "What is the one idea you want to put into the feed? Tell me the take and where it should show up.",
-  },
-  presentation: {
-    label: "Presentation",
-    color: "#E8506A",
-    watson: "What is the presentation for, who is in the room, and what decision should they make by the last slide?",
-  },
-  business: {
-    label: "Business",
-    color: "#6b4dd4",
-    watson: "What are you trying to win here: a client, a project, or a renewal? Give me the stakes, the buyer, and the shape of the proposal.",
-  },
-  freestyle: {
-    label: "Freestyle",
-    color: "#C8961A",
-    watson: "What do you want to make that does not fit the grid? Describe it in your own words and we will build from there.",
-  },
-};
-
-const OUTPUT_TYPE_KEYS = [
-  "essay",
-  "podcast",
-  "book",
-  "website",
-  "video_script",
-  "newsletter",
-  "socials",
-  "presentation",
-  "business",
-  "freestyle",
-] as const;
-
-// Map frontend output type keys to API output types (Watson/generate)
-const OUTPUT_TYPE_TO_API: Record<string, string> = {
-  essay: "essay",
-  podcast: "podcast",
-  book: "essay",
-  website: "freestyle",
-  video_script: "video",
-  newsletter: "newsletter",
-  socials: "social",
-  presentation: "presentation",
-  business: "freestyle",
-  freestyle: "freestyle",
-};
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
+interface OutlineRow {
+  label: string;
   content: string;
-  ts: number;
-  typing?: boolean;
+  indent?: boolean;
 }
 
-// Auto-resize textarea (premium chatbot style)
-function AutoTextarea({
-  value, onChange, onSubmit, placeholder, disabled, inputRef, className,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  placeholder: string;
-  disabled?: boolean;
-  inputRef?: React.RefObject<HTMLTextAreaElement>;
-  className?: string;
+interface EditFlag {
+  id: string;
+  type: "must" | "style";
+  text: string;
+  flagMsg: string;
+  suggestion: string;
+  replacement: string;
+  dismissed: boolean;
+  fixed: boolean;
+}
+
+interface ReviewTab {
+  id: string;
+  label: string;
+  reviewed: boolean;
+  exported: boolean;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATIC DATA
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LENS_OPTIONS = [
+  {
+    id: "a",
+    title: "The Infrastructure Reframe",
+    desc: "Opens with the myth, pivots to structural diagnosis, closes with the system as solution. Strong for LinkedIn.",
+    outline: [
+      { label: "Title", content: "The thinking is in your head. It belongs in the world." },
+      { label: "Hook", content: "The myth: you don't need more time or motivation." },
+      { label: "Body", content: "The diagnosis: this is a structural problem." },
+      { label: "", content: "Why willpower can't bridge the gap.", indent: true },
+      { label: "", content: "What infrastructure actually looks like — concrete, not aspirational.", indent: true },
+      { label: "Stakes", content: "The cost of not building it." },
+      { label: "", content: "Every week without it, someone else says what you've been thinking.", indent: true },
+      { label: "Close", content: "The thinking is in your head. It belongs in the world." },
+    ] as OutlineRow[],
+  },
+  {
+    id: "b",
+    title: "The Articulation Gap",
+    desc: "Leads with the emotional experience — ideas trapped, Sunday night feeling. Builds empathy before the reframe. Better for newsletter.",
+    outline: [
+      { label: "Title", content: "You've said it perfectly. It never made it out." },
+      { label: "Hook", content: "Sunday night. Three ideas worth writing about. None of them made it out." },
+      { label: "Body", content: "The gap has a name: the articulation problem." },
+      { label: "", content: "It's not about having nothing to say.", indent: true },
+      { label: "", content: "It's about the distance between the thought and the audience.", indent: true },
+      { label: "Stakes", content: "What it costs to keep the thinking to yourself." },
+      { label: "", content: "Someone else is saying what you've been thinking — and getting credit for it.", indent: true },
+      { label: "Close", content: "The infrastructure exists. The gap can close." },
+    ] as OutlineRow[],
+  },
+];
+
+const REVIEW_CONTENT: Record<string, string[]> = {
+  LinkedIn: [
+    "The thinking is in your head. It belongs in the world.",
+    "You said it perfectly in a meeting. That version never gets out.",
+    "Most people think this is a motivation problem. The cause is structural.",
+    "Discipline gets you to the blank page. It does not close the gap. That gap is an engineering problem.",
+    "Every week without it, someone else says what you have been thinking.",
+  ],
+  Newsletter: [
+    "The Articulation Gap",
+    "John Gilmore Executive Edge — March 28",
+    "I have been thinking about something I hear constantly from clients. Brilliant thinking that never makes it to an audience.",
+    "You said it perfectly in a meeting. That version never gets out. This week I want to talk about why — and what to do about it.",
+    "Discipline gets you to the blank page. Infrastructure gets you to your audience.",
+  ],
+  Podcast: [
+    "Script — The Thinking Trap",
+    "Podcast script — Adapted for audio",
+    "Hey, welcome back. I want to start today with something I hear from almost every executive I work with.",
+    "They have the ideas. Sometimes brilliant ones. And somehow those ideas never make it out of their head.",
+    "It is a structural problem. And structure can be built.",
+  ],
+  "Sunday Story": [
+    "The Mountain Between Knowing and Saying",
+    "Sunday Story — March 28, 2026",
+    "There is a thing that happens in rooms where smart people gather. Someone says something that shifts the whole conversation. And then the meeting ends. And that insight dissolves.",
+    "Not because it was not valuable. Because there was no infrastructure to carry it forward.",
+    "We call it the articulation gap. And it is not what most people think it is.",
+  ],
+};
+
+const EXPORT_PREVIEWS: Record<string, React.ReactNode> = {
+  LinkedIn: (
+    <div>
+      <p style={{ fontWeight: 700, color: "var(--fg)", marginBottom: 10 }}>The thinking is in your head. It belongs in the world.</p>
+      <p style={{ color: "var(--fg-2)", lineHeight: 1.7 }}>You said it perfectly in a meeting. On a plane. Walking out of a conversation that changed the room. That version never gets out.</p>
+      <p style={{ color: "var(--fg-2)", lineHeight: 1.7, marginTop: 10 }}>Most people think this is a motivation problem. It is not. It is structural.</p>
+      <p style={{ color: "var(--fg-2)", lineHeight: 1.7, marginTop: 10 }}>The people who show up everywhere built the operation. Every week without it, someone else says what you have been thinking.</p>
+      <p style={{ color: "var(--blue)", fontWeight: 600, marginTop: 14 }}>What does your infrastructure look like?</p>
+    </div>
+  ),
+  Newsletter: (
+    <div>
+      <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 16 }}>John Gilmore · Executive Edge · March 28</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)", marginBottom: 12 }}>The Articulation Gap</div>
+      <div style={{ width: 28, height: 3, background: "var(--gold-bright)", marginBottom: 16, borderRadius: 2 }} />
+      <p style={{ color: "var(--fg-2)", lineHeight: 1.75 }}>I have been thinking about something I hear constantly from clients. Brilliant thinking that never makes it to an audience.</p>
+      <div style={{ background: "var(--bg-2)", borderLeft: "3px solid var(--gold-bright)", padding: "10px 14px", borderRadius: "0 6px 6px 0", margin: "16px 0" }}>
+        <p style={{ fontSize: 13, color: "var(--fg)", fontWeight: 600, lineHeight: 1.6 }}>The gap is not a motivation problem. It is structural. And structure can be built.</p>
+      </div>
+    </div>
+  ),
+  Podcast: (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>Podcast Script</div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fg)", marginBottom: 18 }}>The Thinking Trap</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {[
+          { label: "OPEN", color: "var(--fg-3)", text: "Hey, welcome back. I want to start today with something I hear from almost every executive I work with." },
+          { label: "PAUSE", color: "var(--line-2)", text: "[beat]", italic: true },
+          { label: "HOOK", color: "var(--gold)", text: "It is a structural problem. And structure can be built.", bold: true },
+        ].map((s, i) => (
+          <div key={i} style={{ display: "flex", gap: 12 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: s.color, width: 44, flexShrink: 0, paddingTop: 2 }}>{s.label}</span>
+            <p style={{ fontSize: 13, color: s.bold ? "var(--fg)" : "var(--fg-2)", fontWeight: s.bold ? 600 : 400, fontStyle: s.italic ? "italic" : "normal", lineHeight: 1.7 }}>{s.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
+  "Sunday Story": (
+    <div>
+      <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 20 }}>Sunday, March 28, 2026</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)", lineHeight: 1.2, marginBottom: 8 }}>The Mountain Between Knowing and Saying</div>
+      <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, fontStyle: "italic" }}>On the gap between having something to say and getting it into the world.</div>
+      <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8 }}>There is a thing that happens in rooms where smart people gather. Someone says something that shifts the whole conversation. And then the meeting ends. And that insight dissolves.</p>
+    </div>
+  ),
+};
+
+const TEMPLATES = ["Thought Leadership", "Case Study Narrative", "Weekly Insight", "Contrarian Take", "Origin Story"];
+const REVIEW_IMPROVEMENTS: Record<string, { pts: string; title: string; desc: string }[]> = {
+  LinkedIn: [
+    { pts: "+4 pts · LinkedIn", title: "Tighten the close", desc: "One sharper final sentence closes the gap between agreement and action." },
+    { pts: "+2 pts · LinkedIn", title: "Add one concrete example", desc: "A single sharp image in the body moves readers from interest to action." },
+  ],
+  Newsletter: [
+    { pts: "+5 pts · Newsletter", title: "Personalize the opening", desc: "Newsletter readers expect a direct address. One sentence that speaks to them specifically." },
+  ],
+  Podcast: [
+    { pts: "+8 pts · Podcast", title: "Conversational transition", desc: "Two sentences read as written, not spoken. Watson can soften them for audio." },
+  ],
+  "Sunday Story": [
+    { pts: "+2 pts · Sunday Story", title: "Deepen the opening image", desc: "One more sensory detail in the first paragraph pulls readers fully in." },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD PANEL COMPONENTS (injected into right panel per stage)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DpLabel({ children, collapsible, open, onToggle }: {
+  children: React.ReactNode;
+  collapsible?: boolean;
+  open?: boolean;
+  onToggle?: () => void;
 }) {
-  const localRef = useRef<HTMLTextAreaElement>(null);
-  const refToUse = inputRef ?? localRef;
-
-  useEffect(() => {
-    const el = refToUse.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 120) + "px";
-    el.scrollTop = el.scrollHeight;
-  }, [value, refToUse]);
-
   return (
-    <textarea
-      ref={refToUse}
-      className={className}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      onKeyDown={e => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          if (value.trim() && !disabled) onSubmit();
-        }
-      }}
-      placeholder={placeholder}
-      disabled={disabled}
-      rows={1}
+    <div
+      onClick={collapsible ? onToggle : undefined}
       style={{
-        width: "100%",
-        resize: "none",
-        border: "none",
-        outline: "none",
-        background: "transparent",
-        fontFamily: "'Afacad Flux', sans-serif",
-        fontSize: 16,
-        lineHeight: 1.5,
-        color: "var(--fg)",
-        padding: 0,
-        minHeight: 24,
-        maxHeight: 120,
-        overflowY: "auto",
+        fontSize: 9, fontWeight: 700, letterSpacing: "0.1em",
+        textTransform: "uppercase" as const, color: "var(--fg-3)",
+        marginBottom: 6, display: "flex", justifyContent: "space-between",
+        alignItems: "center", cursor: collapsible ? "pointer" : "default",
+        userSelect: "none" as const,
       }}
-    />
+    >
+      <span>{children}</span>
+      {collapsible && (
+        <span style={{
+          fontSize: 16, color: open ? "var(--fg)" : "var(--fg-3)",
+          fontWeight: 600, lineHeight: 1,
+          transform: open ? "rotate(90deg)" : "none",
+          transition: "transform 0.15s", display: "inline-block",
+        }}>›</span>
+      )}
+    </div>
   );
 }
 
-// Watson thinking indicator: living mark at smaller size, faster animation
-function TypingIndicator() {
+function DpSection({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return <div style={{ marginBottom: 14, ...style }}>{children}</div>;
+}
+
+// ── Intake dashboard ──────────────────────────────────────────
+function IntakeDash({
+  selectedFormats,
+  onToggleFormat,
+  selectedTemplate,
+  onSelectTemplate,
+}: {
+  selectedFormats: Format[];
+  onToggleFormat: (f: Format) => void;
+  selectedTemplate: string;
+  onSelectTemplate: (t: string) => void;
+}) {
+  const [outputsOpen, setOutputsOpen] = useState(true);
+  const [templatesOpen, setTemplatesOpen] = useState(true);
+  const [sessionFilesOpen, setSessionFilesOpen] = useState(false);
+  const [projectFilesOpen, setProjectFilesOpen] = useState(false);
+
   return (
-    <div style={{ display: "flex", alignItems: "center", padding: "4px 0" }}>
-      <style>{`
-        @keyframes evThinkMorph {
-          0% { border-radius: 50%; transform: rotate(0deg) scale(1); }
-          12% { border-radius: 33% 67% 50% 50% / 43% 39% 61% 57%; transform: rotate(18deg) scale(1.1); }
-          25% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; transform: rotate(-15deg) scale(0.9); }
-          37% { border-radius: 40% 60% 55% 45% / 35% 65% 35% 65%; transform: rotate(22deg) scale(1.08); }
-          50% { border-radius: 65% 35% 45% 55% / 55% 45% 55% 45%; transform: rotate(-20deg) scale(0.92); }
-          62% { border-radius: 45% 55% 65% 35% / 40% 60% 40% 60%; transform: rotate(12deg) scale(1.05); }
-          75% { border-radius: 55% 45% 40% 60% / 60% 40% 60% 40%; transform: rotate(-10deg) scale(0.95); }
-          87% { border-radius: 42% 58% 52% 48% / 48% 52% 42% 58%; transform: rotate(8deg) scale(1.02); }
-          100% { border-radius: 50%; transform: rotate(0deg) scale(1); }
-        }
-        @keyframes evThinkBreathe {
-          0%, 100% { transform: scale(1); opacity: 0.85; }
-          50% { transform: scale(1.15); opacity: 1; }
-        }
-        @keyframes evThinkColor {
-          0%, 100% { background: #C8961A; }
-          33% { background: #D4A832; }
-          66% { background: #BF8A15; }
-        }
-      `}</style>
-      <div style={{ display: "inline-flex", animation: "evThinkBreathe 1.5s ease-in-out infinite" }}>
-        <div style={{
-          width: 24, height: 24,
-          background: "#C8961A",
-          animation: "evThinkMorph 2.5s ease-in-out infinite, evColorShift 3.5s ease-in-out infinite",
-          boxShadow: "0 0 16px rgba(200, 150, 26, 0.25)",
-        }} />
+    <>
+      <DpSection>
+        <DpLabel collapsible open={outputsOpen} onToggle={() => setOutputsOpen(o => !o)}>Outputs</DpLabel>
+        {outputsOpen && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginTop: 6 }}>
+            {ALL_FORMATS.map(f => {
+              const on = selectedFormats.includes(f);
+              return (
+                <div
+                  key={f}
+                  onClick={() => onToggleFormat(f)}
+                  style={{
+                    fontSize: 10, padding: "4px 6px", borderRadius: 4,
+                    border: on ? "1px solid var(--gold-bright)" : "1px solid var(--line)",
+                    background: on ? "rgba(245,198,66,0.1)" : "var(--surface)",
+                    color: on ? "#9A7030" : "var(--fg-3)",
+                    fontWeight: on ? 600 : 400,
+                    cursor: "pointer", textAlign: "center" as const,
+                    transition: "all 0.1s",
+                  }}
+                >
+                  {f}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </DpSection>
+
+      <DpSection>
+        <DpLabel collapsible open={templatesOpen} onToggle={() => setTemplatesOpen(o => !o)}>
+          Templates{" "}
+          <span
+            onClick={e => e.stopPropagation()}
+            style={{ fontSize: 9, fontWeight: 400, color: "var(--blue)", cursor: "pointer", marginLeft: 6, textTransform: "none" as const, letterSpacing: 0 }}
+          >
+            Edit
+          </span>
+        </DpLabel>
+        {templatesOpen && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 6 }}>
+            {TEMPLATES.map(t => (
+              <div
+                key={t}
+                onClick={() => onSelectTemplate(t)}
+                style={{
+                  padding: "5px 9px", borderRadius: 5,
+                  border: selectedTemplate === t ? "1px solid var(--blue)" : "1px solid var(--line)",
+                  background: selectedTemplate === t ? "rgba(74,144,217,0.05)" : "var(--surface)",
+                  color: selectedTemplate === t ? "var(--fg)" : "var(--fg-2)",
+                  fontWeight: selectedTemplate === t ? 600 : 400,
+                  fontSize: 11, cursor: "pointer", transition: "all 0.1s",
+                }}
+              >
+                {t}
+              </div>
+            ))}
+          </div>
+        )}
+      </DpSection>
+
+      <DpSection>
+        <DpLabel collapsible open={sessionFilesOpen} onToggle={() => setSessionFilesOpen(o => !o)}>Session Files</DpLabel>
+        {sessionFilesOpen && (
+          <div style={{ marginTop: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 5 }}>
+              <FileIcon />
+              <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>HBR_Thought_Leadership.pdf</span>
+              <span style={{ fontSize: 9, color: "var(--fg-3)" }}>340 KB</span>
+            </div>
+            <div style={{ fontSize: 9, color: "var(--fg-3)", marginTop: 4 }}>Session only — not saved to Project Files</div>
+          </div>
+        )}
+      </DpSection>
+
+      <DpSection>
+        <DpLabel collapsible open={projectFilesOpen} onToggle={() => setProjectFilesOpen(o => !o)}>Project Files</DpLabel>
+        {projectFilesOpen && (
+          <div style={{ marginTop: 6, fontSize: 10, color: "var(--blue)", lineHeight: 1.9 }}>
+            ✓ Voice DNA · John Gilmore v2<br />
+            ✓ Brand Guide<br />
+            ✓ Maui Studiomind
+          </div>
+        )}
+      </DpSection>
+    </>
+  );
+}
+
+// ── Outline dashboard ─────────────────────────────────────────
+function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
+  const wordMap: Partial<Record<Format, string>> = {
+    LinkedIn: "700 words", Newsletter: "800 words",
+    Podcast: "1,200 words", "Sunday Story": "1,500 words",
+  };
+  return (
+    <DpSection>
+      <DpLabel>Selected outputs</DpLabel>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {selectedFormats.map(f => (
+          <div key={f} style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "5px 8px", borderRadius: 5,
+            border: "1px solid var(--gold-bright)",
+            background: "rgba(245,198,66,0.05)",
+          }}>
+            <span style={{ fontSize: 11, color: "var(--fg)", fontWeight: 500 }}>{f}</span>
+            <span style={{ fontSize: 10, color: "var(--blue)" }}>{wordMap[f] ?? "~"}</span>
+          </div>
+        ))}
+      </div>
+    </DpSection>
+  );
+}
+
+// ── Edit dashboard ────────────────────────────────────────────
+function EditDash({
+  mustCount,
+  styleCount,
+  wordCount,
+  selectedFormats,
+}: {
+  mustCount: number;
+  styleCount: number;
+  wordCount: number;
+  selectedFormats: Format[];
+}) {
+  const optimum = 700;
+  const over = wordCount - optimum;
+  const fillPct = Math.min((wordCount / (optimum * 1.5)) * 100, 100);
+  const wordMap: Partial<Record<Format, string>> = {
+    LinkedIn: "700 words", Newsletter: "800 words",
+    Podcast: "1,200 words", "Sunday Story": "1,500 words",
+  };
+
+  return (
+    <>
+      <DpSection>
+        <DpLabel>Voice match</DpLabel>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <svg viewBox="0 0 100 60" width="48" height="29">
+            <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
+            <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--blue)" strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset="16" />
+          </svg>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>89%</span>
+          <span style={{ fontSize: 9, color: "var(--fg-3)" }}>prelim</span>
+        </div>
+      </DpSection>
+
+      <DpSection>
+        <DpLabel>Flags</DpLabel>
+        <div style={{ display: "flex", gap: 5 }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            padding: "3px 8px", borderRadius: 4,
+            background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.35)",
+            fontSize: 10, color: "#9A7030",
+          }}>
+            <span>{mustCount}</span> must fix
+          </div>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            padding: "3px 8px", borderRadius: 4,
+            background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
+            fontSize: 10, color: "var(--blue)",
+          }}>
+            <span>{styleCount}</span> style
+          </div>
+        </div>
+      </DpSection>
+
+      <DpSection>
+        <DpLabel>Words</DpLabel>
+        <div style={{ marginBottom: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
+            <span style={{ fontWeight: 600, color: "var(--fg)" }}>{wordCount}</span>
+            <span style={{ color: "var(--gold)" }}>{over > 0 ? `+${over}` : ""}</span>
+          </div>
+          <div style={{ fontSize: 9, color: "var(--fg-3)", marginBottom: 4 }}>optimum {optimum}</div>
+          <div style={{ height: 5, background: "var(--line)", borderRadius: 3, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${fillPct}%`, background: "rgba(245,198,66,0.35)", borderRadius: 3, transition: "width 0.3s" }} />
+          </div>
+        </div>
+      </DpSection>
+
+      <DpSection>
+        <DpLabel>Outputs in queue</DpLabel>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {selectedFormats.map(f => (
+            <div key={f} style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+              <span style={{ color: "var(--fg-2)" }}>{f}</span>
+              <span style={{ color: "var(--blue)", fontSize: 10 }}>{wordMap[f] ?? "~"}</span>
+            </div>
+          ))}
+        </div>
+      </DpSection>
+    </>
+  );
+}
+
+// ── Review dashboard ──────────────────────────────────────────
+function ReviewDash({
+  activeTab,
+  reviewedTabs,
+  improvements,
+  onFix,
+  onSkip,
+  onExportAll,
+  exported,
+}: {
+  activeTab: string;
+  reviewedTabs: Record<string, boolean>;
+  improvements: { pts: string; title: string; desc: string; done: boolean }[];
+  onFix: (i: number) => void;
+  onSkip: (i: number) => void;
+  onExportAll: () => void;
+  exported: boolean;
+}) {
+  const allReviewed = Object.values(reviewedTabs).every(Boolean);
+  const unreviewed = Object.values(reviewedTabs).filter(v => !v).length;
+
+  return (
+    <div style={{ paddingTop: 4 }}>
+      {improvements.map((card, i) => (
+        <div
+          key={i}
+          style={{
+            background: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 8, padding: "12px 14px", marginBottom: 8,
+            boxShadow: "var(--shadow-sm)",
+            opacity: card.done ? 0.35 : 1,
+            pointerEvents: card.done ? "none" : "auto",
+            transition: "opacity 0.2s",
+          }}
+        >
+          <div style={{
+            fontSize: 9, fontWeight: 700, color: "var(--blue)",
+            background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.15)",
+            padding: "2px 7px", borderRadius: 10, marginBottom: 5,
+            display: "inline-block", letterSpacing: "0.04em",
+          }}>
+            {card.pts}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)", marginBottom: 4 }}>{card.title}</div>
+          <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>{card.desc}</div>
+          <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+            <button
+              onClick={() => onFix(i)}
+              style={{
+                fontSize: 11, padding: "6px 14px", borderRadius: 5,
+                background: "var(--fg)", border: "none", color: "var(--surface)",
+                cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600, flex: 1,
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--fg-2)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--fg)"; }}
+            >
+              Fix this
+            </button>
+            <button
+              onClick={() => onSkip(i)}
+              style={{
+                fontSize: 11, padding: "6px 14px", borderRadius: 5,
+                background: "transparent", border: "1px solid var(--line)",
+                color: "var(--fg-3)", cursor: "pointer", fontFamily: "var(--font)",
+                transition: "all 0.1s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "var(--fg-2)"; e.currentTarget.style.borderColor = "var(--line-2)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; e.currentTarget.style.borderColor = "var(--line)"; }}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <div style={{
+        fontSize: 10, color: allReviewed ? "var(--blue)" : "var(--fg-3)",
+        marginTop: 12, marginBottom: 6,
+        transition: "color 0.2s",
+      }}>
+        {exported
+          ? "All formats exported to Session Files."
+          : allReviewed
+          ? "All formats reviewed — ready to export."
+          : `${unreviewed} format${unreviewed !== 1 ? "s" : ""} still need review.`}
+      </div>
+
+      <button
+        onClick={onExportAll}
+        disabled={!allReviewed || exported}
+        style={{
+          width: "100%", padding: 10, borderRadius: 6,
+          background: exported ? "rgba(74,144,217,0.12)" : allReviewed ? "var(--gold-bright)" : "var(--gold-bright)",
+          border: exported ? "1px solid rgba(74,144,217,0.3)" : "none",
+          fontSize: 12, fontWeight: 700,
+          color: exported ? "var(--blue)" : "var(--fg)",
+          cursor: allReviewed && !exported ? "pointer" : "not-allowed",
+          fontFamily: "var(--font)",
+          opacity: allReviewed ? 1 : 0.4,
+          transition: "all 0.2s",
+        }}
+      >
+        {exported ? "Exported" : "Export all"}
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SMALL SHARED COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FileIcon() {
+  return (
+    <svg style={{ width: 13, height: 13, stroke: "var(--blue)", strokeWidth: 1.75, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg style={{ width: 13, height: 13, stroke: "#fff", strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </svg>
+  );
+}
+
+function MicIcon({ active }: { active?: boolean }) {
+  return (
+    <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" y1="19" x2="12" y2="23" />
+      <line x1="8" y1="23" x2="16" y2="23" />
+    </svg>
+  );
+}
+
+function AttachIcon() {
+  return (
+    <svg style={{ width: 15, height: 15, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+    </svg>
+  );
+}
+
+// ── Input Bar ─────────────────────────────────────────────────
+function InputBar({
+  placeholder,
+  value,
+  onChange,
+  onSend,
+  onEnter,
+}: {
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  onSend: () => void;
+  onEnter?: () => void;
+}) {
+  const [micActive, setMicActive] = useState(false);
+
+  return (
+    <div style={{
+      borderTop: "1px solid var(--line)",
+      padding: "10px 14px",
+      display: "flex", flexDirection: "column", gap: 4,
+      flexShrink: 0, background: "var(--bg)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }}
+          placeholder={placeholder}
+          style={{
+            flex: 1, background: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 8, padding: "0 12px", fontSize: 13, color: "var(--fg)",
+            fontFamily: "var(--font)", outline: "none", height: 36,
+            transition: "border-color 0.12s",
+          }}
+          onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.5)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+        />
+        <IaBtn title="Attach file"><AttachIcon /></IaBtn>
+        <IaBtn
+          title="Hold to speak"
+          active={micActive}
+          onMouseDown={() => setMicActive(true)}
+          onMouseUp={() => setMicActive(false)}
+          onMouseLeave={() => setMicActive(false)}
+        >
+          <MicIcon active={micActive} />
+        </IaBtn>
+        <button
+          onClick={onSend}
+          style={{
+            width: 36, height: 36, borderRadius: 7,
+            background: "var(--fg)", border: "none",
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0, transition: "background 0.1s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = "var(--fg-2)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "var(--fg)"; }}
+        >
+          <SendIcon />
+        </button>
+      </div>
+      <div style={{ fontSize: 9, color: "var(--fg-3)", textAlign: "right" as const, paddingRight: 80, letterSpacing: "0.04em" }}>
+        Hold to speak · Release to send
       </div>
     </div>
   );
 }
 
-// Message bubble: Claude-style. Watson = plain text left-aligned, no bubble. User = subtle dark pill right-aligned.
-function MessageBubble({ msg, isMobile }: { msg: Message; isMobile: boolean }) {
-  const isUser = msg.role === "user";
+function IaBtn({
+  title, active, children, onMouseDown, onMouseUp, onMouseLeave,
+}: {
+  title?: string; active?: boolean; children: React.ReactNode;
+  onMouseDown?: () => void; onMouseUp?: () => void; onMouseLeave?: () => void;
+}) {
+  return (
+    <button
+      title={title}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseLeave}
+      style={{
+        width: 36, height: 36, borderRadius: 7,
+        border: "1px solid var(--line)",
+        background: active ? "rgba(245,198,66,0.1)" : "var(--surface)",
+        borderColor: active ? "var(--gold-bright)" : "var(--line)",
+        color: active ? "var(--gold)" : "var(--fg-3)",
+        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0, transition: "all 0.12s",
+      }}
+      onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "var(--bg-2)"; e.currentTarget.style.color = "var(--fg-2)"; } }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAGE COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Intake ────────────────────────────────────────────────────
+function StageIntake({
+  messages,
+  onSend,
+  onAdvance,
+}: {
+  messages: ChatMessage[];
+  onSend: (text: string) => void;
+  onAdvance: () => void;
+}) {
+  const [input, setInput] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const send = () => {
+    if (!input.trim()) return;
+    onSend(input.trim());
+    setInput("");
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+      {/* Conversation */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+        {messages.map((m, i) => (
+          <ChatBubble key={i} role={m.role} text={m.text} />
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Advance cta after enough messages */}
+      {messages.length >= 5 && (
+        <div style={{ padding: "0 14px 10px", display: "flex", justifyContent: "flex-end" }}>
+          <button
+            onClick={onAdvance}
+            style={{
+              fontSize: 11, fontWeight: 600, padding: "7px 16px",
+              borderRadius: 6, background: "var(--gold-bright)",
+              border: "none", color: "var(--fg)", cursor: "pointer",
+              fontFamily: "var(--font)", transition: "opacity 0.1s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+          >
+            Build outline →
+          </button>
+        </div>
+      )}
+
+      <InputBar
+        placeholder="Keep going..."
+        value={input}
+        onChange={setInput}
+        onSend={send}
+      />
+    </div>
+  );
+}
+
+function ChatBubble({ role, text }: { role: "watson" | "user"; text: string }) {
+  const isWatson = role === "watson";
   return (
     <div style={{
       display: "flex",
-      flexDirection: isUser ? "row-reverse" : "row",
-      alignItems: "flex-start",
       gap: 10,
-      maxWidth: "100%",
+      alignItems: "flex-start",
+      justifyContent: isWatson ? "flex-start" : "flex-end",
     }}>
-      {/* No avatar next to Watson messages */}
+      {isWatson && (
+        <div style={{
+          width: 26, height: 26, borderRadius: "50%",
+          background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 10, fontWeight: 700, color: "var(--blue)", flexShrink: 0, marginTop: 2,
+        }}>W</div>
+      )}
       <div style={{
-        maxWidth: isMobile ? "90%" : "75%",
-        ...(isUser ? {
-          background: "var(--fg)",
-          borderRadius: "16px 16px 4px 16px",
-          padding: "10px 16px",
-        } : {
-          background: "transparent",
-          padding: "0",
-        }),
+        background: isWatson ? "rgba(74,144,217,0.07)" : "rgba(245,198,66,0.08)",
+        border: isWatson ? "1px solid rgba(74,144,217,0.15)" : "1px solid rgba(245,198,66,0.2)",
+        borderRadius: isWatson ? "0 10px 10px 10px" : "10px 0 10px 10px",
+        padding: "10px 14px",
+        maxWidth: "82%",
       }}>
-        {msg.typing ? (
-          <TypingIndicator />
-        ) : isUser ? (
-          <p style={{
-            fontFamily: "'Afacad Flux', sans-serif",
-            fontSize: 16, lineHeight: 1.65,
-            color: "var(--bg)",
-            fontWeight: 400,
-            margin: 0, whiteSpace: "pre-wrap",
-          }}>{msg.content}</p>
-        ) : (
-          <div
-            style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 16, lineHeight: 1.65,
-              color: "var(--fg)",
-              fontWeight: 400,
-            }}
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
-          />
-        )}
+        <p style={{ fontSize: 13, color: isWatson ? "var(--fg-2)" : "var(--fg)", lineHeight: 1.6 }}>{text}</p>
+      </div>
+      {!isWatson && (
+        <div style={{
+          width: 26, height: 26, borderRadius: "50%",
+          background: "rgba(245,198,66,0.15)", border: "1px solid rgba(245,198,66,0.3)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 9, fontWeight: 700, color: "var(--gold)", flexShrink: 0, marginTop: 2,
+        }}>MS</div>
+      )}
+    </div>
+  );
+}
+
+// ── Outline ───────────────────────────────────────────────────
+function StageOutline({
+  selectedLens,
+  onSelectLens,
+  outlineRows,
+  onUpdateRow,
+  onAdvance,
+}: {
+  selectedLens: string;
+  onSelectLens: (id: string) => void;
+  outlineRows: OutlineRow[];
+  onUpdateRow: (i: number, content: string) => void;
+  onAdvance: () => void;
+}) {
+  const [input, setInput] = useState("");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+        {/* Lens cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+          {LENS_OPTIONS.map(lens => {
+            const selected = selectedLens === lens.id;
+            return (
+              <div
+                key={lens.id}
+                onClick={() => onSelectLens(lens.id)}
+                style={{
+                  border: selected ? "1px solid var(--gold-bright)" : "1px solid var(--line)",
+                  background: selected ? "rgba(245,198,66,0.03)" : "var(--surface)",
+                  borderRadius: 8, padding: 14, cursor: "pointer",
+                  transition: "all 0.15s", position: "relative",
+                }}
+                onMouseEnter={e => { if (!selected) e.currentTarget.style.borderColor = "rgba(245,198,66,0.4)"; }}
+                onMouseLeave={e => { if (!selected) e.currentTarget.style.borderColor = "var(--line)"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", lineHeight: 1.4, flex: 1 }}>{lens.title}</span>
+                  {/* Vote buttons */}
+                  <div style={{ display: "flex", gap: 2, alignItems: "center", flexShrink: 0 }}>
+                    {[true, false].map((up, vi) => (
+                      <button
+                        key={vi}
+                        onClick={e => e.stopPropagation()}
+                        title={up ? "Suggest more like this" : "Don't suggest this style"}
+                        style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+                      >
+                        <svg style={{ width: 14, height: 14, stroke: selected && up ? "var(--blue)" : "var(--line-2)", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
+                          {up
+                            ? <><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" /><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" /></>
+                            : <><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" /><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" /></>}
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>{lens.desc}</div>
+                {selected && (
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--gold)", marginTop: 8 }}>
+                    Selected ✓
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Outline structure */}
+        <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, minHeight: 200 }}>
+          {outlineRows.map((row, i) => (
+            <OutlineRow
+              key={i}
+              label={row.label}
+              content={row.content}
+              indent={row.indent}
+              onChange={c => onUpdateRow(i, c)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div style={{
+        borderTop: "1px solid var(--line)", padding: "10px 14px",
+        display: "flex", alignItems: "center", gap: 6,
+        flexShrink: 0, background: "var(--bg)",
+      }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Ask Watson to restructure — or click any line to edit..."
+          style={{
+            flex: 1, background: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)",
+            fontFamily: "var(--font)", outline: "none", height: 36,
+          }}
+          onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+        />
+        <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
+        <button
+          onClick={onAdvance}
+          style={{
+            width: 36, height: 36, borderRadius: 7,
+            background: "var(--fg)", border: "none",
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}
+        >
+          <SendIcon />
+        </button>
       </div>
     </div>
   );
 }
 
-// Empty state - shown when no messages (or only Watson opening). Suggestion pills moved below input.
-const EMPTY_PROMPTS: Record<string, string> = {
-  essay: "What's on your mind?",
-  podcast: "What is this episode about and who is listening?",
-  book: "What is the book for and what change should it create?",
-  website: "What offer are we shaping this page around?",
-  video_script: "What is the video about and where will it live?",
-  newsletter: "What story are you telling in this issue?",
-  socials: "What is the take you want to put into the feed?",
-  presentation: "What is the talk for and who is in the room?",
-  business: "What are you trying to win with this document?",
-  freestyle: "What do you want to make that does not fit a format?",
-};
-
-const SUGGESTIONS_BY_TYPE: Record<string, string[]> = {
-  essay: [
-    "I want to write about the future of remote work.",
-    "Help me make the case for slow thinking in a fast world.",
-    "I have a contrarian take on how leaders should communicate.",
-  ],
-  podcast: [
-    "Solo episode on a mistake I made and what it taught me.",
-    "Conversation about where my industry is actually going.",
-    "Three-part series to introduce my core framework.",
-  ],
-  book: [
-    "Book that captures the philosophy behind my work.",
-    "Short book I can hand to new clients as an onboarding guide.",
-    "Field guide that turns my talks into a repeatable system.",
-  ],
-  website: [
-    "Homepage that explains my offer in plain language.",
-    "Services page that makes it clear who I am for.",
-    "About page that tells the real story behind my work.",
-  ],
-  video_script: [
-    "60-second video on the one thing my best clients have in common.",
-    "Explainer video that walks through my framework.",
-    "Behind-the-scenes video on how I actually work with clients.",
-  ],
-  newsletter: [
-    "Story from this week that changed how I see my work.",
-    "Roundup of three signals my audience should know about.",
-    "Letter to my list about a shift in my offer.",
-  ],
-  socials: [
-    "Take on a trend in my space that I disagree with.",
-    "Short thread breaking down a framework I use.",
-    "Quote and reaction to something my audience is already talking about.",
-  ],
-  presentation: [
-    "Keynote for a leadership summit, 45 minutes.",
-    "Sales deck for a new service offering.",
-    "Internal strategy presentation for my team.",
-  ],
-  business: [
-    "Proposal for a new advisory engagement.",
-    "Pitch deck for a workshop series.",
-    "RFP response for a corporate client.",
-  ],
-  freestyle: [
-    "I have a strange idea and I am not sure what format it belongs in.",
-    "I want to rewrite something that already exists but make it mine.",
-    "I want to experiment with a new way of explaining an old idea.",
-  ],
-};
-
-// Premium chatbot-style input (Claude / ChatGPT / Gemini pattern)
-function SessionInputBox({
-  input,
-  setInput,
-  sendMessage,
-  loading,
-  inputRef,
-  isSupported,
-  toggleListening,
-  isListening,
-  apiError,
-  setApiError,
-  attachedFiles,
-  setAttachedFiles,
-  handleFileUpload,
-  getFileIcon,
-  formatFileSize,
+function OutlineRow({
+  label, content, indent, onChange,
 }: {
-  input: string;
-  setInput: (v: string) => void;
-  sendMessage: () => void;
-  loading: boolean;
-  inputRef: React.RefObject<HTMLTextAreaElement | null>;
-  isSupported: boolean;
-  toggleListening: () => void;
-  isListening: boolean;
-  apiError: string;
-  setApiError: (v: string) => void;
-  attachedFiles?: Array<{ name: string; type: string; base64?: string; textContent?: string; size: number }>;
-  setAttachedFiles?: (fn: (prev: any[]) => any[]) => void;
-  handleFileUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  getFileIcon?: (type: string) => string;
-  formatFileSize?: (bytes: number) => string;
+  label: string; content: string; indent?: boolean; onChange: (v: string) => void;
 }) {
-  const [focusWithin, setFocusWithin] = useState(false);
-  const { theme } = useTheme();
-  const dark = theme === "dark";
-  const hasText = !!input.trim();
-  const sendEnabled = hasText && !loading;
+  const [showAlt, setShowAlt] = useState(false);
+  const [localContent, setLocalContent] = useState(content);
 
   return (
     <div
       style={{
-        maxWidth: 680,
-        width: "100%",
-        margin: "0 auto",
-        background: "var(--surface)",
-        border: "1px solid var(--line)",
-        borderRadius: 12,
-        padding: "14px 18px",
-        minHeight: 52,
-        transition: "border-color 0.15s ease, box-shadow 0.15s ease",
-        ...(focusWithin
-          ? { borderColor: "var(--gold)", boxShadow: "0 0 0 3px rgba(200, 150, 26, 0.08)" }
-          : {}),
-      }}
-      onFocus={() => setFocusWithin(true)}
-      onBlur={(e) => {
-        // Don't lose focus highlight when clicking buttons inside this container
-        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-        setFocusWithin(false);
+        display: "flex", alignItems: "baseline", gap: 0,
+        padding: "7px 0", borderBottom: "1px solid var(--line)",
+        position: "relative",
       }}
     >
-      {/* Attached file pills */}
-      {attachedFiles && attachedFiles.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-          {attachedFiles.map((file, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", background: "var(--bg-2)", border: "1px solid var(--line)", borderRadius: 6, fontSize: 12, color: "var(--fg-2)" }}>
-              <span style={{ fontWeight: 600 }}>{getFileIcon?.(file.type) || "FILE"}</span>
-              <span>{file.name}</span>
-              <span style={{ color: "var(--fg-3)" }}>({formatFileSize?.(file.size) || ""})</span>
-              <button onClick={() => setAttachedFiles?.(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 14, color: "var(--fg-3)", lineHeight: 1 }}>x</button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {/* File upload button */}
-        {handleFileUpload && (
-          <label style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "border-color 0.15s ease", background: "transparent" }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round">
-              <line x1="9" y1="3" x2="9" y2="15" />
-              <line x1="3" y1="9" x2="15" y2="9" />
-            </svg>
-            <input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.txt,.csv,.md,.rtf,.xls,.xlsx,.pptx" style={{ display: "none" }} onChange={handleFileUpload} />
-          </label>
-        )}
-        {isSupported && (
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={toggleListening}
-            aria-label={isListening ? "Stop listening" : "Start voice input"}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              border: "none",
-              background: isListening ? "rgba(229, 57, 53, 0.12)" : "rgba(0,0,0,0.04)",
-              cursor: "pointer",
-              color: isListening ? "#E53935" : "#64748B",
-              transition: "background 0.15s ease",
-              flexShrink: 0,
-              position: "relative",
-              zIndex: 10,
-            }}
-            onMouseEnter={(e) => {
-              if (!isListening) {
-                e.currentTarget.style.background = "rgba(0,0,0,0.08)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isListening) {
-                e.currentTarget.style.background = "rgba(0,0,0,0.04)";
-              }
-            }}
-          >
-            <Mic size={18} strokeWidth={2} />
-            {isListening && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: -2,
-                  right: -2,
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: "#E53935",
-                  animation: "voicePulse 1.5s ease-in-out infinite",
-                }}
-              />
-            )}
-          </button>
-        )}
-        <div style={{ flex: 1, minWidth: 0, width: "100%" }}>
-          <AutoTextarea
-            value={input}
-            onChange={setInput}
-            onSubmit={sendMessage}
-            placeholder="Tell Watson what's on your mind..."
-            disabled={loading}
-            inputRef={inputRef}
-            className="watson-input"
-          />
-        </div>
-        <button
-          type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => { if (sendEnabled) sendMessage(); }}
-          disabled={!sendEnabled}
-          title="Send message"
+      {/* Label */}
+      <div style={{
+        width: 52, fontSize: 10, fontWeight: 600, color: "var(--line-2)",
+        textTransform: "uppercase" as const, letterSpacing: "0.08em",
+        flexShrink: 0, paddingTop: 1,
+        display: "flex", alignItems: "flex-start", gap: 4,
+      }}>
+        <span
+          onClick={() => setShowAlt(s => !s)}
+          title="Brainstorm alternatives"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            border: "none",
-            background: sendEnabled ? "var(--fg)" : "var(--fg-3)",
-            color: "white",
-            cursor: sendEnabled ? "pointer" : "default",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "background 0.15s ease",
-            flexShrink: 0,
-            opacity: sendEnabled ? 1 : 0.3,
-            position: "relative",
-            zIndex: 10,
+            fontSize: 11, color: "var(--gold)", cursor: "pointer",
+            opacity: 0, transition: "opacity 0.15s", lineHeight: 1, flexShrink: 0,
           }}
-          onMouseEnter={(e) => {
-            if (sendEnabled) e.currentTarget.style.background = "var(--fg-2)";
-          }}
-          onMouseLeave={(e) => {
-            if (sendEnabled) e.currentTarget.style.background = "var(--fg)";
+          className="os-brainstorm-btn"
+        >↻</span>
+        {label}
+      </div>
+
+      {/* Content */}
+      <div
+        contentEditable
+        suppressContentEditableWarning
+        spellCheck={false}
+        onInput={e => onChange((e.target as HTMLDivElement).textContent || "")}
+        style={{
+          flex: 1, fontSize: indent ? 12 : 13,
+          color: indent ? "var(--fg-3)" : "var(--fg)",
+          lineHeight: 1.5, fontWeight: indent ? 400 : 500,
+          paddingLeft: indent ? 24 : 0,
+          outline: "none", cursor: "text", borderRadius: 3, padding: "1px 4px",
+        }}
+        onMouseEnter={e => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
+        onMouseLeave={e => { (e.target as HTMLElement).style.background = "transparent"; }}
+        onFocus={e => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
+        onBlur={e => { (e.target as HTMLElement).style.background = "transparent"; }}
+      >
+        {localContent}
+      </div>
+    </div>
+  );
+}
+
+// ── Edit ──────────────────────────────────────────────────────
+function StageEdit({
+  flags,
+  onFixFlag,
+  onDismissFlag,
+  onAdvance,
+}: {
+  flags: EditFlag[];
+  onFixFlag: (id: string, replacement: string) => void;
+  onDismissFlag: (id: string) => void;
+  onAdvance: () => void;
+}) {
+  const [input, setInput] = useState("");
+  const [activePop, setActivePop] = useState<string | null>(null);
+  const hideTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const showPop = (id: string) => {
+    Object.keys(hideTimers.current).forEach(k => {
+      if (k !== id) {
+        clearTimeout(hideTimers.current[k]);
+        setActivePop(null);
+      }
+    });
+    clearTimeout(hideTimers.current[id]);
+    setActivePop(id);
+  };
+
+  const hidePop = (id: string) => {
+    hideTimers.current[id] = setTimeout(() => setActivePop(null), 200);
+  };
+
+  const cancelHide = (id: string) => clearTimeout(hideTimers.current[id]);
+
+  const draftParagraphs = [
+    {
+      text: "You've said it perfectly in a meeting. On a plane. Walking out of a conversation that changed the room. That version — the real one, in your voice —",
+      flags: ["pop-b1"],
+      afterFlag: " never made it anywhere.",
+    },
+    {
+      text: "Most people think this is a motivation problem. ",
+      flags: ["pop-r1"],
+      afterFlag: ". They're wrong. It's structural.",
+      flagText: "Studies show that 87% of executives feel underrepresented in public conversation",
+    },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+        <div style={{ maxWidth: 580 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", lineHeight: 1.3, marginBottom: 16 }}>
+            The thinking is in your head. It belongs in the world.
+          </div>
+
+          {/* Paragraph 1 */}
+          <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75 }}>
+            You've said it perfectly in a meeting. On a plane. Walking out of a conversation that changed the room. That version — the real one, in your voice —{" "}
+            <FlagSpan
+              id="pop-b1"
+              type="style"
+              active={activePop === "pop-b1"}
+              flagMsg="Slightly passive. Consider making this more direct."
+              suggestion='"never gets out" or "disappears"'
+              replacement="never gets out"
+              onShow={showPop}
+              onHide={hidePop}
+              onCancelHide={cancelHide}
+              onFix={r => onFixFlag("pop-b1", r)}
+              onDismiss={() => onDismissFlag("pop-b1")}
+              dismissed={flags.find(f => f.id === "pop-b1")?.dismissed ?? false}
+              fixed={flags.find(f => f.id === "pop-b1")?.fixed ?? false}
+            >
+              never made it anywhere
+            </FlagSpan>
+            .
+          </p>
+
+          {/* Paragraph 2 */}
+          <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75, marginTop: 12 }}>
+            Most people think this is a motivation problem.{" "}
+            <FlagSpan
+              id="pop-r1"
+              type="must"
+              active={activePop === "pop-r1"}
+              flagMsg="No source found. Remove or verify before Review."
+              suggestion='"Most executives I speak with..." (your observation, no citation needed)'
+              replacement="Most executives I speak with feel underrepresented in public conversation"
+              onShow={showPop}
+              onHide={hidePop}
+              onCancelHide={cancelHide}
+              onFix={r => onFixFlag("pop-r1", r)}
+              onDismiss={() => onDismissFlag("pop-r1")}
+              dismissed={flags.find(f => f.id === "pop-r1")?.dismissed ?? false}
+              fixed={flags.find(f => f.id === "pop-r1")?.fixed ?? false}
+            >
+              Studies show that 87% of executives feel underrepresented in public conversation
+            </FlagSpan>
+            . They're wrong. It's structural.
+          </p>
+
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", margin: "16px 0 8px" }}>The myth of motivation</div>
+
+          <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75 }}>
+            Discipline gets you to the blank page. It does not close the gap between a half-formed idea and a published piece that sounds like you. That gap is not a character test. It is an engineering problem.
+          </p>
+
+          <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75, marginTop: 12 }}>
+            The people in your market who show up everywhere built the operation.{" "}
+            <FlagSpan
+              id="pop-b2"
+              type="style"
+              active={activePop === "pop-b2"}
+              flagMsg='Voice drift — cliche. "Lost opportunity" is weak. You usually land harder.'
+              suggestion={"Every week without it — someone else says what you've been thinking."}
+              replacement="Every week without it, someone else says what you've been thinking"
+              onShow={showPop}
+              onHide={hidePop}
+              onCancelHide={cancelHide}
+              onFix={r => onFixFlag("pop-b2", r)}
+              onDismiss={() => onDismissFlag("pop-b2")}
+              dismissed={flags.find(f => f.id === "pop-b2")?.dismissed ?? false}
+              fixed={flags.find(f => f.id === "pop-b2")?.fixed ?? false}
+            >
+              Every week without infrastructure is a week of lost opportunity
+            </FlagSpan>
+            .
+          </p>
+        </div>
+      </div>
+
+      {/* Advance button */}
+      <div style={{ padding: "0 14px 0", display: "flex", justifyContent: "flex-end", paddingBottom: 8 }}>
+        <button
+          onClick={onAdvance}
+          style={{
+            fontSize: 11, fontWeight: 600, padding: "7px 16px",
+            borderRadius: 6, background: "var(--gold-bright)",
+            border: "none", color: "var(--fg)", cursor: "pointer",
+            fontFamily: "var(--font)",
           }}
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
+          Move to Review →
         </button>
       </div>
-      {isListening && (
-        <div
+
+      <InputBar
+        placeholder="Tell Watson what to change — or edit above..."
+        value={input}
+        onChange={setInput}
+        onSend={() => setInput("")}
+      />
+    </div>
+  );
+}
+
+function FlagSpan({
+  id, type, active, children,
+  flagMsg, suggestion, replacement,
+  onShow, onHide, onCancelHide, onFix, onDismiss,
+  dismissed, fixed,
+}: {
+  id: string; type: "must" | "style"; active: boolean; children: React.ReactNode;
+  flagMsg: string; suggestion: string; replacement: string;
+  onShow: (id: string) => void; onHide: (id: string) => void;
+  onCancelHide: (id: string) => void; onFix: (r: string) => void;
+  onDismiss: () => void; dismissed: boolean; fixed: boolean;
+}) {
+  if (fixed) return <>{replacement}</>;
+
+  const isMust = type === "must";
+  const underlineColor = dismissed ? "var(--line-2)" : isMust ? "var(--gold-bright)" : "var(--blue)";
+  const underlineStyle = dismissed ? "dotted" : "solid";
+
+  return (
+    <span style={{ position: "relative" as const, display: "inline" }}>
+      <span
+        onMouseEnter={() => onShow(id)}
+        onMouseLeave={() => onHide(id)}
+        style={{
+          textDecoration: "underline",
+          textDecorationColor: underlineColor,
+          textDecorationStyle: underlineStyle,
+          textUnderlineOffset: 3,
+          cursor: dismissed ? "default" : "pointer",
+        }}
+      >
+        {children}
+      </span>
+
+      {active && !dismissed && (
+        <span
+          onMouseEnter={() => onCancelHide(id)}
+          onMouseLeave={() => onHide(id)}
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginTop: 10,
-            fontSize: 12,
-            color: "#E53935",
-            fontFamily: "'Afacad Flux', sans-serif",
+            display: "block",
+            position: "absolute" as const,
+            bottom: "calc(100% + 6px)", left: 0,
+            zIndex: 100, background: "var(--surface)",
+            border: "1px solid var(--line)", borderRadius: 7,
+            padding: "10px 12px", width: 260,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
           }}
         >
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: "#E53935",
-              animation: "voicePulse 1.5s ease-in-out infinite",
-            }}
-          />
-          Listening...
-        </div>
-      )}
-      {apiError && (
-        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 13,
-              color: "var(--danger)",
-            }}
-          >
-            {apiError}
+          <span style={{
+            fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
+            textTransform: "uppercase" as const, display: "block", marginBottom: 4,
+            color: isMust ? "var(--gold)" : "var(--blue)",
+          }}>
+            {isMust ? "Must fix — claim unverified" : "Style suggestion"}
           </span>
-          <button
-            type="button"
-            onClick={() => setApiError("")}
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: "var(--fg)",
-              background: "rgba(0,0,0,0.06)",
-              border: "none",
-              borderRadius: 6,
-              padding: "4px 10px",
-              cursor: "pointer",
-            }}
-          >
-            Try again
-          </button>
-        </div>
+          <span style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5, display: "block", marginBottom: 4 }}>{flagMsg}</span>
+          <span style={{ fontSize: 11, color: "var(--fg)", fontStyle: "italic", display: "block", marginBottom: 8 }}>{suggestion}</span>
+          <span style={{ display: "flex", gap: 6 }}>
+            <button
+              onClick={() => onFix(replacement)}
+              style={{
+                fontSize: 10, padding: "4px 10px", borderRadius: 4,
+                background: "var(--fg)", border: "none", color: "var(--surface)",
+                cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600,
+              }}
+            >Fix</button>
+            <button
+              onClick={onDismiss}
+              style={{
+                fontSize: 10, padding: "4px 10px", borderRadius: 4,
+                background: "transparent", border: "1px solid var(--line)",
+                color: "var(--fg-3)", cursor: "pointer", fontFamily: "var(--font)",
+              }}
+            >Dismiss</button>
+          </span>
+        </span>
       )}
-    </div>
+    </span>
   );
 }
 
-function EmptyState({
-  children,
-  isMobile,
-  displayName,
+// ── Review ────────────────────────────────────────────────────
+function StageReview({
+  tabs, activeTab, onTabClick, onAdvance,
 }: {
-  outputType: string;
-  onSuggestion: (s: string) => void;
-  isMobile: boolean;
-  children?: React.ReactNode;
-  displayName?: string;
+  tabs: ReviewTab[];
+  activeTab: string;
+  onTabClick: (id: string) => void;
+  onAdvance: () => void;
 }) {
-  const firstName = displayName ? displayName.split(" ")[0] : "there";
-  const h = new Date().getHours();
-  const greeting = h < 12 ? `Good morning, ${firstName}.` : h < 17 ? `Afternoon, ${firstName}.` : `Evening, ${firstName}.`;
+  const content = REVIEW_CONTENT[activeTab] || REVIEW_CONTENT.LinkedIn;
+  const [input, setInput] = useState("");
 
   return (
-    <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-      <EverywhereMarkIcon size={48} style={{ marginBottom: 20 }} />
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+      {/* Format tabs */}
       <div style={{
-        position: "relative", zIndex: 1, textAlign: "center",
-        maxWidth: 680, width: "100%", padding: "0 24px",
-        animation: "emptyFadeIn 0.6s ease both",
+        display: "flex", alignItems: "center",
+        borderBottom: "1px solid var(--line)",
+        padding: "0 20px", flexShrink: 0,
+        background: "var(--bg)", overflowX: "auto",
       }}>
-        <h1 style={{ fontSize: 28, fontWeight: 600, color: "var(--fg)", margin: "0 0 8px", fontFamily: "'Afacad Flux', sans-serif" }}>
-          {greeting}
-        </h1>
-        <p style={{ fontSize: 16, color: "var(--fg-3)", margin: "0 0 32px", fontFamily: "'Afacad Flux', sans-serif" }}>
-          Watson is listening. Tell him what's on your mind.
-        </p>
-      </div>
-      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 680, padding: "0 24px" }}>
-        {children}
-      </div>
-      <style>{`@keyframes emptyFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-    </div>
-  );
-}
-
-function WatsonThinking() {
-  return (
-    <div style={{ display: "flex", alignItems: "center", padding: "12px 0" }}>
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "10px 20px",
-        background: "var(--surface-white)",
-        borderRadius: 20,
-        border: "1px solid var(--border-subtle)",
-      }}>
-        {[
-          { color: "var(--cornflower)", delay: "0s" },
-          { color: "var(--gold)", delay: "0.15s" },
-          { color: "var(--cornflower)", delay: "0.3s" },
-        ].map((dot, i) => (
-          <div key={i} style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: dot.color,
-            animation: `watsonPulse 1.4s ${dot.delay} ease-in-out infinite`,
-          }} />
+        {tabs.map(tab => (
+          <ReviewTabBtn
+            key={tab.id}
+            label={tab.label}
+            active={activeTab === tab.id}
+            reviewed={tab.reviewed}
+            exported={tab.exported}
+            onClick={() => onTabClick(tab.id)}
+          />
         ))}
       </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+        <div style={{ maxWidth: 580 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", lineHeight: 1.3, marginBottom: 16 }}>
+            {content[0]}
+          </div>
+          {content.slice(1).map((p, i) => (
+            <p key={i} style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75, marginTop: 12 }}>{p}</p>
+          ))}
+        </div>
+      </div>
+
+      {/* Advance */}
+      <div style={{ padding: "0 14px 8px", display: "flex", justifyContent: "flex-end" }}>
+        <button
+          onClick={onAdvance}
+          style={{
+            fontSize: 11, fontWeight: 600, padding: "7px 16px",
+            borderRadius: 6, background: "var(--gold-bright)",
+            border: "none", color: "var(--fg)", cursor: "pointer",
+            fontFamily: "var(--font)",
+          }}
+        >
+          Move to Export →
+        </button>
+      </div>
+
+      <div style={{
+        borderTop: "1px solid var(--line)", padding: "10px 14px",
+        display: "flex", alignItems: "center", gap: 6,
+        flexShrink: 0, background: "var(--bg)",
+      }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Send back to Edit — tell Watson what to change..."
+          style={{
+            flex: 1, background: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)",
+            fontFamily: "var(--font)", outline: "none", height: 36,
+          }}
+          onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+        />
+        <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
+        <button
+          onClick={() => setInput("")}
+          style={{
+            width: 36, height: 36, borderRadius: 7,
+            background: "var(--fg)", border: "none",
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          <SendIcon />
+        </button>
+      </div>
     </div>
   );
 }
 
-// Output type selector pill - dropdown with all 12 types
-function OutputTypePill({
-  value, onChange,
+function ReviewTabBtn({
+  label, active, reviewed, exported, onClick,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  label: string; active: boolean; reviewed: boolean; exported: boolean; onClick: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [openDir, setOpenDir] = useState<"up" | "down">("down");
-  const type = OUTPUT_TYPES[value] || OUTPUT_TYPES.essay;
-  const ref = useRef<HTMLDivElement>(null);
+  const dotColor = exported ? "var(--blue)" : reviewed ? "var(--gold-bright)" : "var(--line)";
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        fontSize: 11, fontWeight: active ? 600 : 500,
+        color: active ? "var(--fg)" : "var(--fg-3)",
+        padding: "12px 14px",
+        borderBottom: active ? "2px solid var(--fg)" : "2px solid transparent",
+        cursor: "pointer", whiteSpace: "nowrap" as const,
+        flexShrink: 0, transition: "all 0.1s",
+      }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "var(--fg-2)"; }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "var(--fg-3)"; }}
+    >
+      {label}
+      <span style={{
+        display: "inline-block", width: 6, height: 6,
+        borderRadius: "50%", background: dotColor,
+        marginLeft: 5, verticalAlign: "middle",
+        position: "relative", top: -1, transition: "background 0.2s",
+      }} />
+    </div>
+  );
+}
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+// ── Export ────────────────────────────────────────────────────
+function StageExport({
+  tabs, activeTab, onTabClick,
+}: {
+  tabs: ReviewTab[];
+  activeTab: string;
+  onTabClick: (id: string) => void;
+}) {
+  const [exportedTabs, setExportedTabs] = useState<Record<string, boolean>>({});
+  const labels: Record<string, string> = {
+    LinkedIn: "LinkedIn Post", Newsletter: "Newsletter",
+    Podcast: "Podcast Script", "Sunday Story": "Sunday Story",
+  };
 
-  useEffect(() => {
-    if (!open || !ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    if (spaceBelow < 360 && rect.top > 360) {
-      setOpenDir("up");
-    } else {
-      setOpenDir("down");
-    }
-  }, [open]);
+  const handleExport = (which: string) => {
+    setExportedTabs(p => ({ ...p, [which]: true }));
+  };
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key.length !== 1) return;
-      const ch = e.key.toLowerCase();
-      if (!/[a-z]/.test(ch)) return;
-      // Avoid stealing focus from form fields
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true")) {
-        return;
-      }
-      const match = OUTPUT_TYPE_KEYS.find(k => OUTPUT_TYPES[k].label.charAt(0).toLowerCase() === ch);
-      if (match) {
-        e.preventDefault();
-        onChange(match);
-        setOpen(false);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onChange]);
+  const handleCopy = () => {
+    const text = document.getElementById("export-preview-content")?.innerText ?? "";
+    navigator.clipboard.writeText(text).catch(() => {});
+  };
+
+  const previewNode = EXPORT_PREVIEWS[activeTab] || EXPORT_PREVIEWS.LinkedIn;
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <button type="button" onClick={() => setOpen(o => !o)} style={{
-        display: "flex", alignItems: "center", gap: 6,
-        background: "var(--surface-white)", border: "1px solid var(--border-subtle)",
-        borderRadius: 20, padding: "6px 16px",
-        cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 500, color: "var(--text-primary)",
-        transition: "all .15s",
-      }}
-        onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border-default)"}
-        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border-subtle)"}
-      >
-        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--work-teal)", flexShrink: 0 }} />
-        <span>{type.label}</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: .45, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}>
-          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+      {/* Format tabs */}
+      <div style={{
+        display: "flex", alignItems: "center",
+        borderBottom: "1px solid var(--line)",
+        padding: "0 20px", flexShrink: 0,
+        background: "var(--bg)", overflowX: "auto",
+      }}>
+        {tabs.map(tab => (
+          <ReviewTabBtn
+            key={tab.id}
+            label={tab.label}
+            active={activeTab === tab.id}
+            reviewed={tab.reviewed}
+            exported={exportedTabs[tab.id] ?? false}
+            onClick={() => onTabClick(tab.id)}
+          />
+        ))}
+      </div>
 
-      {open && (
-        <div style={{
-          position: "absolute",
-          ...(openDir === "down" ? { top: "calc(100% + 8px)" } : { bottom: "calc(100% + 8px)" }),
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "var(--surface)", border: "1px solid var(--line)",
-          borderRadius: 12, padding: 6, minWidth: 220, maxHeight: 320, overflowY: "auto",
-          boxShadow: "var(--shadow-md)", zIndex: 50,
-          animation: openDir === "down" ? "ddDown .15s ease-out" : "ddUp .15s ease-out",
-        }}>
-          {OUTPUT_TYPE_KEYS.map(t => {
-            const ot = OUTPUT_TYPES[t];
-            const active = t === value;
-            return (
-              <button key={t} type="button" onClick={() => { onChange(t); setOpen(false); }} style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%",
-                background: active ? "var(--bg-2)" : "transparent",
-                border: "none", borderRadius: 8, padding: "8px 10px",
-                cursor: "pointer", fontFamily: "var(--font)",
-                transition: "background .12s",
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px", maxWidth: 660 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fg)" }}>{labels[activeTab] ?? activeTab}</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              onClick={handleCopy}
+              style={{
+                fontSize: 11, padding: "5px 12px", borderRadius: 5,
+                border: "1px solid var(--line)", background: "var(--surface)",
+                color: "var(--fg-2)", cursor: "pointer", fontFamily: "var(--font)",
               }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg-2)"; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
-              >
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: ot.color, flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: active ? "var(--fg)" : "var(--fg-2)", fontWeight: active ? 500 : 400 }}>{ot.label}</span>
-                <div style={{ marginLeft: "auto" }}>
-                  {active && (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6L5 9L10 3" stroke={ot.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+            >Copy</button>
+            <button
+              onClick={() => handleExport(activeTab)}
+              style={{
+                fontSize: 11, padding: "5px 14px", borderRadius: 5,
+                border: exportedTabs[activeTab] ? "1px solid rgba(74,144,217,0.3)" : "none",
+                background: exportedTabs[activeTab] ? "rgba(74,144,217,0.1)" : "var(--fg)",
+                color: exportedTabs[activeTab] ? "var(--blue)" : "var(--surface)",
+                cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600,
+                transition: "all 0.15s",
+              }}
+            >
+              {exportedTabs[activeTab] ? "Exported" : "Export"}
+            </button>
+          </div>
         </div>
-      )}
+        <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 18 }}>Saves to Session Files on export.</div>
+        <div
+          id="export-preview-content"
+          style={{
+            background: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 8, padding: "22px 26px", fontSize: 13,
+            color: "var(--fg-2)", lineHeight: 1.7,
+          }}
+        >
+          {previewNode}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ── Main Work Session ─────────────────────────────────────────────────────────
-type Phase = "input" | "bluesky" | "structure" | "drafting" | "editing" | "stress-test" | "polish" | "complete";
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 
-const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
-const IS_DEV = import.meta.env.DEV;
-
-const FETCH_TIMEOUT_MS = 90000;  // 90s for chat/generate
-const FRONTEND_RETRIES = 2;      // retry 404/502/503/504/429
-const RETRY_BACKOFF_MS = 800;
-
-function friendlyMessage(status: number, bodyError?: string): string {
-  // Production: never show developer instructions. Keep it short and actionable for end users.
-  if (!IS_DEV) {
-    if (status === 404 || status === 502 || status === 503 || status === 504)
-      return "We're having trouble connecting. Please try again in a moment.";
-    if (status === 401)
-      return "Something went wrong on our end. Please try again later.";
-    if (status === 429)
-      return "We're a bit busy. Please wait a moment and try again.";
-    if (status >= 500)
-      return "We hit a snag. Please try again in a moment.";
-    if (bodyError && !bodyError.includes("npm") && !bodyError.includes("backend"))
-      return bodyError.length > 100 ? bodyError.slice(0, 100) + "…" : bodyError;
-    return "Something went wrong. Please try again.";
-  }
-  // Development: helpful for you while building
-  if (status === 404)
-    return "Connection issue. Make sure the backend is running (npm run server or npm run dev:all).";
-  if (status === 401)
-    return "API key issue. Check SETUP.md and your .env file.";
-  if (status === 429)
-    return "Too many requests. Please wait a moment and try again.";
-  if (status >= 500)
-    return "Temporary glitch on our side. Try again in a moment.";
-  if (bodyError)
-    return bodyError.length > 120 ? bodyError.slice(0, 120) + "…" : bodyError;
-  return "Something went wrong. Try again.";
-}
-
-function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
-  const ctrl = new AbortController();
-  const to = setTimeout(() => ctrl.abort(), timeoutMs);
-  return fetch(url, { ...options, signal: ctrl.signal }).finally(() => clearTimeout(to));
-}
-
-async function requestWithRetry(
-  url: string,
-  options: RequestInit,
-  timeoutMs: number = FETCH_TIMEOUT_MS
-): Promise<Response> {
-  let lastRes: Response | null = null;
-  let lastErr: Error | null = null;
-  for (let attempt = 0; attempt <= FRONTEND_RETRIES; attempt++) {
-    try {
-      const res = await fetchWithTimeout(url, options, timeoutMs);
-      lastRes = res;
-      const retryable = res.status === 404 || res.status === 502 || res.status === 503 || res.status === 504 || res.status === 429;
-      const data = res.ok ? null : await res.json().catch(() => ({}));
-      const canRetry = retryable && attempt < FRONTEND_RETRIES && (data?.retryable !== false);
-      if (res.ok) return res;
-      if (!canRetry) throw new Error(friendlyMessage(res.status, data?.error));
-      await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS * (attempt + 1)));
-    } catch (err) {
-      lastErr = err instanceof Error ? err : new Error(String(err));
-      if (lastErr.name === "AbortError")
-        throw new Error(IS_DEV ? "Request took too long. Try again." : "That took too long. Please try again.");
-      if (attempt >= FRONTEND_RETRIES) throw lastErr;
-      await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS * (attempt + 1)));
-    }
-  }
-  if (lastRes && !lastRes.ok) {
-    const data = await lastRes.json().catch(() => ({}));
-    throw new Error(friendlyMessage(lastRes.status, data?.error));
-  }
-  throw lastErr || new Error("Something went wrong. Try again.");
-}
-
-async function chatWithWatson(
-  messages: { role: string; content: string }[],
-  outputTypeApi: string,
-  voiceProfile: object | null,
-  voiceDnaMd: string,
-  systemMode: SystemMode,
-  userId: string | undefined
-): Promise<{ reply: string; readyToGenerate: boolean; detectedFormat?: string | null }> {
-  const url = `${API_BASE}/api/chat`;
-  const body: Record<string, unknown> = {
-    messages: messages.map((m) => ({
-      role: m.role === "assistant" ? "watson" : "user",
-      content: m.content,
-    })),
-    outputType: outputTypeApi,
-    voiceProfile,
-    systemMode,
-    userId,
-  };
-  if (voiceDnaMd && voiceDnaMd.trim()) {
-    body.voiceDnaMd = voiceDnaMd.trim();
-  }
-  const res = await requestWithRetry(
-    url,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
-    FETCH_TIMEOUT_MS
-  );
-  return res.json();
-}
-
-async function generateOutput(conversationSummary: string, outputTypeApi: string, voiceProfile: object | null, userId: string | undefined): Promise<{ content: string; score: number; gates?: unknown }> {
-  const url = `${API_BASE}/api/generate`;
-  const res = await requestWithRetry(
-    url,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ conversationSummary, outputType: outputTypeApi, voiceProfile, userId }),
-    },
-    FETCH_TIMEOUT_MS
-  );
-  return res.json();
-}
-
-type GatesFromApi = {
-  strategy?: number;
-  voice?: number;
-  accuracy?: number;
-  ai_tells?: number;
-  audience?: number;
-  platform?: number;
-  impact?: number;
-  total?: number;
-  summary?: string;
-};
-
-const CHECKPOINTS = [
-  { number: 0, agent: "Echo", role: "Deduplication", key: null as string | null, description: "Scanning for repeated concepts and structural patterns" },
-  { number: 1, agent: "Priya", role: "Research Accuracy", key: "accuracy", description: "Verifying claims against independent sources" },
-  { number: 2, agent: "Jordan", role: "Voice Authenticity", key: "voice", description: "Matching output against your Voice DNA profile" },
-  { number: 3, agent: "David", role: "Engagement", key: "audience", description: "Testing the hook - 7 seconds to earn attention" },
-  { number: 4, agent: "Elena", role: "SLOP Detection", key: "ai_tells", description: "Zero AI tells, zero em dashes, zero filler" },
-  { number: 5, agent: "Natasha", role: "Editorial Excellence", key: "strategy", description: "Publication-grade quality check" },
-  { number: 6, agent: "Marcus", role: "Perspective", key: "platform", description: "Cultural sensitivity and platform fit" },
-  { number: 7, agent: "Marshall", role: "Impact + NVC", key: "impact", description: "Final impact and communication assessment" },
+const INITIAL_MESSAGES: ChatMessage[] = [
+  { role: "watson", text: "What's on your mind?" },
+  { role: "user", text: "I want to write about the gap between knowing what to say and getting it out into the world. Executives deal with this constantly — brilliant thinking that never reaches an audience." },
+  { role: "watson", text: 'The HBR piece calls it the "articulation gap." Is your angle the psychological barrier, the structural problem, or the solution?' },
+  { role: "user", text: "Structural. People think they need more time or motivation. They don't. They need infrastructure." },
+  { role: "watson", text: "Good. That's a reframe — and a strong one. Who's the primary reader?" },
 ];
 
-function checkpointScoreColor(score: number): { text: string; bg: string } {
-  if (score >= 80) return { text: "#50c8a0", bg: "rgba(80,200,160,0.12)" };
-  if (score >= 60) return { text: "#C8961A", bg: "rgba(200,150,26,0.12)" };
-  return { text: "#E53935", bg: "rgba(229,57,53,0.12)" };
-}
+const INITIAL_FLAGS: EditFlag[] = [
+  { id: "pop-b1", type: "style", text: "never made it anywhere", flagMsg: "Slightly passive. Consider making this more direct.", suggestion: '"never gets out" or "disappears"', replacement: "never gets out", dismissed: false, fixed: false },
+  { id: "pop-r1", type: "must", text: "Studies show that 87% of executives feel underrepresented in public conversation", flagMsg: "No source found. Remove or verify before Review.", suggestion: '"Most executives I speak with..." (your observation, no citation needed)', replacement: "Most executives I speak with feel underrepresented in public conversation", dismissed: false, fixed: false },
+  { id: "pop-b2", type: "style", text: "Every week without infrastructure is a week of lost opportunity", flagMsg: 'Voice drift — cliche. "Lost opportunity" is weak. You usually land harder.', suggestion: '"Every week without it, someone else says what you\'ve been thinking."', replacement: "Every week without it, someone else says what you've been thinking", dismissed: false, fixed: false },
+];
 
-function totalScoreColor(total: number): string {
-  if (total >= 900) return "#50c8a0";
-  if (total >= 700) return "#C8961A";
-  return "#E53935";
-}
+const INITIAL_REVIEW_TABS: ReviewTab[] = [
+  { id: "LinkedIn", label: "LinkedIn", reviewed: false, exported: false },
+  { id: "Newsletter", label: "Newsletter", reviewed: false, exported: false },
+  { id: "Podcast", label: "Podcast", reviewed: false, exported: false },
+  { id: "Sunday Story", label: "Sunday Story", reviewed: false, exported: false },
+];
 
 export default function WorkSession() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const { user, displayName } = useAuth();
-  const { toast } = useToast();
-  const isMobile = useMobile();
-  const { theme } = useTheme();
-  const [outputType, setOutputType] = useState(searchParams.get("type") || "freestyle");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [phase, setPhase] = useState<Phase>("input");
-  const [sessionTitle, setSessionTitle] = useState("New Session");
-  const [generatedContent, setGeneratedContent] = useState("");
-  const [generatedScore, setGeneratedScore] = useState(0);
-  const [generatedOutputId, setGeneratedOutputId] = useState<string>("new");
-  const [voiceProfile, setVoiceProfile] = useState<object | null>(null);
-  const [voiceDnaMd, setVoiceDnaMd] = useState<string>("");
-  const [brandDnaMd, setBrandDnaMd] = useState<string | undefined>(undefined);
-  const [methodDnaMd, setMethodDnaMd] = useState<string | undefined>(undefined);
-  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>("IDLE");
-  const [currentStage, setCurrentStage] = useState<string | undefined>(undefined);
-  const [pipelineGateResults, setPipelineGateResults] = useState<any[]>([]);
-  const [blockedAt, setBlockedAt] = useState<string | undefined>(undefined);
-  const [pipelineResult, setPipelineResult] = useState<any>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const type = OUTPUT_TYPES[outputType] || OUTPUT_TYPES.essay;
-  const outputTypeApi = OUTPUT_TYPE_TO_API[outputType] || "freestyle";
-  const [isReady, setIsReady] = useState(false);
-  const [currentSystemMode, setCurrentSystemMode] = useState<SystemMode>("CONTENT_PRODUCTION");
-  const [generatedGates, setGeneratedGates] = useState<GatesFromApi | null>(null);
-  const [showCheckpointSequence, setShowCheckpointSequence] = useState(false);
-  const [visibleCheckpointCount, setVisibleCheckpointCount] = useState(0);
-  const [revealedCheckpointCount, setRevealedCheckpointCount] = useState(0);
-  const [showTotalScore, setShowTotalScore] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState("Writing your draft...");
-  const loadingStartRef = useRef(Date.now());
-  const [contentCopied, setContentCopied] = useState(false);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const [revisionMode, setRevisionMode] = useState(false);
-  const [revisionOutputId, setRevisionOutputId] = useState<string | null>(null);
-  const [revisionContent, setRevisionContent] = useState<string | null>(null);
-  const [revisionPipelineContext, setRevisionPipelineContext] = useState<string | null>(null);
+  const { setDashContent, setDashOpen } = useShell();
+  const { displayName } = useAuth();
+  const nav = useNavigate();
 
-  // Writer's Room state
-  const [angles, setAngles] = useState<Array<{ id: string; title: string; description: string; hook: string; approach: string }>>([]);
-  const [selectedAngles, setSelectedAngles] = useState<string[]>([]);
-  const [blueSkyNotes, setBlueSkyNotes] = useState("");
-  const [outline, setOutline] = useState<Array<{ id: string; section: string; beats: string[]; purpose: string }>>([]);
-  const [thesis, setThesis] = useState("");
-  const [draftContent, setDraftContent] = useState("");
-  const [editNotes, setEditNotes] = useState("");
-  const [layer1Results, setLayer1Results] = useState<Array<{ gate: string; status: string; score: number; feedback: string; startedAt?: number }>>([]);
-  const [stressResults, setStressResults] = useState<Array<{ agent: string; lens: string; verdict: string; feedback: string; suggestion: string }>>([]);
-  const [saraSynthesis, setSaraSynthesis] = useState<{ summary: string; actionItems: string[] }>({ summary: "", actionItems: [] });
-  const [acceptedItems, setAcceptedItems] = useState<boolean[]>([]);
-  const [showPipelineDetail, setShowPipelineDetail] = useState(false);
-  const pipelineNotificationShown = useRef(false);
-  const [showMeetTeam, setShowMeetTeam] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    try { return localStorage.getItem("ew_work_intro_seen") !== "true"; } catch { return false; }
-  });
-  const dismissWalkthrough = () => {
-    localStorage.setItem("ew_work_intro_seen", "true");
-    setShowOnboarding(false);
+  // ── Stage state ──────────────────────────────────────────────
+  const [stage, setStage] = useState<WorkStage>("Intake");
+
+  // ── Intake ───────────────────────────────────────────────────
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const WATSON_RESPONSES = [
+    "Interesting. What's the biggest misconception executives have about this problem?",
+    "Good. Can you give me one specific example — a real moment where this played out?",
+    "That's the hook. What do you want the reader to actually do differently after reading this?",
+    "Understood. Let me build an outline from what you've shared.",
+  ];
+  const watsonIdx = useRef(0);
+
+  const handleIntakeSend = (text: string) => {
+    setMessages(m => [...m, { role: "user", text }]);
+    const reply = WATSON_RESPONSES[watsonIdx.current % WATSON_RESPONSES.length];
+    watsonIdx.current++;
+    setTimeout(() => {
+      setMessages(m => [...m, { role: "watson", text: reply }]);
+    }, 600);
   };
-  const [writersRoomLoading, setWritersRoomLoading] = useState(false);
-  const [editingParaIndex, setEditingParaIndex] = useState<number | null>(null);
-  const [editingParaText, setEditingParaText] = useState("");
-  const [improvingQueue, setImprovingQueue] = useState<string[]>([]);
-  const [currentlyImproving, setCurrentlyImproving] = useState<string | null>(null);
-  const [continueWritingInput, setContinueWritingInput] = useState("");
-  const [continueWritingLoading, setContinueWritingLoading] = useState(false);
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
-  const [allCheckpointsPassed, setAllCheckpointsPassed] = useState(false);
-  const [autoImprovingCurrent, setAutoImprovingCurrent] = useState<string | null>(null);
-  const [manualFixNeeded, setManualFixNeeded] = useState<string[]>([]);
-  const [attachedFiles, setAttachedFiles] = useState<Array<{
-    name: string;
-    type: string;
-    base64?: string;
-    textContent?: string;
-    size: number;
-  }>>([]);
-  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
 
-  const { isListening, isSupported, toggleListening, stopListening } = useVoiceInput((text) => {
-    setInput(text);
-  });
+  // ── Outline ──────────────────────────────────────────────────
+  const [selectedLens, setSelectedLens] = useState("a");
+  const [outlineRows, setOutlineRows] = useState<OutlineRow[]>(LENS_OPTIONS[0].outline);
 
-  // Load projects for project selector
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("projects").select("id, name").eq("user_id", user.id).order("sort_order", { ascending: true })
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setProjects(data);
-          if (!activeProjectId) setActiveProjectId(data.find((p: any) => p.is_default)?.id || data[0].id);
-        }
-      });
-  }, [user]);
+  const handleSelectLens = (id: string) => {
+    setSelectedLens(id);
+    const lens = LENS_OPTIONS.find(l => l.id === id);
+    if (lens) setOutlineRows(lens.outline);
+  };
 
-  // Checkpoint timeout: if any checkpoint is "running" for more than 60s, mark as timeout
-  useEffect(() => {
-    const hasRunning = layer1Results.some(r => r.status === "running");
-    if (!hasRunning) return;
-    const interval = setInterval(() => {
-      const now = Date.now();
-      setLayer1Results(prev => prev.map(r => {
-        if (r.status === "running" && r.startedAt && now - r.startedAt > 60000) {
-          return { ...r, status: "timeout", feedback: "This specialist could not complete. Click Re-run to try again." };
-        }
-        return r;
-      }));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [layer1Results]);
+  const handleUpdateOutlineRow = (i: number, content: string) => {
+    setOutlineRows(rows => rows.map((r, idx) => idx === i ? { ...r, content } : r));
+  };
 
-  // Pipeline completion notification
-  useEffect(() => {
-    if (layer1Results.length === 0) return;
-    const allDone = layer1Results.every(r => r.status !== "running" && r.status !== "pending");
-    if (allDone && !pipelineNotificationShown.current) {
-      pipelineNotificationShown.current = true;
-      toast("Quality review complete. Your draft is ready.", "success");
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("EVERYWHERE Studio", { body: "Your draft is ready. Quality review complete.", icon: "/favicon.ico" });
-      }
+  // ── Edit flags ────────────────────────────────────────────────
+  const [flags, setFlags] = useState<EditFlag[]>(INITIAL_FLAGS);
+  const mustCount = flags.filter(f => f.type === "must" && !f.dismissed && !f.fixed).length;
+  const styleCount = flags.filter(f => f.type === "style" && !f.dismissed && !f.fixed).length;
+  const wordCount = 847;
+
+  const handleFixFlag = (id: string, replacement: string) => {
+    setFlags(fs => fs.map(f => f.id === id ? { ...f, fixed: true, replacement } : f));
+  };
+  const handleDismissFlag = (id: string) => {
+    setFlags(fs => fs.map(f => f.id === id ? { ...f, dismissed: true } : f));
+  };
+
+  // ── Review ────────────────────────────────────────────────────
+  const [reviewTabs, setReviewTabs] = useState<ReviewTab[]>(INITIAL_REVIEW_TABS);
+  const [activeReviewTab, setActiveReviewTab] = useState("LinkedIn");
+  const [reviewImprovements, setReviewImprovements] = useState<
+    Record<string, { pts: string; title: string; desc: string; done: boolean }[]>
+  >(
+    Object.fromEntries(
+      Object.entries(REVIEW_IMPROVEMENTS).map(([k, v]) => [k, v.map(x => ({ ...x, done: false }))])
+    )
+  );
+  const [exportedAll, setExportedAll] = useState(false);
+
+  const reviewedState = Object.fromEntries(reviewTabs.map(t => [t.id, t.reviewed]));
+
+  const handleReviewTabClick = (id: string) => {
+    setActiveReviewTab(id);
+    // Check if all improvements for this tab are done, if so auto-mark reviewed
+    const imps = reviewImprovements[id] || [];
+    if (imps.every(i => i.done)) {
+      setReviewTabs(tabs => tabs.map(t => t.id === id ? { ...t, reviewed: true } : t));
     }
-  }, [layer1Results]);
+  };
 
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("voice_profile, voice_dna_md, brand_dna_md, method_dna_md")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
-        setVoiceProfile(data?.voice_profile || null);
-        setVoiceDnaMd((data?.voice_dna_md as string) || "");
-        setBrandDnaMd((data?.brand_dna_md as string | null) || undefined);
-        setMethodDnaMd((data?.method_dna_md as string | null) || undefined);
-      });
-  }, [user]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading]);
-
-  useEffect(() => {
-    if (id === "new" || !id) {
-      const persisted = loadSession();
-      if (persisted && persisted.messages.length > 1) {
-        setMessages(persisted.messages);
-        setInput(persisted.input || "");
-        setOutputType(persisted.outputType || "freestyle");
-        setSessionTitle(persisted.sessionTitle || "New Session");
-        // Restore phase, reset transient loading phases back to their start
-        const pp = persisted.phase as string;
-        const restoredPhase = pp === "generating" ? "input" : pp === "polish" ? "stress-test" : pp;
-        setPhase(restoredPhase as Phase);
-        setGeneratedContent(persisted.generatedContent || "");
-        setGeneratedScore(persisted.generatedScore || 0);
-        setGeneratedOutputId(persisted.generatedOutputId || "new");
-        setGeneratedGates(persisted.generatedGates || null);
-        setIsReady(persisted.isReady || false);
-        setTimeout(() => toast("Session restored"), 300);
-        return;
+  const handleReviewFix = (tabId: string, impIdx: number) => {
+    setReviewImprovements(prev => {
+      const updated = { ...prev, [tabId]: prev[tabId].map((imp, i) => i === impIdx ? { ...imp, done: true } : imp) };
+      const allDone = updated[tabId].every(i => i.done);
+      if (allDone) {
+        setReviewTabs(tabs => tabs.map(t => t.id === tabId ? { ...t, reviewed: true } : t));
       }
-      setMessages([{
-        id: "w0",
-        role: "assistant",
-        content: "What's on your mind? Tell me your idea and we'll figure out the best format together.",
-        ts: Date.now(),
-      }]);
-      setSessionTitle("New Session");
-    }
-  }, [id]);
+      return updated;
+    });
+  };
 
-  useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 100);
+  const handleReviewSkip = (tabId: string, impIdx: number) => handleReviewFix(tabId, impIdx);
+
+  const handleExportAll = () => {
+    setExportedAll(true);
+    setReviewTabs(tabs => tabs.map(t => ({ ...t, exported: true })));
+    setTimeout(() => setStage("Export"), 1200);
+  };
+
+  // ── Export tabs ───────────────────────────────────────────────
+  const [activeExportTab, setActiveExportTab] = useState("LinkedIn");
+
+  // ── Formats + templates ───────────────────────────────────────
+  const [selectedFormats, setSelectedFormats] = useState<Format[]>(DEFAULT_FORMATS);
+  const [selectedTemplate, setSelectedTemplate] = useState("Weekly Insight");
+
+  const toggleFormat = (f: Format) => {
+    setSelectedFormats(fs => fs.includes(f) ? fs.filter(x => x !== f) : [...fs, f]);
+  };
+
+  // ── Stage navigation ──────────────────────────────────────────
+  const goToStage = useCallback((s: WorkStage) => {
+    setStage(s);
+    if (s === "Review") setActiveReviewTab("LinkedIn");
+    if (s === "Export") setActiveExportTab("LinkedIn");
   }, []);
 
-  // Progressive loading animation during generation
+  // Expose stage to topbar breadcrumb
   useEffect(() => {
-    if ((phase as string) !== "generating" && phase !== "drafting") {
-      if (loadingProgress > 0) setLoadingProgress(100);
-      return;
-    }
-    loadingStartRef.current = Date.now();
-    setLoadingProgress(0);
-    setLoadingMessage("Writing your draft...");
-
-    const interval = setInterval(() => {
-      const elapsed = (Date.now() - loadingStartRef.current) / 1000;
-      let progress: number;
-      let message: string;
-
-      if (elapsed < 12) {
-        progress = (elapsed / 12) * 30;
-        message = "Writing your draft...";
-      } else if (elapsed < 25) {
-        progress = 30 + ((elapsed - 12) / 13) * 25;
-        message = "Applying your voice DNA...";
-      } else if (elapsed < 40) {
-        progress = 55 + ((elapsed - 25) / 15) * 20;
-        message = "Running quality checkpoints...";
-      } else if (elapsed < 55) {
-        progress = 75 + ((elapsed - 40) / 15) * 15;
-        message = "Almost there...";
-      } else {
-        progress = Math.min(95, 90 + (elapsed - 55) * 0.1);
-        message = "Taking a bit longer than usual...";
-      }
-
-      setLoadingProgress(progress);
-      setLoadingMessage(message);
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [phase]);
-
-  // Persist session state on changes (debounced)
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  useEffect(() => {
-    if (messages.length <= 1 && !input.trim() && phase === "input") return;
-    clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      saveSession({
-        messages: messages.filter(m => !m.typing),
-        input,
-        outputType,
-        sessionTitle,
-        phase: phase as any,
-        generatedContent,
-        generatedScore,
-        generatedOutputId,
-        generatedGates,
-        isReady,
-        timestamp: Date.now(),
-      });
-    }, 500);
-    return () => clearTimeout(saveTimeoutRef.current);
-  }, [messages, input, outputType, sessionTitle, phase, generatedContent, generatedScore, generatedOutputId, generatedGates, isReady]);
-
-  useEffect(() => {
-    const state = location.state as {
-      ideaTitle?: string;
-      ideaDescription?: string;
-      reviseOutputId?: string;
-      reviseContent?: string;
-      reviseTitle?: string;
-      reviseType?: string;
-      reviseScore?: number;
-      reviseGates?: Record<string, unknown> | null;
-      revisePipelineRun?: { gate_results?: Array<{ gate: string; status: string; score: number; feedback: string }>; betterish_score?: { total: number } | null } | null;
-      watchTrigger?: {
-        headline: string;
-        summary: string;
-        angle: string;
-        prompt: string;
-      };
-      watchSignal?: {
-        headline: string;
-        source: string;
-        url?: string;
-        relevance?: string;
-        anglePrompt?: string;
-      };
-    } | null;
-
-    if (state?.watchSignal) {
-      const signal = state.watchSignal;
-      const watchPrompt = signal.anglePrompt
-        ? `I want to write about this: "${signal.headline}" (from ${signal.source}). ${signal.anglePrompt}`
-        : `I want to write about this: "${signal.headline}" from ${signal.source}. ${signal.relevance || ""}`;
-      setInput(watchPrompt);
-      setTimeout(() => sendMessage(watchPrompt), 300);
-      return;
-    }
-
-    if (state?.watchTrigger) {
-      const { headline, angle, prompt } = state.watchTrigger;
-      setMessages([{
-        id: "w0",
-        role: "assistant",
-        content: `I see you're interested in "${headline}". Here's an angle we could explore: ${angle}. Which direction feels right, or would you like to take it somewhere else?`,
-        ts: Date.now(),
-      }]);
-      setInput(prompt);
-      return;
-    }
-
-    if (state?.reviseOutputId) {
-      setRevisionMode(true);
-      setRevisionOutputId(state.reviseOutputId);
-      setRevisionContent(state.reviseContent || null);
-      setGeneratedOutputId(state.reviseOutputId);
-      if (state.reviseType) setOutputType(state.reviseType);
-      setSessionTitle(`Revising: ${state.reviseTitle || "Untitled"}`);
-      const typeLabel = state.reviseType ? (OUTPUT_TYPES[state.reviseType]?.label || state.reviseType) : "content";
-      const score = state.reviseScore;
-
-      // Build smart Watson message from gate scores and pipeline feedback
-      let watsonMsg = `I have your ${typeLabel} titled "${state.reviseTitle || "Untitled"}"`;
-      const gateScores = state.reviseGates as Record<string, number | string> | null;
-      const pipelineRun = state.revisePipelineRun;
-      let pipelineCtx = "";
-
-      if (score != null) {
-        watsonMsg += ` (scored ${score}).`;
-      } else {
-        watsonMsg += `.`;
-      }
-
-      // Try to extract specialist scores from pipeline run first, then gates
-      const specialistMap: Record<string, { score: number; feedback?: string }> = {};
-      if (pipelineRun?.gate_results && pipelineRun.gate_results.length > 0) {
-        for (const g of pipelineRun.gate_results) {
-          specialistMap[g.gate] = { score: g.score, feedback: g.feedback };
-        }
-      } else if (gateScores) {
-        const gateLabels: Record<string, string> = { strategy: "Strategy", voice: "Voice", accuracy: "Accuracy", ai_tells: "AI Tells", audience: "Audience", platform: "Platform", impact: "Impact" };
-        for (const [k, label] of Object.entries(gateLabels)) {
-          if (typeof gateScores[k] === "number") {
-            specialistMap[label] = { score: gateScores[k] as number };
-          }
-        }
-      }
-
-      const specialists = Object.entries(specialistMap).filter(([, v]) => typeof v.score === "number");
-      if (specialists.length > 0) {
-        const sorted = [...specialists].sort((a, b) => b[1].score - a[1].score);
-        const strongest = sorted[0];
-        const weakest = sorted[sorted.length - 1];
-
-        watsonMsg += ` Here's what stood out:\n- Strongest: ${strongest[0]} (${strongest[1].score})\n- Needs work: ${weakest[0]} (${weakest[1].score})`;
-
-        // Build revision options from actual weak areas
-        const weakAreas = sorted.filter(([, v]) => v.score < 75).slice(-3);
-        if (weakAreas.length > 0) {
-          watsonMsg += `\n\nI can help you:`;
-          weakAreas.forEach(([name, data], i) => {
-            const letter = String.fromCharCode(65 + i);
-            const feedbackSnippet = data.feedback ? ` (${data.feedback.slice(0, 80)}${data.feedback.length > 80 ? "..." : ""})` : "";
-            watsonMsg += `\n${letter}) Strengthen ${name}${feedbackSnippet}`;
-          });
-          watsonMsg += `\n${String.fromCharCode(65 + weakAreas.length)}) Something else: tell me what you want to change`;
-        } else {
-          watsonMsg += `\n\nWhat would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`;
-        }
-
-        // Build pipeline context string for the chat API
-        pipelineCtx = "\n\n[PIPELINE RESULTS FOR REVISION CONTEXT:]\n";
-        for (const [name, data] of sorted) {
-          pipelineCtx += `- ${name}: ${data.score}/100`;
-          if (data.feedback) pipelineCtx += `. ${data.feedback.slice(0, 200)}`;
-          pipelineCtx += "\n";
-        }
-      } else {
-        watsonMsg += ` What would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`;
-      }
-
-      setRevisionPipelineContext(pipelineCtx || null);
-      setMessages([{
-        id: "w0",
-        role: "assistant",
-        content: watsonMsg,
-        ts: Date.now(),
-      }]);
-      return;
-    }
-
-    if (state?.ideaTitle) {
-      setInput(state.ideaDescription ? `${state.ideaTitle}\n\n${state.ideaDescription}` : state.ideaTitle);
-    }
-  }, [location.state]);
-
-  useEffect(() => {
-    if (!loading) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [loading]);
-
-  useEffect(() => {
-    if (!showCheckpointSequence || !generatedGates || visibleCheckpointCount >= 8) return;
-    const t = setTimeout(() => setVisibleCheckpointCount((c) => c + 1), 600);
-    return () => clearTimeout(t);
-  }, [showCheckpointSequence, generatedGates, visibleCheckpointCount]);
-
-  useEffect(() => {
-    if (revealedCheckpointCount >= visibleCheckpointCount || visibleCheckpointCount === 0) return;
-    const id = setTimeout(() => setRevealedCheckpointCount(visibleCheckpointCount), 800);
-    return () => clearTimeout(id);
-  }, [visibleCheckpointCount, revealedCheckpointCount]);
-
-  useEffect(() => {
-    if (visibleCheckpointCount < 8 || revealedCheckpointCount < 8) {
-      setShowTotalScore(false);
-      return;
-    }
-    const t = setTimeout(() => setShowTotalScore(true), 800);
-    return () => clearTimeout(t);
-  }, [visibleCheckpointCount, revealedCheckpointCount]);
-
-  function getFileIcon(mimeType: string): string {
-    if (mimeType.startsWith("image/")) return "IMG";
-    if (mimeType === "application/pdf") return "PDF";
-    if (mimeType.includes("word") || mimeType.includes("docx")) return "DOC";
-    if (mimeType.includes("spreadsheet") || mimeType.includes("xlsx") || mimeType.includes("csv")) return "XLS";
-    if (mimeType.includes("presentation") || mimeType.includes("pptx")) return "PPT";
-    return "TXT";
-  }
-
-  function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes}B`;
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-  }
-
-  function fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(",")[1]);
-      };
-      reader.onerror = () => reject(new Error("Failed to read file"));
-      reader.readAsDataURL(file);
-    });
-  }
-
-  async function extractFileText(file: File): Promise<string | null> {
-    if (file.type === "text/plain" || file.type === "text/csv" || file.type === "text/markdown" ||
-        file.name.endsWith(".md") || file.name.endsWith(".txt") || file.name.endsWith(".csv") || file.name.endsWith(".rtf")) {
-      return await file.text();
-    }
-    if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-        file.name.endsWith(".docx") || file.name.endsWith(".doc") ||
-        file.name.endsWith(".xlsx") || file.name.endsWith(".xls") || file.name.endsWith(".pptx")) {
-      const formData = new FormData();
-      formData.append("file", file);
-      try {
-        const res = await fetch(`${API_BASE}/api/extract-text`, { method: "POST", body: formData });
-        if (res.ok) { const data = await res.json(); return data.text || null; }
-      } catch {}
-      return null;
-    }
-    try { return await file.text(); } catch { return null; }
-  }
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    const processed: typeof attachedFiles = [];
-    for (const file of Array.from(files)) {
-      if (file.size > 10 * 1024 * 1024) { toast(`${file.name} is too large. Maximum 10MB.`); continue; }
-      if (file.type === "application/pdf" || file.type.startsWith("image/")) {
-        const base64 = await fileToBase64(file);
-        processed.push({ name: file.name, type: file.type, base64, size: file.size });
-      } else {
-        const text = await extractFileText(file);
-        if (text) { processed.push({ name: file.name, type: file.type, textContent: text, size: file.size }); }
-        else { toast(`Could not read ${file.name}. Try a different format.`); }
-      }
-    }
-    setAttachedFiles(prev => [...prev, ...processed]);
-    e.target.value = "";
-  };
-
-  const sendMessage = async (contentOverride?: string) => {
-    const text = (contentOverride !== undefined ? contentOverride : input).trim();
-    if (!text || loading) return;
-
-    if (isListening) {
-      stopListening();
-    }
-    if (contentOverride === undefined) setInput("");
-    setApiError(null);
-    if (contentOverride === undefined) setTimeout(() => inputRef.current?.focus(), 0);
-
-    if (messages.filter(m => m.role === "user").length === 0) {
-      setSessionTitle(text.slice(0, 40) + (text.length > 40 ? "..." : ""));
-    }
-
-    // Build content with file attachments
-    const currentFiles = [...attachedFiles];
-    let messageContent: string | Array<any> = text;
-    if (currentFiles.length > 0) {
-      const contentParts: any[] = [];
-      for (const file of currentFiles) {
-        if (file.base64 && file.type === "application/pdf") {
-          contentParts.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: file.base64 } });
-        } else if (file.base64 && file.type.startsWith("image/")) {
-          contentParts.push({ type: "image", source: { type: "base64", media_type: file.type, data: file.base64 } });
-        } else if (file.textContent) {
-          contentParts.push({ type: "text", text: `[FILE: ${file.name}]\n${file.textContent.slice(0, 15000)}\n[END FILE]` });
-        }
-      }
-      contentParts.push({ type: "text", text });
-      messageContent = contentParts;
-      setAttachedFiles([]);
-    }
-
-    const fileNames = currentFiles.map(f => f.name);
-    const displayText = fileNames.length > 0 ? `${text}\n\n[Attached: ${fileNames.join(", ")}]` : text;
-
-    const userMessage: Message = { id: Date.now().toString(), role: "user", content: displayText, ts: Date.now() };
-    setMessages(prev => [...prev, userMessage]);
-    setIsReady(false);
-    setLoading(true);
-
-    const inferredMode = inferMode(text);
-    setCurrentSystemMode(inferredMode);
-
-    // Build chat history: use multipart content for the latest message if files attached
-    let chatHistory = [...messages, { ...userMessage, content: messageContent }].map(m => ({ role: m.role, content: m.content }));
-    // In revision mode, prepend the original content as context
-    if (revisionMode && revisionContent && chatHistory.length <= 3) {
-      let contextMsg = `[REVISION CONTEXT - Original content being revised:]\n\n${revisionContent.slice(0, 3000)}`;
-      if (revisionPipelineContext) {
-        contextMsg += revisionPipelineContext;
-      }
-      chatHistory = [
-        { role: "user" as const, content: contextMsg },
-        { role: "assistant" as const, content: "I've reviewed the original content and the quality pipeline results. I can see the strengths and areas to improve. Let me know what you'd like to change." },
-        ...chatHistory,
-      ];
-    }
-
-    try {
-      const { reply, readyToGenerate, detectedFormat } = await chatWithWatson(chatHistory, outputTypeApi, voiceProfile, voiceDnaMd, inferredMode, user?.id);
-      setMessages(prev => [...prev, {
-        id: "w-" + Date.now(),
-        role: "assistant",
-        content: reply,
-        ts: Date.now(),
-      }]);
-      if (readyToGenerate) {
-        setIsReady(true);
-        if (detectedFormat) {
-          setOutputType(detectedFormat);
-        }
-      }
-    } catch (err) {
-      setApiError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Auto-save current work to Supabase
-  const saveCurrentWork = async () => {
-    if (!user || !generatedOutputId || generatedOutputId === "new") return;
-    const content = draftContent || generatedContent;
-    if (!content) return;
-    try {
-      await supabase.from("outputs").update({
-        content,
-        title: sessionTitle !== "New Session" ? sessionTitle : undefined,
-        writer_room_phase: phase as string,
-        updated_at: new Date().toISOString(),
-      }).eq("id", generatedOutputId);
-    } catch (err) {
-      console.error("[WorkSession] Auto-save failed:", err);
-    }
-  };
-
-  // Auto-save on 30-second interval
-  useEffect(() => {
-    const interval = setInterval(() => {
-      saveCurrentWork();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [user, generatedOutputId, draftContent, generatedContent, sessionTitle, phase]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Save on phase transitions
-  useEffect(() => {
-    saveCurrentWork();
-  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Watch/Sentinel integration: auto-send prompt from search params
-  const promptParamHandled = useRef(false);
-  const generateLockRef = useRef(false);
-  useEffect(() => {
-    const promptParam = searchParams.get("prompt");
-    if (promptParam && !promptParamHandled.current) {
-      promptParamHandled.current = true;
-      // Small delay to ensure Watson's opening message is set first
-      setTimeout(() => sendMessage(promptParam), 300);
-    }
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Writer's Room Phase Handlers ──────────────────────────────────────────
-
-  const getConversationSummary = () =>
-    messages.map(m => (m.role === "user" ? "User: " : "Watson: ") + m.content).join("\n\n");
-
-  const handleEnterBluesky = async () => {
-    setPhase("bluesky");
-    setWritersRoomLoading(true);
-    setApiError(null);
-    try {
-      const res = await fetchWithRetry(`${API_BASE}/api/writers-room/bluesky`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationSummary: getConversationSummary(),
-          outputType: outputTypeApi,
-          voiceDnaMd,
-          userId: user?.id,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to generate angles");
-      const data = await res.json();
-      setAngles(data.angles || []);
-    } catch (err: any) {
-      setApiError(err.message || "Failed to generate angles");
-      toast("Could not generate angles. Try again.", "error");
-    } finally {
-      setWritersRoomLoading(false);
-    }
-  };
-
-  const handleEnterStructure = async () => {
-    setPhase("structure");
-    setWritersRoomLoading(true);
-    setApiError(null);
-    const selectedAngleData = angles.filter(a => selectedAngles.includes(a.id));
-    try {
-      const res = await fetchWithRetry(`${API_BASE}/api/writers-room/structure`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationSummary: getConversationSummary(),
-          selectedAngles: selectedAngleData.length > 0 ? selectedAngleData : [blueSkyNotes || getConversationSummary().slice(0, 500)],
-          userNotes: blueSkyNotes,
-          outputType: outputTypeApi,
-          voiceDnaMd,
-          userId: user?.id,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to generate outline");
-      const data = await res.json();
-      setOutline(data.outline || []);
-      setThesis(data.thesis || "");
-    } catch (err: any) {
-      setApiError(err.message || "Failed to generate outline");
-      toast("Could not generate outline. Try again.", "error");
-    } finally {
-      setWritersRoomLoading(false);
-    }
-  };
-
-  const handleEnterDrafting = async () => {
-    if (generateLockRef.current) return;
-    generateLockRef.current = true;
-    setPhase("drafting");
-    setWritersRoomLoading(true);
-    setApiError(null);
-    pipelineNotificationShown.current = false;
-    setShowPipelineDetail(false);
-
-    try {
-      // Brief delay before first attempt
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Retry loop: up to 3 attempts with 5s delay between retries
-      let data: any = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              conversationSummary: getConversationSummary(),
-              outputType: outputTypeApi,
-              voiceProfile,
-              userId: user?.id,
-              outline: outline.length > 0 ? outline : undefined,
-              thesis: thesis || undefined,
-            }),
-          });
-          if (!res.ok) throw new Error("Draft generation failed");
-          data = await res.json();
-          break; // Success, exit retry loop
-        } catch (err) {
-          if (attempt < 3) {
-            toast(`Draft generation attempt ${attempt} failed. Retrying...`, "error");
-            await new Promise(resolve => setTimeout(resolve, 5000));
-          } else {
-            throw err; // Final attempt failed
-          }
-        }
-      }
-      if (!data) throw new Error("Draft generation failed after 3 attempts");
-      setDraftContent(data.content || "");
-      setGeneratedContent(data.content || "");
-      setGeneratedScore(data.score || 0);
-      setGeneratedGates(data.gates || null);
-
-      // Save to Supabase
-      const title = generateTitle(messages.find(m => m.role === "user")?.content || "", data.content || "") || `${type.label} - ${new Date().toLocaleDateString()}`;
-      if (revisionMode && revisionOutputId) {
-        await supabase.from("outputs").update({
-          content: data.content, score: data.score, gates: data.gates,
-          outline: outline.length > 0 ? outline : null,
-          writer_room_phase: "drafting",
-        }).eq("id", revisionOutputId);
-        setGeneratedOutputId(revisionOutputId);
-      } else {
-        const { data: saved } = await supabase.from("outputs").insert({
-          user_id: user!.id, title, content: data.content,
-          output_type: outputType, score: data.score,
-          gates: data.gates, outline: outline.length > 0 ? outline : null,
-          writer_room_phase: "drafting",
-        }).select().single();
-        setGeneratedOutputId(saved?.id ?? "new");
-      }
-
-      // Fire Layer 1 checkpoints in background
-      setLayer1Results([
-        { gate: "Echo", status: "running", score: 0, feedback: "", startedAt: Date.now() },
-        { gate: "Priya", status: "running", score: 0, feedback: "", startedAt: Date.now() },
-        { gate: "Jordan", status: "running", score: 0, feedback: "", startedAt: Date.now() },
-        { gate: "David", status: "running", score: 0, feedback: "", startedAt: Date.now() },
-        { gate: "Elena", status: "running", score: 0, feedback: "", startedAt: Date.now() },
-        { gate: "Natasha", status: "running", score: 0, feedback: "", startedAt: Date.now() },
-        { gate: "Marcus + Marshall", status: "running", score: 0, feedback: "", startedAt: Date.now() },
-      ]);
-
-      try {
-        const pipelineRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            draft: data.content, outputType: outputTypeApi,
-            voiceDnaMd, brandDnaMd, methodDnaMd,
-            userId: user?.id, outputId: revisionOutputId || "new",
-            gateSubset: ["Echo", "Priya", "Jordan", "David", "Elena", "Natasha", "Marcus + Marshall"],
-          }),
-        }, { timeout: 120000 });
-        if (pipelineRes.ok) {
-          const result = await pipelineRes.json();
-          setLayer1Results((result.gateResults || []).map((g: any) => ({
-            gate: g.gate, status: g.status === "PASS" ? "pass" : g.status === "FAIL" ? "fail" : "flag",
-            score: g.score, feedback: g.feedback,
-          })));
-        }
-      } catch (err) {
-        console.error("[WorkSession] Layer 1 checkpoints failed:", err);
-      }
-
-      setWritersRoomLoading(false);
-    } catch (err: any) {
-      console.error("[WorkSession] Draft generation failed:", err);
-      setWritersRoomLoading(false);
-      setPhase("structure");
-      setApiError(`Draft generation failed: ${err.message || "Unknown error"}. Check your connection and try again.`);
-      toast("Draft generation failed. Tap to retry.", "error");
-      generateLockRef.current = false;
-    } finally {
-      generateLockRef.current = false;
-    }
-  };
-
-  const handleEnterEditing = () => {
-    setPhase("editing");
-    setEditNotes("");
-  };
-
-  const handleSaveAndClose = async () => {
-    const content = generatedContent || draftContent;
-    if (!content || !user) return;
-    let outputId = generatedOutputId;
-    if (!outputId || outputId === "new") {
-      const title = generateTitle(messages.find(m => m.role === "user")?.content || "", content);
-      const { data, error } = await supabase.from("outputs").insert({
-        user_id: user.id, title, content, output_type: outputType,
-        score: generatedScore || 0, content_state: "vault",
-        gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
-        project_id: activeProjectId || null,
-      }).select().single();
-      if (error) { console.error("[Vault] Save failed:", error); toast("Failed to save. Try again."); return; }
-      outputId = data.id;
-      setGeneratedOutputId(data.id);
-    } else {
-      await supabase.from("outputs").update({
-        content, score: generatedScore || 0, content_state: "vault",
-        gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
-      }).eq("id", outputId);
-    }
-    clearSession();
-    navigate(`/studio/outputs/${outputId}`);
-  };
-
-  const handleMoveToWrap = async () => {
-    if (!user) return;
-    const content = draftContent || generatedContent;
-    if (!content) return;
-
-    let outputId = generatedOutputId;
-
-    if (!outputId || outputId === "new") {
-      const title = generateTitle(
-        messages.find(m => m.role === "user")?.content || "",
-        content
-      );
-      const { data, error } = await supabase.from("outputs").insert({
-        user_id: user.id,
-        title,
-        content,
-        output_type: outputType,
-        score: generatedScore || 0,
-        content_state: "vault",
-        gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
-        project_id: activeProjectId || null,
-      }).select().single();
-
-      if (error) {
-        toast("Failed to save. Try again.", "error");
-        return;
-      }
-      outputId = data.id;
-      setGeneratedOutputId(data.id);
-    } else {
-      await supabase.from("outputs").update({
-        content,
-        content_state: "vault",
-        score: generatedScore || 0,
-        gates: generatedGates ? (({ summary, ...rest }: any) => rest)(generatedGates) : null,
-      }).eq("id", outputId);
-    }
-
-    clearSession();
-    navigate(`/studio/wrap?outputId=${outputId}`);
-  };
-
-  const handleRevisionFromEdits = async () => {
-    setWritersRoomLoading(true);
-    try {
-      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationSummary: getConversationSummary(),
-          outputType: outputTypeApi,
-          voiceProfile,
-          userId: user?.id,
-          revisionNotes: editNotes,
-          originalDraft: draftContent,
-        }),
-      });
-      if (!res.ok) throw new Error("Revision failed");
-      const data = await res.json();
-      setDraftContent(data.content || "");
-      setGeneratedContent(data.content || "");
-      setGeneratedScore(data.score || 0);
-      toast("Draft revised.");
-      setPhase("stress-test");
-      handleEnterStressTest(data.content || draftContent);
-    } catch (err: any) {
-      toast("Revision failed. Try again.", "error");
-    } finally {
-      setWritersRoomLoading(false);
-    }
-  };
-
-  const handleEnterStressTest = async (draft?: string) => {
-    setPhase("stress-test");
-    setWritersRoomLoading(true);
-    try {
-      const res = await fetchWithRetry(`${API_BASE}/api/writers-room/stress-test`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft: draft || draftContent,
-          outputType: outputTypeApi,
-          voiceDnaMd, brandDnaMd,
-          userId: user?.id,
-        }),
-      }, { timeout: 90000 });
-      if (!res.ok) throw new Error("Stress test failed");
-      const data = await res.json();
-      setStressResults(data.results || []);
-      setSaraSynthesis(data.synthesis || { summary: "", actionItems: [] });
-      setAcceptedItems(new Array((data.synthesis?.actionItems || []).length).fill(false));
-    } catch (err: any) {
-      toast("Stress test encountered an error.", "error");
-    } finally {
-      setWritersRoomLoading(false);
-    }
-  };
-
-  const handleImproveCheckpoint = async (gateName: string, _feedback: string) => {
-    // Add to queue instead of blocking
-    setImprovingQueue(prev => prev.includes(gateName) ? prev : [...prev, gateName]);
-  };
-
-  const runImprovement = async (gateName: string, feedback: string) => {
-    console.log(`[handleImproveCheckpoint] Starting improvement for gate: "${gateName}"`);
-    const oldScore = layer1Results.find(r => r.gate === gateName)?.score || 0;
-    console.log(`[handleImproveCheckpoint] Old score for "${gateName}": ${oldScore}`);
-    try {
-      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationSummary: getConversationSummary(),
-          originalDraft: draftContent || generatedContent,
-          revisionNotes: `MANDATORY REVISION. The ${gateName} checkpoint scored this draft poorly.\n\nCHECKPOINT FEEDBACK:\n${feedback}\n\nINSTRUCTIONS:\n1. Read the original draft carefully.\n2. Identify every instance of the issues described above.\n3. Rewrite the affected sections to directly address each issue.\n4. The revised draft MUST be noticeably different from the original in the flagged areas.\n5. If the issue is repetition, CUT redundant sections entirely. Do not rephrase them.\n6. If the issue is missing evidence, ADD specific examples or remove unsupported claims.\n7. If the issue is structural, REORGANIZE sections so each one advances the argument.\n8. Maintain the same overall voice, argument, and approximate length.\n9. Do NOT just rephrase the same content. Actually fix the structural and content issues.\n\nOutput ONLY the complete revised draft. No commentary, no preamble.`,
-          outputType: outputTypeApi,
-          voiceProfile,
-          userId: user?.id,
-          voiceDnaMd,
-        }),
-      });
-      if (!res.ok) throw new Error("Revision failed");
-      const data = await res.json();
-      setDraftContent(data.content || "");
-      setGeneratedContent(data.content || "");
-
-      if (generatedOutputId && generatedOutputId !== "new") {
-        await supabase.from("outputs").update({
-          content: data.content,
-        }).eq("id", generatedOutputId);
-        console.log(`[handleImproveCheckpoint] Saved revised draft to Supabase for output ${generatedOutputId}`);
-      }
-
-      console.log(`[handleImproveCheckpoint] Re-running pipeline for gate: "${gateName}"`);
-      const pipelineRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft: data.content,
-          outputType: outputTypeApi,
-          voiceDnaMd, brandDnaMd, methodDnaMd,
-          userId: user?.id,
-          gateSubset: [gateName],
-        }),
-      }, { timeout: 60000 });
-      if (pipelineRes.ok) {
-        const result = await pipelineRes.json();
-        const newGate = result.gateResults?.[0];
-        console.log("[Improve] Pipeline response:", JSON.stringify(result));
-        console.log("[Improve] Looking for gate:", gateName);
-        if (newGate) {
-          const matchGate = newGate.gate || gateName;
-          setLayer1Results(prev => {
-            const updated = prev.map(r => {
-              if (r.gate === gateName || r.gate === matchGate) {
-                return {
-                  gate: gateName,
-                  status: newGate.score >= 80 ? "pass" as const : newGate.score >= 60 ? "flag" as const : "fail" as const,
-                  score: newGate.score,
-                  feedback: newGate.feedback,
-                  issues: newGate.issues || [],
-                };
-              }
-              return r;
-            });
-            console.log("[Improve] Updated results:", updated.map(r => `${r.gate}: ${r.score}`));
-            return updated;
-          });
-          toast(`${gateName}: score updated to ${newGate.score}`);
-        }
-      }
-    } catch (err) {
-      toast("Improvement failed. Try again.", "error");
-    }
-  };
-
-  // Process the improvement queue one at a time
-  useEffect(() => {
-    if (currentlyImproving || improvingQueue.length === 0) return;
-
-    const nextGate = improvingQueue[0];
-    const gateData = layer1Results.find(r => r.gate === nextGate);
-    if (!gateData) {
-      setImprovingQueue(prev => prev.slice(1));
-      return;
-    }
-
-    setCurrentlyImproving(nextGate);
-
-    runImprovement(nextGate, gateData.feedback).finally(() => {
-      setCurrentlyImproving(null);
-      setImprovingQueue(prev => prev.slice(1));
-    });
-  }, [improvingQueue, currentlyImproving]);
-
-  // Auto-improve blocking gates: when all checkpoints complete, auto-fix failures
-  useEffect(() => {
-    if (phase !== "drafting" || layer1Results.length < 7) return;
-    if (layer1Results.some(r => r.status === "running" || r.status === "pending" || (r as any).status === "timeout")) return;
-    if (autoImprovingCurrent) return; // Already auto-improving
-
-    const failing = layer1Results.filter(r => r.score > 0 && r.score < 60);
-    if (failing.length === 0) {
-      setAllCheckpointsPassed(true);
-      return;
-    }
-
-    // Start auto-improve queue
-    (async () => {
-      for (const gate of failing) {
-        setAutoImprovingCurrent(gate.gate);
-        toast(`Revising to fix: ${gate.gate}...`);
-
-        for (let attempt = 0; attempt < 2; attempt++) {
-          await handleImproveCheckpoint(gate.gate, gate.feedback);
-          await new Promise(r => setTimeout(r, 2000));
-
-          // Check if score improved (read fresh from state via ref pattern)
-          const current = layer1Results.find(r => r.gate === gate.gate);
-          if (current && current.score >= 60) break;
-
-          if (attempt === 1) {
-            setManualFixNeeded(prev => [...prev, gate.gate]);
-          }
-        }
-      }
-
-      setAutoImprovingCurrent(null);
-      const stillFailing = layer1Results.filter(r => r.score > 0 && r.score < 60);
-      setAllCheckpointsPassed(stillFailing.length === 0);
-    })();
-  }, [layer1Results, phase]);
-
-  const handleEnterPolish = async () => {
-    setPhase("polish");
-    setWritersRoomLoading(true);
-    setPipelineStatus("RUNNING");
-
-    // Apply accepted stress-test suggestions
-    const acceptedSuggestions = saraSynthesis.actionItems.filter((_, i) => acceptedItems[i]);
-    let finalDraft = draftContent;
-
-    if (acceptedSuggestions.length > 0) {
-      try {
-        const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            conversationSummary: getConversationSummary(),
-            outputType: outputTypeApi,
-            voiceProfile,
-            userId: user?.id,
-            revisionNotes: `Apply these specific changes:\n${acceptedSuggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
-            originalDraft: draftContent,
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          finalDraft = data.content || draftContent;
-          setDraftContent(finalDraft);
-          setGeneratedContent(finalDraft);
-        }
-      } catch {}
-    }
-
-    // Run Layer 2 checkpoints
-    try {
-      const pipelineRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft: finalDraft,
-          outputType: outputTypeApi,
-          voiceDnaMd, brandDnaMd, methodDnaMd,
-          userId: user?.id,
-          outputId: generatedOutputId,
-          gateSubset: ["Elena", "Jordan", "Marcus + Marshall"],
-        }),
-      }, { timeout: 120000 });
-
-      if (pipelineRes.ok) {
-        const result = await pipelineRes.json();
-        setPipelineGateResults(result.gateResults || []);
-        setPipelineStatus(result.status);
-        setBlockedAt(result.blockedAt);
-
-        const finalScore = result.betterishScore?.total ?? generatedScore;
-        setGeneratedScore(finalScore);
-        setGeneratedContent(finalDraft);
-
-        // Update output in Supabase
-        if (generatedOutputId && generatedOutputId !== "new") {
-          await supabase.from("outputs").update({
-            content: finalDraft,
-            score: finalScore,
-            content_state: result.status === "PASSED" ? "vault" : "in_progress",
-            stress_test_results: stressResults,
-            writer_room_phase: "complete",
-          }).eq("id", generatedOutputId);
-
-          await supabase.from("pipeline_runs").insert({
-            output_id: generatedOutputId,
-            user_id: user?.id,
-            status: result.status,
-            gate_results: result.gateResults,
-            betterish_score: result.betterishScore,
-            betterish_total: result.betterishScore?.total ?? null,
-            blocked_at: result.blockedAt ?? null,
-          });
-        }
-      }
-    } catch (err) {
-      console.error("[WorkSession] Layer 2 pipeline failed:", err);
-      toast("Quality polish encountered an error.", "error");
-    } finally {
-      setWritersRoomLoading(false);
-      setPipelineStatus("IDLE");
-      setPhase("complete");
-    }
-  };
-
-  // ── Original Generation Handler (modified to enter Writer's Room) ────────
-
-  const handleMakeTheThing = async () => {
-    if (generateLockRef.current) return;
-    generateLockRef.current = true;
-    setApiError(null);
-    // Enter Writer's Room flow instead of direct generation
-    generateLockRef.current = false;
-    handleEnterBluesky();
-    return;
-
-    // Legacy direct generation path (kept for reference, unreachable)
-    setPhase("drafting" as Phase);
-    setPipelineStatus("IDLE");
-    setPipelineGateResults([]);
-    setBlockedAt(undefined);
-    setPipelineResult(null);
-    setShowCheckpointSequence(false);
-    setShowTotalScore(false);
-
-    const conversationSummary = messages
-      .map(m => (m.role === "user" ? "User: " : "Watson: ") + m.content)
-      .join("\n\n");
-
-    try {
-      // ── Pass 1: Generate draft ──────────────────────
-      const { content, score, gates } = await generateOutput(conversationSummary, outputTypeApi, voiceProfile, user?.id);
-      setGeneratedContent(content);
-      setGeneratedScore(score);
-      const gatesData = (gates as GatesFromApi) ?? null;
-      setGeneratedGates(gatesData);
-
-      // Save draft to Supabase
-      const firstUserMsg = messages.find(m => m.role === "user")?.content || "";
-      const title = sessionTitle.startsWith("Revising:")
-        ? sessionTitle.replace("Revising: ", "")
-        : generateTitle(firstUserMsg, content) || `${type.label} - ${new Date().toLocaleDateString()}`;
-      let outputId: string;
-
-      if (revisionMode && revisionOutputId) {
-        // Update existing output
-        await supabase.from("outputs").update({
-          content,
-          score,
-          gates,
-          conversation_summary: conversationSummary,
-          content_state: "in_progress",
-        }).eq("id", revisionOutputId);
-        outputId = revisionOutputId;
-        toast("Revision saved. Running quality review...");
-      } else {
-        // Create new output
-        const { data: savedOutput } = await supabase
-          .from("outputs")
-          .insert({
-            user_id: user!.id,
-            title,
-            content,
-            output_type: outputType,
-            score,
-            conversation_summary: conversationSummary,
-            gates,
-            content_state: "in_progress",
-            project_id: activeProjectId || null,
-          })
-          .select()
-          .single();
-        outputId = savedOutput?.id ?? "new";
-        toast("Draft generated. Running quality review...");
-      }
-
-      setGeneratedOutputId(outputId);
-
-      // ── Pass 2: Run real pipeline via API ───────────────
-      if (outputId !== "new" && user) {
-        setPipelineStatus("RUNNING");
-        setShowCheckpointSequence(true);
-        setVisibleCheckpointCount(0);
-        setRevealedCheckpointCount(0);
-
-        try {
-          const pipelineRes = await requestWithRetry(
-            `${API_BASE}/api/run-pipeline`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                draft: content,
-                outputType: outputTypeApi,
-                voiceDnaMd,
-                brandDnaMd,
-                methodDnaMd,
-                userId: user.id,
-                outputId,
-              }),
-            },
-            180000 // pipeline takes longer. Generous to avoid racing Vercel's 120s limit
+    (window as any).__ewWorkStage = stage;
+    (window as any).__ewSetWorkStage = goToStage;
+    return () => {
+      delete (window as any).__ewWorkStage;
+      delete (window as any).__ewSetWorkStage;
+    };
+  }, [stage, goToStage]);
+
+  // ── Inject dashboard panel ────────────────────────────────────
+  useLayoutEffect(() => {
+    setDashOpen(true);
+
+    const currentImps = (reviewImprovements[activeReviewTab] || []);
+
+    const dashNode = (() => {
+      switch (stage) {
+        case "Intake":
+          return (
+            <IntakeDash
+              selectedFormats={selectedFormats}
+              onToggleFormat={toggleFormat}
+              selectedTemplate={selectedTemplate}
+              onSelectTemplate={setSelectedTemplate}
+            />
           );
-
-          if (!pipelineRes.ok) throw new Error("Pipeline API failed");
-          const result = await pipelineRes.json();
-
-          // Populate gate results for the SpecialistPanel
-          const gateResultsArr = (result.gateResults || []).map((g: any) => ({
-            gate: g.gate,
-            status: g.status,
-            score: g.score,
-            feedback: g.feedback,
-            issues: g.issues,
-          }));
-          setPipelineGateResults(gateResultsArr);
-          setPipelineStatus(result.status);
-          setBlockedAt(result.blockedAt);
-
-          // Save pipeline run to Supabase
-          await supabase.from("pipeline_runs").insert({
-            output_id: outputId,
-            user_id: user.id,
-            status: result.status,
-            gate_results: result.gateResults,
-            betterish_score: result.betterishScore,
-            betterish_total: result.betterishScore?.total ?? null,
-            blocked_at: result.blockedAt ?? null,
-            duration_ms: result.totalDurationMs,
-          });
-
-          // Update output with pipeline results
-          const finalScore = result.betterishScore?.total ?? score;
-          const finalContent = result.finalDraft || content;
-          setGeneratedContent(finalContent);
-          setGeneratedScore(finalScore);
-
-        await supabase.from("outputs").update({
-          content: finalContent,
-          score: finalScore,
-          content_state: result.status === "PASSED" ? "vault" : "in_progress",
-        }).eq("id", outputId);
-
-        if (result.status === "PASSED") {
-          toast("Quality pipeline passed. Output moved to The Vault.");
-          // Insert notification for published output
-          if (user) {
-            supabase.from("notifications").insert({
-              user_id: user.id,
-              type: "output_published",
-              title: `Your ${type.label} scored ${finalScore}`,
-              body: "Ready to publish. View it in The Vault.",
-              read: false,
-              link: `/studio/outputs/${outputId}`,
-            });
-          }
-        } else if (result.status === "BLOCKED") {
-          toast("Quality pipeline flagged issues. Review checkpoint feedback.");
-        }
-        } catch (pipelineErr) {
-          console.error("[WorkSession] Pipeline failed:", pipelineErr);
-          toast("Quality pipeline unavailable. Showing unscored draft.");
-          setPipelineStatus("IDLE");
-        }
+        case "Outline":
+          return <OutlineDash selectedFormats={selectedFormats} />;
+        case "Edit":
+          return (
+            <EditDash
+              mustCount={mustCount}
+              styleCount={styleCount}
+              wordCount={wordCount}
+              selectedFormats={selectedFormats}
+            />
+          );
+        case "Review":
+          return (
+            <ReviewDash
+              activeTab={activeReviewTab}
+              reviewedTabs={reviewedState}
+              improvements={currentImps}
+              onFix={i => handleReviewFix(activeReviewTab, i)}
+              onSkip={i => handleReviewSkip(activeReviewTab, i)}
+              onExportAll={handleExportAll}
+              exported={exportedAll}
+            />
+          );
+        case "Export":
+          return (
+            <div style={{ fontSize: 11, color: "var(--fg-3)" }}>
+              <div style={{ fontWeight: 700, fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Session Files</div>
+              {selectedFormats.map(f => (
+                <div key={f} style={{
+                  display: "flex", alignItems: "center", gap: 7,
+                  padding: "5px 8px", background: "var(--surface)",
+                  border: "1px solid var(--line)", borderRadius: 5, marginBottom: 4,
+                }}>
+                  <FileIcon />
+                  <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1 }}>{f}_Draft.md</span>
+                  <span style={{ fontSize: 9, color: "var(--blue)", fontWeight: 600, cursor: "pointer" }}>Copy</span>
+                </div>
+              ))}
+            </div>
+          );
+        default:
+          return null;
       }
+    })();
 
-      setPhase("complete");
-    } catch (err) {
-      setApiError(err instanceof Error ? err.message : "Generation failed.");
-      setPhase("input");
-    } finally {
-      generateLockRef.current = false;
-    }
-  };
+    setDashContent(dashNode);
+    return () => setDashContent(null);
+  }, [
+    stage, selectedFormats, selectedTemplate, mustCount, styleCount,
+    activeReviewTab, reviewImprovements, exportedAll, reviewedState,
+  ]);
 
-  const handleRunPipeline = async () => {
-    if (!user || !generatedOutputId || generatedOutputId === "new" || !generatedContent) return;
-    setPipelineStatus("RUNNING");
-    setPipelineGateResults([]);
-    setBlockedAt(undefined);
-    setPipelineResult(null);
-
-    try {
-      const pipelineRes = await requestWithRetry(
-        `${API_BASE}/api/run-pipeline`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            draft: generatedContent,
-            outputType: outputTypeApi,
-            voiceDnaMd,
-            brandDnaMd,
-            methodDnaMd,
-            userId: user.id,
-            outputId: generatedOutputId,
-          }),
-        },
-        120000 // pipeline takes longer
-      );
-
-      if (!pipelineRes.ok) throw new Error("Pipeline API failed");
-      const result = await pipelineRes.json();
-
-      setPipelineGateResults((result.gateResults || []).map((g: any) => ({
-        gate: g.gate, status: g.status, score: g.score, feedback: g.feedback, issues: g.issues,
-      })));
-      setPipelineStatus(result.status);
-      setBlockedAt(result.blockedAt);
-
-      const finalScore = result.betterishScore?.total ?? generatedScore;
-      const finalContent = result.finalDraft || generatedContent;
-      setGeneratedContent(finalContent);
-      setGeneratedScore(finalScore);
-
-      await supabase.from("pipeline_runs").insert({
-        output_id: generatedOutputId,
-        user_id: user.id,
-        status: result.status,
-        gate_results: result.gateResults,
-        betterish_score: result.betterishScore,
-        betterish_total: result.betterishScore?.total ?? null,
-        blocked_at: result.blockedAt ?? null,
-        duration_ms: result.totalDurationMs,
-      });
-
-      await supabase.from("outputs").update({
-        content: finalContent,
-        score: finalScore,
-        content_state: result.status === "PASSED" ? "vault" : "in_progress",
-      }).eq("id", generatedOutputId);
-
-      if (result.status === "PASSED") {
-        toast("Quality pipeline passed. Output moved to The Vault.");
-      } else {
-        toast("Quality pipeline complete. Review specialist feedback.");
-      }
-    } catch (err) {
-      console.error("[WorkSession] Re-run pipeline failed:", err);
-      toast("Pipeline failed. Try again.");
-      setPipelineStatus("IDLE");
-    }
-  };
-
-  const startOver = async () => {
-    if (!window.confirm("Start a new session? Your current draft is saved in The Vault. This clears the conversation.")) return;
-    // Auto-save current content to Supabase before clearing
-    if (user && (generatedContent || draftContent)) {
-      try {
-        const title = sessionTitle || generateTitle(messages.find(m => m.role === "user")?.content || "", generatedContent || draftContent);
-        await supabase.from("outputs").insert({
-          user_id: user.id,
-          title,
-          content: generatedContent || draftContent,
-          output_type: outputType,
-          score: generatedScore || 0,
-          gates: generatedGates,
-        });
-      } catch (err) {
-        console.error("[WorkSession] Auto-save before new session failed:", err);
-      }
-    }
-    setPhase("input");
-    setGeneratedContent("");
-    setGeneratedScore(0);
-    setGeneratedGates(null);
-    setShowCheckpointSequence(false);
-    setShowTotalScore(false);
-    setApiError(null);
-    setIsReady(false);
-    setMessages([{
-      id: "w0",
-      role: "assistant",
-      content: type.watson,
-      ts: Date.now(),
-    }]);
-    setInput("");
-    setSessionTitle("New Session");
-    clearSession();
-  };
+  // ─────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", height: "100vh",
-      background: "var(--bg-light)",
-      overflow: "hidden", fontFamily: "'Afacad Flux', sans-serif",
+      display: "flex", flexDirection: "column", flex: 1,
+      height: "100%", overflow: "hidden", fontFamily: "var(--font)",
     }}>
-      <style>{`
-        @keyframes typingBounce {
-          0%, 80%, 100% { transform: translateY(0); opacity: .4; }
-          40%            { transform: translateY(-4px); opacity: 1; }
-        }
-        @keyframes ddDown {
-          from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
-          to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        @keyframes ddUp {
-          from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-          to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        @keyframes orbAtmos {
-          0%, 100% { opacity: 0.7; transform: scale(1); }
-          50%       { opacity: 1.0; transform: scale(1.08); }
-        }
-        @keyframes orbPulse {
-          0%, 100% { transform: scale(1); opacity: 0.9; }
-          50%      { transform: scale(1.05); opacity: 1; }
-        }
-        @keyframes orbMiniPulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 6px rgba(74,144,217,0.2); }
-          50%      { transform: scale(1.06); box-shadow: 0 0 14px rgba(74,144,217,0.5); }
-        }
-        @keyframes watsonDot {
-          0%, 80%, 100% { transform: translateY(0); opacity: .4; }
-          40%          { transform: translateY(-3px); opacity: 1; }
-        }
-        @keyframes watsonPulse {
-          0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
-          50% { transform: scale(1.3) translateY(-4px); opacity: 1; }
-        }
-        @keyframes makeThingPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(200,150,26,0); }
-          50%      { box-shadow: 0 0 0 6px rgba(200,150,26,0.2); }
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .watson-input::placeholder {
-          color: rgba(0,0,0,0.3);
-        }
-      `}</style>
-
-      {/* Top bar removed (FIX 2) */}
-      {/* ── Empty state: perfectly centered ─────────────────────────────── */}
-      {phase === "input" && messages.length <= 1 ? (
-        <EmptyState
-          outputType={outputType}
-          onSuggestion={(s) => sendMessage(s)}
-          isMobile={isMobile}
-          displayName={displayName}
-        >
-          <SessionInputBox
-            input={input}
-            setInput={setInput}
-            sendMessage={sendMessage}
-            loading={loading}
-            inputRef={inputRef}
-            isSupported={isSupported}
-            toggleListening={toggleListening}
-            isListening={isListening}
-            apiError={apiError ?? ""}
-            setApiError={setApiError}
-            attachedFiles={attachedFiles}
-            setAttachedFiles={setAttachedFiles}
-            handleFileUpload={handleFileUpload}
-            getFileIcon={getFileIcon}
-            formatFileSize={formatFileSize}
-          />
-        </EmptyState>
-      ) : (
-        <>
-      {/* Session progress: Watson · Room · Draft · Edit · Review · Done */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-        padding: "16px 24px",
-        flexShrink: 0,
-      }}>
-        {[
-          { key: "watson", label: "Watson", done: phase !== "input", active: phase === "input" },
-          { key: "room", label: "Outline", done: ["drafting","editing","stress-test","polish","complete"].includes(phase), active: phase === "bluesky" || phase === "structure" },
-          { key: "draft", label: "Draft", done: ["editing","stress-test","polish","complete"].includes(phase), active: phase === "drafting" },
-          { key: "edit", label: "Edit", done: ["stress-test","polish","complete"].includes(phase), active: phase === "editing" },
-          { key: "review", label: "Review", done: phase === "complete", active: phase === "stress-test" || phase === "polish" },
-          { key: "done", label: "Results", done: phase === "complete", active: phase === "complete" },
-        ].map((step, i) => (
-          <span key={step.key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{
-              fontSize: 13,
-              fontWeight: step.active ? 600 : 400,
-              color: step.active ? "var(--fg)" : step.done ? "var(--gold)" : "var(--fg-3)",
-              transition: "color 0.15s ease",
-            }}>
-              {step.label}
-            </span>
-            {i < 5 && <span style={{ color: "var(--fg-3)", fontSize: 10, opacity: 0.5 }}>·</span>}
-          </span>
-        ))}
-      </div>
-
-      {/* ── Messages area ────────────────────────────────────────────── */}
-      <div style={{
-        flex: 1, overflowY: "auto", padding: "0 0 8px",
-        display: "flex", flexDirection: "column", minHeight: 0,
-      }}>
-        {/* ── BLUESKY PHASE: Angle selection ──────────────────── */}
-        {phase === "bluesky" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
-            {writersRoomLoading && angles.length === 0 ? (
-              <RoomLoadingAnimation isLoading={true} />
-            ) : (
-              <div style={{ maxWidth: 760, width: "100%" }}>
-                <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px", letterSpacing: "-0.02em" }}>Choose your angle</h2>
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 24px" }}>The Room generated {angles.length} approaches. Select one or combine ideas.</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-                  {angles.map((angle) => {
-                    const isSelected = selectedAngles.includes(angle.id);
-                    return (
-                      <button
-                        key={angle.id}
-                        type="button"
-                        onClick={() => setSelectedAngles(prev => prev.includes(angle.id) ? prev.filter(id => id !== angle.id) : [...prev, angle.id])}
-                        style={{
-                          textAlign: "left", padding: 20, borderRadius: 12,
-                          border: isSelected ? "2px solid var(--gold)" : "1px solid var(--border-subtle)",
-                          background: isSelected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
-                          cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease",
-                        }}
-                      >
-                        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>{angle.title}</div>
-                        <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8, lineHeight: 1.5 }}>{angle.description}</div>
-                        <div style={{ fontSize: 13, color: "var(--gold)", fontStyle: "italic" }}>Hook: "{angle.hook}"</div>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div style={{ marginBottom: 20 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-tertiary)", letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6 }}>Notes for the Room</label>
-                  <textarea
-                    value={blueSkyNotes}
-                    onChange={(e) => setBlueSkyNotes(e.target.value)}
-                    placeholder="e.g., I like angle 2 but with the hook from angle 1..."
-                    style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-subtle)", background: "var(--bg-2)", color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, resize: "vertical", minHeight: 60, outline: "none" }}
-                  />
-                </div>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <button
-                    onClick={handleEnterStructure}
-                    disabled={selectedAngles.length === 0 && !blueSkyNotes.trim()}
-                    style={{
-                      padding: "12px 24px", borderRadius: 8, border: "none",
-                      background: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "var(--gold)" : "var(--bg-3)",
-                      color: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "white" : "var(--text-tertiary)",
-                      fontSize: 14, fontWeight: 700, cursor: (selectedAngles.length > 0 || blueSkyNotes.trim()) ? "pointer" : "default",
-                      fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s",
-                    }}
-                  >
-                    Build the outline
-                  </button>
-                  <button
-                    onClick={() => { setPhase("structure"); handleEnterStructure(); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--text-tertiary)", fontFamily: "'Afacad Flux', sans-serif", textDecoration: "underline" }}
-                  >
-                    Skip to draft
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── STRUCTURE PHASE: Beat sheet ─────────────────────── */}
-        {phase === "structure" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
-            {writersRoomLoading && outline.length === 0 ? (
-              <OutlineLoadingAnimation />
-            ) : (
-              <div style={{ maxWidth: 760, width: "100%" }}>
-                <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 8px" }}>Beat Sheet</h2>
-                <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 16px" }}>Edit the outline before we write the draft.</p>
-                {thesis && (
-                  <div style={{ marginBottom: 20, padding: 16, background: "rgba(200,150,26,0.06)", borderLeft: "3px solid var(--gold)", borderRadius: 6 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>Thesis</label>
-                    <input
-                      value={thesis}
-                      onChange={(e) => setThesis(e.target.value)}
-                      style={{ width: "100%", background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none" }}
-                    />
-                  </div>
-                )}
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
-                  {outline.map((section, idx) => (
-                    <div key={section.id} data-section-index={idx} style={{ padding: 16, border: "1px solid var(--line)", borderRadius: 10, background: "var(--surface)" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--gold)", width: 20, marginTop: 4 }}>{idx + 1}</span>
-                        <textarea
-                          value={section.section}
-                          onChange={(e) => { setOutline(prev => prev.map((s, i) => i === idx ? { ...s, section: e.target.value } : s)); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
-                          rows={1}
-                          style={{ flex: 1, background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "var(--text-primary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none", resize: "none", overflow: "hidden", lineHeight: 1.4 }}
-                          ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-                        />
-                        <button
-                          onClick={() => setOutline(prev => prev.filter((_, i) => i !== idx))}
-                          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, padding: 4 }}
-                        >x</button>
-                      </div>
-                      <div style={{ paddingLeft: 28 }}>
-                        {section.beats.map((beat, bi) => (
-                          <div key={bi} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 4 }}>
-                            <span style={{ color: "var(--text-tertiary)", fontSize: 12, marginTop: 4 }}>-</span>
-                            <textarea
-                              value={beat}
-                              onChange={(e) => { setOutline(prev => prev.map((s, i) => i === idx ? { ...s, beats: s.beats.map((b, j) => j === bi ? e.target.value : b) } : s)); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
-                              rows={1}
-                              style={{ flex: 1, background: "transparent", border: "none", fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif", outline: "none", resize: "none", overflow: "hidden", lineHeight: 1.4 }}
-                              ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-                            />
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => {
-                            setOutline(prev => prev.map((s, i) => i === idx ? { ...s, beats: [...s.beats, ""] } : s));
-                            requestAnimationFrame(() => requestAnimationFrame(() => {
-                              const el = document.querySelector(`[data-section-index="${idx}"]`);
-                              if (el) { const tas = el.querySelectorAll("textarea"); const last = tas[tas.length - 1] as HTMLTextAreaElement; if (last) last.focus(); }
-                            }));
-                          }}
-                          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--cornflower)", fontFamily: "'Afacad Flux', sans-serif", padding: "4px 0" }}
-                        >+ Add beat</button>
-                      </div>
-                      {section.purpose && (
-                        <div style={{ paddingLeft: 28, marginTop: 6, fontSize: 12, color: "var(--text-tertiary)", fontStyle: "italic" }}>{section.purpose}</div>
-                      )}
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => setOutline(prev => [...prev, { id: `section-${Date.now()}`, section: "New Section", beats: [""], purpose: "" }])}
-                    style={{ padding: 12, border: "1px dashed var(--border-subtle)", borderRadius: 10, background: "transparent", cursor: "pointer", fontSize: 13, color: "var(--text-tertiary)", fontFamily: "'Afacad Flux', sans-serif" }}
-                  >+ Add section</button>
-                </div>
-                <button
-                  onClick={handleEnterDrafting}
-                  style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                >
-                  Write the draft
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── DRAFTING PHASE: Draft + Layer 1 checkpoints ──────── */}
-        {phase === "drafting" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading && !draftContent ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
-            {writersRoomLoading && !draftContent ? (
-              <DraftLoadingAnimation />
-            ) : (
-              <div style={{ display: "flex", gap: 24, maxWidth: 1100, width: "100%", margin: "0 auto", flexDirection: isMobile ? "column" : "row" }}>
-                {/* Draft content (left column) */}
-                <div style={{ flex: isMobile ? "1" : "0 0 63%", minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.7, color: "var(--fg)", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: isMobile ? "20px 16px" : "28px 32px" }}>
-                    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
-                  </div>
-
-                  {/* Continue Writing input */}
-                  <div style={{ marginTop: 16, padding: "16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10 }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Tell Watson what to change</label>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <textarea
-                        value={continueWritingInput}
-                        onChange={(e) => setContinueWritingInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && continueWritingInput.trim() && !continueWritingLoading) {
-                            e.preventDefault();
-                            (async () => {
-                              setContinueWritingLoading(true);
-                              try {
-                                const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({
-                                    originalDraft: draftContent || generatedContent,
-                                    revisionNotes: continueWritingInput,
-                                    outputType: outputTypeApi,
-                                    voiceProfile,
-                                    userId: user?.id,
-                                    voiceDnaMd,
-                                  }),
-                                });
-                                if (!res.ok) throw new Error("Revision failed");
-                                const data = await res.json();
-                                if (data.content) {
-                                  setDraftContent(data.content);
-                                  setGeneratedContent(data.content);
-                                  setContinueWritingInput("");
-                                  toast("Draft updated.");
-                                }
-                              } catch (err) {
-                                toast("Revision failed. Try again.", "error");
-                              } finally {
-                                setContinueWritingLoading(false);
-                              }
-                            })();
-                          }
-                        }}
-                        placeholder="e.g., Expand section 3, add an example about..."
-                        style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--fg)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, resize: "vertical", minHeight: 40, outline: "none" }}
-                      />
-                      <button
-                        onClick={async () => {
-                          if (!continueWritingInput.trim() || continueWritingLoading) return;
-                          setContinueWritingLoading(true);
-                          try {
-                            const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                originalDraft: draftContent || generatedContent,
-                                revisionNotes: continueWritingInput,
-                                outputType: outputTypeApi,
-                                voiceProfile,
-                                userId: user?.id,
-                                voiceDnaMd,
-                              }),
-                            });
-                            if (!res.ok) throw new Error("Revision failed");
-                            const data = await res.json();
-                            if (data.content) {
-                              setDraftContent(data.content);
-                              setGeneratedContent(data.content);
-                              setContinueWritingInput("");
-                              toast("Draft updated.");
-                            }
-                          } catch (err) {
-                            toast("Revision failed. Try again.", "error");
-                          } finally {
-                            setContinueWritingLoading(false);
-                          }
-                        }}
-                        disabled={!continueWritingInput.trim() || continueWritingLoading}
-                        style={{
-                          padding: "8px 16px", borderRadius: 8, border: "none",
-                          background: continueWritingLoading ? "var(--fg-3)" : "var(--gold)",
-                          color: "white", fontSize: 12, fontWeight: 600, cursor: continueWritingLoading ? "default" : "pointer",
-                          fontFamily: "'Afacad Flux', sans-serif", flexShrink: 0, alignSelf: "flex-end",
-                        }}
-                      >
-                        {continueWritingLoading ? "Revising..." : "Send"}
-                      </button>
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4 }}>Cmd+Enter to send</div>
-                  </div>
-                  <div style={{ marginTop: 16 }}>
-                    {autoImprovingCurrent && (
-                      <div style={{
-                        padding: "12px 16px",
-                        background: "rgba(200, 150, 26, 0.06)",
-                        borderRadius: 8,
-                        marginBottom: 12,
-                        fontSize: 13,
-                        color: "var(--fg-2)",
-                      }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Revising to pass checkpoints...</div>
-                        <div>Currently fixing: {autoImprovingCurrent}</div>
-                      </div>
-                    )}
-                    {manualFixNeeded.length > 0 && !autoImprovingCurrent && (
-                      <div style={{
-                        padding: "12px 16px",
-                        background: "rgba(229, 57, 53, 0.06)",
-                        borderRadius: 8,
-                        marginBottom: 12,
-                        fontSize: 13,
-                      }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4, color: "#E53935" }}>
-                          {manualFixNeeded.length} checkpoint{manualFixNeeded.length > 1 ? "s" : ""} need attention
-                        </div>
-                        <div style={{ color: "var(--fg-2)" }}>
-                          {manualFixNeeded.join(", ")} could not be auto-fixed.
-                        </div>
-                      </div>
-                    )}
-                    {!autoImprovingCurrent && (
-                      <div style={{ textAlign: "center", marginTop: 16 }}>
-                        {allCheckpointsPassed || (!manualFixNeeded.length && layer1Results.every(r => r.score === 0 || r.score >= 60)) ? (
-                          <>
-                            <button onClick={handleEnterEditing} style={{ padding: "12px 24px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}>
-                              Continue to editing
-                            </button>
-                            <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 8 }}>
-                              {allCheckpointsPassed ? "All checkpoints passed. Ready to continue." : "Read through your draft, make changes, and run the stress test."}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => {
-                                console.log("[Gates] User overrode blocking gates:", manualFixNeeded);
-                                handleEnterEditing();
-                              }}
-                              style={{
-                                padding: "12px 24px",
-                                borderRadius: 8,
-                                border: "1px solid var(--line)",
-                                background: "transparent",
-                                fontSize: 14,
-                                fontWeight: 500,
-                                color: "var(--fg-3)",
-                                cursor: "pointer",
-                                fontFamily: "'Afacad Flux', sans-serif",
-                              }}
-                            >
-                              Continue anyway
-                            </button>
-                            <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 8 }}>
-                              Some checkpoints are below threshold. You can continue or edit to fix them.
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 8 }}>
-                      You'll be able to read through, make changes, and run the stress test.
-                    </div>
-                  </div>
-                </div>
-                {/* Checkpoints sidebar (right column) */}
-                <div style={{ flex: isMobile ? "1" : "0 0 35%", position: isMobile ? "static" as const : "sticky" as const, top: 80, alignSelf: "flex-start", maxHeight: isMobile ? "none" : "calc(100vh - 120px)", overflowY: isMobile ? "visible" as const : "auto" as const }}>
-                {/* Pipeline running indicator */}
-                {layer1Results.some(r => r.status === "running") && (
-                  <div style={{
-                    padding: "12px 16px",
-                    background: "var(--surface)",
-                    border: "1px solid var(--line)",
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: "var(--fg-3)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    marginBottom: 12,
-                  }}>
-                    <div style={{
-                      width: 8, height: 8, borderRadius: "50%",
-                      background: "var(--gold)",
-                      animation: "orbPulse 1.5s ease-in-out infinite",
-                    }} />
-                    Quality review running in the background...
-                    <button
-                      onClick={() => setShowPipelineDetail(prev => !prev)}
-                      style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif" }}
-                    >
-                      {showPipelineDetail ? "Hide" : "Show thinking"}
-                    </button>
-                  </div>
-                )}
-
-                {/* Layer 1 checkpoint results (hidden by default) */}
-                {showPipelineDetail && <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--text-tertiary)", marginBottom: 2 }}>Quality Checkpoints</div>
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 8 }}>
-                      Each checkpoint scores your draft 0-100.
-                    </div>
-                    <div style={{ display: "flex", gap: 16, fontSize: 13, flexWrap: "wrap" }}>
-                      <span><span style={{ color: "#50c8a0", fontWeight: 600 }}>80%+</span> Strong</span>
-                      <span><span style={{ color: "#C8961A", fontWeight: 600 }}>60-79%</span> Needs work</span>
-                      <span><span style={{ color: "#E53935", fontWeight: 600 }}>Below 60%</span> Needs attention</span>
-                    </div>
-                  </div>
-                  {layer1Results.map((r, idx) => {
-                    const descriptions: Record<string, { title: string; runningMsg: string }> = {
-                      Echo: { title: "Deduplication", runningMsg: "Scanning for repeated concepts..." },
-                      Priya: { title: "Research Accuracy", runningMsg: "Verifying factual claims..." },
-                      Jordan: { title: "Voice Authenticity", runningMsg: "Matching voice DNA..." },
-                      David: { title: "Engagement", runningMsg: "Testing the hook..." },
-                      Elena: { title: "SLOP Detection", runningMsg: "Scanning for AI fingerprints..." },
-                      Natasha: { title: "Editorial Excellence", runningMsg: "Checking editorial quality..." },
-                      "Marcus + Marshall": { title: "Perspective + Impact", runningMsg: "Reviewing perspective..." },
-                      Betterish: { title: "Final Gut Check", runningMsg: "Running final assessment..." },
-                    };
-                    const info = descriptions[r.gate] || { title: "", runningMsg: "Processing..." };
-                    const isExpanded = expandedCards.has(r.gate);
-                    const feedbackText = r.feedback || "";
-                    const shouldTruncate = feedbackText.length > 120 && !isExpanded;
-                    const displayFeedback = shouldTruncate ? feedbackText.slice(0, 120) + "..." : feedbackText;
-                    const isImproving = currentlyImproving === r.gate;
-                    const isQueued = improvingQueue.includes(r.gate) && currentlyImproving !== r.gate;
-
-                    return (
-                      <div
-                        key={r.gate}
-                        onClick={() => feedbackText.length > 120 ? setExpandedCards(prev => { const n = new Set(prev); n.has(r.gate) ? n.delete(r.gate) : n.add(r.gate); return n; }) : undefined}
-                        style={{
-                          padding: "10px 12px", borderRadius: 8, border: "1px solid var(--line)",
-                          transition: "all 0.15s ease",
-                          cursor: feedbackText.length > 120 ? "pointer" : "default",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                          {/* Status indicator */}
-                          <span style={{
-                            width: 10, height: 10, borderRadius: "50%", marginTop: 4, flexShrink: 0,
-                            background: r.status === "pass" ? "#50c8a0" : r.status === "fail" ? "#E53935" : r.status === "running" ? "var(--gold)" : "transparent",
-                            border: (r.status !== "pass" && r.status !== "fail" && r.status !== "running") ? "1.5px solid var(--fg-3)" : "none",
-                            animation: r.status === "running" ? "checkpointPulse 1.5s ease-in-out infinite" : "none",
-                          }} />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                              <div>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{info.title}</span>
-                              </div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                                {r.score > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: r.score >= 80 ? "#50c8a0" : r.score >= 60 ? "var(--gold)" : "#E53935" }}>{Math.round(r.score)}%</span>}
-                                {r.status === "pass" && r.score === 0 && <span style={{ fontSize: 12, fontWeight: 600, color: "#50c8a0" }}>Pass</span>}
-                              </div>
-                            </div>
-                            {/* Running state */}
-                            {r.status === "running" && (
-                              <div style={{ fontSize: 13, fontStyle: "italic", color: "var(--fg-3)", marginTop: 4, animation: "fadeInOut 2s ease-in-out infinite" }}>
-                                {info.runningMsg}
-                              </div>
-                            )}
-                            {/* Pending state */}
-                            {r.status !== "running" && r.status !== "pass" && r.status !== "fail" && r.status !== "flag" && (
-                              <div style={{ fontSize: 13, fontStyle: "italic", color: "var(--fg-3)", marginTop: 4 }}>Waiting in queue...</div>
-                            )}
-                            {/* Feedback (completed) */}
-                            {feedbackText && r.status !== "running" && (
-                              <div style={{ fontSize: 12, color: "var(--fg-2)", marginTop: 4, lineHeight: 1.5 }}>
-                                {displayFeedback}
-                                {feedbackText.length > 120 && (
-                                  <span style={{ display: "inline-block", marginLeft: 4, fontSize: 10, color: "var(--fg-3)", transition: "transform 0.15s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>&#9660;</span>
-                                )}
-                              </div>
-                            )}
-                            {/* Improve button */}
-                            {r.score > 0 && r.score < 80 && r.status !== "running" && feedbackText && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleImproveCheckpoint(r.gate, feedbackText); }}
-                                disabled={isImproving || isQueued}
-                                style={{
-                                  marginTop: 8, padding: "4px 12px", borderRadius: 6,
-                                  border: "1px solid var(--line)", background: "transparent",
-                                  fontSize: 12, fontWeight: 500,
-                                  color: (isImproving || isQueued) ? "var(--fg-3)" : "var(--fg-2)",
-                                  cursor: (isImproving || isQueued) ? "default" : "pointer",
-                                  fontFamily: "'Afacad Flux', sans-serif",
-                                  transition: "all 0.15s ease",
-                                }}
-                                onMouseEnter={e => { if (!isImproving && !isQueued) { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; } }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = (isImproving || isQueued) ? "var(--fg-3)" : "var(--fg-2)"; }}
-                              >
-                                {isImproving ? "Improving..." : isQueued ? "Queued..." : "Improve"}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                }{/* end showPipelineDetail */}
-                </div>{/* end sidebar */}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── EDITING PHASE: User edit pass ────────────────────── */}
-        {phase === "editing" && (() => {
-          const paragraphs = (draftContent || generatedContent).split(/\n\n+/).filter(p => p.trim());
-          const saveParagraph = () => {
-            if (editingParaIndex === null) return;
-            const updated = paragraphs.map((p, i) => i === editingParaIndex ? editingParaText : p).join("\n\n");
-            setDraftContent(updated);
-            setEditingParaIndex(null);
-            setEditingParaText("");
-          };
-          return (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
-            <div style={{ maxWidth: 760, width: "100%" }}>
-              <h2 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 18, fontWeight: 600, color: "var(--fg)", margin: "0 0 6px" }}>Edit your draft</h2>
-              <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "0 0 20px" }}>Click any paragraph to edit. Add general notes below.</p>
-              {/* Paragraph-by-paragraph rendered view */}
-              <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: isMobile ? "20px 16px" : "28px 32px", marginBottom: 20 }}>
-                {paragraphs.map((para, i) => (
-                  editingParaIndex === i ? (
-                    <div key={i} style={{ marginBottom: 12 }}>
-                      <textarea
-                        autoFocus
-                        value={editingParaText}
-                        onChange={(e) => setEditingParaText(e.target.value)}
-                        style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--gold)", background: "var(--surface)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, lineHeight: 1.6, color: "var(--fg)", resize: "vertical", minHeight: 80, outline: "none", boxShadow: "0 0 0 3px rgba(200,150,26,0.08)" }}
-                      />
-                      <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                        <button onClick={saveParagraph} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: "var(--gold)", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}>Save</button>
-                        <button onClick={() => setEditingParaIndex(null)} style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid var(--line)", background: "transparent", fontSize: 12, color: "var(--fg-3)", cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      key={i}
-                      onClick={() => { setEditingParaIndex(i); setEditingParaText(para); }}
-                      style={{ padding: "6px 8px", marginBottom: 8, borderRadius: 6, cursor: "pointer", transition: "background 0.15s ease", lineHeight: 1.6, fontSize: 15, color: "var(--fg)" }}
-                      onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-2)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-                      dangerouslySetInnerHTML={{ __html: renderMarkdown(para) }}
-                    />
-                  )
-                ))}
-              </div>
-              {/* General revision notes */}
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6 }}>Notes for revision</label>
-                <textarea
-                  value={editNotes}
-                  onChange={(e) => setEditNotes(e.target.value)}
-                  onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); editNotes.trim() ? handleRevisionFromEdits() : handleEnterStressTest(); } }}
-                  placeholder="General feedback, things to strengthen, areas to cut..."
-                  style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, resize: "vertical", minHeight: 60, outline: "none" }}
-                />
-                <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4 }}>Cmd+Enter to apply</div>
-              </div>
-              <button
-                onClick={editNotes.trim() ? handleRevisionFromEdits : () => handleEnterStressTest()}
-                style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
-                onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
-              >
-                {editNotes.trim() ? "Revise and stress test" : "Send to stress test"}
-              </button>
-            </div>
-          </div>
-          );
-        })()}
-
-        {/* ── STRESS TEST PHASE: SBU feedback ─────────────────── */}
-        {phase === "stress-test" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: writersRoomLoading ? "center" : "flex-start", padding: isMobile ? "24px 16px" : "32px 24px", overflowY: "auto" }}>
-            {writersRoomLoading ? (
-              (() => {
-                const stressAgents = [
-                  { name: "Josh", role: "Category Analysis", msg: "Evaluating your category position..." },
-                  { name: "Guy", role: "Business Development", msg: "Checking conversion architecture..." },
-                  { name: "Ward", role: "Sales Qualification", msg: "Testing audience qualification..." },
-                  { name: "Scott", role: "Market Reality Check", msg: "Assessing market demand..." },
-                  { name: "Dana", role: "Red Team", msg: "Building the case against your piece..." },
-                  { name: "Betterish", role: "Final Gut Check", msg: "Would you click on this?..." },
-                ];
-                const completed = stressResults.map(r => r.agent);
-                const current = stressAgents.find(a => !completed.includes(a.name));
-                return (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: 48 }}>
-                    <div style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 8 }}>
-                      {stressAgents.map(agent => {
-                        const isDone = completed.includes(agent.name);
-                        const isRunning = current?.name === agent.name;
-                        return (
-                          <div key={agent.name} style={{
-                            display: "flex", alignItems: "center", gap: 12,
-                            padding: "12px 16px", background: isRunning ? "rgba(200,150,26,0.04)" : "var(--surface)",
-                            border: "1px solid var(--line)", borderRadius: 8,
-                            opacity: isDone || isRunning ? 1 : 0.4, transition: "all 0.3s ease",
-                          }}>
-                            <div style={{
-                              width: 24, height: 24, borderRadius: "50%",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              background: isDone ? "#50c8a0" : isRunning ? "transparent" : "var(--bg-3)",
-                              border: isRunning ? "2px solid var(--gold)" : "none",
-                              animation: isRunning ? "checkpointSpin 1.2s linear infinite" : "none",
-                              flexShrink: 0,
-                            }}>
-                              {isDone && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{agent.role}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {current && <p style={{ fontSize: 14, color: "var(--fg-3)", fontStyle: "italic", animation: "fadeInOut 2s ease-in-out infinite" }}>{current.msg}</p>}
-                    <style>{`@keyframes checkpointSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-                  </div>
-                );
-              })()
-            ) : (
-              <div style={{ display: "flex", gap: 24, maxWidth: 1100, width: "100%", margin: "0 auto", flexDirection: isMobile ? "column" : "row" }}>
-                {/* Left: Draft reference */}
-                <div style={{ flex: isMobile ? "1" : "0 0 53%", minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Your Draft</div>
-                  <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: "24px 28px", maxHeight: isMobile ? "none" : "calc(100vh - 160px)", overflowY: "auto", fontSize: 14, lineHeight: 1.6, color: "var(--fg)" }}>
-                    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draftContent || generatedContent) }} />
-                  </div>
-                </div>
-                {/* Right: Agent feedback */}
-                <div style={{ flex: isMobile ? "1" : "0 0 45%", position: isMobile ? "static" as const : "sticky" as const, top: 80, alignSelf: "flex-start", maxHeight: isMobile ? "none" : "calc(100vh - 120px)", overflowY: isMobile ? "visible" as const : "auto" as const }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Stress Test Results</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-                    {stressResults.map((r) => (
-                      <div key={r.agent} style={{ padding: "14px 16px", border: "1px solid var(--line)", borderRadius: 8, background: "var(--surface)" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{r.lens || r.agent}</span>
-                          </div>
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.verdict === "pass" ? "#50c8a0" : "var(--gold)" }} />
-                        </div>
-                        <p style={{ fontSize: 13, color: "var(--fg-2)", margin: 0, lineHeight: 1.5 }}>{r.feedback}</p>
-                        {r.suggestion && r.verdict === "flag" && (
-                          <p style={{ fontSize: 12, color: "var(--gold)", margin: "6px 0 0", fontStyle: "italic" }}>{r.suggestion}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {/* Strategic Synthesis */}
-                  {saraSynthesis.summary && (
-                    <div style={{ padding: "16px 18px", borderRadius: 8, background: "var(--surface)", border: "1px solid var(--line)", borderLeft: "3px solid var(--gold)", marginBottom: 16 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 6 }}>Strategic Synthesis</div>
-                      <p style={{ fontSize: 13, color: "var(--fg)", margin: "0 0 10px", lineHeight: 1.5 }}>{saraSynthesis.summary}</p>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                        {saraSynthesis.actionItems.map((item, i) => (
-                          <label key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", padding: 6, borderRadius: 4, background: acceptedItems[i] ? "rgba(200,150,26,0.06)" : "transparent" }}>
-                            <input type="checkbox" checked={acceptedItems[i] || false} onChange={() => setAcceptedItems(prev => prev.map((v, j) => j === i ? !v : v))} style={{ marginTop: 2 }} />
-                            <span style={{ fontSize: 13, color: "var(--fg)", lineHeight: 1.5 }}>{item}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    onClick={handleEnterPolish}
-                    style={{ width: "100%", padding: "10px 20px", borderRadius: 8, border: "none", background: "var(--gold)", color: "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-                  >
-                    Apply and polish
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── POLISH PHASE: Layer 2 checkpoints ───────────────── */}
-        {phase === "polish" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px" }}>
-            {writersRoomLoading ? (
-              <PolishLoadingAnimation />
-            ) : (
-              <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 15, color: "var(--fg-2)", marginBottom: 16, fontFamily: "'Afacad Flux', sans-serif" }}>Quality checks complete. Calculating final score...</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── MEET THE TEAM OVERLAY ───────────────────────────── */}
-        {showMeetTeam && <MeetTheTeam onClose={() => setShowMeetTeam(false)} />}
-        {showOnboarding && phase === "input" && messages.length <= 1 && <AnimatedWalkthrough onComplete={dismissWalkthrough} />}
-
-        {phase === "drafting" && <style>{`
-          @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-          @keyframes checkpointPulse { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
-          @keyframes fadeInOut { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-        `}</style>}
-
-        {(phase as string) === "generating" && (
-          <div style={{
-            flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            gap: 0, padding: 40,
-          }}>
-            <style>{`
-              @keyframes shimmerBar {
-                0% { background-position: -200% center; }
-                100% { background-position: 200% center; }
-              }
-            `}</style>
-            <EverywhereMarkIcon size={48} style={{ marginBottom: 16 }} />
-            <div style={{ marginTop: 24, width: "100%", maxWidth: 400 }}>
-              {/* Progress bar */}
-              <div style={{ height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
-                <div style={{
-                  height: "100%",
-                  width: `${loadingProgress}%`,
-                  borderRadius: 2,
-                  background: "linear-gradient(90deg, #4A90D9, var(--gold))",
-                  backgroundSize: "200% 100%",
-                  animation: "shimmerBar 2s linear infinite",
-                  transition: "width 0.5s ease-out",
-                }} />
-              </div>
-              {/* Message */}
-              <div style={{ textAlign: "center", marginTop: 16 }}>
-                <p style={{
-                  fontSize: 15,
-                  fontWeight: 500,
-                  color: "var(--fg-2)",
-                  margin: 0,
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  transition: "opacity 0.3s ease",
-                }}>
-                  {loadingMessage}
-                </p>
-                <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "8px 0 0", opacity: 0.7 }}>
-                  Generating your draft, then running the full quality pipeline.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {phase === "complete" && showCheckpointSequence && (
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              padding: isMobile ? "24px 16px" : "32px 24px",
-              overflowY: "auto",
-              maxWidth: 960,
-              margin: "0 auto",
-              width: "100%",
-            }}
-          >
-            <SpecialistPanel
-              pipelineGateResults={pipelineGateResults.length > 0 ? pipelineGateResults : undefined}
-              simpleGates={pipelineGateResults.length === 0 && generatedGates ? (({ summary, ...rest }) => rest)(generatedGates) as Record<string, number | undefined> : undefined}
-              visibleCount={visibleCheckpointCount}
-              revealedCount={revealedCheckpointCount}
-              totalScore={showTotalScore ? (generatedScore || undefined) : undefined}
-              showTotal={showTotalScore}
-              isAnimating={!showTotalScore}
-              threshold={MARKETING_NUMBERS.betterishThreshold}
-            />
-            {showTotalScore && (
-              <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  style={{ padding: "10px 20px", fontSize: 14, borderRadius: 8 }}
-                  onClick={() => setShowCheckpointSequence(false)}
-                >
-                  View output
-                </button>
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  style={{ padding: "10px 20px", fontSize: 14, borderRadius: 8, border: "1px solid var(--border-subtle)", background: "transparent" }}
-                  onClick={() => {
-                    setPhase("input");
-                    setShowCheckpointSequence(false);
-                    if (generatedOutputId && generatedOutputId !== "new") {
-                      setRevisionMode(true);
-                      setRevisionOutputId(generatedOutputId);
-                      setRevisionContent(generatedContent);
-
-                      // Build smart revision message from available gate data
-                      const specialists: Array<[string, { score: number; feedback?: string }]> = [];
-                      if (pipelineGateResults.length > 0) {
-                        for (const g of pipelineGateResults) {
-                          specialists.push([g.gate, { score: g.score, feedback: g.feedback }]);
-                        }
-                      } else if (generatedGates) {
-                        const labels: Record<string, string> = { strategy: "Strategy", voice: "Voice", accuracy: "Accuracy", ai_tells: "AI Tells", audience: "Audience", platform: "Platform", impact: "Impact" };
-                        for (const [k, label] of Object.entries(labels)) {
-                          const v = (generatedGates as any)[k];
-                          if (typeof v === "number") specialists.push([label, { score: v }]);
-                        }
-                      }
-
-                      if (specialists.length > 0) {
-                        const sorted = [...specialists].sort((a, b) => b[1].score - a[1].score);
-                        const strongest = sorted[0];
-                        const weakest = sorted[sorted.length - 1];
-                        const weakAreas = sorted.filter(([, v]) => v.score < 75).slice(-3);
-                        let msg = `Your ${outputType || "content"} scored ${Math.round(generatedScore / 10)}%. Here's what stood out:\n- Strongest: ${strongest[0]} (${Math.round(strongest[1].score)}%)\n- Needs work: ${weakest[0]} (${Math.round(weakest[1].score)}%)`;
-                        if (weakAreas.length > 0) {
-                          msg += `\n\nI can help you:`;
-                          weakAreas.forEach(([name, data], i) => {
-                            const letter = String.fromCharCode(65 + i);
-                            const snippet = data.feedback ? ` (${data.feedback.slice(0, 80)}${data.feedback.length > 80 ? "..." : ""})` : "";
-                            msg += `\n${letter}) Strengthen ${name}${snippet}`;
-                          });
-                          msg += `\n${String.fromCharCode(65 + weakAreas.length)}) Something else: tell me what you want to change`;
-                        } else {
-                          msg += `\n\nWhat would you like to improve?`;
-                        }
-                        // Build pipeline context for chat API
-                        let ctx = "\n\n[PIPELINE RESULTS FOR REVISION CONTEXT:]\n";
-                        for (const [name, data] of sorted) {
-                          ctx += `- ${name}: ${data.score}/100`;
-                          if (data.feedback) ctx += `. ${data.feedback.slice(0, 200)}`;
-                          ctx += "\n";
-                        }
-                        setRevisionPipelineContext(ctx);
-                        setMessages(prev => [...prev, { id: `w-rev-${Date.now()}`, role: "assistant" as const, content: msg, ts: Date.now() }]);
-                      } else {
-                        setMessages(prev => [...prev, { id: `w-rev-${Date.now()}`, role: "assistant" as const, content: `Your ${outputType || "content"} scored ${Math.round(generatedScore / 10)}%. What would you like to improve? I can help with voice, structure, hook, clarity, or anything specific.`, ts: Date.now() }]);
-                      }
-                    }
-                  }}
-                >
-                  Revise with Watson
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {phase === "complete" && !showCheckpointSequence && (
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              padding: isMobile ? "24px 16px" : "32px 24px",
-              overflowY: "auto",
-            }}
-          >
-            {/* Generated content - front and center */}
-            <div style={{ maxWidth: 680, width: "100%", marginBottom: 24 }}>
-              <div
-                style={{
-                  position: "relative",
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  fontSize: isMobile ? 14 : 15,
-                  lineHeight: 1.7,
-                  color: "var(--text-primary)",
-                  background: "var(--surface-white)",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: 12,
-                  padding: isMobile ? "20px 16px" : "32px 36px",
-                }}
-              >
-                {/* Copy button */}
-                <button
-                  onClick={async () => {
-                    const plain = generatedContent
-                      .replace(/^#{1,6}\s+/gm, "")
-                      .replace(/\*\*(.+?)\*\*/g, "$1")
-                      .replace(/\*(.+?)\*/g, "$1")
-                      .replace(/_(.+?)_/g, "$1")
-                      .replace(/`(.+?)`/g, "$1");
-                    await navigator.clipboard.writeText(plain);
-                    setContentCopied(true);
-                    setTimeout(() => setContentCopied(false), 2000);
-                  }}
-                  title="Copy to clipboard"
-                  style={{
-                    position: "absolute",
-                    top: 12,
-                    right: 12,
-                    width: 36,
-                    height: 36,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: 8,
-                    border: "1px solid var(--border-subtle)",
-                    background: contentCopied ? "#50c8a0" : "var(--surface-white)",
-                    color: contentCopied ? "#fff" : "var(--fg-3)",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    zIndex: 2,
-                  }}
-                  onMouseEnter={e => { if (!contentCopied) { e.currentTarget.style.borderColor = "var(--border-default)"; e.currentTarget.style.color = "var(--fg)"; } }}
-                  onMouseLeave={e => { if (!contentCopied) { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--fg-3)"; } }}
-                >
-                  {contentCopied ? <Check size={16} /> : <Clipboard size={16} />}
-                </button>
-                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(generatedContent) }} />
-              </div>
-            </div>
-
-
-                  {/* Continue Writing input */}
-                  <div style={{ marginTop: 0, marginBottom: 24, padding: "16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10 }}>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Tell Watson what to change</label>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <textarea
-                        value={continueWritingInput}
-                        onChange={(e) => setContinueWritingInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && continueWritingInput.trim() && !continueWritingLoading) {
-                            e.preventDefault();
-                            (async () => {
-                              setContinueWritingLoading(true);
-                              try {
-                                const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({
-                                    originalDraft: draftContent || generatedContent,
-                                    revisionNotes: continueWritingInput,
-                                    outputType: outputTypeApi,
-                                    voiceProfile,
-                                    userId: user?.id,
-                                    voiceDnaMd,
-                                  }),
-                                });
-                                if (!res.ok) throw new Error("Revision failed");
-                                const data = await res.json();
-                                if (data.content) {
-                                  setDraftContent(data.content);
-                                  setGeneratedContent(data.content);
-                                  setContinueWritingInput("");
-                                  toast("Draft updated.");
-                                }
-                              } catch (err) {
-                                toast("Revision failed. Try again.", "error");
-                              } finally {
-                                setContinueWritingLoading(false);
-                              }
-                            })();
-                          }
-                        }}
-                        placeholder="e.g., Expand section 3, add an example about..."
-                        style={{ flex: 1, padding: 10, borderRadius: 8, border: "1px solid var(--line)", background: "var(--bg)", color: "var(--fg)", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, resize: "vertical", minHeight: 40, outline: "none" }}
-                      />
-                      <button
-                        onClick={async () => {
-                          if (!continueWritingInput.trim() || continueWritingLoading) return;
-                          setContinueWritingLoading(true);
-                          try {
-                            const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                originalDraft: draftContent || generatedContent,
-                                revisionNotes: continueWritingInput,
-                                outputType: outputTypeApi,
-                                voiceProfile,
-                                userId: user?.id,
-                                voiceDnaMd,
-                              }),
-                            });
-                            if (!res.ok) throw new Error("Revision failed");
-                            const data = await res.json();
-                            if (data.content) {
-                              setDraftContent(data.content);
-                              setGeneratedContent(data.content);
-                              setContinueWritingInput("");
-                              toast("Draft updated.");
-                            }
-                          } catch (err) {
-                            toast("Revision failed. Try again.", "error");
-                          } finally {
-                            setContinueWritingLoading(false);
-                          }
-                        }}
-                        disabled={!continueWritingInput.trim() || continueWritingLoading}
-                        style={{
-                          padding: "8px 16px", borderRadius: 8, border: "none",
-                          background: continueWritingLoading ? "var(--fg-3)" : "var(--gold)",
-                          color: "white", fontSize: 12, fontWeight: 600, cursor: continueWritingLoading ? "default" : "pointer",
-                          fontFamily: "'Afacad Flux', sans-serif", flexShrink: 0, alignSelf: "flex-end",
-                        }}
-                      >
-                        {continueWritingLoading ? "Revising..." : "Send"}
-                      </button>
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4 }}>Cmd+Enter to send</div>
-                  </div>
-
-            {/* Score summary + action buttons */}
-            <div style={{ maxWidth: 680, width: "100%", marginBottom: 24 }}>
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 16,
-                marginBottom: 16,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 48,
-                    fontWeight: 800,
-                    color: "var(--gold)",
-                    fontVariantNumeric: "tabular-nums",
-                    lineHeight: 1,
-                  }}>
-                    {Math.round(generatedScore / 10)}%
-                  </div>
-                  <div>
-                    <div style={{
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: generatedScore >= 900 ? "#50c8a0" : "var(--fg)",
-                    }}>
-                      {generatedScore >= 900 ? "Publication ready" : "Below publication threshold"}
-                    </div>
-                    <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 4 }}>
-                      {generatedScore >= 900
-                        ? "This piece meets the Betterish publication threshold."
-                        : `Below publication threshold (90%). You can edit to improve, or save as-is.`
-                      }
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPhase("editing");
-                      setShowCheckpointSequence(false);
-                      if (!draftContent && generatedContent) {
-                        setDraftContent(generatedContent);
-                      }
-                    }}
-                    style={{
-                      background: "transparent",
-                      color: "var(--text-primary)",
-                      border: "1px solid var(--border-subtle)",
-                      borderRadius: 8,
-                      padding: "10px 20px",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      fontSize: 14,
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
-                  >
-                    Edit draft
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleMoveToWrap}
-                    style={{
-                      background: "var(--gold)",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "10px 20px",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      transition: "opacity 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                  >
-                    Move to Wrap
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveAndClose}
-                    style={{
-                      background: "transparent",
-                      color: "var(--text-primary)",
-                      border: "1px solid var(--border-subtle)",
-                      borderRadius: 8,
-                      padding: "10px 20px",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      fontSize: 14,
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-default)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
-                  >
-                    Save and close
-                  </button>
-                </div>
-              </div>
-
-              {/* Compact quality summary */}
-              {layer1Results.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-                  {layer1Results.map(r => {
-                    const roleLabels: Record<string, string> = {
-                      Echo: "Deduplication", Priya: "Research Accuracy", Jordan: "Voice Authenticity",
-                      David: "Engagement", Elena: "SLOP Detection", Natasha: "Editorial Excellence",
-                      "Marcus + Marshall": "Perspective + Impact", Betterish: "Final Gut Check",
-                    };
-                    const label = roleLabels[r.gate] || r.gate;
-                    const pct = Math.round(r.score);
-                    const color = pct >= 80 ? "#50c8a0" : pct >= 60 ? "var(--gold)" : "#E53935";
-                    return (
-                      <div key={r.gate} style={{
-                        padding: "6px 12px", borderRadius: 6,
-                        border: "1px solid var(--line)", background: "var(--surface)",
-                        fontSize: 12, display: "flex", gap: 8, alignItems: "center",
-                      }}>
-                        <span style={{ color: "var(--fg-2)" }}>{label}</span>
-                        {r.score > 0 && <span style={{ fontWeight: 700, color }}>{pct}%</span>}
-                        {r.status === "pass" && r.score === 0 && <span style={{ fontWeight: 700, color: "#50c8a0" }}>Pass</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Quality Pipeline CTA */}
-              {pipelineStatus === "PASSED" ? (
-                <div style={{
-                  padding: "14px 18px",
-                  background: "rgba(80,200,160,0.06)",
-                  borderLeft: "3px solid #50c8a0",
-                  borderRadius: 6,
-                  marginBottom: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: 10,
-                }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#50c8a0", fontFamily: "'Afacad Flux', sans-serif" }}>All 7 checkpoints passed</div>
-                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>Content moved to The Vault.</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/studio/outputs")}
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: 6,
-                      border: "none",
-                      background: "#50c8a0",
-                      color: "#fff",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                    }}
-                  >
-                    Save and close
-                  </button>
-                </div>
-              ) : (
-                <div style={{ marginBottom: 16 }}>
-                  {generatedScore < 900 && pipelineStatus === "IDLE" && (
-                    <div style={{
-                      padding: "12px 16px",
-                      background: "rgba(245,198,66,0.06)",
-                      borderLeft: "3px solid var(--gold)",
-                      borderRadius: 6,
-                      marginBottom: 12,
-                      fontSize: 13,
-                      color: "var(--text-secondary)",
-                      lineHeight: 1.5,
-                      fontFamily: "'Afacad Flux', sans-serif",
-                    }}>
-                      Score below publication threshold. Run the full quality pipeline for detailed specialist feedback and automatic revisions.
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleRunPipeline}
-                    disabled={pipelineStatus === "RUNNING" || !generatedOutputId || generatedOutputId === "new"}
-                    style={{
-                      padding: "12px 20px",
-                      borderRadius: 8,
-                      border: pipelineGateResults.length === 0 ? "none" : "2px solid var(--gold)",
-                      background: pipelineStatus === "RUNNING"
-                        ? "rgba(245,198,66,0.04)"
-                        : pipelineGateResults.length === 0
-                          ? "var(--gold)"
-                          : "var(--surface-white)",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: pipelineStatus === "RUNNING"
-                        ? "var(--text-tertiary)"
-                        : pipelineGateResults.length === 0
-                          ? "white"
-                          : "var(--gold)",
-                      cursor: pipelineStatus === "RUNNING" ? "default" : "pointer",
-                      transition: "all 0.15s ease",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (pipelineStatus !== "RUNNING") {
-                        e.currentTarget.style.background = pipelineGateResults.length === 0 ? "rgba(200,150,26,0.85)" : "rgba(245,198,66,0.06)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (pipelineStatus !== "RUNNING") {
-                        e.currentTarget.style.background = pipelineGateResults.length === 0 ? "var(--gold)" : "var(--surface-white)";
-                      }
-                    }}
-                  >
-                    <Sparkles size={16} />
-                    {pipelineStatus === "RUNNING"
-                      ? "Running pipeline..."
-                      : pipelineGateResults.length === 0
-                        ? "Run Full Quality Pipeline"
-                        : "Re-run Quality Pipeline"}
-                  </button>
-                  {/* Auto-fix all issues button */}
-                  {pipelineGateResults.length > 0 && generatedScore < 900 && pipelineStatus !== "RUNNING" && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const failingGates = pipelineGateResults.filter((g: any) => g && g.score < 80);
-                        if (failingGates.length === 0) return;
-                        const combinedFeedback = failingGates.map((g: any) => `${g.gate} (score: ${g.score}): ${g.feedback || ""}${g.issues?.length ? "\nIssues: " + g.issues.join("; ") : ""}`).join("\n\n");
-                        setPipelineStatus("RUNNING");
-                        try {
-                          const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              conversationSummary: getConversationSummary(),
-                              originalDraft: generatedContent,
-                              revisionNotes: `FIX ALL ISSUES. Multiple specialists flagged problems in this draft.\n\n${combinedFeedback}\n\nAddress every issue listed above. Cut redundancy, fix voice mismatches, resolve unsupported claims, and strengthen weak sections.`,
-                              outputType: outputTypeApi,
-                              voiceProfile,
-                              userId: user?.id,
-                              voiceDnaMd,
-                            }),
-                          });
-                          if (!res.ok) throw new Error("Auto-fix failed");
-                          const data = await res.json();
-                          if (data.content) {
-                            setGeneratedContent(data.content);
-                            setDraftContent(data.content);
-                            if (generatedOutputId && generatedOutputId !== "new") {
-                              await supabase.from("outputs").update({ content: data.content }).eq("id", generatedOutputId);
-                            }
-                            toast("Draft revised. Re-running quality pipeline...");
-                            setTimeout(() => handleRunPipeline(), 500);
-                          }
-                        } catch (err) {
-                          toast("Auto-fix failed. Try again.", "error");
-                          setPipelineStatus("IDLE");
-                        }
-                      }}
-                      style={{
-                        padding: "12px 20px",
-                        borderRadius: 8,
-                        border: "none",
-                        background: "#E53935",
-                        fontFamily: "'Afacad Flux', sans-serif",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: "white",
-                        cursor: "pointer",
-                        transition: "opacity 0.15s ease",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        marginTop: 10,
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                    >
-                      Auto-fix all issues
-                    </button>
-                  )}
-                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
-                    {pipelineGateResults.length === 0
-                      ? "7 specialists will review voice, accuracy, engagement, and more"
-                      : "Re-run all 7 specialists for a fresh evaluation"}
-                  </div>
-                  {pipelineStatus !== "IDLE" && (
-                    <div style={{ marginTop: 12 }}>
-                      <PipelineProgress
-                        status={pipelineStatus}
-                        currentStage={currentStage}
-                        blockedAt={blockedAt}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Specialist Pipeline Results */}
-              {(generatedGates || pipelineGateResults.length > 0) && (
-                <div style={{ marginTop: 8 }}>
-                  <SpecialistPanel
-                    pipelineGateResults={pipelineGateResults.length > 0 ? pipelineGateResults : undefined}
-                    simpleGates={pipelineGateResults.length === 0 && generatedGates ? (({ summary, ...rest }) => rest)(generatedGates) as Record<string, number | undefined> : undefined}
-                    totalScore={generatedScore || undefined}
-                    showTotal={false}
-                    threshold={MARKETING_NUMBERS.betterishThreshold}
-                  />
-                </div>
-              )}
-
-              {/* Start over */}
-              <div style={{ marginTop: 16 }}>
-                <button
-                  type="button"
-                  onClick={startOver}
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: 8,
-                    border: "1px solid var(--border-subtle)",
-                    background: "transparent",
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    color: "var(--text-secondary)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  New session
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Emergency navigation - always visible in production phases */}
-        {(phase === "drafting" || phase === "editing" || phase === "stress-test" || phase === "polish") && (
-          <div style={{
-            position: "fixed",
-            bottom: 20,
-            right: 20,
-            zIndex: 100,
-            display: "flex",
-            gap: 8,
-          }}>
-            <button
-              onClick={() => {
-                const nextPhase: Record<string, Phase> = {
-                  drafting: "editing",
-                  editing: "stress-test",
-                  "stress-test": "polish",
-                  polish: "complete",
-                };
-                const next = nextPhase[phase];
-                if (next) setPhase(next);
-              }}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 8,
-                border: "1px solid var(--line)",
-                background: "var(--surface)",
-                fontSize: 12,
-                color: "var(--fg-3)",
-                cursor: "pointer",
-                fontFamily: "'Afacad Flux', sans-serif",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            >
-              Skip to next step
-            </button>
-          </div>
-        )}
-
-        {phase === "input" && (
-          <div style={{
-            maxWidth: 760, width: "100%", margin: "0 auto",
-            padding: "32px 24px 8px", display: "flex", flexDirection: "column", gap: 20,
-          }}>
-            {revisionMode && revisionContent && (
-              <details style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
-                <summary style={{ padding: "10px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--fg-3)", fontFamily: "'Afacad Flux', sans-serif", userSelect: "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span>View original content</span>
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ transition: "transform 0.15s" }}>
-                    <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </summary>
-                <div style={{ padding: "0 16px 16px", maxHeight: 300, overflowY: "auto" }}>
-                  <pre style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, lineHeight: 1.5, color: "var(--fg-3)", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
-                    {revisionContent}
-                  </pre>
-                </div>
-              </details>
-            )}
-            {messages.map(msg => (
-              <MessageBubble key={msg.id} msg={msg} isMobile={isMobile} />
-            ))}
-            {loading && <WatsonThinking />}
-            {isReady && !loading && (
-              <div style={{
-                marginTop: 8,
-                padding: "16px 20px",
-                background: "var(--surface-white)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 12,
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-              }}>
-                <div style={{
-                  width: "100%",
-                  height: 1,
-                  background: "var(--border-subtle)",
-                  marginBottom: 4,
-                }} />
-                <p style={{
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  fontSize: 14,
-                  color: "var(--text-secondary)",
-                  margin: 0,
-                }}>
-                  Watson has what he needs. Let the Room take it from here.
-                </p>
-                <div style={{ marginBottom: 4 }}>
-                  <OutputTypePill value={outputType} onChange={setOutputType} />
-                </div>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    onClick={handleMakeTheThing}
-                    disabled={loading}
-                    style={{
-                      background: "var(--gold)",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "8px 20px",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      cursor: loading ? "default" : "pointer",
-                    }}
-                  >
-                    Take it to the Room
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsReady(false)}
-                    style={{
-                      background: "transparent",
-                      color: "var(--text-primary)",
-                      border: "1px solid var(--border-subtle)",
-                      borderRadius: 8,
-                      padding: "8px 20px",
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Keep talking
-                  </button>
-                </div>
-              </div>
-            )}
-            <div ref={bottomRef} />
-          </div>
-        )}
-      </div>
-
-      {/* ── Input bar (only when phase is input and there are messages) ───────── */}
-      {phase === "input" && messages.length > 1 && (
-      <div style={{
-        flexShrink: 0,
-        position: "sticky", bottom: 0,
-        padding: isMobile ? "8px 12px 16px" : "16px 24px 24px",
-        background: "linear-gradient(transparent, var(--bg-light) 20%)",
-      }}>
-        <div style={{ maxWidth: 800, margin: "0 auto", width: "100%", padding: "0 24px", boxSizing: "border-box" }}>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <SessionInputBox
-                input={input}
-                setInput={setInput}
-                sendMessage={sendMessage}
-                loading={loading}
-                inputRef={inputRef}
-                isSupported={isSupported}
-                toggleListening={toggleListening}
-                isListening={isListening}
-                apiError={apiError ?? ""}
-                setApiError={setApiError}
-                attachedFiles={attachedFiles}
-                setAttachedFiles={setAttachedFiles}
-                handleFileUpload={handleFileUpload}
-                getFileIcon={getFileIcon}
-                formatFileSize={formatFileSize}
-              />
-            </div>
-          </div>
-          {!isReady && !loading && messages.filter(m => m.role === "user").length >= 2 && (
-            <div style={{ textAlign: "right", marginTop: 8, maxWidth: 760, marginLeft: "auto", marginRight: "auto" }}>
-              <button
-                type="button"
-                onClick={() => setIsReady(true)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  fontSize: 12,
-                  color: "var(--text-tertiary)",
-                  cursor: "pointer",
-                  transition: "color 0.15s ease",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--gold)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-tertiary)"; }}
-              >
-                Ready to produce? Skip ahead
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      {stage === "Intake" && (
+        <StageIntake
+          messages={messages}
+          onSend={handleIntakeSend}
+          onAdvance={() => goToStage("Outline")}
+        />
       )}
-        </>
+      {stage === "Outline" && (
+        <StageOutline
+          selectedLens={selectedLens}
+          onSelectLens={handleSelectLens}
+          outlineRows={outlineRows}
+          onUpdateRow={handleUpdateOutlineRow}
+          onAdvance={() => goToStage("Edit")}
+        />
+      )}
+      {stage === "Edit" && (
+        <StageEdit
+          flags={flags}
+          onFixFlag={handleFixFlag}
+          onDismissFlag={handleDismissFlag}
+          onAdvance={() => goToStage("Review")}
+        />
+      )}
+      {stage === "Review" && (
+        <StageReview
+          tabs={reviewTabs}
+          activeTab={activeReviewTab}
+          onTabClick={handleReviewTabClick}
+          onAdvance={() => goToStage("Export")}
+        />
+      )}
+      {stage === "Export" && (
+        <StageExport
+          tabs={reviewTabs}
+          activeTab={activeExportTab}
+          onTabClick={setActiveExportTab}
+        />
       )}
     </div>
   );
