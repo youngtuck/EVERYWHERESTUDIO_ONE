@@ -97,10 +97,8 @@ function HomeDashContent({
       {/* Today's briefing */}
       <div style={{ marginBottom: 14 }}>
         <div style={S.label}>Today's briefing</div>
-        <div style={{ fontSize: 10, color: "var(--fg-2)", lineHeight: 1.7 }}>
-          ● Exec coaching demand +34%<br />
-          ● Category window open<br />
-          ● 2 competitors silent
+        <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.7, fontStyle: "italic" }}>
+          Run a briefing in Watch to see today's signals here.
         </div>
         <button
           onClick={onGoToWatch}
@@ -154,10 +152,10 @@ export default function Dashboard() {
       <HomeDashContent
         sessions={outputs.length}
         formatsExported={outputs.filter(o => o.score >= 800).length}
-        signalsTracked={12}
+        signalsTracked={0}
         inProgressTitle={inProgress?.title ?? null}
-        inProgressStage="Edit"
-        inProgressFlags={2}
+        inProgressStage="In progress"
+        inProgressFlags={0}
         onGoToWatch={() => nav("/studio/watch")}
       />
     );
@@ -169,10 +167,8 @@ export default function Dashboard() {
   const inProgress = outputs.find(o => !o.score || o.score < 800);
   const pipelineIdea = outputs[1] ?? null;
 
-  // ── Briefing card signals (live from Watch if available, else static)
-  const signals: BriefingSignal[] = [
-    { label: "Three signals ranked and ready", description: "Executive coaching demand up 34%. Category window open. Two competitors went quiet." },
-  ];
+  // ── Briefing signals — live from Watch only, no static fallback
+  const signals: BriefingSignal[] = [];
 
   return (
     <div style={{

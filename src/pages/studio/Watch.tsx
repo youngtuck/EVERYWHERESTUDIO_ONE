@@ -243,12 +243,9 @@ export default function Watch() {
 
   // Sources & config (real from Supabase or defaults)
   const [sources, setSources] = useState<WatchSource[]>(DEFAULT_SOURCES);
-  const [keywords, setKeywords] = useState<string[]>(DEFAULT_KEYWORDS || [
-    "executive coaching AI", "thought leadership", "composed intelligence",
-    "fractional CAIO", "digital transformation 2026",
-  ]);
-  const [competitors, setCompetitors] = useState<string[]>(["Craig Mod", "Cal Newport"]);
-  const [thoughtLeaders, setThoughtLeaders] = useState<string[]>(["Ann Handley", "Joe Pulizzi"]);
+  const [keywords, setKeywords] = useState<string[]>(DEFAULT_KEYWORDS || []);
+  const [competitors, setCompetitors] = useState<string[]>([]);
+  const [thoughtLeaders, setThoughtLeaders] = useState<string[]>([]);
 
   // Briefing state
   const [briefing, setBriefing] = useState<BriefingData | null>(null);
@@ -390,21 +387,10 @@ export default function Watch() {
 
   // Extract sections from live briefing or fall back to static demo
   const sections = briefing?.sections;
-  const contentTriggers = sections?.content_triggers ?? sections?.whats_moving ?? [
-    { title: "Executive coaching demand up 34%", summary: 'LinkedIn shifting toward ROI framing. Your "infrastructure over motivation" angle fits this window.', cta_label: "Use this" },
-    { title: "Three competitors silent this week.", summary: "Category window open. No one is publishing in your lane.", cta_label: "Use this" },
-    { title: '"Fractional CAIO" trending', summary: "on Reddit. Adjacent to your positioning — not a direct hit but worth watching.", cta_label: "Note it" },
-  ];
-  const opportunities = sections?.opportunities ?? [
-    { title: 'Thought leadership gap in "sustainable growth coaching"', summary: "2 posts this week, both thin. You could own this angle.", priority: "High" as const },
-    { title: 'Newsletter angle: "What I wish I knew at year 5"', summary: "High resonance in your keyword cluster this week.", priority: "High" as const },
-    { title: "HBR published on executive communication gaps yesterday.", summary: "Responding with your angle in 48 hours would be timely.", priority: "Medium" as const },
-  ];
-  const marketSignals = sections?.threats ?? [
-    { title: "Competitor: Craig Mod", summary: "Published Sunday essay, high engagement. Topic: deep work and output systems.", priority: "High" as const },
-    { title: "Competitor: Cal Newport", summary: "Silent this week.", priority: "Low" as const },
-    { title: "Thought leader: Ann Handley", summary: "Newsletter sent Thursday. Topic: editorial calendars.", priority: "Low" as const },
-  ];
+  // Only show real briefing data — no static fallbacks
+  const contentTriggers = sections?.content_triggers ?? sections?.whats_moving ?? [];
+  const opportunities = sections?.opportunities ?? [];
+  const marketSignals = sections?.threats ?? [];
 
   const Card = ({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) => (
     <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
@@ -445,40 +431,66 @@ export default function Watch() {
       <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
         {loadingBriefing ? (
           <div style={{ fontSize: 12, color: "var(--fg-3)", padding: "40px 0", textAlign: "center" as const }}>Loading briefing...</div>
+        ) : generatingBriefing ? (
+          <div style={{ fontSize: 12, color: "var(--fg-3)", padding: "40px 0", textAlign: "center" as const }}>
+            Generating your briefing. This takes about 60 seconds...
+          </div>
+        ) : contentTriggers.length === 0 && opportunities.length === 0 && marketSignals.length === 0 ? (
+          <div style={{ textAlign: "center" as const, padding: "48px 24px" }}>
+            <div style={{ fontSize: 28, color: "var(--line)", marginBottom: 16 }}>◉</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>No briefing yet</div>
+            <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.6, marginBottom: 20, maxWidth: 320, margin: "0 auto 20px" }}>
+              Add your keywords and sources in the dashboard panel, then hit Refresh to generate your first briefing.
+            </div>
+            <button
+              onClick={handleGenerateBriefing}
+              disabled={generatingBriefing}
+              style={{
+                fontSize: 12, fontWeight: 600, padding: "9px 20px", borderRadius: 6,
+                background: "var(--fg)", border: "none", color: "var(--surface)",
+                cursor: "pointer", fontFamily: "var(--font)",
+              }}
+            >
+              Generate briefing
+            </button>
+          </div>
         ) : (
           <>
-            {/* Content Triggers */}
-            <Card title="Content Triggers">
-              {contentTriggers.slice(0, 5).map((item, i) => (
-                <SignalCard
-                  key={i}
-                  signal={item}
-                  ctaLabel={item.cta_label === "Note it" ? "Note it" : "Use this"}
-                  ctaColor={item.cta_label === "Note it" ? "var(--gold)" : "var(--blue)"}
-                  onCta={() => {
-                    if (item.cta_label !== "Note it") {
-                      sessionStorage.setItem("ew-signal-text", item.title);
-                      sessionStorage.setItem("ew-signal-detail", item.summary || "");
-                      nav("/studio/work");
-                    }
-                  }}
-                />
-              ))}
-            </Card>
+            {contentTriggers.length > 0 && (
+              <Card title="Content Triggers">
+                {contentTriggers.slice(0, 5).map((item, i) => (
+                  <SignalCard
+                    key={i}
+                    signal={item}
+                    ctaLabel={item.cta_label === "Note it" ? "Note it" : "Use this"}
+                    ctaColor={item.cta_label === "Note it" ? "var(--gold)" : "var(--blue)"}
+                    onCta={() => {
+                      if (item.cta_label !== "Note it") {
+                        sessionStorage.setItem("ew-signal-text", item.title);
+                        sessionStorage.setItem("ew-signal-detail", item.summary || "");
+                        nav("/studio/work");
+                      }
+                    }}
+                  />
+                ))}
+              </Card>
+            )}
 
-            {/* Opportunities */}
-            <Card title="Opportunities">
-              {opportunities.slice(0, 5).map((item, i) => (
-                <OpportunityRow key={i} signal={item} active={(item as any).priority !== "Low"} />
-              ))}
-            </Card>
+            {opportunities.length > 0 && (
+              <Card title="Opportunities">
+                {opportunities.slice(0, 5).map((item, i) => (
+                  <OpportunityRow key={i} signal={item} active={(item as any).priority !== "Low"} />
+                ))}
+              </Card>
+            )}
 
-            {/* Market Signals */}
-            <Card title="Market Signals">
-              {marketSignals.slice(0, 5).map((item, i) => (
-                <OpportunityRow key={i} signal={item} active={(item as any).priority === "High"} />
-              ))}
-            </Card>
+            {marketSignals.length > 0 && (
+              <Card title="Market Signals">
+                {marketSignals.slice(0, 5).map((item, i) => (
+                  <OpportunityRow key={i} signal={item} active={(item as any).priority === "High"} />
+                ))}
+              </Card>
+            )}
           </>
         )}
       </div>

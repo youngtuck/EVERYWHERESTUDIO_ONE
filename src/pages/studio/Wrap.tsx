@@ -5,6 +5,7 @@
 import { useState, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
+import { useAuth } from "../../context/AuthContext";
 import "./shared.css";
 
 type WrapFormat = "LinkedIn" | "Newsletter" | "Podcast" | "Sunday Story";
@@ -33,7 +34,8 @@ const FORMAT_LABEL: Record<WrapFormat, string> = {
 };
 
 // ── Wrap previews (matches wireframe HTML exactly) ─────────────
-const WRAP_PREVIEWS: Record<WrapFormat, React.ReactNode> = {
+function buildWrapPreviews(displayName: string): Record<WrapFormat, React.ReactNode> {
+  return {
   LinkedIn: (
     <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
       <div style={{ padding: "11px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg)" }}>
@@ -54,7 +56,7 @@ const WRAP_PREVIEWS: Record<WrapFormat, React.ReactNode> = {
         <p style={{ color: "var(--fg-2)", marginTop: 12 }}>Most people think this is a motivation problem.</p>
         <p style={{ color: "var(--fg-2)", marginTop: 8 }}>It is not. It is structural.</p>
         <p style={{ color: "var(--blue)", fontWeight: 600, marginTop: 16 }}>What does your infrastructure look like?</p>
-        <p style={{ color: "var(--fg-3)", fontSize: 11, marginTop: 16 }}>— John Gilmore</p>
+        <p style={{ color: "var(--fg-3)", fontSize: 11, marginTop: 16 }}>— {displayName}</p>
       </div>
     </div>
   ),
@@ -69,7 +71,7 @@ const WRAP_PREVIEWS: Record<WrapFormat, React.ReactNode> = {
         <button style={{ fontSize: 10, padding: "3px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}>Download</button>
       </div>
       <div style={{ padding: "26px 30px" }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 16 }}>John Gilmore — Executive Edge — March 28</div>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 16 }}>{displayName} — March 28</div>
         <div style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", marginBottom: 12 }}>The Articulation Gap</div>
         <div style={{ width: 28, height: 3, background: "var(--gold-bright)", marginBottom: 18, borderRadius: 2 }} />
         <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75, marginBottom: 12 }}>I have been thinking about something I hear constantly from clients. Brilliant thinking that never makes it to an audience.</p>
@@ -125,11 +127,12 @@ const WRAP_PREVIEWS: Record<WrapFormat, React.ReactNode> = {
         <div style={{ width: 36, height: 1, background: "var(--line)", marginBottom: 22 }} />
         <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8, marginBottom: 14 }}>There is a thing that happens in rooms where smart people gather. Someone says something that shifts the whole conversation. Everyone feels it.</p>
         <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8 }}>And then the meeting ends. And that insight dissolves. Not because it was not valuable. Because there was no infrastructure to carry it forward.</p>
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--line)", fontSize: 12, color: "var(--fg-3)" }}>John Gilmore</div>
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--line)", fontSize: 12, color: "var(--fg-3)" }}>{displayName}</div>
       </div>
     </div>
   ),
-};
+  };
+}
 
 // ── Wrap dashboard panel ──────────────────────────────────────
 function WrapDashboard({
@@ -275,6 +278,7 @@ function WrapDashboard({
 export default function WrapPage() {
   const nav = useNavigate();
   const { setDashContent, setDashOpen } = useShell();
+  const { displayName } = useAuth();
 
   const [activeFormat, setActiveFormat] = useState<WrapFormat>("LinkedIn");
   const [selectedTemplate, setSelectedTemplate] = useState("LinkedIn Post");
@@ -371,7 +375,7 @@ export default function WrapPage() {
           </div>
         ) : wrapped ? (
           <div style={{ width: "100%", maxWidth: 580 }}>
-            {WRAP_PREVIEWS[activeFormat]}
+            {buildWrapPreviews(displayName)[activeFormat]}
           </div>
         ) : (
           <div style={{ width: "100%", maxWidth: 580, textAlign: "center" as const }}>

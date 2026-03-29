@@ -31,35 +31,8 @@ interface PipelineItem {
 }
 
 // Static signals — surfaced by Watch, parked here
-const STATIC_SIGNALS: PipelineItem[] = [
-  {
-    id: "s1", type: "signal",
-    title: '"Fractional CAIO" trending',
-    meta: "Noted 3.28.26",
-    strength: "getting-stronger", strengthLabel: "Getting stronger",
-    subtitle: "Noted 3.28.26 · Getting stronger",
-    detail: "Adjacent to your positioning. Not a direct hit but the conversation is moving toward your lane. Three Reddit threads this week.",
-    action: "Use this in Work",
-  },
-  {
-    id: "s2", type: "signal",
-    title: "AI governance conversation heating up",
-    meta: "Noted 3.21.26",
-    strength: "steady", strengthLabel: "Steady",
-    subtitle: "Noted 3.21.26 · Steady",
-    detail: "Multiple publications covering this week. Not in your keyword set yet but adjacent to composed intelligence positioning.",
-    action: "Add to Watch",
-  },
-  {
-    id: "s3", type: "signal",
-    title: "Executive burnout narrative shifting",
-    meta: "Noted 3.14.26",
-    strength: "quieting", strengthLabel: "Quieting",
-    subtitle: "Noted 3.14.26 · Quieting",
-    detail: "Was strong two weeks ago. Signal weakening. May not resurface.",
-    action: "Dismiss",
-  },
-];
+// No static signals — signals come from Watch via run-sentinel
+const STATIC_SIGNALS: PipelineItem[] = [];
 
 function strengthColor(s?: SignalStrength): string {
   if (s === "getting-stronger") return "var(--blue)";
@@ -144,12 +117,7 @@ export default function TheLot() {
           outputId: r.id,
         })));
       } else {
-        // Static fallback ideas
-        setParkedIdeas([
-          { id: "i1", type: "idea", title: "Year-end reflection", meta: "Timing · Ready Nov 2026", subtitle: "Parked · Timing", detail: "Not ready until November. The argument needs a full year of evidence to land properly. Set a reminder for October.", action: "Activate" },
-          { id: "i2", type: "idea", title: "Case study — Maui client", meta: "Dependency · Permission pending", subtitle: "Parked · Dependency", detail: "Waiting on client permission to use the story. Follow up sent 3.15.26. Strong story — worth the wait.", action: "Activate" },
-          { id: "i3", type: "idea", title: "The real cost of not publishing", meta: "Research · One gap remaining", subtitle: "Parked · Research", detail: "Need one more data point before this argument holds. Looking for a study on thought leadership attribution.", action: "Activate" },
-        ]);
+        setParkedIdeas([]);
       }
       setLoading(false);
     })();
@@ -250,14 +218,22 @@ export default function TheLot() {
       <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>The Pipeline</div>
 
       <Card title="Watched signals">
-        {signals.map(item => <PipelineRow key={item.id} item={item} />)}
+        {signals.length === 0 ? (
+          <div style={{ padding: "16px 4px", fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+            No signals yet. Run a Watch briefing and use "Note it" on signals you want to track here.
+          </div>
+        ) : (
+          signals.map(item => <PipelineRow key={item.id} item={item} />)
+        )}
       </Card>
 
       <Card title="Parked ideas">
         {loading ? (
           <div style={{ padding: "8px 0", fontSize: 11, color: "var(--fg-3)" }}>Loading...</div>
         ) : parkedIdeas.length === 0 ? (
-          <div style={{ padding: "8px 0", fontSize: 11, color: "var(--fg-3)" }}>No parked ideas yet. Start a Work session and park ideas here.</div>
+          <div style={{ padding: "16px 4px", fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+            No parked ideas yet. When you start a Work session, you can park ideas here to return to later.
+          </div>
         ) : (
           parkedIdeas.map(item => <PipelineRow key={item.id} item={item} />)
         )}

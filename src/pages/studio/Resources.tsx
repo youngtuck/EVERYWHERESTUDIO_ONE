@@ -160,21 +160,7 @@ function FileDetailPanel({
   );
 }
 
-// ── Fallback static files (shown when Supabase has no resources) ──
-const STATIC_FILES: Resource[] = [
-  {
-    id: "f1", title: "Voice DNA", resource_type: "voice_dna",
-    description: "The voice signature for this project. Three-layer model: Voice Markers, Value Markers, Personality Markers.",
-    content: "No Voice DNA has been set up yet. Complete Voice DNA onboarding to populate this file.",
-    is_active: true, updated_at: new Date().toISOString(),
-  },
-  {
-    id: "f2", title: "Brand Guide", resource_type: "brand_dna",
-    description: "Brand colors, typography, tone rules, and forbidden language for this project.",
-    content: "No Brand DNA has been uploaded yet. Upload a brand guide to populate this file.",
-    is_active: true, updated_at: new Date().toISOString(),
-  },
-];
+// No static fallback — show empty state when no resources exist
 
 // ── Main Component ─────────────────────────────────────────────
 export default function Resources() {
@@ -203,7 +189,7 @@ export default function Resources() {
       if (data && data.length > 0) {
         setResources(data as Resource[]);
       } else {
-        setResources(STATIC_FILES);
+        setResources([]);
       }
       setLoading(false);
     })();
@@ -341,6 +327,18 @@ export default function Resources() {
             {[1, 2, 3].map(i => (
               <div key={i} style={{ height: 52, background: "var(--bg-2)", borderRadius: 6, marginBottom: 4 }} />
             ))}
+          </div>
+        ) : resources.length === 0 ? (
+          <div style={{
+            background: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 8, padding: "32px 20px", textAlign: "center" as const,
+            boxShadow: "var(--shadow-sm)", marginBottom: 10,
+          }}>
+            <div style={{ fontSize: 22, color: "var(--line)", marginBottom: 12 }}>▤</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>No project files yet</div>
+            <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+              Upload your Voice DNA, Brand Guide, or any reference files below. They'll be available to every Work session in this project.
+            </div>
           </div>
         ) : (
           <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)", marginBottom: 10 }}>
