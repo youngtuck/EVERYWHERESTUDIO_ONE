@@ -1,609 +1,190 @@
-import { useState, useEffect, useRef } from "react";
+/**
+ * Settings.tsx — Preferences
+ * Matches wireframe v7.23 exactly.
+ * Display settings, Edit stage settings, Voice input settings.
+ */
+import { useState, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
-import { useToast } from "../../context/ToastContext";
-import { supabase } from "../../lib/supabase";
+import { useShell } from "../../components/studio/StudioShell";
 import "./shared.css";
 
-function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <div
-      role="switch"
-      aria-checked={value}
-      onClick={() => onChange(!value)}
+      onClick={onToggle}
       style={{
-        width: 40,
-        height: 22,
-        borderRadius: 11,
-        background: value ? "var(--text-primary)" : "var(--surface-elevated)",
+        width: 32, height: 18,
+        background: on ? "var(--blue)" : "var(--line-2)",
+        borderRadius: 9,
         cursor: "pointer",
         position: "relative",
-        transition: "background 0.15s ease",
-        border: "1px solid var(--line)",
         flexShrink: 0,
+        transition: "background 0.15s",
       }}
     >
-      <div
-        style={{
-          width: 16,
-          height: 16,
-          borderRadius: "50%",
-          background: value ? "var(--surface)" : "var(--text-tertiary)",
-          position: "absolute",
-          top: 2,
-          left: value ? 20 : 2,
-          transition: "left 0.15s ease",
-        }}
-      />
+      <div style={{
+        position: "absolute",
+        top: 2,
+        left: on ? 16 : 2,
+        width: 14, height: 14,
+        borderRadius: "50%",
+        background: "#fff",
+        transition: "left 0.15s",
+      }} />
     </div>
   );
 }
 
-function SectionCard({ children }: { children: React.ReactNode }) {
+function RadioGroup({
+  name, options, value, onChange,
+}: {
+  name: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
-    <div
-      style={{
-        background: "var(--surface)",
-        border: "1px solid var(--line)",
-        borderRadius: 12,
-        padding: "20px 24px",
-        marginBottom: 32,
-      }}
-    >
-      {children}
+    <div style={{ display: "flex", gap: 6 }}>
+      {options.map(opt => {
+        const active = value === opt.value;
+        return (
+          <label
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            style={{
+              display: "flex", alignItems: "center", gap: 5,
+              fontSize: 11, padding: "4px 10px", borderRadius: 5,
+              border: active ? "1px solid var(--fg)" : "1px solid var(--line)",
+              background: active ? "var(--bg)" : "var(--surface)",
+              color: active ? "var(--fg)" : "var(--fg-3)",
+              fontWeight: active ? 600 : 400,
+              cursor: "pointer", transition: "all 0.1s",
+            }}
+          >
+            <input type="radio" name={name} value={opt.value} checked={active} onChange={() => onChange(opt.value)} style={{ display: "none" }} />
+            {opt.label}
+          </label>
+        );
+      })}
     </div>
   );
 }
 
-function SectionHeader({ label }: { label: string }) {
-  return (
-    <h2
-      style={{
-        fontFamily: "'Afacad Flux', sans-serif",
-        fontSize: 18,
-        fontWeight: 700,
-        color: "var(--text-primary)",
-        margin: "0 0 16px",
-        letterSpacing: "-0.02em",
-      }}
-    >
-      {label}
-    </h2>
-  );
-}
+const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
+    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>{title}</div>
+    {children}
+  </div>
+);
+
+const PrefRow = ({ label, sublabel, children }: { label: string; sublabel?: string; children: React.ReactNode }) => (
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+    <div>
+      <span style={{ fontSize: 12, color: "var(--fg-2)", fontWeight: 500 }}>{label}</span>
+      {sublabel && <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 2 }}>{sublabel}</div>}
+    </div>
+    {children}
+  </div>
+);
+
+const PrefRowLast = ({ label, sublabel, children }: { label: string; sublabel?: string; children: React.ReactNode }) => (
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0" }}>
+    <div>
+      <span style={{ fontSize: 12, color: "var(--fg-2)", fontWeight: 500 }}>{label}</span>
+      {sublabel && <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 2 }}>{sublabel}</div>}
+    </div>
+    {children}
+  </div>
+);
 
 export default function Settings() {
-  const navigate = useNavigate();
-  const { user, signOut, displayName: ctxDisplayName, refreshProfile } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const { toast } = useToast();
+  const nav = useNavigate();
+  const { setDashContent, setDashOpen } = useShell();
 
-  const [loading, setLoading] = useState(true);
-  const [fullName, setFullName] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState("");
+  const [displayMode, setDisplayMode] = useState<"light" | "dark">("light");
+  const [fontSize, setFontSize] = useState(2);
+  const [flagsInDraft, setFlagsInDraft] = useState(true);
+  const [voiceMode, setVoiceMode] = useState<"ptt" | "auto">("ptt");
 
-  const [watchTopics, setWatchTopics] = useState<string[]>([]);
-  const [watchInput, setWatchInput] = useState("");
-  const [watchAutoSaved, setWatchAutoSaved] = useState(false);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const watchTopicsInitialized = useRef(false);
+  const fontLabels = ["Small", "Default", "Large"];
 
-  const [voiceComplete, setVoiceComplete] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [emailUpdating, setEmailUpdating] = useState(false);
-  const [passwordResetSent, setPasswordResetSent] = useState(false);
-
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from("profiles")
-          .select("full_name, voice_dna_completed, sentinel_topics")
-          .eq("id", user.id)
-          .single();
-        if (data) {
-          setFullName(
-            data.full_name
-            || ctxDisplayName
-            || user?.user_metadata?.full_name
-            || user?.user_metadata?.name
-            || (user?.email ? user.email.split("@")[0] : "")
-          );
-          setVoiceComplete(!!data.voice_dna_completed);
-          setWatchTopics(Array.isArray(data.sentinel_topics) ? data.sentinel_topics : []);
-          // Mark initialized after state is set so auto-save doesn't fire on load
-          setTimeout(() => { watchTopicsInitialized.current = true; }, 0);
-        }
-      } catch (err) {
-        console.error("[Settings] Failed to load profile:", err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [user?.id]);
-
-  // Fill fullName from AuthContext if it resolved after the profile query
-  useEffect(() => {
-    if (!fullName && ctxDisplayName && ctxDisplayName !== "there") {
-      setFullName(ctxDisplayName);
-    }
-  }, [ctxDisplayName]);
-
-  const handleSaveProfile = async () => {
-    if (!user) return;
-    setSaveError("");
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ full_name: fullName.trim() || null })
-        .eq("id", user.id);
-      if (error) throw error;
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-      toast("Profile saved");
-      // Update AuthContext so dashboard greeting reflects the change immediately
-      await refreshProfile();
-    } catch (err: any) {
-      toast("Failed to save: " + (err.message || "Unknown error"), "error");
-      setSaveError(err.message || "Save failed.");
-    }
-  };
-
-  const handleAddWatchTopic = () => {
-    const t = watchInput.trim();
-    if (!t || watchTopics.includes(t)) return;
-    setWatchTopics((prev) => [...prev, t]);
-    setWatchInput("");
-  };
-
-  // Auto-save watch topics with 1s debounce
-  useEffect(() => {
-    if (!user || !watchTopicsInitialized.current) return;
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    setWatchAutoSaved(false);
-    saveTimeoutRef.current = setTimeout(async () => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ sentinel_topics: watchTopics })
-        .eq("id", user.id);
-      if (!error) {
-        setWatchAutoSaved(true);
-        toast("Topics saved");
-        setTimeout(() => setWatchAutoSaved(false), 3000);
-      } else {
-        toast("Failed to save topics: " + (error.message || "Unknown error"), "error");
-      }
-    }, 1000);
-    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
-  }, [watchTopics]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
-
-  if (loading) {
-    return (
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 24px", fontFamily: "'Afacad Flux', sans-serif", color: "var(--text-tertiary)" }}>
-        Loading settings...
-      </div>
-    );
-  }
+  useLayoutEffect(() => {
+    setDashOpen(false);
+    setDashContent(null);
+    return () => setDashContent(null);
+  }, [setDashContent, setDashOpen]);
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 24px", fontFamily: "'Afacad Flux', sans-serif" }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
-          Settings
-        </h1>
-        <p style={{ fontSize: 14, color: "var(--fg-3)", marginTop: 8, marginBottom: 0 }}>
-          Account and preferences
-        </p>
-      </div>
+    <div style={{ padding: 20, fontFamily: "var(--font)", maxWidth: 560 }}>
+      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>Preferences</div>
 
-      {/* Profile */}
-      <SectionCard>
-        <SectionHeader label="Profile" />
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              style={{ width: "100%", maxWidth: 320, padding: "10px 14px", fontSize: 15, background: "var(--surface)", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none", transition: "border-color 0.15s ease" }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
-              Email
-            </label>
-            <div style={{ fontSize: 15, color: "var(--fg-2)", padding: "10px 0" }}>{user?.email || ""}</div>
-          </div>
-          {saveError && <p style={{ fontSize: 13, color: "#D64545", margin: 0 }}>{saveError}</p>}
-          <button
-            onClick={handleSaveProfile}
-            style={{ alignSelf: "flex-start", background: "var(--gold)", color: "white", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-          >
-            {saved ? "Saved" : "Save Changes"}
-          </button>
-
-          {/* Change Email */}
-          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
-              Change Email
-            </label>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="New email address"
-                style={{ width: "100%", maxWidth: 280, padding: "10px 14px", fontSize: 15, background: "var(--surface)", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", outline: "none" }}
-              />
-              <button
-                type="button"
-                disabled={emailUpdating || !newEmail.trim()}
-                onClick={async () => {
-                  setEmailUpdating(true);
-                  const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
-                  setEmailUpdating(false);
-                  if (error) { toast("Failed to update email: " + error.message, "error"); }
-                  else { toast("Confirmation email sent to " + newEmail.trim()); setNewEmail(""); }
-                }}
-                style={{ background: "var(--gold)", color: "white", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 700, cursor: emailUpdating || !newEmail.trim() ? "default" : "pointer", fontFamily: "'Afacad Flux', sans-serif", opacity: emailUpdating || !newEmail.trim() ? 0.5 : 1, transition: "opacity 0.15s ease", whiteSpace: "nowrap" }}
-              >
-                {emailUpdating ? "Updating..." : "Update Email"}
-              </button>
-            </div>
-          </div>
-
-          {/* Change Password */}
-          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fg-3)", marginBottom: 8 }}>
-              Change Password
-            </label>
-            <button
-              type="button"
-              disabled={passwordResetSent}
-              onClick={async () => {
-                if (!user?.email) return;
-                const { error } = await supabase.auth.resetPasswordForEmail(user.email);
-                if (error) { toast("Failed to send reset email: " + error.message, "error"); }
-                else { setPasswordResetSent(true); toast("Password reset email sent to " + user.email); }
-              }}
-              style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: passwordResetSent ? "default" : "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease", opacity: passwordResetSent ? 0.6 : 1 }}
-            >
-              {passwordResetSent ? "Reset email sent" : "Send Password Reset Email"}
-            </button>
-          </div>
-        </div>
-      </SectionCard>
-
-      {/* Voice DNA */}
-      <SectionCard>
-        <SectionHeader label="Voice DNA" />
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 12px", lineHeight: 1.6 }}>
-          {voiceComplete
-            ? "Voice DNA active. Your content is being matched to your writing patterns."
-            : "Your Voice DNA hasn't been configured yet. Content is being generated with a general voice profile. Add your Voice DNA to increase voice match accuracy from ~75% to 95%+."}
-        </p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          {voiceComplete ? (
-            <button
-              type="button"
-              onClick={() => navigate("/onboarding?retrain=1")}
-              style={{
-                background: "transparent",
-                color: "var(--gold-dark)",
-                border: "1px solid var(--gold-dark)",
-                borderRadius: 8,
-                padding: "10px 20px",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "'Afacad Flux', sans-serif",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,150,26,0.06)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-            >
-              Retrain Voice DNA
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => navigate("/onboarding?retrain=1")}
-                style={{
-                  background: "var(--gold-dark)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "10px 20px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  transition: "opacity 0.15s ease",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-              >
-                Start Voice DNA
-              </button>
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "transparent",
-                  color: "var(--text-secondary)",
-                  border: "1px solid var(--line)",
-                  borderRadius: 8,
-                  padding: "10px 20px",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                Upload Voice Sample
-                <input
-                  type="file"
-                  accept=".md,.txt"
-                  style={{ display: "none" }}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file || !user) return;
-                    const text = await file.text();
-                    const { error } = await supabase
-                      .from("profiles")
-                      .update({ voice_dna_md: text, voice_dna_completed: true })
-                      .eq("id", user.id);
-                    if (error) { toast("Upload failed: " + error.message, "error"); }
-                    else { toast("Voice sample uploaded successfully"); setVoiceComplete(true); }
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-            </>
-          )}
-          {voiceComplete && (
-            <button
-              type="button"
-              onClick={() => navigate("/studio/settings/voice")}
-              style={{
-                background: "transparent",
-                color: "var(--text-secondary)",
-                border: "1px solid var(--line)",
-                borderRadius: 8,
-                padding: "10px 20px",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "'Afacad Flux', sans-serif",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
-            >
-              View Voice Profile
-            </button>
-          )}
-        </div>
-      </SectionCard>
-
-      {/* Watch Configuration */}
-      <SectionCard>
-        <SectionHeader label="Watch Configuration" />
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 12, marginTop: 0 }}>
-          Topics Sentinel uses to build your intelligence briefings.
-        </p>
-        {watchTopics.length === 0 && (
-          <div style={{
-            padding: "10px 14px",
-            background: "rgba(74,144,217,0.06)",
-            borderLeft: "3px solid var(--cornflower)",
-            borderRadius: 4,
-            marginBottom: 16,
-            fontSize: 13,
-            color: "var(--text-secondary)",
-            lineHeight: 1.5,
-          }}>
-            Sample briefing active. Add your topics below to customize your intelligence briefing.
-          </div>
-        )}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-          {watchTopics.map((topic, i) => (
-            <span
-              key={`${topic}-${i}`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 12px",
-                background: "var(--bg-2)",
-                border: "1px solid var(--line)",
-                borderRadius: 20,
-                fontSize: 13,
-                color: "var(--text-primary)",
-              }}
-            >
-              {topic}
-              <button
-                type="button"
-                onClick={() => setWatchTopics((prev) => prev.filter((_, idx) => idx !== i))}
-                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, lineHeight: 1 }}
-                aria-label="Remove"
-              >
-                x
-              </button>
-            </span>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
-          <input
-            type="text"
-            value={watchInput}
-            onChange={(e) => setWatchInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddWatchTopic(); } }}
-            placeholder="Add a topic (e.g., AI governance, content marketing)"
-            style={{ width: 280, padding: "8px 12px", background: "var(--surface)", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, outline: "none" }}
+      {/* Display */}
+      <Card title="Display">
+        <PrefRow label="Mode">
+          <RadioGroup
+            name="display-mode"
+            options={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }]}
+            value={displayMode}
+            onChange={v => setDisplayMode(v as "light" | "dark")}
           />
-          <button
-            type="button"
-            onClick={handleAddWatchTopic}
-            style={{ background: "var(--gold)", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "opacity 0.15s ease" }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-          >
-            Add
-          </button>
-        </div>
-        {["AI", "Leadership", "Content Strategy", "Public Speaking", "Executive Coaching", "Industry Trends"].filter(s => !watchTopics.includes(s)).length > 0 && (
-          <div style={{ marginTop: -4, marginBottom: 16, fontSize: 12, color: "var(--fg-3)" }}>
-            Suggestions:{" "}
-            {["AI", "Leadership", "Content Strategy", "Public Speaking", "Executive Coaching", "Industry Trends"]
-              .filter(s => !watchTopics.includes(s))
-              .slice(0, 4)
-              .map(s => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setWatchTopics(prev => [...prev, s])}
-                  style={{ background: "none", border: "none", color: "var(--cornflower)", cursor: "pointer", fontSize: 12, textDecoration: "underline", marginLeft: 8, fontFamily: "'Afacad Flux', sans-serif", padding: 0 }}
-                >
-                  {s}
-                </button>
-              ))}
-          </div>
-        )}
-        {watchAutoSaved && (
-          <span style={{ fontSize: 12, color: "var(--fg-3)", fontStyle: "italic" }}>
-            Auto-saved
-          </span>
-        )}
-      </SectionCard>
-
-      {/* Appearance */}
-      <SectionCard>
-        <SectionHeader label="Appearance" />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Theme</p>
-            <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 2, marginBottom: 0 }}>
-              {theme === "dark" ? "Dark mode" : "Light mode"}
-            </p>
-          </div>
-          <Toggle value={theme === "dark"} onChange={() => toggleTheme()} />
-        </div>
-      </SectionCard>
-
-      {/* Notifications */}
-      <SectionCard>
-        <SectionHeader label="Notifications" />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>In-app notifications</p>
-            <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 2, marginBottom: 0 }}>
-              Briefing alerts, output scores, and activity reminders
-            </p>
-          </div>
-          <Toggle value={true} onChange={() => {}} />
-        </div>
-      </SectionCard>
-
-      {/* Account */}
-      <SectionCard>
-        <SectionHeader label="Account" />
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            style={{ alignSelf: "flex-start", background: "transparent", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", transition: "all 0.15s ease" }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
-          >
-            Sign out
-          </button>
-          <button
-            type="button"
-            onClick={() => setDeleteModalOpen(true)}
-            style={{ alignSelf: "flex-start", background: "none", border: "none", padding: 0, fontSize: 13, color: "var(--text-tertiary)", cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", textDecoration: "underline" }}
-          >
-            Delete my account
-          </button>
-        </div>
-      </SectionCard>
-
-      {deleteModalOpen && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
-          onClick={() => setDeleteModalOpen(false)}
-        >
-          <div
-            style={{ background: "var(--surface)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.2)", fontFamily: "'Afacad Flux', sans-serif" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 18, fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
-              Delete account
-            </h3>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, margin: "0 0 16px" }}>
-              In Alpha, account deletion is handled manually. Type DELETE to confirm, then contact mark@mixedgrill.studio to complete the process.
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              placeholder="Type DELETE"
-              style={{ width: "100%", padding: "10px 12px", background: "var(--surface)", color: "var(--text-primary)", border: "1px solid var(--line)", borderRadius: 8, fontSize: 14, fontFamily: "'Afacad Flux', sans-serif", marginBottom: 16, outline: "none" }}
-            />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                onClick={() => { setDeleteModalOpen(false); setDeleteConfirmText(""); }}
-                style={{ background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif" }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (deleteConfirmText.toUpperCase() !== "DELETE") return;
-                  setDeleteModalOpen(false);
-                  setDeleteConfirmText("");
-                }}
-                disabled={deleteConfirmText.toUpperCase() !== "DELETE"}
-                style={{
-                  background: deleteConfirmText.toUpperCase() === "DELETE" ? "#D64545" : "var(--surface-elevated)",
-                  color: deleteConfirmText.toUpperCase() === "DELETE" ? "#fff" : "var(--text-tertiary)",
-                  border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600,
-                  cursor: deleteConfirmText.toUpperCase() === "DELETE" ? "pointer" : "default",
-                  fontFamily: "'Afacad Flux', sans-serif",
-                }}
-              >
-                Confirm
-              </button>
+        </PrefRow>
+        <div style={{ padding: "10px 0" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", flexDirection: "column", gap: 10 }}>
+            <span style={{ fontSize: 12, color: "var(--fg-2)", fontWeight: 500 }}>Font size</span>
+            <div style={{ width: "100%" }}>
+              <input
+                type="range"
+                min={1} max={3} step={1}
+                value={fontSize}
+                onChange={e => setFontSize(Number(e.target.value))}
+                style={{ width: "100%", accentColor: "var(--fg)", cursor: "pointer" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--fg-3)", marginTop: 4 }}>
+                <span>Small</span>
+                <span style={{ color: "var(--fg)", fontWeight: 600 }}>{fontLabels[fontSize - 1]}</span>
+                <span>Large</span>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </Card>
+
+      {/* Edit stage */}
+      <Card title="Edit stage">
+        <PrefRowLast label="Flags in draft" sublabel="Underline suggestions while editing">
+          <Toggle on={flagsInDraft} onToggle={() => setFlagsInDraft(v => !v)} />
+        </PrefRowLast>
+      </Card>
+
+      {/* Voice */}
+      <Card title="Voice">
+        <PrefRowLast label="Input method">
+          <RadioGroup
+            name="voice-mode"
+            options={[{ value: "ptt", label: "Push to talk" }, { value: "auto", label: "Always on" }]}
+            value={voiceMode}
+            onChange={v => setVoiceMode(v as "ptt" | "auto")}
+          />
+        </PrefRowLast>
+      </Card>
+
+      {/* Voice DNA link */}
+      <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>Voice DNA is configured separately.</div>
+        <button
+          onClick={() => nav("/studio/settings/voice")}
+          style={{
+            fontSize: 12, padding: "8px 16px", borderRadius: 6,
+            border: "1px solid var(--line)", background: "var(--surface)",
+            color: "var(--fg-2)", cursor: "pointer", fontFamily: "var(--font)",
+            transition: "all 0.1s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+        >
+          Edit Voice DNA →
+        </button>
+      </div>
     </div>
   );
 }

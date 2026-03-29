@@ -1020,6 +1020,47 @@ export default function WorkSession() {
     setStage(s);
   }, []);
 
+  // ── Reopen from Catalog or Pipeline ──────────────────────────
+  // When a user hits "Reopen in Work" from OutputLibrary or TheLot,
+  // sessionStorage has the output ID and title. Load the draft and
+  // drop into Edit stage so they can continue from where they left off.
+  useEffect(() => {
+    const reopenId = sessionStorage.getItem("ew-reopen-output-id");
+    const reopenTitle = sessionStorage.getItem("ew-reopen-title");
+    if (!reopenId || !user) return;
+
+    // Clear immediately so navigating away and back doesn't retrigger
+    sessionStorage.removeItem("ew-reopen-output-id");
+    sessionStorage.removeItem("ew-reopen-title");
+
+    (async () => {
+      const { data } = await supabase
+        .from("outputs")
+        .select("id, title, content, output_type")
+        .eq("id", reopenId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (!data) return;
+
+      // Seed the conversation with the title as context
+      if (reopenTitle) {
+        setMessages([
+          { role: "watson", content: "What's on your mind?" },
+          { role: "user", content: `I want to continue working on: ${reopenTitle}` },
+          { role: "watson", content: `Picking up where we left off. I've loaded your draft. Jump to Edit to continue, or tell me what you'd like to change.` },
+        ]);
+      }
+
+      // Load the draft and jump to Edit
+      if (data.content) {
+        setDraft(data.content);
+        setOutputId(data.id);
+        goToStage("Edit");
+      }
+    })();
+  }, [user, goToStage]);
+
   // Expose to StudioTopBar breadcrumb
   useEffect(() => {
     (window as any).__ewWorkStage = stage;

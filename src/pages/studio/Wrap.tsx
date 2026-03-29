@@ -1,380 +1,390 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { supabase } from "../../lib/supabase";
-import { getScoreColor } from "../../utils/scoreColor";
-import { timeAgo } from "../../utils/timeAgo";
+/**
+ * Wrap.tsx — Turn exported drafts into deliverables
+ * Matches wireframe v7.23 exactly.
+ */
+import { useState, useLayoutEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useShell } from "../../components/studio/StudioShell";
 import "./shared.css";
 
-interface Output {
-  id: string;
-  title: string;
-  output_type: string;
-  score: number;
-  created_at: string;
-  content?: string;
-}
+type WrapFormat = "LinkedIn" | "Newsletter" | "Podcast" | "Sunday Story";
+const WRAP_FORMATS: WrapFormat[] = ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
 
-const TYPE_LABELS: Record<string, string> = {
-  essay: "Essay",
-  newsletter: "Newsletter",
-  presentation: "Presentation",
-  social: "Social",
-  podcast: "Podcast",
-  podcast_script: "Podcast Script",
-  video: "Video",
-  sunday_story: "Sunday Story",
-  freestyle: "Freestyle",
-  linkedin_post: "LinkedIn Post",
-  twitter_thread: "Twitter Thread",
-  substack_note: "Substack Note",
-  talk_outline: "Talk Outline",
-  email_campaign: "Email Campaign",
-  blog_post: "Blog Post",
-  executive_brief: "Executive Brief",
-  short_video: "Short Video",
-  book: "Book",
-  website: "Website",
-  video_script: "Video Script",
-  socials: "Socials",
-  business: "Business",
+const SOURCE_FILES: Record<WrapFormat, string> = {
+  LinkedIn: "LinkedIn_TheThinkingIsInYourHead.md",
+  Newsletter: "Newsletter_TheArticulationGap.md",
+  Podcast: "Podcast_Script_TheThinkingTrap.md",
+  "Sunday Story": "SundayStory_TheMountain.md",
 };
 
-export default function Wrap() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [searchParams] = useSearchParams();
-  const outputIdParam = searchParams.get("outputId");
-  const isExpressMode = searchParams.get("express") === "true";
+const TEMPLATES = [
+  { name: "LinkedIn Post", format: "Plain text" },
+  { name: "Sunday Story", format: "HTML" },
+  { name: "Executive Brief", format: "HTML" },
+  { name: "The Edition", format: "Full package" },
+  { name: "One-Pager", format: "HTML" },
+];
 
-  const [outputs, setOutputs] = useState<Output[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expressContent, setExpressContent] = useState("");
-  const [wrapOutput, setWrapOutput] = useState<Output | null>(null);
+const FORMAT_LABEL: Record<WrapFormat, string> = {
+  LinkedIn: "LinkedIn Post",
+  Newsletter: "Newsletter",
+  Podcast: "Podcast Script",
+  "Sunday Story": "Sunday Story",
+};
 
-  // Load specific output if outputId is provided
-  useEffect(() => {
-    if (outputIdParam && user) {
-      supabase
-        .from("outputs")
-        .select("*")
-        .eq("id", outputIdParam)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            setWrapOutput(data as Output);
-          }
-          setLoading(false);
-        });
-      return;
-    }
-
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    if (isExpressMode) {
-      setLoading(false);
-      return;
-    }
-
-    // Load all completed outputs (no score gate)
-    supabase
-      .from("outputs")
-      .select("id, title, output_type, score, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(30)
-      .then(({ data }) => {
-        setOutputs((data as Output[]) ?? []);
-        setLoading(false);
-      });
-  }, [user, outputIdParam, isExpressMode]);
-
-  const goldBtn: React.CSSProperties = {
-    background: "var(--gold-dark)",
-    color: "#fff",
-    border: "none",
-    borderRadius: 8,
-    padding: "10px 20px",
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
-    fontFamily: "'Afacad Flux', sans-serif",
-    transition: "opacity 0.15s ease",
-  };
-
-  return (
-    <div
-      className="studio-page-transition"
-      style={{
-        maxWidth: 960,
-        margin: "0 auto",
-        padding: "32px 24px",
-        fontFamily: "'Afacad Flux', sans-serif",
-      }}
-    >
-      <div style={{ marginBottom: 32 }}>
-        <h1
-          style={{
-            fontFamily: "'Afacad Flux', sans-serif",
-            fontSize: 24,
-            fontWeight: 700,
-            color: "var(--text-primary)",
-            margin: 0,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Wrap
-        </h1>
-        <p
-          style={{
-            fontSize: 14,
-            color: "var(--text-secondary)",
-            marginTop: 8,
-            marginBottom: 0,
-            lineHeight: 1.6,
-          }}
-        >
-          Final polish and delivery. Three specialists refine your content before it ships.
-        </p>
-        <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
+// ── Wrap previews (matches wireframe HTML exactly) ─────────────
+const WRAP_PREVIEWS: Record<WrapFormat, React.ReactNode> = {
+  LinkedIn: (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div style={{ padding: "11px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--blue)" }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)" }}>LinkedIn Post</span>
+          <span style={{ fontSize: 10, color: "var(--fg-3)" }}>Plain text</span>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button style={{ fontSize: 10, padding: "3px 9px", borderRadius: 4, background: "transparent", border: "1px solid var(--line)", color: "var(--fg-2)", cursor: "pointer", fontFamily: "var(--font)" }}>Copy</button>
+          <button style={{ fontSize: 10, padding: "3px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}>Download</button>
+        </div>
+      </div>
+      <div style={{ padding: "22px 26px", fontSize: 14, color: "var(--fg)", lineHeight: 1.65 }}>
+        <p style={{ fontWeight: 700, marginBottom: 12 }}>The thinking is in your head. It belongs in the world.</p>
+        <p style={{ color: "var(--fg-2)" }}>You said it perfectly in a meeting.</p>
+        <p style={{ color: "var(--fg-2)", marginTop: 8 }}>That version — the real one, in your voice — never gets out.</p>
+        <p style={{ color: "var(--fg-2)", marginTop: 12 }}>Most people think this is a motivation problem.</p>
+        <p style={{ color: "var(--fg-2)", marginTop: 8 }}>It is not. It is structural.</p>
+        <p style={{ color: "var(--blue)", fontWeight: 600, marginTop: 16 }}>What does your infrastructure look like?</p>
+        <p style={{ color: "var(--fg-3)", fontSize: 11, marginTop: 16 }}>— John Gilmore</p>
+      </div>
+    </div>
+  ),
+  Newsletter: (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div style={{ padding: "11px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--gold)" }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)" }}>Newsletter</span>
+          <span style={{ fontSize: 10, color: "var(--fg-3)" }}>HTML</span>
+        </div>
+        <button style={{ fontSize: 10, padding: "3px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}>Download</button>
+      </div>
+      <div style={{ padding: "26px 30px" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 16 }}>John Gilmore — Executive Edge — March 28</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", marginBottom: 12 }}>The Articulation Gap</div>
+        <div style={{ width: 28, height: 3, background: "var(--gold-bright)", marginBottom: 18, borderRadius: 2 }} />
+        <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75, marginBottom: 12 }}>I have been thinking about something I hear constantly from clients. Brilliant thinking that never makes it to an audience.</p>
+        <div style={{ background: "var(--bg)", borderLeft: "3px solid var(--gold-bright)", padding: "10px 14px", borderRadius: "0 6px 6px 0", margin: "16px 0" }}>
+          <p style={{ fontSize: 13, color: "var(--fg)", fontWeight: 600, lineHeight: 1.6 }}>The gap is not a motivation problem. It is structural. And structure can be built.</p>
+        </div>
+        <p style={{ fontSize: 11, color: "var(--fg-3)", borderTop: "1px solid var(--line)", paddingTop: 12, marginTop: 16 }}>Unsubscribe</p>
+      </div>
+    </div>
+  ),
+  Podcast: (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div style={{ padding: "11px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--fg-3)" }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)" }}>Podcast Script</span>
+          <span style={{ fontSize: 10, color: "var(--fg-3)" }}>Plain text</span>
+        </div>
+        <button style={{ fontSize: 10, padding: "3px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}>Download</button>
+      </div>
+      <div style={{ padding: "22px 26px" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>Episode script</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fg)", marginBottom: 18 }}>The Thinking Trap</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[
-            { name: "Byron", role: "Humanization", desc: "Adds natural rhythm, personality, and the human touches that AI misses" },
-            { name: "Mira", role: "Format", desc: "Structures content for the specific output format and reading context" },
-            { name: "Dmitri", role: "Platform", desc: "Optimizes for the target platform's conventions and audience expectations" },
-          ].map((s) => (
-            <div
-              key={s.name}
-              style={{
-                flex: "1 1 200px",
-                padding: "12px 14px",
-                background: "var(--surface)",
-                border: "1px solid var(--line)",
-                borderRadius: 12,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--fg)" }}>{s.role}</span>
-              </div>
-              <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
+            { label: "OPEN", color: "var(--fg-3)", text: "Hey, welcome back. I want to start today with something I hear from almost every executive I work with.", bold: false, italic: false },
+            { label: "PAUSE", color: "var(--line-2)", text: "[beat]", bold: false, italic: true },
+            { label: "HOOK", color: "var(--gold)", text: "It is a structural problem. And structure can be built.", bold: true, italic: false },
+          ].map((s, i) => (
+            <div key={i} style={{ display: "flex", gap: 12 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: s.color, width: 44, flexShrink: 0, paddingTop: 2 }}>{s.label}</span>
+              <p style={{ fontSize: 13, color: s.bold ? "var(--fg)" : "var(--fg-2)", fontWeight: s.bold ? 600 : 400, fontStyle: s.italic ? "italic" : "normal", lineHeight: 1.7 }}>{s.text}</p>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Express mode: paste/upload content directly */}
-      {isExpressMode && !wrapOutput && (
-        <div style={{
-          background: "var(--surface)",
-          border: "1px solid var(--line)",
-          borderRadius: 12,
-          padding: "32px 24px",
-        }}>
-          <p style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>
-            Paste or upload the content you want to visualize.
-          </p>
-          <textarea
-            value={expressContent}
-            onChange={(e) => setExpressContent(e.target.value)}
-            placeholder="Paste your content here..."
-            style={{
-              width: "100%",
-              minHeight: 200,
-              padding: 16,
-              borderRadius: 8,
-              border: "1px solid var(--line)",
-              background: "var(--bg)",
-              color: "var(--fg)",
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 14,
-              lineHeight: 1.6,
-              resize: "vertical",
-              outline: "none",
-              boxSizing: "border-box",
-              marginBottom: 16,
-            }}
-          />
-          <button
-            onClick={() => {
-              if (!expressContent.trim()) return;
-              // TODO: Pass content to KAI visual generation
-              navigate("/studio/wrap");
-            }}
-            disabled={!expressContent.trim()}
-            style={{
-              ...goldBtn,
-              opacity: expressContent.trim() ? 1 : 0.5,
-              cursor: expressContent.trim() ? "pointer" : "default",
-            }}
-          >
-            Create Visual
-          </button>
+    </div>
+  ),
+  "Sunday Story": (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      <div style={{ padding: "11px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--fg)" }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)" }}>Sunday Story — The Edition</span>
+          <span style={{ fontSize: 10, color: "var(--fg-3)" }}>HTML</span>
         </div>
-      )}
+        <button style={{ fontSize: 10, padding: "3px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}>Download</button>
+      </div>
+      <div style={{ padding: "30px 34px" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 22 }}>Sunday, March 28, 2026</div>
+        <div style={{ fontSize: 26, fontWeight: 800, color: "var(--fg)", lineHeight: 1.15, marginBottom: 8 }}>The Mountain Between Knowing and Saying</div>
+        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 24, fontStyle: "italic" }}>On the gap between having something to say and getting it into the world.</div>
+        <div style={{ width: 36, height: 1, background: "var(--line)", marginBottom: 22 }} />
+        <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8, marginBottom: 14 }}>There is a thing that happens in rooms where smart people gather. Someone says something that shifts the whole conversation. Everyone feels it.</p>
+        <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8 }}>And then the meeting ends. And that insight dissolves. Not because it was not valuable. Because there was no infrastructure to carry it forward.</p>
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--line)", fontSize: 12, color: "var(--fg-3)" }}>John Gilmore</div>
+      </div>
+    </div>
+  ),
+};
 
-      {/* Single output loaded by ID */}
-      {wrapOutput && (
-        <div style={{
-          background: "var(--surface)",
-          border: "1px solid var(--line)",
-          borderRadius: 12,
-          padding: "24px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{wrapOutput.title}</div>
-              <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 4 }}>
-                {TYPE_LABELS[wrapOutput.output_type] || wrapOutput.output_type}
-                {wrapOutput.score ? ` · ${Math.round(wrapOutput.score / 10)}%` : ""}
+// ── Wrap dashboard panel ──────────────────────────────────────
+function WrapDashboard({
+  activeFormat,
+  selectedTemplate,
+  onSelectTemplate,
+  onWrap,
+  wrapped,
+  onReset,
+  copyToClipboard,
+  downloadFile,
+  onToggleCopy,
+  onToggleDownload,
+}: {
+  activeFormat: WrapFormat;
+  selectedTemplate: string;
+  onSelectTemplate: (t: string) => void;
+  onWrap: () => void;
+  wrapped: boolean;
+  onReset: () => void;
+  copyToClipboard: boolean;
+  downloadFile: boolean;
+  onToggleCopy: () => void;
+  onToggleDownload: () => void;
+}) {
+  const sourceFile = SOURCE_FILES[activeFormat];
+  const formatLabel = FORMAT_LABEL[activeFormat];
+
+  const DpLabel = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {children}
+    </div>
+  );
+
+  return (
+    <>
+      {/* Source file */}
+      <div style={{ marginBottom: 14 }}>
+        <DpLabel>Source</DpLabel>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 6 }}>
+          <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 1.75, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+          </svg>
+          <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{sourceFile}</span>
+        </div>
+      </div>
+
+      {/* Templates */}
+      <div style={{ marginBottom: 14 }}>
+        <DpLabel>
+          <span>Templates</span>
+          <span style={{ fontSize: 9, fontWeight: 600, color: "var(--blue)", cursor: "pointer", textTransform: "none" as const, letterSpacing: 0 }}>Manage</span>
+        </DpLabel>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {TEMPLATES.map(t => (
+            <div
+              key={t.name}
+              onClick={() => onSelectTemplate(t.name)}
+              style={{
+                padding: "9px 12px", borderRadius: 7,
+                border: selectedTemplate === t.name ? "1px solid var(--gold-bright)" : "1px solid var(--line)",
+                background: selectedTemplate === t.name ? "rgba(245,198,66,0.05)" : "var(--surface)",
+                cursor: "pointer", transition: "all 0.1s",
+              }}
+              onMouseEnter={e => { if (selectedTemplate !== t.name) e.currentTarget.style.borderColor = "var(--line-2)"; }}
+              onMouseLeave={e => { if (selectedTemplate !== t.name) e.currentTarget.style.borderColor = "var(--line)"; }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)" }}>{t.name}</span>
+                <span style={{ fontSize: 9, color: "var(--fg-3)" }}>{t.format}</span>
               </div>
             </div>
-            <button
-              onClick={() => navigate(`/studio/outputs/${wrapOutput.id}`)}
-              style={goldBtn}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-            >
-              Wrap and publish
-            </button>
+          ))}
+          <div
+            style={{
+              padding: "5px 9px", borderRadius: 5,
+              border: "1px dashed var(--line)", textAlign: "center" as const,
+              cursor: "pointer", fontSize: 10, color: "var(--fg-3)", marginTop: 2,
+              transition: "all 0.12s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+          >
+            + Add template
           </div>
-          {wrapOutput.content && (
-            <div style={{
-              padding: 16,
-              background: "var(--bg)",
-              borderRadius: 8,
-              border: "1px solid var(--line)",
-              fontSize: 14,
-              lineHeight: 1.6,
-              color: "var(--fg)",
-              whiteSpace: "pre-wrap",
-            }}>
-              {wrapOutput.content}
-            </div>
-          )}
         </div>
-      )}
+      </div>
 
-      {/* Output list (no express, no single output) */}
-      {!isExpressMode && !wrapOutput && (
-        <>
-          {loading ? (
-            <div style={{ padding: "40px 0", fontSize: 14, color: "var(--text-secondary)" }}>
-              Loading...
+      {/* Also */}
+      <div style={{ marginBottom: 14 }}>
+        <DpLabel>Also</DpLabel>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {[
+            { label: "Copy to clipboard", checked: copyToClipboard, toggle: onToggleCopy },
+            { label: "Download file", checked: downloadFile, toggle: onToggleDownload },
+          ].map(item => (
+            <label key={item.label} onClick={item.toggle} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 5, cursor: "pointer", fontSize: 11, color: "var(--fg-2)" }}>
+              <input
+                type="checkbox"
+                checked={item.checked}
+                onChange={item.toggle}
+                style={{ accentColor: "var(--blue)", width: 13, height: 13, flexShrink: 0, cursor: "pointer" }}
+              />
+              {item.label}
+            </label>
+          ))}
+        </div>
+        <div style={{ fontSize: 9, color: "var(--fg-3)", marginTop: 4 }}>Always saves to Session Files.</div>
+      </div>
+
+      {/* Wrap action */}
+      <div id="wrap-action-sec">
+        {wrapped ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "rgba(74,144,217,0.06)", border: "1px solid rgba(74,144,217,0.2)", borderRadius: 6 }}>
+            <svg style={{ width: 14, height: 14, stroke: "var(--blue)", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--blue)" }}>Wrapped and saved</span>
+            <button onClick={onReset} style={{ marginLeft: "auto", fontSize: 10, color: "var(--fg-3)", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font)" }}>Reset</button>
+          </div>
+        ) : (
+          <button
+            onClick={onWrap}
+            style={{
+              width: "100%", padding: 10, borderRadius: 6,
+              background: "var(--gold-bright)", border: "none",
+              fontSize: 12, fontWeight: 700, color: "var(--fg)",
+              cursor: "pointer", fontFamily: "var(--font)",
+              transition: "opacity 0.1s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+          >
+            {activeFormat === "Sunday Story" ? "Wrap as Sunday Story" : `Wrap ${activeFormat}`}
+          </button>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────
+export default function WrapPage() {
+  const nav = useNavigate();
+  const { setDashContent, setDashOpen } = useShell();
+
+  const [activeFormat, setActiveFormat] = useState<WrapFormat>("LinkedIn");
+  const [selectedTemplate, setSelectedTemplate] = useState("LinkedIn Post");
+  const [wrapping, setWrapping] = useState(false);
+  const [wrapped, setWrapped] = useState(false);
+  const [copyToClipboard, setCopyToClipboard] = useState(true);
+  const [downloadFile, setDownloadFile] = useState(true);
+
+  const handleTabClick = (format: WrapFormat) => {
+    setActiveFormat(format);
+    setWrapped(false);
+    // Set default template per format
+    const defaults: Record<WrapFormat, string> = {
+      LinkedIn: "LinkedIn Post", Newsletter: "Newsletter",
+      Podcast: "Podcast Script", "Sunday Story": "Sunday Story",
+    };
+    setSelectedTemplate(defaults[format]);
+  };
+
+  const handleWrap = () => {
+    setWrapping(true);
+    setTimeout(() => {
+      setWrapping(false);
+      setWrapped(true);
+    }, 1200);
+  };
+
+  const handleReset = () => {
+    setWrapped(false);
+  };
+
+  useLayoutEffect(() => {
+    setDashOpen(true);
+    setDashContent(
+      <WrapDashboard
+        activeFormat={activeFormat}
+        selectedTemplate={selectedTemplate}
+        onSelectTemplate={setSelectedTemplate}
+        onWrap={handleWrap}
+        wrapped={wrapped}
+        onReset={handleReset}
+        copyToClipboard={copyToClipboard}
+        downloadFile={downloadFile}
+        onToggleCopy={() => setCopyToClipboard(v => !v)}
+        onToggleDownload={() => setDownloadFile(v => !v)}
+      />
+    );
+    return () => setDashContent(null);
+  }, [activeFormat, selectedTemplate, wrapped, copyToClipboard, downloadFile, setDashContent, setDashOpen]);
+
+  const TabBtn = ({ format }: { format: WrapFormat }) => {
+    const active = activeFormat === format;
+    return (
+      <div
+        onClick={() => handleTabClick(format)}
+        style={{
+          fontSize: 11, fontWeight: active ? 600 : 500,
+          color: active ? "var(--fg)" : "var(--fg-3)",
+          padding: "12px 14px",
+          borderBottom: active ? "2px solid var(--fg)" : "2px solid transparent",
+          cursor: "pointer", whiteSpace: "nowrap" as const,
+          flexShrink: 0, transition: "all 0.1s",
+        }}
+        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "var(--fg-2)"; }}
+        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "var(--fg-3)"; }}
+      >
+        {format}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: "var(--font)" }}>
+      {/* Format tabs */}
+      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--line)", padding: "0 20px", flexShrink: 0, background: "var(--bg)", overflowX: "auto" }}>
+        {WRAP_FORMATS.map(f => <TabBtn key={f} format={f} />)}
+      </div>
+
+      {/* Stage area */}
+      <div
+        style={{
+          flex: 1, overflowY: "auto",
+          padding: "32px 40px",
+          display: "flex",
+          alignItems: wrapped ? "flex-start" : "center",
+          justifyContent: wrapped ? "flex-start" : "center",
+          transition: "align-items 0.2s",
+        }}
+      >
+        {wrapping ? (
+          <div style={{ textAlign: "center" as const, color: "var(--fg-3)", fontSize: 13 }}>
+            <div style={{ fontSize: 28, color: "var(--gold-bright)", marginBottom: 14 }}>✦</div>
+            Wrapping...
+          </div>
+        ) : wrapped ? (
+          <div style={{ width: "100%", maxWidth: 580 }}>
+            {WRAP_PREVIEWS[activeFormat]}
+          </div>
+        ) : (
+          <div style={{ width: "100%", maxWidth: 580, textAlign: "center" as const }}>
+            <div style={{ fontSize: 28, color: "var(--line)", marginBottom: 14 }}>✦</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
+              Ready to wrap {activeFormat}
             </div>
-          ) : outputs.length === 0 ? (
-            <div
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--line)",
-                borderRadius: 12,
-                padding: "60px 24px",
-                textAlign: "center",
-              }}
-            >
-              <p style={{ fontSize: 18, color: "var(--fg-2)", marginBottom: 8 }}>
-                No content ready for Wrap yet.
-              </p>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "var(--fg-3)",
-                  marginBottom: 24,
-                  maxWidth: 400,
-                  marginLeft: "auto",
-                  marginRight: "auto",
-                  lineHeight: 1.6,
-                }}
-              >
-                Finish a session in Work and click "Move to Wrap," or paste content directly below.
-              </p>
-              <button
-                onClick={() => navigate("/studio/work")}
-                style={goldBtn}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-              >
-                Start a session
-              </button>
+            <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.6 }}>
+              Choose a template in the dashboard,<br />then hit Wrap it.
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {outputs.map((o) => {
-                const sc = getScoreColor(o.score);
-                return (
-                  <div
-                    key={o.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "20px 24px",
-                      background: "var(--surface)",
-                      border: "1px solid var(--line)",
-                      borderRadius: 12,
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "var(--bg-2)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "var(--surface)";
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 15,
-                            fontWeight: 500,
-                            color: "var(--text-primary)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {o.title}
-                        </div>
-                        <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 2 }}>
-                          {TYPE_LABELS[o.output_type] || o.output_type} · {timeAgo(o.created_at)}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
-                      <span
-                        style={{
-                          fontFamily: "'Afacad Flux', sans-serif",
-                          fontSize: 16,
-                          fontWeight: 500,
-                          color: sc.text,
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {Math.round(o.score / 10)}%
-                      </span>
-                      <button
-                        onClick={() => navigate(`/studio/outputs/${o.id}`)}
-                        title="Review and publish this output"
-                        style={{
-                          ...goldBtn,
-                          padding: "8px 16px",
-                          fontSize: 13,
-                          whiteSpace: "nowrap",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                      >
-                        Wrap and publish
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
