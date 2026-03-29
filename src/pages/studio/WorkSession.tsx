@@ -668,6 +668,7 @@ function StageIntake({
             onChange={setInput}
             onSend={handleSend}
             disabled={sending}
+            autoFocus
           />
         </div>
       </div>
@@ -729,11 +730,20 @@ function ChatBubble({ role, text }: { role: "watson" | "user"; text: string }) {
 
 // Clean, centered input bar for the chat interface
 function ChatInputBar({
-  placeholder, value, onChange, onSend, disabled,
+  placeholder, value, onChange, onSend, disabled, autoFocus,
 }: {
   placeholder: string; value: string; onChange: (v: string) => void;
-  onSend: () => void; disabled?: boolean;
+  onSend: () => void; disabled?: boolean; autoFocus?: boolean;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Focus on mount when autoFocus is set
+  useEffect(() => {
+    if (autoFocus && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [autoFocus]);
+
   const handleKey = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey && !disabled) {
       e.preventDefault();
@@ -761,6 +771,7 @@ function ChatInputBar({
       }}
     >
       <textarea
+        ref={textareaRef}
         value={value}
         onChange={e => onChange(e.target.value)}
         onKeyDown={handleKey}
@@ -1142,6 +1153,27 @@ export default function WorkSession() {
     setStage(s);
   }, []);
 
+  // ── Prefill from Watch/Pipeline signal ───────────────────────
+  // When "Use this in Work" is clicked from Watch or TheLot,
+  // sessionStorage has the signal title and detail.
+  // We seed Watson with the context so the user lands in a live conversation.
+  useEffect(() => {
+    const signalText = sessionStorage.getItem("ew-signal-text");
+    const signalDetail = sessionStorage.getItem("ew-signal-detail");
+    if (!signalText) return;
+
+    sessionStorage.removeItem("ew-signal-text");
+    sessionStorage.removeItem("ew-signal-detail");
+
+    const detail = signalDetail ? ` ${signalDetail}` : "";
+    setMessages([
+      { role: "watson", content: "What's on your mind?" },
+      { role: "user", content: `I want to write about this: ${signalText}.${detail}` },
+      { role: "watson", content: `Good signal. Let me ask a few questions to shape this into something worth publishing.\n\nWho specifically needs to hear this? Not a general audience — give me the exact person this is for.` },
+    ]);
+    // Keep stage at Intake so Watson continues the conversation naturally
+  }, []);
+
   // ── Reopen from Catalog or Pipeline ──────────────────────────
   // When a user hits "Reopen in Work" from OutputLibrary or TheLot,
   // sessionStorage has the output ID and title. Load the draft and
@@ -1515,7 +1547,11 @@ export default function WorkSession() {
   // ─────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%", overflow: "hidden", fontFamily: FONT }}>
+    <div style={{
+      position: "absolute", inset: 0,
+      display: "flex", flexDirection: "column",
+      overflow: "hidden", fontFamily: FONT,
+    }}>
       {stage === "Intake" && (
         <StageIntake
           messages={messages}

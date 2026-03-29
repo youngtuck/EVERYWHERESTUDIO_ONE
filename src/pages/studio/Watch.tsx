@@ -455,7 +455,13 @@ export default function Watch() {
                   signal={item}
                   ctaLabel={item.cta_label === "Note it" ? "Note it" : "Use this"}
                   ctaColor={item.cta_label === "Note it" ? "var(--gold)" : "var(--blue)"}
-                  onCta={() => { if (item.cta_label !== "Note it") nav("/studio/work"); }}
+                  onCta={() => {
+                    if (item.cta_label !== "Note it") {
+                      sessionStorage.setItem("ew-signal-text", item.title);
+                      sessionStorage.setItem("ew-signal-detail", item.summary || "");
+                      nav("/studio/work");
+                    }
+                  }}
                 />
               ))}
             </Card>

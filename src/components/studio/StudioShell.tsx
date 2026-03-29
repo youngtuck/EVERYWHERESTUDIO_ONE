@@ -278,7 +278,7 @@ export default function StudioShell() {
 
           {/* Content + Dashboard panel row */}
           <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-            <main className="studio-main-inner" style={{ flex: 1, overflowY: "auto", minWidth: 0, paddingBottom: isMobile ? 80 : 0 }}>
+            <main className="studio-main-inner" style={{ flex: 1, overflowY: "auto", minWidth: 0, paddingBottom: isMobile ? 80 : 0, position: "relative" }}>
               <Outlet />
             </main>
             {!isMobile && (

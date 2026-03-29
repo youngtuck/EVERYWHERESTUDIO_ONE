@@ -160,11 +160,22 @@ export default function TheLot() {
 
   const handleActivate = useCallback(async () => {
     if (!selectedItem) return;
-    if (selectedItem.outputId) {
-      // Reopen real output in Work
+
+    if (selectedItem.type === "signal") {
+      // Signals don't have a saved output — seed Watson with the signal context
+      // WorkSession reads ew-signal-text on mount and prefills the conversation
+      sessionStorage.setItem("ew-signal-text", selectedItem.title);
+      sessionStorage.setItem("ew-signal-detail", selectedItem.detail);
+    } else if (selectedItem.outputId) {
+      // Parked ideas with real outputs — reopen in Edit stage
       sessionStorage.setItem("ew-reopen-output-id", selectedItem.outputId);
       sessionStorage.setItem("ew-reopen-title", selectedItem.title);
+    } else {
+      // Parked idea without a saved output — seed Watson with the idea title
+      sessionStorage.setItem("ew-signal-text", selectedItem.title);
+      sessionStorage.setItem("ew-signal-detail", selectedItem.detail);
     }
+
     nav("/studio/work");
   }, [selectedItem, nav]);
 
