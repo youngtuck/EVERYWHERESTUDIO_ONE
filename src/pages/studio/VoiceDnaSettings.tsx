@@ -43,7 +43,7 @@ function buildNarrativeSummary(traits: typeof TRAITS): string {
 function TraitBar({ label, score, delay }: { label: string; score: number; delay: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-      <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", width: 180, flexShrink: 0 }}>{label}</div>
+      <div style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, color: "var(--fg)", width: 180, flexShrink: 0 }}>{label}</div>
       <div style={{ flex: 1, height: 8, borderRadius: 4, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
         <div style={{ width: `${score}%`, height: "100%", overflow: "hidden", borderRadius: 4 }}>
           <div
@@ -51,7 +51,7 @@ function TraitBar({ label, score, delay }: { label: string; score: number; delay
               height: "100%",
               width: "100%",
               borderRadius: 4,
-              background: "var(--gold-dark)",
+              background: "var(--gold)",
               animation: "barFill 0.8s ease forwards",
               animationDelay: `${delay}ms`,
               transformOrigin: "left",
@@ -59,7 +59,7 @@ function TraitBar({ label, score, delay }: { label: string; score: number; delay
           />
         </div>
       </div>
-      <div style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 600, color: "var(--gold-dark)", width: 72, textAlign: "right" }}>{scoreToLabel(score)}</div>
+      <div style={{ fontFamily: "var(--font)", fontSize: 13, fontWeight: 600, color: "var(--gold)", width: 72, textAlign: "right" }}>{scoreToLabel(score)}</div>
     </div>
   );
 }
@@ -75,31 +75,31 @@ export default function VoiceDnaSettings() {
         maxWidth: 720,
         margin: "0 auto",
         padding: "32px 24px 80px",
-        fontFamily: "'Afacad Flux', sans-serif",
+        fontFamily: "var(--font)",
       }}
     >
       <header style={{ marginBottom: 24 }}>
         <h1
           style={{
-            fontFamily: "'Afacad Flux', sans-serif",
+            fontFamily: "var(--font)",
             fontSize: 28,
             fontWeight: 700,
-            color: "var(--text-primary)",
+            color: "var(--fg)",
             margin: 0,
             letterSpacing: "-0.02em",
           }}
         >
           Voice DNA
         </h1>
-        <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0 }}>
+        <p style={{ fontFamily: "var(--font)", fontSize: 14, color: "var(--fg-2)", marginTop: 4, marginBottom: 0 }}>
           How the system learns to write like you
         </p>
       </header>
 
       <section
         style={{
-          background: "var(--surface-white)",
-          border: "1px solid var(--border-subtle)",
+          background: "var(--surface)",
+          border: "1px solid var(--line)",
           borderRadius: 12,
           padding: 32,
           marginBottom: 24,
@@ -107,12 +107,12 @@ export default function VoiceDnaSettings() {
       >
         <div
           style={{
-            fontFamily: "'Afacad Flux', sans-serif",
+            fontFamily: "var(--font)",
             fontSize: 14,
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.05em",
-            color: "var(--text-tertiary)",
+            color: "var(--fg-3)",
             marginBottom: 10,
           }}
         >
@@ -120,24 +120,24 @@ export default function VoiceDnaSettings() {
         </div>
         <p
           style={{
-            fontFamily: "'Afacad Flux', sans-serif",
+            fontFamily: "var(--font)",
             fontSize: 15,
             lineHeight: 1.5,
-            color: "var(--text-primary)",
+            color: "var(--fg)",
             margin: "0 0 12px",
           }}
         >
           {buildNarrativeSummary(TRAITS)}
         </p>
-        <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+        <div style={{ fontSize: 12, color: "var(--fg-3)" }}>
           Last trained: Mar 4, 2026
         </div>
       </section>
 
       <section
         style={{
-          background: "var(--surface-white)",
-          border: "1px solid var(--border-subtle)",
+          background: "var(--surface)",
+          border: "1px solid var(--line)",
           borderRadius: 12,
           padding: 32,
           marginBottom: 24,
@@ -145,12 +145,12 @@ export default function VoiceDnaSettings() {
       >
         <div
           style={{
-            fontFamily: "'Afacad Flux', sans-serif",
+            fontFamily: "var(--font)",
             fontSize: 14,
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.05em",
-            color: "var(--text-tertiary)",
+            color: "var(--fg-3)",
             marginBottom: 18,
           }}
         >
@@ -165,8 +165,8 @@ export default function VoiceDnaSettings() {
 
       <section
         style={{
-          background: "var(--surface-white)",
-          border: "1px solid var(--border-subtle)",
+          background: "var(--surface)",
+          border: "1px solid var(--line)",
           borderRadius: 12,
           padding: 32,
         }}
@@ -174,12 +174,12 @@ export default function VoiceDnaSettings() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <div
             style={{
-              fontFamily: "'Afacad Flux', sans-serif",
+              fontFamily: "var(--font)",
               fontSize: 14,
               fontWeight: 500,
               textTransform: "uppercase",
               letterSpacing: "0.05em",
-              color: "var(--text-tertiary)",
+              color: "var(--fg-3)",
             }}
           >
             WRITING SAMPLES
@@ -189,11 +189,11 @@ export default function VoiceDnaSettings() {
             onClick={() => fileInputRef.current?.click()}
             style={{
               background: "transparent",
-              color: "var(--text-primary)",
-              border: "1px solid var(--border-default)",
+              color: "var(--fg)",
+              border: "1px solid var(--line-2)",
               padding: "10px 20px",
               borderRadius: 8,
-              fontFamily: "'Afacad Flux', sans-serif",
+              fontFamily: "var(--font)",
               fontSize: 14,
               fontWeight: 500,
               cursor: "pointer",
@@ -204,11 +204,11 @@ export default function VoiceDnaSettings() {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(0,0,0,0.02)";
-              e.currentTarget.style.borderColor = "var(--text-tertiary)";
+              e.currentTarget.style.borderColor = "var(--fg-3)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.borderColor = "var(--border-default)";
+              e.currentTarget.style.borderColor = "var(--line-2)";
             }}
           >
             <Plus size={16} strokeWidth={2} />
@@ -234,16 +234,16 @@ export default function VoiceDnaSettings() {
               key={i}
               style={{
                 padding: "14px 0",
-                borderBottom: i < samples.length - 1 ? "1px solid var(--border-subtle)" : "none",
+                borderBottom: i < samples.length - 1 ? "1px solid var(--line)" : "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
               }}
             >
-              <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
+              <span style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
-                <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>{s.wordCount} words</span>
-                <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>{s.dateAdded}</span>
+                <span style={{ fontFamily: "var(--font)", fontSize: 12, color: "var(--fg-3)" }}>{s.wordCount} words</span>
+                <span style={{ fontFamily: "var(--font)", fontSize: 12, color: "var(--fg-3)" }}>{s.dateAdded}</span>
               </div>
             </div>
           ))}
@@ -253,8 +253,8 @@ export default function VoiceDnaSettings() {
       {/* Retrain section */}
       <section
         style={{
-          background: "var(--surface-white)",
-          border: "1px solid var(--border-subtle)",
+          background: "var(--surface)",
+          border: "1px solid var(--line)",
           borderRadius: 12,
           padding: 32,
           marginTop: 24,
@@ -262,18 +262,18 @@ export default function VoiceDnaSettings() {
       >
         <div
           style={{
-            fontFamily: "'Afacad Flux', sans-serif",
+            fontFamily: "var(--font)",
             fontSize: 14,
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.05em",
-            color: "var(--text-tertiary)",
+            color: "var(--fg-3)",
             marginBottom: 12,
           }}
         >
           RETRAIN
         </div>
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: "0 0 16px", lineHeight: 1.6 }}>
+        <p style={{ fontSize: 14, color: "var(--fg-2)", margin: "0 0 16px", lineHeight: 1.6 }}>
           Add new writing samples or re-analyze existing ones to improve voice matching accuracy.
         </p>
         <button
@@ -281,14 +281,14 @@ export default function VoiceDnaSettings() {
           onClick={() => navigate("/onboarding?step=voice&retrain=true")}
           style={{
             background: "transparent",
-            color: "var(--gold-dark)",
-            border: "2px solid var(--gold-dark)",
+            color: "var(--gold)",
+            border: "2px solid var(--gold)",
             borderRadius: 8,
             padding: "10px 20px",
             fontSize: 14,
             fontWeight: 600,
             cursor: "pointer",
-            fontFamily: "'Afacad Flux', sans-serif",
+            fontFamily: "var(--font)",
             display: "flex",
             alignItems: "center",
             gap: 8,

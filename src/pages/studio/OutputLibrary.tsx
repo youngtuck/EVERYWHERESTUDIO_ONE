@@ -1,530 +1,271 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { FileText, Search, Trash2 } from "lucide-react";
+/**
+ * OutputLibrary.tsx — The Catalog
+ * Phase 6: fully wired to Supabase outputs table.
+ * Selecting a session opens detail in dashboard panel.
+ * "Reopen in Work" navigates to WorkSession with session state.
+ */
+import { useState, useEffect, useLayoutEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import { useShell } from "../../components/studio/StudioShell";
 import { timeAgo } from "../../utils/timeAgo";
-import { getScoreColor } from "../../utils/scoreColor";
 import "./shared.css";
 
-interface Output {
+const FONT = "var(--font)";
+
+interface OutputRow {
   id: string;
   title: string;
   output_type: string;
   score: number;
   created_at: string;
+  updated_at?: string;
+  content?: string;
+  content_state?: string;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  essay: "Essay",
-  newsletter: "Newsletter",
-  presentation: "Presentation",
-  social: "Social",
-  podcast: "Podcast",
-  podcast_script: "Podcast Script",
-  video: "Video",
-  sunday_story: "Essay",
-  freestyle: "Freestyle",
-  linkedin_post: "LinkedIn Post",
-  twitter_thread: "Twitter Thread",
-  substack_note: "Substack Note",
-  talk_outline: "Talk Outline",
-  email_campaign: "Email Campaign",
-  blog_post: "Blog Post",
-  executive_brief: "Executive Brief",
-  short_video: "Short Video",
-};
+function formatDateShort(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}.${d.getDate()}.${String(d.getFullYear()).slice(2)}`;
+}
 
-export default function OutputLibrary() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const viewParam = searchParams.get("view");
-  const isInProgressView = viewParam === "in_progress";
-  const { user } = useAuth();
-  const [outputs, setOutputs] = useState<Output[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"list" | "card">("list");
-  const [deleteTarget, setDeleteTarget] = useState<Output | null>(null);
-  const [toast, setToast] = useState("");
-
-  const handleDelete = async () => {
-    if (!deleteTarget || !user) return;
-    await supabase.from("pipeline_runs").delete().eq("output_id", deleteTarget.id);
-    await supabase.from("outputs").delete().eq("id", deleteTarget.id).eq("user_id", user.id);
-    setOutputs(prev => prev.filter(o => o.id !== deleteTarget.id));
-    setDeleteTarget(null);
-    setToast("Output deleted");
-    setTimeout(() => setToast(""), 2000);
+function outputTypeToLabel(t: string): string {
+  const map: Record<string, string> = {
+    essay: "Essay", newsletter: "Newsletter", socials: "LinkedIn Post",
+    podcast: "Podcast Script", presentation: "Presentation",
+    video_script: "Video Script", business: "Business", book: "Book",
+    freestyle: "Freestyle", sunday_story: "Sunday Story",
   };
+  return map[t] || t.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
 
-  useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    let query = supabase
-      .from("outputs")
-      .select("id, title, output_type, score, created_at, content_state")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-    // Filter by content_state based on view
-    if (isInProgressView) {
-      query = query.eq("content_state", "in_progress");
-    }
-    query.then(({ data }) => {
-      setOutputs(data ?? []);
-      setLoading(false);
-    });
-  }, [user, isInProgressView]);
+function scoreColor(score: number): string {
+  if (score >= 900) return "var(--blue)";
+  if (score >= 700) return "var(--gold)";
+  return "var(--fg-3)";
+}
 
-  const baseOutputs = outputs;
-  const filtered = baseOutputs.filter((o) => {
-    const matchSearch = !search || o.title.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === "all" || o.output_type === filter;
-    return matchSearch && matchFilter;
-  });
-
-  const transition = "all 0.15s ease";
+// ── Session detail dashboard panel ────────────────────────────
+function SessionDetailPanel({
+  output, onReopen, onDelete,
+}: {
+  output: OutputRow;
+  onReopen: () => void;
+  onDelete: () => void;
+}) {
+  const formats = [outputTypeToLabel(output.output_type)];
 
   return (
-    <div
-      className="studio-page-transition"
-      style={{
-        maxWidth: 800,
-        margin: "0 auto",
-        padding: "32px 24px",
-        fontFamily: "var(--font)",
-      }}
-    >
-      {/* Page Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-end",
-          marginBottom: 32,
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontFamily: "var(--font)",
-              fontSize: 28,
-              fontWeight: 700,
-              color: "var(--text-primary)",
-              margin: 0,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            {isInProgressView ? "In Progress" : "The Vault"}
-          </h1>
-          <p
-            style={{
-              fontFamily: "var(--font)",
-              fontSize: 14,
-              color: "var(--text-secondary)",
-              marginTop: 4,
-              marginBottom: 0,
-            }}
-          >
-            {isInProgressView
-              ? `${baseOutputs.length} piece${baseOutputs.length !== 1 ? "s" : ""} in progress`
-              : `${outputs.length} pieces in the vault`}
-          </p>
+    <>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>
+          {formatDateShort(output.created_at)}
         </div>
-        <button
-          onClick={() => navigate("/studio/work")}
-          style={{
-            background: "var(--text-primary)",
-            color: "#fff",
-            padding: "10px 20px",
-            borderRadius: 8,
-            fontFamily: "'Afacad Flux', sans-serif",
-            fontSize: 14,
-            fontWeight: 500,
-            border: "none",
-            cursor: "pointer",
-            transition,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = "0.88";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = "1";
-          }}
-        >
-          New Session
-        </button>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 10, lineHeight: 1.4 }}>{output.title}</div>
+
+        {output.score > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <span style={{ fontSize: 10, color: "var(--fg-3)" }}>Betterish Score</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor(output.score) }}>{output.score}</span>
+          </div>
+        )}
+
+        {formats.map(f => (
+          <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 5, marginBottom: 4 }}>
+            <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 1.75, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1 }}>{f}</span>
+            <span
+              onClick={() => { if (output.content) navigator.clipboard.writeText(output.content); }}
+              style={{ fontSize: 9, color: "var(--blue)", cursor: "pointer", fontWeight: 600 }}
+            >Copy</span>
+          </div>
+        ))}
       </div>
 
-      {/* Search and Filter Bar */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          marginBottom: 24,
-          alignItems: "center",
-        }}
-      >
-        <div style={{ flex: 1, maxWidth: 360, position: "relative" }}>
-          <Search
-            size={16}
-            style={{
-              position: "absolute",
-              left: 14,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-tertiary)",
-              pointerEvents: "none",
-            }}
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search outputs..."
-            style={{
-              width: "100%",
-              padding: "10px 16px 10px 40px",
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 14,
-              color: "var(--text-primary)",
-              background: "var(--surface)",
-              border: "1px solid var(--line)",
-              borderRadius: 8,
-              outline: "none",
-              transition,
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--gold-dark)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--line)";
-            }}
-          />
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Actions</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <button
+            onClick={onReopen}
+            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
+          >
+            Reopen in Work
+          </button>
+          <button
+            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
+          >
+            Rename session
+          </button>
+          <button
+            onClick={onDelete}
+            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.04)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
+          >
+            Delete session
+          </button>
         </div>
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          style={{
-            minWidth: 140,
-            padding: "10px 36px 10px 16px",
-            fontFamily: "var(--font)",
-            fontSize: 14,
-            color: "var(--text-primary)",
-            background: "var(--surface)",
-            border: "1px solid var(--line)",
-            borderRadius: 8,
-            appearance: "none",
-            cursor: "pointer",
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4.5L6 8L10 4.5' stroke='%239B9B9B' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'/%3E%3C/svg%3E")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 12px center",
-          }}
-        >
-          <option value="all">All types</option>
-          {Object.entries(TYPE_LABELS).map(([v, l]) => (
-            <option key={v} value={v}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={() => setViewMode((m) => (m === "list" ? "card" : "list"))}
-          style={{
-            padding: "8px 12px",
-            border: "1px solid var(--line)",
-            borderRadius: 8,
-            background: "var(--surface)",
-            cursor: "pointer",
-            fontSize: 12,
-            fontWeight: 500,
-            color: "var(--fg-2)",
-            fontFamily: "var(--font)",
-          }}
-          title={viewMode === "list" ? "Switch to card view" : "Switch to list view"}
-        >
-          {viewMode === "list" ? "Cards" : "List"}
-        </button>
+      </div>
+    </>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────
+export default function OutputLibrary() {
+  const nav = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { setDashContent, setDashOpen } = useShell();
+
+  const [outputs, setOutputs] = useState<OutputRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  // Load outputs from Supabase
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    setLoading(true);
+    (async () => {
+      const { data } = await supabase
+        .from("outputs")
+        .select("id, title, output_type, score, created_at, updated_at, content_state")
+        .eq("user_id", user.id)
+        .in("content_state", ["vault", "in_progress"])
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setOutputs((data as OutputRow[]) || []);
+      if (data && data.length > 0) setSelectedId(data[0].id);
+      setLoading(false);
+    })();
+  }, [user]);
+
+  // Load content for selected output (for copy)
+  const [selectedContent, setSelectedContent] = useState<string>("");
+  useEffect(() => {
+    if (!selectedId || !user) return;
+    supabase.from("outputs").select("content").eq("id", selectedId).single().then(({ data }) => {
+      setSelectedContent(data?.content || "");
+    });
+  }, [selectedId, user]);
+
+  const selectedOutput = outputs.find(o => o.id === selectedId) ?? null;
+
+  const handleReopen = useCallback(() => {
+    if (!selectedOutput) return;
+    // Store session context and navigate to work
+    sessionStorage.setItem("ew-reopen-output-id", selectedOutput.id);
+    sessionStorage.setItem("ew-reopen-title", selectedOutput.title);
+    nav("/studio/work");
+  }, [selectedOutput, nav]);
+
+  const handleDelete = useCallback(async () => {
+    if (!selectedOutput || !user) return;
+    const confirmed = window.confirm(`Delete "${selectedOutput.title}"? This cannot be undone.`);
+    if (!confirmed) return;
+    await supabase.from("outputs").delete().eq("id", selectedOutput.id).eq("user_id", user.id);
+    setOutputs(prev => prev.filter(o => o.id !== selectedOutput.id));
+    setSelectedId(null);
+    toast("Session deleted.");
+  }, [selectedOutput, user, toast]);
+
+  // Dashboard panel
+  useLayoutEffect(() => {
+    if (selectedOutput) {
+      setDashOpen(true);
+      setDashContent(
+        <SessionDetailPanel
+          output={{ ...selectedOutput, content: selectedContent }}
+          onReopen={handleReopen}
+          onDelete={handleDelete}
+        />
+      );
+    } else {
+      setDashOpen(false);
+      setDashContent(
+        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+          Select a session to see its files.
+        </div>
+      );
+    }
+    return () => setDashContent(null);
+  }, [selectedOutput, selectedContent, handleReopen, handleDelete, setDashContent, setDashOpen]);
+
+  const filtered = outputs.filter(o =>
+    !search || o.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{ padding: 20, fontFamily: FONT, maxWidth: 680 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)" }}>The Catalog</div>
+        <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{outputs.length} session{outputs.length !== 1 ? "s" : ""}</div>
       </div>
 
-      {/* Output List */}
+      {/* Search */}
+      {outputs.length > 6 && (
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search sessions..."
+          style={{
+            width: "100%", marginBottom: 12, background: "var(--surface)",
+            border: "1px solid var(--line)", borderRadius: 7, padding: "8px 12px",
+            fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none",
+          }}
+          onFocus={e => { e.target.style.borderColor = "rgba(74,144,217,0.4)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+        />
+      )}
+
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="studio-skeleton"
-              style={{
-                height: 56,
-                marginBottom: 0,
-                borderBottom: "1px solid var(--line)",
-                animationDelay: `${i * 50}ms`,
-              }}
-            />
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: "1px solid var(--line)" }}>
+              <div style={{ width: 48, height: 10, background: "var(--bg-2)", borderRadius: 3 }} />
+              <div style={{ flex: 1, height: 12, background: "var(--bg-2)", borderRadius: 3 }} />
+            </div>
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div
-          style={{
-            padding: "80px 0",
-            textAlign: "center",
-          }}
-        >
-          <FileText size={32} style={{ color: "var(--text-tertiary)" }} />
-          <h2
-            style={{
-              fontFamily: "var(--font)",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              marginTop: 16,
-              marginBottom: 0,
-            }}
-          >
-            {isInProgressView ? "Nothing in progress" : "No outputs yet"}
-          </h2>
-          <p
-            style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 14,
-              color: "var(--text-secondary)",
-              marginTop: 8,
-              marginBottom: 0,
-            }}
-          >
-            Start a session with Watson to create your first piece.
-          </p>
-          <button
-            onClick={() => navigate("/studio/work")}
-            style={{
-              marginTop: 20,
-              background: "var(--gold-dark)",
-              color: "#fff",
-              padding: "10px 20px",
-              borderRadius: 8,
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 14,
-              fontWeight: 500,
-              border: "none",
-              cursor: "pointer",
-              transition,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--gold-light)";
-              e.currentTarget.style.transform = "scale(1.02)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--gold-dark)";
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-          >
-            Start Session
-          </button>
+        <div style={{ textAlign: "center" as const, padding: "48px 0", color: "var(--fg-3)", fontSize: 13 }}>
+          {search ? "No sessions match your search." : "No sessions yet. Complete a Work session to see it here."}
         </div>
-      ) : viewMode === "card" ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-            {filtered.map((o) => {
-              const sc = getScoreColor(o.score);
-              return (
-                <button
-                  key={o.id}
-                  onClick={() => navigate(`/studio/outputs/${o.id}`)}
-                  className="card"
-                  style={{
-                    padding: 20,
-                    textAlign: "left",
-                    cursor: "pointer",
-                    border: "1px solid var(--line)",
-                    borderRadius: 12,
-                    background: "var(--surface)",
-                    transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: sc.fill, flexShrink: 0 }} />
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                      {TYPE_LABELS[o.output_type] || o.output_type}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.3 }}>
-                    {o.title}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-
-                    <span style={{ fontSize: 18, fontWeight: 700, color: sc.text, fontVariantNumeric: "tabular-nums" }}>{o.score}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{timeAgo(o.created_at)}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(o); }}
-                        title="Delete"
-                        style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--fg-3)", transition: "color 0.15s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-3)"; }}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {filtered.map((o) => {
-            const sc = getScoreColor(o.score);
+      ) : (
+        <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+          {filtered.map((output, i) => {
+            const active = selectedId === output.id;
             return (
-              <button
-                key={o.id}
-                onClick={() => navigate(`/studio/outputs/${o.id}`)}
+              <div
+                key={output.id}
+                onClick={() => setSelectedId(output.id)}
                 style={{
-                  padding: "16px 0",
-                  borderBottom: "1px solid var(--line)",
-                  borderTop: filtered[0]?.id === o.id ? "1px solid var(--line)" : "none",
-                  display: "flex",
-                  alignItems: "center",
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "8px 8px",
+                  borderBottom: i < filtered.length - 1 ? "1px solid var(--line)" : "none",
                   cursor: "pointer",
-                  background: "transparent",
-                  borderLeft: "none",
-                  borderRight: "none",
-                  width: "100%",
-                  textAlign: "left",
-                  fontFamily: "inherit",
-                  transition,
+                  background: active ? "rgba(245,198,66,0.06)" : "transparent",
+                  transition: "background 0.1s",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--bg-2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg)"; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
               >
-                <div
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: sc.fill,
-                    flexShrink: 0,
-                    marginRight: 16,
-                  }}
-                />
-                <span
-                  style={{
-                    flex: 1,
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 15,
-                    fontWeight: 500,
-                    color: "var(--text-primary)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {o.title}
+                <span style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)", flexShrink: 0, fontVariantNumeric: "tabular-nums", width: 48 }}>
+                  {formatDateShort(output.created_at)}
                 </span>
-                <span
-                  style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 13,
-                    color: "var(--text-tertiary)",
-                    width: 120,
-                    textAlign: "right",
-                    flexShrink: 0,
-                  }}
-                >
-                  {TYPE_LABELS[o.output_type] || o.output_type}
+                <span style={{ fontSize: 12, color: active ? "var(--fg)" : "var(--fg-2)", flex: 1, lineHeight: 1.4, fontWeight: active ? 500 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                  {output.title || "Untitled"}
                 </span>
-                <span
-                  style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: sc.text,
-                    width: 48,
-                    textAlign: "right",
-                    flexShrink: 0,
-                  }}
-                >
-                  {o.score}
-                </span>
-                {(Date.now() - new Date(o.created_at).getTime()) < 5 * 60 * 1000 ? (
-                  <span
-                    style={{
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      textTransform: "uppercase",
-                      padding: "3px 10px",
-                      borderRadius: 4,
-                      background: "rgba(58, 154, 92, 0.1)",
-                      color: "#3A9A5C",
-                      width: 56,
-                      textAlign: "center" as const,
-                      flexShrink: 0,
-                      marginLeft: 8,
-                    }}
-                  >
-                    saved
+                {output.score > 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 600, color: scoreColor(output.score), flexShrink: 0 }}>
+                    {output.score}
                   </span>
-                ) : (
-                  <span style={{ width: 56, marginLeft: 8, flexShrink: 0 }} />
                 )}
-                <span
-                  style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 12,
-                    color: "var(--text-tertiary)",
-                    width: 72,
-                    textAlign: "right",
-                    flexShrink: 0,
-                  }}
-                >
-                  {timeAgo(o.created_at)}
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(o); }}
-                  title="Delete output"
-                  style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--fg-3)", flexShrink: 0, marginLeft: 4, transition: "color 0.15s" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-3)"; }}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </button>
+              </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Delete confirmation */}
-      {deleteTarget && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }} onClick={() => setDeleteTarget(null)}>
-          <div style={{ background: "var(--surface)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }} onClick={(e) => e.stopPropagation()}>
-            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Delete this output?</p>
-            <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20 }}>"{deleteTarget.title}" will be permanently removed.</p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => setDeleteTarget(null)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", cursor: "pointer", fontSize: 14, fontFamily: "'Afacad Flux', sans-serif" }}>Cancel</button>
-              <button type="button" onClick={handleDelete} style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: "var(--danger)", color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: "'Afacad Flux', sans-serif" }}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast */}
-      {toast && (
-        <div style={{ position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)", background: "#1a1a1a", color: "#fff", padding: "10px 24px", borderRadius: 100, fontSize: 13, fontWeight: 500, fontFamily: "'Afacad Flux', sans-serif", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", zIndex: 1000 }}>
-          {toast}
         </div>
       )}
     </div>

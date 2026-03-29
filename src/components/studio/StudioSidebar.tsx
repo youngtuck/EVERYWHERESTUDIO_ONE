@@ -101,20 +101,44 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
+interface Project { id: string; name: string; is_default: boolean; }
+
 export default function StudioSidebar({ collapsed = false, onToggleCollapsed, onMobileClose }: SidebarProps) {
   const nav = useNavigate();
   const loc = useLocation();
   const { user, displayName } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [project, setProject] = useState("Default Project");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [showProjectMenu, setShowProjectMenu] = useState(false);
+
+  const activeProject = projects.find(p => p.id === activeProjectId) ?? projects.find(p => p.is_default) ?? projects[0];
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("is_admin, project_name").eq("id", user.id).single().then(({ data }) => {
+    // Load admin status
+    supabase.from("profiles").select("is_admin").eq("id", user.id).single().then(({ data }) => {
       setIsAdmin(!!data?.is_admin);
-      if (data?.project_name) setProject(data.project_name);
     });
-  }, [user]);
+    // Load projects
+    supabase
+      .from("projects")
+      .select("id, name, is_default")
+      .eq("user_id", user.id)
+      .order("is_default", { ascending: false })
+      .order("sort_order")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setProjects(data as Project[]);
+          const def = data.find((p: Project) => p.is_default);
+          setActiveProjectId(def?.id ?? data[0].id);
+        } else {
+          // Fallback: show display name as project
+          setProjects([{ id: "default", name: displayName?.split(" ")[0] ? `${displayName.split(" ")[0]}'s Studio` : "My Studio", is_default: true }]);
+          setActiveProjectId("default");
+        }
+      });
+  }, [user, displayName]);
 
   const isActive = (p: string) => {
     if (p === "/studio/work") return loc.pathname === p || loc.pathname.startsWith("/studio/work/");
@@ -150,22 +174,52 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       }}>
         {/* Project block */}
         {!collapsed && (
-          <div style={{ flex: 1, overflow: "hidden", minWidth: 0 }}>
-            <div style={{
-              display: "flex", alignItems: "flex-start", flexDirection: "column",
-              gap: 1, background: "rgba(0,0,0,0.05)", borderRadius: 5,
-              padding: "5px 8px", cursor: "pointer",
-            }}>
+          <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
+            <div
+              onClick={() => projects.length > 1 && setShowProjectMenu(m => !m)}
+              style={{
+                display: "flex", alignItems: "flex-start", flexDirection: "column",
+                gap: 1, background: "rgba(0,0,0,0.05)", borderRadius: 5,
+                padding: "5px 8px", cursor: projects.length > 1 ? "pointer" : "default",
+              }}
+            >
               <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Project</span>
               <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 4 }}>
                 <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {project}
+                  {activeProject?.name ?? "Loading..."}
                 </span>
-                <svg style={{ width: 11, height: 11, stroke: "var(--fg-3)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
+                {projects.length > 1 && (
+                  <svg style={{ width: 11, height: 11, stroke: "var(--fg-3)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                )}
               </div>
             </div>
+            {showProjectMenu && projects.length > 1 && (
+              <>
+                <div onClick={() => setShowProjectMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 99 }} />
+                <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 7, boxShadow: "var(--shadow-md)", zIndex: 100, overflow: "hidden" }}>
+                  {projects.map(p => (
+                    <div
+                      key={p.id}
+                      onClick={() => { setActiveProjectId(p.id); setShowProjectMenu(false); }}
+                      style={{
+                        padding: "8px 10px", fontSize: 12, cursor: "pointer",
+                        color: p.id === activeProjectId ? "var(--fg)" : "var(--fg-2)",
+                        fontWeight: p.id === activeProjectId ? 600 : 400,
+                        background: p.id === activeProjectId ? "rgba(245,198,66,0.08)" : "transparent",
+                        transition: "background 0.1s",
+                      }}
+                      onMouseEnter={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "var(--bg)"; }}
+                      onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
+                    >
+                      {p.name}
+                      {p.is_default && <span style={{ fontSize: 9, color: "var(--fg-3)", marginLeft: 6 }}>default</span>}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 

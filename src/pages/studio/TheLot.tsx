@@ -1,353 +1,256 @@
-import { useState } from "react";
+/**
+ * TheLot.tsx — The Pipeline
+ * Phase 6: wired to Supabase outputs table (content_state = 'lot')
+ * plus static watched signals. Selecting opens detail in dashboard panel.
+ */
+import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bookmark, Plus, Trash2 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import { useShell } from "../../components/studio/StudioShell";
 import { timeAgo } from "../../utils/timeAgo";
 import "./shared.css";
 
-const PROJECTS = [
-  { id: "1", name: "My Studio" },
-  { id: "2", name: "TEDx Content" },
-  { id: "3", name: "Book Project" },
-];
+const FONT = "var(--font)";
 
-type Idea = {
+type ItemType = "signal" | "idea";
+type SignalStrength = "getting-stronger" | "steady" | "quieting";
+
+interface PipelineItem {
   id: string;
+  type: ItemType;
   title: string;
-  note: string;
-  projectId: string;
-  projectName: string;
-  createdAt: string;
-};
+  meta: string;
+  strength?: SignalStrength;
+  strengthLabel?: string;
+  subtitle: string;
+  detail: string;
+  action: string;
+  outputId?: string;
+}
 
-const PLACEHOLDER_IDEAS: Idea[] = [
-  { id: "1", title: "Essay on delegation and trust", note: "Angle: most advice is about systems, not the relationship. Parked until I have a clear thesis.", projectId: "1", projectName: "My Studio", createdAt: "2026-03-10T00:00:00Z" },
-  { id: "2", title: "TEDx opener: the question that changed my view", note: "Personal story hook. Need to refine the question before writing.", projectId: "2", projectName: "TEDx Content", createdAt: "2026-03-14T00:00:00Z" },
-  { id: "3", title: "Book chapter: composed intelligence", note: "Define the term and contrast with artificial intelligence. Parked for deeper research.", projectId: "3", projectName: "Book Project", createdAt: "2026-03-18T00:00:00Z" },
+// Static signals — surfaced by Watch, parked here
+const STATIC_SIGNALS: PipelineItem[] = [
+  {
+    id: "s1", type: "signal",
+    title: '"Fractional CAIO" trending',
+    meta: "Noted 3.28.26",
+    strength: "getting-stronger", strengthLabel: "Getting stronger",
+    subtitle: "Noted 3.28.26 · Getting stronger",
+    detail: "Adjacent to your positioning. Not a direct hit but the conversation is moving toward your lane. Three Reddit threads this week.",
+    action: "Use this in Work",
+  },
+  {
+    id: "s2", type: "signal",
+    title: "AI governance conversation heating up",
+    meta: "Noted 3.21.26",
+    strength: "steady", strengthLabel: "Steady",
+    subtitle: "Noted 3.21.26 · Steady",
+    detail: "Multiple publications covering this week. Not in your keyword set yet but adjacent to composed intelligence positioning.",
+    action: "Add to Watch",
+  },
+  {
+    id: "s3", type: "signal",
+    title: "Executive burnout narrative shifting",
+    meta: "Noted 3.14.26",
+    strength: "quieting", strengthLabel: "Quieting",
+    subtitle: "Noted 3.14.26 · Quieting",
+    detail: "Was strong two weeks ago. Signal weakening. May not resurface.",
+    action: "Dismiss",
+  },
 ];
 
-const transition = "all 0.15s ease";
+function strengthColor(s?: SignalStrength): string {
+  if (s === "getting-stronger") return "var(--blue)";
+  if (s === "steady") return "var(--line-2)";
+  return "var(--line)";
+}
 
-export default function TheLot() {
-  const navigate = useNavigate();
-  const [ideas, setIdeas] = useState<Idea[]>(PLACEHOLDER_IDEAS);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [newIdeaText, setNewIdeaText] = useState("");
-  const [newIdeaProjectId, setNewIdeaProjectId] = useState(PROJECTS[0]?.id ?? "");
-
-  const handleParkIt = () => {
-    const project = PROJECTS.find((p) => p.id === newIdeaProjectId);
-    if (!newIdeaText.trim() || !project) return;
-    setIdeas((prev) => [
-      ...prev,
-      {
-        id: String(Date.now()),
-        title: newIdeaText.trim().slice(0, 60) + (newIdeaText.trim().length > 60 ? "…" : ""),
-        note: newIdeaText.trim(),
-        projectId: project.id,
-        projectName: project.name,
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setNewIdeaText("");
-    setNewIdeaProjectId(PROJECTS[0]?.id ?? "");
-    setModalOpen(false);
-  };
-
-  const handlePickUp = (idea: Idea) => {
-    setIdeas((prev) => prev.filter((i) => i.id !== idea.id));
-    navigate("/studio/work", { state: { ideaTitle: idea.title, ideaDescription: idea.note } });
-  };
-
-  const handleDiscard = (idea: Idea) => {
-    if (!window.confirm("Discard this idea?")) return;
-    setIdeas((prev) => prev.filter((i) => i.id !== idea.id));
-  };
-
-  const isEmpty = ideas.length === 0;
-
+// ── Pipeline detail dashboard panel ──────────────────────────
+function PipelineDetailPanel({
+  item, onActivate, onRemove,
+}: {
+  item: PipelineItem;
+  onActivate: () => void;
+  onRemove: () => void;
+}) {
+  const isSignal = item.type === "signal";
   return (
-    <div
-      style={{
-        maxWidth: 960,
-        margin: "0 auto",
-        padding: "32px 24px 80px",
-        fontFamily: "'Afacad Flux', sans-serif",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
-        <div>
-          <h1
-            style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 28,
-              fontWeight: 700,
-              color: "var(--text-primary)",
-              margin: 0,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            The Lot
-          </h1>
-          <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "var(--text-secondary)", marginTop: 4, marginBottom: 0 }}>
-            Ideas parked for later
-          </p>
+    <>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>
+          {isSignal ? "Signal" : "Parked idea"}
         </div>
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          style={{
-            background: "var(--gold)",
-            color: "var(--fg)",
-            padding: "10px 20px",
-            borderRadius: 8,
-            fontFamily: "'Afacad Flux', sans-serif",
-            fontSize: 14,
-            fontWeight: 600,
-            border: "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            transition,
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.88"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-        >
-          <Plus size={16} strokeWidth={2.5} />
-          + Park an Idea
-        </button>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4, lineHeight: 1.4 }}>{item.title}</div>
+        <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 12 }}>{item.subtitle}</div>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>{item.detail}</div>
       </div>
-
-      {isEmpty ? (
-        <div
-          style={{
-            padding: "80px 0",
-            textAlign: "center",
-          }}
-        >
-          <Bookmark size={32} style={{ color: "var(--text-tertiary)" }} />
-          <h2
-            style={{
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 18,
-              fontWeight: 600,
-              color: "var(--text-primary)",
-              marginTop: 16,
-              marginBottom: 8,
-            }}
-          >
-            No ideas parked yet
-          </h2>
-          <p style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 320, margin: "0 auto 20px" }}>
-            Use The Lot to save ideas you are not ready to develop.
-          </p>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Actions</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            style={{
-              background: "var(--gold-dark)",
-              color: "#fff",
-              padding: "10px 20px",
-              borderRadius: 8,
-              fontFamily: "'Afacad Flux', sans-serif",
-              fontSize: 14,
-              fontWeight: 500,
-              border: "none",
-              cursor: "pointer",
-              transition,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--gold-light)"; e.currentTarget.style.transform = "scale(1.02)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "var(--gold-dark)"; e.currentTarget.style.transform = "scale(1)"; }}
+            onClick={onActivate}
+            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "none", background: isSignal ? "var(--blue)" : "var(--fg)", fontSize: 11, color: "#fff", cursor: "pointer", fontFamily: FONT, fontWeight: 600 }}
           >
-            Park an Idea
+            {item.action}
+          </button>
+          <button style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}>Edit note</button>
+          <button
+            onClick={onRemove}
+            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.04)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
+          >
+            Remove
           </button>
         </div>
-      ) : (
-        <div className="lot-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-          {ideas.map((idea) => (
-            <div
-              key={idea.id}
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--line)",
-                borderRadius: 12,
-                padding: "20px 24px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                minHeight: 200,
-                transition,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--bg-2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "var(--surface)";
-              }}
-            >
-              <div>
-                <h3
-                  style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 16,
-                    fontWeight: 600,
-                    color: "var(--text-primary)",
-                    margin: 0,
-                    lineHeight: 1.4,
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}
-                >
-                  {idea.title}
-                </h3>
-                <p
-                  style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 13,
-                    color: "var(--text-secondary)",
-                    marginTop: 8,
-                    marginBottom: 0,
-                    lineHeight: 1.5,
-                    display: "-webkit-box",
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}
-                >
-                  {idea.note}
-                </p>
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 8 }}>
-                  Parked {timeAgo(idea.createdAt)}
-                </div>
-              </div>
-              <div style={{ marginTop: "auto", paddingTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-                <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 12, color: "var(--text-tertiary)" }}>
-                  {idea.projectName !== "My Studio" ? idea.projectName : ""}
-                </span>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <button
-                    type="button"
-                    onClick={() => handleDiscard(idea)}
-                    title="Delete idea"
-                    style={{
-                      background: "transparent",
-                      color: "var(--text-tertiary)",
-                      border: "none",
-                      padding: 6,
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: 0.3,
-                      transition,
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.color = "#E53935"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.3"; e.currentTarget.style.color = "var(--text-tertiary)"; }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handlePickUp(idea)}
-                    style={{
-                      background: "transparent",
-                      color: "var(--text-primary)",
-                      border: "1px solid var(--line)",
-                      padding: "6px 14px",
-                      borderRadius: 8,
-                      fontFamily: "'Afacad Flux', sans-serif",
-                      fontSize: 13,
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      transition,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(0,0,0,0.03)";
-                      e.currentTarget.style.borderColor = "var(--text-tertiary)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.borderColor = "var(--line)";
-                    }}
-                  >
-                    Pick Up
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      </div>
+    </>
+  );
+}
 
-      {modalOpen && (
-        <>
-          <div
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9998, backdropFilter: "blur(4px)" }}
-            aria-hidden
-            onClick={() => setModalOpen(false)}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="park-idea-title"
-            style={{
-              position: "fixed",
-              left: "50%",
-              top: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "100%",
-              maxWidth: 420,
-              background: "var(--bg-light)",
-              borderRadius: 12,
-              border: "1px solid var(--line)",
-              zIndex: 9999,
-              fontFamily: "'Afacad Flux', sans-serif",
-              padding: "24px 28px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="park-idea-title" style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 18, fontWeight: 700, color: "var(--text-primary)", marginBottom: 20, letterSpacing: "-0.02em" }}>
-              Park an Idea
-            </h2>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, color: "var(--text-tertiary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
-                What is the idea?
-              </label>
-              <textarea
-                value={newIdeaText}
-                onChange={(e) => setNewIdeaText(e.target.value)}
-                placeholder="A few words or a paragraph. You can refine it later."
-                rows={4}
-                style={{
-                  width: "100%",
-                  resize: "vertical",
-                  minHeight: 100,
-                  fontFamily: "'Afacad Flux', sans-serif",
-                  fontSize: 14,
-                  padding: "10px 14px",
-                  border: "1px solid var(--line)",
-                  borderRadius: 8,
-                  outline: "none",
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--gold-dark)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
-              />
-            </div>
-            {/* Project assignment removed - all ideas go to default project until multi-project support is live */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-              <button type="button" onClick={() => setModalOpen(false)} style={{ background: "transparent", color: "var(--text-primary)", border: "1px solid var(--line)", padding: "10px 20px", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button type="button" onClick={handleParkIt} disabled={!newIdeaText.trim()} style={{ background: "var(--gold-dark)", color: "#fff", border: "none", padding: "10px 20px", borderRadius: 8, fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, fontWeight: 500, cursor: newIdeaText.trim() ? "pointer" : "default", opacity: newIdeaText.trim() ? 1 : 0.6 }}>
-                Park It
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+// ── Main Component ─────────────────────────────────────────────
+export default function TheLot() {
+  const nav = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { setDashContent, setDashOpen } = useShell();
+
+  const [parkedIdeas, setParkedIdeas] = useState<PipelineItem[]>([]);
+  const [signals, setSignals] = useState<PipelineItem[]>(STATIC_SIGNALS);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Load parked ideas from Supabase (content_state = 'lot')
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("outputs")
+        .select("id, title, output_type, created_at, score")
+        .eq("user_id", user.id)
+        .eq("content_state", "lot")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (data && data.length > 0) {
+        setParkedIdeas(data.map(r => ({
+          id: r.id,
+          type: "idea" as ItemType,
+          title: r.title || "Untitled",
+          meta: `Parked ${timeAgo(r.created_at)}`,
+          subtitle: "Parked · In progress",
+          detail: `${r.title}. Output type: ${r.output_type?.replace(/_/g, " ")}. Parked ${timeAgo(r.created_at)}.`,
+          action: "Activate",
+          outputId: r.id,
+        })));
+      } else {
+        // Static fallback ideas
+        setParkedIdeas([
+          { id: "i1", type: "idea", title: "Year-end reflection", meta: "Timing · Ready Nov 2026", subtitle: "Parked · Timing", detail: "Not ready until November. The argument needs a full year of evidence to land properly. Set a reminder for October.", action: "Activate" },
+          { id: "i2", type: "idea", title: "Case study — Maui client", meta: "Dependency · Permission pending", subtitle: "Parked · Dependency", detail: "Waiting on client permission to use the story. Follow up sent 3.15.26. Strong story — worth the wait.", action: "Activate" },
+          { id: "i3", type: "idea", title: "The real cost of not publishing", meta: "Research · One gap remaining", subtitle: "Parked · Research", detail: "Need one more data point before this argument holds. Looking for a study on thought leadership attribution.", action: "Activate" },
+        ]);
+      }
+      setLoading(false);
+    })();
+  }, [user]);
+
+  const allItems = [...signals, ...parkedIdeas];
+  const selectedItem = allItems.find(i => i.id === selectedId) ?? null;
+
+  const handleActivate = useCallback(async () => {
+    if (!selectedItem) return;
+    if (selectedItem.outputId) {
+      // Reopen real output in Work
+      sessionStorage.setItem("ew-reopen-output-id", selectedItem.outputId);
+      sessionStorage.setItem("ew-reopen-title", selectedItem.title);
+    }
+    nav("/studio/work");
+  }, [selectedItem, nav]);
+
+  const handleRemove = useCallback(async () => {
+    if (!selectedItem) return;
+    if (selectedItem.type === "idea" && selectedItem.outputId && user) {
+      await supabase.from("outputs").delete().eq("id", selectedItem.outputId).eq("user_id", user.id);
+      setParkedIdeas(prev => prev.filter(i => i.id !== selectedItem.id));
+    } else if (selectedItem.type === "signal") {
+      setSignals(prev => prev.filter(s => s.id !== selectedItem.id));
+    }
+    setSelectedId(null);
+    toast("Removed from Pipeline.");
+  }, [selectedItem, user, toast]);
+
+  useLayoutEffect(() => {
+    if (selectedItem) {
+      setDashOpen(true);
+      setDashContent(
+        <PipelineDetailPanel
+          item={selectedItem}
+          onActivate={handleActivate}
+          onRemove={handleRemove}
+        />
+      );
+    } else {
+      setDashOpen(false);
+      setDashContent(
+        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+          Select a signal or idea to see details.
+        </div>
+      );
+    }
+    return () => setDashContent(null);
+  }, [selectedItem, handleActivate, handleRemove, setDashContent, setDashOpen]);
+
+  const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>{title}</div>
+      {children}
+    </div>
+  );
+
+  const PipelineRow = ({ item }: { item: PipelineItem }) => {
+    const active = selectedId === item.id;
+    return (
+      <div
+        onClick={() => setSelectedId(item.id)}
+        style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "9px 4px", borderBottom: "1px solid var(--line)",
+          cursor: "pointer", borderRadius: 5,
+          background: active ? "rgba(245,198,66,0.06)" : "transparent",
+          transition: "background 0.1s",
+        }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg)"; }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(245,198,66,0.06)" : "transparent"; }}
+      >
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 12, color: active ? "var(--fg)" : "var(--fg-2)", fontWeight: active ? 500 : 400, marginBottom: 2 }}>{item.title}</div>
+          <div style={{ fontSize: 10, color: "var(--fg-3)" }}>{item.meta}</div>
+        </div>
+        {item.strengthLabel && (
+          <div style={{ fontSize: 9, fontWeight: 600, color: strengthColor(item.strength), whiteSpace: "nowrap" as const }}>{item.strengthLabel}</div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ padding: 20, fontFamily: FONT, maxWidth: 680 }}>
+      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>The Pipeline</div>
+
+      <Card title="Watched signals">
+        {signals.map(item => <PipelineRow key={item.id} item={item} />)}
+      </Card>
+
+      <Card title="Parked ideas">
+        {loading ? (
+          <div style={{ padding: "8px 0", fontSize: 11, color: "var(--fg-3)" }}>Loading...</div>
+        ) : parkedIdeas.length === 0 ? (
+          <div style={{ padding: "8px 0", fontSize: 11, color: "var(--fg-3)" }}>No parked ideas yet. Start a Work session and park ideas here.</div>
+        ) : (
+          parkedIdeas.map(item => <PipelineRow key={item.id} item={item} />)
+        )}
+      </Card>
     </div>
   );
 }
