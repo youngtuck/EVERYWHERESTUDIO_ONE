@@ -11,6 +11,7 @@ const GATE_FILES = [
   { name: "Elena", file: "gate-4-elena.md", label: "SLOP Detection" },
   { name: "Natasha", file: "gate-5-natasha.md", label: "Editorial" },
   { name: "Marcus + Marshall", file: "gate-6-perspective.md", label: "Perspective" },
+  { name: "Human Voice Test", file: "gate-7-human-voice.md", label: "AI Detection" },
 ];
 
 // Prompt loading with detailed error reporting
@@ -214,7 +215,7 @@ export default async function handler(req, res) {
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     for (let i = 0; i < gatesToRun.length; i++) {
-      if (Date.now() - startTime > 100000) {
+      if (Date.now() - startTime > 155000) {
         for (let j = i; j < gatesToRun.length; j++) {
           gateResults.push({ gate: gatesToRun[j].name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
         }
@@ -230,7 +231,7 @@ export default async function handler(req, res) {
     // Betterish scorer
     await delay(4000);
     const elapsed2 = Date.now() - startTime;
-    if (elapsed2 < 100000) {
+    if (elapsed2 < 155000) {
       const betterishPrompt = getPrompt("betterish.md");
       if (betterishPrompt) {
         try {

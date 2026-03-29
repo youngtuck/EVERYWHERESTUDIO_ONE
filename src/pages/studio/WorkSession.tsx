@@ -61,6 +61,7 @@ const GATE_LABELS: Record<string, string> = {
   "gate-4": "Elena — SLOP Detection",
   "gate-5": "Natasha — Editorial",
   "gate-6": "Marcus + Marshall — Perspective",
+  "gate-7": "Human Voice Test — AI Detection",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -507,7 +508,7 @@ function ReviewDash({
         <DpSection>
           <DpLabel>Running checkpoints</DpLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
-            {["Echo", "Priya", "Jordan", "David", "Elena", "Natasha", "Marcus + Marshall"].map((name, i) => (
+            {["Echo", "Priya", "Jordan", "David", "Elena", "Natasha", "Marcus + Marshall", "Human Voice Test"].map((name, i) => (
               <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--fg-3)" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--line-2)", animation: `pulse ${0.5 * i + 1}s infinite` }} />
                 {name}
