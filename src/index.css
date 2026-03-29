@@ -139,6 +139,70 @@
 /* ─── NAV TOOLTIP (collapsed sidebar) ───────────────────────── */
 div:hover > .nav-tooltip { display: block !important; }
 
+/* ─── FLUID VIEWPORT SCALING ─────────────────────────────────────
+   The studio UI was designed at 1280px. At wider viewports everything
+   scales up proportionally so text stays readable on large desktops.
+   We use zoom on #root because it scales ALL px values (inline styles,
+   CSS px, box model) uniformly — no need to touch individual components.
+
+   Breakpoints:
+   < 1280px  → 1.00× (base, laptop)
+   1280–1440 → 1.05× (15" MBP, 1440p)
+   1440–1600 → 1.10× (16" MBP, common desktop)
+   1600–1920 → 1.18× (1080p external monitor)
+   1920–2560 → 1.30× (1440p monitor, 27" iMac)
+   > 2560    → 1.45× (4K / 5K displays)
+
+   Note: zoom doesn't affect scrollbar px widths (intentional).
+   Firefox uses transform fallback via the .firefox-scale class added by JS.
+────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 1280px) {
+  #root { zoom: 1.00; }
+}
+@media (min-width: 1440px) {
+  #root { zoom: 1.06; }
+}
+@media (min-width: 1600px) {
+  #root { zoom: 1.12; }
+}
+@media (min-width: 1920px) {
+  #root { zoom: 1.22; }
+}
+@media (min-width: 2560px) {
+  #root { zoom: 1.40; }
+}
+
+/* Firefox doesn't support zoom — use transform scale instead */
+@-moz-document url-prefix() {
+  @media (min-width: 1440px) {
+    #root {
+      zoom: unset;
+      transform-origin: top left;
+      transform: scale(1.06);
+      width: calc(100% / 1.06);
+    }
+  }
+  @media (min-width: 1600px) {
+    #root {
+      transform: scale(1.12);
+      width: calc(100% / 1.12);
+    }
+  }
+  @media (min-width: 1920px) {
+    #root {
+      transform: scale(1.22);
+      width: calc(100% / 1.22);
+    }
+  }
+  @media (min-width: 2560px) {
+    #root {
+      transform: scale(1.40);
+      width: calc(100% / 1.40);
+    }
+  }
+}
+
 /* ─── RESET ──────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html {
