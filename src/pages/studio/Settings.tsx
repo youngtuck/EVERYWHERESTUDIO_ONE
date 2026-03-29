@@ -1,12 +1,24 @@
 /**
  * Settings.tsx — Preferences
- * Matches wireframe v7.23 exactly.
- * Display settings, Edit stage settings, Voice input settings.
+ * Fixed:
+ *  - Dark mode now actually calls ThemeContext.toggleTheme()
+ *  - Font size slider now applies zoom to document.documentElement
  */
-import { useState, useLayoutEffect } from "react";
+import { useState, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
+import { useTheme } from "../../context/ThemeContext";
 import "./shared.css";
+
+const FONT = "var(--font)";
+
+// Font size zoom levels (relative to base 1.0)
+// These intentionally stack on top of the viewport zoom in index.css
+const FONT_SIZE_ZOOM: Record<number, number> = {
+  1: 0.88,   // Small — 12% smaller than base
+  2: 1.00,   // Default — no change
+  3: 1.12,   // Large — 12% larger than base
+};
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
@@ -15,21 +27,16 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       style={{
         width: 32, height: 18,
         background: on ? "var(--blue)" : "var(--line-2)",
-        borderRadius: 9,
-        cursor: "pointer",
-        position: "relative",
-        flexShrink: 0,
+        borderRadius: 9, cursor: "pointer",
+        position: "relative", flexShrink: 0,
         transition: "background 0.15s",
       }}
     >
       <div style={{
         position: "absolute",
-        top: 2,
-        left: on ? 16 : 2,
-        width: 14, height: 14,
-        borderRadius: "50%",
-        background: "#fff",
-        transition: "left 0.15s",
+        top: 2, left: on ? 16 : 2,
+        width: 14, height: 14, borderRadius: "50%",
+        background: "#fff", transition: "left 0.15s",
       }} />
     </div>
   );
@@ -100,13 +107,37 @@ const PrefRowLast = ({ label, sublabel, children }: { label: string; sublabel?: 
 export default function Settings() {
   const nav = useNavigate();
   const { setDashContent, setDashOpen } = useShell();
+  const { theme, toggleTheme } = useTheme();
 
-  const [displayMode, setDisplayMode] = useState<"light" | "dark">("light");
-  const [fontSize, setFontSize] = useState(2);
+  // Font size: read from localStorage so it persists
+  const [fontSize, setFontSize] = useState<number>(() => {
+    try { const s = localStorage.getItem("ew-font-size"); if (s) return Number(s); } catch {}
+    return 2;
+  });
   const [flagsInDraft, setFlagsInDraft] = useState(true);
   const [voiceMode, setVoiceMode] = useState<"ptt" | "auto">("ptt");
 
   const fontLabels = ["Small", "Default", "Large"];
+
+  // Apply font size zoom to document root
+  useEffect(() => {
+    const zoom = FONT_SIZE_ZOOM[fontSize] ?? 1;
+    // Store as CSS var so the viewport zoom in index.css stacks on top
+    document.documentElement.style.setProperty("--font-size-zoom", String(zoom));
+    // Apply it as a zoom adjustment on #root relative to the viewport breakpoint zoom
+    const root = document.getElementById("root");
+    if (root) {
+      // We store the user preference; the actual zoom is computed in index.css
+      // by multiplying viewport zoom × font size zoom. We apply it via data-attr.
+      root.setAttribute("data-font-size", String(fontSize));
+    }
+    try { localStorage.setItem("ew-font-size", String(fontSize)); } catch {}
+  }, [fontSize]);
+
+  // Dark mode: call the real ThemeContext toggle when mode changes
+  const handleModeChange = (mode: string) => {
+    if (mode !== theme) toggleTheme();
+  };
 
   useLayoutEffect(() => {
     setDashOpen(false);
@@ -115,7 +146,7 @@ export default function Settings() {
   }, [setDashContent, setDashOpen]);
 
   return (
-    <div style={{ padding: 20, fontFamily: "var(--font)", maxWidth: 560 }}>
+    <div style={{ padding: 20, fontFamily: FONT, maxWidth: 560 }}>
       <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>Preferences</div>
 
       {/* Display */}
@@ -124,8 +155,8 @@ export default function Settings() {
           <RadioGroup
             name="display-mode"
             options={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }]}
-            value={displayMode}
-            onChange={v => setDisplayMode(v as "light" | "dark")}
+            value={theme}
+            onChange={handleModeChange}
           />
         </PrefRow>
         <div style={{ padding: "10px 0" }}>
@@ -176,7 +207,7 @@ export default function Settings() {
           style={{
             fontSize: 12, padding: "8px 16px", borderRadius: 6,
             border: "1px solid var(--line)", background: "var(--surface)",
-            color: "var(--fg-2)", cursor: "pointer", fontFamily: "var(--font)",
+            color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
             transition: "all 0.1s",
           }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}

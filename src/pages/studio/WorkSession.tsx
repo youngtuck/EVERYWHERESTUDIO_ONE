@@ -607,10 +607,16 @@ function StageIntake({
 }) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Only scroll when a new message is added — not on every render
+  const prevMsgCount = useRef(messages.length);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, sending]);
+    if (messages.length !== prevMsgCount.current || sending) {
+      prevMsgCount.current = messages.length;
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [messages.length, sending]);
 
   const handleSend = () => {
     if (!input.trim() || sending) return;
@@ -619,26 +625,33 @@ function StageIntake({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-      <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-        {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} />)}
-        {sending && (
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "var(--blue)", flexShrink: 0 }}>W</div>
-            <LoadingDots label="" />
-          </div>
-        )}
-        <div ref={bottomRef} />
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)" }}>
+      {/* Scrollable message area — centered column */}
+      <div
+        ref={scrollAreaRef}
+        style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", alignItems: "center" }}
+      >
+        <div style={{ width: "100%", maxWidth: 680, padding: "32px 24px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
+          {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} />)}
+          {sending && (
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
+              <WatsonAvatar />
+              <LoadingDots label="" />
+            </div>
+          )}
+          <div ref={bottomRef} style={{ height: 1 }} />
+        </div>
       </div>
 
+      {/* "Build outline" appears above the input when ready */}
       {isReady && (
-        <div style={{ padding: "0 14px 8px", display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "8px 24px 0" }}>
           <button
             onClick={onAdvance}
             style={{
-              fontSize: 11, fontWeight: 600, padding: "7px 16px", borderRadius: 6,
+              fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 6,
               background: "var(--gold-bright)", border: "none", color: "var(--fg)",
-              cursor: "pointer", fontFamily: FONT,
+              cursor: "pointer", fontFamily: FONT, letterSpacing: "0.01em",
             }}
           >
             Build outline →
@@ -646,33 +659,142 @@ function StageIntake({
         </div>
       )}
 
-      <InputBar
-        placeholder="What's on your mind?"
-        value={input} onChange={setInput}
-        onSend={handleSend} disabled={sending}
-      />
+      {/* Input bar — centered, max-width constrained */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px 24px 16px", background: "var(--bg)" }}>
+        <div style={{ width: "100%", maxWidth: 680 }}>
+          <ChatInputBar
+            placeholder="What's on your mind?"
+            value={input}
+            onChange={setInput}
+            onSend={handleSend}
+            disabled={sending}
+          />
+        </div>
+      </div>
     </div>
+  );
+}
+
+function WatsonAvatar() {
+  return (
+    <div style={{
+      width: 28, height: 28, borderRadius: "50%",
+      background: "linear-gradient(135deg, rgba(74,144,217,0.18) 0%, rgba(74,144,217,0.08) 100%)",
+      border: "1px solid rgba(74,144,217,0.25)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: 10, fontWeight: 700, color: "var(--blue)",
+      flexShrink: 0, marginTop: 2, letterSpacing: "0.03em",
+    }}>W</div>
   );
 }
 
 function ChatBubble({ role, text }: { role: "watson" | "user"; text: string }) {
   const isWatson = role === "watson";
   return (
-    <div style={{ display: "flex", gap: 10, alignItems: "flex-start", justifyContent: isWatson ? "flex-start" : "flex-end" }}>
-      {isWatson && (
-        <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "var(--blue)", flexShrink: 0, marginTop: 2 }}>W</div>
+    <div style={{
+      display: "flex",
+      gap: 10,
+      alignItems: "flex-start",
+      padding: "6px 0",
+    }}>
+      {isWatson ? (
+        <>
+          <WatsonAvatar />
+          <div style={{
+            flex: 1,
+            fontSize: 14, color: "var(--fg-2)", lineHeight: 1.7,
+            whiteSpace: "pre-wrap" as const,
+            paddingTop: 4,
+          }}>
+            {text}
+          </div>
+        </>
+      ) : (
+        <div style={{
+          marginLeft: "auto",
+          maxWidth: "76%",
+          background: "var(--bg-2)",
+          border: "1px solid var(--line)",
+          borderRadius: "16px 16px 4px 16px",
+          padding: "10px 14px",
+          fontSize: 14, color: "var(--fg)", lineHeight: 1.6,
+          whiteSpace: "pre-wrap" as const,
+        }}>
+          {text}
+        </div>
       )}
-      <div style={{
-        background: isWatson ? "rgba(74,144,217,0.07)" : "rgba(245,198,66,0.08)",
-        border: isWatson ? "1px solid rgba(74,144,217,0.15)" : "1px solid rgba(245,198,66,0.2)",
-        borderRadius: isWatson ? "0 10px 10px 10px" : "10px 0 10px 10px",
-        padding: "10px 14px", maxWidth: "82%",
-      }}>
-        <p style={{ fontSize: 13, color: isWatson ? "var(--fg-2)" : "var(--fg)", lineHeight: 1.6, whiteSpace: "pre-wrap" as const }}>{text}</p>
-      </div>
-      {!isWatson && (
-        <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(245,198,66,0.15)", border: "1px solid rgba(245,198,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>ME</div>
-      )}
+    </div>
+  );
+}
+
+// Clean, centered input bar for the chat interface
+function ChatInputBar({
+  placeholder, value, onChange, onSend, disabled,
+}: {
+  placeholder: string; value: string; onChange: (v: string) => void;
+  onSend: () => void; disabled?: boolean;
+}) {
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey && !disabled) {
+      e.preventDefault();
+      onSend();
+    }
+  };
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "flex-end", gap: 8,
+      background: "var(--surface)",
+      border: "1px solid var(--line-2)",
+      borderRadius: 12,
+      padding: "8px 10px 8px 14px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+      transition: "border-color 0.15s, box-shadow 0.15s",
+    }}
+      onFocus={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,144,217,0.4)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(74,144,217,0.08)";
+      }}
+      onBlur={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--line-2)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+      }}
+    >
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder={placeholder}
+        disabled={disabled}
+        rows={1}
+        style={{
+          flex: 1, resize: "none",
+          background: "transparent", border: "none", outline: "none",
+          fontSize: 14, color: "var(--fg)", fontFamily: FONT,
+          lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
+          opacity: disabled ? 0.5 : 1,
+        }}
+        onInput={e => {
+          const t = e.target as HTMLTextAreaElement;
+          t.style.height = "auto";
+          t.style.height = Math.min(t.scrollHeight, 120) + "px";
+        }}
+      />
+      <button
+        onClick={onSend}
+        disabled={disabled || !value.trim()}
+        style={{
+          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+          background: value.trim() && !disabled ? "var(--fg)" : "var(--line)",
+          border: "none", cursor: value.trim() && !disabled ? "pointer" : "not-allowed",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "background 0.15s",
+        }}
+      >
+        <svg style={{ width: 13, height: 13, stroke: "#fff", strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
+          <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+        </svg>
+      </button>
     </div>
   );
 }
