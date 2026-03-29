@@ -2,40 +2,42 @@
 
 /* ─── TOKENS ─────────────────────────────────────────────────── */
 :root {
-  /* Backgrounds - warm cream base */
-  --bg: #FFFCF8;
-  --bg-2: #FAF8F5;
-  --bg-3: #F0EDE8;
+  /* Backgrounds - Mark's wireframe system */
+  --bg: #F7F9FC;
+  --bg-2: #EDF1F5;
+  --bg-3: #E2E8F0;
   --surface: #FFFFFF;
   --surface-elevated: #FFFFFF;
-  --sidebar: #FAF8F5;
+  --sidebar: #EDF1F5;
 
   /* Text */
-  --fg: #1A1A1A;
-  --fg-2: #4A4A4A;
-  --fg-3: #8A8A8A;
+  --fg: #0D1B2A;
+  --fg-2: #334155;
+  --fg-3: #94A3B8;
 
-  /* Borders - warm */
-  --line: #E8E4DF;
-  --line-2: #D4CFC8;
-  --border-subtle: #E8E4DF;
-  --border-default: #D4CFC8;
+  /* Borders */
+  --line: #E2E8F0;
+  --line-2: #CBD5E1;
+  --border-subtle: #E2E8F0;
+  --border-default: #CBD5E1;
 
   /* Brand */
-  --gold: #C8961A;
-  --gold-dark: #C8961A;
-  --cornflower: #6B7FF2;
-  --accent: #C8961A;
-  --danger: #D64545;
-  --success: #3A9A5C;
+  --gold: #C49A20;
+  --gold-bright: #F5C642;
+  --gold-dark: #C49A20;
+  --blue: #4A90D9;
+  --cornflower: #4A90D9;
+  --accent: #F5C642;
+  --danger: #DC2626;
+  --success: #4CAF82;
 
   /* Font */
   --font: 'Afacad Flux', sans-serif;
 
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.03);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 32px rgba(0,0,0,0.08);
 
   /* Aliases for backward compatibility */
   --text-primary: var(--fg);
@@ -52,52 +54,53 @@
   --border: var(--line);
   --border-strong: var(--line-2);
   --text-muted: var(--fg-3);
-  --topbar: rgba(255,252,248,0.92);
+  --topbar: rgba(247,249,252,0.95);
   --topbar-bg: var(--topbar);
-  --bg-inverse: #1A1A1A;
-  --signal-gold: var(--gold);
+  --bg-inverse: #0D1B2A;
+  --signal-gold: var(--gold-bright);
   --gold-l: var(--gold);
-  --gold-light: #B8880F;
+  --gold-light: #D4AA30;
   --gold-hover: #B8880F;
   --gold-pressed: #A07A0A;
-  --deep-navy: #1A1A1A;
-  --rich-navy: #2A2A2A;
+  --deep-navy: #0D1B2A;
+  --rich-navy: #1B263B;
   --soft-gray: var(--bg-2);
   --mid-gray: var(--fg-3);
-  --watch-blue: var(--cornflower);
-  --work-teal: var(--cornflower);
+  --watch-blue: var(--blue);
+  --work-teal: var(--blue);
   --wrap-violet: #A080F5;
-  --teal: var(--cornflower);
-  --blue: var(--cornflower);
+  --teal: var(--blue);
   --warm-coral: #E8B4A0;
   --font-logo: var(--font);
   --font-serif: var(--font);
-  --bg-navy: #1A1A1A;
+  --bg-navy: #0D1B2A;
 }
 
 [data-theme="dark"] {
-  --bg: #1C1C1C;
-  --bg-2: #242424;
-  --bg-3: #2E2E2E;
-  --surface: #2A2A2A;
-  --surface-elevated: #2A2A2A;
-  --sidebar: #1C1C1C;
-  --fg: #ECECEC;
-  --fg-2: #B0B0B0;
-  --fg-3: #707070;
-  --line: #333333;
-  --line-2: #444444;
-  --border-subtle: #333333;
-  --border-default: #444444;
+  --bg: #111827;
+  --bg-2: #1E2533;
+  --bg-3: #2A3344;
+  --surface: #1E2533;
+  --surface-elevated: #253040;
+  --sidebar: #141C28;
+  --fg: #F1F5F9;
+  --fg-2: #CBD5E1;
+  --fg-3: #64748B;
+  --line: #1E2D3D;
+  --line-2: #2A3D52;
+  --border-subtle: #1E2D3D;
+  --border-default: #2A3D52;
   --gold: #D4A832;
+  --gold-bright: #F5C642;
   --gold-dark: #D4A832;
-  --cornflower: #8B9DF5;
+  --blue: #6BA8E8;
+  --cornflower: #6BA8E8;
   --danger: #FF6B6B;
   --success: #50C8A0;
-  --topbar: rgba(28,28,28,0.92);
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.35);
-  --shadow-md: 0 8px 30px rgba(0,0,0,0.45);
+  --topbar: rgba(17,24,39,0.95);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.5);
+  --shadow-md: 0 8px 30px rgba(0,0,0,0.6);
 
   /* Backward compat aliases */
   --text-primary: var(--fg);
@@ -115,9 +118,9 @@
   --border-strong: var(--line-2);
   --text-muted: var(--fg-3);
   --topbar-bg: var(--topbar);
-  --bg-inverse: #ECECEC;
+  --bg-inverse: #F1F5F9;
   --bg-navy: var(--bg);
-  --signal-gold: var(--gold);
+  --signal-gold: var(--gold-bright);
   --gold-l: var(--gold);
   --gold-light: var(--gold);
   --gold-hover: var(--gold);
@@ -126,6 +129,15 @@
   --deep-navy: var(--bg);
   --rich-navy: var(--bg-2);
 }
+
+/* ─── SCROLLBARS ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+
+/* ─── NAV TOOLTIP (collapsed sidebar) ───────────────────────── */
+div:hover > .nav-tooltip { display: block !important; }
 
 /* ─── RESET ──────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
