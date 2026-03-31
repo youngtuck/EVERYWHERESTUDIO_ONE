@@ -6,9 +6,9 @@ import { ArrowLeft, Globe, FileText, Pencil, Clipboard, Check, ChevronDown, Chev
 import { useMobile } from "../../hooks/useMobile";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
-import type { Impact ScoreScore, GateResult } from "../../lib/agents/types";
+import type { ImpactScore, GateResult } from "../../lib/agents/types";
 import { CheckpointResultsPanel } from "../../components/pipeline/CheckpointResultsPanel";
-import { Impact ScoreScoreCard } from "../../components/pipeline/Impact ScoreScoreCard";
+import { ImpactScoreCard } from "../../components/pipeline/ImpactScoreCard";
 import { PipelineBlockedAlert } from "../../components/pipeline/PipelineBlockedAlert";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
@@ -50,7 +50,7 @@ interface Output {
 interface PipelineRunRow {
   status: "PASSED" | "BLOCKED" | "ERROR";
   gate_results: GateResult[];
-  impact_score: Impact ScoreScore | null;
+  betterish_score: ImpactScore | null;
   blocked_at: string | null;
 }
 
@@ -189,7 +189,7 @@ export default function OutputDetail() {
         setOutput(data);
         const { data: runs } = await supabase
           .from("pipeline_runs")
-          .select("status, gate_results, impact_score, blocked_at")
+          .select("status, gate_results, betterish_score, blocked_at")
           .eq("output_id", id)
           .order("created_at", { ascending: false })
           .limit(1);
@@ -306,7 +306,7 @@ export default function OutputDetail() {
       const run: PipelineRunRow = {
         status: result.status,
         gate_results: result.gateResults || [],
-        impact_score: result.impactScore || null,
+        betterish_score: result.impactScore || null,
         blocked_at: result.blockedAt || null,
       };
       setPipelineRun(run);
@@ -322,8 +322,8 @@ export default function OutputDetail() {
         user_id: user.id,
         status: result.status,
         gate_results: result.gateResults,
-        impact_score: result.impactScore,
-        impact_total: result.impactScore?.total ?? null,
+        betterish_score: result.impactScore,
+        betterish_total: result.impactScore?.total ?? null,
         blocked_at: result.blockedAt || null,
       });
 
@@ -696,7 +696,7 @@ export default function OutputDetail() {
             {/* Pipeline results */}
             {pipelineRun && !pipelineRunning && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <Impact ScoreScoreCard score={pipelineRun.impact_score} />
+                <ImpactScoreCard score={pipelineRun.betterish_score} />
                 <CheckpointResultsPanel results={pipelineRun.gate_results} blockedAt={pipelineRun.blocked_at || undefined} />
                 {pipelineRun.status === "BLOCKED" && (
                   <PipelineBlockedAlert
