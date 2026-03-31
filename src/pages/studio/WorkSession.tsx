@@ -2137,6 +2137,15 @@ export default function WorkSession() {
   // RENDER
   // ─────────────────────────────────────────────────────────────
 
+  // Lock parent main scroll when WorkSession is active
+  useEffect(() => {
+    const main = document.querySelector(".studio-main-inner") as HTMLElement;
+    if (main) {
+      main.style.overflow = "hidden";
+      return () => { main.style.overflow = ""; };
+    }
+  }, []);
+
   return (
     <div style={{
       position: "absolute", inset: 0,
