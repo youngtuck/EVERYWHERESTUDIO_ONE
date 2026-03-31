@@ -750,7 +750,7 @@ function StageIntake({
       )}
 
       {/* Input bar */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px 24px 16px", background: "var(--bg)" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--bg)", flexShrink: 0, borderTop: "1px solid var(--line)" }}>
         <div style={{ width: "100%", maxWidth: 680 }}>
           <ChatInputBar
             placeholder="What's on your mind?"
