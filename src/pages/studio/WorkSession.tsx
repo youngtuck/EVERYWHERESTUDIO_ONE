@@ -327,16 +327,14 @@ function IntakeDash({
   selectedTemplate: string; onSelectTemplate: (t: string) => void;
   sessionFiles: string[];
 }) {
-  const [outputsOpen, setOutputsOpen] = useState(true);
-  const [templatesOpen, setTemplatesOpen] = useState(true);
-  const [sessionFilesOpen, setSessionFilesOpen] = useState(false);
-  const [projectFilesOpen, setProjectFilesOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string>("outputs");
+  const toggle = (section: string) => setOpenSection(prev => prev === section ? "" : section);
 
   return (
     <>
       <DpSection>
-        <DpLabel collapsible open={outputsOpen} onToggle={() => setOutputsOpen(o => !o)}>Outputs</DpLabel>
-        {outputsOpen && (
+        <DpLabel collapsible open={openSection === "outputs"} onToggle={() => toggle("outputs")}>Outputs</DpLabel>
+        {openSection === "outputs" && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginTop: 6 }}>
             {ALL_FORMATS.map(f => {
               const on = selectedFormats.includes(f);
@@ -361,10 +359,10 @@ function IntakeDash({
 
       <DpSection>
         <DpLabel
-          collapsible open={templatesOpen} onToggle={() => setTemplatesOpen(o => !o)}
+          collapsible open={openSection === "templates"} onToggle={() => toggle("templates")}
           action={<span style={{ fontSize: 9, fontWeight: 400, color: "var(--blue)", cursor: "pointer", marginLeft: 6, textTransform: "none" as const, letterSpacing: 0 }}>Edit</span>}
         >Templates</DpLabel>
-        {templatesOpen && (
+        {openSection === "templates" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 6 }}>
             {TEMPLATES.map(t => (
               <div
@@ -385,8 +383,8 @@ function IntakeDash({
       </DpSection>
 
       <DpSection>
-        <DpLabel collapsible open={sessionFilesOpen} onToggle={() => setSessionFilesOpen(o => !o)}>Session Files</DpLabel>
-        {sessionFilesOpen && (
+        <DpLabel collapsible open={openSection === "sessionFiles"} onToggle={() => toggle("sessionFiles")}>Session Files</DpLabel>
+        {openSection === "sessionFiles" && (
           <div style={{ marginTop: 6 }}>
             {sessionFiles.length === 0 ? (
               <div style={{ fontSize: 9, color: "var(--fg-3)" }}>No files attached yet.</div>
@@ -402,8 +400,8 @@ function IntakeDash({
       </DpSection>
 
       <DpSection>
-        <DpLabel collapsible open={projectFilesOpen} onToggle={() => setProjectFilesOpen(o => !o)}>Project Files</DpLabel>
-        {projectFilesOpen && (
+        <DpLabel collapsible open={openSection === "projectFiles"} onToggle={() => toggle("projectFiles")}>Project Files</DpLabel>
+        {openSection === "projectFiles" && (
           <div style={{ marginTop: 6, fontSize: 10, color: "var(--blue)", lineHeight: 1.9 }}>
             ✓ Voice DNA<br />✓ Brand Guide
           </div>
@@ -778,31 +776,27 @@ function WatsonAvatar() {
   );
 }
 
-/** Parse Watson text: render **bold** as <strong>, strip raw **, bold only the final direct question */
+/** Parse Watson text: render **bold** as <strong>, strip raw **, detect questions vs statements, detect search indicators */
 function WatsonTextRenderer({ text }: { text: string }) {
   // Detect search/research lines
   const isSearchLine = (line: string) =>
     /^(searching|looking up|researching|checking|scanning|analyzing|pulling data)/i.test(line.trim());
 
-  const lines = text.split("\n").filter(l => l.trim());
+  // Detect if a line ends with a question mark (Watson is asking the user)
+  const isQuestion = (line: string) => /\?\s*$/.test(line.trim());
 
-  // Find the LAST line that ends with ? (that's Watson's direct question to the user)
-  let lastQuestionIdx = -1;
-  for (let i = lines.length - 1; i >= 0; i--) {
-    if (/\?\s*$/.test(lines[i].trim())) {
-      lastQuestionIdx = i;
-      break;
-    }
-  }
+  const lines = text.split("\n");
 
   return (
     <>
       {lines.map((line, li) => {
+        if (!line.trim()) return <br key={li} />;
+
         // Search/research indicator
         if (isSearchLine(line)) {
           return (
             <div key={li} style={{
-              fontSize: 13, color: "var(--blue)", fontStyle: "italic",
+              fontSize: 11, color: "var(--blue)", fontStyle: "italic",
               padding: "3px 0", display: "flex", alignItems: "center", gap: 6,
             }}>
               <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
@@ -822,16 +816,16 @@ function WatsonTextRenderer({ text }: { text: string }) {
           return <span key={pi}>{part}</span>;
         });
 
-        // Only bold the LAST question line (Watson's direct ask to the user)
-        if (li === lastQuestionIdx) {
+        // If Watson is asking a question, render bold
+        if (isQuestion(line)) {
           return (
-            <div key={li} style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginTop: li > 0 ? 8 : 0 }}>
+            <div key={li} style={{ fontWeight: 600, color: "var(--fg)" }}>
               {rendered}
             </div>
           );
         }
 
-        return <div key={li} style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.5, marginTop: li > 0 ? 4 : 0 }}>{rendered}</div>;
+        return <div key={li}>{rendered}</div>;
       })}
     </>
   );
@@ -1940,7 +1934,7 @@ export default function WorkSession() {
         }
       }
 
-      toast(result.status === "PASSED" ? "All 7 checkpoints passed." : "Pipeline complete.");
+      // Pipeline complete - no toast, results show in Review stage silently
     } catch (err: any) {
       toast("Pipeline encountered an error. Try again.", "error");
       console.error("[WorkSession][pipeline]", err);

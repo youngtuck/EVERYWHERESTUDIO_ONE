@@ -34,7 +34,7 @@ const TYPE_ICONS: Record<string, string> = {
 };
 
 // Suppressed notification types per Mark's directive
-const SUPPRESSED_TYPES = new Set(["briefing_ready", "nudge_stale", "system"]);
+const SUPPRESSED_TYPES = new Set(["briefing_ready", "nudge_stale", "system", "pipeline_complete", "score_improved", "output_published", "checkpoint_passed"]);
 
 export default function NotificationBell() {
   const { user } = useAuth();

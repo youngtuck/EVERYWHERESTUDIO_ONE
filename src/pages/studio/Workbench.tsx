@@ -193,7 +193,7 @@ export default function Workbench() {
                     color: scoreStyle.text,
                   }}
                 >
-                  {o.score}
+                  {o.score}%
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <button

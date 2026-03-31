@@ -42,7 +42,7 @@ function outputTypeToLabel(t: string): string {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 900) return "var(--blue)";
+  if (score >= 90) return "var(--blue)";
   if (score >= 700) return "var(--gold)";
   return "var(--fg-3)";
 }
@@ -68,7 +68,7 @@ function SessionDetailPanel({
         {output.score > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
             <span style={{ fontSize: 10, color: "var(--fg-3)" }}>Impact Score</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor(output.score) }}>{output.score}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor(output.score) }}>{output.score}%</span>
           </div>
         )}
 
@@ -260,7 +260,7 @@ export default function OutputLibrary() {
                 </span>
                 {output.score > 0 && (
                   <span style={{ fontSize: 10, fontWeight: 600, color: scoreColor(output.score), flexShrink: 0 }}>
-                    {output.score}
+                    {output.score}%
                   </span>
                 )}
               </div>

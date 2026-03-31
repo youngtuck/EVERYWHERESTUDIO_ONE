@@ -854,7 +854,7 @@ export default function ExplorePage() {
                 { num: "04", name: "Engagement", desc: "7-second hook test. Doesn't earn the read, doesn't ship." },
                 { num: "05", name: "SLOP", desc: "SLOP detection. One em dash in prose is an automatic block." },
                 { num: "06", name: "Editorial", desc: "Publication-grade standard plus the Stranger Test." },
-                { num: "07", name: "Marcus + Marshall", desc: "Cultural sensitivity and nonviolent communication review." },
+                { num: "07", name: "Perspective", desc: "Cultural sensitivity and nonviolent communication review." },
               ].map((cp, i) => (
                 <StaggerReveal key={cp.num} index={i} parentVisible={checkpointReveal.isVisible}>
                   <div className="xp-cp" style={i === 0 ? { borderTop: "1px solid var(--divider)" } : undefined}>

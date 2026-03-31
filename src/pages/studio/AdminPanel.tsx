@@ -306,7 +306,7 @@ function PeopleTab() {
                         <div key={o.id} style={{ fontSize: 13, color: "var(--fg-2)", padding: "4px 0", display: "flex", gap: 8 }}>
                           <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.title}</span>
                           <span style={{ color: "var(--fg-3)" }}>{o.output_type}</span>
-                          <span style={{ fontWeight: 600, color: o.score >= 900 ? "#50c8a0" : "var(--fg-2)" }}>{o.score}</span>
+                          <span style={{ fontWeight: 600, color: o.score >= 90 ? "#50c8a0" : "var(--fg-2)" }}>{o.score}</span>
                         </div>
                       ))}
                     </div>

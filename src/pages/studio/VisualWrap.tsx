@@ -527,7 +527,7 @@ export default function VisualWrap() {
           {output.content.slice(0, 200)}
           {output.content.length > 200 ? "..." : ""}
         </div>
-        <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Score: {output.score}</div>
+        <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Impact: {output.score}%</div>
       </div>
 
       {/* Section 2: Visual Style */}
