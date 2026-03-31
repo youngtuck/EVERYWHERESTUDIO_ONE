@@ -234,16 +234,28 @@ export default function Dashboard() {
       {!loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
 
-          {/* Briefing card — always shown */}
-          <HomeCard
-            accentColor="var(--fg)"
-            label="Watch"
-            labelColor="var(--fg-3)"
-            title={signals[0].label}
-            meta={signals[0].description}
-            cta="Go to Watch"
-            onCta={() => nav("/studio/watch")}
-          />
+          {/* Briefing card — only shown when signals exist */}
+          {signals.length > 0 ? (
+            <HomeCard
+              accentColor="var(--fg)"
+              label="Watch"
+              labelColor="var(--fg-3)"
+              title={signals[0].label}
+              meta={signals[0].description}
+              cta="Go to Watch"
+              onCta={() => nav("/studio/watch")}
+            />
+          ) : (
+            <HomeCard
+              accentColor="var(--fg)"
+              label="Watch"
+              labelColor="var(--fg-3)"
+              title="Run a briefing to see today's signals"
+              meta="Watch scans your landscape and surfaces what matters."
+              cta="Go to Watch"
+              onCta={() => nav("/studio/watch")}
+            />
+          )}
 
           {/* Resume in-progress session */}
           {inProgress && (
