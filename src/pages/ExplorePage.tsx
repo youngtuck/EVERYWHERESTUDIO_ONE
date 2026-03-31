@@ -681,7 +681,7 @@ export default function ExplorePage() {
               {[
                 { value: MARKETING_NUMBERS.specialistCount, label: "Specialists" },
                 { value: MARKETING_NUMBERS.qualityCheckpoints, label: "Checkpoints" },
-                { value: MARKETING_NUMBERS.betterishThreshold, label: "Min. Impact Score" },
+                { value: MARKETING_NUMBERS.impactThreshold, label: "Min. Impact Score" },
                 { value: 0, label: "Left for you to finish" },
               ].map((s) => (
                 <div key={s.label} style={{ textAlign: "center" }}>
