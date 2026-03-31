@@ -1071,11 +1071,157 @@ function StageEdit({
   onRevise: (instructions: string) => void;
 }) {
   const [input, setInput] = useState("");
+  const [activePopover, setActivePopover] = useState<string | null>(null);
+  const [dismissedFlags, setDismissedFlags] = useState<Set<string>>(new Set());
+  const [fixedFlags, setFixedFlags] = useState<Map<string, string>>(new Map());
+  const popoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleRevise = () => {
     if (!input.trim() || generating) return;
     onRevise(input.trim());
     setInput("");
+  };
+
+  const showPopover = (id: string) => {
+    if (popoverTimerRef.current) clearTimeout(popoverTimerRef.current);
+    setActivePopover(id);
+  };
+  const delayHidePopover = (id: string) => {
+    popoverTimerRef.current = setTimeout(() => {
+      setActivePopover(prev => prev === id ? null : prev);
+    }, 200);
+  };
+  const cancelHide = () => {
+    if (popoverTimerRef.current) clearTimeout(popoverTimerRef.current);
+  };
+  const handleFix = (id: string, replacement: string) => {
+    setFixedFlags(prev => new Map(prev).set(id, replacement));
+    setActivePopover(null);
+  };
+  const handleDismiss = (id: string) => {
+    setDismissedFlags(prev => new Set(prev).add(id));
+    setActivePopover(null);
+  };
+
+  // Render a flagged span with popover
+  const FlagSpan = ({ id, type, text, message, suggestion }: {
+    id: string; type: "must" | "style"; text: string; message: string; suggestion: string;
+  }) => {
+    const isDismissed = dismissedFlags.has(id);
+    const fixedText = fixedFlags.get(id);
+    const displayText = fixedText || text;
+    const className = isDismissed ? "flag-dismissed" : type === "must" ? "flag-r" : "flag-b";
+
+    return (
+      <span
+        className={className}
+        style={{ position: "relative", cursor: "pointer" }}
+        onMouseEnter={() => !isDismissed && !fixedText && showPopover(id)}
+        onMouseLeave={() => delayHidePopover(id)}
+      >
+        {displayText}
+        {activePopover === id && !isDismissed && !fixedText && (
+          <span
+            className="flag-pop"
+            style={{ display: "block" }}
+            onMouseEnter={cancelHide}
+            onMouseLeave={() => delayHidePopover(id)}
+          >
+            <span className={`fp-type ${type === "must" ? "gold" : "blue"}`}>
+              {type === "must" ? "Must fix" : "Style suggestion"}
+            </span>
+            <span className="fp-msg">{message}</span>
+            <span className="fp-suggestion">{suggestion}</span>
+            <span className="fp-actions">
+              <button className="fp-fix" onClick={() => handleFix(id, suggestion)}>Fix</button>
+              <button className="fp-dismiss" onClick={() => handleDismiss(id)}>Dismiss</button>
+            </span>
+          </span>
+        )}
+      </span>
+    );
+  };
+
+  // Parse draft and inject flags into rendered output
+  const renderDraftWithFlags = () => {
+    if (!draft) return <div style={{ color: "var(--fg-3)", fontSize: 13 }}>No draft yet.</div>;
+
+    const paragraphs = draft.split("\n").filter(Boolean);
+    const title = paragraphs[0] || "";
+    const body = paragraphs.slice(1);
+
+    return (
+      <>
+        <div className="draft-title-text">{title}</div>
+        {body.map((para, i) => {
+          const isSubhead = para.length < 60 && !para.endsWith(".");
+          if (isSubhead) {
+            return <div key={i} className="draft-subhead">{para}</div>;
+          }
+
+          // Scan for potential flag patterns in text
+          // Flag: unverified statistics/claims (must fix)
+          const statMatch = para.match(/(\d+%\s+of\s+\w+[^.]*)/);
+          // Flag: cliche/weak phrases (style)
+          const clicheMatch = para.match(/(lost opportunity|game.?changer|at the end of the day|touch base|move the needle)/i);
+          // Flag: passive voice (style)
+          const passiveMatch = para.match(/(never made it anywhere|was done by|been completed|were given)/i);
+
+          if (statMatch && !fixedFlags.has(`must-${i}`) && !dismissedFlags.has(`must-${i}`)) {
+            const idx = para.indexOf(statMatch[1]);
+            return (
+              <p key={i} style={{ marginTop: 12, position: "relative" }}>
+                {para.slice(0, idx)}
+                <FlagSpan
+                  id={`must-${i}`}
+                  type="must"
+                  text={statMatch[1]}
+                  message="No source found. Remove or verify before Review."
+                  suggestion={`Most executives I speak with ${statMatch[1].replace(/\d+%\s+of\s+/, "").toLowerCase()}`}
+                />
+                {para.slice(idx + statMatch[1].length)}
+              </p>
+            );
+          }
+
+          if (passiveMatch && !fixedFlags.has(`style-${i}`) && !dismissedFlags.has(`style-${i}`)) {
+            const idx = para.indexOf(passiveMatch[1]);
+            return (
+              <p key={i} style={{ marginTop: 12, position: "relative" }}>
+                {para.slice(0, idx)}
+                <FlagSpan
+                  id={`style-${i}`}
+                  type="style"
+                  text={passiveMatch[1]}
+                  message="Slightly passive. Consider making this more direct."
+                  suggestion="never gets out"
+                />
+                {para.slice(idx + passiveMatch[1].length)}
+              </p>
+            );
+          }
+
+          if (clicheMatch && !fixedFlags.has(`cliche-${i}`) && !dismissedFlags.has(`cliche-${i}`)) {
+            const idx = para.indexOf(clicheMatch[1]);
+            return (
+              <p key={i} style={{ marginTop: 12, position: "relative" }}>
+                {para.slice(0, idx)}
+                <FlagSpan
+                  id={`cliche-${i}`}
+                  type="style"
+                  text={clicheMatch[1]}
+                  message="Voice drift. You usually land harder."
+                  suggestion="Every week without it, someone else says what you have been thinking."
+                />
+                {para.slice(idx + clicheMatch[1].length)}
+              </p>
+            );
+          }
+
+          return <p key={i} style={{ marginTop: 12 }}>{fixedFlags.get(`must-${i}`) || fixedFlags.get(`style-${i}`) || fixedFlags.get(`cliche-${i}`) || para}</p>;
+        })}
+      </>
+    );
   };
 
   return (
@@ -1087,29 +1233,7 @@ function StageEdit({
           </div>
         ) : (
           <div className="draft-body">
-            {draft ? (
-              <>
-                {/* Render first line as title */}
-                <div className="draft-title-text" contentEditable suppressContentEditableWarning spellCheck={false}
-                  onInput={e => {
-                    const lines = draft.split("\n");
-                    lines[0] = (e.target as HTMLElement).textContent || "";
-                    onDraftChange(lines.join("\n"));
-                  }}
-                >{draft.split("\n")[0]}</div>
-                {/* Render remaining paragraphs */}
-                {draft.split("\n").slice(1).filter(Boolean).map((para, i) => {
-                  // Detect subheadings (short lines, no period at end)
-                  const isSubhead = para.length < 60 && !para.endsWith(".");
-                  if (isSubhead) {
-                    return <div key={i} className="draft-subhead" contentEditable suppressContentEditableWarning spellCheck={false}>{para}</div>;
-                  }
-                  return <p key={i} style={{ marginTop: 12 }} contentEditable suppressContentEditableWarning spellCheck={false}>{para}</p>;
-                })}
-              </>
-            ) : (
-              <div style={{ color: "var(--fg-3)", fontSize: 13 }}>No draft yet.</div>
-            )}
+            {renderDraftWithFlags()}
           </div>
         )}
       </div>

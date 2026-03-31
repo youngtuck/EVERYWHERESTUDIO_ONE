@@ -42,11 +42,12 @@ function strengthColor(s?: SignalStrength): string {
 
 // ── Pipeline detail dashboard panel ──────────────────────────
 function PipelineDetailPanel({
-  item, onActivate, onRemove,
+  item, onActivate, onRemove, onSendToWrap,
 }: {
   item: PipelineItem;
   onActivate: () => void;
   onRemove: () => void;
+  onSendToWrap?: () => void;
 }) {
   const isSignal = item.type === "signal";
   return (
@@ -68,6 +69,14 @@ function PipelineDetailPanel({
           >
             {item.action}
           </button>
+          {item.outputId && onSendToWrap && (
+            <button
+              onClick={onSendToWrap}
+              style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--gold-bright)", background: "rgba(245,198,66,0.06)", fontSize: 11, color: "var(--gold)", cursor: "pointer", fontFamily: FONT, fontWeight: 600 }}
+            >
+              Send to Wrap
+            </button>
+          )}
           <button style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}>Edit note</button>
           <button
             onClick={onRemove}
@@ -167,6 +176,11 @@ export default function TheLot() {
           item={selectedItem}
           onActivate={handleActivate}
           onRemove={handleRemove}
+          onSendToWrap={selectedItem.outputId ? () => {
+            sessionStorage.setItem("ew-wrap-output-id", selectedItem.outputId!);
+            sessionStorage.setItem("ew-wrap-title", selectedItem.title);
+            nav("/studio/wrap");
+          } : undefined}
         />
       );
     } else {
