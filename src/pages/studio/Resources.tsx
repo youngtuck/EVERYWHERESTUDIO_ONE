@@ -1,5 +1,5 @@
 /**
- * Resources.tsx — Project Files
+ * Resources.tsx, Project Files
  * Phase 6 + fixes:
  *  - Loads real resources from Supabase (resources table)
  *  - "View file" opens a modal showing the extracted content
@@ -160,7 +160,7 @@ function FileDetailPanel({
   );
 }
 
-// No static fallback — show empty state when no resources exist
+// No static fallback, show empty state when no resources exist
 
 // ── Main Component ─────────────────────────────────────────────
 export default function Resources() {
@@ -204,7 +204,7 @@ export default function Resources() {
   const handleRemove = async () => {
     if (!selectedResource || !user) return;
     if (selectedResource.id.startsWith("f")) {
-      toast("No real file to remove — this is a placeholder.", "error");
+      toast("No real file to remove, this is a placeholder.", "error");
       return;
     }
     await supabase.from("resources").update({ is_active: false }).eq("id", selectedResource.id).eq("user_id", user.id);
@@ -366,7 +366,7 @@ export default function Resources() {
           <p style={{ fontSize: 11, color: "var(--fg-3)" }}>
             {uploading
               ? "Uploading..."
-              : <><span style={{ color: "var(--blue)", fontWeight: 600 }}>Upload a file</span> — PDF, doc, deck, or any reference</>
+              : <><span style={{ color: "var(--blue)", fontWeight: 600 }}>Upload a file</span>, PDF, doc, deck, or any reference</>
             }
           </p>
         </div>

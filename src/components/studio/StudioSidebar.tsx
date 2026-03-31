@@ -15,6 +15,7 @@ const NAV = [
       {
         path: "/studio/watch",
         label: "Watch",
+        desc: "Your daily intelligence briefing. Signals, competitors, opportunities.",
         icon: (
           <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" />
@@ -24,6 +25,7 @@ const NAV = [
       {
         path: "/studio/work",
         label: "Work",
+        desc: "Talk to Watson, build outlines, write drafts, run checkpoints.",
         icon: (
           <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
             <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
@@ -33,6 +35,7 @@ const NAV = [
       {
         path: "/studio/wrap",
         label: "Wrap",
+        desc: "Turn drafts into formatted deliverables for every channel.",
         icon: (
           <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
             <polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" />
@@ -47,6 +50,7 @@ const NAV = [
       {
         path: "/studio/outputs",
         label: "The Catalog",
+        desc: "Every piece you have published or exported lives here.",
         icon: (
           <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
             <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
@@ -57,6 +61,7 @@ const NAV = [
       {
         path: "/studio/lot",
         label: "The Pipeline",
+        desc: "Ideas parked for later. Resurfaces when timing is right.",
         icon: (
           <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
@@ -71,6 +76,7 @@ const NAV = [
       {
         path: "/studio/resources",
         label: "Project Files",
+        desc: "Uploaded reference docs, brand assets, research materials.",
         icon: (
           <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
@@ -85,6 +91,7 @@ const NAV = [
       {
         path: "/studio/settings",
         label: "Preferences",
+        desc: "Voice DNA, display settings, Watch sources, defaults.",
         icon: (
           <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
             <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="18" x2="11" y2="18" />
@@ -318,12 +325,13 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                 <div style={{ height: 1, background: "var(--line)", margin: "8px 6px", opacity: 0.5 }} />
               )}
 
-              {items.map(({ path, label, icon }) => {
+              {items.map(({ path, label, icon, desc }) => {
                 const active = isActive(path);
                 return (
                   <NavItem
                     key={path}
                     label={label}
+                    desc={desc}
                     icon={icon}
                     active={active}
                     collapsed={collapsed}
@@ -372,21 +380,32 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
 // ── Nav Item ────────────────────────────────────────────────────
 function NavItem({
   label,
+  desc,
   icon,
   active,
   collapsed,
   onClick,
 }: {
   label: string;
+  desc?: string;
   icon: React.ReactNode;
   active: boolean;
   collapsed: boolean;
   onClick: () => void;
 }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   return (
     <div
       onClick={onClick}
-      title={collapsed ? label : undefined}
+      onMouseEnter={e => {
+        if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+        setShowTooltip(true);
+      }}
+      onMouseLeave={e => {
+        if (!active) e.currentTarget.style.background = "transparent";
+        setShowTooltip(false);
+      }}
       style={{
         display: "flex",
         alignItems: "center",
@@ -400,8 +419,6 @@ function NavItem({
         background: active ? "rgba(245,198,66,0.12)" : "transparent",
         justifyContent: collapsed ? "center" : "flex-start",
       }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
-      onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
     >
       {/* Icon */}
       <div style={{
@@ -430,35 +447,33 @@ function NavItem({
         </span>
       )}
 
-      {/* Tooltip in collapsed mode */}
-      {collapsed && (
-        <TooltipLabel label={label} />
+      {/* Super tooltip: shows on hover for both expanded and collapsed modes */}
+      {showTooltip && desc && (
+        <div
+          style={{
+            position: "absolute",
+            left: collapsed ? 52 : 220,
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "var(--fg)",
+            borderRadius: 6,
+            padding: "6px 10px",
+            fontSize: 11,
+            color: "rgba(255,255,255,0.92)",
+            whiteSpace: "normal",
+            width: 180,
+            lineHeight: 1.4,
+            zIndex: 200,
+            pointerEvents: "none",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 2 }}>{label}</div>
+          <div style={{ opacity: 0.75, fontSize: 10 }}>{desc}</div>
+        </div>
       )}
     </div>
   );
 }
 
-function TooltipLabel({ label }: { label: string }) {
-  return (
-    <div
-      className="nav-tooltip"
-      style={{
-        display: "none",
-        position: "absolute",
-        left: 46,
-        top: "50%",
-        transform: "translateY(-50%)",
-        background: "var(--fg)",
-        borderRadius: 4,
-        padding: "4px 9px",
-        fontSize: 11,
-        color: "rgba(255,255,255,0.85)",
-        whiteSpace: "nowrap",
-        zIndex: 200,
-        pointerEvents: "none",
-      }}
-    >
-      {label}
-    </div>
-  );
-}
+

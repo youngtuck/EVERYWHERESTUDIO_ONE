@@ -1,5 +1,5 @@
 /**
- * Wrap.tsx — Turn exported drafts into deliverables
+ * Wrap.tsx, Turn exported drafts into deliverables
  * Matches wireframe v7.23 exactly.
  */
 import { useState, useLayoutEffect } from "react";
@@ -52,11 +52,11 @@ function buildWrapPreviews(displayName: string): Record<WrapFormat, React.ReactN
       <div style={{ padding: "22px 26px", fontSize: 14, color: "var(--fg)", lineHeight: 1.65 }}>
         <p style={{ fontWeight: 700, marginBottom: 12 }}>The thinking is in your head. It belongs in the world.</p>
         <p style={{ color: "var(--fg-2)" }}>You said it perfectly in a meeting.</p>
-        <p style={{ color: "var(--fg-2)", marginTop: 8 }}>That version — the real one, in your voice — never gets out.</p>
+        <p style={{ color: "var(--fg-2)", marginTop: 8 }}>That version, the real one, in your voice, never gets out.</p>
         <p style={{ color: "var(--fg-2)", marginTop: 12 }}>Most people think this is a motivation problem.</p>
         <p style={{ color: "var(--fg-2)", marginTop: 8 }}>It is not. It is structural.</p>
         <p style={{ color: "var(--blue)", fontWeight: 600, marginTop: 16 }}>What does your infrastructure look like?</p>
-        <p style={{ color: "var(--fg-3)", fontSize: 11, marginTop: 16 }}>— {displayName}</p>
+        <p style={{ color: "var(--fg-3)", fontSize: 11, marginTop: 16 }}>- {displayName}</p>
       </div>
     </div>
   ),
@@ -71,7 +71,7 @@ function buildWrapPreviews(displayName: string): Record<WrapFormat, React.ReactN
         <button style={{ fontSize: 10, padding: "3px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}>Download</button>
       </div>
       <div style={{ padding: "26px 30px" }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 16 }}>{displayName} — March 28</div>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 16 }}>{displayName}, March 28</div>
         <div style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", marginBottom: 12 }}>The Articulation Gap</div>
         <div style={{ width: 28, height: 3, background: "var(--gold-bright)", marginBottom: 18, borderRadius: 2 }} />
         <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75, marginBottom: 12 }}>I have been thinking about something I hear constantly from clients. Brilliant thinking that never makes it to an audience.</p>
@@ -115,7 +115,7 @@ function buildWrapPreviews(displayName: string): Record<WrapFormat, React.ReactN
       <div style={{ padding: "11px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--fg)" }} />
-          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)" }}>Sunday Story — The Edition</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)" }}>Sunday Story, The Edition</span>
           <span style={{ fontSize: 10, color: "var(--fg-3)" }}>HTML</span>
         </div>
         <button style={{ fontSize: 10, padding: "3px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}>Download</button>

@@ -39,7 +39,7 @@ export function useShell() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADVISORS CONTENT — context-aware per page (matches wireframe advContent object)
+// ADVISORS CONTENT, context-aware per page (matches wireframe advContent object)
 // ─────────────────────────────────────────────────────────────────────────────
 
 type AdvisorCard = { role: string; text: string };
@@ -49,25 +49,25 @@ const ADVISOR_CONTENT: Record<string, AdvisorContext> = {
   watch: {
     rec: "You are tracking 71 sources across 5 categories. Three blind spots surfaced this week: no podcast coverage of AI governance, no Substack writers in the executive development space, and zero coverage of the \"fractional executive\" movement which is adjacent to your positioning.",
     cards: [
-      { role: "Positioning", text: "Craig Mod and Cal Newport are your only tracked competitors. Both are productivity writers. Consider adding someone writing specifically about executive communication — that is your actual lane." },
-      { role: "Coverage Gaps", text: "Your keyword cluster skews toward AI and coaching. No one in your sources is covering the intersection of both. That gap is yours to own — and nobody is watching it yet." },
+      { role: "Positioning", text: "Craig Mod and Cal Newport are your only tracked competitors. Both are productivity writers. Consider adding someone writing specifically about executive communication, that is your actual lane." },
+      { role: "Coverage Gaps", text: "Your keyword cluster skews toward AI and coaching. No one in your sources is covering the intersection of both. That gap is yours to own, and nobody is watching it yet." },
       { role: "Signals", text: "Three thought leaders you follow went quiet this week simultaneously. That pattern sometimes precedes a major publication. Worth watching if something drops in the next 72 hours." },
     ],
   },
   work: {
-    rec: "Three advisors flag the close as the weakest element. The argument earns agreement — but agreement is not action. The piece needs one sharper sentence before it ends. Everything else holds.",
+    rec: "Three advisors flag the close as the weakest element. The argument earns agreement, but agreement is not action. The piece needs one sharper sentence before it ends. Everything else holds.",
     cards: [
-      { role: "Strategy", text: "The infrastructure framing is ownable. Competitors are writing about time management — you are writing about systems. Stay there. Do not soften the diagnosis in the close." },
+      { role: "Strategy", text: "The infrastructure framing is ownable. Competitors are writing about time management, you are writing about systems. Stay there. Do not soften the diagnosis in the close." },
       { role: "Conversion", text: "The reader needs one more concrete image of what infrastructure looks like. A single sharp example closes the gap between interest and action." },
-      { role: "Sales", text: "A skeptic finishes this piece nodding — but not moving. The close is directional, not decisive. Consider whether the last sentence should point somewhere specific." },
+      { role: "Sales", text: "A skeptic finishes this piece nodding, but not moving. The close is directional, not decisive. Consider whether the last sentence should point somewhere specific." },
     ],
   },
   wrap: {
-    rec: "Before you wrap, consider the distribution sequence. LinkedIn post first builds momentum. Newsletter 48 hours later catches the second wave. Podcast last — it has the longest shelf life.",
+    rec: "Before you wrap, consider the distribution sequence. LinkedIn post first builds momentum. Newsletter 48 hours later catches the second wave. Podcast last, it has the longest shelf life.",
     cards: [
       { role: "Timing", text: "Saturday morning posts on LinkedIn get 40% lower engagement than Tuesday–Thursday. If you are wrapping now, consider scheduling LinkedIn for Tuesday." },
       { role: "Sequencing", text: "Your Sunday Story should go out Sunday. The LinkedIn post should tease it Friday. That sequence has driven the highest newsletter open rates in your category." },
-      { role: "Audience", text: "The podcast script reads well but opens cold. Podcast listeners need a warmer entry — one personal sentence before the hook lands." },
+      { role: "Audience", text: "The podcast script reads well but opens cold. Podcast listeners need a warmer entry, one personal sentence before the hook lands." },
     ],
   },
 };
@@ -79,7 +79,7 @@ function getAdvisorCtx(pathname: string): { ctx: AdvisorContext; stageLabel: str
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DISCOVER DATA — full 17-item grid matching wireframe v7.23
+// DISCOVER DATA, full 17-item grid matching wireframe v7.23
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface DiscoverItem {
@@ -99,42 +99,42 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "watson", color: "#6B8FD4", icon: "✦", name: "Watson",
     desc: "Interview and excavate your thinking.",
     rationale: "Your thinking partner before the blank page.",
-    detail: "Watson runs in the Intake stage of Work. It opens as a conversation, not a form.\n\nYou talk. Watson listens and asks questions — pushing deeper, surfacing the specifics, finding the angles you did not know were there. When the session is done, Watson hands off a structured brief to Outline.\n\nHow to use it: Go to Work and start typing or speaking. You do not need to know what you want to write. Start with what is on your mind and Watson will help you find the shape of the idea.\n\nThe output is yours because the input was yours. Watson does not invent — it excavates.",
+    detail: "Watson runs in the Intake stage of Work. It opens as a conversation, not a form.\n\nYou talk. Watson listens and asks questions, pushing deeper, surfacing the specifics, finding the angles you did not know were there. When the session is done, Watson hands off a structured brief to Outline.\n\nHow to use it: Go to Work and start typing or speaking. You do not need to know what you want to write. Start with what is on your mind and Watson will help you find the shape of the idea.\n\nThe output is yours because the input was yours. Watson does not invent, it excavates.",
     launchLabel: "Open Intake", route: "/studio/work",
   },
   {
     id: "voicedna", color: "#D4A832", icon: "◆", name: "Voice DNA",
     desc: "Capture your voice signature.",
     rationale: "Three layers + subconscious markers.",
-    detail: "Voice DNA lives in Preferences. It is the foundation that every session builds on.\n\nIt captures your communication signature across three layers:\n\nVoice Markers — sentence structure, rhythm, pacing. How you move through an argument.\n\nValue Markers — what you believe and stand for. The positions you hold without being asked.\n\nPersonality Markers — how you show up. Warmth, edge, humor, gravity.\n\nThere is also a fourth layer — subconscious patterns that most people cannot see in their own writing: pronoun habits, sentence openings, conjunction use, linguistic variance.\n\nRun it once to set your baseline. The system updates it over time.",
+    detail: "Voice DNA lives in Preferences. It is the foundation that every session builds on.\n\nIt captures your communication signature across three layers:\n\nVoice Markers, sentence structure, rhythm, pacing. How you move through an argument.\n\nValue Markers, what you believe and stand for. The positions you hold without being asked.\n\nPersonality Markers, how you show up. Warmth, edge, humor, gravity.\n\nThere is also a fourth layer, subconscious patterns that most people cannot see in their own writing: pronoun habits, sentence openings, conjunction use, linguistic variance.\n\nRun it once to set your baseline. The system updates it over time.",
     launchLabel: "Go to Preferences", route: "/studio/settings/voice",
   },
   {
     id: "betterish", color: "#4CAF82", icon: "⊕", name: "Draft Score",
     desc: "Score your draft before publishing.",
     rationale: "900/1000 is the publication-ready threshold.",
-    detail: "Draft Score runs automatically in the Review stage. You do not invoke it manually — it is always running in the background as you edit.\n\nThe score is out of 1,000. Publication-ready threshold is 900.\n\nBelow 900, the system tells you exactly what is weak and routes the problem to the right stage. A voice issue sends you back to Edit. A factual flag surfaces in the draft. A structure problem points back to Outline.\n\nThe score is not a grade. It is a map. 900 means the piece is ready. Under 900 means there is something specific left to fix.",
+    detail: "Draft Score runs automatically in the Review stage. You do not invoke it manually, it is always running in the background as you edit.\n\nThe score is out of 1,000. Publication-ready threshold is 900.\n\nBelow 900, the system tells you exactly what is weak and routes the problem to the right stage. A voice issue sends you back to Edit. A factual flag surfaces in the draft. A structure problem points back to Outline.\n\nThe score is not a grade. It is a map. 900 means the piece is ready. Under 900 means there is something specific left to fix.",
     launchLabel: "Go to Review", route: "/studio/work",
   },
   {
     id: "watch", color: "#0D1B2A", icon: "◉", name: "Watch",
     desc: "Your overnight market intelligence briefing.",
     rationale: "Ranked signals, ready when you arrive.",
-    detail: "Watch is your intelligence briefing. It runs overnight and is ready when you open Studio in the morning.\n\nIt scans your market, tracks competitor activity, and surfaces the opportunities most relevant to your positioning — ranked in order of relevance. What appears first matters most right now.\n\nWatch pulls from the sources and topics you have configured in your Watch settings. The more context you give it, the more precise the briefing becomes.\n\nEach signal includes a suggested action: use it in Work, note it in the Pipeline, or dismiss it. Nothing sits unread for long.",
+    detail: "Watch is your intelligence briefing. It runs overnight and is ready when you open Studio in the morning.\n\nIt scans your market, tracks competitor activity, and surfaces the opportunities most relevant to your positioning, ranked in order of relevance. What appears first matters most right now.\n\nWatch pulls from the sources and topics you have configured in your Watch settings. The more context you give it, the more precise the briefing becomes.\n\nEach signal includes a suggested action: use it in Work, note it in the Pipeline, or dismiss it. Nothing sits unread for long.",
     launchLabel: "Go to Watch", route: "/studio/watch",
   },
   {
     id: "work", color: "#6B8FD4", icon: "✎", name: "Work",
     desc: "Where ideas become drafts.",
     rationale: "Five stages: Intake, Outline, Edit, Review, Export.",
-    detail: "Work is where ideas become drafts. It moves in five stages:\n\nIntake — You talk, Watson listens. The idea gets excavated and shaped.\n\nOutline — The structure gets built. You choose the angle, the format, the arc.\n\nEdit — The draft appears. You write, refine, and resolve flags. Voice match runs in real time.\n\nReview — The draft is read by an adversarial reader. Flags surface. Score runs.\n\nExport — The final draft is saved to your session and sent to Wrap.",
+    detail: "Work is where ideas become drafts. It moves in five stages:\n\nIntake, You talk, Watson listens. The idea gets excavated and shaped.\n\nOutline, The structure gets built. You choose the angle, the format, the arc.\n\nEdit, The draft appears. You write, refine, and resolve flags. Voice match runs in real time.\n\nReview, The draft is read by an adversarial reader. Flags surface. Score runs.\n\nExport, The final draft is saved to your session and sent to Wrap.",
     launchLabel: "Go to Work", route: "/studio/work",
   },
   {
     id: "wrap", color: "#C49A20", icon: "□", name: "Wrap",
     desc: "Turn drafts into deliverables.",
     rationale: "Choose a format, pick a template, publish.",
-    detail: "Wrap is where drafts become deliverables. You choose a format, pick a template, and the system produces the final output — formatted, styled, and ready to publish or send.\n\nTemplates include: LinkedIn Post, Newsletter, Podcast Script, Sunday Story, Executive Brief, One-Pager, and The Edition (full package).\n\nYou can add and edit templates from the Wrap dashboard. Every template can be customized for your brand and your typical use cases.\n\nWrap always saves to your session files. Download, copy to clipboard, or send directly from here.",
+    detail: "Wrap is where drafts become deliverables. You choose a format, pick a template, and the system produces the final output, formatted, styled, and ready to publish or send.\n\nTemplates include: LinkedIn Post, Newsletter, Podcast Script, Sunday Story, Executive Brief, One-Pager, and The Edition (full package).\n\nYou can add and edit templates from the Wrap dashboard. Every template can be customized for your brand and your typical use cases.\n\nWrap always saves to your session files. Download, copy to clipboard, or send directly from here.",
     launchLabel: "Go to Wrap", route: "/studio/wrap",
   },
   {
@@ -155,7 +155,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "edition", color: "#C49A20", icon: "✦", name: "The Edition",
     desc: "Full publication package from one draft.",
     rationale: "Every format out from one approved draft.",
-    detail: "The Edition is a Wrap template that produces your complete publication package from a single approved draft.\n\nOne draft in. Every format out — LinkedIn post, newsletter, podcast script, Sunday Story, show notes, image prompts, and more.\n\nEach format is adapted to its channel — not just reformatted, but rewritten for the platform and the reader who lives there. A LinkedIn post reads like LinkedIn. A podcast script sounds like audio.\n\nSelect The Edition from the template list in Wrap. It runs after you have completed Work and exported your draft.",
+    detail: "The Edition is a Wrap template that produces your complete publication package from a single approved draft.\n\nOne draft in. Every format out, LinkedIn post, newsletter, podcast script, Sunday Story, show notes, image prompts, and more.\n\nEach format is adapted to its channel, not just reformatted, but rewritten for the platform and the reader who lives there. A LinkedIn post reads like LinkedIn. A podcast script sounds like audio.\n\nSelect The Edition from the template list in Wrap. It runs after you have completed Work and exported your draft.",
     launchLabel: "Go to Wrap", route: "/studio/wrap",
   },
   {
@@ -169,7 +169,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "pipeline", color: "#4A90D9", icon: "◌", name: "The Pipeline",
     desc: "Ideas and signals waiting for the right moment.",
     rationale: "Parked ideas and watched signals.",
-    detail: "The Pipeline is your idea holding area. Two types of items live here:\n\nSignals — things Watch surfaced that you are not ready to act on yet but do not want to lose.\n\nParked ideas — topics you want to write about when the timing is right, when a dependency resolves, or when you have the research you need.\n\nPipeline items surface on your Home screen when conditions suggest the timing is right. You can activate any item directly into a new Work session.",
+    detail: "The Pipeline is your idea holding area. Two types of items live here:\n\nSignals, things Watch surfaced that you are not ready to act on yet but do not want to lose.\n\nParked ideas, topics you want to write about when the timing is right, when a dependency resolves, or when you have the research you need.\n\nPipeline items surface on your Home screen when conditions suggest the timing is right. You can activate any item directly into a new Work session.",
     launchLabel: "Go to Pipeline", route: "/studio/lot",
   },
   {
@@ -183,14 +183,14 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "prefs", color: "#94A3B8", icon: "⚙", name: "Preferences",
     desc: "Configure how Studio works for you.",
     rationale: "Watch sources, Voice DNA, default formats.",
-    detail: "Preferences is where you configure how Studio works for you.\n\nSet up Voice DNA to capture your communication signature. Configure Watch sources — which publications, people, and topics you want tracked. Set your default output formats and platform preferences.\n\nPreferences apply to every session in this project. Change them any time from the rail.",
+    detail: "Preferences is where you configure how Studio works for you.\n\nSet up Voice DNA to capture your communication signature. Configure Watch sources, which publications, people, and topics you want tracked. Set your default output formats and platform preferences.\n\nPreferences apply to every session in this project. Change them any time from the rail.",
     launchLabel: "Go to Preferences", route: "/studio/settings",
   },
   {
     id: "advisors", color: "#4A90D9", icon: "☻", name: "Advisors",
     desc: "Strategic guidance at every stage.",
     rationale: "Available in Watch, Work, and Wrap.",
-    detail: "Advisors is a panel of strategic perspectives available at every stage of Watch, Work, and Wrap.\n\nWhen you open Advisors, you get a synthesized recommendation based on your current stage and content — plus individual perspectives from different strategic lenses: positioning, audience, timing, conversion, and more.\n\nEach card shows a specific observation and lets you agree or skip. \"Apply recommendations\" pushes accepted advice into your current stage.\n\nAdvisors is not available in Catalog, Pipeline, Project Files, or Preferences — it only activates where there is active content to advise on.",
+    detail: "Advisors is a panel of strategic perspectives available at every stage of Watch, Work, and Wrap.\n\nWhen you open Advisors, you get a synthesized recommendation based on your current stage and content, plus individual perspectives from different strategic lenses: positioning, audience, timing, conversion, and more.\n\nEach card shows a specific observation and lets you agree or skip. \"Apply recommendations\" pushes accepted advice into your current stage.\n\nAdvisors is not available in Catalog, Pipeline, Project Files, or Preferences, it only activates where there is active content to advise on.",
     launchLabel: "Open Advisors", route: null,
   },
   {
@@ -211,7 +211,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "session", color: "#6B8FD4", icon: "✎", name: "What is a Session?",
     desc: "One idea, worked all the way through.",
     rationale: "A session is one run through Watch, Work, Wrap.",
-    detail: "A Session is one idea worked all the way through — from Intake to Export.\n\nEvery time you start something new in Work, you are starting a session. When you finish and export, the session is saved to the Catalog with all its output files.\n\nSessions are not drafts. A draft is what lives in Edit. A session is the complete record: what you brought in, what Watson surfaced, what you wrote, what you exported, and what formats you produced.\n\nYou can resume a session any time from the Start screen or from the Catalog. Sessions do not expire. Everything you produced is there.",
+    detail: "A Session is one idea worked all the way through, from Intake to Export.\n\nEvery time you start something new in Work, you are starting a session. When you finish and export, the session is saved to the Catalog with all its output files.\n\nSessions are not drafts. A draft is what lives in Edit. A session is the complete record: what you brought in, what Watson surfaced, what you wrote, what you exported, and what formats you produced.\n\nYou can resume a session any time from the Start screen or from the Catalog. Sessions do not expire. Everything you produced is there.",
     launchLabel: "Start a session", route: "/studio/work",
   },
 ];
@@ -331,7 +331,7 @@ function DashboardPanel({ open, children }: { open: boolean; children: React.Rea
         <div style={{ flex: 1, overflowY: "auto", padding: "14px" }}>
           {children ?? <DefaultDashContent />}
         </div>
-        {/* Copyright footer — matches wireframe */}
+        {/* Copyright footer, matches wireframe */}
         <div style={{
           padding: "10px 14px 12px",
           fontSize: 9, color: "var(--line-2)",
@@ -355,7 +355,7 @@ function DefaultDashContent() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ADVISORS MODAL — context-aware per page
+// ADVISORS MODAL, context-aware per page
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () => void }) {
@@ -454,7 +454,7 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DISCOVER OVERLAY — list view + detail view with back button
+// DISCOVER OVERLAY, list view + detail view with back button
 // ─────────────────────────────────────────────────────────────────────────────
 
 function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname: string }) {

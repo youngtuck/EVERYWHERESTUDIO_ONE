@@ -1,5 +1,5 @@
 /**
- * Watch.tsx — Sentinel Briefing + Sources
+ * Watch.tsx, Sentinel Briefing + Sources
  * Phase 6: wired to real Supabase sentinel_briefings + /api/run-sentinel
  */
 import { useState, useEffect, useLayoutEffect } from "react";
@@ -196,7 +196,7 @@ function SignalCard({ signal, ctaLabel, ctaColor, onCta }: {
     <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
       <div style={{ flex: 1, fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
         <strong style={{ color: "var(--fg)" }}>{signal.title}</strong>
-        {signal.summary ? ` — ${signal.summary}` : ""}
+        {signal.summary ? `, ${signal.summary}` : ""}
         {signal.implication && (
           <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 3, lineHeight: 1.4 }}>{signal.implication}</div>
         )}
@@ -229,7 +229,7 @@ function OpportunityRow({ signal, active }: { signal: Signal; active: boolean })
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0", opacity: active ? 1 : 0.5 }}>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: active ? "var(--blue)" : "var(--line-2)", flexShrink: 0, marginTop: 5 }} />
-      <span style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>{signal.title}{signal.summary ? ` — ${signal.summary}` : ""}</span>
+      <span style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>{signal.title}{signal.summary ? `, ${signal.summary}` : ""}</span>
     </div>
   );
 }
@@ -387,7 +387,7 @@ export default function Watch() {
 
   // Extract sections from live briefing or fall back to static demo
   const sections = briefing?.sections;
-  // Only show real briefing data — no static fallbacks
+  // Only show real briefing data, no static fallbacks
   const contentTriggers = sections?.content_triggers ?? sections?.whats_moving ?? [];
   const opportunities = sections?.opportunities ?? [];
   const marketSignals = sections?.threats ?? [];

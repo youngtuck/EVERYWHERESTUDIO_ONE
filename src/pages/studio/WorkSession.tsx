@@ -54,14 +54,14 @@ const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
 const TEMPLATES = ["Thought Leadership", "Case Study Narrative", "Weekly Insight", "Contrarian Take", "Origin Story"];
 
 const GATE_LABELS: Record<string, string> = {
-  "gate-0": "Echo — Deduplication",
-  "gate-1": "Priya — Research",
-  "gate-2": "Jordan — Voice DNA",
-  "gate-3": "David — Hook & Engagement",
-  "gate-4": "Elena — SLOP Detection",
-  "gate-5": "Natasha — Editorial",
-  "gate-6": "Marcus + Marshall — Perspective",
-  "gate-7": "Human Voice Test — AI Detection",
+  "gate-0": "Deduplication",
+  "gate-1": "Research Accuracy",
+  "gate-2": "Voice DNA Match",
+  "gate-3": "Hook & Engagement",
+  "gate-4": "SLOP Detection",
+  "gate-5": "Editorial Polish",
+  "gate-6": "Perspective & Balance",
+  "gate-7": "Human Voice Test",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -397,7 +397,7 @@ function IntakeDash({
                 <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{f}</span>
               </div>
             ))}
-            <div style={{ fontSize: 9, color: "var(--fg-3)", marginTop: 4 }}>Session only — not saved to Project Files</div>
+            <div style={{ fontSize: 9, color: "var(--fg-3)", marginTop: 4 }}>Session only, not saved to Project Files</div>
           </div>
         )}
       </DpSection>
@@ -508,7 +508,7 @@ function ReviewDash({
         <DpSection>
           <DpLabel>Running checkpoints</DpLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
-            {["Echo", "Priya", "Jordan", "David", "Elena", "Natasha", "Marcus + Marshall", "Human Voice Test"].map((name, i) => (
+            {["Deduplication", "Research Accuracy", "Voice DNA Match", "Hook & Engagement", "SLOP Detection", "Editorial Polish", "Perspective & Balance", "Human Voice Test"].map((name, i) => (
               <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--fg-3)" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--line-2)", animation: `pulse ${0.5 * i + 1}s infinite` }} />
                 {name}
@@ -690,6 +690,61 @@ function WatsonAvatar() {
   );
 }
 
+/** Parse Watson text: render **bold** as <strong>, strip raw **, detect questions vs statements, detect search indicators */
+function WatsonTextRenderer({ text }: { text: string }) {
+  // Detect search/research lines
+  const isSearchLine = (line: string) =>
+    /^(searching|looking up|researching|checking|scanning|analyzing|pulling data)/i.test(line.trim());
+
+  // Detect if a line ends with a question mark (Watson is asking the user)
+  const isQuestion = (line: string) => /\?\s*$/.test(line.trim());
+
+  const lines = text.split("\n");
+
+  return (
+    <>
+      {lines.map((line, li) => {
+        if (!line.trim()) return <br key={li} />;
+
+        // Search/research indicator
+        if (isSearchLine(line)) {
+          return (
+            <div key={li} style={{
+              fontSize: 11, color: "var(--blue)", fontStyle: "italic",
+              padding: "3px 0", display: "flex", alignItems: "center", gap: 6,
+            }}>
+              <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              {line}
+            </div>
+          );
+        }
+
+        // Parse markdown bold: **text** becomes <strong>text</strong>
+        const parts = line.split(/(\*\*[^*]+\*\*)/g);
+        const rendered = parts.map((part, pi) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={pi} style={{ fontWeight: 600, color: "var(--fg)" }}>{part.slice(2, -2)}</strong>;
+          }
+          return <span key={pi}>{part}</span>;
+        });
+
+        // If Watson is asking a question, render bold
+        if (isQuestion(line)) {
+          return (
+            <div key={li} style={{ fontWeight: 600, color: "var(--fg)" }}>
+              {rendered}
+            </div>
+          );
+        }
+
+        return <div key={li}>{rendered}</div>;
+      })}
+    </>
+  );
+}
+
 function ChatBubble({ role, text }: { role: "watson" | "user"; text: string }) {
   const isWatson = role === "watson";
   return (
@@ -704,11 +759,11 @@ function ChatBubble({ role, text }: { role: "watson" | "user"; text: string }) {
           <WatsonAvatar />
           <div style={{
             flex: 1,
-            fontSize: 14, color: "var(--fg-2)", lineHeight: 1.7,
+            fontSize: 14, color: "var(--fg-2)", lineHeight: 1.35,
             whiteSpace: "pre-wrap" as const,
             paddingTop: 4,
           }}>
-            {text}
+            <WatsonTextRenderer text={text} />
           </div>
         </>
       ) : (
@@ -737,6 +792,7 @@ function ChatInputBar({
   onSend: () => void; disabled?: boolean; autoFocus?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [micActive, setMicActive] = useState(false);
 
   // Focus on mount when autoFocus is set
   useEffect(() => {
@@ -754,59 +810,75 @@ function ChatInputBar({
 
   return (
     <div style={{
-      display: "flex", alignItems: "flex-end", gap: 8,
-      background: "var(--surface)",
-      border: "1px solid var(--line-2)",
-      borderRadius: 12,
-      padding: "8px 10px 8px 14px",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-      transition: "border-color 0.15s, box-shadow 0.15s",
-    }}
-      onFocus={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,144,217,0.4)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(74,144,217,0.08)";
+      display: "flex", flexDirection: "column", gap: 6,
+    }}>
+      <div style={{
+        display: "flex", alignItems: "flex-end", gap: 8,
+        background: "rgba(245,198,66,0.10)",
+        border: "1px solid rgba(245,198,66,0.35)",
+        borderRadius: 12,
+        padding: "8px 10px 8px 14px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        transition: "border-color 0.15s, box-shadow 0.15s",
       }}
-      onBlur={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--line-2)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-      }}
-    >
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onKeyDown={handleKey}
-        placeholder={placeholder}
-        disabled={disabled}
-        rows={1}
-        style={{
-          flex: 1, resize: "none",
-          background: "transparent", border: "none", outline: "none",
-          fontSize: 14, color: "var(--fg)", fontFamily: FONT,
-          lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
-          opacity: disabled ? 0.5 : 1,
+        onFocus={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(245,198,66,0.6)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(245,198,66,0.12)";
         }}
-        onInput={e => {
-          const t = e.target as HTMLTextAreaElement;
-          t.style.height = "auto";
-          t.style.height = Math.min(t.scrollHeight, 120) + "px";
-        }}
-      />
-      <button
-        onClick={onSend}
-        disabled={disabled || !value.trim()}
-        style={{
-          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-          background: value.trim() && !disabled ? "var(--fg)" : "var(--line)",
-          border: "none", cursor: value.trim() && !disabled ? "pointer" : "not-allowed",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "background 0.15s",
+        onBlur={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(245,198,66,0.35)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
         }}
       >
-        <svg style={{ width: 13, height: 13, stroke: "#fff", strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
-          <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-        </svg>
-      </button>
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={1}
+          style={{
+            flex: 1, resize: "none",
+            background: "transparent", border: "none", outline: "none",
+            fontSize: 14, color: "var(--fg)", fontFamily: FONT,
+            lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
+            opacity: disabled ? 0.5 : 1,
+          }}
+          onInput={e => {
+            const t = e.target as HTMLTextAreaElement;
+            t.style.height = "auto";
+            t.style.height = Math.min(t.scrollHeight, 120) + "px";
+          }}
+        />
+        <IaBtn title="Attach file"><AttachIcon /></IaBtn>
+        <IaBtn
+          title="Hold to speak" active={micActive}
+          onMouseDown={() => setMicActive(true)}
+          onMouseUp={() => setMicActive(false)}
+          onMouseLeave={() => setMicActive(false)}
+        >
+          <MicIcon />
+        </IaBtn>
+        <button
+          onClick={onSend}
+          disabled={disabled || !value.trim()}
+          style={{
+            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+            background: value.trim() && !disabled ? "var(--fg)" : "var(--line)",
+            border: "none", cursor: value.trim() && !disabled ? "pointer" : "not-allowed",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "background 0.15s",
+          }}
+        >
+          <svg style={{ width: 13, height: 13, stroke: "#fff", strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
+            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
+      <div style={{ fontSize: 9, color: "var(--fg-3)", textAlign: "center" as const, letterSpacing: "0.04em" }}>
+        Hold to speak · Release to send
+      </div>
     </div>
   );
 }
@@ -822,16 +894,55 @@ function StageOutline({
   onAdvance: () => void; building: boolean;
 }) {
   const [input, setInput] = useState("");
+  const [activeAngle, setActiveAngle] = useState<0 | 1>(0);
+
+  // Generate alternative options for each row (title gets 3 options, others get 2)
+  // These are placeholder alternatives. In production, Watson would generate these.
+  const getAlternatives = (row: OutlineRow, _index: number): string[] => {
+    if (row.label.toLowerCase() === "title") {
+      return [row.content, `Alt: ${row.content.split(" ").reverse().join(" ")}`, `The case for ${row.content.toLowerCase()}`];
+    }
+    return [row.content];
+  };
+
+  const angleLabels = ["Angle A", "Angle B"];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+      {/* Angle tabs */}
+      {!building && (
+        <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--line)", flexShrink: 0, padding: "0 20px" }}>
+          {angleLabels.map((label, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveAngle(idx as 0 | 1)}
+              style={{
+                padding: "10px 18px", fontSize: 12, fontWeight: activeAngle === idx ? 600 : 400,
+                color: activeAngle === idx ? "var(--fg)" : "var(--fg-3)",
+                background: "transparent", border: "none", borderBottom: activeAngle === idx ? "2px solid var(--gold-bright)" : "2px solid transparent",
+                cursor: "pointer", fontFamily: FONT, transition: "all 0.12s",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
         {building ? (
           <LoadingDots label="Building outline from your conversation..." />
         ) : (
           <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, minHeight: 200 }}>
             {outlineRows.map((row, i) => (
-              <OutlineRowComponent key={i} label={row.label} content={row.content} indent={row.indent} onChange={v => onUpdateRow(i, v)} />
+              <OutlineRowComponent
+                key={i}
+                label={row.label}
+                content={row.content}
+                indent={row.indent}
+                onChange={v => onUpdateRow(i, v)}
+                alternatives={getAlternatives(row, i)}
+              />
             ))}
           </div>
         )}
@@ -842,7 +953,7 @@ function StageOutline({
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
           value={input} onChange={e => setInput(e.target.value)}
-          placeholder="Ask Watson to restructure — or click any line to edit..."
+          placeholder="Ask Watson to restructure, or click any line to edit..."
           style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36 }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
           onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
@@ -856,31 +967,78 @@ function StageOutline({
   );
 }
 
-function OutlineRowComponent({ label, content, indent, onChange }: { label: string; content: string; indent?: boolean; onChange: (v: string) => void }) {
+function OutlineRowComponent({ label, content, indent, onChange, alternatives }: {
+  label: string; content: string; indent?: boolean; onChange: (v: string) => void; alternatives?: string[];
+}) {
+  const [showOptions, setShowOptions] = useState(false);
+  const isTitle = label.toLowerCase() === "title";
+  const hasAlts = alternatives && alternatives.length > 1;
+
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 0, padding: "7px 0", borderBottom: "1px solid var(--line)", position: "relative" }}>
-      <div style={{ width: 52, fontSize: 10, fontWeight: 600, color: "var(--line-2)", textTransform: "uppercase" as const, letterSpacing: "0.08em", flexShrink: 0, paddingTop: 1 }}>
-        {label}
+    <div style={{ padding: "7px 0", borderBottom: "1px solid var(--line)", position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 0 }}>
+        <div
+          onClick={() => { if (hasAlts || isTitle) setShowOptions(o => !o); }}
+          style={{
+            width: 52, fontSize: 10, fontWeight: 600,
+            color: (hasAlts || isTitle) ? "var(--blue)" : "var(--line-2)",
+            textTransform: "uppercase" as const, letterSpacing: "0.08em",
+            flexShrink: 0, paddingTop: 1,
+            cursor: (hasAlts || isTitle) ? "pointer" : "default",
+            transition: "color 0.1s",
+          }}
+        >
+          {label}
+        </div>
+        <div
+          contentEditable
+          suppressContentEditableWarning
+          spellCheck={false}
+          onInput={e => onChange((e.target as HTMLDivElement).textContent || "")}
+          style={{
+            flex: 1, fontSize: indent ? 12 : 13,
+            color: indent ? "var(--fg-3)" : "var(--fg)",
+            lineHeight: 1.5, fontWeight: indent ? 400 : 500,
+            paddingLeft: indent ? 24 : 0,
+            outline: "none", cursor: "text", borderRadius: 3, padding: "1px 4px",
+          }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.background = "transparent"; }}
+          onFocus={e => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
+          onBlur={e => { (e.target as HTMLElement).style.background = "transparent"; }}
+        >
+          {content}
+        </div>
       </div>
-      <div
-        contentEditable
-        suppressContentEditableWarning
-        spellCheck={false}
-        onInput={e => onChange((e.target as HTMLDivElement).textContent || "")}
-        style={{
-          flex: 1, fontSize: indent ? 12 : 13,
-          color: indent ? "var(--fg-3)" : "var(--fg)",
-          lineHeight: 1.5, fontWeight: indent ? 400 : 500,
-          paddingLeft: indent ? 24 : 0,
-          outline: "none", cursor: "text", borderRadius: 3, padding: "1px 4px",
-        }}
-        onMouseEnter={e => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
-        onMouseLeave={e => { (e.target as HTMLElement).style.background = "transparent"; }}
-        onFocus={e => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
-        onBlur={e => { (e.target as HTMLElement).style.background = "transparent"; }}
-      >
-        {content}
-      </div>
+
+      {/* Options dropdown: click label to see alternatives */}
+      {showOptions && (
+        <div style={{
+          marginTop: 6, marginLeft: 52, display: "flex", flexDirection: "column", gap: 3,
+          background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 6, padding: 6,
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 2 }}>
+            Options
+          </div>
+          {(alternatives || [content]).map((alt, ai) => (
+            <div
+              key={ai}
+              onClick={() => { onChange(alt); setShowOptions(false); }}
+              style={{
+                fontSize: 11, color: alt === content ? "var(--fg)" : "var(--blue)",
+                fontWeight: alt === content ? 500 : 400,
+                padding: "4px 6px", borderRadius: 4, cursor: "pointer",
+                background: alt === content ? "rgba(245,198,66,0.08)" : "transparent",
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-2)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = alt === content ? "rgba(245,198,66,0.08)" : "transparent"; }}
+            >
+              {alt}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -939,7 +1097,7 @@ function StageEdit({
         <input
           value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRevise(); } }}
-          placeholder="Tell Watson what to change — or edit above..."
+          placeholder="Tell Watson what to change, or edit above..."
           disabled={generating}
           style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, opacity: generating ? 0.5 : 1 }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
@@ -993,7 +1151,7 @@ function StageReview({
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
           value={input} onChange={e => setInput(e.target.value)}
-          placeholder="Send back to Edit — tell Watson what to change..."
+          placeholder="Send back to Edit, tell Watson what to change..."
           style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36 }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
           onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
@@ -1170,7 +1328,7 @@ export default function WorkSession() {
     setMessages([
       { role: "watson", content: "What's on your mind?" },
       { role: "user", content: `I want to write about this: ${signalText}.${detail}` },
-      { role: "watson", content: `Good signal. Let me ask a few questions to shape this into something worth publishing.\n\nWho specifically needs to hear this? Not a general audience — give me the exact person this is for.` },
+      { role: "watson", content: `Good signal. Let me ask a few questions to shape this into something worth publishing.\n\nWho specifically needs to hear this? Not a general audience, give me the exact person this is for.` },
     ]);
     // Keep stage at Intake so Watson continues the conversation naturally
   }, []);
@@ -1255,7 +1413,8 @@ export default function WorkSession() {
 
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = await res.json();
-      const reply = data.reply ?? "";
+      // Sanitize: strip em-dashes, en-dashes, replace with commas or colons
+      const reply = (data.reply ?? "").replace(/\u2014/g, ",").replace(/\u2013/g, ",");
 
       setMessages(prev => [...prev, { role: "watson", content: reply }]);
 
@@ -1473,7 +1632,7 @@ export default function WorkSession() {
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
-    setDashOpen(true);
+    setDashOpen(false);
 
     const dashNode = (() => {
       switch (stage) {

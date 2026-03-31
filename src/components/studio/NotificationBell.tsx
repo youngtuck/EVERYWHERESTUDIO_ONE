@@ -33,6 +33,9 @@ const TYPE_ICONS: Record<string, string> = {
   system: "\u2139\uFE0F",
 };
 
+// Suppressed notification types per Mark's directive
+const SUPPRESSED_TYPES = new Set(["briefing_ready", "nudge_stale", "system"]);
+
 export default function NotificationBell() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -41,7 +44,9 @@ export default function NotificationBell() {
   const [loaded, setLoaded] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // Filter out suppressed types for display
+  const visibleNotifications = notifications.filter(n => !SUPPRESSED_TYPES.has(n.type));
+  const unreadCount = visibleNotifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     if (!user) return;
@@ -178,12 +183,12 @@ export default function NotificationBell() {
             )}
           </div>
 
-          {notifications.length === 0 ? (
+          {visibleNotifications.length === 0 ? (
             <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--fg-3)", fontSize: 13 }}>
               No notifications yet
             </div>
           ) : (
-            notifications.map((n) => (
+            visibleNotifications.map((n) => (
               <button
                 key={n.id}
                 type="button"
