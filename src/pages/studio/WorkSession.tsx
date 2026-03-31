@@ -638,14 +638,17 @@ function ReviewDash({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StageIntake({
-  messages, onSend, sending, isReady, onAdvance, userInitials,
+  messages, onSend, sending, isReady, onAdvance, userInitials, firstName,
 }: {
   messages: ChatMessage[]; onSend: (text: string) => void;
-  sending: boolean; isReady: boolean; onAdvance: () => void; userInitials?: string;
+  sending: boolean; isReady: boolean; onAdvance: () => void; userInitials?: string; firstName?: string;
 }) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Welcome state: show centered greeting until user sends first message
+  const hasUserMessage = messages.some(m => m.role === "user");
 
   // Only scroll when a new message is added, not on every render
   const prevMsgCount = useRef(messages.length);
@@ -662,15 +665,70 @@ function StageIntake({
     setInput("");
   };
 
+  // Welcome state: centered greeting + input, like Claude's empty chat
+  if (!hasUserMessage && !sending) {
+    return (
+      <div style={{
+        display: "flex", flexDirection: "column", flex: 1, overflow: "hidden",
+        background: "var(--bg)", alignItems: "center", justifyContent: "center",
+      }}>
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          width: "100%", maxWidth: 680, padding: "0 24px",
+          marginBottom: 40,
+        }}>
+          {/* Watson icon */}
+          <div style={{
+            width: 40, height: 40, borderRadius: "50%",
+            background: "linear-gradient(135deg, rgba(74,144,217,0.2) 0%, rgba(245,198,66,0.15) 100%)",
+            border: "1px solid rgba(74,144,217,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 14, fontWeight: 700, color: "var(--blue)",
+            marginBottom: 20,
+          }}>W</div>
+
+          {/* Greeting */}
+          <div style={{
+            fontSize: 24, fontWeight: 600, color: "var(--fg)",
+            marginBottom: 6, fontFamily: FONT,
+            textAlign: "center" as const,
+          }}>
+            {firstName ? `Good to see you, ${firstName}.` : "What's on your mind?"}
+          </div>
+
+          <div style={{
+            fontSize: 13, color: "var(--fg-3)", marginBottom: 32,
+            textAlign: "center" as const, lineHeight: 1.5,
+          }}>
+            Start with an idea, a transcript, or just start talking.
+          </div>
+
+          {/* Centered input bar */}
+          <div style={{ width: "100%" }}>
+            <ChatInputBar
+              placeholder="What's on your mind?"
+              value={input}
+              onChange={setInput}
+              onSend={handleSend}
+              disabled={sending}
+              autoFocus
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Active chat state: messages + input bar at bottom
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)" }}>
-      {/* Scrollable message area - messages push to bottom when few */}
+      {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
         style={{
           flex: 1, overflowY: "auto", padding: "20px",
           display: "flex", flexDirection: "column",
-          justifyContent: messages.length <= 2 ? "flex-end" : "flex-start",
+          justifyContent: messages.length <= 3 ? "flex-end" : "flex-start",
           gap: 14,
         }}
       >
@@ -700,7 +758,7 @@ function StageIntake({
         </div>
       )}
 
-      {/* Input bar — centered, max-width constrained */}
+      {/* Input bar */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px 24px 16px", background: "var(--bg)" }}>
         <div style={{ width: "100%", maxWidth: 680 }}>
           <ChatInputBar
@@ -2016,6 +2074,7 @@ export default function WorkSession() {
           isReady={intakeReady}
           onAdvance={handleBuildOutline}
           userInitials={displayName ? displayName.split(" ").map(w => w[0]).join("").slice(0, 2) : "U"}
+          firstName={displayName ? displayName.split(" ")[0] : undefined}
         />
       )}
       {stage === "Outline" && (
