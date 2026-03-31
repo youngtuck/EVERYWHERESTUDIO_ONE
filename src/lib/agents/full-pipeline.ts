@@ -1,5 +1,5 @@
 import { runGatePipeline } from "./gate-pipeline";
-import { scoreBetterish } from "./betterish-scorer";
+import { scoreImpact } from "./betterish-scorer";
 import { runWrapPipeline } from "./wrap-pipeline";
 import { runAgent } from "./agent-runner";
 import { PIPELINE_CONFIG } from "./config";
@@ -31,7 +31,7 @@ export async function runFullPipeline(
       finalDraft: gateResult.currentDraft,
       originalDraft: rawDraft,
       gateResults: gateResult.results,
-      betterishScore: null,
+      impactScore: null,
       wrapApplied: false,
       qaResult: null,
       completenessResult: null,
@@ -41,21 +41,21 @@ export async function runFullPipeline(
     };
   }
 
-  callbacks?.onStageStart?.("betterish");
-  const betterishScore = await scoreBetterish(gateResult.currentDraft, context);
-  callbacks?.onStageComplete?.("betterish");
+  callbacks?.onStageStart?.("forecast");
+  const impactScore = await scoreImpact(gateResult.currentDraft, context);
+  callbacks?.onStageComplete?.("forecast");
 
-  if (betterishScore.total < PIPELINE_CONFIG.betterishThreshold) {
+  if (impactScore.total < PIPELINE_CONFIG.impactThreshold) {
     return {
       status: "BLOCKED",
       finalDraft: gateResult.currentDraft,
       originalDraft: rawDraft,
       gateResults: gateResult.results,
-      betterishScore,
+      impactScore,
       wrapApplied: false,
       qaResult: null,
       completenessResult: null,
-      blockedAt: `Betterish (${betterishScore.total}/${PIPELINE_CONFIG.betterishThreshold} required)`,
+      blockedAt: `Impact Score (${impactScore.total}/${PIPELINE_CONFIG.impactThreshold} required)`,
       totalDurationMs: Date.now() - startTime,
       runId,
     };
@@ -87,7 +87,7 @@ export async function runFullPipeline(
       finalDraft: wrapResult.finalDraft,
       originalDraft: rawDraft,
       gateResults: [...gateResult.results, ...wrapResult.results],
-      betterishScore,
+      impactScore,
       wrapApplied: true,
       qaResult,
       completenessResult,
@@ -102,7 +102,7 @@ export async function runFullPipeline(
     finalDraft: wrapResult.finalDraft,
     originalDraft: rawDraft,
     gateResults: [...gateResult.results, ...wrapResult.results],
-    betterishScore,
+    impactScore,
     wrapApplied: true,
     qaResult,
     completenessResult,

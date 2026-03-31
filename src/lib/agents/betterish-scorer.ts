@@ -1,17 +1,17 @@
 import { supabase } from "../supabase";
 import { PIPELINE_CONFIG } from "./config";
-import type { BetterishScore, PipelineContext } from "./types";
+import type { ImpactScore, PipelineContext } from "./types";
 import { PROMPTS } from "./prompts/index";
 
-function loadBetterishPrompt(): string {
+function loadImpactPrompt(): string {
   return PROMPTS["betterish.md"];
 }
 
-export async function scoreBetterish(
+export async function scoreImpact(
   draft: string,
   context: PipelineContext
-): Promise<BetterishScore> {
-  const systemPrompt = await loadBetterishPrompt();
+): Promise<ImpactScore> {
+  const systemPrompt = await loadImpactPrompt();
 
   const userMessage = [
     `Score this ${context.outputType} on a 0-1000 scale.`,
@@ -30,7 +30,7 @@ export async function scoreBetterish(
   const { data, error } = await supabase.functions.invoke("claude-agent", {
     body: {
       model: PIPELINE_CONFIG.model,
-      maxTokens: PIPELINE_CONFIG.maxTokensForBetterish,
+      maxTokens: PIPELINE_CONFIG.maxTokensForImpact,
       systemPrompt,
       userMessage,
     },
@@ -63,8 +63,8 @@ export async function scoreBetterish(
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       const total = parsed.total || parsed.totalScore || 0;
-      let verdict: BetterishScore["verdict"] = "REJECT";
-      if (total >= PIPELINE_CONFIG.betterishThreshold) verdict = "PUBLISH";
+      let verdict: ImpactScore["verdict"] = "REJECT";
+      if (total >= PIPELINE_CONFIG.impactThreshold) verdict = "PUBLISH";
       else if (total >= 600) verdict = "REVISE";
 
       return {

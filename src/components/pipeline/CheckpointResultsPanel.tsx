@@ -43,13 +43,13 @@ interface CheckpointResultsPanelProps {
 }
 
 const GATE_ROLE_LABELS: Record<string, string> = {
-  "Echo": "Deduplication",
-  "Priya": "Research Accuracy",
-  "Jordan": "Voice Authenticity",
-  "David": "Engagement",
-  "Elena": "SLOP Detection",
-  "Natasha": "Editorial Excellence",
-  "Marcus + Marshall": "Perspective + Impact",
+  "Deduplication": "Checkpoint 0",
+  "Research Validation": "Checkpoint 1",
+  "Voice Authenticity": "Checkpoint 2",
+  "Engagement Optimization": "Checkpoint 3",
+  "SLOP Detection": "Checkpoint 4",
+  "Editorial Excellence": "Checkpoint 5",
+  "Perspective & Risk": "Checkpoint 6",
 };
 
 export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResultsPanelProps) {

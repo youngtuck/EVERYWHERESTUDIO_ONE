@@ -110,7 +110,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     launchLabel: "Go to Preferences", route: "/studio/settings/voice",
   },
   {
-    id: "betterish", color: "#4CAF82", icon: "⊕", name: "Draft Score",
+    id: "impact-score", color: "#4CAF82", icon: "⊕", name: "Impact Score",
     desc: "Score your draft before publishing.",
     rationale: "900/1000 is the publication-ready threshold.",
     detail: "Draft Score runs automatically in the Review stage. You do not invoke it manually, it is always running in the background as you edit.\n\nThe score is out of 1,000. Publication-ready threshold is 900.\n\nBelow 900, the system tells you exactly what is weak and routes the problem to the right stage. A voice issue sends you back to Edit. A factual flag surfaces in the draft. A structure problem points back to Outline.\n\nThe score is not a grade. It is a map. 900 means the piece is ready. Under 900 means there is something specific left to fix.",

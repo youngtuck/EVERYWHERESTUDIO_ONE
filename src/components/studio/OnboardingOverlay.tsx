@@ -15,7 +15,7 @@ const STEPS = [
   },
   {
     title: "Quality Checkpoints",
-    body: "Before anything ships, 7 specialists review your work independently:\n\nEcho checks for repetition. Priya verifies every fact. Jordan matches your voice. David tests the hook. Elena catches AI fingerprints. Natasha enforces editorial standards. Marcus and Marshall check perspective and sensitivity.\n\nThe Betterish Score (0-1000) is your final quality measure. 900+ means it's ready to publish.",
+    body: "Before anything ships, 7 specialists review your work independently:\n\nDeduplication catches repetition. Research validates every fact. Voice Authenticity matches your voice. Engagement tests the hook. SLOP Detection catches AI fingerprints. Editorial Excellence enforces publication standards. Perspective checks blind spots and sensitivity.\n\nThe Impact Score (1-100) is your final quality measure. 75+ means it is ready to publish.",
   },
 ];
 

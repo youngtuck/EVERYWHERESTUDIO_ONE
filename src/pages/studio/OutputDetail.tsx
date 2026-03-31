@@ -6,9 +6,9 @@ import { ArrowLeft, Globe, FileText, Pencil, Clipboard, Check, ChevronDown, Chev
 import { useMobile } from "../../hooks/useMobile";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
-import type { BetterishScore, GateResult } from "../../lib/agents/types";
+import type { Impact ScoreScore, GateResult } from "../../lib/agents/types";
 import { CheckpointResultsPanel } from "../../components/pipeline/CheckpointResultsPanel";
-import { BetterishScoreCard } from "../../components/pipeline/BetterishScoreCard";
+import { Impact ScoreScoreCard } from "../../components/pipeline/Impact ScoreScoreCard";
 import { PipelineBlockedAlert } from "../../components/pipeline/PipelineBlockedAlert";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
@@ -50,7 +50,7 @@ interface Output {
 interface PipelineRunRow {
   status: "PASSED" | "BLOCKED" | "ERROR";
   gate_results: GateResult[];
-  betterish_score: BetterishScore | null;
+  impact_score: Impact ScoreScore | null;
   blocked_at: string | null;
 }
 
@@ -189,7 +189,7 @@ export default function OutputDetail() {
         setOutput(data);
         const { data: runs } = await supabase
           .from("pipeline_runs")
-          .select("status, gate_results, betterish_score, blocked_at")
+          .select("status, gate_results, impact_score, blocked_at")
           .eq("output_id", id)
           .order("created_at", { ascending: false })
           .limit(1);
@@ -306,13 +306,13 @@ export default function OutputDetail() {
       const run: PipelineRunRow = {
         status: result.status,
         gate_results: result.gateResults || [],
-        betterish_score: result.betterishScore || null,
+        impact_score: result.impactScore || null,
         blocked_at: result.blockedAt || null,
       };
       setPipelineRun(run);
 
       // Update output score
-      const finalScore = result.betterishScore?.total ?? output.score;
+      const finalScore = result.impactScore?.total ?? output.score;
       await supabase.from("outputs").update({ score: finalScore, content_state: result.status === "PASSED" ? "vault" : output.score >= 900 ? "vault" : "in_progress" }).eq("id", output.id);
       setOutput({ ...output, score: finalScore });
 
@@ -322,8 +322,8 @@ export default function OutputDetail() {
         user_id: user.id,
         status: result.status,
         gate_results: result.gateResults,
-        betterish_score: result.betterishScore,
-        betterish_total: result.betterishScore?.total ?? null,
+        impact_score: result.impactScore,
+        impact_total: result.impactScore?.total ?? null,
         blocked_at: result.blockedAt || null,
       });
 
@@ -649,7 +649,7 @@ export default function OutputDetail() {
             background: "rgba(74,144,217,0.06)", borderLeft: "3px solid var(--cornflower)", borderRadius: 6,
             display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10,
           }}>
-            <span style={{ fontSize: 13, color: "var(--fg-2)" }}>Content edited. Re-score to update your Betterish score.</span>
+            <span style={{ fontSize: 13, color: "var(--fg-2)" }}>Content edited. Re-score to update your Impact Score.</span>
             <button
               onClick={handleRescore} disabled={rescoring}
               style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: "var(--cornflower)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: rescoring ? "default" : "pointer", fontFamily: font }}
@@ -696,7 +696,7 @@ export default function OutputDetail() {
             {/* Pipeline results */}
             {pipelineRun && !pipelineRunning && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <BetterishScoreCard score={pipelineRun.betterish_score} />
+                <Impact ScoreScoreCard score={pipelineRun.impact_score} />
                 <CheckpointResultsPanel results={pipelineRun.gate_results} blockedAt={pipelineRun.blocked_at || undefined} />
                 {pipelineRun.status === "BLOCKED" && (
                   <PipelineBlockedAlert
@@ -707,7 +707,7 @@ export default function OutputDetail() {
               </div>
             )}
 
-            {/* Gate score bars (from initial Betterish scoring) */}
+            {/* Gate score bars (from initial Impact Score scoring) */}
             {gateEntries.length > 0 && !pipelineRun && (
               <div style={{ marginTop: 16 }}>
                 {gates?.summary && <p style={{ fontSize: 13, color: "var(--fg-2)", marginBottom: 14 }}>{gates.summary}</p>}

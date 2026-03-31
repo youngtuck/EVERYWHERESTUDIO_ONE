@@ -2,7 +2,7 @@
  * Wrap.tsx, Turn exported drafts into deliverables
  * Matches wireframe v7.23 exactly.
  */
-import { useState, useLayoutEffect } from "react";
+import { useState, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
@@ -286,6 +286,18 @@ export default function WrapPage() {
   const [wrapped, setWrapped] = useState(false);
   const [copyToClipboard, setCopyToClipboard] = useState(true);
   const [downloadFile, setDownloadFile] = useState(true);
+  const [pipelineSource, setPipelineSource] = useState<string | null>(null);
+
+  // Pick up handoff from Pipeline
+  useEffect(() => {
+    const outputId = sessionStorage.getItem("ew-wrap-output-id");
+    const title = sessionStorage.getItem("ew-wrap-title");
+    if (outputId) {
+      sessionStorage.removeItem("ew-wrap-output-id");
+      sessionStorage.removeItem("ew-wrap-title");
+      setPipelineSource(title || "Pipeline draft");
+    }
+  }, []);
 
   const handleTabClick = (format: WrapFormat) => {
     setActiveFormat(format);
@@ -379,6 +391,18 @@ export default function WrapPage() {
           </div>
         ) : (
           <div style={{ width: "100%", maxWidth: 580, textAlign: "center" as const }}>
+            {pipelineSource && (
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px",
+                background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.25)",
+                borderRadius: 6, fontSize: 11, color: "var(--gold)", fontWeight: 500, marginBottom: 16,
+              }}>
+                <svg style={{ width: 12, height: 12, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                </svg>
+                From Pipeline: {pipelineSource}
+              </div>
+            )}
             <div style={{ fontSize: 28, color: "var(--line)", marginBottom: 14 }}>✦</div>
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
               Ready to wrap {activeFormat}

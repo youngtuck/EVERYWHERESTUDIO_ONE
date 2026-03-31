@@ -35,7 +35,7 @@ export interface GateResult {
   timestamp: string;
 }
 
-export interface BetterishScore {
+export interface ImpactScore {
   total: number;
   breakdown: {
     voiceAuthenticity: number;
@@ -59,7 +59,7 @@ export interface PipelineResult {
   finalDraft: string;
   originalDraft: string;
   gateResults: GateResult[];
-  betterishScore: BetterishScore | null;
+  impactScore: ImpactScore | null;
   wrapApplied: boolean;
   qaResult: GateResult | null;
   completenessResult: GateResult | null;

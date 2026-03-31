@@ -1,10 +1,10 @@
 export const MARKETING_NUMBERS = {
   specialistCount: 40,
-  outputFormatCount: 10,
+  outputFormatCount: 12,
   qualityCheckpoints: 7,
-  betterishThreshold: 900,
+  impactThreshold: 75,
   voiceDnaTarget: 95,
 } as const;
 
-export const APP_VERSION = "0.11.0";
+export const APP_VERSION = "7.0.0";
 

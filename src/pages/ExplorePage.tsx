@@ -569,7 +569,7 @@ export default function ExplorePage() {
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>861</span>
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Betterish Score</span>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Impact Score</span>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
@@ -681,7 +681,7 @@ export default function ExplorePage() {
               {[
                 { value: MARKETING_NUMBERS.specialistCount, label: "Specialists" },
                 { value: MARKETING_NUMBERS.qualityCheckpoints, label: "Checkpoints" },
-                { value: MARKETING_NUMBERS.betterishThreshold, label: "Min. Betterish Score" },
+                { value: MARKETING_NUMBERS.betterishThreshold, label: "Min. Impact Score" },
                 { value: 0, label: "Left for you to finish" },
               ].map((s) => (
                 <div key={s.label} style={{ textAlign: "center" }}>
@@ -848,12 +848,12 @@ export default function ExplorePage() {
             </Reveal>
             <div ref={checkpointReveal.ref}>
               {[
-                { num: "01", name: "Echo", desc: "Catches repeated concepts and structural patterns." },
-                { num: "02", name: "Priya", desc: "Verifies every factual claim. 100% accuracy standard." },
-                { num: "03", name: "Jordan", desc: `Voice DNA fidelity. Greater than ${MARKETING_NUMBERS.voiceDnaTarget}% match. Zero AI tells.` },
-                { num: "04", name: "David", desc: "7-second hook test. Doesn't earn the read, doesn't ship." },
-                { num: "05", name: "Elena", desc: "SLOP detection. One em dash in prose is an automatic block." },
-                { num: "06", name: "Natasha", desc: "Publication-grade standard plus the Stranger Test." },
+                { num: "01", name: "Deduplication", desc: "Catches repeated concepts and structural patterns." },
+                { num: "02", name: "Research", desc: "Verifies every factual claim. 100% accuracy standard." },
+                { num: "03", name: "Voice", desc: `Voice DNA fidelity. Greater than ${MARKETING_NUMBERS.voiceDnaTarget}% match. Zero AI tells.` },
+                { num: "04", name: "Engagement", desc: "7-second hook test. Doesn't earn the read, doesn't ship." },
+                { num: "05", name: "SLOP", desc: "SLOP detection. One em dash in prose is an automatic block." },
+                { num: "06", name: "Editorial", desc: "Publication-grade standard plus the Stranger Test." },
                 { num: "07", name: "Marcus + Marshall", desc: "Cultural sensitivity and nonviolent communication review." },
               ].map((cp, i) => (
                 <StaggerReveal key={cp.num} index={i} parentVisible={checkpointReveal.isVisible}>

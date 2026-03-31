@@ -67,7 +67,7 @@ function SessionDetailPanel({
 
         {output.score > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <span style={{ fontSize: 10, color: "var(--fg-3)" }}>Betterish Score</span>
+            <span style={{ fontSize: 10, color: "var(--fg-3)" }}>Impact Score</span>
             <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor(output.score) }}>{output.score}</span>
           </div>
         )}

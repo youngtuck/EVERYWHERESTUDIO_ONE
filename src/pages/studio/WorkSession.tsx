@@ -1,12 +1,12 @@
 /**
- * WorkSession.tsx — Phase 5: Fully wired to real API
+ * WorkSession.tsx, v7.0 Quality Checkpoint Framework
  *
  * Flow:
- *   Intake  → /api/chat (Watson conversation, READY_TO_GENERATE detection)
- *   Outline → client-side state built from Watson's readiness summary
- *   Edit    → /api/generate (draft generation + back-of-house auto-revision)
- *   Review  → /api/run-pipeline (7 specialist gates + Betterish score)
- *   Export  → save to Supabase outputs table + copy/download
+ *   Intake  -> /api/chat (Watson conversation, READY_TO_GENERATE detection)
+ *   Outline -> client-side state built from Watson's readiness summary
+ *   Edit    -> /api/generate (draft generation + back-of-house auto-revision)
+ *   Review  -> /api/run-pipeline (7 checkpoints + Impact Score + Human Voice Test)
+ *   Approve -> save to Supabase outputs table + copy/download + send to Wrap
  */
 
 import {
@@ -28,8 +28,8 @@ import "./shared.css";
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
 
-type WorkStage = "Intake" | "Outline" | "Edit" | "Review" | "Export";
-const STAGES: WorkStage[] = ["Intake", "Outline", "Edit", "Review", "Export"];
+type WorkStage = "Intake" | "Outline" | "Edit" | "Review" | "Approve";
+const STAGES: WorkStage[] = ["Intake", "Outline", "Edit", "Review", "Approve"];
 
 type Format =
   | "LinkedIn" | "Newsletter" | "Podcast" | "Sunday Story"
@@ -53,15 +53,14 @@ const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
 
 const TEMPLATES = ["Thought Leadership", "Case Study Narrative", "Weekly Insight", "Contrarian Take", "Origin Story"];
 
-const GATE_LABELS: Record<string, string> = {
-  "gate-0": "Deduplication",
-  "gate-1": "Research Accuracy",
-  "gate-2": "Voice DNA Match",
-  "gate-3": "Hook & Engagement",
-  "gate-4": "SLOP Detection",
-  "gate-5": "Editorial Polish",
-  "gate-6": "Perspective & Balance",
-  "gate-7": "Human Voice Test",
+const CHECKPOINT_LABELS: Record<string, string> = {
+  "checkpoint-0": "Deduplication",
+  "checkpoint-1": "Research Validation",
+  "checkpoint-2": "Voice Authenticity",
+  "checkpoint-3": "Engagement Optimization",
+  "checkpoint-4": "SLOP Detection",
+  "checkpoint-5": "Editorial Excellence",
+  "checkpoint-6": "Perspective & Risk",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,7 +78,7 @@ interface OutlineRow {
   indent?: boolean;
 }
 
-interface GateResult {
+interface CheckpointResult {
   gate: string;
   status: "PASS" | "FAIL" | "FLAG";
   score: number;
@@ -87,8 +86,8 @@ interface GateResult {
   issues?: string[];
 }
 
-interface BetterishScore {
-  total: number;
+interface ImpactScore {
+  total: number;  // 1-100, threshold 75
   verdict: "PUBLISH" | "REVISE" | "REJECT";
   topIssue?: string;
   gutCheck?: string;
@@ -97,8 +96,8 @@ interface BetterishScore {
 
 interface PipelineRun {
   status: "PASSED" | "BLOCKED" | "ERROR";
-  gateResults: GateResult[];
-  betterishScore: BetterishScore | null;
+  checkpointResults: CheckpointResult[];
+  impactScore: ImpactScore | null;
   blockedAt?: string;
   finalDraft?: string;
 }
@@ -535,9 +534,9 @@ function ReviewDash({
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
 }) {
-  const score = pipelineRun?.betterishScore?.total ?? null;
+  const score = pipelineRun?.impactScore?.total ?? null;
   const passed = pipelineRun?.status === "PASSED";
-  const allGatesPass = pipelineRun?.gateResults?.every(g => g.status === "PASS" || g.status === "FLAG") ?? false;
+  const allGatesPass = pipelineRun?.checkpointResults?.every(g => g.status === "PASS" || g.status === "FLAG") ?? false;
   const canExport = pipelineRun && !running && !allExported;
 
   return (
@@ -546,7 +545,7 @@ function ReviewDash({
         <DpSection>
           <DpLabel>Running checkpoints</DpLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
-            {["Deduplication", "Research Accuracy", "Voice DNA Match", "Hook & Engagement", "SLOP Detection", "Editorial Polish", "Perspective & Balance", "Human Voice Test"].map((name, i) => (
+            {["Deduplication", "Research Validation", "Voice Authenticity", "Engagement Optimization", "SLOP Detection", "Editorial Excellence", "Perspective & Risk"].map((name, i) => (
               <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--fg-3)" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--line-2)", animation: `pulse ${0.5 * i + 1}s infinite` }} />
                 {name}
@@ -560,20 +559,20 @@ function ReviewDash({
         <>
           {score !== null && (
             <DpSection>
-              <DpLabel>Betterish Score</DpLabel>
+              <DpLabel>Impact Score</DpLabel>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <svg viewBox="0 0 100 60" width="48" height="29">
                   <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
-                  <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke={score >= 900 ? "var(--blue)" : score >= 700 ? "var(--gold)" : "var(--danger)"} strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (score / 1000) * 141} />
+                  <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke={score >= 90 ? "var(--blue)" : score >= 75 ? "var(--gold)" : "var(--danger)"} strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (score / 100) * 141} />
                 </svg>
                 <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{score}</span>
-                <span style={{ fontSize: 9, color: "var(--fg-3)" }}>/1000</span>
+                <span style={{ fontSize: 9, color: "var(--fg-3)" }}>/100</span>
               </div>
-              <div style={{ fontSize: 10, color: score >= 900 ? "var(--blue)" : "var(--gold)", marginTop: 4, fontWeight: 600 }}>
-                {pipelineRun.betterishScore?.verdict ?? (score >= 900 ? "PUBLISH" : "REVISE")}
+              <div style={{ fontSize: 10, color: score >= 90 ? "var(--blue)" : "var(--gold)", marginTop: 4, fontWeight: 600 }}>
+                {pipelineRun.impactScore?.verdict ?? (score >= 75 ? "PUBLISH" : "REVISE")}
               </div>
-              {pipelineRun.betterishScore?.topIssue && (
-                <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 4, lineHeight: 1.5 }}>{pipelineRun.betterishScore.topIssue}</div>
+              {pipelineRun.impactScore?.topIssue && (
+                <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 4, lineHeight: 1.5 }}>{pipelineRun.impactScore.topIssue}</div>
               )}
             </DpSection>
           )}
@@ -581,7 +580,7 @@ function ReviewDash({
           <DpSection>
             <DpLabel>Checkpoints</DpLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {pipelineRun.gateResults.map((gate, i) => (
+              {pipelineRun.checkpointResults.map((gate, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, padding: "4px 0", borderBottom: "1px solid var(--line)", fontSize: 10 }}>
                   <span style={{
                     color: gate.status === "PASS" ? "var(--blue)" : gate.status === "FLAG" ? "var(--gold)" : "var(--danger)",
@@ -611,7 +610,7 @@ function ReviewDash({
       )}
 
       <div style={{ fontSize: 10, color: allExported ? "var(--blue)" : "var(--fg-3)", marginBottom: 6, transition: "color 0.2s" }}>
-        {allExported ? "All formats exported to Session Files." : running ? "Running 7 checkpoints..." : pipelineRun ? (passed ? "Pipeline passed. Ready to export." : "Pipeline complete. Review results above.") : "Run pipeline to check your draft."}
+        {allExported ? "All formats exported to Session Files." : running ? "Running checkpoints..." : pipelineRun ? (passed ? "Pipeline passed. Ready to export." : "Pipeline complete. Review results above.") : "Run pipeline to check your draft."}
       </div>
 
       <button
@@ -665,10 +664,15 @@ function StageIntake({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)" }}>
-      {/* Scrollable message area */}
+      {/* Scrollable message area - messages push to bottom when few */}
       <div
         ref={scrollAreaRef}
-        style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 14 }}
+        style={{
+          flex: 1, overflowY: "auto", padding: "20px",
+          display: "flex", flexDirection: "column",
+          justifyContent: messages.length <= 2 ? "flex-end" : "flex-start",
+          gap: 14,
+        }}
       >
         {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} />)}
         {sending && (
@@ -1323,7 +1327,7 @@ function StageReview({
       {/* Draft preview + improve cards */}
       <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
         {running ? (
-          <LoadingDots label="Running 7 checkpoints..." />
+          <LoadingDots label="Running checkpoints..." />
         ) : (
           <>
             {/* Draft body matching wireframe typography */}
@@ -1359,7 +1363,7 @@ function StageReview({
         )}
       </div>
 
-      {!running && pipelineRun && <AdvanceButton label="Move to Export &#8594;" onClick={onAdvance} />}
+      {!running && pipelineRun && <AdvanceButton label="Approve &amp; Wrap &#8594;" onClick={onAdvance} />}
 
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
@@ -1853,8 +1857,8 @@ export default function WorkSession() {
 
       setPipelineRun({
         status: result.status,
-        gateResults: result.gateResults || [],
-        betterishScore: result.betterishScore || null,
+        checkpointResults: result.checkpointResults || [],
+        impactScore: result.impactScore || null,
         blockedAt: result.blockedAt,
         finalDraft: result.finalDraft,
       });
@@ -1867,15 +1871,15 @@ export default function WorkSession() {
       // Save to Supabase
       if (user) {
         const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
-        const score = result.betterishScore?.total ?? 0;
+        const score = result.impactScore?.total ?? 0;
         const { data: savedOutput } = await supabase.from("outputs").insert({
           user_id: user.id,
           title: title.slice(0, 200),
           content: result.finalDraft || draft,
           output_type: FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
           score,
-          gates: result.gateResults || null,
-          content_state: score >= 900 ? "vault" : "in_progress",
+          gates: result.checkpointResults || null,
+          content_state: score >= 75 ? "vault" : "in_progress",
         }).select("id").single();
 
         if (savedOutput?.id) {
@@ -1898,7 +1902,7 @@ export default function WorkSession() {
     selectedFormats.forEach(f => { exported[f] = true; });
     setExportedTabs(exported);
     setAllExported(true);
-    setTimeout(() => goToStage("Export"), 1200);
+    setTimeout(() => goToStage("Approve"), 1200);
   }, [selectedFormats, goToStage]);
 
   // ── EXPORT: Copy to clipboard ─────────────────────────────────
@@ -1958,7 +1962,7 @@ export default function WorkSession() {
               allExported={allExported}
             />
           );
-        case "Export":
+        case "Approve":
           return (
             <div>
               <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Session Files</div>
@@ -2040,11 +2044,11 @@ export default function WorkSession() {
           activeTab={activeReviewTab}
           tabs={selectedFormats}
           onTabClick={(t) => setActiveReviewTab(t as any)}
-          onAdvance={() => goToStage("Export")}
+          onAdvance={() => goToStage("Approve")}
           onGoBack={handleGoBackToEdit}
         />
       )}
-      {stage === "Export" && (
+      {stage === "Approve" && (
         <StageExport
           draft={draft}
           title={outlineRows[0]?.content || "Draft"}

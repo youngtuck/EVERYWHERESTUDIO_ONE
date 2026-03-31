@@ -252,7 +252,7 @@ export default function ProjectDetail() {
           <div style={{ fontSize: 32, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'Afacad Flux', sans-serif" }}>{outputsCount}</div>
         </div>
         <div className="card" style={{ padding: "18px 20px" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>Avg Betterish score</div>
+          <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase", marginBottom: 6, fontFamily: "'Afacad Flux', sans-serif" }}>Avg Impact Score</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: avgScore > 0 ? scoreColor(avgScore) : "rgba(0,0,0,0.35)", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", fontFamily: "'Afacad Flux', sans-serif" }}>
             {avgScore > 0 ? avgScore : "–"}
           </div>

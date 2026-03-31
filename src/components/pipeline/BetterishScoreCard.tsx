@@ -1,6 +1,6 @@
 import type { BetterishScore } from "../../lib/agents/types";
 
-interface BetterishScoreCardProps {
+interface ImpactScoreCardProps {
   score: BetterishScore | null;
   compact?: boolean;
 }
@@ -31,7 +31,7 @@ const DIMENSIONS: Array<keyof BetterishScore["breakdown"]> = [
   "nvcCompliance",
 ];
 
-export function BetterishScoreCard({ score, compact }: BetterishScoreCardProps) {
+export function ImpactScoreCard({ score, compact }: ImpactScoreCardProps) {
   if (!score) return null;
 
   const total = score.total ?? 0;

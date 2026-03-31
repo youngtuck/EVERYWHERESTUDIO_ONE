@@ -146,12 +146,12 @@ export default function Dashboard() {
 
   // Inject dashboard panel content
   useLayoutEffect(() => {
-    const inProgress = outputs.find(o => !o.score || o.score < 800);
+    const inProgress = outputs.find(o => !o.score || o.score < 75);
 
     setDashContent(
       <HomeDashContent
         sessions={outputs.length}
-        formatsExported={outputs.filter(o => o.score >= 800).length}
+        formatsExported={outputs.filter(o => o.score >= 75).length}
         signalsTracked={0}
         inProgressTitle={inProgress?.title ?? null}
         inProgressStage="In progress"
@@ -164,7 +164,7 @@ export default function Dashboard() {
   }, [outputs, setDashContent, nav]);
 
   const firstName = displayName ? displayName.split(" ")[0] : "there";
-  const inProgress = outputs.find(o => !o.score || o.score < 800);
+  const inProgress = outputs.find(o => !o.score || o.score < 75);
   const pipelineIdea = outputs[1] ?? null;
 
   // ── Briefing signals — live from Watch only, no static fallback

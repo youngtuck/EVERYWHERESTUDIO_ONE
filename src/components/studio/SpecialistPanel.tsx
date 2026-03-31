@@ -4,55 +4,55 @@ import { useMobile } from "../../hooks/useMobile";
 
 const SPECIALIST_INFO: Record<number, { name: string; role: string; color: string; detail: string }> = {
   0: {
-    name: "Echo",
-    role: "Deduplication",
+    name: "Deduplication",
+    role: "Checkpoint 0",
     color: "var(--cornflower)",
-    detail: "Echo scans for conceptual repetition, not just word-for-word duplicates. If your piece restates the same argument in different words across sections, Echo catches it.",
+    detail: "Scans for conceptual repetition, not just word-for-word duplicates. If your piece restates the same argument in different words across sections, it catches it.",
   },
   1: {
-    name: "Priya",
-    role: "Research Accuracy",
+    name: "Research Validation",
+    role: "Checkpoint 1",
     color: "var(--gold)",
-    detail: "Priya verifies every factual claim against independent sources. Unverified claims are flagged for revision or removal.",
+    detail: "Verifies every factual claim against independent sources. Unverified claims are flagged for revision or removal. Minimum 8 sources for long-form.",
   },
   2: {
-    name: "Jordan",
-    role: "Voice Authenticity",
+    name: "Voice Authenticity",
+    role: "Checkpoint 2",
     color: "var(--cornflower)",
-    detail: "Jordan compares every sentence against your Voice DNA profile. Vocabulary, rhythm, tonal register, metaphor patterns, and structural habits all get scored. The target is 95% fidelity.",
+    detail: "Compares every sentence against your Voice DNA profile. Vocabulary, rhythm, tonal register, metaphor patterns, and structural habits all get scored. Target is 95% fidelity.",
   },
   3: {
-    name: "David",
-    role: "Engagement",
+    name: "Engagement Optimization",
+    role: "Checkpoint 3",
     color: "#A080F5",
-    detail: "David runs the 7-second hook test. If your opening does not earn attention within the first two sentences, it fails. He also checks for clear stakes and counts quotable moments.",
+    detail: "Runs the 7-second hook test. If your opening does not earn attention within the first two sentences, it fails. Also checks for clear stakes and counts quotable moments.",
   },
   4: {
-    name: "Elena",
-    role: "SLOP Detection",
+    name: "SLOP Detection",
+    role: "Checkpoint 4",
     color: "#E8506A",
-    detail: "Elena is the SLOP Detector. She scans for Superfluity, Loops, Overwrought prose, and Pretension. One em dash in prose is an automatic block.",
+    detail: "Scans for Superfluity, Loops, Overwrought prose, and Pretension. Zero tolerance for AI padding.",
   },
   5: {
-    name: "Natasha",
-    role: "Editorial Excellence",
+    name: "Editorial Excellence",
+    role: "Checkpoint 5",
     color: "var(--cornflower)",
-    detail: "Natasha applies publication-grade editorial standards. Every term must be explained for a cold reader. If a stranger cannot follow your argument without context, it fails.",
+    detail: "Applies publication-grade editorial standards plus the Stranger Test. Every term must be explained for a cold reader. If a stranger cannot follow your argument without context, it fails.",
   },
   6: {
-    name: "Marcus + Marshall",
-    role: "Perspective + Impact",
+    name: "Perspective & Risk",
+    role: "Checkpoint 6",
     color: "#50c8a0",
-    detail: "Marcus checks for cultural blind spots and unexamined assumptions. Marshall applies nonviolent communication principles. Together they ensure your content challenges without alienating.",
+    detail: "Checks for cultural blind spots and unexamined assumptions. Applies nonviolent communication principles. Ensures content challenges without alienating.",
   },
 };
 
-// Map simplified gate keys (from /api/generate) to specialist indices
-const GATE_KEY_MAP: Record<string, number> = {
+// Map simplified checkpoint keys (from /api/generate) to specialist indices
+const CHECKPOINT_KEY_MAP: Record<string, number> = {
   accuracy: 1, voice: 2, audience: 3, ai_tells: 4, strategy: 5, platform: 6, impact: 6,
 };
 
-interface GateData {
+interface CheckpointData {
   index: number;
   status: "pass" | "fail" | "flag" | "processing" | "pending";
   score?: number;
@@ -62,9 +62,9 @@ interface GateData {
 
 interface SpecialistPanelProps {
   // From real pipeline (GateResult[])
-  pipelineGateResults?: Array<{ gate?: string; status?: string; score?: number; feedback?: string; issues?: string[] } | null>;
+  pipelineCheckpointResults?: Array<{ checkpoint?: string; status?: string; score?: number; feedback?: string; issues?: string[] } | null>;
   // From simplified /api/generate gates
-  simpleGates?: Record<string, number | undefined> | null;
+  simpleCheckpoints?: Record<string, number | undefined> | null;
   // Animation state
   visibleCount?: number;
   revealedCount?: number;
@@ -84,8 +84,8 @@ function scoreColor(score: number): string {
 }
 
 export default function SpecialistPanel({
-  pipelineGateResults,
-  simpleGates,
+  pipelineCheckpointResults,
+  simpleCheckpoints,
   visibleCount = 7,
   revealedCount = 7,
   totalScore,
@@ -96,13 +96,13 @@ export default function SpecialistPanel({
   const isMobile = useMobile();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  // Build gate data from either source
-  const gates: GateData[] = [];
+  // Build checkpoint data from either source
+  const gates: CheckpointData[] = [];
 
-  if (pipelineGateResults && pipelineGateResults.some(Boolean)) {
+  if (pipelineCheckpointResults && pipelineCheckpointResults.some(Boolean)) {
     // Real pipeline results
     for (let i = 0; i < 7; i++) {
-      const r = pipelineGateResults[i];
+      const r = pipelineCheckpointResults[i];
       if (!r) {
         gates.push({ index: i, status: i < visibleCount ? "processing" : "pending" });
       } else {
@@ -116,13 +116,13 @@ export default function SpecialistPanel({
         });
       }
     }
-  } else if (simpleGates) {
+  } else if (simpleCheckpoints) {
     // Simplified gates from /api/generate
     // Echo always passes
     gates.push({ index: 0, status: "pass" });
     const keys = ["accuracy", "voice", "audience", "ai_tells", "strategy", "platform"];
     for (let i = 0; i < keys.length; i++) {
-      const val = simpleGates[keys[i] as keyof typeof simpleGates] as number | undefined;
+      const val = simpleCheckpoints[keys[i] as keyof typeof simpleCheckpoints] as number | undefined;
       gates.push({
         index: i + 1,
         status: val !== undefined ? (val >= 60 ? "pass" : "fail") : "pending",
@@ -135,7 +135,7 @@ export default function SpecialistPanel({
     }
   }
 
-  // Auto-select the most recently completed gate during animation
+  // Auto-select the most recently completed checkpoint during animation
   useEffect(() => {
     if (!isAnimating) return;
     const lastRevealed = gates.filter(g => g.status !== "processing" && g.status !== "pending").length - 1;
@@ -145,7 +145,7 @@ export default function SpecialistPanel({
   const selected = selectedIndex !== null ? gates[selectedIndex] : null;
   const selectedInfo = selectedIndex !== null ? SPECIALIST_INFO[selectedIndex] : null;
 
-  const statusIcon = (g: GateData) => {
+  const statusIcon = (g: CheckpointData) => {
     if (g.status === "processing") return <Loader2 size={16} style={{ color: "var(--fg-3)", animation: "spin 0.8s linear infinite" }} />;
     if (g.status === "pending") return <span style={{ width: 16, height: 16, borderRadius: "50%", background: "var(--bg-3)", display: "block" }} />;
     if (g.status === "pass") return <Check size={16} strokeWidth={2.5} style={{ color: "#50c8a0" }} />;

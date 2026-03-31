@@ -61,6 +61,16 @@
 }
 .user-bubble-wrap p { font-size: 13px; color: var(--fg); line-height: 1.35; }
 
+/* Dark mode bubble adjustments */
+[data-theme="dark"] .watson-bubble-wrap {
+  background: rgba(74,144,217,0.12);
+  border-color: rgba(74,144,217,0.25);
+}
+[data-theme="dark"] .user-bubble-wrap {
+  background: rgba(245,198,66,0.12);
+  border-color: rgba(245,198,66,0.3);
+}
+
 /* ── LENS CARDS (Outline angles) ── */
 .lens-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 .lens-card {
@@ -197,3 +207,34 @@
 .projects-grid, .lot-grid { display: grid; gap: 16px; }
 .projects-grid { grid-template-columns: repeat(3, 1fr); }
 .lot-grid { grid-template-columns: repeat(3, 1fr); }
+
+/* ── DARK MODE OVERRIDES ── */
+[data-theme="dark"] .lens-card {
+  background: var(--surface);
+  border-color: var(--line);
+}
+[data-theme="dark"] .lens-card:hover { border-color: rgba(245,198,66,0.5); }
+[data-theme="dark"] .lens-card.selected {
+  border-color: var(--gold-bright);
+  background: rgba(245,198,66,0.06);
+}
+[data-theme="dark"] .rev-improve-card {
+  background: var(--surface);
+  border-color: var(--line);
+}
+[data-theme="dark"] .flag-pop {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] .os-content:hover,
+[data-theme="dark"] .os-content:focus {
+  background: var(--bg-3);
+}
+[data-theme="dark"] .draft-body p { color: var(--fg-2); }
+[data-theme="dark"] .rev-tab.on { border-bottom-color: var(--fg); }
+[data-theme="dark"] .ric-pts {
+  background: rgba(107,168,232,0.12);
+  border-color: rgba(107,168,232,0.2);
+  color: var(--blue);
+}

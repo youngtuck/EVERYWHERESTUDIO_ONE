@@ -7,10 +7,10 @@ interface Agent {
 }
 
 const AGENTS: Agent[] = [
-  { name: "Elena", title: "SLOP Detection", desc: "Scanning for AI fingerprints and filler..." },
-  { name: "Jordan", title: "Voice Authenticity", desc: "Matching your voice DNA..." },
-  { name: "Marcus + Marshall", title: "Perspective + Impact", desc: "Checking perspective and sensitivity..." },
-  { name: "Betterish", title: "Final Gut Check", desc: "Would you click on this? Would you share it?" },
+  { name: "SLOP Detection", title: "SLOP Detection", desc: "Scanning for AI fingerprints and filler..." },
+  { name: "Voice Authenticity", title: "Voice Authenticity", desc: "Matching your voice DNA..." },
+  { name: "Perspective & Risk", title: "Perspective + Impact", desc: "Checking perspective and sensitivity..." },
+  { name: "Forecast", title: "Final Gut Check", desc: "Would you click on this? Would you share it?" },
 ];
 
 const CSS = `

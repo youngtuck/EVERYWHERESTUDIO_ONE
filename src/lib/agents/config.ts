@@ -1,16 +1,16 @@
 export const PIPELINE_CONFIG = {
   model: "claude-sonnet-4-20250514",
   maxTokensPerGate: 8192,
-  maxTokensForBetterish: 4096,
+  maxTokensForImpact: 4096,
   maxTokensForWrap: 8192,
-  betterishThreshold: 900, // Must match MARKETING_NUMBERS.betterishThreshold in src/lib/constants.ts
+  impactThreshold: 75, // Must match MARKETING_NUMBERS.impactThreshold in src/lib/constants.ts
   maxAutoFixAttempts: 1,
 } as const;
 
 export const GATE_DEFINITIONS = [
   {
     id: "gate-0",
-    name: "Echo",
+    name: "Deduplication",
     label: "Deduplication",
     promptFile: "gate-0-echo.md",
     blocking: true,
@@ -18,7 +18,7 @@ export const GATE_DEFINITIONS = [
   },
   {
     id: "gate-1",
-    name: "Priya",
+    name: "Research Validation",
     label: "Research",
     promptFile: "gate-1-priya.md",
     blocking: true,
@@ -26,7 +26,7 @@ export const GATE_DEFINITIONS = [
   },
   {
     id: "gate-2",
-    name: "Jordan",
+    name: "Voice Authenticity",
     label: "Voice DNA",
     promptFile: "gate-2-jordan.md",
     blocking: true,
@@ -34,7 +34,7 @@ export const GATE_DEFINITIONS = [
   },
   {
     id: "gate-3",
-    name: "David",
+    name: "Engagement Optimization",
     label: "Hook & Engagement",
     promptFile: "gate-3-david.md",
     blocking: true,
@@ -42,7 +42,7 @@ export const GATE_DEFINITIONS = [
   },
   {
     id: "gate-4",
-    name: "Elena",
+    name: "SLOP Detection",
     label: "SLOP + AI Tells",
     promptFile: "gate-4-elena.md",
     blocking: true,
@@ -50,7 +50,7 @@ export const GATE_DEFINITIONS = [
   },
   {
     id: "gate-5",
-    name: "Natasha",
+    name: "Editorial Excellence",
     label: "Editorial + Stranger Test",
     promptFile: "gate-5-natasha.md",
     blocking: true,
@@ -58,7 +58,7 @@ export const GATE_DEFINITIONS = [
   },
   {
     id: "gate-6",
-    name: "Marcus + Marshall",
+    name: "Perspective & Risk",
     label: "Perspective + NVC",
     promptFile: "gate-6-perspective.md",
     blocking: true,
