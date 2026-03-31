@@ -451,6 +451,10 @@ function EditDash({
     LinkedIn: "700 words", Newsletter: "800 words",
     Podcast: "1,200 words", "Sunday Story": "1,500 words",
   };
+  // Simulated voice match and flags (in production these come from the pipeline)
+  const voiceMatch = wordCount > 0 ? 89 : 0;
+  const mustFixFlags = 2;
+  const styleFlags = 3;
 
   return (
     <>
@@ -458,6 +462,40 @@ function EditDash({
         <DpSection>
           <DpLabel>Generating</DpLabel>
           <div style={{ fontSize: 11, color: "var(--blue)", lineHeight: 1.6 }}>{generatingLabel}</div>
+        </DpSection>
+      )}
+
+      {/* Voice match gauge (wireframe v7.23) */}
+      {!generating && wordCount > 0 && (
+        <DpSection>
+          <DpLabel>Voice match</DpLabel>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <svg viewBox="0 0 100 60" width="48" height="29">
+              <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
+              <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--blue)" strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (voiceMatch / 100) * 141} />
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{voiceMatch}%</span>
+            <span style={{ fontSize: 9, color: "var(--fg-3)" }}>prelim</span>
+          </div>
+        </DpSection>
+      )}
+
+      {/* Flags (wireframe v7.23) */}
+      {!generating && wordCount > 0 && (
+        <DpSection>
+          <DpLabel>Flags</DpLabel>
+          <div style={{ display: "flex", gap: 5 }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
+              borderRadius: 4, background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.35)",
+              fontSize: 10, color: "#9A7030",
+            }}>{mustFixFlags} must fix</div>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
+              borderRadius: 4, background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
+              fontSize: 10, color: "var(--blue)",
+            }}>{styleFlags} style</div>
+          </div>
         </DpSection>
       )}
 
@@ -1297,12 +1335,91 @@ function StageExport({
         <div style={{
           background: "var(--surface)", border: "1px solid var(--line)",
           borderRadius: 8, padding: "22px 26px", fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7,
-          whiteSpace: "pre-wrap" as const, fontFamily: FONT,
+          fontFamily: FONT,
         }}>
-          {draft || "No content yet."}
+          {draft ? (
+            <ExportPreview format={activeTab} draft={draft} title={title} />
+          ) : "No content yet."}
         </div>
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORT PREVIEW, format-specific rendering matching wireframe v7.23
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ExportPreview({ format, draft, title }: { format: string; draft: string; title: string }) {
+  const paragraphs = draft.split("\n").filter(Boolean);
+  const firstLine = paragraphs[0] || title;
+  const bodyParas = paragraphs.slice(1);
+
+  if (format === "Podcast" || format === "Podcast Script") {
+    return (
+      <>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 14 }}>
+          Podcast Script · {title}
+        </div>
+        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>OPEN</span>
+          <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>Hey, welcome back. I want to start today with something I hear from almost every executive I work with.</p>
+        </div>
+        <div style={{ display: "flex", gap: 12 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--gold)", width: 44, flexShrink: 0, paddingTop: 2 }}>HOOK</span>
+          <p style={{ fontSize: 13, color: "var(--fg)", fontWeight: 600, lineHeight: 1.7 }}>{firstLine}</p>
+        </div>
+        {bodyParas.slice(0, 3).map((p, i) => (
+          <div key={i} style={{ display: "flex", gap: 12, marginTop: 10 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>BODY</span>
+            <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{p}</p>
+          </div>
+        ))}
+      </>
+    );
+  }
+
+  if (format === "Sunday Story") {
+    return (
+      <>
+        <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 20 }}>
+          Sunday, {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)", lineHeight: 1.2, marginBottom: 8 }}>{firstLine}</div>
+        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, fontStyle: "italic" }}>
+          On the gap between having something to say and getting it into the world.
+        </div>
+        {bodyParas.map((p, i) => (
+          <p key={i} style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8, marginTop: i > 0 ? 12 : 0 }}>{p}</p>
+        ))}
+      </>
+    );
+  }
+
+  if (format === "Newsletter") {
+    return (
+      <>
+        <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 16 }}>
+          {title} · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)", marginBottom: 12 }}>{firstLine}</div>
+        <div style={{ width: 28, height: 3, background: "var(--gold-bright)", marginBottom: 16, borderRadius: 2 }} />
+        {bodyParas.map((p, i) => (
+          <p key={i} style={{ marginTop: i > 0 ? 10 : 0 }}>{p}</p>
+        ))}
+      </>
+    );
+  }
+
+  // Default: LinkedIn
+  return (
+    <>
+      <p style={{ fontWeight: 700, color: "var(--fg)", marginBottom: 10 }}>{firstLine}</p>
+      {bodyParas.map((p, i) => (
+        <p key={i} style={{ marginTop: 10 }}>{p}</p>
+      ))}
+      <p style={{ marginTop: 14, color: "var(--blue)", fontWeight: 600 }}>What does your infrastructure look like?</p>
+    </>
   );
 }
 
