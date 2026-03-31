@@ -889,61 +889,84 @@ function StageOutline({
   onAdvance: () => void; building: boolean;
 }) {
   const [input, setInput] = useState("");
-  const [activeAngle, setActiveAngle] = useState<0 | 1>(0);
+  const [selectedLens, setSelectedLens] = useState<"a" | "b">("a");
 
-  // Generate alternative options for each row (title gets 3 options, others get 2)
-  // These are placeholder alternatives. In production, Watson would generate these.
-  const getAlternatives = (row: OutlineRow, _index: number): string[] => {
-    if (row.label.toLowerCase() === "title") {
-      return [row.content, `Alt: ${row.content.split(" ").reverse().join(" ")}`, `The case for ${row.content.toLowerCase()}`];
-    }
-    return [row.content];
+  // Generate a second angle from the outline rows (simplified: reword each row)
+  const lensA = {
+    title: outlineRows.find(r => r.label.toLowerCase() === "title")?.content || "Angle A",
+    desc: "Opens with the core thesis, pivots to diagnosis, closes with the system as solution. Strong for LinkedIn.",
   };
-
-  const angleLabels = ["Angle A", "Angle B"];
+  const lensB = {
+    title: outlineRows.length > 1
+      ? (outlineRows.find(r => r.label.toLowerCase() === "hook")?.content || "Alternative angle")
+      : "Alternative angle",
+    desc: "Leads with the emotional experience, builds empathy before the reframe. Better for newsletter.",
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-      {/* Angle tabs */}
-      {!building && (
-        <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--line)", flexShrink: 0, padding: "0 20px" }}>
-          {angleLabels.map((label, idx) => (
-            <button
-              key={idx}
-              onClick={() => setActiveAngle(idx as 0 | 1)}
-              style={{
-                padding: "10px 18px", fontSize: 12, fontWeight: activeAngle === idx ? 600 : 400,
-                color: activeAngle === idx ? "var(--fg)" : "var(--fg-3)",
-                background: "transparent", border: "none", borderBottom: activeAngle === idx ? "2px solid var(--gold-bright)" : "2px solid transparent",
-                cursor: "pointer", fontFamily: FONT, transition: "all 0.12s",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-
       <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
         {building ? (
           <LoadingDots label="Building outline from your conversation..." />
         ) : (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, minHeight: 200 }}>
-            {outlineRows.map((row, i) => (
-              <OutlineRowComponent
-                key={i}
-                label={row.label}
-                content={row.content}
-                indent={row.indent}
-                onChange={v => onUpdateRow(i, v)}
-                alternatives={getAlternatives(row, i)}
-              />
-            ))}
-          </div>
+          <>
+            {/* Lens cards: two angles side by side */}
+            <div className="lens-row">
+              <div
+                className={`lens-card${selectedLens === "a" ? " selected" : ""}`}
+                onClick={() => setSelectedLens("a")}
+              >
+                <div className="lens-title-row">
+                  <div className="lens-title">{lensA.title}</div>
+                  <div style={{ display: "flex", gap: 2, alignItems: "center", flexShrink: 0 }}>
+                    <button onClick={e => e.stopPropagation()} title="More like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: selectedLens === "a" ? "var(--blue)" : "var(--line-2)" }}>
+                      <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                    </button>
+                    <button onClick={e => e.stopPropagation()} title="Less like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "var(--line-2)" }}>
+                      <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="lens-desc">{lensA.desc}</div>
+                {selectedLens === "a" && <div className="lens-selected-badge">Selected &#10003;</div>}
+              </div>
+              <div
+                className={`lens-card${selectedLens === "b" ? " selected" : ""}`}
+                onClick={() => setSelectedLens("b")}
+              >
+                <div className="lens-title-row">
+                  <div className="lens-title">{lensB.title}</div>
+                  <div style={{ display: "flex", gap: 2, alignItems: "center", flexShrink: 0 }}>
+                    <button onClick={e => e.stopPropagation()} title="More like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: selectedLens === "b" ? "var(--blue)" : "var(--line-2)" }}>
+                      <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                    </button>
+                    <button onClick={e => e.stopPropagation()} title="Less like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "var(--line-2)" }}>
+                      <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="lens-desc">{lensB.desc}</div>
+                {selectedLens === "b" && <div className="lens-selected-badge">Selected &#10003;</div>}
+              </div>
+            </div>
+
+            {/* Outline structure with brainstorm icons */}
+            <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, minHeight: 200 }}>
+              {outlineRows.map((row, i) => (
+                <OutlineRowComponent
+                  key={i}
+                  label={row.label}
+                  content={row.content}
+                  indent={row.indent}
+                  onChange={v => onUpdateRow(i, v)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 
-      {!building && <AdvanceButton label="Write draft →" onClick={onAdvance} />}
+      {!building && <AdvanceButton label="Write draft &#8594;" onClick={onAdvance} />}
 
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
@@ -962,78 +985,38 @@ function StageOutline({
   );
 }
 
-function OutlineRowComponent({ label, content, indent, onChange, alternatives }: {
-  label: string; content: string; indent?: boolean; onChange: (v: string) => void; alternatives?: string[];
+/** Outline row with brainstorm hover icon matching wireframe v7.23 */
+function OutlineRowComponent({ label, content, indent, onChange }: {
+  label: string; content: string; indent?: boolean; onChange: (v: string) => void;
 }) {
-  const [showOptions, setShowOptions] = useState(false);
-  const isTitle = label.toLowerCase() === "title";
-  const hasAlts = alternatives && alternatives.length > 1;
+  const [showBrainstorm, setShowBrainstorm] = useState(false);
 
   return (
-    <div style={{ padding: "7px 0", borderBottom: "1px solid var(--line)", position: "relative" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 0 }}>
-        <div
-          onClick={() => { if (hasAlts || isTitle) setShowOptions(o => !o); }}
-          style={{
-            width: 52, fontSize: 10, fontWeight: 600,
-            color: (hasAlts || isTitle) ? "var(--blue)" : "var(--line-2)",
-            textTransform: "uppercase" as const, letterSpacing: "0.08em",
-            flexShrink: 0, paddingTop: 1,
-            cursor: (hasAlts || isTitle) ? "pointer" : "default",
-            transition: "color 0.1s",
-          }}
-        >
-          {label}
-        </div>
-        <div
-          contentEditable
-          suppressContentEditableWarning
-          spellCheck={false}
-          onInput={e => onChange((e.target as HTMLDivElement).textContent || "")}
-          style={{
-            flex: 1, fontSize: indent ? 12 : 13,
-            color: indent ? "var(--fg-3)" : "var(--fg)",
-            lineHeight: 1.5, fontWeight: indent ? 400 : 500,
-            paddingLeft: indent ? 24 : 0,
-            outline: "none", cursor: "text", borderRadius: 3, padding: "1px 4px",
-          }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.background = "transparent"; }}
-          onFocus={e => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
-          onBlur={e => { (e.target as HTMLElement).style.background = "transparent"; }}
-        >
-          {content}
-        </div>
+    <div
+      className="os-row"
+      onMouseEnter={() => setShowBrainstorm(true)}
+      onMouseLeave={() => setShowBrainstorm(false)}
+    >
+      <div className="os-label">
+        {label && (
+          <span
+            className="os-brainstorm"
+            style={{ opacity: showBrainstorm ? 1 : 0 }}
+            onClick={e => { e.stopPropagation(); /* future: open brainstorm popover */ }}
+            title="Brainstorm alternatives"
+          >&#8635;</span>
+        )}
+        {label}
       </div>
-
-      {/* Options dropdown: click label to see alternatives */}
-      {showOptions && (
-        <div style={{
-          marginTop: 6, marginLeft: 52, display: "flex", flexDirection: "column", gap: 3,
-          background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 6, padding: 6,
-        }}>
-          <div style={{ fontSize: 9, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 2 }}>
-            Options
-          </div>
-          {(alternatives || [content]).map((alt, ai) => (
-            <div
-              key={ai}
-              onClick={() => { onChange(alt); setShowOptions(false); }}
-              style={{
-                fontSize: 11, color: alt === content ? "var(--fg)" : "var(--blue)",
-                fontWeight: alt === content ? 500 : 400,
-                padding: "4px 6px", borderRadius: 4, cursor: "pointer",
-                background: alt === content ? "rgba(245,198,66,0.08)" : "transparent",
-                transition: "background 0.1s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-2)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = alt === content ? "rgba(245,198,66,0.08)" : "transparent"; }}
-            >
-              {alt}
-            </div>
-          ))}
-        </div>
-      )}
+      <div
+        className={`os-content${indent ? " os-indent" : ""}`}
+        contentEditable
+        suppressContentEditableWarning
+        spellCheck={false}
+        onInput={e => onChange((e.target as HTMLDivElement).textContent || "")}
+      >
+        {content}
+      </div>
     </div>
   );
 }
@@ -1059,26 +1042,33 @@ function StageEdit({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+      <div className="edit-area" style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
         {generating ? (
-          <div style={{ maxWidth: 580 }}>
+          <div className="draft-body">
             <LoadingDots label={generatingLabel} />
           </div>
         ) : (
-          <div style={{ maxWidth: 580 }}>
+          <div className="draft-body">
             {draft ? (
-              <div
-                contentEditable
-                suppressContentEditableWarning
-                onInput={e => onDraftChange((e.target as HTMLDivElement).innerText)}
-                style={{
-                  fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75,
-                  outline: "none", whiteSpace: "pre-wrap" as const,
-                  fontFamily: FONT,
-                }}
-              >
-                {draft}
-              </div>
+              <>
+                {/* Render first line as title */}
+                <div className="draft-title-text" contentEditable suppressContentEditableWarning spellCheck={false}
+                  onInput={e => {
+                    const lines = draft.split("\n");
+                    lines[0] = (e.target as HTMLElement).textContent || "";
+                    onDraftChange(lines.join("\n"));
+                  }}
+                >{draft.split("\n")[0]}</div>
+                {/* Render remaining paragraphs */}
+                {draft.split("\n").slice(1).filter(Boolean).map((para, i) => {
+                  // Detect subheadings (short lines, no period at end)
+                  const isSubhead = para.length < 60 && !para.endsWith(".");
+                  if (isSubhead) {
+                    return <div key={i} className="draft-subhead" contentEditable suppressContentEditableWarning spellCheck={false}>{para}</div>;
+                  }
+                  return <p key={i} style={{ marginTop: 12 }} contentEditable suppressContentEditableWarning spellCheck={false}>{para}</p>;
+                })}
+              </>
             ) : (
               <div style={{ color: "var(--fg-3)", fontSize: 13 }}>No draft yet.</div>
             )}
@@ -1086,7 +1076,7 @@ function StageEdit({
         )}
       </div>
 
-      {!generating && draft && <AdvanceButton label="Move to Review →" onClick={onAdvance} />}
+      {!generating && draft && <AdvanceButton label="Move to Review &#8594;" onClick={onAdvance} />}
 
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
@@ -1124,24 +1114,90 @@ function StageReview({
   onAdvance: () => void; onGoBack: (instructions: string) => void;
 }) {
   const [input, setInput] = useState("");
+  const [reviewedTabs, setReviewedTabs] = useState<Set<string>>(new Set());
+
+  // Per-format improve suggestions (matching wireframe v7.23)
+  const improveCards: Record<string, { pts: number; title: string; desc: string }[]> = {
+    LinkedIn: [
+      { pts: 12, title: "Sharpen the closing question", desc: "The close is directional but not decisive. A sharper final question drives more engagement." },
+      { pts: 5, title: "Tighten the hook", desc: "First two sentences could be condensed. The insight lands faster if the setup is shorter." },
+    ],
+    Newsletter: [
+      { pts: 5, title: "Personalize the opening", desc: "Newsletter readers expect a direct address. One sentence that speaks to them specifically." },
+    ],
+    Podcast: [
+      { pts: 8, title: "Conversational transition", desc: "Two sentences read as written, not spoken. Watson can soften them for audio." },
+    ],
+    "Sunday Story": [
+      { pts: 2, title: "Deepen the opening image", desc: "One more sensory detail in the first paragraph pulls readers fully in." },
+    ],
+  };
+
+  const currentCards = improveCards[activeTab] || [];
+  const [fixedCards, setFixedCards] = useState<Set<number>>(new Set());
+
+  const handleFixOrSkip = (cardIdx: number) => {
+    setFixedCards(prev => new Set(prev).add(cardIdx));
+    setReviewedTabs(prev => new Set(prev).add(activeTab));
+  };
+
+  const allReviewed = tabs.every(t => reviewedTabs.has(t));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-      {/* Format tabs */}
+      {/* Format tabs with status dots */}
       <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--line)", padding: "0 20px", flexShrink: 0, background: "var(--bg)", overflowX: "auto" }}>
         {tabs.map(tab => (
-          <ReviewTabBtn key={tab} label={tab} active={activeTab === tab} reviewed={false} exported={false} onClick={() => onTabClick(tab)} />
+          <button
+            key={tab}
+            className={`rev-tab${activeTab === tab ? " on" : ""}${reviewedTabs.has(tab) ? " reviewed" : ""}`}
+            onClick={() => { onTabClick(tab); setFixedCards(new Set()); }}
+          >
+            {tab}<span className="tab-dot" />
+          </button>
         ))}
       </div>
 
-      {/* Draft preview */}
+      {/* Draft preview + improve cards */}
       <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
-        <div style={{ maxWidth: 580, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75, whiteSpace: "pre-wrap" as const, fontFamily: FONT }}>
-          {running ? <LoadingDots label="Running 7 checkpoints..." /> : draft || <span style={{ color: "var(--fg-3)" }}>No draft to review.</span>}
-        </div>
+        {running ? (
+          <LoadingDots label="Running 7 checkpoints..." />
+        ) : (
+          <>
+            {/* Draft body matching wireframe typography */}
+            <div className="draft-body">
+              <div className="draft-title-text">{draft.split("\n")[0] || "Draft"}</div>
+              {draft.split("\n").slice(1).filter(Boolean).map((p, i) => (
+                <p key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>{p}</p>
+              ))}
+            </div>
+
+            {/* Improve cards */}
+            {currentCards.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                {currentCards.map((card, ci) => (
+                  <div key={ci} className={`rev-improve-card${fixedCards.has(ci) ? " done" : ""}`}>
+                    <div className="ric-pts">+{card.pts} pts · {activeTab}</div>
+                    <div className="ric-title">{card.title}</div>
+                    <div className="ric-desc">{card.desc}</div>
+                    <div className="ric-actions">
+                      <button className="ric-fix" onClick={() => handleFixOrSkip(ci)}>Fix this</button>
+                      <button className="ric-skip" onClick={() => handleFixOrSkip(ci)}>Skip</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Review progress hint */}
+            <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 12, marginBottom: 6 }}>
+              {allReviewed ? "All formats reviewed. Ready to export." : "Review all formats before exporting."}
+            </div>
+          </>
+        )}
       </div>
 
-      {!running && pipelineRun && <AdvanceButton label="Move to Export →" onClick={onAdvance} />}
+      {!running && pipelineRun && <AdvanceButton label="Move to Export &#8594;" onClick={onAdvance} />}
 
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
