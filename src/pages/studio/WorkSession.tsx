@@ -677,20 +677,10 @@ function StageIntake({
           width: "100%", maxWidth: 680, padding: "0 24px",
           marginBottom: 40,
         }}>
-          {/* Watson icon */}
-          <div style={{
-            width: 40, height: 40, borderRadius: "50%",
-            background: "linear-gradient(135deg, rgba(74,144,217,0.2) 0%, rgba(245,198,66,0.15) 100%)",
-            border: "1px solid rgba(74,144,217,0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, fontWeight: 700, color: "var(--blue)",
-            marginBottom: 20,
-          }}>W</div>
-
           {/* Greeting */}
           <div style={{
-            fontSize: 24, fontWeight: 600, color: "var(--fg)",
-            marginBottom: 6, fontFamily: FONT,
+            fontSize: 26, fontWeight: 600, color: "var(--fg)",
+            marginBottom: 8, fontFamily: FONT,
             textAlign: "center" as const,
           }}>
             {firstName ? `Good to see you, ${firstName}.` : "What's on your mind?"}
@@ -933,12 +923,14 @@ function ChatInputBar({
           placeholder={placeholder}
           disabled={disabled}
           rows={1}
+          className="watson-input"
           style={{
             flex: 1, resize: "none",
             background: "transparent", border: "none", outline: "none",
             fontSize: 14, color: "var(--fg)", fontFamily: FONT,
             lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
             opacity: disabled ? 0.5 : 1,
+            textAlign: value ? "left" as const : "center" as const,
           }}
           onInput={e => {
             const t = e.target as HTMLTextAreaElement;
