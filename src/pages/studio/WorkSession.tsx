@@ -19,6 +19,7 @@ import { useToast } from "../../context/ToastContext";
 import { supabase } from "../../lib/supabase";
 import { fetchWithRetry } from "../../lib/retry";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
+import { useVoiceInput } from "../../hooks/useVoiceInput";
 import "./shared.css";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -636,10 +637,11 @@ function ReviewDash({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StageIntake({
-  messages, onSend, sending, isReady, onAdvance, userInitials, firstName,
+  messages, onSend, sending, isReady, onAdvance, userInitials, firstName, onFileAttach,
 }: {
   messages: ChatMessage[]; onSend: (text: string) => void;
   sending: boolean; isReady: boolean; onAdvance: () => void; userInitials?: string; firstName?: string;
+  onFileAttach?: (files: FileList) => void;
 }) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -700,6 +702,7 @@ function StageIntake({
               onSend={handleSend}
               disabled={sending}
               autoFocus
+              onFileAttach={onFileAttach}
             />
           </div>
         </div>
@@ -756,6 +759,7 @@ function StageIntake({
             onSend={handleSend}
             disabled={sending}
             autoFocus
+            onFileAttach={onFileAttach}
           />
         </div>
       </div>
@@ -869,13 +873,19 @@ function ChatBubble({ role, text, userInitials }: { role: "watson" | "user"; tex
 
 // Clean, centered input bar for the chat interface
 function ChatInputBar({
-  placeholder, value, onChange, onSend, disabled, autoFocus,
+  placeholder, value, onChange, onSend, disabled, autoFocus, onFileAttach,
 }: {
   placeholder: string; value: string; onChange: (v: string) => void;
   onSend: () => void; disabled?: boolean; autoFocus?: boolean;
+  onFileAttach?: (files: FileList) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [micActive, setMicActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Wire up real voice input
+  const { isListening, isSupported, startListening, stopListening } = useVoiceInput((transcript) => {
+    onChange(transcript);
+  });
 
   // Focus on mount when autoFocus is set
   useEffect(() => {
@@ -891,10 +901,46 @@ function ChatInputBar({
     }
   };
 
+  const handleMicDown = () => {
+    if (!isSupported) return;
+    startListening();
+  };
+
+  const handleMicUp = () => {
+    if (!isSupported) return;
+    stopListening();
+    // Auto-send after voice stops if there's content
+    setTimeout(() => {
+      if (value.trim()) onSend();
+    }, 300);
+  };
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0 && onFileAttach) {
+      onFileAttach(files);
+    }
+    // Reset so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   return (
     <div style={{
       display: "flex", flexDirection: "column", gap: 6,
     }}>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".pdf,.doc,.docx,.txt,.md,.csv,.json,.png,.jpg,.jpeg,.gif,.webp"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
       <div style={{
         display: "flex", alignItems: "center", gap: 8,
         background: "rgba(245,198,66,0.10)",
@@ -935,12 +981,13 @@ function ChatInputBar({
             t.style.height = Math.min(t.scrollHeight, 120) + "px";
           }}
         />
-        <IaBtn title="Attach file"><AttachIcon /></IaBtn>
+        <IaBtn title="Attach file" onClick={handleFileClick}><AttachIcon /></IaBtn>
         <IaBtn
-          title="Hold to speak" active={micActive}
-          onMouseDown={() => setMicActive(true)}
-          onMouseUp={() => setMicActive(false)}
-          onMouseLeave={() => setMicActive(false)}
+          title={isSupported ? "Hold to speak" : "Voice not supported in this browser"}
+          active={isListening}
+          onMouseDown={handleMicDown}
+          onMouseUp={handleMicUp}
+          onMouseLeave={handleMicUp}
         >
           <MicIcon />
         </IaBtn>
@@ -960,8 +1007,8 @@ function ChatInputBar({
           </svg>
         </button>
       </div>
-      <div style={{ fontSize: 9, color: "var(--fg-3)", textAlign: "center" as const, letterSpacing: "0.04em" }}>
-        Hold to speak · Release to send
+      <div style={{ fontSize: 9, color: isListening ? "var(--gold)" : "var(--fg-3)", textAlign: "center" as const, letterSpacing: "0.04em", transition: "color 0.15s" }}>
+        {isListening ? "Listening... release to send" : "Hold to speak · Release to send"}
       </div>
     </div>
   );
@@ -1610,21 +1657,33 @@ export default function WorkSession() {
   const [searchParams] = useSearchParams();
   const { voiceDnaMd, brandDnaMd, methodDnaMd } = useUserDNA(user?.id);
 
+  // ── Restore persisted session on mount ────────────────────────
+  const restored = useRef(false);
+  const persisted = !restored.current ? loadSession() : null;
+
   // ── Stage state ──────────────────────────────────────────────
-  const [stage, setStage] = useState<WorkStage>("Intake");
+  const [stage, setStage] = useState<WorkStage>(
+    (persisted?.phase === "complete" ? "Edit" : persisted?.phase === "generating" ? "Edit" : "Intake") as WorkStage
+  );
 
   // ── Intake ───────────────────────────────────────────────────
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "watson", content: "What's on your mind?" },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (persisted?.messages && persisted.messages.length > 0) {
+      return persisted.messages.map(m => ({
+        role: m.role === "assistant" ? "watson" as const : "user" as const,
+        content: m.content,
+      }));
+    }
+    return [{ role: "watson", content: "What's on your mind?" }];
+  });
   const [intakeSending, setIntakeSending] = useState(false);
-  const [intakeReady, setIntakeReady] = useState(false);
+  const [intakeReady, setIntakeReady] = useState(persisted?.isReady ?? false);
   const [readySummary, setReadySummary] = useState("");
 
   // ── Formats + templates ───────────────────────────────────────
   const [selectedFormats, setSelectedFormats] = useState<Format[]>(DEFAULT_FORMATS);
   const [selectedTemplate, setSelectedTemplate] = useState("Weekly Insight");
-  const [sessionFiles] = useState<string[]>([]);
+  const [sessionFiles, setSessionFiles] = useState<string[]>([]);
 
   const toggleFormat = (f: Format) => {
     setSelectedFormats(fs => fs.includes(f) ? fs.filter(x => x !== f) : [...fs, f]);
@@ -1635,7 +1694,7 @@ export default function WorkSession() {
   const [buildingOutline, setBuildingOutline] = useState(false);
 
   // ── Edit ─────────────────────────────────────────────────────
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(persisted?.generatedContent || "");
   const [generating, setGenerating] = useState(false);
   const [generatingLabel, setGeneratingLabel] = useState("Writing draft...");
 
@@ -1647,8 +1706,37 @@ export default function WorkSession() {
   // ── Export ────────────────────────────────────────────────────
   const [exportedTabs, setExportedTabs] = useState<Record<string, boolean>>({});
   const [activeExportTab, setActiveExportTab] = useState(selectedFormats[0] ?? "LinkedIn");
-  const [outputId, setOutputId] = useState<string | null>(null);
+  const [outputId, setOutputId] = useState<string | null>(persisted?.generatedOutputId || null);
   const [allExported, setAllExported] = useState(false);
+
+  // Mark restored so we don't re-read persisted on re-renders
+  useEffect(() => { restored.current = true; }, []);
+
+  // ── Auto-save session on every meaningful state change ─────────
+  useEffect(() => {
+    if (!restored.current) return; // skip the initial mount
+    const hasContent = messages.length > 1 || draft;
+    if (!hasContent) return;
+
+    saveSession({
+      messages: messages.map((m, i) => ({
+        id: String(i),
+        role: m.role === "watson" ? "assistant" : "user",
+        content: m.content,
+        ts: Date.now(),
+      })),
+      input: "",
+      outputType: selectedFormats[0] || "LinkedIn",
+      sessionTitle: outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 60) || "",
+      phase: draft ? "complete" : "input",
+      generatedContent: draft,
+      generatedScore: 0,
+      generatedOutputId: outputId || "",
+      generatedGates: null,
+      isReady: intakeReady,
+      timestamp: Date.now(),
+    });
+  }, [messages, draft, intakeReady, outputId, stage]);
 
   // ── Stage navigation ──────────────────────────────────────────
   const goToStage = useCallback((s: WorkStage) => {
@@ -2064,6 +2152,10 @@ export default function WorkSession() {
           onAdvance={handleBuildOutline}
           userInitials={displayName ? displayName.split(" ").map(w => w[0]).join("").slice(0, 2) : "U"}
           firstName={displayName ? displayName.split(" ")[0] : undefined}
+          onFileAttach={(files) => {
+            const names = Array.from(files).map(f => f.name);
+            setSessionFiles(prev => [...prev, ...names]);
+          }}
         />
       )}
       {stage === "Outline" && (
