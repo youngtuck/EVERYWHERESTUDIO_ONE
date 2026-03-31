@@ -778,27 +778,31 @@ function WatsonAvatar() {
   );
 }
 
-/** Parse Watson text: render **bold** as <strong>, strip raw **, detect questions vs statements, detect search indicators */
+/** Parse Watson text: render **bold** as <strong>, strip raw **, bold only the final direct question */
 function WatsonTextRenderer({ text }: { text: string }) {
   // Detect search/research lines
   const isSearchLine = (line: string) =>
     /^(searching|looking up|researching|checking|scanning|analyzing|pulling data)/i.test(line.trim());
 
-  // Detect if a line ends with a question mark (Watson is asking the user)
-  const isQuestion = (line: string) => /\?\s*$/.test(line.trim());
+  const lines = text.split("\n").filter(l => l.trim());
 
-  const lines = text.split("\n");
+  // Find the LAST line that ends with ? (that's Watson's direct question to the user)
+  let lastQuestionIdx = -1;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/\?\s*$/.test(lines[i].trim())) {
+      lastQuestionIdx = i;
+      break;
+    }
+  }
 
   return (
     <>
       {lines.map((line, li) => {
-        if (!line.trim()) return <br key={li} />;
-
         // Search/research indicator
         if (isSearchLine(line)) {
           return (
             <div key={li} style={{
-              fontSize: 11, color: "var(--blue)", fontStyle: "italic",
+              fontSize: 13, color: "var(--blue)", fontStyle: "italic",
               padding: "3px 0", display: "flex", alignItems: "center", gap: 6,
             }}>
               <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
@@ -818,16 +822,16 @@ function WatsonTextRenderer({ text }: { text: string }) {
           return <span key={pi}>{part}</span>;
         });
 
-        // If Watson is asking a question, render bold
-        if (isQuestion(line)) {
+        // Only bold the LAST question line (Watson's direct ask to the user)
+        if (li === lastQuestionIdx) {
           return (
-            <div key={li} style={{ fontWeight: 600, color: "var(--fg)" }}>
+            <div key={li} style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginTop: li > 0 ? 8 : 0 }}>
               {rendered}
             </div>
           );
         }
 
-        return <div key={li}>{rendered}</div>;
+        return <div key={li} style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.5, marginTop: li > 0 ? 4 : 0 }}>{rendered}</div>;
       })}
     </>
   );
