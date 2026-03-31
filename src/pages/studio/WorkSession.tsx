@@ -898,7 +898,7 @@ function ChatInputBar({
       display: "flex", flexDirection: "column", gap: 6,
     }}>
       <div style={{
-        display: "flex", alignItems: "flex-end", gap: 8,
+        display: "flex", alignItems: "center", gap: 8,
         background: "rgba(245,198,66,0.10)",
         border: "1px solid rgba(245,198,66,0.35)",
         borderRadius: 12,
@@ -930,7 +930,6 @@ function ChatInputBar({
             fontSize: 14, color: "var(--fg)", fontFamily: FONT,
             lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
             opacity: disabled ? 0.5 : 1,
-            textAlign: value ? "left" as const : "center" as const,
           }}
           onInput={e => {
             const t = e.target as HTMLTextAreaElement;
