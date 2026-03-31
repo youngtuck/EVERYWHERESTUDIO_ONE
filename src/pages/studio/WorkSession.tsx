@@ -601,16 +601,16 @@ function ReviewDash({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StageIntake({
-  messages, onSend, sending, isReady, onAdvance,
+  messages, onSend, sending, isReady, onAdvance, userInitials,
 }: {
   messages: ChatMessage[]; onSend: (text: string) => void;
-  sending: boolean; isReady: boolean; onAdvance: () => void;
+  sending: boolean; isReady: boolean; onAdvance: () => void; userInitials?: string;
 }) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Only scroll when a new message is added — not on every render
+  // Only scroll when a new message is added, not on every render
   const prevMsgCount = useRef(messages.length);
   useEffect(() => {
     if (messages.length !== prevMsgCount.current || sending) {
@@ -627,21 +627,19 @@ function StageIntake({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)" }}>
-      {/* Scrollable message area — centered column */}
+      {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
-        style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", alignItems: "center" }}
+        style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 14 }}
       >
-        <div style={{ width: "100%", maxWidth: 680, padding: "32px 24px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
-          {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} />)}
-          {sending && (
-            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
-              <WatsonAvatar />
-              <LoadingDots label="" />
-            </div>
-          )}
-          <div ref={bottomRef} style={{ height: 1 }} />
-        </div>
+        {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} />)}
+        {sending && (
+          <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
+            <WatsonAvatar />
+            <LoadingDots label="" />
+          </div>
+        )}
+        <div ref={bottomRef} style={{ height: 1 }} />
       </div>
 
       {/* "Build outline" appears above the input when ready */}
@@ -745,7 +743,7 @@ function WatsonTextRenderer({ text }: { text: string }) {
   );
 }
 
-function ChatBubble({ role, text }: { role: "watson" | "user"; text: string }) {
+function ChatBubble({ role, text, userInitials }: { role: "watson" | "user"; text: string; userInitials?: string }) {
   const isWatson = role === "watson";
   return (
     <div style={{
@@ -753,32 +751,29 @@ function ChatBubble({ role, text }: { role: "watson" | "user"; text: string }) {
       gap: 10,
       alignItems: "flex-start",
       padding: "6px 0",
+      justifyContent: isWatson ? "flex-start" : "flex-end",
     }}>
       {isWatson ? (
         <>
           <WatsonAvatar />
-          <div style={{
-            flex: 1,
-            fontSize: 14, color: "var(--fg-2)", lineHeight: 1.35,
-            whiteSpace: "pre-wrap" as const,
-            paddingTop: 4,
-          }}>
+          <div className="watson-bubble-wrap">
             <WatsonTextRenderer text={text} />
           </div>
         </>
       ) : (
-        <div style={{
-          marginLeft: "auto",
-          maxWidth: "76%",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line)",
-          borderRadius: "16px 16px 4px 16px",
-          padding: "10px 14px",
-          fontSize: 14, color: "var(--fg)", lineHeight: 1.6,
-          whiteSpace: "pre-wrap" as const,
-        }}>
-          {text}
-        </div>
+        <>
+          <div className="user-bubble-wrap">
+            <p>{text}</p>
+          </div>
+          <div style={{
+            width: 26, height: 26, borderRadius: "50%",
+            background: "rgba(245,198,66,0.15)",
+            border: "1px solid rgba(245,198,66,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 9, fontWeight: 700, color: "var(--gold)",
+            flexShrink: 0, marginTop: 2,
+          }}>{userInitials || "U"}</div>
+        </>
       )}
     </div>
   );
@@ -1719,6 +1714,7 @@ export default function WorkSession() {
           sending={intakeSending}
           isReady={intakeReady}
           onAdvance={handleBuildOutline}
+          userInitials={displayName ? displayName.split(" ").map(w => w[0]).join("").slice(0, 2) : "U"}
         />
       )}
       {stage === "Outline" && (
