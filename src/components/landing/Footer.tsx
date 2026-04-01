@@ -1,7 +1,7 @@
 import Logo from "../Logo";
 import { useNavigate } from "react-router-dom";
 
-const CTA_MAILTO = "mailto:mark@mixedgrill.studio?subject=EVERYWHERE%20Studio%3A%20Let's%20Talk";
+const CTA_MAILTO = "mailto:mark@coastalintelligence.ai?subject=EVERYWHERE%20Studio%3A%20Let's%20Talk";
 const linkStyle: React.CSSProperties = {
   background: "none",
   border: "none",
@@ -34,12 +34,12 @@ export default function Footer() {
             </button>
           ))}
           <a
-            href="mailto:mark@mixedgrill.studio"
+            href="mailto:mark@coastalintelligence.ai"
             style={{ ...linkStyle, textDecoration: "none" }}
             onMouseEnter={e => { e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
             onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
           >
-            mark@mixedgrill.studio
+            mark@coastalintelligence.ai
           </a>
           <a
             href={CTA_MAILTO}

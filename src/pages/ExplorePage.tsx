@@ -4,7 +4,7 @@ import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import { MARKETING_NUMBERS } from "../lib/constants";
 
-const CTA_MAILTO = "mailto:mark@mixedgrill.studio?subject=EVERYWHERE%20Studio%3A%20Let's%20Talk";
+const CTA_MAILTO = "mailto:mark@coastalintelligence.ai?subject=EVERYWHERE%20Studio%3A%20Let's%20Talk";
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 // ── Scroll reveal hook ──────────────────────────────────────────────────────
