@@ -1,0 +1,150 @@
+/**
+ * OutputTypePicker: Category/Type selector for Work sessions.
+ *
+ * Two categories + Freestyle:
+ *   Content: Essay, Podcast, Book, Website Content, Website Audit, Video Script,
+ *            Newsletter, Email, Social Media
+ *   Business: Presentation, Proposal, One-Pager, Report, Executive Summary,
+ *             Case Study, Statement of Work, Meeting Agenda/Recap,
+ *             Bio/Speaker Profile, White Paper
+ *   Freestyle: sits outside both categories
+ */
+
+import { useState } from "react";
+
+const FONT = "var(--font)";
+
+export type OutputCategory = "Content" | "Business" | "Freestyle";
+
+export interface OutputTypeOption {
+  id: string;
+  label: string;
+  category: OutputCategory;
+  isProject?: boolean; // Book, Website Content, Newsletter, Social Media
+}
+
+export const OUTPUT_TYPES: OutputTypeOption[] = [
+  // Content
+  { id: "essay", label: "Essay", category: "Content" },
+  { id: "podcast", label: "Podcast", category: "Content" },
+  { id: "book", label: "Book", category: "Content", isProject: true },
+  { id: "website_content", label: "Website Content", category: "Content", isProject: true },
+  { id: "website_audit", label: "Website Audit", category: "Content" },
+  { id: "video_script", label: "Video Script", category: "Content" },
+  { id: "newsletter", label: "Newsletter", category: "Content", isProject: true },
+  { id: "email", label: "Email", category: "Content" },
+  { id: "social_media", label: "Social Media", category: "Content", isProject: true },
+  // Business
+  { id: "presentation", label: "Presentation", category: "Business" },
+  { id: "proposal", label: "Proposal", category: "Business" },
+  { id: "one_pager", label: "One-Pager", category: "Business" },
+  { id: "report", label: "Report", category: "Business" },
+  { id: "executive_summary", label: "Executive Summary", category: "Business" },
+  { id: "case_study", label: "Case Study", category: "Business" },
+  { id: "sow", label: "Statement of Work", category: "Business" },
+  { id: "meeting", label: "Meeting Agenda/Recap", category: "Business" },
+  { id: "bio", label: "Bio/Speaker Profile", category: "Business" },
+  { id: "white_paper", label: "White Paper", category: "Business" },
+  // Freestyle
+  { id: "freestyle", label: "Freestyle", category: "Freestyle" },
+];
+
+export const PROJECT_TYPE_IDS = OUTPUT_TYPES.filter(t => t.isProject).map(t => t.id);
+
+const CATEGORIES: OutputCategory[] = ["Content", "Business", "Freestyle"];
+
+interface OutputTypePickerProps {
+  selected: string | null;
+  onSelect: (typeId: string) => void;
+  compact?: boolean;
+}
+
+export default function OutputTypePicker({ selected, onSelect, compact }: OutputTypePickerProps) {
+  const [activeCategory, setActiveCategory] = useState<OutputCategory>(
+    selected
+      ? OUTPUT_TYPES.find(t => t.id === selected)?.category || "Content"
+      : "Content"
+  );
+
+  const typesForCategory = activeCategory === "Freestyle"
+    ? OUTPUT_TYPES.filter(t => t.category === "Freestyle")
+    : OUTPUT_TYPES.filter(t => t.category === activeCategory);
+
+  return (
+    <div style={{ fontFamily: FONT }}>
+      {/* Category tabs */}
+      <div style={{
+        display: "flex", gap: 0,
+        borderBottom: "1px solid var(--line)",
+        marginBottom: compact ? 8 : 12,
+      }}>
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            style={{
+              flex: cat === "Freestyle" ? "none" : 1,
+              padding: compact ? "6px 10px" : "8px 14px",
+              fontSize: compact ? 10 : 11,
+              fontWeight: activeCategory === cat ? 700 : 500,
+              color: activeCategory === cat ? "var(--fg)" : "var(--fg-3)",
+              background: "transparent",
+              border: "none",
+              borderBottom: activeCategory === cat ? "2px solid var(--gold-bright)" : "2px solid transparent",
+              cursor: "pointer",
+              fontFamily: FONT,
+              transition: "all 0.15s",
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Type grid */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: compact ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+        gap: compact ? 4 : 6,
+      }}>
+        {typesForCategory.map(type => {
+          const isSelected = selected === type.id;
+          return (
+            <button
+              key={type.id}
+              onClick={() => onSelect(type.id)}
+              style={{
+                padding: compact ? "6px 8px" : "10px 12px",
+                borderRadius: 6,
+                border: isSelected ? "2px solid var(--gold-bright)" : "1px solid var(--line)",
+                background: isSelected ? "rgba(245,198,66,0.08)" : "var(--surface)",
+                cursor: "pointer",
+                fontFamily: FONT,
+                fontSize: compact ? 10 : 11,
+                fontWeight: isSelected ? 600 : 400,
+                color: isSelected ? "var(--fg)" : "var(--fg-2)",
+                textAlign: "left",
+                transition: "all 0.12s",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              {type.label}
+              {type.isProject && (
+                <span style={{
+                  fontSize: 8, color: "var(--fg-3)",
+                  background: "var(--line)",
+                  borderRadius: 3, padding: "1px 4px",
+                  flexShrink: 0,
+                }}>
+                  project
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

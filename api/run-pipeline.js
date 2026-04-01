@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { callWithRetry } from "./_retry.js";
 
-const GATE_FILES = [
+const CHECKPOINT_GATES = [
   { name: "Echo", file: "gate-0-echo.md", label: "Deduplication" },
   { name: "Priya", file: "gate-1-priya.md", label: "Research" },
   { name: "Jordan", file: "gate-2-jordan.md", label: "Voice DNA" },
@@ -11,8 +11,12 @@ const GATE_FILES = [
   { name: "Elena", file: "gate-4-elena.md", label: "SLOP Detection" },
   { name: "Natasha", file: "gate-5-natasha.md", label: "Editorial" },
   { name: "Marcus + Marshall", file: "gate-6-perspective.md", label: "Perspective" },
-  { name: "Human Voice Test", file: "gate-7-human-voice.md", label: "AI Detection" },
 ];
+
+const HVT_GATE = { name: "Human Voice Test", file: "gate-7-human-voice.md", label: "AI Detection" };
+
+// Combined list for backward compat with gateSubset filtering
+const GATE_FILES = [...CHECKPOINT_GATES, HVT_GATE];
 
 // Prompt loading with detailed error reporting
 function loadPrompt(filename) {
@@ -117,6 +121,44 @@ function parseBetterishResponse(text) {
   return { total, verdict, breakdown: emptyBreakdown, topIssue: "", gutCheck: "" };
 }
 
+// HVT feedback parsing helpers
+function extractHVTIssue(feedback, flaggedLine) {
+  if (!feedback || !flaggedLine) return "Reads as generated rather than written";
+  const lower = flaggedLine.toLowerCase();
+  if (/alongside that|threaded through|with that in mind|that said|it's worth noting|building on that|stepping back|zooming out|taken together|beyond that|to make this concrete/.test(lower)) {
+    return "AI-pattern transition phrase";
+  }
+  if (/not as .+\. as .+|this isn't about .+\. it's about/.test(lower)) {
+    return "Fragment pair construction, a reliable generation tell";
+  }
+  // Try to extract from feedback: "quoted line | vector | reason | suggestion"
+  const escaped = flaggedLine.slice(0, 30).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = feedback.match(new RegExp(escaped + "[^|]*\\|[^|]*\\|\\s*([^|]+)", "i"));
+  return match ? match[1].trim() : "Reads as generated rather than written";
+}
+
+function extractHVTVector(feedback, flaggedLine) {
+  if (!feedback || !flaggedLine) return "Construction";
+  const lower = flaggedLine.toLowerCase();
+  if (/alongside that|threaded through|with that in mind|that said|it's worth noting|building on that|stepping back|zooming out|taken together|beyond that|to make this concrete/.test(lower)) return "Transitions";
+  if (/not as .+\. as .+|this isn't about .+\. it's about/.test(lower)) return "Fragment Pairs";
+  const vectors = ["Rhythm", "Transitions", "Structure", "Register", "Construction", "Contractions", "Fragment Pairs", "Close"];
+  const escaped = flaggedLine.slice(0, 30).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = feedback.match(new RegExp(escaped + "[^|]*\\|\\s*([^|]+)", "i"));
+  if (match) {
+    const found = vectors.find(v => match[1].toLowerCase().includes(v.toLowerCase()));
+    if (found) return found;
+  }
+  return "Construction";
+}
+
+function extractHVTSuggestion(feedback, flaggedLine) {
+  if (!feedback || !flaggedLine) return "";
+  const escaped = flaggedLine.slice(0, 30).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = feedback.match(new RegExp(escaped + "[^|]*\\|[^|]*\\|[^|]*\\|\\s*(.+?)(?:\\n|$)", "i"));
+  return match ? match[1].trim() : "";
+}
+
 export const config = { maxDuration: 120 };
 
 export default async function handler(req, res) {
@@ -129,13 +171,16 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-  const { draft, outputType, voiceDnaMd, brandDnaMd, methodDnaMd, userId, outputId, gateSubset } = req.body || {};
+  const { draft, outputType, voiceDnaMd, brandDnaMd, methodDnaMd, userId, outputId, gateSubset, hvtOnly } = req.body || {};
   if (!draft) return res.status(400).json({ error: "draft is required" });
 
-  // If gateSubset is provided, only run those specific gates (for Layer 2 runs)
-  const gatesToRun = gateSubset && Array.isArray(gateSubset)
-    ? GATE_FILES.filter(g => gateSubset.includes(g.name))
-    : GATE_FILES;
+  // hvtOnly: rerun just the Human Voice Test (for HVT retry from Review stage)
+  // gateSubset: run specific gates only (for Layer 2 runs)
+  const gatesToRun = hvtOnly
+    ? [HVT_GATE]
+    : gateSubset && Array.isArray(gateSubset)
+      ? GATE_FILES.filter(g => gateSubset.includes(g.name))
+      : GATE_FILES;
 
   const gateResults = [];
   let betterishScore = { total: 0, verdict: "REJECT", breakdown: { voiceAuthenticity: 0, researchDepth: 0, hookStrength: 0, slopScore: 0, editorialQuality: 0, perspective: 0, engagement: 0, platformFit: 0, strategicValue: 0, nvcCompliance: 0 }, topIssue: "", gutCheck: "" };
@@ -270,17 +315,60 @@ export default async function handler(req, res) {
     }
 
     const durationMs = Date.now() - startTime;
-    const anyFailed = gateResults.some(g => g.status === "FAIL");
-    const status = anyFailed ? "BLOCKED" : "PASSED";
-    console.log(`[run-pipeline] Done. Status: ${status}, Score: ${betterishScore.total}, Duration: ${durationMs}ms`);
+
+    // Separate HVT result from checkpoint results
+    const hvtGateResult = gateResults.find(g => g.gate === "Human Voice Test");
+    const checkpointResults = gateResults.filter(g => g.gate !== "Human Voice Test");
+
+    // Build structured HVT result
+    const humanVoiceTest = hvtGateResult ? {
+      verdict: hvtGateResult.status === "PASS" ? "PASSES" : "NEEDS_WORK",
+      score: hvtGateResult.score,
+      feedback: hvtGateResult.feedback,
+      flaggedLines: (hvtGateResult.issues || []).map((line, i) => ({
+        lineIndex: i,
+        original: line,
+        issue: extractHVTIssue(hvtGateResult.feedback, line),
+        vector: extractHVTVector(hvtGateResult.feedback, line),
+        suggestion: extractHVTSuggestion(hvtGateResult.feedback, line),
+      })),
+    } : null;
+
+    // Normalize Impact Score to 0-100 scale
+    const rawTotal = betterishScore.total || 0;
+    const normalizedTotal = rawTotal > 100 ? Math.round(rawTotal / 10) : rawTotal;
+    const impactScore = {
+      total: normalizedTotal,
+      verdict: normalizedTotal >= 75 ? "PUBLISH" : normalizedTotal >= 50 ? "REVISE" : "REJECT",
+      breakdown: betterishScore.breakdown || {},
+      topIssue: betterishScore.topIssue || "",
+      gutCheck: betterishScore.gutCheck || "",
+    };
+
+    const anyCheckpointFailed = checkpointResults.some(g => g.status === "FAIL");
+    const hvtFailed = humanVoiceTest && humanVoiceTest.verdict !== "PASSES";
+    const status = anyCheckpointFailed || hvtFailed ? "BLOCKED" : "PASSED";
+    console.log(`[run-pipeline] Done. Status: ${status}, Impact: ${impactScore.total}, HVT: ${humanVoiceTest?.verdict || "N/A"}, Duration: ${durationMs}ms`);
+
+    // If hvtOnly, return just the HVT result
+    if (hvtOnly) {
+      return res.status(200).json({
+        humanVoiceTest,
+        totalDurationMs: durationMs,
+      });
+    }
 
     return res.status(200).json({
       status,
-      gateResults,
-      betterishScore,
+      checkpointResults,
+      impactScore,
+      humanVoiceTest,
       finalDraft: currentDraft,
       blockedAt,
       totalDurationMs: durationMs,
+      // Legacy fields for backward compat
+      gateResults,
+      betterishScore,
     });
 
   } catch (fatalErr) {

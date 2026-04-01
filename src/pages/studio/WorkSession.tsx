@@ -20,6 +20,7 @@ import { supabase } from "../../lib/supabase";
 import { fetchWithRetry } from "../../lib/retry";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
+import OutputTypePicker, { OUTPUT_TYPES, PROJECT_TYPE_IDS } from "../../components/studio/OutputTypePicker";
 import "./shared.css";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,10 +96,26 @@ interface ImpactScore {
   breakdown?: Record<string, number>;
 }
 
+interface HVTFlaggedLine {
+  lineIndex: number;
+  original: string;
+  issue: string;
+  vector: string;
+  suggestion: string;
+}
+
+interface HVTResult {
+  verdict: "PASSES" | "NEEDS_WORK";
+  flaggedLines: HVTFlaggedLine[];
+  score: number;
+  feedback: string;
+}
+
 interface PipelineRun {
   status: "PASSED" | "BLOCKED" | "ERROR";
   checkpointResults: CheckpointResult[];
   impactScore: ImpactScore | null;
+  humanVoiceTest: HVTResult | null;
   blockedAt?: string;
   finalDraft?: string;
 }
@@ -322,19 +339,29 @@ function DpSection({ children }: { children: React.ReactNode }) {
 // ── Intake dashboard ──────────────────────────────────────────
 function IntakeDash({
   selectedFormats, onToggleFormat, selectedTemplate, onSelectTemplate,
-  sessionFiles,
+  sessionFiles, outputType, onSelectOutputType,
 }: {
   selectedFormats: Format[]; onToggleFormat: (f: Format) => void;
   selectedTemplate: string; onSelectTemplate: (t: string) => void;
   sessionFiles: string[];
+  outputType: string | null; onSelectOutputType: (id: string) => void;
 }) {
-  const [openSection, setOpenSection] = useState<string>("outputs");
+  const [openSection, setOpenSection] = useState<string>("outputType");
   const toggle = (section: string) => setOpenSection(prev => prev === section ? "" : section);
 
   return (
     <>
       <DpSection>
-        <DpLabel collapsible open={openSection === "outputs"} onToggle={() => toggle("outputs")}>Outputs</DpLabel>
+        <DpLabel collapsible open={openSection === "outputType"} onToggle={() => toggle("outputType")}>Output Type</DpLabel>
+        {openSection === "outputType" && (
+          <div style={{ marginTop: 6 }}>
+            <OutputTypePicker selected={outputType} onSelect={onSelectOutputType} compact />
+          </div>
+        )}
+      </DpSection>
+
+      <DpSection>
+        <DpLabel collapsible open={openSection === "outputs"} onToggle={() => toggle("outputs")}>Formats</DpLabel>
         {openSection === "outputs" && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginTop: 6 }}>
             {ALL_FORMATS.map(f => {
@@ -528,15 +555,20 @@ function EditDash({
 
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
-  pipelineRun, running, onExportAll, allExported,
+  pipelineRun, running, onExportAll, allExported, hvtAttempts, onRerunHVT, hvtRunning,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
+  hvtAttempts: number; onRerunHVT: () => void; hvtRunning: boolean;
 }) {
   const score = pipelineRun?.impactScore?.total ?? null;
-  const passed = pipelineRun?.status === "PASSED";
+  const hvt = pipelineRun?.humanVoiceTest;
+  const hvtPasses = hvt?.verdict === "PASSES";
+  const scoreOk = score !== null && score >= 75;
+  const canApprove = scoreOk && hvtPasses;
+  const passed = pipelineRun?.status === "PASSED" && canApprove;
   const allGatesPass = pipelineRun?.checkpointResults?.every(g => g.status === "PASS" || g.status === "FLAG") ?? false;
-  const canExport = pipelineRun && !running && !allExported;
+  const canExport = pipelineRun && !running && !allExported && canApprove;
 
   return (
     <>
@@ -599,6 +631,45 @@ function ReviewDash({
             </div>
           </DpSection>
 
+          {/* Human Voice Test status */}
+          {hvt && (
+            <DpSection>
+              <DpLabel>Human Voice Test</DpLabel>
+              <div style={{
+                fontSize: 11, fontWeight: 700,
+                color: hvtPasses ? "var(--blue)" : "var(--gold)",
+                marginBottom: 4,
+              }}>
+                {hvtPasses ? "PASSES" : "NEEDS WORK"}
+              </div>
+              {!hvtPasses && hvt.flaggedLines.length > 0 && (
+                <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 6 }}>
+                  {hvt.flaggedLines.length} line{hvt.flaggedLines.length !== 1 ? "s" : ""} flagged
+                </div>
+              )}
+              {!hvtPasses && hvtAttempts < 3 && (
+                <button
+                  onClick={onRerunHVT}
+                  disabled={hvtRunning}
+                  style={{
+                    width: "100%", padding: 6, borderRadius: 5,
+                    background: "rgba(245,198,66,0.12)", border: "1px solid var(--gold)",
+                    fontSize: 10, fontWeight: 600, color: "var(--gold)",
+                    cursor: hvtRunning ? "not-allowed" : "pointer",
+                    fontFamily: FONT, marginBottom: 4,
+                  }}
+                >
+                  {hvtRunning ? "Running..." : "Rerun Voice Test"}
+                </button>
+              )}
+              {!hvtPasses && hvtAttempts >= 3 && (
+                <div style={{ fontSize: 10, color: "var(--danger)", lineHeight: 1.5, fontWeight: 600 }}>
+                  Voice issues are structural. Consider a full rewrite.
+                </div>
+              )}
+            </DpSection>
+          )}
+
           {pipelineRun.blockedAt && (
             <DpSection>
               <DpLabel>Blocked at</DpLabel>
@@ -609,7 +680,7 @@ function ReviewDash({
       )}
 
       <div style={{ fontSize: 10, color: allExported ? "var(--blue)" : "var(--fg-3)", marginBottom: 6, transition: "color 0.2s" }}>
-        {allExported ? "All formats exported to Session Files." : running ? "Running checkpoints..." : pipelineRun ? (passed ? "Pipeline passed. Ready to export." : "Pipeline complete. Review results above.") : "Run pipeline to check your draft."}
+        {allExported ? "All formats exported to Session Files." : running ? "Running checkpoints..." : pipelineRun ? (passed ? "Pipeline passed. Ready to export." : canApprove ? "Pipeline passed. Ready to export." : "Pipeline complete. Review results above.") : "Run pipeline to check your draft."}
       </div>
 
       <button
@@ -617,10 +688,10 @@ function ReviewDash({
         disabled={!canExport || running}
         style={{
           width: "100%", padding: 10, borderRadius: 6,
-          background: allExported ? "rgba(74,144,217,0.12)" : canExport ? "var(--gold-bright)" : "var(--gold-bright)",
-          border: allExported ? "1px solid rgba(74,144,217,0.3)" : "none",
+          background: allExported ? "rgba(74,144,217,0.12)" : canExport ? "var(--gold-bright)" : "var(--surface)",
+          border: allExported ? "1px solid rgba(74,144,217,0.3)" : canExport ? "none" : "1px solid var(--line)",
           fontSize: 12, fontWeight: 700,
-          color: allExported ? "var(--blue)" : "var(--fg)",
+          color: allExported ? "var(--blue)" : canExport ? "var(--fg)" : "var(--fg-3)",
           cursor: canExport ? "pointer" : "not-allowed",
           opacity: !pipelineRun && !running ? 0.4 : 1,
           transition: "all 0.2s", fontFamily: FONT,
@@ -1373,6 +1444,11 @@ function StageReview({
   activeTab: string; tabs: string[]; onTabClick: (t: string) => void;
   onAdvance: () => void; onGoBack: (instructions: string) => void;
 }) {
+  // Approve gate: both Impact Score >= 75 and HVT must PASS
+  const scoreOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
+  const hvtPasses = pipelineRun?.humanVoiceTest?.verdict === "PASSES";
+  const canApprove = scoreOk && hvtPasses;
+  const hvtFlaggedLines = pipelineRun?.humanVoiceTest?.flaggedLines || [];
   const [input, setInput] = useState("");
   const [reviewedTabs, setReviewedTabs] = useState<Set<string>>(new Set());
 
@@ -1427,9 +1503,29 @@ function StageReview({
             {/* Draft body matching wireframe typography */}
             <div className="draft-body">
               <div className="draft-title-text">{draft.split("\n")[0] || "Draft"}</div>
-              {draft.split("\n").slice(1).filter(Boolean).map((p, i) => (
-                <p key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>{p}</p>
-              ))}
+              {draft.split("\n").slice(1).filter(Boolean).map((p, i) => {
+                // Check if this line is flagged by HVT
+                const flagged = hvtFlaggedLines.find(f => p.includes(f.original) || f.original.includes(p.slice(0, 40)));
+                return (
+                  <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
+                    <p style={flagged ? {
+                      borderBottom: "2px solid var(--gold)",
+                      paddingBottom: 2,
+                      background: "rgba(245,198,66,0.06)",
+                    } : undefined}>{p}</p>
+                    {flagged && (
+                      <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, lineHeight: 1.5 }}>
+                        <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
+                        {flagged.suggestion && (
+                          <div style={{ color: "var(--fg-3)", marginTop: 2, fontStyle: "italic" }}>
+                            Suggestion: {flagged.suggestion}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Improve cards */}
@@ -1457,7 +1553,23 @@ function StageReview({
         )}
       </div>
 
-      {!running && pipelineRun && <AdvanceButton label="Approve &amp; Wrap &#8594;" onClick={onAdvance} />}
+      {!running && pipelineRun && canApprove && <AdvanceButton label="Approve &amp; Wrap &#8594;" onClick={onAdvance} />}
+      {!running && pipelineRun && !canApprove && (
+        <div style={{ padding: "0 14px 8px", display: "flex", justifyContent: "flex-end" }}>
+          <button
+            disabled
+            style={{
+              padding: "8px 22px", borderRadius: 6,
+              background: "var(--surface)", border: "1px solid var(--line)",
+              fontSize: 12, fontWeight: 700, color: "var(--fg-3)",
+              cursor: "not-allowed", fontFamily: FONT, opacity: 0.6,
+            }}
+            title={!scoreOk ? "Impact Score must be 75% or higher" : "Human Voice Test must pass"}
+          >
+            Approve &amp; Wrap (blocked)
+          </button>
+        </div>
+      )}
 
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
@@ -1502,13 +1614,40 @@ function ReviewTabBtn({ label, active, reviewed, exported, onClick }: { label: s
 // STAGE: EXPORT
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Output handoff suggestions based on current output type
+const HANDOFF_MAP: Record<string, { label: string; targetType: string; prompt: string }[]> = {
+  proposal: [
+    { label: "Turn this into a Statement of Work", targetType: "sow", prompt: "Ready to turn this into a Statement of Work?" },
+    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
+  ],
+  report: [
+    { label: "Create an Executive Summary", targetType: "executive_summary", prompt: "Create an Executive Summary?" },
+    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
+  ],
+  case_study: [
+    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
+  ],
+  essay: [
+    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
+  ],
+  newsletter: [
+    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
+  ],
+  presentation: [
+    { label: "Create an Executive Summary", targetType: "executive_summary", prompt: "Create an Executive Summary?" },
+    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
+  ],
+};
+
 function StageExport({
   draft, title, formats, activeTab, onTabClick, exportedTabs, onExport, onCopy, outputId,
+  currentOutputType, onHandoff,
 }: {
   draft: string; title: string; formats: string[];
   activeTab: string; onTabClick: (t: string) => void;
   exportedTabs: Record<string, boolean>; onExport: (format: string) => void;
   onCopy: () => void; outputId: string | null;
+  currentOutputType?: string | null; onHandoff?: (targetType: string) => void;
 }) {
   const labels: Record<string, string> = {
     LinkedIn: "LinkedIn Post", Newsletter: "Newsletter",
@@ -1563,6 +1702,31 @@ function StageExport({
             <ExportPreview format={activeTab} draft={draft} title={title} />
           ) : "No content yet."}
         </div>
+
+        {/* What's Next: Output handoff suggestions */}
+        {currentOutputType && HANDOFF_MAP[currentOutputType] && HANDOFF_MAP[currentOutputType].length > 0 && (
+          <div style={{ marginTop: 24 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg-2)", marginBottom: 8 }}>What's Next</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {HANDOFF_MAP[currentOutputType].map(h => (
+                <button
+                  key={h.targetType}
+                  onClick={() => onHandoff?.(h.targetType)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "10px 14px", borderRadius: 6,
+                    border: "1px solid var(--line)", background: "var(--surface)",
+                    cursor: "pointer", fontFamily: FONT, textAlign: "left",
+                    transition: "all 0.12s",
+                  }}
+                >
+                  <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{h.label}</span>
+                  <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--gold)", fontWeight: 600 }}>Start</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1674,11 +1838,15 @@ export default function WorkSession() {
         content: m.content,
       }));
     }
-    return [{ role: "watson", content: "What's on your mind?" }];
+    return [{ role: "watson", content: "Good to see you. Who specifically needs to hear what you are working on?" }];
   });
   const [intakeSending, setIntakeSending] = useState(false);
   const [intakeReady, setIntakeReady] = useState(persisted?.isReady ?? false);
   const [readySummary, setReadySummary] = useState("");
+
+  // ── Output type (CO-003) ─────────────────────────────────────
+  const [outputType, setOutputType] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
 
   // ── Formats + templates ───────────────────────────────────────
   const [selectedFormats, setSelectedFormats] = useState<Format[]>(DEFAULT_FORMATS);
@@ -1702,6 +1870,8 @@ export default function WorkSession() {
   const [pipelineRun, setPipelineRun] = useState<PipelineRun | null>(null);
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [activeReviewTab, setActiveReviewTab] = useState(selectedFormats[0] ?? "LinkedIn");
+  const [hvtAttempts, setHvtAttempts] = useState(0);
+  const [hvtRunning, setHvtRunning] = useState(false);
 
   // ── Export ────────────────────────────────────────────────────
   const [exportedTabs, setExportedTabs] = useState<Record<string, boolean>>({});
@@ -1757,9 +1927,9 @@ export default function WorkSession() {
 
     const detail = signalDetail ? ` ${signalDetail}` : "";
     setMessages([
-      { role: "watson", content: "What's on your mind?" },
+      { role: "watson", content: "Good to see you. Who specifically needs to hear what you are working on?" },
       { role: "user", content: `I want to write about this: ${signalText}.${detail}` },
-      { role: "watson", content: `Good signal. Let me ask a few questions to shape this into something worth publishing.\n\nWho specifically needs to hear this? Not a general audience, give me the exact person this is for.` },
+      { role: "watson", content: `Good signal. Let me shape this into something worth publishing.\n\nWho specifically needs to hear this? Not a general audience, give me the exact person this is for.` },
     ]);
     // Keep stage at Intake so Watson continues the conversation naturally
   }, []);
@@ -1835,7 +2005,7 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role === "watson" ? "assistant" : "user", content: m.content })),
-          outputType: FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle",
+          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle",
           voiceDnaMd,
           userId: user?.id,
           systemMode: "CONTENT_PRODUCTION",
@@ -1859,7 +2029,7 @@ export default function WorkSession() {
     } finally {
       setIntakeSending(false);
     }
-  }, [messages, selectedFormats, voiceDnaMd, user?.id]);
+  }, [messages, selectedFormats, voiceDnaMd, user?.id, outputType]);
 
   // ── INTAKE → OUTLINE: Build outline from conversation ─────────
   const handleBuildOutline = useCallback(async () => {
@@ -1978,7 +2148,7 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft,
-          outputType: FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
           voiceDnaMd,
           brandDnaMd,
           methodDnaMd,
@@ -1994,9 +2164,11 @@ export default function WorkSession() {
         status: result.status,
         checkpointResults: result.checkpointResults || [],
         impactScore: result.impactScore || null,
+        humanVoiceTest: result.humanVoiceTest || null,
         blockedAt: result.blockedAt,
         finalDraft: result.finalDraft,
       });
+      setHvtAttempts(1);
 
       // Use the pipeline's final draft if it differs
       if (result.finalDraft && result.finalDraft !== draft) {
@@ -2007,11 +2179,16 @@ export default function WorkSession() {
       if (user) {
         const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
         const score = result.impactScore?.total ?? 0;
+        const outputTypeId = outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay";
+        const outputCategory = OUTPUT_TYPES.find(t => t.id === outputTypeId)?.category?.toLowerCase() || null;
         const { data: savedOutput } = await supabase.from("outputs").insert({
           user_id: user.id,
           title: title.slice(0, 200),
           content: result.finalDraft || draft,
-          output_type: FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          output_type: outputTypeId,
+          output_category: outputCategory,
+          output_type_id: outputTypeId,
+          project_id: projectId || undefined,
           score,
           gates: result.checkpointResults || null,
           content_state: score >= 75 ? "vault" : "in_progress",
@@ -2039,6 +2216,45 @@ export default function WorkSession() {
     setAllExported(true);
     setTimeout(() => goToStage("Approve"), 1200);
   }, [selectedFormats, goToStage]);
+
+  // ── REVIEW: Rerun Human Voice Test only ───────────────────────
+  const handleRerunHVT = useCallback(async () => {
+    if (!draft || !user || hvtAttempts >= 3) return;
+    setHvtRunning(true);
+
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft,
+          outputType: FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          voiceDnaMd,
+          userId: user.id,
+          hvtOnly: true,
+        }),
+      }, { timeout: 60000 });
+
+      if (!res.ok) throw new Error(`HVT rerun error ${res.status}`);
+      const result = await res.json();
+      const newAttempt = hvtAttempts + 1;
+      setHvtAttempts(newAttempt);
+
+      if (result.humanVoiceTest) {
+        setPipelineRun(prev => prev ? {
+          ...prev,
+          humanVoiceTest: result.humanVoiceTest,
+          status: prev.impactScore && prev.impactScore.total >= 75 && result.humanVoiceTest.verdict === "PASSES"
+            ? "PASSED" : prev.status,
+        } : prev);
+      }
+    } catch (err: any) {
+      toast("Voice test rerun failed. Try again.", "error");
+      console.error("[WorkSession][hvt-rerun]", err);
+    } finally {
+      setHvtRunning(false);
+    }
+  }, [draft, user, hvtAttempts, selectedFormats, voiceDnaMd, toast]);
 
   // ── EXPORT: Copy to clipboard ─────────────────────────────────
   const handleCopy = useCallback(() => {
@@ -2075,6 +2291,8 @@ export default function WorkSession() {
               selectedTemplate={selectedTemplate}
               onSelectTemplate={setSelectedTemplate}
               sessionFiles={sessionFiles}
+              outputType={outputType}
+              onSelectOutputType={setOutputType}
             />
           );
         case "Outline":
@@ -2095,6 +2313,9 @@ export default function WorkSession() {
               running={pipelineRunning}
               onExportAll={handleExportAll}
               allExported={allExported}
+              hvtAttempts={hvtAttempts}
+              onRerunHVT={handleRerunHVT}
+              hvtRunning={hvtRunning}
             />
           );
         case "Approve":
@@ -2131,6 +2352,7 @@ export default function WorkSession() {
   }, [
     stage, selectedFormats, selectedTemplate, draft, generating, generatingLabel,
     pipelineRun, pipelineRunning, allExported, outputId,
+    hvtAttempts, handleRerunHVT, hvtRunning, outputType,
   ]);
 
   // ─────────────────────────────────────────────────────────────
@@ -2208,6 +2430,18 @@ export default function WorkSession() {
           onExport={handleExport}
           onCopy={handleCopy}
           outputId={outputId}
+          currentOutputType={outputType}
+          onHandoff={(targetType) => {
+            // Store handoff context and start a new session
+            sessionStorage.setItem("ew-handoff-source-id", outputId || "");
+            sessionStorage.setItem("ew-handoff-target-type", targetType);
+            setOutputType(targetType);
+            setStage("Intake");
+            setMessages([{ role: "watson", content: "Good to see you. Who specifically needs to hear what you are working on?" }]);
+            setDraft("");
+            setPipelineRun(null);
+            setHvtAttempts(0);
+          }}
         />
       )}
     </div>
