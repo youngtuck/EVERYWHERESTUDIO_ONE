@@ -848,13 +848,13 @@ export default function ExplorePage() {
             </Reveal>
             <div ref={checkpointReveal.ref}>
               {[
-                { num: "01", name: "Echo", desc: "Catches repeated concepts and structural patterns." },
-                { num: "02", name: "Priya", desc: "Verifies every factual claim. 100% accuracy standard." },
-                { num: "03", name: "Jordan", desc: `Voice DNA fidelity. Greater than ${MARKETING_NUMBERS.voiceDnaTarget}% match. Zero AI tells.` },
-                { num: "04", name: "David", desc: "7-second hook test. Doesn't earn the read, doesn't ship." },
-                { num: "05", name: "Elena", desc: "SLOP detection. One em dash in prose is an automatic block." },
-                { num: "06", name: "Natasha", desc: "Publication-grade standard plus the Stranger Test." },
-                { num: "07", name: "Marcus + Marshall", desc: "Cultural sensitivity and nonviolent communication review." },
+                { num: "01", name: "Deduplication", desc: "Catches repeated concepts and structural patterns." },
+                { num: "02", name: "Research Validation", desc: "Verifies every factual claim. 100% accuracy standard." },
+                { num: "03", name: "Voice Authenticity", desc: `Voice DNA fidelity. Greater than ${MARKETING_NUMBERS.voiceDnaTarget}% match. Zero AI tells.` },
+                { num: "04", name: "Engagement", desc: "7-second hook test. Doesn't earn the read, doesn't ship." },
+                { num: "05", name: "SLOP Detection", desc: "Zero AI padding. Superfluity, loops, overwrought prose, pretension." },
+                { num: "06", name: "Editorial Excellence", desc: "Publication-grade standard plus the Stranger Test." },
+                { num: "07", name: "Perspective + Risk", desc: "Cultural sensitivity and nonviolent communication review." },
               ].map((cp, i) => (
                 <StaggerReveal key={cp.num} index={i} parentVisible={checkpointReveal.isVisible}>
                   <div className="xp-cp" style={i === 0 ? { borderTop: "1px solid var(--divider)" } : undefined}>
