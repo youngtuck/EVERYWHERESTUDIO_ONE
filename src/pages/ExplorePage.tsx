@@ -568,8 +568,8 @@ export default function ExplorePage() {
                   borderTop: "1px solid rgba(255,255,255,0.06)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>861</span>
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Betterish Score</span>
+                    <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>86</span>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Impact Score</span>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
@@ -681,7 +681,7 @@ export default function ExplorePage() {
               {[
                 { value: MARKETING_NUMBERS.specialistCount, label: "Specialists" },
                 { value: MARKETING_NUMBERS.qualityCheckpoints, label: "Checkpoints" },
-                { value: MARKETING_NUMBERS.betterishThreshold, label: "Min. Betterish Score" },
+                { value: MARKETING_NUMBERS.impactThreshold + "+", label: "Impact Score to Ship" },
                 { value: 0, label: "Left for you to finish" },
               ].map((s) => (
                 <div key={s.label} style={{ textAlign: "center" }}>
