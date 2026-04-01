@@ -53,7 +53,7 @@ const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
   Presentation: "presentation", "Book Chapter": "book",
 };
 
-const TEMPLATES = ["Thought Leadership", "Case Study Narrative", "Weekly Insight", "Contrarian Take", "Origin Story"];
+const TEMPLATES = ["Essay", "LinkedIn Post", "Newsletter Issue", "Podcast Script", "Case Study", "One-Pager", "Email"];
 
 const CHECKPOINT_LABELS: Record<string, string> = {
   "checkpoint-0": "Deduplication",
