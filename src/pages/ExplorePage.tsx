@@ -548,7 +548,7 @@ export default function ExplorePage() {
                     color: "rgba(255,255,255,0.85)",
                     lineHeight: 1.5,
                   }}>
-                    The best content creators aren't the loudest voices. They're the ones who got their infrastructure right.
+                    The people in your market who show up everywhere aren't better thinkers. They got their ideas out. Every week. On every channel. Without doing it alone.
                   </div>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
