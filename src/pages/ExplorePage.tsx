@@ -484,14 +484,17 @@ export default function ExplorePage() {
                 letterSpacing: "-0.02em",
                 margin: "0 0 28px",
               }}>
-                You have years of thinking that the world hasn't heard yet.{" "}
-                <em>That's not a discipline problem. It's an infrastructure problem.</em>
+                The thought leaders you see everywhere aren't better thinkers.{" "}
+                <em>They got their ideas out.</em>
               </h2>
               <p style={{ color: "var(--white-dim)", maxWidth: 580, marginBottom: 16 }}>
-                Getting ideas from your head, through drafting, editing, formatting, and publishing, across every channel, in your voice, at the quality they deserve: that is a full operation.
+                You have the thinking. What you've been missing is someone to carry it, from your head, into the world, without you doing the work twice.
+              </p>
+              <p style={{ color: "var(--white-dim)", maxWidth: 580, marginBottom: 16 }}>
+                This isn't about discipline or talent.
               </p>
               <p style={{ color: "var(--white-dim)", maxWidth: 580 }}>
-                You've been trying to run that operation alone. Most thought leaders are. The ones who aren't are the ones you see everywhere.
+                It's an infrastructure problem. Watson is the answer.
               </p>
             </div>
           </div>
