@@ -24,30 +24,87 @@ function useScrollReveal(threshold = 0.15) {
   return { ref, isVisible };
 }
 
-// ── Reveal wrapper ──────────────────────────────────────────────────────────
+// ── Scroll progress (0-1 through entire page) ──────────────────────────────
+function useScrollProgress() {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const handleScroll = () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(total > 0 ? window.scrollY / total : 0);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+  return progress;
+}
+
+// ── Element scroll progress (0-1 as element traverses viewport) ─────────────
+function useElementScroll(ref: React.RefObject<HTMLElement | null>) {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handleScroll = () => {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const p = 1 - (rect.top + rect.height) / (vh + rect.height);
+      setProgress(Math.max(0, Math.min(1, p)));
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+  return progress;
+}
+
+// ── Reveal wrapper (enhanced with direction support) ────────────────────────
+type RevealDirection = "up" | "left" | "right" | "scale" | "none";
+
 function Reveal({
   children,
   delay = 0,
   threshold = 0.15,
+  direction = "up",
+  distance = 40,
+  duration = 900,
+  once = true,
   scale,
   style,
 }: {
   children: React.ReactNode;
   delay?: number;
   threshold?: number;
+  direction?: RevealDirection;
+  distance?: number;
+  duration?: number;
+  once?: boolean;
   scale?: boolean;
   style?: React.CSSProperties;
 }) {
   const { ref, isVisible } = useScrollReveal(threshold);
+
+  const hiddenTransform = (() => {
+    switch (direction) {
+      case "up": return `translateY(${distance}px)`;
+      case "left": return `translateX(${distance}px)`;
+      case "right": return `translateX(-${distance}px)`;
+      case "scale": return "scale(0.92)";
+      case "none": return "none";
+      default: return `translateY(${distance}px)`;
+    }
+  })();
+
+  const show = once ? isVisible : isVisible;
+
   return (
     <div
       ref={ref}
       style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible
-          ? "translateY(0) scale(1)"
-          : `translateY(30px) scale(${scale ? 0.95 : 1})`,
-        transition: `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
+        opacity: show ? 1 : 0,
+        transform: show
+          ? `translateY(0) translateX(0) scale(1)`
+          : `${hiddenTransform}${scale && direction !== "scale" ? " scale(0.95)" : ""}`,
+        transition: `opacity ${duration}ms ${EASE} ${delay}ms, transform ${duration}ms ${EASE} ${delay}ms`,
         ...style,
       }}
     >
@@ -61,20 +118,26 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
 
 :root {
-  --navy: #FAFAF8;
-  --navy-mid: #FFFFFF;
-  --gold: #F5C642;
-  --gold-dim: rgba(245, 198, 66, 0.12);
-  --blue: #6B8FD4;
-  --white: #111111;
-  --white-dim: #5A5A58;
-  --divider: rgba(0, 0, 0, 0.06);
+  --ew-navy: #0D1B2A;
+  --ew-navy-rich: #1B263B;
+  --ew-gold: #F5C642;
+  --ew-blue: #4A90D9;
+  --ew-coral: #E8B4A0;
+  --ew-white: #FFFFFF;
+  --ew-offwhite: #F7F9FC;
+  --ew-text-dark: #111111;
+  --ew-text-body: #64748B;
+  --ew-text-light: rgba(255,255,255,0.85);
+  --ew-text-light-dim: rgba(255,255,255,0.5);
+  --ew-border-light: #E2E8F0;
+  --ew-border-dark: rgba(255,255,255,0.08);
+  --ew-ease: ${EASE};
   --font: 'Afacad Flux', sans-serif;
 }
 
 .xp {
-  background: var(--navy);
-  color: var(--white);
+  background: var(--ew-navy);
+  color: var(--ew-text-light);
   font-family: var(--font);
   font-size: 17px;
   line-height: 1.7;
@@ -83,10 +146,11 @@ const CSS = `
   position: relative;
 }
 
-.xp em { font-style: normal; color: var(--gold); }
+/* em inherits section context: gold on dark, blue on light */
+.xp em { font-style: normal; }
 .xp a { color: inherit; text-decoration: none; }
 
-/* Nav */
+/* Nav: starts transparent over dark hero, darkens on scroll */
 .xp-nav {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -99,10 +163,10 @@ const CSS = `
   transition: background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease;
 }
 .xp-nav.scrolled {
-  background: rgba(250, 250, 248, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(13, 27, 42, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--ew-border-dark);
 }
 .xp-nav-links {
   display: flex;
@@ -114,7 +178,7 @@ const CSS = `
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #5A5A58;
+  color: var(--ew-text-light-dim);
   transition: color 0.2s ease;
   cursor: pointer;
   background: none;
@@ -122,32 +186,49 @@ const CSS = `
   font-family: var(--font);
   padding: 0;
 }
-.xp-nav-link:hover { color: #111111; }
+.xp-nav-link:hover { color: var(--ew-text-light); }
 
-/* Buttons */
+/* Buttons: dark surface variants (gold accent) */
 .xp-btn-gold {
   display: inline-block;
   padding: 14px 36px;
-  background: #111111;
-  color: #FFFFFF;
+  background: var(--ew-gold);
+  color: var(--ew-navy);
   border: none;
-  border-radius: 100px;
+  border-radius: 6px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: var(--font);
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: background 0.25s ${EASE}, transform 0.25s ${EASE};
+  transition: opacity 0.25s ${EASE}, transform 0.25s ${EASE};
   text-decoration: none;
 }
-.xp-btn-gold:hover { background: #333333; transform: translateY(-1px); }
+.xp-btn-gold:hover { opacity: 0.88; transform: translateY(-1px); }
+/* Light surface variant: blue accent */
+.xp-btn-blue {
+  display: inline-block;
+  padding: 14px 36px;
+  background: var(--ew-blue);
+  color: var(--ew-white);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: opacity 0.25s ${EASE}, transform 0.25s ${EASE};
+  text-decoration: none;
+}
+.xp-btn-blue:hover { opacity: 0.88; transform: translateY(-1px); }
 .xp-btn-outline {
   display: inline-block;
   padding: 14px 36px;
   background: transparent;
-  color: #111111;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 100px;
+  color: var(--ew-text-light);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
   font-family: var(--font);
@@ -155,7 +236,23 @@ const CSS = `
   transition: border-color 0.25s ${EASE}, transform 0.25s ${EASE};
   text-decoration: none;
 }
-.xp-btn-outline:hover { border-color: rgba(0, 0, 0, 0.3); transform: translateY(-1px); }
+.xp-btn-outline:hover { border-color: rgba(255, 255, 255, 0.4); transform: translateY(-1px); }
+/* Outline on light surfaces */
+.xp-btn-outline-light {
+  display: inline-block;
+  padding: 14px 36px;
+  background: transparent;
+  color: var(--ew-text-dark);
+  border: 1px solid var(--ew-border-light);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: border-color 0.25s ${EASE}, transform 0.25s ${EASE};
+  text-decoration: none;
+}
+.xp-btn-outline-light:hover { border-color: #CBD5E1; transform: translateY(-1px); }
 
 /* Section container */
 .xp-inner {
@@ -172,14 +269,14 @@ const CSS = `
   align-items: start;
 }
 
-/* Rooms */
+/* Rooms: dark surface (Watch.Work.Wrap on navy) */
 .xp-rooms {
   display: grid;
   grid-template-columns: 1fr 1px 1fr 1px 1fr;
   gap: 0;
 }
 .xp-room-divider {
-  background: var(--divider);
+  background: var(--ew-border-dark);
   width: 1px;
   align-self: stretch;
 }
@@ -192,7 +289,7 @@ const CSS = `
   text-transform: uppercase;
   letter-spacing: -0.02em;
   line-height: 1;
-  color: #111111;
+  color: var(--ew-text-light);
   margin: 0 0 8px;
 }
 .xp-room-tag {
@@ -200,12 +297,12 @@ const CSS = `
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #F5C642;
+  color: var(--ew-gold);
   margin-bottom: 20px;
 }
 .xp-room-body {
   font-size: 15px;
-  color: var(--white-dim);
+  color: var(--ew-text-light-dim);
   line-height: 1.65;
   margin-bottom: 24px;
 }
@@ -216,7 +313,7 @@ const CSS = `
 }
 .xp-room-items li {
   font-size: 14px;
-  color: var(--white-dim);
+  color: var(--ew-text-light-dim);
   padding: 8px 0;
   display: flex;
   align-items: baseline;
@@ -228,7 +325,7 @@ const CSS = `
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--ew-gold);
   flex-shrink: 0;
   position: relative;
   top: -2px;
@@ -237,49 +334,48 @@ const CSS = `
 /* Checkpoints */
 .xp-cp {
   padding: 18px 0;
-  border-bottom: 1px solid var(--divider);
+  border-bottom: 1px solid var(--ew-border-dark);
   line-height: 1.6;
 }
 .xp-cp-num {
   font-size: 12px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--ew-gold);
   margin-right: 10px;
   font-variant-numeric: tabular-nums;
 }
 .xp-cp-name {
   font-weight: 700;
-  color: #111111;
+  color: var(--ew-text-light);
   margin-right: 6px;
 }
 .xp-cp-desc {
-  color: var(--white-dim);
+  color: var(--ew-text-light-dim);
   font-size: 15px;
 }
 
 /* Moments */
 .xp-moment {
   padding: 24px 0;
-  border-bottom: 1px solid var(--divider);
+  border-bottom: 1px solid var(--ew-border-dark);
 }
-.xp-moment:first-child { border-top: 1px solid var(--divider); }
+.xp-moment:first-child { border-top: 1px solid var(--ew-border-dark); }
 .xp-moment-label {
   font-size: 12px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--ew-gold);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 6px;
 }
 .xp-moment-text {
-  color: var(--white-dim);
+  color: var(--ew-text-light-dim);
   font-size: 16px;
   line-height: 1.6;
 }
 
 /* Footer */
 .xp-footer {
-  border-top: 1px solid var(--divider);
   padding: 40px;
   display: flex;
   align-items: center;
@@ -287,7 +383,7 @@ const CSS = `
   max-width: 1080px;
   margin: 0 auto;
   font-size: 13px;
-  color: var(--white-dim);
+  color: var(--ew-text-body);
 }
 
 /* Mobile */
@@ -350,7 +446,7 @@ export default function ExplorePage() {
 
       {/* ── NAV ──────────────────────────────────────────────── */}
       <nav className={`xp-nav ${navScrolled ? "scrolled" : ""}`}>
-        <Logo size="sm" variant="light" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+        <Logo size="sm" variant="dark" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
         <div className="xp-nav-links">
           {!isMobile && (
             <div className="xp-nav-links-desktop" style={{ display: "flex", gap: 32, alignItems: "center" }}>
@@ -374,7 +470,7 @@ export default function ExplorePage() {
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          background: "linear-gradient(180deg, #FAFAF8 0%, #F5F3EE 40%, #FAFAF8 100%)",
+          background: "radial-gradient(ellipse at 50% 0%, rgba(107,143,212,0.06) 0%, transparent 60%), var(--ew-navy)",
         }}
       >
         <div
@@ -393,27 +489,25 @@ export default function ExplorePage() {
             lineHeight: 1.08,
             letterSpacing: "-0.035em",
             margin: "0 0 28px",
-            color: "#111111",
+            color: "var(--ew-text-light)",
           }}>
             <span style={{
               display: "block",
               animation: "xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both",
-              fontWeight: 700,
             }}>
               Your thinking reaches your audience.
             </span>
             <em style={{
               display: "block",
               animation: "xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both",
-              fontWeight: 500,
-              color: "#F5C642",
+              color: "var(--ew-gold)",
             }}>
               In your voice. Better than you'd write it yourself.
             </em>
           </h1>
           <p style={{
             fontSize: isMobile ? 17 : 20,
-            color: "#5A5A58",
+            color: "var(--ew-text-light-dim)",
             maxWidth: 540,
             margin: "0 auto 40px",
             lineHeight: 1.6,
@@ -439,28 +533,29 @@ export default function ExplorePage() {
         `}</style>
       </section>
 
-      {/* ── SECTION 02: THE PROBLEM ────────────────────────── */}
-      <section style={{ padding: sectionPad }}>
+      {/* ── SECTION 02: THE PROBLEM (Light: #FFFFFF, blue accent) ── */}
+      <section style={{ padding: sectionPad, background: "var(--ew-white)" }}>
         <Reveal>
           <div className="xp-inner">
-            <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: isMobile ? 20 : 32, maxWidth: 700 }}>
+            <div style={{ borderLeft: "3px solid var(--ew-blue)", paddingLeft: isMobile ? 20 : 32, maxWidth: 700 }}>
               <h2 style={{
                 fontSize: "clamp(28px, 4vw, 42px)",
                 fontWeight: 700,
                 lineHeight: 1.18,
                 letterSpacing: "-0.02em",
                 margin: "0 0 28px",
+                color: "var(--ew-text-dark)",
               }}>
                 The thought leaders you see everywhere aren't better thinkers.{" "}
-                <em>They got their ideas out.</em>
+                <em style={{ color: "var(--ew-blue)", fontWeight: 700 }}>They got their ideas out.</em>
               </h2>
-              <p style={{ color: "var(--white-dim)", maxWidth: 580, marginBottom: 16 }}>
+              <p style={{ color: "var(--ew-text-body)", maxWidth: 580, marginBottom: 16 }}>
                 You have the thinking. What you've been missing is someone to carry it, from your head, into the world, without you doing the work twice.
               </p>
-              <p style={{ color: "var(--white-dim)", maxWidth: 580, marginBottom: 16 }}>
+              <p style={{ color: "var(--ew-text-body)", maxWidth: 580, marginBottom: 16 }}>
                 This isn't about discipline or talent.
               </p>
-              <p style={{ color: "var(--white-dim)", maxWidth: 580 }}>
+              <p style={{ color: "var(--ew-text-body)", maxWidth: 580 }}>
                 It's an infrastructure problem. Watson is the answer.
               </p>
             </div>
@@ -468,26 +563,26 @@ export default function ExplorePage() {
         </Reveal>
       </section>
 
-      {/* ── SECTION 03: WATSON ────────────────────────────────── */}
-      <section style={{ padding: sectionPad }}>
+      {/* ── SECTION 03: WATSON (Dark: #1B263B, gold accent) ─────── */}
+      <section style={{ padding: sectionPad, background: "var(--ew-navy-rich)" }}>
         <Reveal>
           <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 16 }}>
               Watson
             </div>
-            <p style={{ color: "var(--white-dim)", maxWidth: 640, textAlign: "center", marginBottom: 16 }}>
+            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 640, textAlign: "center", marginBottom: 16 }}>
               Watson is your thinking partner. You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're done.
             </p>
-            <p style={{ color: "var(--white-dim)", maxWidth: 640, textAlign: "center", marginBottom: 48 }}>
+            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 640, textAlign: "center", marginBottom: 48 }}>
               No editing. No formatting. No chasing the idea across five tabs. Watson carries it. What comes back is done. In your voice. Ready to ship.
             </p>
             {/* Watson demo widget */}
             <div style={{
-              background: "#FFFFFF",
-              borderRadius: 16,
-              border: "1px solid rgba(0,0,0,0.08)",
+              background: "#0E0E0C",
+              borderRadius: 14,
+              border: "1px solid var(--ew-border-dark)",
               overflow: "hidden",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
               maxWidth: 440,
               width: "100%",
               marginBottom: 48,
@@ -495,25 +590,24 @@ export default function ExplorePage() {
               {/* Header */}
               <div style={{
                 padding: "14px 20px",
-                borderBottom: "1px solid rgba(0,0,0,0.06)",
-                background: "#FAFAF8",
+                borderBottom: "1px solid var(--ew-border-dark)",
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
               }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#F5C642", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#5A5A58", letterSpacing: "0.04em" }}>Watson is listening</span>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ew-gold)", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ew-text-light-dim)", letterSpacing: "0.04em" }}>Watson is listening</span>
               </div>
               {/* Chat area */}
               <div style={{ padding: "20px 20px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
                   <div style={{
-                    background: "#F5F3EE",
+                    background: "#1B263B",
                     borderRadius: "14px 14px 4px 14px",
                     padding: "10px 16px",
                     maxWidth: "80%",
                     fontSize: 13,
-                    color: "#111111",
+                    color: "var(--ew-text-light)",
                     lineHeight: 1.5,
                   }}>
                     The people in your market who show up everywhere aren't better thinkers. They got their ideas out. Every week. On every channel. Without doing it alone.
@@ -521,16 +615,16 @@ export default function ExplorePage() {
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
                   <div style={{
-                    background: "#FFFFFF",
-                    border: "1px solid rgba(0,0,0,0.06)",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid var(--ew-border-dark)",
                     borderRadius: "14px 14px 14px 4px",
                     padding: "10px 16px",
                     maxWidth: "85%",
                     fontSize: 13,
-                    color: "#333333",
+                    color: "rgba(255,255,255,0.7)",
                     lineHeight: 1.5,
                   }}>
-                    <strong style={{ color: "#F5C642" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
+                    <strong style={{ color: "var(--ew-gold)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
                     Who specifically needs to hear this?
                   </div>
                 </div>
@@ -539,11 +633,11 @@ export default function ExplorePage() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   paddingTop: 12,
-                  borderTop: "1px solid rgba(0,0,0,0.06)",
+                  borderTop: "1px solid var(--ew-border-dark)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 22, fontWeight: 700, color: "#F5C642", fontVariantNumeric: "tabular-nums" }}>86</span>
-                    <span style={{ fontSize: 11, color: "#5A5A58", fontWeight: 500 }}>Impact Score</span>
+                    <span style={{ fontSize: 22, fontWeight: 700, color: "var(--ew-gold)", fontVariantNumeric: "tabular-nums" }}>86</span>
+                    <span style={{ fontSize: 11, color: "var(--ew-text-light-dim)", fontWeight: 500 }}>Impact Score</span>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
@@ -552,9 +646,8 @@ export default function ExplorePage() {
                         fontWeight: 600,
                         padding: "4px 10px",
                         borderRadius: 20,
-                        background: i < 2 ? "#F5F3EE" : "rgba(0,0,0,0.03)",
-                        border: "1px solid rgba(0,0,0,0.08)",
-                        color: i < 2 ? "#5A5A58" : "rgba(0,0,0,0.25)",
+                        background: i < 2 ? "rgba(212,168,50,0.15)" : "rgba(255,255,255,0.04)",
+                        color: i < 2 ? "var(--ew-gold)" : "rgba(255,255,255,0.25)",
                         letterSpacing: "0.02em",
                       }}>
                         {f}
@@ -568,7 +661,7 @@ export default function ExplorePage() {
             <p style={{
               fontSize: "clamp(20px, 3vw, 28px)",
               fontWeight: 600,
-              color: "var(--gold)",
+              color: "var(--ew-gold)",
               margin: 0,
               maxWidth: 720,
               textAlign: "center",
@@ -581,8 +674,8 @@ export default function ExplorePage() {
         </Reveal>
       </section>
 
-      {/* ── SECTION 04: YOU KNOW THIS FEELING ─────────────────── */}
-      <section style={{ padding: sectionPad }}>
+      {/* ── SECTION 04: YOU KNOW THIS FEELING (Light: #F7F9FC, blue accent) */}
+      <section style={{ padding: sectionPad, background: "var(--ew-offwhite)" }}>
         <Reveal>
           <div className="xp-inner">
             <div style={{ textAlign: "center", marginBottom: isMobile ? 36 : 56 }}>
@@ -592,10 +685,11 @@ export default function ExplorePage() {
                 lineHeight: 1.15,
                 letterSpacing: "-0.02em",
                 margin: "0 0 16px",
+                color: "var(--ew-text-dark)",
               }}>
                 The idea is in your head. Not in the world.
               </h2>
-              <p style={{ color: "var(--white-dim)", maxWidth: 540, margin: "0 auto" }}>
+              <p style={{ color: "var(--ew-text-body)", maxWidth: 540, margin: "0 auto" }}>
                 You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out. In your voice, at the quality it deserves, on every channel that matters.
               </p>
             </div>
@@ -611,21 +705,20 @@ export default function ExplorePage() {
                 { label: "After the conversation", text: "You just explained something perfectly to a client. Room changed. No one else will ever hear that version of it." },
               ].map((m) => (
                 <div key={m.label} style={{
-                  background: "#FFFFFF",
-                  border: "1px solid rgba(0,0,0,0.06)",
-                  borderRadius: 12,
+                  background: "var(--ew-white)",
+                  border: "1px solid var(--ew-border-light)",
+                  borderRadius: 8,
                   padding: "28px 32px",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
                 }}>
                   <div style={{
                     fontSize: 12,
                     fontWeight: 700,
-                    color: "var(--gold)",
+                    color: "var(--ew-blue)",
                     textTransform: "uppercase" as const,
                     letterSpacing: "0.1em",
                     marginBottom: 8,
                   }}>{m.label}</div>
-                  <div style={{ color: "var(--white-dim)", fontSize: 16, lineHeight: 1.6 }}>{m.text}</div>
+                  <div style={{ color: "var(--ew-text-body)", fontSize: 16, lineHeight: 1.6 }}>{m.text}</div>
                 </div>
               ))}
             </div>
@@ -633,11 +726,11 @@ export default function ExplorePage() {
         </Reveal>
       </section>
 
-      {/* ── SECTION 05: THE SYSTEM ─────────────────────────────── */}
-      <section style={{ padding: sectionPad, background: "#FFFFFF" }}>
+      {/* ── SECTION 05: THE SYSTEM (Light: #F7F9FC, blue accent) ── */}
+      <section style={{ padding: sectionPad, background: "var(--ew-offwhite)" }}>
         <Reveal>
           <div className="xp-inner" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--ew-blue)", marginBottom: 16 }}>
               EVERYWHERE Studio
             </div>
             <h2 style={{
@@ -647,10 +740,11 @@ export default function ExplorePage() {
               letterSpacing: "-0.02em",
               margin: "0 auto 28px",
               maxWidth: 800,
+              color: "var(--ew-text-dark)",
             }}>
               You talk. Watson listens until he really gets it. Then {MARKETING_NUMBERS.specialistCount} specialists turn what you said into publication-ready content, in your voice, verified, every word traceable back to you.
             </h2>
-            <p style={{ color: "var(--white-dim)", maxWidth: 600, margin: "0 auto 0", textAlign: "center" }}>
+            <p style={{ color: "var(--ew-text-body)", maxWidth: 600, margin: "0 auto 0", textAlign: "center" }}>
               You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
             </p>
             <div style={{ display: "flex", gap: isMobile ? 32 : 56, justifyContent: "center", flexWrap: "wrap", marginTop: 56, flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "center" : "flex-start" }}>
@@ -660,10 +754,10 @@ export default function ExplorePage() {
                 { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is done." },
               ].map((block) => (
                 <div key={block.headline} style={{ textAlign: "center", maxWidth: 280 }}>
-                  <div style={{ fontSize: 19, fontWeight: 700, color: "#111111", marginBottom: 8 }}>
+                  <div style={{ fontSize: 19, fontWeight: 700, color: "var(--ew-text-dark)", marginBottom: 8 }}>
                     {block.headline}
                   </div>
-                  <div style={{ fontSize: 14, color: "#5A5A58", lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 14, color: "var(--ew-text-body)", lineHeight: 1.6 }}>
                     {block.body}
                   </div>
                 </div>
@@ -674,13 +768,13 @@ export default function ExplorePage() {
               <blockquote style={{
                 margin: 0,
                 padding: "0 0 0 24px",
-                borderLeft: "3px solid #F5C642",
+                borderLeft: "3px solid var(--ew-blue)",
               }}>
                 <p style={{
                   fontSize: "clamp(18px, 2.5vw, 22px)",
                   fontWeight: 400,
                   lineHeight: 1.5,
-                  color: "#111111",
+                  color: "var(--ew-text-dark)",
                   fontStyle: "italic",
                   margin: "0 0 12px",
                   letterSpacing: "-0.01em",
@@ -689,7 +783,7 @@ export default function ExplorePage() {
                 </p>
                 <p style={{
                   fontSize: 14,
-                  color: "#5A5A58",
+                  color: "var(--ew-text-body)",
                   lineHeight: 1.6,
                   margin: "0 0 16px",
                 }}>
@@ -700,7 +794,7 @@ export default function ExplorePage() {
                   fontWeight: 600,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase" as const,
-                  color: "#888888",
+                  color: "var(--ew-text-body)",
                 }}>
                   Doug C., Executive Coach
                 </footer>
@@ -710,8 +804,8 @@ export default function ExplorePage() {
         </Reveal>
       </section>
 
-      {/* ── SECTION 06: WATCH. WORK. WRAP. ────────────────────── */}
-      <section ref={howRef} style={{ padding: sectionPad }}>
+      {/* ── SECTION 06: WATCH. WORK. WRAP. (Dark: #0D1B2A, gold accent) */}
+      <section ref={howRef} style={{ padding: sectionPad, background: "var(--ew-navy)" }}>
         <div className="xp-inner">
           <Reveal>
             <div style={{ textAlign: "center", marginBottom: isMobile ? 48 : 72 }}>
@@ -755,7 +849,7 @@ export default function ExplorePage() {
                   },
                 ].map((room, i) => (
                   <div key={room.name}>
-                    {i > 0 && <div style={{ height: 1, background: "var(--divider)", margin: "8px 0" }} />}
+                    {i > 0 && <div style={{ height: 1, background: "var(--ew-border-dark)", margin: "8px 0" }} />}
                     <div className="xp-room">
                       <div className="xp-room-name">{room.name}</div>
                       <div className="xp-room-tag">{room.tag}</div>
@@ -812,12 +906,12 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* ── SECTION 07: QUALITY STANDARD ───────────────────── */}
-      <section ref={standardRef} style={{ padding: sectionPad, background: "#FFFFFF" }}>
+      {/* ── SECTION 07: QUALITY STANDARD (Light: #FFFFFF, blue accent) */}
+      <section ref={standardRef} style={{ padding: sectionPad, background: "var(--ew-white)" }}>
         <div className="xp-inner">
           <Reveal>
             <div style={{ maxWidth: 640 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--ew-blue)", marginBottom: 16 }}>
                 Quality Standard
               </div>
               <h2 style={{
@@ -826,10 +920,11 @@ export default function ExplorePage() {
                 lineHeight: 1.15,
                 letterSpacing: "-0.02em",
                 margin: "0 0 24px",
+                color: "var(--ew-text-dark)",
               }}>
                 Nothing ships unless it would fool a skeptic.
               </h2>
-              <p style={{ color: "var(--white-dim)", maxWidth: 580 }}>
+              <p style={{ color: "var(--ew-text-body)", maxWidth: 580 }}>
                 Before any content reaches you, a hostile reader runs through it. Looking for AI patterns, assembled phrases, anything that doesn't sound like a human made a real decision. If it fails, it doesn't ship. Not once. Not ever. AI slop is everywhere. This is the only standard that keeps your name off it.
               </p>
             </div>
@@ -837,8 +932,8 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* ── SECTION 08: ANCHOR LINE ──────────────────────────── */}
-      <section style={{ padding: isMobile ? "56px 0" : "100px 0" }}>
+      {/* ── SECTION 08: ANCHOR LINE (Dark transition) ──────── */}
+      <section style={{ padding: isMobile ? "56px 0" : "100px 0", background: "var(--ew-navy)" }}>
         <Reveal>
           <div className="xp-inner" style={{ textAlign: "center" }}>
             <p style={{
@@ -854,11 +949,11 @@ export default function ExplorePage() {
         </Reveal>
       </section>
 
-      {/* ── SECTION 09: FINAL CTA ────────────────────────────── */}
-      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111111", padding: "120px 0" }}>
+      {/* ── SECTION 09: FINAL CTA (Dark: #0D1B2A, gold accent) ── */}
+      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--ew-navy)", padding: "120px 0" }}>
         <Reveal>
           <div style={{ textAlign: "center", maxWidth: 720, padding: "0 32px" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "#F5C642", marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 20 }}>
               Let's Talk
             </div>
             <h2 style={{
@@ -867,24 +962,24 @@ export default function ExplorePage() {
               lineHeight: 1.08,
               letterSpacing: "-0.03em",
               margin: "0 0 28px",
-              color: "#FFFFFF",
+              color: "var(--ew-text-light)",
             }}>
-              Your thinking deserves to <em style={{ color: "#F5C642" }}>be heard.</em>
+              Your thinking deserves to <em style={{ color: "var(--ew-gold)" }}>be heard.</em>
             </h2>
-            <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
+            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
               You don't need more discipline. You need a system that carries the idea from your head to your audience, every week, without it sitting on your to-do list.
             </p>
-            <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
+            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
               The output is yours because the input was yours.
             </p>
-            <p style={{ color: "#F5C642", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
+            <p style={{ color: "var(--ew-gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
             </p>
             <div className="xp-hero-ctas" style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-              <button onClick={() => navigate("/auth?mode=signup")} style={{ display: "inline-block", padding: "16px 44px", background: "#F5C642", color: "#111111", border: "none", borderRadius: 100, fontSize: 15, fontWeight: 700, fontFamily: "var(--font)", cursor: "pointer", transition: "opacity 0.2s" }}>
+              <button className="xp-btn-gold" onClick={() => navigate("/auth?mode=signup")} style={{ border: "none", fontSize: 15, padding: "16px 44px" }}>
                 Get Early Access
               </button>
-              <a href={CTA_MAILTO} style={{ display: "inline-block", padding: "16px 44px", background: "transparent", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 100, fontSize: 15, fontWeight: 600, fontFamily: "var(--font)", textDecoration: "none", cursor: "pointer" }}>
+              <a href={CTA_MAILTO} className="xp-btn-outline" style={{ fontSize: 15, padding: "16px 44px" }}>
                 Let's Talk
               </a>
             </div>
@@ -892,11 +987,11 @@ export default function ExplorePage() {
         </Reveal>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────────── */}
-      <footer style={{ background: "#FAFAF8", borderTop: "3px solid #F5C642" }}>
+      {/* ── FOOTER (Light: #F7F9FC) ─────────────────────────── */}
+      <footer style={{ background: "var(--ew-offwhite)" }}>
         <div className="xp-footer">
           <Logo size="sm" variant="light" />
-          <span style={{ color: "#AAAAAA" }}>&copy; 2026 Mixed Grill, LLC</span>
+          <span style={{ color: "var(--ew-text-body)" }}>&copy; 2026 Mixed Grill, LLC</span>
         </div>
       </footer>
     </div>
