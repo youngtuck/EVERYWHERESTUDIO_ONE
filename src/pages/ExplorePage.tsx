@@ -506,10 +506,13 @@ export default function ExplorePage() {
         <Reveal>
           <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
-              Watson is listening
+              Watson
             </div>
+            <p style={{ color: "var(--white-dim)", maxWidth: 640, textAlign: "center", marginBottom: 16 }}>
+              Watson is your thinking partner. You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're done.
+            </p>
             <p style={{ color: "var(--white-dim)", maxWidth: 640, textAlign: "center", marginBottom: 48 }}>
-              Watson doesn't generate. He interviews. He asks until he fully understands what you're trying to say, in your words, from your experience. That takes as long as it takes. Sometimes 30 minutes. Then the room goes to work.
+              No editing. No formatting. No chasing the idea across five tabs. Watson carries it. What comes back is done. In your voice. Ready to ship.
             </p>
             {/* Watson demo widget */}
             <div style={{
