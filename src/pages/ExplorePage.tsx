@@ -658,18 +658,19 @@ export default function ExplorePage() {
             <p style={{ color: "var(--white-dim)", maxWidth: 600, margin: "0 auto 0", textAlign: "center" }}>
               You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
             </p>
-            <div style={{ display: "flex", gap: isMobile ? 32 : 64, justifyContent: "center", flexWrap: "wrap", marginTop: 56 }}>
+            <div style={{ display: "flex", gap: isMobile ? 32 : 56, justifyContent: "center", flexWrap: "wrap", marginTop: 56, flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "center" : "flex-start" }}>
               {[
-                { value: MARKETING_NUMBERS.specialistCount, label: "Specialists" },
-                { value: MARKETING_NUMBERS.qualityCheckpoints, label: "Checkpoints" },
-                { value: MARKETING_NUMBERS.impactThreshold + "+", label: "Impact Score to Ship" },
-                { value: 0, label: "Left for you to finish" },
-              ].map((s) => (
-                <div key={s.label} style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "clamp(36px, 5vw, 52px)", fontWeight: 700, color: "var(--gold)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
-                    {s.value}
+                { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Watson is there. You talk. It's done." },
+                { headline: "Every channel.", body: "Newsletter, LinkedIn, podcast, Substack, one idea, every format, native to each." },
+                { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is done." },
+              ].map((block) => (
+                <div key={block.headline} style={{ textAlign: "center", maxWidth: 280 }}>
+                  <div style={{ fontSize: 19, fontWeight: 700, color: "var(--gold)", marginBottom: 8 }}>
+                    {block.headline}
                   </div>
-                  <div style={{ fontSize: 13, color: "var(--white-dim)", marginTop: 8 }}>{s.label}</div>
+                  <div style={{ fontSize: 14, color: "var(--white-dim)", lineHeight: 1.6 }}>
+                    {block.body}
+                  </div>
                 </div>
               ))}
             </div>
