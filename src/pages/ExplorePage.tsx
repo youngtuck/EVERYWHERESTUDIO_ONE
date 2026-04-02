@@ -758,21 +758,21 @@ export default function ExplorePage() {
                 {[
                   {
                     name: "Watch",
-                    tag: "Room One: The Intelligence Room",
-                    body: "Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing, so your thinking lands in context, not into noise.",
-                    items: ["Real-time market signal tracking", "Conversation and gap mapping", "Your idea meets the moment"],
+                    tag: "Watch",
+                    body: "You arrive knowing what your audience is already thinking. Your ideas land in context, not into noise.",
+                    items: [] as string[],
                   },
                   {
                     name: "Work",
-                    tag: "Room Two: The Production Room",
-                    body: "A coordinated team transforms what's in your head into publication-grade content. In your voice. Every claim verified. Seven checkpoints before it touches you.",
-                    items: ["Voice DNA: sounds exactly like you", "100% verified claims", "Zero AI fingerprints", "7-second hook on every piece"],
+                    tag: "Work",
+                    body: "Your idea becomes publication-ready content. In your voice. Verified. Zero AI fingerprints. Nothing ships until it reads like a human made every decision.",
+                    items: [] as string[],
                   },
                   {
                     name: "Wrap",
-                    tag: "Room Three: The Distribution Room",
-                    body: "One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack. Simultaneously.",
-                    items: ["Every channel, formatted natively", "One-click to publish", "Every piece makes the next one better"],
+                    tag: "Wrap",
+                    body: "One idea. Every channel. Simultaneously. Newsletter, LinkedIn, podcast, Substack, formatted for each, ready to publish.",
+                    items: [] as string[],
                   },
                 ].map((room, i) => (
                   <div key={room.name}>
@@ -781,9 +781,11 @@ export default function ExplorePage() {
                       <div className="xp-room-name">{room.name}</div>
                       <div className="xp-room-tag">{room.tag}</div>
                       <p className="xp-room-body">{room.body}</p>
-                      <ul className="xp-room-items">
-                        {room.items.map((item) => <li key={item}>{item}</li>)}
-                      </ul>
+                      {room.items.length > 0 && (
+                        <ul className="xp-room-items">
+                          {room.items.map((item) => <li key={item}>{item}</li>)}
+                        </ul>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -794,21 +796,21 @@ export default function ExplorePage() {
                 {[
                   {
                     name: "Watch",
-                    tag: "Room One: The Intelligence Room",
-                    body: "Your idea doesn't enter a vacuum. We map what your market is already reading, arguing about, and missing, so your thinking lands in context, not into noise.",
-                    items: ["Real-time market signal tracking", "Conversation and gap mapping", "Your idea meets the moment"],
+                    tag: "Watch",
+                    body: "You arrive knowing what your audience is already thinking. Your ideas land in context, not into noise.",
+                    items: [] as string[],
                   },
                   {
                     name: "Work",
-                    tag: "Room Two: The Production Room",
-                    body: "A coordinated team transforms what's in your head into publication-grade content. In your voice. Every claim verified. Seven checkpoints before it touches you.",
-                    items: ["Voice DNA: sounds exactly like you", "100% verified claims", "Zero AI fingerprints", "7-second hook on every piece"],
+                    tag: "Work",
+                    body: "Your idea becomes publication-ready content. In your voice. Verified. Zero AI fingerprints. Nothing ships until it reads like a human made every decision.",
+                    items: [] as string[],
                   },
                   {
                     name: "Wrap",
-                    tag: "Room Three: The Distribution Room",
-                    body: "One idea becomes a complete publishing event. Newsletter, LinkedIn, podcast, Substack. Simultaneously.",
-                    items: ["Every channel, formatted natively", "One-click to publish", "Every piece makes the next one better"],
+                    tag: "Wrap",
+                    body: "One idea. Every channel. Simultaneously. Newsletter, LinkedIn, podcast, Substack, formatted for each, ready to publish.",
+                    items: [] as string[],
                   },
                 ].flatMap((room, i) => {
                   const el = (
@@ -816,9 +818,11 @@ export default function ExplorePage() {
                       <div className="xp-room-name">{room.name}</div>
                       <div className="xp-room-tag">{room.tag}</div>
                       <p className="xp-room-body">{room.body}</p>
-                      <ul className="xp-room-items">
-                        {room.items.map((item) => <li key={item}>{item}</li>)}
-                      </ul>
+                      {room.items.length > 0 && (
+                        <ul className="xp-room-items">
+                          {room.items.map((item) => <li key={item}>{item}</li>)}
+                        </ul>
+                      )}
                     </div>
                   );
                   return i < 2 ? [el, <div key={`div-${i}`} className="xp-room-divider" />] : [el];
