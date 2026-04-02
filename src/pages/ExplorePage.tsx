@@ -56,29 +56,6 @@ function Reveal({
   );
 }
 
-// ── Staggered checkpoint reveal ─────────────────────────────────────────────
-function StaggerReveal({
-  children,
-  index,
-  parentVisible,
-}: {
-  children: React.ReactNode;
-  index: number;
-  parentVisible: boolean;
-}) {
-  return (
-    <div
-      style={{
-        opacity: parentVisible ? 1 : 0,
-        transform: parentVisible ? "translateY(0)" : "translateY(16px)",
-        transition: `opacity 0.6s ${EASE} ${index * 100}ms, transform 0.6s ${EASE} ${index * 100}ms`,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
 // ── CSS ─────────────────────────────────────────────────────────────────────
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
@@ -274,7 +251,6 @@ const CSS = `
   border-bottom: 1px solid var(--divider);
   line-height: 1.6;
 }
-/* border-top applied inline to first checkpoint when wrapped in StaggerReveal */
 .xp-cp-num {
   font-size: 12px;
   font-weight: 700;
@@ -357,7 +333,6 @@ export default function ExplorePage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [heroParallax, setHeroParallax] = useState({ y: 0, opacity: 1 });
   const [navScrolled, setNavScrolled] = useState(false);
-  const checkpointReveal = useScrollReveal(0.1);
 
   // Hero parallax + nav background
   useEffect(() => {
@@ -833,49 +808,28 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* ── SECTION 07: QUALITY CHECKPOINTS ──────────────────── */}
+      {/* ── SECTION 07: QUALITY STANDARD ───────────────────── */}
       <section ref={standardRef} style={{ padding: sectionPad, background: "var(--navy-mid)" }}>
         <div className="xp-inner">
-          <div className="xp-grid-2">
-            <Reveal>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
-                  Quality Checkpoints
-                </div>
-                <h2 style={{
-                  fontSize: "clamp(28px, 3.5vw, 40px)",
-                  fontWeight: 700,
-                  lineHeight: 1.15,
-                  letterSpacing: "-0.02em",
-                  margin: "0 0 24px",
-                }}>
-                  Nothing ships without passing all seven.
-                </h2>
-                <p style={{ color: "var(--white-dim)", maxWidth: 400 }}>
-                  Every piece of content runs through {MARKETING_NUMBERS.qualityCheckpoints} independent quality checkpoints before it reaches you. Not style checks. Substantive evaluation by specialists who know what publication-ready means.
-                </p>
+          <Reveal>
+            <div style={{ maxWidth: 640 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
+                Quality Standard
               </div>
-            </Reveal>
-            <div ref={checkpointReveal.ref}>
-              {[
-                { num: "01", name: "Deduplication", desc: "Catches repeated concepts and structural patterns." },
-                { num: "02", name: "Research Validation", desc: "Verifies every factual claim. 100% accuracy standard." },
-                { num: "03", name: "Voice Authenticity", desc: `Voice DNA fidelity. Greater than ${MARKETING_NUMBERS.voiceDnaTarget}% match. Zero AI tells.` },
-                { num: "04", name: "Engagement", desc: "7-second hook test. Doesn't earn the read, doesn't ship." },
-                { num: "05", name: "SLOP Detection", desc: "Zero AI padding. Superfluity, loops, overwrought prose, pretension." },
-                { num: "06", name: "Editorial Excellence", desc: "Publication-grade standard plus the Stranger Test." },
-                { num: "07", name: "Perspective + Risk", desc: "Cultural sensitivity and nonviolent communication review." },
-              ].map((cp, i) => (
-                <StaggerReveal key={cp.num} index={i} parentVisible={checkpointReveal.isVisible}>
-                  <div className="xp-cp" style={i === 0 ? { borderTop: "1px solid var(--divider)" } : undefined}>
-                    <span className="xp-cp-num">{cp.num}</span>
-                    <span className="xp-cp-name">{cp.name}</span>
-                    <span className="xp-cp-desc">{cp.desc}</span>
-                  </div>
-                </StaggerReveal>
-              ))}
+              <h2 style={{
+                fontSize: "clamp(28px, 3.5vw, 40px)",
+                fontWeight: 700,
+                lineHeight: 1.15,
+                letterSpacing: "-0.02em",
+                margin: "0 0 24px",
+              }}>
+                Nothing ships unless it would fool a skeptic.
+              </h2>
+              <p style={{ color: "var(--white-dim)", maxWidth: 580 }}>
+                Before any content reaches you, a hostile reader runs through it. Looking for AI patterns, assembled phrases, anything that doesn't sound like a human made a real decision. If it fails, it doesn't ship. Not once. Not ever. AI slop is everywhere. This is the only standard that keeps your name off it.
+              </p>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
