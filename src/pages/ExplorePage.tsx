@@ -687,10 +687,18 @@ export default function ExplorePage() {
                   lineHeight: 1.5,
                   color: "var(--white)",
                   fontStyle: "italic",
-                  margin: "0 0 16px",
+                  margin: "0 0 12px",
                   letterSpacing: "-0.01em",
                 }}>
-                  "I had a decade of thinking that had never made it out. Now it does, every week, and it <em>sounds like me</em>. Better than what I was writing myself."
+                  "Better than what I was writing myself."
+                </p>
+                <p style={{
+                  fontSize: 14,
+                  color: "var(--white-dim)",
+                  lineHeight: 1.6,
+                  margin: "0 0 16px",
+                }}>
+                  Doug C. had a decade of thinking that never made it out. Now it does, in his voice.
                 </p>
                 <footer style={{
                   fontSize: 12,
