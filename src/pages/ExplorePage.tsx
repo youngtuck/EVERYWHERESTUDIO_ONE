@@ -61,14 +61,14 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
 
 :root {
-  --navy: #07091A;
-  --navy-mid: #0D1230;
-  --gold: #D4A832;
-  --gold-dim: rgba(212, 168, 50, 0.12);
+  --navy: #FAFAF8;
+  --navy-mid: #FFFFFF;
+  --gold: #F5C642;
+  --gold-dim: rgba(245, 198, 66, 0.12);
   --blue: #6B8FD4;
-  --white: #F0F2F8;
-  --white-dim: rgba(240, 242, 248, 0.55);
-  --divider: rgba(240, 242, 248, 0.07);
+  --white: #111111;
+  --white-dim: #5A5A58;
+  --divider: rgba(0, 0, 0, 0.06);
   --font: 'Afacad Flux', sans-serif;
 }
 
@@ -81,17 +81,6 @@ const CSS = `
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   position: relative;
-}
-
-/* Subtle noise grain overlay */
-.xp::after {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.018;
-  pointer-events: none;
-  z-index: 1;
 }
 
 .xp em { font-style: normal; color: var(--gold); }
@@ -110,10 +99,10 @@ const CSS = `
   transition: background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease;
 }
 .xp-nav.scrolled {
-  background: rgba(7, 9, 26, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--divider);
+  background: rgba(250, 250, 248, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 .xp-nav-links {
   display: flex;
@@ -125,7 +114,7 @@ const CSS = `
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-dim);
+  color: #5A5A58;
   transition: color 0.2s ease;
   cursor: pointer;
   background: none;
@@ -133,32 +122,32 @@ const CSS = `
   font-family: var(--font);
   padding: 0;
 }
-.xp-nav-link:hover { color: var(--white); }
+.xp-nav-link:hover { color: #111111; }
 
 /* Buttons */
 .xp-btn-gold {
   display: inline-block;
   padding: 14px 36px;
-  background: var(--gold);
-  color: var(--navy);
+  background: #111111;
+  color: #FFFFFF;
   border: none;
-  border-radius: 6px;
+  border-radius: 100px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--font);
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: opacity 0.25s ${EASE}, transform 0.25s ${EASE};
+  transition: background 0.25s ${EASE}, transform 0.25s ${EASE};
   text-decoration: none;
 }
-.xp-btn-gold:hover { opacity: 0.88; transform: translateY(-1px); }
+.xp-btn-gold:hover { background: #333333; transform: translateY(-1px); }
 .xp-btn-outline {
   display: inline-block;
   padding: 14px 36px;
   background: transparent;
-  color: var(--white);
-  border: 1px solid rgba(240, 242, 248, 0.15);
-  border-radius: 6px;
+  color: #111111;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 100px;
   font-size: 14px;
   font-weight: 600;
   font-family: var(--font);
@@ -166,7 +155,7 @@ const CSS = `
   transition: border-color 0.25s ${EASE}, transform 0.25s ${EASE};
   text-decoration: none;
 }
-.xp-btn-outline:hover { border-color: rgba(240, 242, 248, 0.4); transform: translateY(-1px); }
+.xp-btn-outline:hover { border-color: rgba(0, 0, 0, 0.3); transform: translateY(-1px); }
 
 /* Section container */
 .xp-inner {
@@ -203,7 +192,7 @@ const CSS = `
   text-transform: uppercase;
   letter-spacing: -0.02em;
   line-height: 1;
-  color: var(--white);
+  color: #111111;
   margin: 0 0 8px;
 }
 .xp-room-tag {
@@ -211,7 +200,7 @@ const CSS = `
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--blue);
+  color: #F5C642;
   margin-bottom: 20px;
 }
 .xp-room-body {
@@ -260,7 +249,7 @@ const CSS = `
 }
 .xp-cp-name {
   font-weight: 700;
-  color: var(--white);
+  color: #111111;
   margin-right: 6px;
 }
 .xp-cp-desc {
@@ -361,7 +350,7 @@ export default function ExplorePage() {
 
       {/* ── NAV ──────────────────────────────────────────────── */}
       <nav className={`xp-nav ${navScrolled ? "scrolled" : ""}`}>
-        <Logo size="sm" variant="dark" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+        <Logo size="sm" variant="light" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
         <div className="xp-nav-links">
           {!isMobile && (
             <div className="xp-nav-links-desktop" style={{ display: "flex", gap: 32, alignItems: "center" }}>
@@ -385,7 +374,7 @@ export default function ExplorePage() {
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          background: "radial-gradient(ellipse at 50% 0%, rgba(107,143,212,0.06) 0%, transparent 60%)",
+          background: "linear-gradient(180deg, #FAFAF8 0%, #F5F3EE 40%, #FAFAF8 100%)",
         }}
       >
         <div
@@ -404,24 +393,27 @@ export default function ExplorePage() {
             lineHeight: 1.08,
             letterSpacing: "-0.035em",
             margin: "0 0 28px",
-            color: "var(--white)",
+            color: "#111111",
           }}>
             <span style={{
               display: "block",
               animation: "xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both",
+              fontWeight: 700,
             }}>
               Your thinking reaches your audience.
             </span>
             <em style={{
               display: "block",
               animation: "xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both",
+              fontWeight: 500,
+              color: "#F5C642",
             }}>
               In your voice. Better than you'd write it yourself.
             </em>
           </h1>
           <p style={{
             fontSize: isMobile ? 17 : 20,
-            color: "var(--white-dim)",
+            color: "#5A5A58",
             maxWidth: 540,
             margin: "0 auto 40px",
             lineHeight: 1.6,
@@ -491,11 +483,11 @@ export default function ExplorePage() {
             </p>
             {/* Watson demo widget */}
             <div style={{
-              background: "#0E0E0C",
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "#FFFFFF",
+              borderRadius: 16,
+              border: "1px solid rgba(0,0,0,0.08)",
               overflow: "hidden",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
               maxWidth: 440,
               width: "100%",
               marginBottom: 48,
@@ -503,24 +495,25 @@ export default function ExplorePage() {
               {/* Header */}
               <div style={{
                 padding: "14px 20px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                borderBottom: "1px solid rgba(0,0,0,0.06)",
+                background: "#FAFAF8",
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
               }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--gold)", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>Watson is listening</span>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#F5C642", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#5A5A58", letterSpacing: "0.04em" }}>Watson is listening</span>
               </div>
               {/* Chat area */}
               <div style={{ padding: "20px 20px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
                   <div style={{
-                    background: "#1B263B",
+                    background: "#F5F3EE",
                     borderRadius: "14px 14px 4px 14px",
                     padding: "10px 16px",
                     maxWidth: "80%",
                     fontSize: 13,
-                    color: "rgba(255,255,255,0.85)",
+                    color: "#111111",
                     lineHeight: 1.5,
                   }}>
                     The people in your market who show up everywhere aren't better thinkers. They got their ideas out. Every week. On every channel. Without doing it alone.
@@ -528,16 +521,16 @@ export default function ExplorePage() {
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
                   <div style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "#FFFFFF",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: "14px 14px 14px 4px",
                     padding: "10px 16px",
                     maxWidth: "85%",
                     fontSize: 13,
-                    color: "rgba(255,255,255,0.7)",
+                    color: "#333333",
                     lineHeight: 1.5,
                   }}>
-                    <strong style={{ color: "rgba(255,255,255,0.9)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
+                    <strong style={{ color: "#F5C642" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
                     Who specifically needs to hear this?
                   </div>
                 </div>
@@ -546,11 +539,11 @@ export default function ExplorePage() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   paddingTop: 12,
-                  borderTop: "1px solid rgba(255,255,255,0.06)",
+                  borderTop: "1px solid rgba(0,0,0,0.06)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 22, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>86</span>
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>Impact Score</span>
+                    <span style={{ fontSize: 22, fontWeight: 700, color: "#F5C642", fontVariantNumeric: "tabular-nums" }}>86</span>
+                    <span style={{ fontSize: 11, color: "#5A5A58", fontWeight: 500 }}>Impact Score</span>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
@@ -559,8 +552,9 @@ export default function ExplorePage() {
                         fontWeight: 600,
                         padding: "4px 10px",
                         borderRadius: 20,
-                        background: i < 2 ? "rgba(212,168,50,0.15)" : "rgba(255,255,255,0.04)",
-                        color: i < 2 ? "var(--gold)" : "rgba(255,255,255,0.25)",
+                        background: i < 2 ? "#F5F3EE" : "rgba(0,0,0,0.03)",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        color: i < 2 ? "#5A5A58" : "rgba(0,0,0,0.25)",
                         letterSpacing: "0.02em",
                       }}>
                         {f}
@@ -617,10 +611,11 @@ export default function ExplorePage() {
                 { label: "After the conversation", text: "You just explained something perfectly to a client. Room changed. No one else will ever hear that version of it." },
               ].map((m) => (
                 <div key={m.label} style={{
-                  background: "rgba(240,242,248,0.03)",
-                  border: "1px solid var(--divider)",
-                  borderRadius: 8,
+                  background: "#FFFFFF",
+                  border: "1px solid rgba(0,0,0,0.06)",
+                  borderRadius: 12,
                   padding: "28px 32px",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
                 }}>
                   <div style={{
                     fontSize: 12,
@@ -639,7 +634,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 05: THE SYSTEM ─────────────────────────────── */}
-      <section style={{ padding: sectionPad, background: "var(--navy-mid)" }}>
+      <section style={{ padding: sectionPad, background: "#FFFFFF" }}>
         <Reveal>
           <div className="xp-inner" style={{ textAlign: "center" }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
@@ -665,10 +660,10 @@ export default function ExplorePage() {
                 { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is done." },
               ].map((block) => (
                 <div key={block.headline} style={{ textAlign: "center", maxWidth: 280 }}>
-                  <div style={{ fontSize: 19, fontWeight: 700, color: "var(--gold)", marginBottom: 8 }}>
+                  <div style={{ fontSize: 19, fontWeight: 700, color: "#111111", marginBottom: 8 }}>
                     {block.headline}
                   </div>
-                  <div style={{ fontSize: 14, color: "var(--white-dim)", lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 14, color: "#5A5A58", lineHeight: 1.6 }}>
                     {block.body}
                   </div>
                 </div>
@@ -679,13 +674,13 @@ export default function ExplorePage() {
               <blockquote style={{
                 margin: 0,
                 padding: "0 0 0 24px",
-                borderLeft: "3px solid var(--gold)",
+                borderLeft: "3px solid #F5C642",
               }}>
                 <p style={{
                   fontSize: "clamp(18px, 2.5vw, 22px)",
                   fontWeight: 400,
                   lineHeight: 1.5,
-                  color: "var(--white)",
+                  color: "#111111",
                   fontStyle: "italic",
                   margin: "0 0 12px",
                   letterSpacing: "-0.01em",
@@ -694,7 +689,7 @@ export default function ExplorePage() {
                 </p>
                 <p style={{
                   fontSize: 14,
-                  color: "var(--white-dim)",
+                  color: "#5A5A58",
                   lineHeight: 1.6,
                   margin: "0 0 16px",
                 }}>
@@ -705,7 +700,7 @@ export default function ExplorePage() {
                   fontWeight: 600,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase" as const,
-                  color: "var(--white-dim)",
+                  color: "#888888",
                 }}>
                   Doug C., Executive Coach
                 </footer>
@@ -818,7 +813,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 07: QUALITY STANDARD ───────────────────── */}
-      <section ref={standardRef} style={{ padding: sectionPad, background: "var(--navy-mid)" }}>
+      <section ref={standardRef} style={{ padding: sectionPad, background: "#FFFFFF" }}>
         <div className="xp-inner">
           <Reveal>
             <div style={{ maxWidth: 640 }}>
@@ -860,10 +855,10 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 09: FINAL CTA ────────────────────────────── */}
-      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#111111", padding: "120px 0" }}>
         <Reveal>
           <div style={{ textAlign: "center", maxWidth: 720, padding: "0 32px" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "#F5C642", marginBottom: 20 }}>
               Let's Talk
             </div>
             <h2 style={{
@@ -872,23 +867,24 @@ export default function ExplorePage() {
               lineHeight: 1.08,
               letterSpacing: "-0.03em",
               margin: "0 0 28px",
+              color: "#FFFFFF",
             }}>
-              Your thinking deserves to <em>be heard.</em>
+              Your thinking deserves to <em style={{ color: "#F5C642" }}>be heard.</em>
             </h2>
-            <p style={{ color: "var(--white-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
               You don't need more discipline. You need a system that carries the idea from your head to your audience, every week, without it sitting on your to-do list.
             </p>
-            <p style={{ color: "var(--white-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
               The output is yours because the input was yours.
             </p>
-            <p style={{ color: "var(--gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
+            <p style={{ color: "#F5C642", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
             </p>
             <div className="xp-hero-ctas" style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="xp-btn-gold" onClick={() => navigate("/auth?mode=signup")} style={{ border: "none", fontSize: 15, padding: "16px 44px" }}>
+              <button onClick={() => navigate("/auth?mode=signup")} style={{ display: "inline-block", padding: "16px 44px", background: "#F5C642", color: "#111111", border: "none", borderRadius: 100, fontSize: 15, fontWeight: 700, fontFamily: "var(--font)", cursor: "pointer", transition: "opacity 0.2s" }}>
                 Get Early Access
               </button>
-              <a href={CTA_MAILTO} className="xp-btn-outline" style={{ fontSize: 15, padding: "16px 44px" }}>
+              <a href={CTA_MAILTO} style={{ display: "inline-block", padding: "16px 44px", background: "transparent", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 100, fontSize: 15, fontWeight: 600, fontFamily: "var(--font)", textDecoration: "none", cursor: "pointer" }}>
                 Let's Talk
               </a>
             </div>
@@ -897,10 +893,10 @@ export default function ExplorePage() {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────── */}
-      <footer style={{ background: "var(--navy)" }}>
+      <footer style={{ background: "#FAFAF8", borderTop: "3px solid #F5C642" }}>
         <div className="xp-footer">
-          <Logo size="sm" variant="dark" />
-          <span>&copy; 2026 Mixed Grill, LLC</span>
+          <Logo size="sm" variant="light" />
+          <span style={{ color: "#AAAAAA" }}>&copy; 2026 Mixed Grill, LLC</span>
         </div>
       </footer>
     </div>
