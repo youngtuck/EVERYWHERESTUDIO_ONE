@@ -184,15 +184,13 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                     justifyContent: "center",
                   }}
                 >
-                  <div
-                    style={{
-                      width: 18,
-                      height: 10,
-                      borderRadius: 999,
-                      border: "2px solid rgba(200,150,26,0.85)",
-                      borderTop: "none",
-                    }}
-                  />
+                  <span style={{
+                    fontFamily: "'Afacad Flux', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "rgba(200,150,26,0.85)",
+                    lineHeight: 1,
+                  }}>W</span>
                 </div>
               )}
               {m.content}
