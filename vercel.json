@@ -65,6 +65,10 @@
     "api/writers-room/stress-test.js": {
       "maxDuration": 60,
       "includeFiles": "CLEAN_6_5/*.md"
+    },
+    "api/adapt-format.js": {
+      "maxDuration": 60,
+      "includeFiles": "src/lib/agents/prompts/*.md"
     }
   },
   "rewrites": [
