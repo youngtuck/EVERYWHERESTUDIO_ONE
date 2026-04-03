@@ -423,7 +423,7 @@ function WatchWorkWrapSection({ howRef, isMobile }: { howRef: React.RefObject<HT
 
   if (isMobile) {
     return (
-      <section ref={howRef} style={{ padding: "80px 0 120px", background: "var(--ew-navy)" }}>
+      <section ref={howRef} data-nav-theme="dark" style={{ padding: "80px 0 120px", background: "var(--ew-navy)" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 24px" }}>
           <Reveal>
             <div style={{ textAlign: "center", marginBottom: 48 }}>
@@ -449,7 +449,7 @@ function WatchWorkWrapSection({ howRef, isMobile }: { howRef: React.RefObject<HT
   }
 
   return (
-    <section ref={(el) => { (sectionRef as any).current = el; if (howRef && "current" in howRef) (howRef as any).current = el; }} style={{ minHeight: "300vh", background: "var(--ew-navy)", position: "relative" }}>
+    <section data-nav-theme="dark" ref={(el) => { (sectionRef as any).current = el; if (howRef && "current" in howRef) (howRef as any).current = el; }} style={{ minHeight: "300vh", background: "var(--ew-navy)", position: "relative" }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px", display: "flex", width: "100%", gap: 80 }}>
           {/* Left: Room names */}
@@ -554,8 +554,10 @@ export default function ExplorePage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [heroParallax, setHeroParallax] = useState({ y: 0, opacity: 1 });
   const [navScrolled, setNavScrolled] = useState(false);
+  const [navTheme, setNavTheme] = useState<"dark" | "light">("dark");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Hero parallax + nav background
+  // Hero parallax + nav scroll state
   useEffect(() => {
     const onScroll = () => {
       const sy = window.scrollY;
@@ -570,6 +572,25 @@ export default function ExplorePage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Nav theme detection: observe which section is behind the nav
+  useEffect(() => {
+    const sections = document.querySelectorAll("[data-nav-theme]");
+    if (sections.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const theme = (entry.target as HTMLElement).dataset.navTheme as "dark" | "light";
+            if (theme) setNavTheme(theme);
+          }
+        }
+      },
+      { rootMargin: "-1px 0px -95% 0px", threshold: 0 }
+    );
+    sections.forEach(s => observer.observe(s));
+    return () => observer.disconnect();
+  }, []);
+
   const scrollTo = useCallback((ref: React.RefObject<HTMLDivElement | null>) => {
     ref.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
@@ -581,25 +602,169 @@ export default function ExplorePage() {
       <style>{CSS}</style>
 
       {/* ── NAV ──────────────────────────────────────────────── */}
-      <nav className={`xp-nav ${navScrolled ? "scrolled" : ""}`}>
-        <Logo size="sm" variant="dark" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
-        <div className="xp-nav-links">
+      <nav style={{
+        position: "fixed",
+        top: 0, left: 0, right: 0,
+        zIndex: 100,
+        height: 56,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: isMobile ? "0 20px" : "0 40px",
+        background: navScrolled
+          ? (navTheme === "dark" ? "rgba(13,27,42,0.92)" : "rgba(255,255,255,0.85)")
+          : "transparent",
+        backdropFilter: navScrolled ? "blur(16px)" : "none",
+        WebkitBackdropFilter: navScrolled ? "blur(16px)" : "none",
+        borderBottom: navScrolled
+          ? (navTheme === "dark" ? "1px solid var(--ew-border-dark)" : "1px solid var(--ew-border-light)")
+          : "1px solid transparent",
+        transition: "background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease",
+      }}>
+        <Logo
+          size="sm"
+          variant={navTheme === "dark" ? "dark" : "light"}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
           {!isMobile && (
-            <div className="xp-nav-links-desktop" style={{ display: "flex", gap: 32, alignItems: "center" }}>
-              <button className="xp-nav-link" onClick={() => scrollTo(howRef)}>How It Works</button>
-              <button className="xp-nav-link" onClick={() => scrollTo(standardRef)}>Quality</button>
-            </div>
+            <>
+              {[
+                { label: "How It Works", action: () => scrollTo(howRef) },
+                { label: "Quality", action: () => scrollTo(standardRef) },
+                { label: "Sign In", action: () => navigate("/auth") },
+              ].map(link => (
+                <button
+                  key={link.label}
+                  onClick={link.action}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase" as const,
+                    color: navTheme === "dark" ? "rgba(255,255,255,0.7)" : "var(--ew-text-body)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "var(--font)",
+                    padding: "4px 0",
+                    position: "relative",
+                    transition: "color 0.3s ease",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = navTheme === "dark" ? "var(--ew-white)" : "var(--ew-text-dark)";
+                    const dot = e.currentTarget.querySelector("[data-nav-dot]") as HTMLElement;
+                    if (dot) { dot.style.opacity = "1"; dot.style.transform = "translateX(-50%) translateY(-2px)"; }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = navTheme === "dark" ? "rgba(255,255,255,0.7)" : "var(--ew-text-body)";
+                    const dot = e.currentTarget.querySelector("[data-nav-dot]") as HTMLElement;
+                    if (dot) { dot.style.opacity = "0"; dot.style.transform = "translateX(-50%) translateY(0)"; }
+                  }}
+                >
+                  {link.label}
+                  <span data-nav-dot="" style={{
+                    position: "absolute",
+                    bottom: -4,
+                    left: "50%",
+                    transform: "translateX(-50%) translateY(0)",
+                    width: 4,
+                    height: 4,
+                    borderRadius: "50%",
+                    background: "var(--ew-gold)",
+                    opacity: 0,
+                    transition: `opacity 0.2s ${EASE}, transform 0.2s ${EASE}`,
+                  }} />
+                </button>
+              ))}
+            </>
           )}
-          <button className="xp-nav-link" onClick={() => navigate("/auth")}>Sign In</button>
-          <a href={CTA_MAILTO} className="xp-btn-gold" style={{ padding: "8px 22px", fontSize: 12, letterSpacing: "0.08em" }}>
-            Let's Talk
-          </a>
+          {!isMobile && (
+            <a
+              href={CTA_MAILTO}
+              style={{
+                padding: "8px 22px",
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase" as const,
+                fontFamily: "var(--font)",
+                textDecoration: "none",
+                borderRadius: 100,
+                transition: `all 0.4s ease`,
+                ...(navTheme === "dark"
+                  ? { border: "1px solid rgba(255,255,255,0.2)", color: "var(--ew-white)", background: "transparent" }
+                  : { border: "none", color: "var(--ew-white)", background: "var(--ew-text-dark)" }
+                ),
+              }}
+            >
+              Let's Talk
+            </a>
+          )}
+          {isMobile && (
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", flexDirection: "column", gap: 5 }}
+            >
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{ display: "block", width: 20, height: 2, background: navTheme === "dark" ? "var(--ew-white)" : "var(--ew-text-dark)", borderRadius: 1 }} />
+              ))}
+            </button>
+          )}
         </div>
       </nav>
+
+      {/* Mobile menu overlay */}
+      {isMobile && mobileMenuOpen && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 200,
+          background: "var(--ew-navy)",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          gap: 32,
+        }}>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: "absolute", top: 16, right: 20,
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 28, color: "var(--ew-gold)", fontFamily: "var(--font)", fontWeight: 300,
+            }}
+          >
+            &times;
+          </button>
+          {[
+            { label: "How It Works", action: () => { setMobileMenuOpen(false); scrollTo(howRef); } },
+            { label: "Quality", action: () => { setMobileMenuOpen(false); scrollTo(standardRef); } },
+            { label: "Sign In", action: () => { setMobileMenuOpen(false); navigate("/auth"); } },
+            { label: "Let's Talk", action: () => { setMobileMenuOpen(false); window.location.href = CTA_MAILTO; } },
+          ].map((link, i) => (
+            <button
+              key={link.label}
+              onClick={link.action}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontSize: 24, fontWeight: 600, color: "var(--ew-white)",
+                fontFamily: "var(--font)", letterSpacing: "0.04em",
+                animation: `xpSlideInRight 0.5s ${EASE} ${i * 80}ms both`,
+              }}
+            >
+              {link.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <style>{`
+        @keyframes xpSlideInRight {
+          from { opacity: 0; transform: translateX(40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+      `}</style>
 
       {/* ── SECTION 01: HERO (Dark Navy, atmospheric) ─────────── */}
       <section
         ref={heroRef}
+        data-nav-theme="dark"
         style={{
           minHeight: "100vh",
           display: "flex",
@@ -769,7 +934,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 02: THE PROBLEM (Light: #FFFFFF, blue accent) ── */}
-      <section style={{ padding: "140px 0", background: "var(--ew-white)" }}>
+      <section data-nav-theme="light" style={{ padding: "140px 0", background: "var(--ew-white)" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px" }}>
           <div style={{ marginLeft: isMobile ? 0 : "clamp(40px, 12vw, 160px)", maxWidth: 600 }}>
             <div style={{ display: "flex", gap: 0 }}>
@@ -817,7 +982,7 @@ export default function ExplorePage() {
       {/* ── SECTION 03: WATSON (Dark: #1B263B, gold accent) ─────── */}
       {/* Gradient transition from light to dark */}
       <div style={{ height: 120, background: "linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy-rich) 100%)" }} />
-      <section style={{ padding: "0 0 120px", background: "var(--ew-navy-rich)" }}>
+      <section data-nav-theme="dark" style={{ padding: "0 0 120px", background: "var(--ew-navy-rich)" }}>
         <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 80 }}>
           <Reveal>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 20, textAlign: "center" }}>
@@ -973,7 +1138,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 04: YOU KNOW THIS FEELING (Light: #F7F9FC, blue accent) */}
-      <section style={{ padding: sectionPad, background: "var(--ew-offwhite)" }}>
+      <section data-nav-theme="light" style={{ padding: sectionPad, background: "var(--ew-offwhite)" }}>
         <Reveal>
           <div className="xp-inner">
             <div style={{ textAlign: "center", marginBottom: isMobile ? 36 : 56 }}>
@@ -1025,7 +1190,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 05: STATS + TESTIMONIAL (Light: #F7F9FC, blue accent) */}
-      <section style={{ padding: "100px 0", background: "var(--ew-offwhite)" }}>
+      <section data-nav-theme="light" style={{ padding: "100px 0", background: "var(--ew-offwhite)" }}>
         <div className="xp-inner">
           {/* Section intro */}
           <Reveal>
@@ -1163,7 +1328,7 @@ export default function ExplorePage() {
       <WatchWorkWrapSection howRef={howRef} isMobile={isMobile} />
 
       {/* ── SECTION 07: QUALITY STANDARD (Light: #FFFFFF, blue accent) */}
-      <section ref={standardRef} style={{ padding: "140px 0", background: "var(--ew-white)" }}>
+      <section ref={standardRef} data-nav-theme="light" style={{ padding: "140px 0", background: "var(--ew-white)" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px" }}>
           <div style={{ marginLeft: isMobile ? 0 : "clamp(40px, 12vw, 160px)", maxWidth: 680 }}>
             <Reveal direction="up" distance={20}>
@@ -1207,7 +1372,7 @@ export default function ExplorePage() {
       <div style={{ height: 120, background: "linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy) 100%)" }} />
 
       {/* ── SECTION 08+09: CLOSING CTA (Dark: #0D1B2A, gold accent) ── */}
-      <section style={{ padding: "160px 0", background: "var(--ew-navy)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+      <section data-nav-theme="dark" style={{ padding: "160px 0", background: "var(--ew-navy)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
         <div style={{ textAlign: "center", maxWidth: 800, padding: "0 32px" }}>
           {/* Anchor statement */}
           <Reveal>
