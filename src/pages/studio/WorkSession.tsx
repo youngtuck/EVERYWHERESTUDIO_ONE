@@ -608,7 +608,10 @@ function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFi
         <div style={{ padding: "4px 0 8px 18px" }}>
           <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 6 }}>{gate.feedback}</div>
           {isFixing ? (
-            <div style={{ fontSize: 10, color: "var(--gold-bright)", fontWeight: 500 }}>Revising draft...</div>
+            <div style={{ fontSize: 10, color: "var(--gold-bright)", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ animation: "pulse-dot 1.5s infinite" }}>&#9679;</span>
+              Revising draft...
+            </div>
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); onFix(); }}
@@ -1801,12 +1804,13 @@ function ReviewProgress({
 
 // ── Format-aware review preview ──────────────────────────────────────────────
 function ReviewFormatPreview({
-  format, draft, hvtFlaggedLines, onApplySuggestion,
+  format, draft, hvtFlaggedLines, onApplySuggestion, highlightedParas,
 }: {
   format: string;
   draft: string;
   hvtFlaggedLines: Array<{ lineIndex: number; original: string; issue: string; vector: string; suggestion: string }>;
   onApplySuggestion?: (instruction: string) => void;
+  highlightedParas?: number[];
 }) {
   const paragraphs = draft.split("\n").filter(Boolean);
   const title = cleanTitle(paragraphs[0] || "Draft");
@@ -1814,9 +1818,10 @@ function ReviewFormatPreview({
 
   const renderPara = (p: string, i: number) => {
     const flagged = hvtFlaggedLines.find(f => p.includes(f.original) || f.original.includes(p.slice(0, 40)));
+    const isHighlighted = highlightedParas?.includes(i + 1);
     return (
       <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
-        <p style={flagged ? { borderBottom: "2px solid var(--gold)", paddingBottom: 2, background: "rgba(245,198,66,0.06)" } : undefined}>{p}</p>
+        <p className={isHighlighted ? "para-highlight" : undefined} style={flagged ? { borderBottom: "2px solid var(--gold)", paddingBottom: 2, background: "rgba(245,198,66,0.06)" } : undefined}>{p}</p>
         {flagged && (
           <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, lineHeight: 1.5 }}>
             <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
@@ -1907,13 +1912,14 @@ function ReviewFormatPreview({
 
 function StageReview({
   draft, pipelineRun, running, activeTab, tabs,
-  onTabClick, onAdvance, onGoBack, onFix, formatDrafts,
+  onTabClick, onAdvance, onGoBack, onFix, formatDrafts, highlightedParas,
 }: {
   draft: string; pipelineRun: PipelineRun | null; running: boolean;
   activeTab: string; tabs: string[]; onTabClick: (t: string) => void;
   onAdvance: () => void; onGoBack: (instructions: string) => void;
   onFix: (instruction: string) => Promise<void>;
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
+  highlightedParas?: number[];
 }) {
   // Approve gate: both Impact Score >= 75 and HVT must PASS
   const scoreOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
@@ -2003,6 +2009,7 @@ function StageReview({
                       setHvtFixing(true);
                       try { await onFix(suggestion); } finally { setHvtFixing(false); }
                     }}
+                    highlightedParas={highlightedParas}
                   />
                   {fd?.status === "error" && (
                     <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 8 }}>Format adaptation unavailable. Showing original draft.</div>
@@ -2359,6 +2366,15 @@ export default function WorkSession() {
   const [formatDrafts, setFormatDrafts] = useState<Record<string, { content: string; metadata: Record<string, string>; status: "pending" | "generating" | "done" | "error" }>>({});
   const [fixingGate, setFixingGate] = useState<string | null>(null);
   const [rerunningPipeline, setRerunningPipeline] = useState(false);
+  const [draftHighlights, setDraftHighlights] = useState<number[]>([]);
+
+  // Auto-clear diff highlights after 5 seconds
+  useEffect(() => {
+    if (draftHighlights.length > 0) {
+      const timer = setTimeout(() => setDraftHighlights([]), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [draftHighlights]);
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [activeReviewTab, setActiveReviewTab] = useState(selectedFormats[0] ?? "LinkedIn");
   const [hvtAttempts, setHvtAttempts] = useState(0);
@@ -2911,6 +2927,7 @@ export default function WorkSession() {
     setFormatDrafts({});
     setOutlineAngles(null);
     setSelectedAngle("a");
+    setDraftHighlights([]);
   }, []);
 
   const handleGoBackToEdit = useCallback((instructions: string) => {
@@ -2975,7 +2992,9 @@ export default function WorkSession() {
   const handleFixCheckpoint = useCallback(async (gateName: string, feedback: string) => {
     if (!draft || !user) return;
     setFixingGate(gateName);
+
     try {
+      // Phase 1: Revise the draft
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2991,57 +3010,87 @@ export default function WorkSession() {
 
       if (!res.ok) throw new Error(`Fix error ${res.status}`);
       const data = await res.json();
+      const newDraft = data.content;
 
-      if (data.content && data.content !== draft) {
-        setDraft(data.content);
-        toast("Draft updated. Re-scoring...");
+      if (!newDraft || newDraft.trim() === draft.trim()) {
+        toast("No changes detected. Try a different approach.");
+        return;
+      }
 
-        // Re-run pipeline with updated draft
+      // Phase 2: Update draft + compute diff highlights
+      const oldParas = draft.split("\n").filter(Boolean);
+      const newParas = newDraft.split("\n").filter(Boolean);
+      const changedIndices: number[] = [];
+      newParas.forEach((p: string, i: number) => {
+        if (!oldParas[i] || oldParas[i] !== p) changedIndices.push(i);
+      });
+
+      setDraft(newDraft);
+      setDraftHighlights(changedIndices);
+      toast("Draft updated.");
+
+      // Immediately update current format tab so user sees the change
+      setFormatDrafts(prev => ({
+        ...prev,
+        [activeReviewTab]: {
+          content: newDraft,
+          metadata: prev[activeReviewTab]?.metadata || {},
+          status: "done" as const,
+        },
+      }));
+
+      // Clear fixingGate now (revision done, pipeline re-run is a separate phase)
+      setFixingGate(null);
+
+      // Phase 3: Re-run pipeline in background
+      setPipelineRunning(true);
+      try {
         const pipeRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            draft: data.content,
+            draft: newDraft,
             outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
-            voiceDnaMd,
-            brandDnaMd,
-            methodDnaMd,
+            voiceDnaMd, brandDnaMd, methodDnaMd,
             userId: user.id,
           }),
         }, { timeout: 175000 });
 
-        if (!pipeRes.ok) throw new Error(`Pipeline re-run error ${pipeRes.status}`);
-        const pipeResult = await pipeRes.json();
-        const oldScore = pipelineRun?.impactScore?.total ?? 0;
-        const newScore = pipeResult.impactScore?.total ?? 0;
+        if (pipeRes.ok) {
+          const result = await pipeRes.json();
+          const oldScore = pipelineRun?.impactScore?.total ?? 0;
+          const newScore = result.impactScore?.total ?? 0;
 
-        setPipelineRun({
-          status: pipeResult.status,
-          checkpointResults: pipeResult.checkpointResults || [],
-          impactScore: pipeResult.impactScore || null,
-          humanVoiceTest: pipeResult.humanVoiceTest || null,
-          blockedAt: pipeResult.blockedAt,
-          finalDraft: pipeResult.finalDraft,
-        });
+          setPipelineRun({
+            status: result.status,
+            checkpointResults: result.checkpointResults || [],
+            impactScore: result.impactScore || null,
+            humanVoiceTest: result.humanVoiceTest || null,
+            blockedAt: result.blockedAt,
+            finalDraft: result.finalDraft,
+          });
 
-        if (newScore > oldScore) {
-          toast(`Score improved: ${oldScore} → ${newScore}`);
+          if (result.finalDraft && result.finalDraft !== newDraft) setDraft(result.finalDraft);
+
+          if (newScore > oldScore) toast(`Score improved: ${oldScore} → ${newScore}`);
+          else if (newScore === oldScore) toast(`Score unchanged at ${newScore}.`);
+          else toast(`Score: ${newScore} (was ${oldScore})`);
         } else {
-          toast("Score unchanged");
+          toast("Re-scoring failed. Use 'Re-score draft' to try again.", "error");
         }
-
-        // Re-adapt formats with new draft
-        handleFormatAdaptation();
-      } else {
-        toast("No changes detected.");
+      } finally {
+        setPipelineRunning(false);
       }
+
+      // Re-adapt formats in background
+      handleFormatAdaptation();
     } catch (err: any) {
       console.error("[handleFixCheckpoint]", err);
       toast("Fix failed. Try again.", "error");
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, pipelineRun, toast, handleFormatAdaptation]);
+  }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, pipelineRun, toast, handleFormatAdaptation, activeReviewTab]);
 
   // ── REVIEW: Re-run pipeline (manual re-score) ─────────────────
   const handleRerunPipeline = useCallback(async () => {
@@ -3257,6 +3306,7 @@ export default function WorkSession() {
           onGoBack={handleGoBackToEdit}
           onFix={handleReviewFix}
           formatDrafts={formatDrafts}
+          highlightedParas={draftHighlights}
         />
       )}
       {stage === "Approve" && (
