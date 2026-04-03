@@ -56,6 +56,18 @@ const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
 
 const TEMPLATES = ["Essay", "LinkedIn Post", "Newsletter Issue", "Podcast Script", "Case Study", "One-Pager", "Email"];
 
+/** Strip markdown bold/italic markers from title text */
+function cleanTitle(raw: string): string {
+  return raw
+    .replace(/\*\*\*(.+?)\*\*\*/g, "$1")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/_(.+?)_/g, "$1")
+    .replace(/^#+\s*/, "")
+    .trim();
+}
+
 const CHECKPOINT_LABELS: Record<string, string> = {
   "checkpoint-0": "Deduplication",
   "checkpoint-1": "Research Validation",
@@ -910,7 +922,7 @@ function WatsonTextRenderer({ text }: { text: string }) {
         if (isSearchLine(line)) {
           return (
             <div key={li} style={{
-              fontSize: 11, color: "var(--blue)", fontStyle: "italic",
+              fontSize: 11, color: "var(--blue)", fontStyle: "normal",
               padding: "3px 0", display: "flex", alignItems: "center", gap: 6,
             }}>
               <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
@@ -1355,7 +1367,7 @@ function StageEdit({
     if (!draft) return <div style={{ color: "var(--fg-3)", fontSize: 13 }}>No draft yet.</div>;
 
     const paragraphs = draft.split("\n").filter(Boolean);
-    const title = paragraphs[0] || "";
+    const title = cleanTitle(paragraphs[0] || "");
     const body = paragraphs.slice(1);
 
     return (
@@ -1541,7 +1553,7 @@ function StageReview({
           <>
             {/* Draft body matching wireframe typography */}
             <div className="draft-body">
-              <div className="draft-title-text">{draft.split("\n")[0] || "Draft"}</div>
+              <div className="draft-title-text">{cleanTitle(draft.split("\n")[0] || "Draft")}</div>
               {draft.split("\n").slice(1).filter(Boolean).map((p, i) => {
                 // Check if this line is flagged by HVT
                 const flagged = hvtFlaggedLines.find(f => p.includes(f.original) || f.original.includes(p.slice(0, 40)));
@@ -1556,7 +1568,7 @@ function StageReview({
                       <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, lineHeight: 1.5 }}>
                         <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
                         {flagged.suggestion && (
-                          <div style={{ color: "var(--fg-3)", marginTop: 2, fontStyle: "italic" }}>
+                          <div style={{ color: "var(--fg-3)", marginTop: 2, fontStyle: "normal" }}>
                             Suggestion: {flagged.suggestion}
                           </div>
                         )}
@@ -1777,7 +1789,7 @@ function StageExport({
 
 function ExportPreview({ format, draft, title }: { format: string; draft: string; title: string }) {
   const paragraphs = draft.split("\n").filter(Boolean);
-  const firstLine = paragraphs[0] || title;
+  const firstLine = cleanTitle(paragraphs[0] || title);
   const bodyParas = paragraphs.slice(1);
 
   if (format === "Podcast" || format === "Podcast Script") {
@@ -1811,7 +1823,7 @@ function ExportPreview({ format, draft, title }: { format: string; draft: string
           Sunday, {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
         </div>
         <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)", lineHeight: 1.2, marginBottom: 8 }}>{firstLine}</div>
-        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, fontStyle: "italic" }}>
+        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, fontStyle: "normal" }}>
           On the gap between having something to say and getting it into the world.
         </div>
         {bodyParas.map((p, i) => (
