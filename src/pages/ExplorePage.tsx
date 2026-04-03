@@ -4,7 +4,6 @@ import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import { MARKETING_NUMBERS } from "../lib/constants";
 
-const CTA_MAILTO = "mailto:mark@coastalintelligence.ai?subject=EVERYWHERE%20Studio%3A%20Let's%20Talk";
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 // ── Scroll reveal hook ──────────────────────────────────────────────────────
@@ -160,6 +159,37 @@ const CSS = `
 
 /* Watson widget: showcase, not link */
 .xp-watson-widget { cursor: default; }
+
+/* Watch.Work.Wrap columns */
+.xp-www-cols {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0;
+}
+.xp-www-col {
+  flex: 1;
+  padding: 0 40px;
+  text-align: center;
+}
+.xp-www-col-border {
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+.xp-www-mob-divider { display: none; }
+
+@media (max-width: 768px) {
+  .xp-www-cols { flex-direction: column; gap: 0; }
+  .xp-www-col { padding: 0; text-align: center; }
+  .xp-www-col-border { border-right: none; }
+  .xp-www-mob-divider {
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    margin: 32px auto;
+  }
+}
 
 /* Nav: starts transparent over dark hero, darkens on scroll */
 .xp-nav {
@@ -426,10 +456,10 @@ const WWW_ROOMS = [
   { name: "Wrap", body: "One idea. Every channel. Simultaneously. Newsletter, LinkedIn, podcast, Substack, formatted for each, ready to publish." },
 ];
 
-function WatchWorkWrapSection({ howRef }: { howRef: React.RefObject<HTMLDivElement | null>; isMobile?: boolean }) {
+function WatchWorkWrapSection({ howRef }: { howRef: React.RefObject<HTMLDivElement | null> }) {
   return (
     <section ref={howRef} data-nav-theme="dark" style={{ padding: "120px 0", background: "var(--ew-navy)" }}>
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 24px" }}>
+      <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 24px" }}>
         <Reveal>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 16 }}>
@@ -440,17 +470,18 @@ function WatchWorkWrapSection({ howRef }: { howRef: React.RefObject<HTMLDivEleme
             </h2>
           </div>
         </Reveal>
-        {WWW_ROOMS.map((room, i) => (
-          <Reveal key={room.name} delay={i * 150}>
-            <div style={{ textAlign: "center" }}>
-              {i > 0 && (
-                <div style={{ width: 80, height: 1, background: "rgba(255,255,255,0.08)", margin: "24px auto" }} />
-              )}
-              <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ew-gold)", marginBottom: 12 }}>{room.name}</div>
-              <p style={{ fontSize: 16, color: "rgba(255,255,255,0.65)", lineHeight: 1.7, margin: 0 }}>{room.body}</p>
-            </div>
-          </Reveal>
-        ))}
+        <div className="xp-www-cols">
+          {WWW_ROOMS.map((room, i) => (
+            <Reveal key={room.name} delay={i * 150}>
+              <div className={`xp-www-col${i < 2 ? " xp-www-col-border" : ""}`}>
+                {/* Mobile divider */}
+                {i > 0 && <div className="xp-www-mob-divider" />}
+                <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ew-gold)", marginBottom: 12 }}>{room.name}</div>
+                <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, margin: 0 }}>{room.body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -566,8 +597,6 @@ export default function ExplorePage() {
           {!isMobile && (
             <>
               {[
-                { label: "How It Works", action: () => scrollTo(howRef) },
-                { label: "Quality", action: () => scrollTo(standardRef) },
                 { label: "Sign In", action: () => navigate("/auth") },
               ].map(link => (
                 <button
@@ -616,8 +645,8 @@ export default function ExplorePage() {
             </>
           )}
           {!isMobile && (
-            <a
-              href={CTA_MAILTO}
+            <button
+              onClick={() => navigate("/auth?mode=signup")}
               style={{
                 padding: "8px 22px",
                 fontSize: 12,
@@ -625,8 +654,8 @@ export default function ExplorePage() {
                 letterSpacing: "0.08em",
                 textTransform: "uppercase" as const,
                 fontFamily: "var(--font)",
-                textDecoration: "none",
                 borderRadius: 100,
+                cursor: "pointer",
                 transition: `all 0.4s ease`,
                 ...(navTheme === "dark"
                   ? { border: "1px solid rgba(255,255,255,0.2)", color: "var(--ew-white)", background: "transparent" }
@@ -634,8 +663,8 @@ export default function ExplorePage() {
                 ),
               }}
             >
-              Let's Talk
-            </a>
+              Get Early Access
+            </button>
           )}
           {isMobile && (
             <button
@@ -670,10 +699,8 @@ export default function ExplorePage() {
             &times;
           </button>
           {[
-            { label: "How It Works", action: () => { setMobileMenuOpen(false); scrollTo(howRef); } },
-            { label: "Quality", action: () => { setMobileMenuOpen(false); scrollTo(standardRef); } },
             { label: "Sign In", action: () => { setMobileMenuOpen(false); navigate("/auth"); } },
-            { label: "Let's Talk", action: () => { setMobileMenuOpen(false); window.location.href = CTA_MAILTO; } },
+            { label: "Get Early Access", action: () => { setMobileMenuOpen(false); navigate("/auth?mode=signup"); } },
           ].map((link, i) => (
             <button
               key={link.label}
@@ -1395,29 +1422,45 @@ export default function ExplorePage() {
         `}</style>
       </section>
 
-      {/* ── WATERMARK + FOOTER (Light: #F7F9FC) ─────────────── */}
-      <div style={{ background: "var(--ew-offwhite)", overflow: "hidden", padding: "60px 0 0" }}>
-        <Reveal direction="up" distance={20} duration={1200}>
-          <div style={{
-            textAlign: "center",
-            pointerEvents: "none",
-            userSelect: "none",
-            lineHeight: 1,
-            marginBottom: -20,
-          }}>
-            <span style={{
-              fontSize: "clamp(120px, 18vw, 280px)",
+      {/* ── MARQUEE WATERMARK ────────────────────────────────── */}
+      <div style={{
+        width: "100%",
+        overflow: "hidden",
+        padding: "40px 0",
+        background: "var(--ew-offwhite)",
+        pointerEvents: "none",
+        userSelect: "none",
+      }}>
+        <div style={{
+          display: "flex",
+          whiteSpace: "nowrap",
+          animation: "xpMarquee 30s linear infinite",
+        }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i} style={{
+              fontSize: "clamp(80px, 12vw, 200px)",
               fontWeight: 800,
               fontFamily: "var(--font)",
-              color: "rgba(0,0,0,0.03)",
+              color: "rgba(0,0,0,0.04)",
               textTransform: "uppercase" as const,
-              letterSpacing: "-0.04em",
-              whiteSpace: "nowrap",
+              letterSpacing: "-0.02em",
+              flexShrink: 0,
+              paddingRight: 40,
             }}>
-              EVERYWHERE
+              EVERYWHERE STUDIO
+              <span style={{ color: "rgba(245,198,66,0.08)", padding: "0 40px" }}>&middot;</span>
             </span>
-          </div>
-        </Reveal>
+          ))}
+        </div>
+        <style>{`
+          @keyframes xpMarquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          @media (max-width: 768px) {
+            .xp [style*="xpMarquee"] { animation-duration: 20s !important; }
+          }
+        `}</style>
       </div>
       <footer style={{ background: "var(--ew-offwhite)", borderTop: "1px solid var(--ew-border-light)" }}>
         <div className="xp-footer">

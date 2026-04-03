@@ -1,7 +1,6 @@
 import Logo from "../Logo";
 import { useNavigate } from "react-router-dom";
 
-const CTA_MAILTO = "mailto:mark@coastalintelligence.ai?subject=EVERYWHERE%20Studio%3A%20Let's%20Talk";
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 function FooterLink({ children, onClick, href }: { children: React.ReactNode; onClick?: () => void; href?: string }) {
@@ -48,9 +47,9 @@ export default function Footer() {
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <FooterLink onClick={() => navigate("/studio/dashboard")}>Studio</FooterLink>
           <FooterLink onClick={() => navigate("/auth")}>Sign in</FooterLink>
-          <FooterLink href="mailto:mark@coastalintelligence.ai">mark@coastalintelligence.ai</FooterLink>
-          <a
-            href={CTA_MAILTO}
+          <span style={{ fontSize: 12, color: "#64748B", fontFamily: "'Afacad Flux', sans-serif" }}>mark@coastalintelligence.ai</span>
+          <button
+            onClick={() => navigate("/auth?mode=signup")}
             style={{
               fontSize: 12,
               fontWeight: 700,
@@ -60,14 +59,14 @@ export default function Footer() {
               borderRadius: 100,
               padding: "10px 24px",
               fontFamily: "'Afacad Flux', sans-serif",
-              textDecoration: "none",
+              cursor: "pointer",
               transition: `background 0.25s ${EASE}`,
             }}
             onMouseEnter={e => { e.currentTarget.style.background = "#4A90D9"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "#111111"; }}
           >
-            Let's Talk
-          </a>
+            Get Early Access
+          </button>
         </div>
       </div>
       {/* Bottom row */}
