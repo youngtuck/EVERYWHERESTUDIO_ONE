@@ -633,33 +633,49 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 02: THE PROBLEM (Light: #FFFFFF, blue accent) ── */}
-      <section style={{ padding: sectionPad, background: "var(--ew-white)" }}>
-        <Reveal>
-          <div className="xp-inner">
-            <div style={{ borderLeft: "3px solid var(--ew-blue)", paddingLeft: isMobile ? 20 : 32, maxWidth: 700 }}>
-              <h2 style={{
-                fontSize: "clamp(28px, 4vw, 42px)",
-                fontWeight: 700,
-                lineHeight: 1.18,
-                letterSpacing: "-0.02em",
-                margin: "0 0 28px",
-                color: "var(--ew-text-dark)",
-              }}>
-                The thought leaders you see everywhere aren't better thinkers.{" "}
-                <em style={{ color: "var(--ew-blue)", fontWeight: 700 }}>They got their ideas out.</em>
-              </h2>
-              <p style={{ color: "var(--ew-text-body)", maxWidth: 580, marginBottom: 16 }}>
-                You have the thinking. What you've been missing is someone to carry it, from your head, into the world, without you doing the work twice.
-              </p>
-              <p style={{ color: "var(--ew-text-body)", maxWidth: 580, marginBottom: 16 }}>
-                This isn't about discipline or talent.
-              </p>
-              <p style={{ color: "var(--ew-text-body)", maxWidth: 580 }}>
-                It's an infrastructure problem. Watson is the answer.
-              </p>
+      <section style={{ padding: "140px 0", background: "var(--ew-white)" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px" }}>
+          <div style={{ marginLeft: isMobile ? 0 : "clamp(40px, 12vw, 160px)", maxWidth: 600 }}>
+            <div style={{ display: "flex", gap: 0 }}>
+              <div style={{
+                width: 3,
+                background: "var(--ew-blue)",
+                borderRadius: 2,
+                flexShrink: 0,
+              }} />
+              <div style={{ paddingLeft: isMobile ? 20 : 32 }}>
+                <Reveal direction="left" distance={30} duration={800}>
+                  <h2 style={{
+                    fontSize: "clamp(26px, 3.5vw, 42px)",
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                    letterSpacing: "-0.02em",
+                    margin: "0 0 32px",
+                    color: "var(--ew-text-dark)",
+                  }}>
+                    The thought leaders you see everywhere aren't better thinkers.{" "}
+                    <em style={{ color: "var(--ew-blue)", fontWeight: 700, fontStyle: "normal" }}>They got their ideas out.</em>
+                  </h2>
+                </Reveal>
+                <Reveal direction="up" distance={20} delay={150}>
+                  <p style={{ color: "var(--ew-text-body)", maxWidth: 540, marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
+                    You have the thinking. What you've been missing is someone to carry it, from your head, into the world, without you doing the work twice.
+                  </p>
+                </Reveal>
+                <Reveal direction="up" distance={20} delay={300}>
+                  <p style={{ color: "var(--ew-text-body)", maxWidth: 540, marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
+                    This isn't about discipline or talent.
+                  </p>
+                </Reveal>
+                <Reveal direction="up" distance={20} delay={450}>
+                  <p style={{ color: "var(--ew-text-body)", maxWidth: 540, fontSize: 16, lineHeight: 1.7 }}>
+                    It's an infrastructure problem. <span style={{ fontWeight: 600, color: "var(--ew-text-dark)" }}>Watson is the answer.</span>
+                  </p>
+                </Reveal>
+              </div>
             </div>
           </div>
-        </Reveal>
+        </div>
       </section>
 
       {/* ── SECTION 03: WATSON (Dark: #1B263B, gold accent) ─────── */}
