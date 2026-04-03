@@ -693,7 +693,7 @@ function ReviewDash({
       )}
 
       <div style={{ fontSize: 10, color: allExported ? "var(--blue)" : "var(--fg-3)", marginBottom: 6, transition: "color 0.2s" }}>
-        {allExported ? "All formats exported to Session Files." : running ? "Running checkpoints..." : pipelineRun ? (passed ? "Pipeline passed. Ready to export." : canApprove ? "Pipeline passed. Ready to export." : "Pipeline complete. Review results above.") : "Run pipeline to check your draft."}
+        {allExported ? "All formats exported to Session Files." : running ? "Pipeline in progress. This takes 2-3 minutes." : pipelineRun ? (passed ? "Pipeline passed. Ready to export." : canApprove ? "Pipeline passed. Ready to export." : "Pipeline complete. Review results above.") : "Run pipeline to check your draft."}
       </div>
 
       <button
@@ -1483,6 +1483,67 @@ function StageEdit({
   );
 }
 
+// ── Pipeline progress bar ────────────────────────────────────────────────────
+function PipelineProgress({ running }: { running: boolean }) {
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (!running) { setElapsed(0); return; }
+    startRef.current = Date.now();
+    const interval = setInterval(() => { setElapsed(Date.now() - startRef.current); }, 500);
+    return () => clearInterval(interval);
+  }, [running]);
+
+  if (!running) return null;
+
+  const ESTIMATED_TOTAL_MS = 160000;
+  const rawProgress = Math.min(elapsed / ESTIMATED_TOTAL_MS, 0.95);
+  const easedProgress = 1 - Math.pow(1 - rawProgress, 2);
+  const percent = Math.round(easedProgress * 100);
+
+  const steps = [
+    { at: 0, label: "Deduplication check" },
+    { at: 15000, label: "Research validation" },
+    { at: 30000, label: "Voice authenticity" },
+    { at: 45000, label: "Engagement optimization" },
+    { at: 60000, label: "SLOP detection" },
+    { at: 75000, label: "Editorial excellence" },
+    { at: 90000, label: "Perspective and risk" },
+    { at: 110000, label: "Scoring content" },
+    { at: 130000, label: "Human Voice Test" },
+  ];
+  const currentStep = [...steps].reverse().find(s => elapsed >= s.at)?.label || "Starting pipeline";
+
+  const elapsedSec = Math.floor(elapsed / 1000);
+  const minutes = Math.floor(elapsedSec / 60);
+  const seconds = elapsedSec % 60;
+  const timeLabel = minutes > 0 ? `${minutes}:${String(seconds).padStart(2, "0")}` : `${seconds}s`;
+
+  return (
+    <div style={{ padding: "40px 28px" }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>
+        Running 7 quality checkpoints
+      </div>
+      <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 16 }}>
+        {currentStep} ({timeLabel})
+      </div>
+      <div style={{ width: "100%", height: 4, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
+        <div style={{
+          height: "100%", borderRadius: 2,
+          background: "var(--gold-bright)",
+          width: `${percent}%`,
+          transition: "width 0.5s ease-out",
+        }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, fontSize: 10, color: "var(--fg-3)" }}>
+        <span>7 checkpoints + Impact Score + Human Voice Test</span>
+        <span>{percent}%</span>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // STAGE: REVIEW
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1548,7 +1609,7 @@ function StageReview({
       {/* Draft preview + improve cards */}
       <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
         {running ? (
-          <LoadingDots label="Running checkpoints..." />
+          <PipelineProgress running={running} />
         ) : (
           <>
             {/* Draft body matching wireframe typography */}
