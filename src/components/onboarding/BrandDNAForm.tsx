@@ -85,9 +85,9 @@ export function BrandDNAForm({ onComplete, onSkip }: BrandDNAFormProps) {
     <div style={{ maxWidth: 640, margin: "0 auto" }}>
       <h2
         style={{
-          fontFamily: "'Cormorant Garamond', 'Times New Roman', serif",
+          fontFamily: "'Afacad Flux', sans-serif",
           fontSize: 28,
-          fontWeight: 300,
+          fontWeight: 600,
           color: "#ffffff",
           margin: "0 0 12px",
         }}

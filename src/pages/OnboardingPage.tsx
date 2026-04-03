@@ -374,7 +374,7 @@ export default function OnboardingPage() {
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
         body { background: #07090f; }
         @keyframes onboarding-progress-voice {
           from { width: 0%; }
@@ -617,9 +617,9 @@ export default function OnboardingPage() {
           >
             <h1
               style={{
-                fontFamily: "'Cormorant Garamond', 'Times New Roman', serif",
+                fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 36,
-                fontWeight: 300,
+                fontWeight: 600,
                 color: "#ffffff",
                 margin: 0,
               }}
@@ -631,7 +631,7 @@ export default function OnboardingPage() {
                 marginTop: 12,
                 fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 16,
-                fontStyle: "italic",
+                fontStyle: "normal",
                 color: "rgba(255,255,255,0.55)",
               }}
             >

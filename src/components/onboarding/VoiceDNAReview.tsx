@@ -48,9 +48,9 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
     <div style={{ maxWidth: 640, margin: "0 auto", color: "#ffffff" }}>
       <h1
         style={{
-          fontFamily: "'Cormorant Garamond', 'Times New Roman', serif",
+          fontFamily: "'Afacad Flux', sans-serif",
           fontSize: 36,
-          fontWeight: 300,
+          fontWeight: 600,
           margin: "0 0 8px",
         }}
       >
