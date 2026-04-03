@@ -1156,24 +1156,24 @@ function ChatInputBar({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StageOutline({
-  outlineRows, onUpdateRow, onAdvance, building,
+  outlineRows, onUpdateRow, onAdvance, building, angles, currentAngle, onSelectAngle,
 }: {
   outlineRows: OutlineRow[]; onUpdateRow: (i: number, v: string) => void;
   onAdvance: () => void; building: boolean;
+  angles?: { a: OutlineRow[]; b: OutlineRow[] } | null;
+  currentAngle?: "a" | "b";
+  onSelectAngle?: (angle: "a" | "b") => void;
 }) {
   const [input, setInput] = useState("");
-  const [selectedLens, setSelectedLens] = useState<"a" | "b">("a");
+  const activeAngle = currentAngle || "a";
 
-  // Generate a second angle from the outline rows (simplified: reword each row)
   const lensA = {
-    title: outlineRows.find(r => r.label.toLowerCase() === "title")?.content || "Angle A",
-    desc: "Opens with the core thesis, pivots to diagnosis, closes with the system as solution. Strong for LinkedIn.",
+    title: (angles?.a.find(r => r.label === "Title")?.content) || outlineRows.find(r => r.label === "Title")?.content || "Angle A",
+    desc: "Thesis-led structure. Strong opening statement, analytical flow.",
   };
   const lensB = {
-    title: outlineRows.length > 1
-      ? (outlineRows.find(r => r.label.toLowerCase() === "hook")?.content || "Alternative angle")
-      : "Alternative angle",
-    desc: "Leads with the emotional experience, builds empathy before the reframe. Better for newsletter.",
+    title: (angles?.b.find(r => r.label === "Title")?.content) || "Alternative angle",
+    desc: "Hook-led structure. Emotional opening, narrative build, reflective close.",
   };
 
   return (
@@ -1186,13 +1186,13 @@ function StageOutline({
             {/* Lens cards: two angles side by side */}
             <div className="lens-row">
               <div
-                className={`lens-card${selectedLens === "a" ? " selected" : ""}`}
-                onClick={() => setSelectedLens("a")}
+                className={`lens-card${activeAngle === "a" ? " selected" : ""}`}
+                onClick={() => onSelectAngle?.("a")}
               >
                 <div className="lens-title-row">
                   <div className="lens-title">{lensA.title}</div>
                   <div style={{ display: "flex", gap: 2, alignItems: "center", flexShrink: 0 }}>
-                    <button onClick={e => e.stopPropagation()} title="More like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: selectedLens === "a" ? "var(--blue)" : "var(--line-2)" }}>
+                    <button onClick={e => e.stopPropagation()} title="More like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: activeAngle === "a" ? "var(--blue)" : "var(--line-2)" }}>
                       <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
                     </button>
                     <button onClick={e => e.stopPropagation()} title="Less like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "var(--line-2)" }}>
@@ -1201,16 +1201,16 @@ function StageOutline({
                   </div>
                 </div>
                 <div className="lens-desc">{lensA.desc}</div>
-                {selectedLens === "a" && <div className="lens-selected-badge">Selected &#10003;</div>}
+                {activeAngle === "a" && <div className="lens-selected-badge">Selected &#10003;</div>}
               </div>
               <div
-                className={`lens-card${selectedLens === "b" ? " selected" : ""}`}
-                onClick={() => setSelectedLens("b")}
+                className={`lens-card${activeAngle === "b" ? " selected" : ""}`}
+                onClick={() => onSelectAngle?.("b")}
               >
                 <div className="lens-title-row">
                   <div className="lens-title">{lensB.title}</div>
                   <div style={{ display: "flex", gap: 2, alignItems: "center", flexShrink: 0 }}>
-                    <button onClick={e => e.stopPropagation()} title="More like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: selectedLens === "b" ? "var(--blue)" : "var(--line-2)" }}>
+                    <button onClick={e => e.stopPropagation()} title="More like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: activeAngle === "b" ? "var(--blue)" : "var(--line-2)" }}>
                       <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
                     </button>
                     <button onClick={e => e.stopPropagation()} title="Less like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "var(--line-2)" }}>
@@ -1219,7 +1219,7 @@ function StageOutline({
                   </div>
                 </div>
                 <div className="lens-desc">{lensB.desc}</div>
-                {selectedLens === "b" && <div className="lens-selected-badge">Selected &#10003;</div>}
+                {activeAngle === "b" && <div className="lens-selected-badge">Selected &#10003;</div>}
               </div>
             </div>
 
@@ -2341,6 +2341,8 @@ export default function WorkSession() {
 
   // ── Outline ──────────────────────────────────────────────────
   const [outlineRows, setOutlineRows] = useState<OutlineRow[]>([]);
+  const [outlineAngles, setOutlineAngles] = useState<{ a: OutlineRow[]; b: OutlineRow[] } | null>(null);
+  const [selectedAngle, setSelectedAngle] = useState<"a" | "b">("a");
   const [buildingOutline, setBuildingOutline] = useState(false);
 
   // ── Edit ─────────────────────────────────────────────────────
@@ -2521,28 +2523,66 @@ export default function WorkSession() {
     goToStage("Outline");
     setBuildingOutline(true);
 
-    // Build outline from Watson's ready summary using a structured parse
     const summary = readySummary || buildConvSummary();
 
-    // Parse Watson's checklist output for Thesis/Audience/Hook/Format
-    const thesis = summary.match(/thesis:?\s*(.+?)(?:\n|$)/i)?.[1]?.trim() || "Core argument";
-    const audience = summary.match(/audience:?\s*(.+?)(?:\n|$)/i)?.[1]?.trim() || "Your target reader";
-    const hook = summary.match(/hook:?\s*(.+?)(?:\n|$)/i)?.[1]?.trim() || "Opening that earns the read";
-    const formatLine = summary.match(/format:?\s*(.+?)(?:\n|$)/i)?.[1]?.trim() || selectedFormats[0];
+    // Parse Watson's summary by finding labeled sections (fields separated by labels, not newlines)
+    function extractField(text: string, field: string, nextFields: string[]): string {
+      const fieldPattern = new RegExp(`${field}:?\\s*`, "i");
+      const match = text.match(fieldPattern);
+      if (!match || match.index === undefined) return "";
+      const startIdx = match.index + match[0].length;
+      let endIdx = text.length;
+      for (const next of nextFields) {
+        const nextPattern = new RegExp(`\\b${next}:`, "i");
+        const nextMatch = text.slice(startIdx).match(nextPattern);
+        if (nextMatch && nextMatch.index !== undefined) {
+          const candidateEnd = startIdx + nextMatch.index;
+          if (candidateEnd < endIdx) endIdx = candidateEnd;
+        }
+      }
+      return text.slice(startIdx, endIdx).replace(/[.\s]+$/, "").trim();
+    }
 
-    // Build a standard editorial outline
-    const rows: OutlineRow[] = [
-      { label: "Title", content: thesis },
+    const allLabels = ["thesis", "audience", "goal", "hook", "format", "tone", "angle"];
+    const thesis = extractField(summary, "thesis", allLabels.filter(l => l !== "thesis")) || "Core argument";
+    const audience = extractField(summary, "audience", allLabels.filter(l => l !== "audience")) || "Your target reader";
+    const hook = extractField(summary, "hook", allLabels.filter(l => l !== "hook")) || "Opening that earns the read";
+    const goal = extractField(summary, "goal", allLabels.filter(l => l !== "goal")) || "";
+
+    // Generate a short title from the thesis (cap at 80 chars)
+    let title = thesis;
+    if (thesis.length > 80) {
+      const firstClause = thesis.split(/,|and\s/)[0].trim();
+      title = firstClause.length > 10 && firstClause.length < 80 ? firstClause : thesis.slice(0, 80);
+    }
+
+    // Angle A: thesis-led (analytical structure)
+    const angleA: OutlineRow[] = [
+      { label: "Title", content: title },
       { label: "Hook", content: hook },
-      { label: "Body", content: "The core argument and diagnosis." },
+      { label: "Body", content: thesis },
       { label: "", content: "Supporting evidence and examples.", indent: true },
-      { label: "", content: "Concrete implications for the reader.", indent: true },
-      { label: "Stakes", content: "What changes if the reader acts on this." },
+      { label: "", content: audience ? `Written for: ${audience}` : "Concrete implications for the reader.", indent: true },
+      { label: "Stakes", content: goal || "What changes if the reader acts on this." },
       { label: "", content: "The cost of inaction.", indent: true },
-      { label: "Close", content: thesis },
+      { label: "Close", content: hook.length < 60 ? `Return to: ${hook}` : "Circle back to the opening image." },
     ];
 
-    setOutlineRows(rows);
+    // Angle B: hook-led (narrative structure)
+    const angleB: OutlineRow[] = [
+      { label: "Title", content: hook.length > 10 && hook.length < 80 ? hook : title },
+      { label: "Hook", content: "Open with the emotional center. Scene or image first, context second." },
+      { label: "Body", content: "Build from the personal to the universal." },
+      { label: "", content: thesis, indent: true },
+      { label: "", content: audience ? `Resonates with: ${audience}` : "Why this matters beyond the personal.", indent: true },
+      { label: "Stakes", content: "What you are building toward." },
+      { label: "", content: goal || "Invite the reader into the next chapter.", indent: true },
+      { label: "Close", content: "Land on a question or an image, not a statement." },
+    ];
+
+    setOutlineAngles({ a: angleA, b: angleB });
+    setSelectedAngle("a");
+    setOutlineRows(angleA);
     setBuildingOutline(false);
   }, [readySummary, buildConvSummary, selectedFormats, goToStage]);
 
@@ -2865,6 +2905,8 @@ export default function WorkSession() {
     setDraftVersions([]);
     setActiveVersionIdx(0);
     setFormatDrafts({});
+    setOutlineAngles(null);
+    setSelectedAngle("a");
   }, []);
 
   const handleGoBackToEdit = useCallback((instructions: string) => {
@@ -3055,6 +3097,14 @@ export default function WorkSession() {
           onUpdateRow={(i, v) => setOutlineRows(rows => rows.map((r, idx) => idx === i ? { ...r, content: v } : r))}
           onAdvance={handleGenerateDraft}
           building={buildingOutline}
+          angles={outlineAngles}
+          currentAngle={selectedAngle}
+          onSelectAngle={(angle) => {
+            setSelectedAngle(angle);
+            if (outlineAngles) {
+              setOutlineRows(angle === "a" ? [...outlineAngles.a] : [...outlineAngles.b]);
+            }
+          }}
         />
       )}
       {stage === "Edit" && (
