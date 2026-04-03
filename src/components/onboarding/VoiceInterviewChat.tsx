@@ -40,8 +40,8 @@ function validateResponse(text: string): boolean {
   const trimmed = text.trim();
   const words = trimmed.split(/\s+/).filter(w => w.length > 0);
 
-  // Must have at least 5 words
-  if (words.length < 5) return false;
+  // Must have at least 3 words
+  if (words.length < 3) return false;
 
   // Check word-to-character ratio (random strings have very long "words")
   const avgWordLen = trimmed.replace(/\s+/g, "").length / words.length;
@@ -62,21 +62,9 @@ function validateResponse(text: string): boolean {
   const alphaNum = trimmed.replace(/[^a-zA-Z0-9\s]/g, "").length;
   if (alphaNum / trimmed.length < 0.6) return false;
 
-  // Require at least 3 unique words (not just "yes yes yes yes yes")
+  // Require at least 2 unique words (not just "yes yes yes yes yes")
   const unique = new Set(words.map(w => w.toLowerCase()));
-  if (unique.size < 3) return false;
-
-  // Check that at least 70% of words look like real words (2+ letters, contain a vowel)
-  const realWordCount = words.filter(w => {
-    const cleaned = w.replace(/[^a-zA-Z]/g, "");
-    return cleaned.length >= 2 && /[aeiouAEIOU]/.test(cleaned);
-  }).length;
-  if (realWordCount / words.length < 0.7) return false;
-
-  // Require at least one common English word as a basic coherence check
-  const COMMON = new Set(["i", "the", "a", "an", "is", "it", "my", "to", "and", "of", "in", "that", "for", "on", "with", "as", "at", "but", "not", "or", "be", "was", "are", "have", "had", "do", "so", "if", "no", "yes", "we", "they", "you", "me", "he", "she", "this", "from", "when", "what", "how", "about", "more", "like", "just", "would", "think", "really", "people", "because", "know", "want"]);
-  const hasCommon = words.some(w => COMMON.has(w.toLowerCase().replace(/[^a-z]/g, "")));
-  if (!hasCommon) return false;
+  if (unique.size < 2) return false;
 
   return true;
 }
@@ -182,7 +170,9 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
     const text = input.trim();
     if (!text || loading) return;
 
-    if (!validateResponse(text)) {
+    // Skip validation for the first response (warm-up "Ready?" question)
+    const isFirstResponse = messages.length === 1 && messages[0].id === "sys-0";
+    if (!isFirstResponse && !validateResponse(text)) {
       setValidationWarning(true);
       return;
     }
@@ -413,7 +403,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                 color: "rgba(255,255,255,0.7)",
                 lineHeight: 1.4,
               }}>
-                That doesn't look like a typical response. Voice DNA works best with real answers that reflect how you naturally communicate. Want to try again?
+                Could you say a bit more? Even a sentence or two helps Watson understand your voice.
               </p>
             )}
             <div
