@@ -1536,62 +1536,131 @@ function StageEdit({
   );
 }
 
-// ── Pipeline progress bar ────────────────────────────────────────────────────
-function PipelineProgress({ running }: { running: boolean }) {
+// ── Review progress (format adaptation + quality pipeline) ───────────────────
+function ReviewProgress({
+  pipelineRunning, formatDrafts, selectedFormats,
+}: {
+  pipelineRunning: boolean;
+  formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
+  selectedFormats: string[];
+}) {
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef(Date.now());
 
   useEffect(() => {
-    if (!running) { setElapsed(0); return; }
+    if (!pipelineRunning) { setElapsed(0); return; }
     startRef.current = Date.now();
-    const interval = setInterval(() => { setElapsed(Date.now() - startRef.current); }, 500);
+    const interval = setInterval(() => setElapsed(Date.now() - startRef.current), 500);
     return () => clearInterval(interval);
-  }, [running]);
+  }, [pipelineRunning]);
 
-  if (!running) return null;
-
-  const ESTIMATED_TOTAL_MS = 160000;
-  const rawProgress = Math.min(elapsed / ESTIMATED_TOTAL_MS, 0.95);
-  const easedProgress = 1 - Math.pow(1 - rawProgress, 2);
-  const percent = Math.round(easedProgress * 100);
-
-  const steps = [
-    { at: 0, label: "Deduplication check" },
-    { at: 15000, label: "Research validation" },
-    { at: 30000, label: "Voice authenticity" },
-    { at: 45000, label: "Engagement optimization" },
-    { at: 60000, label: "SLOP detection" },
-    { at: 75000, label: "Editorial excellence" },
-    { at: 90000, label: "Perspective and risk" },
-    { at: 110000, label: "Scoring content" },
-    { at: 130000, label: "Human Voice Test" },
+  const STEPS = [
+    { label: "Deduplication", at: 0 },
+    { label: "Research validation", at: 15000 },
+    { label: "Voice authenticity", at: 30000 },
+    { label: "Engagement", at: 45000 },
+    { label: "SLOP detection", at: 60000 },
+    { label: "Editorial excellence", at: 75000 },
+    { label: "Perspective", at: 90000 },
+    { label: "Impact Score", at: 110000 },
+    { label: "Human Voice Test", at: 130000 },
   ];
-  const currentStep = [...steps].reverse().find(s => elapsed >= s.at)?.label || "Starting pipeline";
 
-  const elapsedSec = Math.floor(elapsed / 1000);
-  const minutes = Math.floor(elapsedSec / 60);
-  const seconds = elapsedSec % 60;
-  const timeLabel = minutes > 0 ? `${minutes}:${String(seconds).padStart(2, "0")}` : `${seconds}s`;
+  const currentStepIdx = STEPS.reduce((acc, s, i) => elapsed >= s.at ? i : acc, 0);
+  const pipelineProgress = Math.min(elapsed / 160000, 0.95);
+  const easedPipeline = 1 - Math.pow(1 - pipelineProgress, 2);
+
+  const formatStatuses = selectedFormats.map(f => ({
+    name: f,
+    status: formatDrafts[f]?.status || "pending",
+  }));
+  const allFormatsComplete = formatStatuses.every(f => f.status === "done" || f.status === "error");
+
+  const minutes = Math.floor(elapsed / 60000);
+  const seconds = Math.floor((elapsed % 60000) / 1000);
+  const timeStr = minutes > 0 ? `${minutes}:${String(seconds).padStart(2, "0")}` : `${seconds}s`;
 
   return (
-    <div style={{ padding: "40px 28px" }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>
-        Running 7 quality checkpoints
+    <div style={{ padding: "32px 28px", maxWidth: 600 }}>
+      {/* Format Adaptation */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.03em", marginBottom: 12 }}>
+          {allFormatsComplete ? "Formats adapted" : "Adapting formats"}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+          {formatStatuses.map((f, i) => (
+            <div
+              key={f.name}
+              className="progress-card"
+              style={{
+                padding: "10px 14px", borderRadius: 8,
+                border: "1px solid var(--line)",
+                background: f.status === "done" ? "rgba(74,144,217,0.06)" : "var(--surface)",
+                transition: "all 0.4s ease",
+                animationDelay: `${i * 100}ms`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  width: 16, height: 16, borderRadius: "50%",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: f.status === "done" ? "var(--blue)" : f.status === "generating" ? "var(--gold-bright)" : "var(--line)",
+                  transition: "all 0.4s ease",
+                }}>
+                  {f.status === "done" && (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  )}
+                  {f.status === "generating" && (
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "white", animation: "pulse-dot 1s ease-in-out infinite" }} />
+                  )}
+                </div>
+                <span style={{
+                  fontSize: 12, fontWeight: f.status === "generating" ? 600 : 400,
+                  color: f.status === "done" ? "var(--blue)" : f.status === "generating" ? "var(--fg)" : "var(--fg-3)",
+                  transition: "all 0.3s ease",
+                }}>
+                  {f.name}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 16 }}>
-        {currentStep} ({timeLabel})
-      </div>
-      <div style={{ width: "100%", height: 4, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
-        <div style={{
-          height: "100%", borderRadius: 2,
-          background: "var(--gold-bright)",
-          width: `${percent}%`,
-          transition: "width 0.5s ease-out",
-        }} />
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, fontSize: 10, color: "var(--fg-3)" }}>
-        <span>7 checkpoints + Impact Score + Human Voice Test</span>
-        <span>{percent}%</span>
+
+      {/* Quality Pipeline */}
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.03em" }}>Quality pipeline</div>
+          <span style={{ fontSize: 10, color: "var(--fg-3)" }}>{timeStr}</span>
+        </div>
+        <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden", marginBottom: 16 }}>
+          <div style={{ height: "100%", borderRadius: 2, background: "var(--gold-bright)", width: `${Math.round(easedPipeline * 100)}%`, transition: "width 0.5s ease-out" }} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {STEPS.map((step, i) => {
+            const isActive = i === currentStepIdx;
+            const isDone = i < currentStepIdx;
+            return (
+              <div key={step.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0", opacity: isDone ? 0.4 : isActive ? 1 : 0.25, transition: "all 0.4s ease" }}>
+                <div style={{
+                  width: 14, height: 14, borderRadius: "50%",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: isDone ? "none" : isActive ? "2px solid var(--gold-bright)" : "1px solid var(--line)",
+                  background: isDone ? "var(--gold-bright)" : "transparent",
+                  transition: "all 0.3s ease",
+                }}>
+                  {isDone && (
+                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="var(--bg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  )}
+                  {isActive && (
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--gold-bright)" }} />
+                  )}
+                </div>
+                <span style={{ fontSize: 11, fontWeight: isActive ? 600 : 400, color: isActive ? "var(--fg)" : "var(--fg-3)" }}>{step.label}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -1760,7 +1829,7 @@ function StageReview({
       {/* Draft preview + improve cards */}
       <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
         {running ? (
-          <PipelineProgress running={running} />
+          <ReviewProgress pipelineRunning={running} formatDrafts={formatDrafts} selectedFormats={tabs} />
         ) : (
           <>
             {(() => {
