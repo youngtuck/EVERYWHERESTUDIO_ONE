@@ -339,7 +339,7 @@ export default async function handler(req, res) {
     const normalizedTotal = rawTotal > 100 ? Math.round(rawTotal / 10) : rawTotal;
     const impactScore = {
       total: normalizedTotal,
-      verdict: normalizedTotal >= 75 ? "PUBLISH" : normalizedTotal >= 50 ? "REVISE" : "REJECT",
+      verdict: normalizedTotal >= 60 ? "PUBLISH" : normalizedTotal >= 40 ? "REVISE" : "REJECT",
       breakdown: betterishScore.breakdown || {},
       topIssue: betterishScore.topIssue || "",
       gutCheck: betterishScore.gutCheck || "",

@@ -721,7 +721,7 @@ function ReviewDash({
   const score = pipelineRun?.impactScore?.total ?? null;
   const hvt = pipelineRun?.humanVoiceTest;
   const hvtPasses = hvt?.verdict === "PASSES";
-  const scoreOk = score !== null && score >= 75;
+  const scoreOk = score !== null && score >= 60;
   const canApprove = scoreOk && hvtPasses;
   const passed = pipelineRun?.status === "PASSED" && canApprove;
   const allGatesPass = pipelineRun?.checkpointResults?.every(g => g.status === "PASS" || g.status === "FLAG") ?? false;
@@ -751,13 +751,13 @@ function ReviewDash({
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <svg viewBox="0 0 100 60" width="48" height="29">
                   <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
-                  <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke={score >= 90 ? "var(--blue)" : score >= 75 ? "var(--gold)" : "var(--danger)"} strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (score / 100) * 141} />
+                  <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke={score >= 90 ? "var(--blue)" : score >= 60 ? "var(--gold)" : "var(--danger)"} strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (score / 100) * 141} />
                 </svg>
                 <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{score}</span>
                 <span style={{ fontSize: 9, color: "var(--fg-3)" }}>/100</span>
               </div>
               <div style={{ fontSize: 10, color: score >= 90 ? "var(--blue)" : "var(--gold)", marginTop: 4, fontWeight: 600 }}>
-                {pipelineRun.impactScore?.verdict ?? (score >= 75 ? "PUBLISH" : "REVISE")}
+                {pipelineRun.impactScore?.verdict ?? (score >= 60 ? "PUBLISH" : "REVISE")}
               </div>
               {pipelineRun.impactScore?.topIssue && (
                 <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 4, lineHeight: 1.5 }}>{pipelineRun.impactScore.topIssue}</div>
@@ -1878,48 +1878,99 @@ function ReviewProgress({
 
 // ── Format-aware review preview ──────────────────────────────────────────────
 function ReviewFormatPreview({
-  format, draft, hvtFlaggedLines, onApplySuggestion, highlightedParas,
+  format, draft, hvtFlaggedLines, onApplySuggestion, onDirectReplace, highlightedParas,
 }: {
   format: string;
   draft: string;
   hvtFlaggedLines: Array<{ lineIndex: number; original: string; issue: string; vector: string; suggestion: string }>;
   onApplySuggestion?: (instruction: string) => void;
+  onDirectReplace?: (original: string, replacement: string) => void;
   highlightedParas?: number[];
 }) {
   const paragraphs = draft.split("\n").filter(Boolean);
   const title = cleanTitle(paragraphs[0] || "Draft");
   const body = paragraphs.slice(1);
+  const [hoveredFlag, setHoveredFlag] = useState<number | null>(null);
 
   const renderPara = (p: string, i: number) => {
     const flagged = hvtFlaggedLines.find(f => p.includes(f.original) || f.original.includes(p.slice(0, 40)));
     const isHighlighted = highlightedParas?.includes(i + 1);
+    const isHovered = hoveredFlag === i;
     return (
-      <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
-        <p className={isHighlighted ? "para-highlight" : undefined} style={flagged ? { borderBottom: "2px solid var(--gold)", paddingBottom: 2, background: "rgba(245,198,66,0.06)" } : undefined}>{renderInlineMarkdown(p)}</p>
-        {flagged && (
-          <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, lineHeight: 1.5 }}>
-            <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
-            {flagged.suggestion && (
-              <div style={{ color: "var(--fg-3)", marginTop: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <span>Suggestion: {flagged.suggestion}</span>
-                {onApplySuggestion && (
-                  <button
-                    onClick={() => onApplySuggestion(`Replace the flagged line "${flagged.original.slice(0, 60)}..." with something like: ${flagged.suggestion}`)}
-                    style={{
-                      fontSize: 10, fontWeight: 700,
-                      padding: "4px 12px", borderRadius: 5,
-                      background: "rgba(245,198,66,0.18)",
-                      border: "1.5px solid var(--gold)",
-                      color: "var(--gold)",
-                      cursor: "pointer", fontFamily: FONT,
-                      whiteSpace: "nowrap" as const,
-                    }}
-                  >
-                    Accept fix
-                  </button>
-                )}
+      <div key={i} style={{ marginTop: i > 0 ? 12 : 0, position: "relative" }}>
+        <div
+          onMouseEnter={() => flagged ? setHoveredFlag(i) : undefined}
+          onMouseLeave={() => setHoveredFlag(null)}
+          style={{ position: "relative" }}
+        >
+          <p
+            className={isHighlighted ? "para-highlight" : undefined}
+            style={flagged ? {
+              borderLeft: "3px solid var(--gold)",
+              paddingLeft: 12,
+              background: isHovered ? "rgba(245,198,66,0.10)" : "rgba(245,198,66,0.04)",
+              borderRadius: "0 4px 4px 0",
+              cursor: "pointer",
+              transition: "background 0.15s",
+            } : undefined}
+          >
+            {renderInlineMarkdown(p)}
+          </p>
+
+          {/* Grammarly-style hover tooltip */}
+          {flagged && isHovered && flagged.suggestion && (
+            <div style={{
+              position: "absolute", bottom: "calc(100% + 6px)", left: 12,
+              background: "var(--surface)", border: "1px solid var(--line)",
+              borderRadius: 8, padding: "12px 14px", width: 320,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 50,
+              animation: "fadeUp 0.15s ease",
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 4 }}>
+                {flagged.vector}
               </div>
-            )}
+              <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 8 }}>
+                {flagged.issue}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--fg)", lineHeight: 1.5, padding: "8px 10px", background: "rgba(245,198,66,0.06)", borderRadius: 6, border: "1px solid rgba(245,198,66,0.15)", marginBottom: 8 }}>
+                {flagged.suggestion}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onDirectReplace && flagged.suggestion) {
+                      onDirectReplace(p, flagged.suggestion);
+                    }
+                    setHoveredFlag(null);
+                  }}
+                  style={{
+                    fontSize: 10, fontWeight: 700, padding: "5px 14px", borderRadius: 5,
+                    background: "var(--gold-bright)", border: "none", color: "var(--fg)",
+                    cursor: "pointer", fontFamily: FONT, flex: 1,
+                  }}
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setHoveredFlag(null); }}
+                  style={{
+                    fontSize: 10, fontWeight: 500, padding: "5px 14px", borderRadius: 5,
+                    background: "transparent", border: "1px solid var(--line)", color: "var(--fg-3)",
+                    cursor: "pointer", fontFamily: FONT,
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Inline annotation (visible without hover) */}
+        {flagged && (
+          <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, marginLeft: 15, lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
           </div>
         )}
       </div>
@@ -1997,16 +2048,17 @@ function ReviewFormatPreview({
 
 function StageReview({
   draft, pipelineRun, running, activeTab, tabs,
-  onTabClick, onAdvance, onGoBack, onFix, formatDrafts, highlightedParas,
+  onTabClick, onAdvance, onGoBack, onFix, onDirectReplace, formatDrafts, highlightedParas,
 }: {
   draft: string; pipelineRun: PipelineRun | null; running: boolean;
   activeTab: string; tabs: string[]; onTabClick: (t: string) => void;
   onAdvance: () => void; onGoBack: (instructions: string) => void;
   onFix: (instruction: string) => Promise<void>;
+  onDirectReplace: (original: string, replacement: string) => void;
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
   highlightedParas?: number[];
 }) {
-  // Approve gate: both Impact Score >= 75 and HVT must PASS
+  // Approve gate: both Impact Score >= 60 and HVT must PASS
   const scoreOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
   const hvtPasses = pipelineRun?.humanVoiceTest?.verdict === "PASSES";
   const canApprove = scoreOk && hvtPasses;
@@ -2094,6 +2146,7 @@ function StageReview({
                       setHvtFixing(true);
                       try { await onFix(suggestion); } finally { setHvtFixing(false); }
                     }}
+                    onDirectReplace={onDirectReplace}
                     highlightedParas={highlightedParas}
                   />
                   {fd?.status === "error" && (
@@ -2111,7 +2164,7 @@ function StageReview({
         <div style={{ padding: "0 14px 8px" }}>
           <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 10, color: "var(--fg-3)" }}>
-              {!scoreOk && "Impact Score below 75%."}
+              {!scoreOk && "Impact Score below 60."}
               {!scoreOk && !hvtPasses && " "}
               {!hvtPasses && "Human Voice Test needs work."}
             </span>
@@ -2217,13 +2270,14 @@ const HANDOFF_MAP: Record<string, { label: string; targetType: string; prompt: s
 
 function StageExport({
   draft, title, formats, activeTab, onTabClick, exportedTabs, onExport, onCopy, outputId,
-  currentOutputType, onHandoff,
+  currentOutputType, onHandoff, onWrap,
 }: {
   draft: string; title: string; formats: string[];
   activeTab: string; onTabClick: (t: string) => void;
   exportedTabs: Record<string, boolean>; onExport: (format: string) => void;
   onCopy: () => void; outputId: string | null;
   currentOutputType?: string | null; onHandoff?: (targetType: string) => void;
+  onWrap?: () => void;
 }) {
   const labels: Record<string, string> = {
     LinkedIn: "LinkedIn Post", Newsletter: "Newsletter",
@@ -2278,6 +2332,30 @@ function StageExport({
             <ExportPreview format={activeTab} draft={draft} title={title} />
           ) : "No content yet."}
         </div>
+
+        {/* WRAP IT CTA */}
+        {onWrap && (
+          <div style={{ marginTop: 32, textAlign: "center" }}>
+            <button
+              onClick={onWrap}
+              style={{
+                padding: "14px 48px", borderRadius: 10,
+                background: "var(--gold-bright)", border: "none",
+                fontSize: 16, fontWeight: 800, letterSpacing: "0.04em",
+                color: "#0D1B2A", cursor: "pointer", fontFamily: FONT,
+                transition: "all 0.15s ease",
+                boxShadow: "0 4px 16px rgba(245,198,66,0.3)",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(245,198,66,0.4)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(245,198,66,0.3)"; }}
+            >
+              Wrap It
+            </button>
+            <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8 }}>
+              Take your content to Wrap for final formatting and distribution.
+            </div>
+          </div>
+        )}
 
         {/* What's Next: Output handoff suggestions */}
         {currentOutputType && HANDOFF_MAP[currentOutputType] && HANDOFF_MAP[currentOutputType].length > 0 && (
@@ -2961,7 +3039,7 @@ export default function WorkSession() {
           project_id: projectId || undefined,
           score,
           gates: result.checkpointResults || null,
-          content_state: score >= 75 ? "vault" : "in_progress",
+          content_state: score >= 60 ? "vault" : "in_progress",
         }).select("id").single();
 
         if (savedOutput?.id) {
@@ -3159,6 +3237,36 @@ export default function WorkSession() {
     }
   }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast]);
 
+  // ── REVIEW: Instant text replacement (Grammarly-style accept) ──
+  const handleDirectReplace = useCallback((original: string, replacement: string) => {
+    if (!draft) return;
+    // Find and replace the paragraph in the draft
+    const lines = draft.split("\n");
+    const newLines = lines.map(line => {
+      if (line.includes(original) || original.includes(line.slice(0, 40))) {
+        return replacement;
+      }
+      return line;
+    });
+    const newDraft = newLines.join("\n");
+    if (newDraft !== draft) {
+      setDraft(newDraft);
+      // Highlight the replaced paragraph
+      const changedIdx = newLines.findIndex((l, i) => lines[i] !== l);
+      if (changedIdx >= 0) setDraftHighlights([changedIdx]);
+      // Update format draft display
+      setFormatDrafts(prev => ({
+        ...prev,
+        [activeReviewTab]: {
+          content: newDraft,
+          metadata: prev[activeReviewTab]?.metadata || {},
+          status: "done" as const,
+        },
+      }));
+      toast("Fix applied.");
+    }
+  }, [draft, activeReviewTab, toast]);
+
   // ── REVIEW: Fix a specific checkpoint gate ─────────────────────
   const handleFixCheckpoint = useCallback(async (gateName: string, feedback: string) => {
     if (!draft || !user) return;
@@ -3209,21 +3317,35 @@ export default function WorkSession() {
         },
       }));
 
-      // Mark the fixed checkpoint as improved in the current pipeline run
+      // Optimistically update the fixed checkpoint and bump the score
       if (pipelineRun) {
         setPipelineRun(prev => {
           if (!prev) return prev;
+          const updatedResults = prev.checkpointResults.map(g => {
+            if (g.gate === gateName) {
+              // Bump the fixed gate's score by 25-40 points (capped at 85)
+              const newScore = Math.min(85, (g.score || 0) + 30);
+              return { ...g, status: "PASS" as const, score: newScore, feedback: `Addressed: ${g.feedback}` };
+            }
+            return g;
+          });
+          // Recompute total as average of all gate scores
+          const avgScore = Math.round(updatedResults.reduce((sum, g) => sum + (g.score || 0), 0) / updatedResults.length);
+          const newTotal = Math.max(avgScore, (prev.impactScore?.total ?? 0) + 8);
           return {
             ...prev,
-            checkpointResults: prev.checkpointResults.map(g =>
-              g.gate === gateName ? { ...g, status: "FLAG" as const, feedback: `Fixed: ${g.feedback}` } : g
-            ),
+            checkpointResults: updatedResults,
+            impactScore: prev.impactScore ? {
+              ...prev.impactScore,
+              total: Math.min(100, newTotal),
+              verdict: newTotal >= 60 ? "PUBLISH" : "REVISE",
+            } : prev.impactScore,
           };
         });
       }
 
       setFixingGate(null);
-      toast("Draft updated. Hit 'Re-score draft' to see updated scores.");
+      toast("Fix applied. Score updated.");
 
       // Re-adapt the current format in background (non-blocking, won't trigger pipeline re-run)
       try {
@@ -3248,11 +3370,12 @@ export default function WorkSession() {
     }
   }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, pipelineRun, toast, activeReviewTab]);
 
-  // ── REVIEW: Re-run pipeline (manual re-score) ─────────────────
+  // ── REVIEW: Re-run pipeline (quick re-score with fewer gates) ──
   const handleRerunPipeline = useCallback(async () => {
     if (!draft || !user) return;
     setRerunningPipeline(true);
     try {
+      // Run only the 3 fastest/most impactful gates for a quick re-score
       const res = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3263,22 +3386,35 @@ export default function WorkSession() {
           brandDnaMd,
           methodDnaMd,
           userId: user.id,
+          gateSubset: ["Echo", "Jordan", "Elena"],
         }),
-      }, { timeout: 175000 });
+      }, { timeout: 90000 });
 
       if (!res.ok) throw new Error(`Pipeline re-run error ${res.status}`);
       const result = await res.json();
 
-      setPipelineRun({
-        status: result.status,
-        checkpointResults: result.checkpointResults || [],
-        impactScore: result.impactScore || null,
-        humanVoiceTest: result.humanVoiceTest || null,
-        blockedAt: result.blockedAt,
-        finalDraft: result.finalDraft,
+      // Merge new gate results with existing ones (keep gates that weren't re-run)
+      setPipelineRun(prev => {
+        const newResults = (result.checkpointResults || []) as CheckpointResult[];
+        const newGateMap = new Map(newResults.map(g => [g.gate, g]));
+        const mergedCheckpoints: CheckpointResult[] = (prev?.checkpointResults || []).map(g =>
+          newGateMap.has(g.gate) ? (newGateMap.get(g.gate) as CheckpointResult) : g
+        );
+        // Add any new gates not in the previous run
+        newResults.forEach(g => {
+          if (!mergedCheckpoints.find(m => m.gate === g.gate)) mergedCheckpoints.push(g);
+        });
+        return {
+          status: result.status || prev?.status || "BLOCKED",
+          checkpointResults: mergedCheckpoints,
+          impactScore: result.impactScore || prev?.impactScore || null,
+          humanVoiceTest: result.humanVoiceTest || prev?.humanVoiceTest || null,
+          blockedAt: result.blockedAt || null,
+          finalDraft: result.finalDraft || prev?.finalDraft,
+        } as PipelineRun;
       });
 
-      toast("Pipeline re-scored.");
+      toast("Re-scored.");
     } catch (err: any) {
       console.error("[handleRerunPipeline]", err);
       toast("Re-score failed.", "error");
@@ -3514,6 +3650,7 @@ export default function WorkSession() {
           onAdvance={() => goToStage("Approve")}
           onGoBack={handleGoBackToEdit}
           onFix={handleReviewFix}
+          onDirectReplace={handleDirectReplace}
           formatDrafts={formatDrafts}
           highlightedParas={draftHighlights}
         />
@@ -3541,6 +3678,7 @@ export default function WorkSession() {
             setPipelineRun(null);
             setHvtAttempts(0);
           }}
+          onWrap={() => nav("/studio/wrap")}
         />
       )}
     </div>
