@@ -1668,11 +1668,12 @@ function ReviewProgress({
 
 // ── Format-aware review preview ──────────────────────────────────────────────
 function ReviewFormatPreview({
-  format, draft, hvtFlaggedLines,
+  format, draft, hvtFlaggedLines, onApplySuggestion,
 }: {
   format: string;
   draft: string;
   hvtFlaggedLines: Array<{ lineIndex: number; original: string; issue: string; vector: string; suggestion: string }>;
+  onApplySuggestion?: (instruction: string) => void;
 }) {
   const paragraphs = draft.split("\n").filter(Boolean);
   const title = cleanTitle(paragraphs[0] || "Draft");
@@ -1687,7 +1688,25 @@ function ReviewFormatPreview({
           <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, lineHeight: 1.5 }}>
             <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
             {flagged.suggestion && (
-              <div style={{ color: "var(--fg-3)", marginTop: 2 }}>Suggestion: {flagged.suggestion}</div>
+              <div style={{ color: "var(--fg-3)", marginTop: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span>Suggestion: {flagged.suggestion}</span>
+                {onApplySuggestion && (
+                  <button
+                    onClick={() => onApplySuggestion(`Replace the flagged line "${flagged.original.slice(0, 60)}..." with something like: ${flagged.suggestion}`)}
+                    style={{
+                      fontSize: 9, fontWeight: 600,
+                      padding: "2px 8px", borderRadius: 4,
+                      background: "rgba(245,198,66,0.15)",
+                      border: "1px solid rgba(245,198,66,0.3)",
+                      color: "var(--gold-bright)",
+                      cursor: "pointer", fontFamily: FONT,
+                      whiteSpace: "nowrap" as const,
+                    }}
+                  >
+                    Apply
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -1813,6 +1832,16 @@ function StageReview({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+      {/* HVT suggestion fixing indicator */}
+      {fixing === -1 && (
+        <div style={{
+          padding: "8px 20px", background: "rgba(245,198,66,0.08)",
+          borderBottom: "1px solid rgba(245,198,66,0.2)",
+          fontSize: 11, color: "var(--gold-bright)", fontWeight: 500, flexShrink: 0,
+        }}>
+          Applying suggestion...
+        </div>
+      )}
       {/* Format tabs with status dots */}
       <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--line)", padding: "0 20px", flexShrink: 0, background: "var(--bg)", overflowX: "auto" }}>
         {tabs.map(tab => (
@@ -1872,7 +1901,15 @@ function StageReview({
                   {metadata.subtitle && (
                     <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16 }}>{metadata.subtitle}</div>
                   )}
-                  <ReviewFormatPreview format={activeTab} draft={adaptedContent} hvtFlaggedLines={hvtFlaggedLines} />
+                  <ReviewFormatPreview
+                    format={activeTab}
+                    draft={adaptedContent}
+                    hvtFlaggedLines={hvtFlaggedLines}
+                    onApplySuggestion={async (suggestion) => {
+                      setFixing(-1);
+                      try { await onFix(suggestion); } finally { setFixing(null); }
+                    }}
+                  />
                   {fd?.status === "error" && (
                     <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 8 }}>Format adaptation unavailable. Showing original draft.</div>
                   )}
@@ -2767,24 +2804,56 @@ export default function WorkSession() {
 
   // ── REVIEW: Fix a specific improvement card ─────────────────────
   const handleReviewFix = useCallback(async (instruction: string) => {
-    if (!draft) return;
-    const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        conversationSummary: buildConvSummary(),
-        outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
-        originalDraft: draft,
-        revisionNotes: `Apply this specific improvement to the draft. Keep everything else the same. Only change what is necessary to address this note: ${instruction}`,
-        userId: user?.id,
-        maxTokens: 4096,
-      }),
-    }, { timeout: 90000 });
+    if (!draft) throw new Error("No draft to fix");
 
-    if (!res.ok) throw new Error(`Fix error ${res.status}`);
-    const data = await res.json();
-    if (data.content) setDraft(data.content);
-  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id]);
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: buildConvSummary(),
+          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          originalDraft: draft,
+          revisionNotes: `Apply this specific improvement to the draft. Keep everything else the same. Only change what is necessary to address this note: ${instruction}`,
+          userId: user?.id,
+          maxTokens: 4096,
+        }),
+      }, { timeout: 90000 });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "Unknown error");
+        throw new Error(`Fix error ${res.status}: ${errText}`);
+      }
+
+      const data = await res.json();
+      if (data.content && data.content !== draft) {
+        setDraft(data.content);
+        toast("Draft updated.");
+
+        // Re-adapt the current format with the new draft
+        try {
+          const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ draft: data.content, format: activeReviewTab, voiceDnaMd, brandDnaMd, userId: user?.id }),
+          }, { timeout: 60000 });
+          if (adaptRes.ok) {
+            const adaptData = await adaptRes.json();
+            setFormatDrafts(prev => ({
+              ...prev,
+              [activeReviewTab]: { content: adaptData.content || data.content, metadata: adaptData.metadata || {}, status: "done" as const },
+            }));
+          }
+        } catch { /* Non-critical: format re-adaptation failed */ }
+      } else {
+        toast("No changes detected.");
+      }
+    } catch (err: any) {
+      console.error("[handleReviewFix]", err);
+      toast("Fix failed. Try again.", "error");
+      throw err;
+    }
+  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast]);
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
