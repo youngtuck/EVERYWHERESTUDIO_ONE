@@ -1742,19 +1742,42 @@ function StageReview({
 
       {!running && pipelineRun && canApprove && <AdvanceButton label="Approve &amp; Wrap &#8594;" onClick={onAdvance} />}
       {!running && pipelineRun && !canApprove && (
-        <div style={{ padding: "0 14px 8px", display: "flex", justifyContent: "flex-end" }}>
-          <button
-            disabled
-            style={{
-              padding: "8px 22px", borderRadius: 6,
-              background: "var(--surface)", border: "1px solid var(--line)",
-              fontSize: 12, fontWeight: 700, color: "var(--fg-3)",
-              cursor: "not-allowed", fontFamily: FONT, opacity: 0.6,
-            }}
-            title={!scoreOk ? "Impact Score must be 75% or higher" : "Human Voice Test must pass"}
-          >
-            Approve &amp; Wrap (blocked)
-          </button>
+        <div style={{ padding: "0 14px 8px" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 10, color: "var(--fg-3)" }}>
+              {!scoreOk && "Impact Score below 75%."}
+              {!scoreOk && !hvtPasses && " "}
+              {!hvtPasses && "Human Voice Test needs work."}
+            </span>
+            <button
+              disabled
+              style={{
+                padding: "8px 22px", borderRadius: 6,
+                background: "var(--surface)", border: "1px solid var(--line)",
+                fontSize: 12, fontWeight: 700, color: "var(--fg-3)",
+                cursor: "not-allowed", fontFamily: FONT, opacity: 0.6,
+              }}
+            >
+              Approve &amp; Wrap (blocked)
+            </button>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+            <button
+              onClick={onAdvance}
+              style={{
+                padding: "6px 16px", borderRadius: 6,
+                background: "transparent",
+                border: "1px solid var(--line)",
+                fontSize: 11, fontWeight: 500, color: "var(--fg-3)",
+                cursor: "pointer", fontFamily: FONT,
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.color = "var(--fg)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+            >
+              Export anyway
+            </button>
+          </div>
         </div>
       )}
 
