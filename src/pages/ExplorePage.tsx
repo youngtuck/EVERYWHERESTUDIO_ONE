@@ -1163,28 +1163,43 @@ export default function ExplorePage() {
       <WatchWorkWrapSection howRef={howRef} isMobile={isMobile} />
 
       {/* ── SECTION 07: QUALITY STANDARD (Light: #FFFFFF, blue accent) */}
-      <section ref={standardRef} style={{ padding: sectionPad, background: "var(--ew-white)" }}>
-        <div className="xp-inner">
-          <Reveal>
-            <div style={{ maxWidth: 640 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--ew-blue)", marginBottom: 16 }}>
+      <section ref={standardRef} style={{ padding: "140px 0", background: "var(--ew-white)" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px" }}>
+          <div style={{ marginLeft: isMobile ? 0 : "clamp(40px, 12vw, 160px)", maxWidth: 680 }}>
+            <Reveal direction="up" distance={20}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-blue)", marginBottom: 20 }}>
                 Quality Standard
               </div>
+            </Reveal>
+            <Reveal direction="none">
               <h2 style={{
-                fontSize: "clamp(28px, 3.5vw, 40px)",
+                fontSize: "clamp(32px, 5vw, 56px)",
                 fontWeight: 700,
                 lineHeight: 1.15,
                 letterSpacing: "-0.02em",
-                margin: "0 0 24px",
+                margin: "0 0 28px",
                 color: "var(--ew-text-dark)",
               }}>
-                Nothing ships unless it would fool a skeptic.
+                {"Nothing ships unless it would fool a skeptic.".split(" ").map((word, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      display: "inline-block",
+                      animation: `xpWordUp 0.6s ${EASE} ${i * 60}ms both`,
+                      marginRight: "0.25em",
+                    }}
+                  >
+                    {word}
+                  </span>
+                ))}
               </h2>
-              <p style={{ color: "var(--ew-text-body)", maxWidth: 580 }}>
+            </Reveal>
+            <Reveal direction="up" distance={20} delay={600}>
+              <p style={{ color: "var(--ew-text-body)", maxWidth: 520, fontSize: 16, lineHeight: 1.7 }}>
                 Before any content reaches you, a hostile reader runs through it. Looking for AI patterns, assembled phrases, anything that doesn't sound like a human made a real decision. If it fails, it doesn't ship. Not once. Not ever. AI slop is everywhere. This is the only standard that keeps your name off it.
               </p>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
         </div>
       </section>
 
