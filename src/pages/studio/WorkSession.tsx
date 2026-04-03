@@ -56,6 +56,50 @@ const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
 
 const TEMPLATES = ["Essay", "LinkedIn Post", "Newsletter Issue", "Podcast Script", "Case Study", "One-Pager", "Email"];
 
+/** Parse podcast script into structured sections from [OPEN], [HOOK], [BODY], [CLOSE] markers */
+function parsePodcastSections(draft: string): { open: string; hook: string; body: string[]; close: string } {
+  const sections: { open: string; hook: string; body: string[]; close: string } = {
+    open: "", hook: "", body: [], close: "",
+  };
+  // Split on section markers
+  const markerPattern = /\[(OPEN|HOOK|BODY|CLOSE|SEGMENT BREAK|PAUSE)\]/gi;
+  let currentSection = "";
+  let lastIndex = 0;
+  let match;
+  const chunks: Array<{ section: string; text: string }> = [];
+
+  // Find all markers and collect text between them
+  while ((match = markerPattern.exec(draft)) !== null) {
+    if (currentSection && lastIndex < match.index) {
+      const text = draft.slice(lastIndex, match.index).trim();
+      if (text) chunks.push({ section: currentSection, text });
+    }
+    currentSection = match[1].toUpperCase();
+    lastIndex = match.index + match[0].length;
+  }
+  // Remaining text after last marker
+  if (currentSection && lastIndex < draft.length) {
+    const text = draft.slice(lastIndex).trim();
+    if (text) chunks.push({ section: currentSection, text });
+  }
+
+  // If no markers found, treat entire text as body
+  if (chunks.length === 0) {
+    const lines = draft.split("\n").filter(Boolean);
+    return { open: lines[0] || "", hook: lines[1] || "", body: lines.slice(2), close: "" };
+  }
+
+  for (const chunk of chunks) {
+    switch (chunk.section) {
+      case "OPEN": sections.open = chunk.text; break;
+      case "HOOK": sections.hook = chunk.text; break;
+      case "CLOSE": sections.close = chunk.text; break;
+      default: sections.body.push(chunk.text); break;
+    }
+  }
+  return sections;
+}
+
 /** Strip markdown bold/italic markers from title text */
 function cleanTitle(raw: string): string {
   return raw
@@ -66,6 +110,36 @@ function cleanTitle(raw: string): string {
     .replace(/_(.+?)_/g, "$1")
     .replace(/^#+\s*/, "")
     .trim();
+}
+
+/** Render inline markdown (bold, italic, blockquote) as React elements */
+function renderInlineMarkdown(text: string): React.ReactNode {
+  // Handle blockquote prefix
+  const isBlockquote = text.startsWith("> ");
+  const content = isBlockquote ? text.slice(2) : text;
+  // Handle heading prefixes (strip #)
+  const headingMatch = content.match(/^(#{1,3})\s+(.+)$/);
+  if (headingMatch) {
+    const level = headingMatch[1].length;
+    const headText = headingMatch[2];
+    const fontSize = level === 1 ? 18 : level === 2 ? 15 : 14;
+    return <span style={{ fontWeight: 700, fontSize, color: "var(--fg)" }}>{headText}</span>;
+  }
+  // Split on **bold** and *italic* markers
+  const parts = content.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  const rendered = parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i} style={{ fontWeight: 700, color: "var(--fg)" }}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+  if (isBlockquote) {
+    return <span style={{ borderLeft: "3px solid var(--gold-bright)", paddingLeft: 12, display: "block", fontStyle: "italic", color: "var(--fg-2)" }}>{rendered}</span>;
+  }
+  return <>{rendered}</>;
 }
 
 /** Map legacy agent names to function labels for old saved outputs */
@@ -583,8 +657,8 @@ function EditDash({
 
 // ── Checkpoint row (expandable for FAIL/FLAG) ────────────────
 function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFixing: boolean; onFix: () => void }) {
-  const [expanded, setExpanded] = useState(false);
   const canExpand = gate.status === "FAIL" || gate.status === "FLAG";
+  const [expanded, setExpanded] = useState(gate.status === "FAIL");
   const icon = gate.status === "PASS" ? "✓" : gate.status === "FLAG" ? "⚑" : "✗";
   const iconColor = gate.status === "PASS" ? "var(--blue)" : gate.status === "FLAG" ? "var(--gold)" : "var(--danger)";
 
@@ -660,8 +734,8 @@ function ReviewDash({
           <DpLabel>Running checkpoints</DpLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
             {["Deduplication", "Research Validation", "Voice Authenticity", "Engagement Optimization", "SLOP Detection", "Editorial Excellence", "Perspective & Risk"].map((name, i) => (
-              <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--fg-3)" }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--line-2)", animation: `pulse ${0.5 * i + 1}s infinite` }} />
+              <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--fg-2)" }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--fg-3)", animation: `pulse ${0.5 * i + 1}s infinite` }} />
                 {name}
               </div>
             ))}
@@ -782,12 +856,12 @@ function ReviewDash({
         disabled={!canExport || running}
         style={{
           width: "100%", padding: 10, borderRadius: 6,
-          background: allExported ? "rgba(74,144,217,0.12)" : canExport ? "var(--gold-bright)" : "var(--surface)",
-          border: allExported ? "1px solid rgba(74,144,217,0.3)" : canExport ? "none" : "1px solid var(--line)",
+          background: allExported ? "rgba(74,144,217,0.12)" : canExport ? "var(--gold-bright)" : "var(--bg-2)",
+          border: allExported ? "1px solid rgba(74,144,217,0.3)" : canExport ? "none" : "1.5px solid var(--line-2)",
           fontSize: 12, fontWeight: 700,
-          color: allExported ? "var(--blue)" : canExport ? "var(--fg)" : "var(--fg-3)",
+          color: allExported ? "var(--blue)" : canExport ? "var(--fg)" : "var(--fg-2)",
           cursor: canExport ? "pointer" : "not-allowed",
-          opacity: !pipelineRun && !running ? 0.4 : 1,
+          opacity: !pipelineRun && !running ? 0.5 : 1,
           transition: "all 0.2s", fontFamily: FONT,
         }}
       >
@@ -1821,7 +1895,7 @@ function ReviewFormatPreview({
     const isHighlighted = highlightedParas?.includes(i + 1);
     return (
       <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
-        <p className={isHighlighted ? "para-highlight" : undefined} style={flagged ? { borderBottom: "2px solid var(--gold)", paddingBottom: 2, background: "rgba(245,198,66,0.06)" } : undefined}>{p}</p>
+        <p className={isHighlighted ? "para-highlight" : undefined} style={flagged ? { borderBottom: "2px solid var(--gold)", paddingBottom: 2, background: "rgba(245,198,66,0.06)" } : undefined}>{renderInlineMarkdown(p)}</p>
         {flagged && (
           <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, lineHeight: 1.5 }}>
             <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
@@ -1832,16 +1906,16 @@ function ReviewFormatPreview({
                   <button
                     onClick={() => onApplySuggestion(`Replace the flagged line "${flagged.original.slice(0, 60)}..." with something like: ${flagged.suggestion}`)}
                     style={{
-                      fontSize: 9, fontWeight: 600,
-                      padding: "2px 8px", borderRadius: 4,
-                      background: "rgba(245,198,66,0.15)",
-                      border: "1px solid rgba(245,198,66,0.3)",
-                      color: "var(--gold-bright)",
+                      fontSize: 10, fontWeight: 700,
+                      padding: "4px 12px", borderRadius: 5,
+                      background: "rgba(245,198,66,0.18)",
+                      border: "1.5px solid var(--gold)",
+                      color: "var(--gold)",
                       cursor: "pointer", fontFamily: FONT,
                       whiteSpace: "nowrap" as const,
                     }}
                   >
-                    Apply
+                    Accept fix
                   </button>
                 )}
               </div>
@@ -1853,23 +1927,34 @@ function ReviewFormatPreview({
   };
 
   if (format === "Podcast" || format === "Podcast Script") {
+    const podcast = parsePodcastSections(draft);
     return (
       <div className="draft-body">
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 16 }}>Podcast Script Preview</div>
-        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 48, flexShrink: 0, paddingTop: 3 }}>OPEN</span>
-          <div style={{ flex: 1 }}><p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>Hey, welcome back. Today I want to start with something that keeps coming up.</p></div>
-        </div>
-        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--gold-bright)", width: 48, flexShrink: 0, paddingTop: 3 }}>HOOK</span>
-          <div style={{ flex: 1 }}><p style={{ fontSize: 14, color: "var(--fg)", fontWeight: 600, lineHeight: 1.7 }}>{title}</p></div>
-        </div>
-        {body.map((p, i) => (
+        {podcast.open && (
+          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 48, flexShrink: 0, paddingTop: 3 }}>OPEN</span>
+            <div style={{ flex: 1 }}><p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.open)}</p></div>
+          </div>
+        )}
+        {podcast.hook && (
+          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--gold-bright)", width: 48, flexShrink: 0, paddingTop: 3 }}>HOOK</span>
+            <div style={{ flex: 1 }}><p style={{ fontSize: 14, color: "var(--fg)", fontWeight: 600, lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.hook)}</p></div>
+          </div>
+        )}
+        {podcast.body.map((p, i) => (
           <div key={i} style={{ display: "flex", gap: 12, marginTop: 10 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 48, flexShrink: 0, paddingTop: 3 }}>{i === body.length - 1 ? "CLOSE" : "BODY"}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 48, flexShrink: 0, paddingTop: 3 }}>BODY</span>
             <div style={{ flex: 1 }}>{renderPara(p, i)}</div>
           </div>
         ))}
+        {podcast.close && (
+          <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 48, flexShrink: 0, paddingTop: 3 }}>CLOSE</span>
+            <div style={{ flex: 1 }}><p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.close)}</p></div>
+          </div>
+        )}
       </div>
     );
   }
@@ -2047,14 +2132,14 @@ function StageReview({
               onClick={onAdvance}
               style={{
                 padding: "6px 16px", borderRadius: 6,
-                background: "transparent",
-                border: "1px solid var(--line)",
-                fontSize: 11, fontWeight: 500, color: "var(--fg-3)",
+                background: "var(--bg-2)",
+                border: "1.5px solid var(--line-2)",
+                fontSize: 11, fontWeight: 600, color: "var(--fg-2)",
                 cursor: "pointer", fontFamily: FONT,
                 transition: "all 0.15s ease",
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.color = "var(--fg)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.color = "var(--fg)"; e.currentTarget.style.background = "rgba(245,198,66,0.08)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg-2)"; e.currentTarget.style.background = "var(--bg-2)"; }}
             >
               Export anyway
             </button>
@@ -2233,25 +2318,36 @@ function ExportPreview({ format, draft, title }: { format: string; draft: string
   const bodyParas = paragraphs.slice(1);
 
   if (format === "Podcast" || format === "Podcast Script") {
+    const podcast = parsePodcastSections(draft);
     return (
       <>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 14 }}>
           Podcast Script · {title}
         </div>
-        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>OPEN</span>
-          <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>Hey, welcome back. I want to start today with something I hear from almost every executive I work with.</p>
-        </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--gold)", width: 44, flexShrink: 0, paddingTop: 2 }}>HOOK</span>
-          <p style={{ fontSize: 13, color: "var(--fg)", fontWeight: 600, lineHeight: 1.7 }}>{firstLine}</p>
-        </div>
-        {bodyParas.slice(0, 3).map((p, i) => (
+        {podcast.open && (
+          <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>OPEN</span>
+            <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.open)}</p>
+          </div>
+        )}
+        {podcast.hook && (
+          <div style={{ display: "flex", gap: 12 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--gold)", width: 44, flexShrink: 0, paddingTop: 2 }}>HOOK</span>
+            <p style={{ fontSize: 13, color: "var(--fg)", fontWeight: 600, lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.hook)}</p>
+          </div>
+        )}
+        {podcast.body.map((p, i) => (
           <div key={i} style={{ display: "flex", gap: 12, marginTop: 10 }}>
             <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>BODY</span>
-            <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{p}</p>
+            <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{renderInlineMarkdown(p)}</p>
           </div>
         ))}
+        {podcast.close && (
+          <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>CLOSE</span>
+            <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.close)}</p>
+          </div>
+        )}
       </>
     );
   }
@@ -2267,7 +2363,7 @@ function ExportPreview({ format, draft, title }: { format: string; draft: string
           On the gap between having something to say and getting it into the world.
         </div>
         {bodyParas.map((p, i) => (
-          <p key={i} style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8, marginTop: i > 0 ? 12 : 0 }}>{p}</p>
+          <p key={i} style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8, marginTop: i > 0 ? 12 : 0 }}>{renderInlineMarkdown(p)}</p>
         ))}
       </>
     );
@@ -2282,7 +2378,7 @@ function ExportPreview({ format, draft, title }: { format: string; draft: string
         <div style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)", marginBottom: 12 }}>{firstLine}</div>
         <div style={{ width: 28, height: 3, background: "var(--gold-bright)", marginBottom: 16, borderRadius: 2 }} />
         {bodyParas.map((p, i) => (
-          <p key={i} style={{ marginTop: i > 0 ? 10 : 0 }}>{p}</p>
+          <p key={i} style={{ marginTop: i > 0 ? 10 : 0 }}>{renderInlineMarkdown(p)}</p>
         ))}
       </>
     );
@@ -2293,9 +2389,8 @@ function ExportPreview({ format, draft, title }: { format: string; draft: string
     <>
       <p style={{ fontWeight: 700, color: "var(--fg)", marginBottom: 10 }}>{firstLine}</p>
       {bodyParas.map((p, i) => (
-        <p key={i} style={{ marginTop: 10 }}>{p}</p>
+        <p key={i} style={{ marginTop: 10 }}>{renderInlineMarkdown(p)}</p>
       ))}
-      <p style={{ marginTop: 14, color: "var(--blue)", fontWeight: 600 }}>What does your infrastructure look like?</p>
     </>
   );
 }
@@ -2889,8 +2984,13 @@ export default function WorkSession() {
     selectedFormats.forEach(f => { exported[f] = true; });
     setExportedTabs(exported);
     setAllExported(true);
-    setTimeout(() => goToStage("Approve"), 1200);
-  }, [selectedFormats, goToStage]);
+    // Update Supabase record
+    if (outputId) {
+      supabase.from("outputs").update({ content_state: "vault" }).eq("id", outputId).then(() => {}, () => {});
+    }
+    // Navigate to Wrap after brief delay
+    setTimeout(() => nav("/studio/wrap"), 1200);
+  }, [selectedFormats, outputId, nav]);
 
   // ── REVIEW: Rerun Human Voice Test only ───────────────────────
   const handleRerunHVT = useCallback(async () => {
@@ -2938,13 +3038,19 @@ export default function WorkSession() {
 
   // ── EXPORT: Individual export ─────────────────────────────────
   const handleExport = useCallback(async (format: string) => {
-    setExportedTabs(prev => ({ ...prev, [format]: true }));
+    const updated = { ...exportedTabs, [format]: true };
+    setExportedTabs(updated);
     // If we have an outputId, update the record
     if (outputId) {
       await supabase.from("outputs").update({ content_state: "vault" }).eq("id", outputId);
     }
     toast(`${format} exported.`);
-  }, [outputId, toast]);
+    // Auto-navigate to Wrap when all formats are exported, or immediately for single-format sessions
+    const allDone = selectedFormats.every(f => updated[f]);
+    if (allDone) {
+      setTimeout(() => nav("/studio/wrap"), 1000);
+    }
+  }, [outputId, toast, exportedTabs, selectedFormats, nav]);
 
   // ── REVIEW → EDIT: Send back ──────────────────────────────────
   // ── NEW SESSION: Reset everything ────────────────────────────

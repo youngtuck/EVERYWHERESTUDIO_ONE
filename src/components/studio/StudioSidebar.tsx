@@ -314,9 +314,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               {/* Group label */}
               {!collapsed && (
                 <div style={{
-                  fontSize: 9, color: "var(--fg-3)",
+                  fontSize: 9, color: "var(--fg-2)",
                   letterSpacing: "0.1em", textTransform: "uppercase" as const,
                   padding: "10px 6px 3px", whiteSpace: "nowrap",
+                  fontWeight: 600,
                 }}>
                   {group.group}
                 </div>
@@ -347,7 +348,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         {isAdmin && (
           <>
             {!collapsed && (
-              <div style={{ fontSize: 9, color: "var(--fg-3)", letterSpacing: "0.1em", textTransform: "uppercase" as const, padding: "10px 6px 3px" }}>
+              <div style={{ fontSize: 9, color: "var(--fg-2)", letterSpacing: "0.1em", textTransform: "uppercase" as const, padding: "10px 6px 3px", fontWeight: 600 }}>
                 Admin
               </div>
             )}
@@ -425,7 +426,7 @@ function NavItem({
         width: 20, height: 20,
         display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0,
-        opacity: active ? 1 : 0.35,
+        opacity: active ? 1 : 0.55,
         color: "var(--fg)",
         transition: "opacity 0.1s",
       }}>
@@ -436,8 +437,8 @@ function NavItem({
       {!collapsed && (
         <span style={{
           fontSize: 12,
-          color: active ? "var(--fg)" : "var(--fg-3)",
-          fontWeight: active ? 600 : 400,
+          color: active ? "var(--fg)" : "var(--fg-2)",
+          fontWeight: active ? 600 : 500,
           whiteSpace: "nowrap",
           overflow: "hidden",
           flex: 1,

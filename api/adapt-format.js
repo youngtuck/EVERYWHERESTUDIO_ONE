@@ -78,6 +78,8 @@ PODCAST SCRIPT RULES (non-negotiable):
 - Include [SEGMENT BREAK] markers between major topic shifts.
 - Episode title: front-load the searchable topic. Under 60 characters.
 - No hashtags, no links, no visual formatting. This is audio.
+- TARGET LENGTH: 8-12 minutes of spoken content (approximately 1200-1800 words). Do NOT cut the content short. Include ALL key points from the original draft. A 90-second script is a failure. Expand, elaborate, and breathe life into every section.
+- The BODY section should be the bulk of the episode. Break it into 2-4 substantial segments with real depth, not summaries.
 
 OUTPUT FORMAT: Return the adapted script in this exact structure:
 EPISODE_TITLE: [title, under 60 chars]
@@ -187,10 +189,12 @@ export default async function handler(req, res) {
 
   try {
     const client = new Anthropic({ apiKey });
+    // Podcast scripts need more tokens for full-length episodes (target 8-12 min read)
+    const tokenLimit = (format === "Podcast" || format === "Podcast Script") ? 6144 : 4096;
     const response = await callWithRetry(() =>
       client.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 4096,
+        max_tokens: tokenLimit,
         system,
         messages: [{ role: "user", content: userContent }],
       }),

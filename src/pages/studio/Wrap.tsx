@@ -3,8 +3,8 @@
  * Shows user's actual exported content from Work sessions,
  * or a clean empty state if no content has been exported yet.
  */
-import { useState, useLayoutEffect, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useLayoutEffect, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
@@ -92,6 +92,7 @@ function WrapDashboard({
 // ── Main Component ─────────────────────────────────────────────
 export default function WrapPage() {
   const nav = useNavigate();
+  const location = useLocation();
   const { setDashContent, setDashOpen } = useShell();
   const { user } = useAuth();
 
@@ -100,20 +101,26 @@ export default function WrapPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState("LinkedIn Post");
 
-  // Load user's exported outputs
-  useEffect(() => {
+  // Fetch outputs from Supabase
+  const fetchOutputs = useCallback(() => {
     if (!user) { setLoading(false); return; }
+    setLoading(true);
     supabase
       .from("outputs")
       .select("id, title, content, output_type, created_at, score")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(10)
+      .limit(50)
       .then(({ data }) => {
         setOutputs((data as OutputItem[]) || []);
         setLoading(false);
       });
   }, [user]);
+
+  // Refetch every time the page is navigated to (location.key changes on each navigation)
+  useEffect(() => {
+    fetchOutputs();
+  }, [fetchOutputs, location.key]);
 
   const selectedOutput = outputs.find(o => o.id === selectedId) || null;
 
