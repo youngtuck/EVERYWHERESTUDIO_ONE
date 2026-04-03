@@ -144,11 +144,65 @@ const CSS = `
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   position: relative;
+  scroll-behavior: smooth;
 }
 
 /* em inherits section context: gold on dark, blue on light */
 .xp em { font-style: normal; }
 .xp a { color: inherit; text-decoration: none; }
+.xp button, .xp a { cursor: pointer; }
+
+/* Text selection: dark surface */
+.xp ::selection { background: rgba(245,198,66,0.3); color: white; }
+/* Light surface selection overrides */
+[data-nav-theme="light"] ::selection { background: rgba(74,144,217,0.2); color: #111; }
+
+/* Active press feedback on buttons */
+.xp button:active, .xp a:active { transform: scale(0.98) !important; transition-duration: 0.1s !important; }
+
+/* Section gradient transitions via pseudo-elements */
+.xp-grad-top-dark {
+  position: relative;
+}
+.xp-grad-top-dark::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy-rich) 100%);
+  pointer-events: none;
+}
+.xp-grad-top-navy {
+  position: relative;
+}
+.xp-grad-top-navy::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(180deg, var(--ew-offwhite) 0%, var(--ew-navy) 100%);
+  pointer-events: none;
+}
+.xp-grad-top-cta {
+  position: relative;
+}
+.xp-grad-top-cta::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy) 100%);
+  pointer-events: none;
+}
+
+/* Watson widget: showcase, not link */
+.xp-watson-widget { cursor: default; }
 
 /* Nav: starts transparent over dark hero, darkens on scroll */
 .xp-nav {
@@ -556,6 +610,14 @@ export default function ExplorePage() {
   const [navScrolled, setNavScrolled] = useState(false);
   const [navTheme, setNavTheme] = useState<"dark" | "light">("dark");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
+  const scrollProgress = useScrollProgress();
+
+  // Page load entrance
+  useEffect(() => {
+    const t = setTimeout(() => setPageLoaded(true), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   // Hero parallax + nav scroll state
   useEffect(() => {
@@ -598,8 +660,24 @@ export default function ExplorePage() {
   const sectionPad = isMobile ? "64px 0" : "120px 0";
 
   return (
-    <div className="xp">
+    <div className="xp" style={{
+      opacity: pageLoaded ? 1 : 0,
+      transition: `opacity 0.4s ${EASE}`,
+    }}>
       <style>{CSS}</style>
+
+      {/* Scroll progress indicator */}
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        height: 2,
+        width: `${scrollProgress * 100}%`,
+        background: navTheme === "dark" ? "var(--ew-gold)" : "var(--ew-blue)",
+        zIndex: 9999,
+        transition: "background 0.4s ease",
+        pointerEvents: "none",
+      }} />
 
       {/* ── NAV ──────────────────────────────────────────────── */}
       <nav style={{
@@ -980,9 +1058,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 03: WATSON (Dark: #1B263B, gold accent) ─────── */}
-      {/* Gradient transition from light to dark */}
-      <div style={{ height: 120, background: "linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy-rich) 100%)" }} />
-      <section data-nav-theme="dark" style={{ padding: "0 0 120px", background: "var(--ew-navy-rich)" }}>
+      <section className="xp-grad-top-dark" data-nav-theme="dark" style={{ padding: "0 0 120px", background: "var(--ew-navy-rich)", marginTop: 120 }}>
         <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 80 }}>
           <Reveal>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 20, textAlign: "center" }}>
@@ -1003,6 +1079,7 @@ export default function ExplorePage() {
           {/* Watson demo widget with magnetic hover */}
           <Reveal direction="scale" duration={1000}>
             <div
+              className="xp-watson-widget"
               style={{ perspective: 1000, maxWidth: 480, width: "100%", marginBottom: 56 }}
               onMouseMove={e => {
                 const el = e.currentTarget.firstElementChild as HTMLElement;
@@ -1321,11 +1398,10 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* Gradient transition: light to dark */}
-      <div style={{ height: 120, background: "linear-gradient(180deg, var(--ew-offwhite) 0%, var(--ew-navy) 100%)" }} />
-
       {/* ── SECTION 06: WATCH. WORK. WRAP. (Dark: #0D1B2A, gold accent) */}
-      <WatchWorkWrapSection howRef={howRef} isMobile={isMobile} />
+      <div className="xp-grad-top-navy" style={{ marginTop: 120 }}>
+        <WatchWorkWrapSection howRef={howRef} isMobile={isMobile} />
+      </div>
 
       {/* ── SECTION 07: QUALITY STANDARD (Light: #FFFFFF, blue accent) */}
       <section ref={standardRef} data-nav-theme="light" style={{ padding: "140px 0", background: "var(--ew-white)" }}>
@@ -1368,11 +1444,8 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* Gradient transition: light to dark */}
-      <div style={{ height: 120, background: "linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy) 100%)" }} />
-
       {/* ── SECTION 08+09: CLOSING CTA (Dark: #0D1B2A, gold accent) ── */}
-      <section data-nav-theme="dark" style={{ padding: "160px 0", background: "var(--ew-navy)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+      <section className="xp-grad-top-cta" data-nav-theme="dark" style={{ padding: "160px 0", background: "var(--ew-navy)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", marginTop: 120 }}>
         <div style={{ textAlign: "center", maxWidth: 800, padding: "0 32px" }}>
           {/* Anchor statement */}
           <Reveal>
