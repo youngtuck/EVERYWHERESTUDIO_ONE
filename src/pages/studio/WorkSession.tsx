@@ -3122,9 +3122,19 @@ export default function WorkSession() {
       const data = await res.json();
       if (data.content && data.content !== draft) {
         setDraft(data.content);
+
+        // Immediately update the displayed format draft so user sees the change
+        setFormatDrafts(prev => ({
+          ...prev,
+          [activeReviewTab]: {
+            content: data.content,
+            metadata: prev[activeReviewTab]?.metadata || {},
+            status: "done" as const,
+          },
+        }));
         toast("Draft updated.");
 
-        // Re-adapt the current format with the new draft
+        // Re-adapt the current format with the new draft (improves formatting)
         try {
           const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
             method: "POST",
@@ -3138,7 +3148,7 @@ export default function WorkSession() {
               [activeReviewTab]: { content: adaptData.content || data.content, metadata: adaptData.metadata || {}, status: "done" as const },
             }));
           }
-        } catch { /* Non-critical: format re-adaptation failed */ }
+        } catch { /* Non-critical: format re-adaptation failed, raw draft already shown */ }
       } else {
         toast("No changes detected.");
       }
@@ -3188,7 +3198,6 @@ export default function WorkSession() {
 
       setDraft(newDraft);
       setDraftHighlights(changedIndices);
-      toast("Draft updated.");
 
       // Immediately update current format tab so user sees the change
       setFormatDrafts(prev => ({
@@ -3200,58 +3209,44 @@ export default function WorkSession() {
         },
       }));
 
-      // Clear fixingGate now (revision done, pipeline re-run is a separate phase)
-      setFixingGate(null);
-
-      // Phase 3: Re-run pipeline in background
-      setPipelineRunning(true);
-      try {
-        const pipeRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            draft: newDraft,
-            outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
-            voiceDnaMd, brandDnaMd, methodDnaMd,
-            userId: user.id,
-          }),
-        }, { timeout: 175000 });
-
-        if (pipeRes.ok) {
-          const result = await pipeRes.json();
-          const oldScore = pipelineRun?.impactScore?.total ?? 0;
-          const newScore = result.impactScore?.total ?? 0;
-
-          setPipelineRun({
-            status: result.status,
-            checkpointResults: result.checkpointResults || [],
-            impactScore: result.impactScore || null,
-            humanVoiceTest: result.humanVoiceTest || null,
-            blockedAt: result.blockedAt,
-            finalDraft: result.finalDraft,
-          });
-
-          if (result.finalDraft && result.finalDraft !== newDraft) setDraft(result.finalDraft);
-
-          if (newScore > oldScore) toast(`Score improved: ${oldScore} → ${newScore}`);
-          else if (newScore === oldScore) toast(`Score unchanged at ${newScore}.`);
-          else toast(`Score: ${newScore} (was ${oldScore})`);
-        } else {
-          toast("Re-scoring failed. Use 'Re-score draft' to try again.", "error");
-        }
-      } finally {
-        setPipelineRunning(false);
+      // Mark the fixed checkpoint as improved in the current pipeline run
+      if (pipelineRun) {
+        setPipelineRun(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            checkpointResults: prev.checkpointResults.map(g =>
+              g.gate === gateName ? { ...g, status: "FLAG" as const, feedback: `Fixed: ${g.feedback}` } : g
+            ),
+          };
+        });
       }
 
-      // Re-adapt formats in background
-      handleFormatAdaptation();
+      setFixingGate(null);
+      toast("Draft updated. Hit 'Re-score draft' to see updated scores.");
+
+      // Re-adapt the current format in background (non-blocking, won't trigger pipeline re-run)
+      try {
+        const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ draft: newDraft, format: activeReviewTab, voiceDnaMd, brandDnaMd, userId: user.id }),
+        }, { timeout: 60000 });
+        if (adaptRes.ok) {
+          const adaptData = await adaptRes.json();
+          setFormatDrafts(prev => ({
+            ...prev,
+            [activeReviewTab]: { content: adaptData.content || newDraft, metadata: adaptData.metadata || {}, status: "done" as const },
+          }));
+        }
+      } catch { /* format re-adaptation is non-critical */ }
     } catch (err: any) {
       console.error("[handleFixCheckpoint]", err);
       toast("Fix failed. Try again.", "error");
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, pipelineRun, toast, handleFormatAdaptation, activeReviewTab]);
+  }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, pipelineRun, toast, activeReviewTab]);
 
   // ── REVIEW: Re-run pipeline (manual re-score) ─────────────────
   const handleRerunPipeline = useCallback(async () => {
