@@ -1329,11 +1329,34 @@ export default function ExplorePage() {
         `}</style>
       </section>
 
-      {/* ── FOOTER (Light: #F7F9FC) ─────────────────────────── */}
-      <footer style={{ background: "var(--ew-offwhite)" }}>
+      {/* ── WATERMARK + FOOTER (Light: #F7F9FC) ─────────────── */}
+      <div style={{ background: "var(--ew-offwhite)", overflow: "hidden", padding: "60px 0 0" }}>
+        <Reveal direction="up" distance={20} duration={1200}>
+          <div style={{
+            textAlign: "center",
+            pointerEvents: "none",
+            userSelect: "none",
+            lineHeight: 1,
+            marginBottom: -20,
+          }}>
+            <span style={{
+              fontSize: "clamp(120px, 18vw, 280px)",
+              fontWeight: 800,
+              fontFamily: "var(--font)",
+              color: "rgba(0,0,0,0.03)",
+              textTransform: "uppercase" as const,
+              letterSpacing: "-0.04em",
+              whiteSpace: "nowrap",
+            }}>
+              EVERYWHERE
+            </span>
+          </div>
+        </Reveal>
+      </div>
+      <footer style={{ background: "var(--ew-offwhite)", borderTop: "1px solid var(--ew-border-light)" }}>
         <div className="xp-footer">
           <Logo size="sm" variant="light" />
-          <span style={{ color: "var(--ew-text-body)" }}>&copy; 2026 Mixed Grill, LLC</span>
+          <span style={{ color: "#AAAAAA", fontSize: 11 }}>&copy; 2026 Mixed Grill, LLC</span>
         </div>
       </footer>
     </div>

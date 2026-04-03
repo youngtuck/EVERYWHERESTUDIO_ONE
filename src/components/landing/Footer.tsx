@@ -2,17 +2,41 @@ import Logo from "../Logo";
 import { useNavigate } from "react-router-dom";
 
 const CTA_MAILTO = "mailto:mark@coastalintelligence.ai?subject=EVERYWHERE%20Studio%3A%20Let's%20Talk";
-const linkStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  fontSize: 12,
-  color: "#64748B",
-  fontFamily: "'Afacad Flux', sans-serif",
-  transition: "color 0.15s",
-  letterSpacing: "-0.01em",
-  padding: 0,
-};
+const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+function FooterLink({ children, onClick, href }: { children: React.ReactNode; onClick?: () => void; href?: string }) {
+  const Tag = href ? "a" : "button";
+  const props: any = href
+    ? { href, style: { color: "#64748B", fontSize: 12, fontFamily: "'Afacad Flux', sans-serif", textDecoration: "none", background: "none", border: "none", padding: 0, cursor: "pointer", position: "relative", display: "inline-block", paddingBottom: 2 } }
+    : { onClick, style: { color: "#64748B", fontSize: 12, fontFamily: "'Afacad Flux', sans-serif", textDecoration: "none", background: "none", border: "none", padding: 0, cursor: "pointer", position: "relative", display: "inline-block", paddingBottom: 2 } };
+
+  return (
+    <Tag
+      {...props}
+      onMouseEnter={(e: React.MouseEvent<HTMLElement>) => {
+        e.currentTarget.style.color = "#111111";
+        const line = e.currentTarget.querySelector("[data-uline]") as HTMLElement;
+        if (line) line.style.width = "100%";
+      }}
+      onMouseLeave={(e: React.MouseEvent<HTMLElement>) => {
+        e.currentTarget.style.color = "#64748B";
+        const line = e.currentTarget.querySelector("[data-uline]") as HTMLElement;
+        if (line) line.style.width = "0";
+      }}
+    >
+      {children}
+      <span data-uline="" style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        height: 1,
+        width: 0,
+        background: "#111111",
+        transition: `width 0.2s ${EASE}`,
+      }} />
+    </Tag>
+  );
+}
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -22,41 +46,25 @@ export default function Footer() {
       <div style={{ maxWidth: 1120, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, paddingBottom: 20 }}>
         <Logo size="sm" variant="light" />
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          {[["Studio", "/studio/dashboard"], ["Sign in", "/auth"]].map(([l, p]) => (
-            <button
-              key={l}
-              onClick={() => navigate(p!)}
-              style={linkStyle}
-              onMouseEnter={e => { e.currentTarget.style.color = "#111111"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#64748B"; }}
-            >
-              {l}
-            </button>
-          ))}
-          <a
-            href="mailto:mark@coastalintelligence.ai"
-            style={{ ...linkStyle, textDecoration: "none" }}
-            onMouseEnter={e => { e.currentTarget.style.color = "#111111"; }}
-            onMouseLeave={e => { e.currentTarget.style.color = "#64748B"; }}
-          >
-            mark@coastalintelligence.ai
-          </a>
+          <FooterLink onClick={() => navigate("/studio/dashboard")}>Studio</FooterLink>
+          <FooterLink onClick={() => navigate("/auth")}>Sign in</FooterLink>
+          <FooterLink href="mailto:mark@coastalintelligence.ai">mark@coastalintelligence.ai</FooterLink>
           <a
             href={CTA_MAILTO}
             style={{
               fontSize: 12,
               fontWeight: 700,
               color: "#FFFFFF",
-              background: "#4A90D9",
+              background: "#111111",
               border: "none",
-              borderRadius: 6,
-              padding: "8px 20px",
+              borderRadius: 100,
+              padding: "10px 24px",
               fontFamily: "'Afacad Flux', sans-serif",
               textDecoration: "none",
-              transition: "all 0.15s ease",
+              transition: `background 0.25s ${EASE}`,
             }}
-            onMouseEnter={e => { e.currentTarget.style.opacity = "0.88"; }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#4A90D9"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "#111111"; }}
           >
             Let's Talk
           </a>
@@ -64,7 +72,7 @@ export default function Footer() {
       </div>
       {/* Bottom row */}
       <div style={{ maxWidth: 1120, margin: "0 auto", borderTop: "1px solid #E2E8F0", padding: "16px 0" }}>
-        <p style={{ fontSize: 11, color: "#94A3B8", fontFamily: "'Afacad Flux', sans-serif", margin: 0 }}>
+        <p style={{ fontSize: 11, color: "#AAAAAA", fontFamily: "'Afacad Flux', sans-serif", margin: 0 }}>
           2026 Mixed Grill, LLC. All rights reserved.
         </p>
       </div>
