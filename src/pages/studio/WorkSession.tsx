@@ -1866,7 +1866,7 @@ export default function WorkSession() {
         content: m.content,
       }));
     }
-    return [{ role: "watson", content: "Good to see you. Who specifically needs to hear what you are working on?" }];
+    return [{ role: "watson", content: "Good to see you. What are you working on?" }];
   });
   const [intakeSending, setIntakeSending] = useState(false);
   const [intakeReady, setIntakeReady] = useState(persisted?.isReady ?? false);
@@ -1955,9 +1955,9 @@ export default function WorkSession() {
 
     const detail = signalDetail ? ` ${signalDetail}` : "";
     setMessages([
-      { role: "watson", content: "Good to see you. Who specifically needs to hear what you are working on?" },
+      { role: "watson", content: "Good to see you. What are you working on?" },
       { role: "user", content: `I want to write about this: ${signalText}.${detail}` },
-      { role: "watson", content: `Good signal. Let me shape this into something worth publishing.\n\nWho specifically needs to hear this? Not a general audience, give me the exact person this is for.` },
+      { role: "watson", content: `Good signal. Let me shape this into something worth publishing.\n\nTell me more about what you want to say.` },
     ]);
     // Keep stage at Intake so Watson continues the conversation naturally
   }, []);
@@ -2303,7 +2303,7 @@ export default function WorkSession() {
   // ── NEW SESSION: Reset everything ────────────────────────────
   const handleNewSession = useCallback(() => {
     clearSession();
-    setMessages([{ role: "watson", content: "Good to see you. Who specifically needs to hear what you are working on?" }]);
+    setMessages([{ role: "watson", content: "Good to see you. What are you working on?" }]);
     setStage("Intake");
     setIntakeSending(false);
     setIntakeReady(false);
@@ -2490,7 +2490,7 @@ export default function WorkSession() {
             sessionStorage.setItem("ew-handoff-target-type", targetType);
             setOutputType(targetType);
             setStage("Intake");
-            setMessages([{ role: "watson", content: "Good to see you. Who specifically needs to hear what you are working on?" }]);
+            setMessages([{ role: "watson", content: "Good to see you. What are you working on?" }]);
             setDraft("");
             setPipelineRun(null);
             setHvtAttempts(0);
