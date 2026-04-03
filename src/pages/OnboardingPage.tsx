@@ -474,7 +474,17 @@ export default function OnboardingPage() {
 
       <div style={{ width: "100%", maxWidth: 640, marginBottom: 16 }}>
         <button
-          onClick={() => nav("/studio/dashboard")}
+          onClick={() => {
+            if (step === 0) {
+              nav("/studio/dashboard");
+            } else if (step === 2) {
+              if (window.confirm("Going back will restart the voice capture. Continue?")) {
+                setStep(1);
+              }
+            } else {
+              setStep((prev) => Math.max(0, prev - 1) as Step);
+            }
+          }}
           style={{
             background: "none",
             border: "none",
@@ -491,7 +501,7 @@ export default function OnboardingPage() {
           onMouseEnter={e => { e.currentTarget.style.color = "rgba(255,255,255,0.8)"; }}
           onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.45)"; }}
         >
-          <span style={{ fontSize: 16, lineHeight: 1 }}>&larr;</span> Back to Studio
+          <span style={{ fontSize: 16, lineHeight: 1 }}>&larr;</span> {step === 0 ? "Back to Studio" : "Back"}
         </button>
       </div>
 
