@@ -247,6 +247,21 @@ export default function Watch() {
   const [competitors, setCompetitors] = useState<string[]>([]);
   const [thoughtLeaders, setThoughtLeaders] = useState<string[]>([]);
 
+  // Load user's sentinel_topics from profile (overrides DEFAULT_KEYWORDS)
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("sentinel_topics")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.sentinel_topics && Array.isArray(data.sentinel_topics) && data.sentinel_topics.length > 0) {
+          setKeywords(data.sentinel_topics);
+        }
+      });
+  }, [user]);
+
   // Briefing state
   const [briefing, setBriefing] = useState<BriefingData | null>(null);
   const [briefingDate, setBriefingDate] = useState("");
@@ -371,8 +386,23 @@ export default function Watch() {
         keywords={keywords}
         competitors={competitors}
         thoughtLeaders={thoughtLeaders}
-        onAddKeyword={v => setKeywords(k => v.trim() && !k.includes(v.trim()) ? [...k, v.trim()] : k)}
-        onRemoveKeyword={v => setKeywords(k => k.filter(x => x !== v))}
+        onAddKeyword={v => {
+          const trimmed = v.trim();
+          if (!trimmed) return;
+          setKeywords(k => {
+            if (k.includes(trimmed)) return k;
+            const updated = [...k, trimmed];
+            if (user) supabase.from("profiles").update({ sentinel_topics: updated }).eq("id", user.id);
+            return updated;
+          });
+        }}
+        onRemoveKeyword={v => {
+          setKeywords(k => {
+            const updated = k.filter(x => x !== v);
+            if (user) supabase.from("profiles").update({ sentinel_topics: updated }).eq("id", user.id);
+            return updated;
+          });
+        }}
         onAddCompetitor={v => setCompetitors(c => v.trim() && !c.includes(v.trim()) ? [...c, v.trim()] : c)}
         onRemoveCompetitor={v => setCompetitors(c => c.filter(x => x !== v))}
         onAddThoughtLeader={v => setThoughtLeaders(t => v.trim() && !t.includes(v.trim()) ? [...t, v.trim()] : t)}
