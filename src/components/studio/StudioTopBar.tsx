@@ -182,10 +182,16 @@ function UserAvatar() {
             <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--line)" }}>
               <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Your profile</div>
               {[
-                { label: "Voice DNA", value: "Active", valueColor: "#4CAF82" },
-                { label: "Brand DNA", value: "Active", valueColor: "#4CAF82" },
+                { label: "Voice DNA", value: "Active", valueColor: "#4CAF82", path: "/studio/settings/voice" },
+                { label: "Brand DNA", value: "Active", valueColor: "#4CAF82", path: "/studio/settings/brand" },
               ].map(r => (
-                <div key={r.label} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "2px 0" }}>
+                <div
+                  key={r.label}
+                  onClick={() => { nav(r.path); setOpen(false); }}
+                  style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "2px 0", cursor: "pointer", borderRadius: 3, transition: "opacity 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = "0.7"; }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+                >
                   <span style={{ color: "var(--fg-2)" }}>{r.label}</span>
                   <span style={{ color: r.valueColor, fontWeight: 600 }}>{r.value}</span>
                 </div>
@@ -197,6 +203,7 @@ function UserAvatar() {
               {[
                 { label: "Preferences", action: () => { nav("/studio/settings"); setOpen(false); } },
                 { label: "Edit Voice DNA", action: () => { nav("/studio/settings/voice"); setOpen(false); } },
+                { label: "Edit Brand DNA", action: () => { nav("/studio/settings/brand"); setOpen(false); } },
               ].map(item => (
                 <div
                   key={item.label}
