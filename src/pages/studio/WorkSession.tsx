@@ -786,7 +786,7 @@ function StageIntake({
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)" }}>
       {/* New Session button */}
       {hasUserMessage && onNewSession && (
-        <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 16px 0", flexShrink: 0 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 24px 0", flexShrink: 0, maxWidth: 748, margin: "0 auto", width: "100%" }}>
           <button
             onClick={() => {
               if (window.confirm("Start a new session? Your current conversation will be cleared.")) {
@@ -816,20 +816,29 @@ function StageIntake({
       <div
         ref={scrollAreaRef}
         style={{
-          flex: 1, overflowY: "auto", padding: "20px",
+          flex: 1, overflowY: "auto",
+          padding: "20px 24px",
           display: "flex", flexDirection: "column",
+          alignItems: "center",
           justifyContent: messages.length <= 3 ? "flex-end" : "flex-start",
-          gap: 14,
         }}
       >
-        {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} />)}
-        {sending && (
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
-            <WatsonAvatar />
-            <LoadingDots label="" />
-          </div>
-        )}
-        <div ref={bottomRef} style={{ height: 1 }} />
+        <div style={{
+          width: "100%",
+          maxWidth: 700,
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+        }}>
+          {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} />)}
+          {sending && (
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
+              <WatsonAvatar />
+              <LoadingDots label="" />
+            </div>
+          )}
+          <div ref={bottomRef} style={{ height: 1 }} />
+        </div>
       </div>
 
       {/* "Build outline" appears above the input when ready */}
