@@ -408,6 +408,142 @@ const CSS = `
 }
 `;
 
+// ── Watch. Work. Wrap. sticky scroll section ────────────────────────────────
+const WWW_ROOMS = [
+  { name: "Watch", body: "You arrive knowing what your audience is already thinking. Your ideas land in context, not into noise." },
+  { name: "Work", body: "Your idea becomes publication-ready content. In your voice. Verified. Zero AI fingerprints. Nothing ships until it reads like a human made every decision." },
+  { name: "Wrap", body: "One idea. Every channel. Simultaneously. Newsletter, LinkedIn, podcast, Substack, formatted for each, ready to publish." },
+];
+
+function WatchWorkWrapSection({ howRef, isMobile }: { howRef: React.RefObject<HTMLDivElement | null>; isMobile: boolean }) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const progress = useElementScroll(sectionRef as React.RefObject<HTMLElement>);
+  // Map 0-1 progress to active index (0, 1, 2)
+  const activeIdx = Math.min(2, Math.floor(progress * 3));
+
+  if (isMobile) {
+    return (
+      <section ref={howRef} style={{ padding: "80px 0 120px", background: "var(--ew-navy)" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 24px" }}>
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 16 }}>
+                Three rooms. One idea.
+              </div>
+              <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-0.02em", margin: 0, color: "var(--ew-white)" }}>
+                Watch. Work. Wrap.
+              </h2>
+            </div>
+          </Reveal>
+          {WWW_ROOMS.map((room, i) => (
+            <Reveal key={room.name} delay={i * 120}>
+              <div style={{ padding: "32px 0", borderTop: i > 0 ? "1px solid var(--ew-border-dark)" : "none" }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ew-gold)", marginBottom: 12 }}>{room.name}</div>
+                <p style={{ fontSize: 15, color: "var(--ew-text-light-dim)", lineHeight: 1.7, margin: 0 }}>{room.body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section ref={(el) => { (sectionRef as any).current = el; if (howRef && "current" in howRef) (howRef as any).current = el; }} style={{ minHeight: "300vh", background: "var(--ew-navy)", position: "relative" }}>
+      <div style={{ position: "sticky", top: 0, height: "100vh", display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px", display: "flex", width: "100%", gap: 80 }}>
+          {/* Left: Room names */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, flexShrink: 0, width: 280, justifyContent: "center" }}>
+            {/* Section label above names */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 12 }}>
+                Three rooms. One idea.
+              </div>
+              <h2 style={{ fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.02em", margin: 0, color: "var(--ew-white)" }}>
+                Watch. Work. Wrap.
+              </h2>
+            </div>
+            {WWW_ROOMS.map((room, i) => {
+              const isActive = i === activeIdx;
+              return (
+                <div
+                  key={room.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    cursor: "default",
+                    transition: `transform 0.2s ${EASE}, color 0.3s ${EASE}`,
+                    transform: isActive ? "translateX(0)" : "translateX(0)",
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.transform = "translateX(4px)";
+                      (e.currentTarget.querySelector("[data-www-name]") as HTMLElement).style.color = "rgba(255,255,255,0.7)";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = "translateX(0)";
+                    if (!isActive) {
+                      (e.currentTarget.querySelector("[data-www-name]") as HTMLElement).style.color = "var(--ew-text-light-dim)";
+                    }
+                  }}
+                >
+                  <div style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: isActive ? "var(--ew-gold)" : "transparent",
+                    transition: `background 0.3s ${EASE}`,
+                    flexShrink: 0,
+                  }} />
+                  <div
+                    data-www-name=""
+                    style={{
+                      fontSize: "clamp(28px, 4vw, 48px)",
+                      fontWeight: 700,
+                      color: isActive ? "var(--ew-gold)" : "var(--ew-text-light-dim)",
+                      textShadow: isActive ? "0 0 40px rgba(245,198,66,0.15)" : "none",
+                      transition: `color 0.3s ${EASE}, text-shadow 0.3s ${EASE}`,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {room.name}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Right: Sticky body text with cross-fade */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center", position: "relative", minHeight: 200 }}>
+            {WWW_ROOMS.map((room, i) => (
+              <p
+                key={room.name}
+                style={{
+                  position: i === 0 ? "relative" : "absolute",
+                  top: i === 0 ? undefined : 0,
+                  left: 0,
+                  right: 0,
+                  maxWidth: 440,
+                  fontSize: 16,
+                  lineHeight: 1.7,
+                  color: "var(--ew-text-light-dim)",
+                  margin: 0,
+                  opacity: i === activeIdx ? 1 : 0,
+                  transform: i === activeIdx ? "translateY(0)" : "translateY(12px)",
+                  transition: `opacity 0.5s ${EASE}, transform 0.5s ${EASE}`,
+                  pointerEvents: i === activeIdx ? "auto" : "none",
+                }}
+              >
+                {room.body}
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function ExplorePage() {
@@ -1020,107 +1156,11 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* ── SECTION 06: WATCH. WORK. WRAP. (Dark: #0D1B2A, gold accent) */}
-      <section ref={howRef} style={{ padding: sectionPad, background: "var(--ew-navy)" }}>
-        <div className="xp-inner">
-          <Reveal>
-            <div style={{ textAlign: "center", marginBottom: isMobile ? 48 : 72 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 16 }}>
-                Three rooms. One idea.
-              </div>
-              <h2 style={{
-                fontSize: "clamp(32px, 5vw, 56px)",
-                fontWeight: 700,
-                lineHeight: 1.08,
-                letterSpacing: "-0.03em",
-                margin: 0,
-              }}>
-                Watch. Work. Wrap.
-              </h2>
-            </div>
-          </Reveal>
+      {/* Gradient transition: light to dark */}
+      <div style={{ height: 120, background: "linear-gradient(180deg, var(--ew-offwhite) 0%, var(--ew-navy) 100%)" }} />
 
-          <Reveal delay={150}>
-            {isMobile ? (
-              /* Mobile: stacked with horizontal dividers */
-              <div>
-                {[
-                  {
-                    name: "Watch",
-                    tag: "Watch",
-                    body: "You arrive knowing what your audience is already thinking. Your ideas land in context, not into noise.",
-                    items: [] as string[],
-                  },
-                  {
-                    name: "Work",
-                    tag: "Work",
-                    body: "Your idea becomes publication-ready content. In your voice. Verified. Zero AI fingerprints. Nothing ships until it reads like a human made every decision.",
-                    items: [] as string[],
-                  },
-                  {
-                    name: "Wrap",
-                    tag: "Wrap",
-                    body: "One idea. Every channel. Simultaneously. Newsletter, LinkedIn, podcast, Substack, formatted for each, ready to publish.",
-                    items: [] as string[],
-                  },
-                ].map((room, i) => (
-                  <div key={room.name}>
-                    {i > 0 && <div style={{ height: 1, background: "var(--ew-border-dark)", margin: "8px 0" }} />}
-                    <div className="xp-room">
-                      <div className="xp-room-name">{room.name}</div>
-                      <div className="xp-room-tag">{room.tag}</div>
-                      <p className="xp-room-body">{room.body}</p>
-                      {room.items.length > 0 && (
-                        <ul className="xp-room-items">
-                          {room.items.map((item) => <li key={item}>{item}</li>)}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              /* Desktop: three columns with vertical dividers */
-              <div className="xp-rooms">
-                {[
-                  {
-                    name: "Watch",
-                    tag: "Watch",
-                    body: "You arrive knowing what your audience is already thinking. Your ideas land in context, not into noise.",
-                    items: [] as string[],
-                  },
-                  {
-                    name: "Work",
-                    tag: "Work",
-                    body: "Your idea becomes publication-ready content. In your voice. Verified. Zero AI fingerprints. Nothing ships until it reads like a human made every decision.",
-                    items: [] as string[],
-                  },
-                  {
-                    name: "Wrap",
-                    tag: "Wrap",
-                    body: "One idea. Every channel. Simultaneously. Newsletter, LinkedIn, podcast, Substack, formatted for each, ready to publish.",
-                    items: [] as string[],
-                  },
-                ].flatMap((room, i) => {
-                  const el = (
-                    <div key={room.name} className="xp-room">
-                      <div className="xp-room-name">{room.name}</div>
-                      <div className="xp-room-tag">{room.tag}</div>
-                      <p className="xp-room-body">{room.body}</p>
-                      {room.items.length > 0 && (
-                        <ul className="xp-room-items">
-                          {room.items.map((item) => <li key={item}>{item}</li>)}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                  return i < 2 ? [el, <div key={`div-${i}`} className="xp-room-divider" />] : [el];
-                })}
-              </div>
-            )}
-          </Reveal>
-        </div>
-      </section>
+      {/* ── SECTION 06: WATCH. WORK. WRAP. (Dark: #0D1B2A, gold accent) */}
+      <WatchWorkWrapSection howRef={howRef} isMobile={isMobile} />
 
       {/* ── SECTION 07: QUALITY STANDARD (Light: #FFFFFF, blue accent) */}
       <section ref={standardRef} style={{ padding: sectionPad, background: "var(--ew-white)" }}>
