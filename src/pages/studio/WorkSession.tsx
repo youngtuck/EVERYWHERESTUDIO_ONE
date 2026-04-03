@@ -953,7 +953,7 @@ function StageIntake({
       )}
 
       {/* Input bar */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--bg)", flexShrink: 0, borderTop: "1px solid var(--line)", position: "sticky" as const, bottom: 0, zIndex: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--bg)", flexShrink: 0, borderTop: "1px solid var(--line)", zIndex: 10 }}>
         <div style={{ width: "100%", maxWidth: 680 }}>
           <ChatInputBar
             placeholder="What's on your mind?"
@@ -2545,29 +2545,76 @@ export default function WorkSession() {
 
     const summary = readySummary || buildConvSummary();
 
-    // Parse Watson's summary by finding labeled sections (fields separated by labels, not newlines)
+    // Parse Watson's summary by finding labeled sections.
+    // Handles: "Thesis: value", "**Thesis:** value", "- Thesis: value", "Thesis - value"
     function extractField(text: string, field: string, nextFields: string[]): string {
-      const fieldPattern = new RegExp(`${field}:?\\s*`, "i");
-      const match = text.match(fieldPattern);
-      if (!match || match.index === undefined) return "";
-      const startIdx = match.index + match[0].length;
-      let endIdx = text.length;
-      for (const next of nextFields) {
-        const nextPattern = new RegExp(`\\b${next}:`, "i");
-        const nextMatch = text.slice(startIdx).match(nextPattern);
-        if (nextMatch && nextMatch.index !== undefined) {
-          const candidateEnd = startIdx + nextMatch.index;
-          if (candidateEnd < endIdx) endIdx = candidateEnd;
+      // Try multiple patterns in order of specificity
+      const patterns = [
+        new RegExp(`(?:^|\\n)\\s*(?:\\*\\*)?${field}(?:\\*\\*)?\\s*[::]\\s*(?:\\*\\*)?`, "im"),  // **Thesis:** or Thesis: at line start
+        new RegExp(`(?:^|\\n)\\s*[-•]\\s*(?:\\*\\*)?${field}(?:\\*\\*)?\\s*[::]\\s*`, "im"),     // - Thesis: or • Thesis:
+        new RegExp(`(?:\\*\\*)?${field}(?:\\*\\*)?\\s*[::]\\s*(?:\\*\\*)?`, "i"),                   // Thesis: anywhere
+        new RegExp(`\\b${field}\\s+is\\s*[::]?\\s*`, "i"),                                        // "thesis is:" or "thesis is"
+      ];
+
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (!match || match.index === undefined) continue;
+        const startIdx = match.index + match[0].length;
+        // Strip any leading markdown bold closers
+        let cleanStart = startIdx;
+        while (cleanStart < text.length && text[cleanStart] === "*") cleanStart++;
+        if (cleanStart < text.length && text[cleanStart] === " ") cleanStart++;
+
+        let endIdx = text.length;
+        for (const next of nextFields) {
+          // Match next field label (with optional markdown bold, bullet prefix)
+          const nextPattern = new RegExp(`(?:^|\\n)\\s*(?:[-•]\\s*)?(?:\\*\\*)?${next}(?:\\*\\*)?\\s*[::]`, "im");
+          const nextMatch = text.slice(cleanStart).match(nextPattern);
+          if (nextMatch && nextMatch.index !== undefined) {
+            const candidateEnd = cleanStart + nextMatch.index;
+            if (candidateEnd < endIdx) endIdx = candidateEnd;
+          }
         }
+        const result = text.slice(cleanStart, endIdx).replace(/[\s.*]+$/, "").replace(/^\*+/, "").trim();
+        if (result.length > 0) return result;
       }
-      return text.slice(startIdx, endIdx).replace(/[.\s]+$/, "").trim();
+      return "";
     }
 
     const allLabels = ["thesis", "audience", "goal", "hook", "format", "tone", "angle"];
-    const thesis = extractField(summary, "thesis", allLabels.filter(l => l !== "thesis")) || "Core argument";
-    const audience = extractField(summary, "audience", allLabels.filter(l => l !== "audience")) || "Your target reader";
-    const hook = extractField(summary, "hook", allLabels.filter(l => l !== "hook")) || "Opening that earns the read";
-    const goal = extractField(summary, "goal", allLabels.filter(l => l !== "goal")) || "";
+    let thesis = extractField(summary, "thesis", allLabels.filter(l => l !== "thesis"));
+    let audience = extractField(summary, "audience", allLabels.filter(l => l !== "audience"));
+    let hook = extractField(summary, "hook", allLabels.filter(l => l !== "hook"));
+    let goal = extractField(summary, "goal", allLabels.filter(l => l !== "goal"));
+
+    // Fallback: if structured parsing fails, extract from conversation intelligently
+    if (!thesis && !hook) {
+      // Try to find Watson's last substantive message (the readiness signal)
+      const watsonMessages = messages.filter(m => m.role === "watson").map(m => m.content);
+      const lastWatson = watsonMessages[watsonMessages.length - 1] || "";
+      // Try parsing the last Watson message too
+      if (lastWatson !== summary) {
+        thesis = thesis || extractField(lastWatson, "thesis", allLabels.filter(l => l !== "thesis"));
+        audience = audience || extractField(lastWatson, "audience", allLabels.filter(l => l !== "audience"));
+        hook = hook || extractField(lastWatson, "hook", allLabels.filter(l => l !== "hook"));
+        goal = goal || extractField(lastWatson, "goal", allLabels.filter(l => l !== "goal"));
+      }
+
+      // Last resort: extract from conversation context
+      if (!thesis) {
+        // Use the user's first substantial message as a rough thesis
+        const userMessages = messages.filter(m => m.role === "user").map(m => m.content);
+        const firstSubstantial = userMessages.find(m => m.length > 20) || userMessages[0] || "";
+        if (firstSubstantial.length > 0) {
+          thesis = firstSubstantial.length > 120 ? firstSubstantial.slice(0, 120).replace(/\s+\S*$/, "") : firstSubstantial;
+        }
+      }
+    }
+
+    // Only use defaults if we truly have nothing
+    thesis = thesis || "Core argument";
+    audience = audience || "Your target reader";
+    hook = hook || "Opening that earns the read";
 
     // Generate a short title from the thesis (cap at 80 chars)
     let title = thesis;
@@ -2604,7 +2651,7 @@ export default function WorkSession() {
     setSelectedAngle("a");
     setOutlineRows(angleA);
     setBuildingOutline(false);
-  }, [readySummary, buildConvSummary, selectedFormats, goToStage]);
+  }, [readySummary, buildConvSummary, selectedFormats, goToStage, messages]);
 
   // ── OUTLINE → EDIT: Generate draft ───────────────────────────
   const handleGenerateDraft = useCallback(async () => {

@@ -49,9 +49,14 @@
   border-radius: 0 10px 10px 10px;
   padding: 10px 14px;
   max-width: 560px;
+  font-size: 13px;
+  color: var(--fg-2);
+  line-height: 1.35;
 }
-.watson-bubble-wrap p { font-size: 13px; color: var(--fg-2); line-height: 1.35; }
-.watson-bubble-wrap p strong { color: var(--fg); }
+.watson-bubble-wrap p,
+.watson-bubble-wrap div { font-size: 13px; color: var(--fg-2); line-height: 1.35; }
+.watson-bubble-wrap p strong,
+.watson-bubble-wrap div strong { color: var(--fg); }
 .user-bubble-wrap {
   background: rgba(245,198,66,0.08);
   border: 1px solid rgba(245,198,66,0.2);
