@@ -12,7 +12,7 @@ const FORMATS = ["LinkedIn Post","Newsletter","Sunday Story","Podcast Script","T
 function Demo() {
   const [typed, setTyped] = useState(""); const [li, setLi] = useState(0); const [ci, setCi] = useState(0);
   const [active, setActive] = useState(false); const [cnt, setCnt] = useState(0);
-  const t = useRef<any>(); const iv = useRef<any>();
+  const t = useRef<any>(); const iv = useRef<any>(); const resetTimer = useRef<any>();
   useEffect(() => {
     const line = LINES[li];
     if (ci < line.length) { t.current = setTimeout(() => { setTyped(line.slice(0,ci+1)); setCi(c=>c+1); }, 34); }
@@ -22,10 +22,10 @@ function Demo() {
   useEffect(() => {
     if (!active) return;
     iv.current = setInterval(() => setCnt(c => {
-      if (c >= FORMATS.length) { clearInterval(iv.current); setTimeout(() => { setActive(false); setCnt(0); setTyped(""); setCi(0); setLi(l=>(l+1)%LINES.length); }, 2400); return c; }
+      if (c >= FORMATS.length) { clearInterval(iv.current); resetTimer.current = setTimeout(() => { setActive(false); setCnt(0); setTyped(""); setCi(0); setLi(l=>(l+1)%LINES.length); }, 2400); return c; }
       return c+1;
     }), 80);
-    return () => clearInterval(iv.current);
+    return () => { clearInterval(iv.current); clearTimeout(resetTimer.current); };
   }, [active]);
 
   return (

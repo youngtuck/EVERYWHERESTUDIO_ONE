@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
 
 export default function CTASection() {
   const [email, setEmail] = useState("");
@@ -16,7 +17,7 @@ export default function CTASection() {
           Invitation only. Currently onboarding founding members.
         </p>
         {!done ? (
-          <form onSubmit={e=>{e.preventDefault();setDone(true);}}
+          <form onSubmit={async e=>{e.preventDefault(); await supabase.from("waitlist").insert({ email: email.trim() }).then(() => {}, () => {}); setDone(true);}}
             style={{ display:"flex", gap:8, maxWidth:400, margin:"0 auto 20px", flexWrap:"wrap", justifyContent:"center" }}>
             <input type="email" required placeholder="your@email.com" value={email} onChange={e=>setEmail(e.target.value)}
               style={{ flex:1, minWidth:180, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:7, padding:"12px 16px", color:"#fff", fontSize:14, fontFamily:"'Afacad Flux', sans-serif", outline:"none", letterSpacing:"-0.01em" }} />

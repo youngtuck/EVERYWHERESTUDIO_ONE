@@ -72,7 +72,7 @@ export default function Footer() {
       {/* Bottom row */}
       <div style={{ maxWidth: 1120, margin: "0 auto", borderTop: "1px solid #E2E8F0", padding: "16px 0" }}>
         <p style={{ fontSize: 11, color: "#AAAAAA", fontFamily: "'Afacad Flux', sans-serif", margin: 0 }}>
-          2026 Mixed Grill, LLC. All rights reserved.
+          &copy; 2026 Mixed Grill, LLC. All rights reserved.
         </p>
       </div>
     </footer>
