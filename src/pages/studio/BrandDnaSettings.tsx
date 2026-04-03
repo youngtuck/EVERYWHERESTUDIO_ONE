@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { useMobile } from "../../hooks/useMobile";
 import "./shared.css";
 
 function renderMarkdown(md: string): string {
@@ -48,6 +49,7 @@ function renderValue(value: unknown): React.ReactNode {
 export default function BrandDnaSettings() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useMobile();
   const [brandDna, setBrandDna] = useState<any>(null);
   const [brandDnaMd, setBrandDnaMd] = useState("");
   const [completedAt, setCompletedAt] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export default function BrandDnaSettings() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 80px", fontFamily: "var(--font)" }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: isMobile ? "20px 16px 100px" : "32px 24px 80px", fontFamily: "var(--font)" }}>
         <p style={{ fontSize: 14, color: "var(--fg-3)" }}>Loading Brand DNA...</p>
       </div>
     );
@@ -78,7 +80,7 @@ export default function BrandDnaSettings() {
 
   if (!brandDna && !brandDnaMd) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 80px", fontFamily: "var(--font)" }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: isMobile ? "20px 16px 100px" : "32px 24px 80px", fontFamily: "var(--font)" }}>
         <header style={{ marginBottom: 24 }}>
           <h1 style={{ fontFamily: "var(--font)", fontSize: 28, fontWeight: 700, color: "var(--fg)", margin: 0, letterSpacing: "-0.02em" }}>
             Brand DNA
@@ -114,7 +116,7 @@ export default function BrandDnaSettings() {
     : [];
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 80px", fontFamily: "var(--font)" }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: isMobile ? "20px 16px 100px" : "32px 24px 80px", fontFamily: "var(--font)" }}>
       <header style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: "var(--font)", fontSize: 28, fontWeight: 700, color: "var(--fg)", margin: 0, letterSpacing: "-0.02em" }}>
           Brand DNA

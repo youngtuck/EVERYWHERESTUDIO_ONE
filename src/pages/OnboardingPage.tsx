@@ -12,6 +12,7 @@ import type { VoiceDNA, VoiceDNAResponse } from "../utils/voiceDNAProcessor";
 import { generateVoiceDNAFromInterview, generateVoiceDNAFromUploads } from "../utils/voiceDNAProcessor";
 import type { BrandDNAResponse } from "../utils/brandDNAProcessor";
 import { fetchWithRetry } from "../lib/retry";
+import { useMobile } from "../hooks/useMobile";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
@@ -37,6 +38,7 @@ export default function OnboardingPage() {
   const { user, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const nav = useNavigate();
+  const isMobile = useMobile();
 
   const [step, setStep] = useState<Step>(0);
   const [method, setMethod] = useState<Method>(null);
@@ -663,7 +665,7 @@ export default function OnboardingPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(0, 1fr))",
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(0, 1fr))",
                 gap: 16,
                 marginTop: 24,
               }}

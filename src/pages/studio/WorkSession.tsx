@@ -18,6 +18,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { supabase } from "../../lib/supabase";
 import { fetchWithRetry } from "../../lib/retry";
+import { useMobile } from "../../hooks/useMobile";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 import OutputTypePicker, { OUTPUT_TYPES, PROJECT_TYPE_IDS } from "../../components/studio/OutputTypePicker";
@@ -717,6 +718,7 @@ function StageIntake({
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMobile();
 
   // Welcome state: show centered greeting until user sends first message
   const hasUserMessage = messages.some(m => m.role === "user");
@@ -797,8 +799,8 @@ function StageIntake({
               background: "none",
               border: "1px solid var(--line)",
               borderRadius: 6,
-              padding: "5px 12px",
-              fontSize: 11,
+              padding: isMobile ? "4px 10px" : "5px 12px",
+              fontSize: isMobile ? 10 : 11,
               fontWeight: 600,
               fontFamily: FONT,
               color: "var(--fg-3)",
@@ -825,10 +827,10 @@ function StageIntake({
       >
         <div style={{
           width: "100%",
-          maxWidth: 700,
+          maxWidth: isMobile ? "100%" : 700,
           display: "flex",
           flexDirection: "column",
-          gap: 14,
+          gap: isMobile ? 10 : 14,
         }}>
           {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} />)}
           {sending && (
@@ -858,7 +860,7 @@ function StageIntake({
       )}
 
       {/* Input bar */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--bg)", flexShrink: 0, borderTop: "1px solid var(--line)" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--bg)", flexShrink: 0, borderTop: "1px solid var(--line)", position: "sticky" as const, bottom: 0, zIndex: 10 }}>
         <div style={{ width: "100%", maxWidth: 680 }}>
           <ChatInputBar
             placeholder="What's on your mind?"

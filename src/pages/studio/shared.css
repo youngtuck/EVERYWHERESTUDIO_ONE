@@ -71,6 +71,11 @@
   border-color: rgba(245,198,66,0.3);
 }
 
+@media (max-width: 768px) {
+  .watson-bubble-wrap { max-width: 85% !important; }
+  .user-bubble-wrap { max-width: 80% !important; }
+}
+
 /* ── LENS CARDS (Outline angles) ── */
 .lens-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 .lens-card {

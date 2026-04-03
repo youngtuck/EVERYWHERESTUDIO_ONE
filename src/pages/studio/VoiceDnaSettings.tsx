@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { useMobile } from "../../hooks/useMobile";
 import "./shared.css";
 
 const VOICE_QUESTIONS = [
@@ -110,11 +111,11 @@ function buildNarrativeSummary(traits: TraitSet): string {
   ].join(" ");
 }
 
-function TraitBar({ label, score, delay, explanation }: { label: string; score: number; delay: number; explanation: string }) {
+function TraitBar({ label, score, delay, explanation, isMobile }: { label: string; score: number; delay: number; explanation: string; isMobile: boolean }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <div style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, color: "var(--fg)", width: 180, flexShrink: 0 }}>{label}</div>
+        <div style={{ fontFamily: "var(--font)", fontSize: isMobile ? 12 : 14, fontWeight: 500, color: "var(--fg)", width: isMobile ? 120 : 180, flexShrink: 0 }}>{label}</div>
         <div style={{ flex: 1, height: 8, borderRadius: 4, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
           <div style={{ width: `${score}%`, height: "100%", overflow: "hidden", borderRadius: 4 }}>
             <div
@@ -132,7 +133,7 @@ function TraitBar({ label, score, delay, explanation }: { label: string; score: 
         </div>
         <div style={{ fontFamily: "var(--font)", fontSize: 13, fontWeight: 600, color: "var(--gold)", width: 72, textAlign: "right" }}>{scoreToLabel(score)}</div>
       </div>
-      <div style={{ marginLeft: 196, fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, marginTop: 4 }}>
+      <div style={{ marginLeft: isMobile ? 136 : 196, fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, marginTop: 4 }}>
         {explanation}
       </div>
     </div>
@@ -165,6 +166,7 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 export default function VoiceDnaSettings() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useMobile();
   const [voiceDna, setVoiceDna] = useState<any>(null);
   const [voiceDnaMd, setVoiceDnaMd] = useState("");
   const [completedAt, setCompletedAt] = useState<string | null>(null);
@@ -190,7 +192,7 @@ export default function VoiceDnaSettings() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 80px", fontFamily: "var(--font)" }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: isMobile ? "20px 16px 100px" : "32px 24px 80px", fontFamily: "var(--font)" }}>
         <p style={{ fontSize: 14, color: "var(--fg-3)" }}>Loading Voice DNA...</p>
       </div>
     );
@@ -198,7 +200,7 @@ export default function VoiceDnaSettings() {
 
   if (!voiceDna) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 80px", fontFamily: "var(--font)" }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: isMobile ? "20px 16px 100px" : "32px 24px 80px", fontFamily: "var(--font)" }}>
         <header style={{ marginBottom: 24 }}>
           <h1 style={{ fontFamily: "var(--font)", fontSize: 28, fontWeight: 700, color: "var(--fg)", margin: 0, letterSpacing: "-0.02em" }}>
             Voice DNA
@@ -235,7 +237,7 @@ export default function VoiceDnaSettings() {
   const interviewResponses: Record<string, string> | undefined = voiceDna.interview_responses;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 80px", fontFamily: "var(--font)" }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: isMobile ? "20px 16px 100px" : "32px 24px 80px", fontFamily: "var(--font)" }}>
       {/* HEADER */}
       <header style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: "var(--font)", fontSize: 28, fontWeight: 700, color: "var(--fg)", margin: 0, letterSpacing: "-0.02em" }}>
@@ -294,7 +296,7 @@ export default function VoiceDnaSettings() {
         <SectionLabel>Trait Profile</SectionLabel>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {TRAIT_META.map((t, i) => (
-            <TraitBar key={t.key} label={t.label} score={traits[t.key] || 0} delay={i * 100} explanation={getTraitExplanation(t, traits[t.key] || 0)} />
+            <TraitBar key={t.key} label={t.label} score={traits[t.key] || 0} delay={i * 100} explanation={getTraitExplanation(t, traits[t.key] || 0)} isMobile={isMobile} />
           ))}
         </div>
         <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: "8px 0 0" }}>

@@ -191,7 +191,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
   const containerStyle = {
     maxWidth: 640,
     margin: "0 auto",
-    height: "calc(100vh - 140px)",
+    minHeight: "calc(100vh - 140px)",
     display: "flex",
     flexDirection: "column" as const,
   };
