@@ -4,16 +4,16 @@ import path from "path";
 import { callWithRetry } from "./_retry.js";
 
 const CHECKPOINT_GATES = [
-  { name: "Echo", file: "gate-0-echo.md", label: "Deduplication" },
-  { name: "Priya", file: "gate-1-priya.md", label: "Research" },
-  { name: "Jordan", file: "gate-2-jordan.md", label: "Voice DNA" },
-  { name: "David", file: "gate-3-david.md", label: "Engagement" },
-  { name: "Elena", file: "gate-4-elena.md", label: "SLOP Detection" },
-  { name: "Natasha", file: "gate-5-natasha.md", label: "Editorial" },
-  { name: "Marcus + Marshall", file: "gate-6-perspective.md", label: "Perspective" },
+  { name: "Echo", file: "gate-0-echo.md", label: "Deduplication", displayName: "Deduplication" },
+  { name: "Priya", file: "gate-1-priya.md", label: "Research Validation", displayName: "Research Validation" },
+  { name: "Jordan", file: "gate-2-jordan.md", label: "Voice Authenticity", displayName: "Voice Authenticity" },
+  { name: "David", file: "gate-3-david.md", label: "Engagement", displayName: "Engagement Optimization" },
+  { name: "Elena", file: "gate-4-elena.md", label: "SLOP Detection", displayName: "SLOP Detection" },
+  { name: "Natasha", file: "gate-5-natasha.md", label: "Editorial", displayName: "Editorial Excellence" },
+  { name: "Marcus + Marshall", file: "gate-6-perspective.md", label: "Perspective", displayName: "Perspective and Risk" },
 ];
 
-const HVT_GATE = { name: "Human Voice Test", file: "gate-7-human-voice.md", label: "AI Detection" };
+const HVT_GATE = { name: "Human Voice Test", file: "gate-7-human-voice.md", label: "AI Detection", displayName: "Human Voice Test" };
 
 // Combined list for backward compat with gateSubset filtering
 const GATE_FILES = [...CHECKPOINT_GATES, HVT_GATE];
@@ -200,7 +200,7 @@ export default async function handler(req, res) {
       const prompt = getPrompt(gate.file);
       if (!prompt) {
         return {
-          gate: gate.name,
+          gate: gate.displayName || gate.label, internalName: gate.name,
           status: "FLAG",
           score: 0,
           feedback: `Prompt file ${gate.file} could not be loaded from the serverless filesystem.`,
@@ -235,7 +235,7 @@ export default async function handler(req, res) {
           const text = response.content[0]?.type === "text" ? response.content[0].text : "";
           console.log(`[run-pipeline] Gate ${index}: ${gate.name} - got response (${text.length} chars)`);
           const parsed = parseGateResponse(text);
-          return { ...parsed, gate: gate.name };
+          return { ...parsed, gate: gate.displayName || gate.label, internalName: gate.name };
         } catch (err) {
           const isRateLimit = err.status === 429 || (err.message || "").includes("rate_limit");
           if (isRateLimit && attempt === 0) {
@@ -245,7 +245,7 @@ export default async function handler(req, res) {
           }
           console.error(`[run-pipeline] Gate ${index} (${gate.name}) API ERROR:`, err.message, err.status || "");
           return {
-            gate: gate.name,
+            gate: gate.displayName || gate.label, internalName: gate.name,
             status: "FLAG",
             score: 0,
             feedback: isRateLimit
@@ -317,8 +317,8 @@ export default async function handler(req, res) {
     const durationMs = Date.now() - startTime;
 
     // Separate HVT result from checkpoint results
-    const hvtGateResult = gateResults.find(g => g.gate === "Human Voice Test");
-    const checkpointResults = gateResults.filter(g => g.gate !== "Human Voice Test");
+    const hvtGateResult = gateResults.find(g => g.gate === "Human Voice Test" || g.internalName === "Human Voice Test");
+    const checkpointResults = gateResults.filter(g => g.gate !== "Human Voice Test" && g.internalName !== "Human Voice Test");
 
     // Build structured HVT result
     const humanVoiceTest = hvtGateResult ? {

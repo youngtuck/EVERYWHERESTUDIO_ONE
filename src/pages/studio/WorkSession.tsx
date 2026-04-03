@@ -68,6 +68,21 @@ function cleanTitle(raw: string): string {
     .trim();
 }
 
+/** Map legacy agent names to function labels for old saved outputs */
+const AGENT_TO_FUNCTION: Record<string, string> = {
+  "Echo": "Deduplication",
+  "Priya": "Research Validation",
+  "Jordan": "Voice Authenticity",
+  "David": "Engagement Optimization",
+  "Elena": "SLOP Detection",
+  "Natasha": "Editorial Excellence",
+  "Marcus + Marshall": "Perspective and Risk",
+  "Human Voice Test": "Human Voice Test",
+};
+function displayGateName(raw: string): string {
+  return AGENT_TO_FUNCTION[raw] || raw;
+}
+
 const CHECKPOINT_LABELS: Record<string, string> = {
   "checkpoint-0": "Deduplication",
   "checkpoint-1": "Research Validation",
@@ -633,7 +648,7 @@ function ReviewDash({
                     {gate.status === "PASS" ? "✓" : gate.status === "FLAG" ? "⚑" : "✗"}
                   </span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ color: "var(--fg-2)", fontWeight: 500 }}>{gate.gate.replace("gate-", "").replace(/-/g, " ")}</div>
+                    <div style={{ color: "var(--fg-2)", fontWeight: 500 }}>{displayGateName(gate.gate)}</div>
                     {gate.feedback && gate.status !== "PASS" && (
                       <div style={{ color: "var(--fg-3)", marginTop: 2, lineHeight: 1.4 }}>{gate.feedback.slice(0, 120)}{gate.feedback.length > 120 ? "..." : ""}</div>
                     )}
