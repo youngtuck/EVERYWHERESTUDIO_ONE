@@ -5,6 +5,21 @@ import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import "./shared.css";
 
+const VOICE_QUESTIONS = [
+  "When people describe you, do they see you as more formal or more casual? Do you agree with them?",
+  "When you are at your best in a conversation, how would you describe your energy?",
+  "When you write something you are proud of, do the sentences tend to be short and punchy, long and flowing, or a mix?",
+  "Do you tend to start with the point and then support it, or build up a story and arrive at the point?",
+  "Are there words or phrases you find yourself using again and again? Things people associate with you?",
+  "Are there words or phrases you hate? Things that make you cringe when AI writes them?",
+  "How does humor show up in your communication, if it does at all?",
+  "What do you believe about your field that most people get wrong?",
+  "When you write or speak, who are you really talking to? Not the broadest audience, the specific person you imagine reading it?",
+  "When you disagree with someone, how do you typically handle it in writing?",
+  "If you were writing a LinkedIn post right now, how would you start it? Give me the first line.",
+  "Read this sentence: \"Innovation requires us to leverage synergies across our ecosystem.\" How does it make you feel, and why?",
+];
+
 function scoreToLabel(score: number): string {
   if (score <= 20) return "Minimal";
   if (score <= 40) return "Light";
@@ -155,6 +170,7 @@ export default function VoiceDnaSettings() {
   const [completedAt, setCompletedAt] = useState<string | null>(null);
   const [method, setMethod] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [interviewOpen, setInterviewOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -338,22 +354,49 @@ export default function VoiceDnaSettings() {
         )}
       </Card>
 
-      {/* SECTION E: Interview Responses or Upload note */}
-      {(method === "interview" || voiceDna.method === "interview") && interviewResponses && Object.keys(interviewResponses).length > 0 ? (
+      {/* SECTION E: Interview Responses (collapsible) or Upload note */}
+      {(method === "interview" || voiceDna.method === "interview") && interviewResponses && Object.keys(interviewResponses).length > 1 ? (
         <Card>
-          <SectionLabel>Your Interview Responses</SectionLabel>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {Object.entries(interviewResponses).map(([question, answer]) => (
-              <div key={question}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, lineHeight: 1.5 }}>
-                  {question}
-                </div>
-                <div style={{ fontSize: 14, color: "var(--fg)", lineHeight: 1.65 }}>
-                  {answer}
-                </div>
-              </div>
-            ))}
-          </div>
+          <button
+            onClick={() => setInterviewOpen(!interviewOpen)}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: "none", border: "none", cursor: "pointer",
+              fontFamily: "var(--font)", fontSize: 10, fontWeight: 700,
+              letterSpacing: "0.08em", textTransform: "uppercase" as const,
+              color: "var(--fg-3)", padding: 0,
+            }}
+          >
+            <span style={{
+              display: "inline-block",
+              transform: interviewOpen ? "rotate(90deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+              fontSize: 12,
+            }}>&#9654;</span>
+            Your Interview Responses
+          </button>
+
+          {interviewOpen && (
+            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 20 }}>
+              {Object.entries(interviewResponses)
+                .sort(([a], [b]) => {
+                  const numA = parseInt(a.replace(/\D/g, "")) || 0;
+                  const numB = parseInt(b.replace(/\D/g, "")) || 0;
+                  return numA - numB;
+                })
+                .slice(1)
+                .map(([key, answer], index) => (
+                  <div key={key}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-3)", marginBottom: 6, lineHeight: 1.5 }}>
+                      {VOICE_QUESTIONS[index] || `Question ${index + 1}`}
+                    </div>
+                    <div style={{ fontSize: 14, color: "var(--fg)", lineHeight: 1.65 }}>
+                      {answer as string}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </Card>
       ) : (method === "upload" || voiceDna.method === "upload") ? (
         <Card>
