@@ -499,7 +499,7 @@ function EditDash({
       {generating && (
         <DpSection>
           <DpLabel>Generating</DpLabel>
-          <div style={{ fontSize: 11, color: "var(--blue)", lineHeight: 1.6 }}>{generatingLabel}</div>
+          <div style={{ fontSize: 11, color: "var(--gold-bright)", lineHeight: 1.6, fontWeight: 500 }}>{generatingLabel}</div>
         </DpSection>
       )}
 
@@ -1501,9 +1501,7 @@ function StageEdit({
           </div>
         )}
         {generating ? (
-          <div className="draft-body">
-            <LoadingDots label={generatingLabel} />
-          </div>
+          <GenerationProgress />
         ) : (
           <div className="draft-body">
             {renderDraftWithFlags()}
@@ -1531,6 +1529,63 @@ function StageEdit({
         >
           <SendIcon />
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Review progress (format adaptation + quality pipeline) ───────────────────
+// ── Generation progress (Edit stage) ─────────────────────────────────────────
+function GenerationProgress() {
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef(Date.now());
+
+  useEffect(() => {
+    startRef.current = Date.now();
+    const interval = setInterval(() => setElapsed(Date.now() - startRef.current), 400);
+    return () => clearInterval(interval);
+  }, []);
+
+  const PHASES = [
+    { at: 0, label: "Loading Voice DNA", sub: "Matching your communication patterns" },
+    { at: 3000, label: "Building structure", sub: "Organizing ideas from your conversation" },
+    { at: 8000, label: "Writing first draft", sub: "Generating content in your voice" },
+    { at: 15000, label: "Refining language", sub: "Checking tone and word choice" },
+    { at: 22000, label: "Final polish", sub: "Cleaning up formatting" },
+  ];
+
+  const currentPhase = [...PHASES].reverse().find(p => elapsed >= p.at) || PHASES[0];
+  const phaseIdx = PHASES.indexOf(currentPhase);
+  const progress = Math.min(elapsed / 30000, 0.95);
+  const eased = 1 - Math.pow(1 - progress, 2.5);
+
+  return (
+    <div style={{ padding: "40px 28px", maxWidth: 480 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{currentPhase.label}</div>
+      <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 20 }}>{currentPhase.sub}</div>
+      <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden", marginBottom: 20 }}>
+        <div style={{ height: "100%", borderRadius: 2, background: "var(--gold-bright)", width: `${Math.round(eased * 100)}%`, transition: "width 0.4s ease-out" }} />
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {PHASES.map((phase, i) => {
+          const isDone = i < phaseIdx;
+          const isActive = i === phaseIdx;
+          return (
+            <div key={phase.label} style={{ display: "flex", alignItems: "center", gap: 10, opacity: isDone ? 0.35 : isActive ? 1 : 0.2, transition: "all 0.4s ease" }}>
+              <div style={{
+                width: 14, height: 14, borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: isDone ? "none" : isActive ? "2px solid var(--gold-bright)" : "1px solid var(--line)",
+                background: isDone ? "var(--gold-bright)" : "transparent",
+                transition: "all 0.3s ease",
+              }}>
+                {isDone && <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="var(--bg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                {isActive && <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--gold-bright)", animation: "pulse-dot 1s ease-in-out infinite" }} />}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: isActive ? 600 : 400, color: isActive ? "var(--fg)" : "var(--fg-3)" }}>{phase.label}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
