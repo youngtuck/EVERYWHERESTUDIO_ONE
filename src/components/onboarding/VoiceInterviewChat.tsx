@@ -19,7 +19,7 @@ interface VoiceInterviewChatProps {
 }
 
 const INITIAL_PROMPT =
-  "I am going to ask you some questions to capture how you communicate. Not what you say, how you say it. Most people do not know what they sound like, but you know more than you think. Ready?";
+  "I am going to ask you a few questions to understand how you communicate. Not what you say, how you say it. Most people do not know what they sound like, but you know more than you think. Type anything to get started.";
 
 const QUESTION_SEQUENCE: string[] = [
   "First thing: when people describe you, do they see you as more formal or more casual. Do you agree with them",
