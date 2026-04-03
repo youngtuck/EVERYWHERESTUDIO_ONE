@@ -581,13 +581,65 @@ function EditDash({
   );
 }
 
+// ── Checkpoint row (expandable for FAIL/FLAG) ────────────────
+function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFixing: boolean; onFix: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const canExpand = gate.status === "FAIL" || gate.status === "FLAG";
+  const icon = gate.status === "PASS" ? "✓" : gate.status === "FLAG" ? "⚑" : "✗";
+  const iconColor = gate.status === "PASS" ? "var(--blue)" : gate.status === "FLAG" ? "var(--gold)" : "var(--danger)";
+
+  return (
+    <div style={{ borderBottom: "1px solid var(--line)" }}>
+      <div
+        onClick={canExpand ? () => setExpanded(e => !e) : undefined}
+        style={{
+          display: "flex", alignItems: "center", gap: 6, padding: "5px 0", fontSize: 10,
+          cursor: canExpand ? "pointer" : "default",
+        }}
+      >
+        <span style={{ color: iconColor, fontWeight: 700, flexShrink: 0 }}>{icon}</span>
+        <span style={{ flex: 1, color: "var(--fg-2)", fontWeight: 500 }}>{displayGateName(gate.gate)}</span>
+        <span style={{ color: "var(--fg-3)", flexShrink: 0 }}>{gate.score}</span>
+        {canExpand && (
+          <span style={{ color: "var(--fg-3)", fontSize: 8, flexShrink: 0, transition: "transform 0.15s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+        )}
+      </div>
+      {canExpand && expanded && (
+        <div style={{ padding: "4px 0 8px 18px" }}>
+          <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 6 }}>{gate.feedback}</div>
+          {isFixing ? (
+            <div style={{ fontSize: 10, color: "var(--gold-bright)", fontWeight: 500 }}>Revising draft...</div>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); onFix(); }}
+              style={{
+                padding: "4px 10px", borderRadius: 4,
+                background: "rgba(245,198,66,0.12)", border: "1px solid var(--gold)",
+                fontSize: 10, fontWeight: 600, color: "var(--gold)",
+                cursor: "pointer", fontFamily: FONT,
+              }}
+            >
+              Fix this issue
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
   pipelineRun, running, onExportAll, allExported, hvtAttempts, onRerunHVT, hvtRunning,
+  onFixCheckpoint, fixingGate, onRerunPipeline, rerunning,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
   hvtAttempts: number; onRerunHVT: () => void; hvtRunning: boolean;
+  onFixCheckpoint: (gateName: string, feedback: string) => void;
+  fixingGate: string | null;
+  onRerunPipeline: () => void;
+  rerunning: boolean;
 }) {
   const score = pipelineRun?.impactScore?.total ?? null;
   const hvt = pipelineRun?.humanVoiceTest;
@@ -638,23 +690,14 @@ function ReviewDash({
 
           <DpSection>
             <DpLabel>Checkpoints</DpLabel>
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {pipelineRun.checkpointResults.map((gate, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, padding: "4px 0", borderBottom: "1px solid var(--line)", fontSize: 10 }}>
-                  <span style={{
-                    color: gate.status === "PASS" ? "var(--blue)" : gate.status === "FLAG" ? "var(--gold)" : "var(--danger)",
-                    fontWeight: 700, flexShrink: 0,
-                  }}>
-                    {gate.status === "PASS" ? "✓" : gate.status === "FLAG" ? "⚑" : "✗"}
-                  </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: "var(--fg-2)", fontWeight: 500 }}>{displayGateName(gate.gate)}</div>
-                    {gate.feedback && gate.status !== "PASS" && (
-                      <div style={{ color: "var(--fg-3)", marginTop: 2, lineHeight: 1.4 }}>{gate.feedback.slice(0, 120)}{gate.feedback.length > 120 ? "..." : ""}</div>
-                    )}
-                  </div>
-                  <span style={{ color: "var(--fg-3)", flexShrink: 0 }}>{gate.score}</span>
-                </div>
+                <CheckpointRow
+                  key={i}
+                  gate={gate}
+                  isFixing={fixingGate === gate.gate}
+                  onFix={() => onFixCheckpoint(gate.gate, gate.feedback)}
+                />
               ))}
             </div>
           </DpSection>
@@ -705,6 +748,26 @@ function ReviewDash({
             </DpSection>
           )}
         </>
+      )}
+
+      {pipelineRun && !running && (
+        rerunning ? (
+          <div style={{ fontSize: 10, color: "var(--gold-bright)", marginBottom: 6, fontWeight: 500 }}>Re-running pipeline...</div>
+        ) : (
+          <button
+            onClick={onRerunPipeline}
+            disabled={!!fixingGate}
+            style={{
+              width: "100%", padding: 7, borderRadius: 5, marginBottom: 6,
+              background: "var(--surface)", border: "1px solid var(--line)",
+              fontSize: 10, fontWeight: 600, color: "var(--fg-2)",
+              cursor: fixingGate ? "not-allowed" : "pointer",
+              fontFamily: FONT, transition: "all 0.15s",
+            }}
+          >
+            Re-score draft
+          </button>
+        )
       )}
 
       <div style={{ fontSize: 10, color: allExported ? "var(--blue)" : "var(--fg-3)", marginBottom: 6, transition: "color 0.2s" }}>
@@ -1859,51 +1922,12 @@ function StageReview({
   const hvtFlaggedLines = pipelineRun?.humanVoiceTest?.flaggedLines || [];
   const [input, setInput] = useState("");
   const [reviewedTabs, setReviewedTabs] = useState<Set<string>>(new Set());
-
-  // Per-format improve suggestions (matching wireframe v7.23)
-  const improveCards: Record<string, { pts: number; title: string; desc: string }[]> = {
-    LinkedIn: [
-      { pts: 12, title: "Sharpen the closing question", desc: "The close is directional but not decisive. A sharper final question drives more engagement." },
-      { pts: 5, title: "Tighten the hook", desc: "First two sentences could be condensed. The insight lands faster if the setup is shorter." },
-    ],
-    Newsletter: [
-      { pts: 5, title: "Personalize the opening", desc: "Newsletter readers expect a direct address. One sentence that speaks to them specifically." },
-    ],
-    Podcast: [
-      { pts: 8, title: "Conversational transition", desc: "Two sentences read as written, not spoken. Watson can soften them for audio." },
-    ],
-    "Sunday Story": [
-      { pts: 2, title: "Deepen the opening image", desc: "One more sensory detail in the first paragraph pulls readers fully in." },
-    ],
-  };
-
-  const currentCards = improveCards[activeTab] || [];
-  const [fixedCards, setFixedCards] = useState<Set<number>>(new Set());
-  const [fixing, setFixing] = useState<number | null>(null);
-
-  const handleFix = async (cardIdx: number) => {
-    const card = currentCards[cardIdx];
-    if (!card || fixing !== null) return;
-    setFixing(cardIdx);
-    try {
-      await onFix(`${card.title}: ${card.desc}`);
-      setFixedCards(prev => new Set(prev).add(cardIdx));
-      setReviewedTabs(prev => new Set(prev).add(activeTab));
-    } catch { /* If fix fails, don't mark as fixed */ }
-    finally { setFixing(null); }
-  };
-
-  const handleSkip = (cardIdx: number) => {
-    setFixedCards(prev => new Set(prev).add(cardIdx));
-    setReviewedTabs(prev => new Set(prev).add(activeTab));
-  };
-
-  const allReviewed = tabs.every(t => reviewedTabs.has(t));
+  const [hvtFixing, setHvtFixing] = useState(false);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
       {/* HVT suggestion fixing indicator */}
-      {fixing === -1 && (
+      {hvtFixing && (
         <div style={{
           padding: "8px 20px", background: "rgba(245,198,66,0.08)",
           borderBottom: "1px solid rgba(245,198,66,0.2)",
@@ -1918,14 +1942,14 @@ function StageReview({
           <button
             key={tab}
             className={`rev-tab${activeTab === tab ? " on" : ""}${reviewedTabs.has(tab) ? " reviewed" : ""}`}
-            onClick={() => { onTabClick(tab); setFixedCards(new Set()); }}
+            onClick={() => onTabClick(tab)}
           >
             {tab}<span className="tab-dot" />
           </button>
         ))}
       </div>
 
-      {/* Draft preview + improve cards */}
+      {/* Draft preview */}
       <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
         {running ? (
           <ReviewProgress pipelineRunning={running} formatDrafts={formatDrafts} selectedFormats={tabs} />
@@ -1976,8 +2000,8 @@ function StageReview({
                     draft={adaptedContent}
                     hvtFlaggedLines={hvtFlaggedLines}
                     onApplySuggestion={async (suggestion) => {
-                      setFixing(-1);
-                      try { await onFix(suggestion); } finally { setFixing(null); }
+                      setHvtFixing(true);
+                      try { await onFix(suggestion); } finally { setHvtFixing(false); }
                     }}
                   />
                   {fd?.status === "error" && (
@@ -1986,28 +2010,6 @@ function StageReview({
                 </>
               );
             })()}
-
-            {/* Improve cards */}
-            {currentCards.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                {currentCards.map((card, ci) => (
-                  <div key={ci} className={`rev-improve-card${fixedCards.has(ci) ? " done" : ""}`}>
-                    <div className="ric-pts">+{card.pts} pts · {activeTab}</div>
-                    <div className="ric-title">{card.title}</div>
-                    <div className="ric-desc">{card.desc}</div>
-                    <div className="ric-actions">
-                      <button className="ric-fix" disabled={fixing !== null} onClick={() => handleFix(ci)}>{fixing === ci ? "Revising..." : "Fix this"}</button>
-                      <button className="ric-skip" disabled={fixing !== null} onClick={() => handleSkip(ci)}>Skip</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Review progress hint */}
-            <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 12, marginBottom: 6 }}>
-              {allReviewed ? "All formats reviewed. Ready to export." : "Review all formats before exporting."}
-            </div>
           </>
         )}
       </div>
@@ -2355,6 +2357,8 @@ export default function WorkSession() {
   // ── Review ───────────────────────────────────────────────────
   const [pipelineRun, setPipelineRun] = useState<PipelineRun | null>(null);
   const [formatDrafts, setFormatDrafts] = useState<Record<string, { content: string; metadata: Record<string, string>; status: "pending" | "generating" | "done" | "error" }>>({});
+  const [fixingGate, setFixingGate] = useState<string | null>(null);
+  const [rerunningPipeline, setRerunningPipeline] = useState(false);
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [activeReviewTab, setActiveReviewTab] = useState(selectedFormats[0] ?? "LinkedIn");
   const [hvtAttempts, setHvtAttempts] = useState(0);
@@ -2967,6 +2971,117 @@ export default function WorkSession() {
     }
   }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast]);
 
+  // ── REVIEW: Fix a specific checkpoint gate ─────────────────────
+  const handleFixCheckpoint = useCallback(async (gateName: string, feedback: string) => {
+    if (!draft || !user) return;
+    setFixingGate(gateName);
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: buildConvSummary(),
+          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          originalDraft: draft,
+          revisionNotes: `A quality checkpoint ("${gateName}") flagged this issue. Revise the draft to fix it while preserving everything else:\n\n${feedback}`,
+          userId: user.id,
+          maxTokens: 4096,
+        }),
+      }, { timeout: 90000 });
+
+      if (!res.ok) throw new Error(`Fix error ${res.status}`);
+      const data = await res.json();
+
+      if (data.content && data.content !== draft) {
+        setDraft(data.content);
+        toast("Draft updated. Re-scoring...");
+
+        // Re-run pipeline with updated draft
+        const pipeRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            draft: data.content,
+            outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+            voiceDnaMd,
+            brandDnaMd,
+            methodDnaMd,
+            userId: user.id,
+          }),
+        }, { timeout: 175000 });
+
+        if (!pipeRes.ok) throw new Error(`Pipeline re-run error ${pipeRes.status}`);
+        const pipeResult = await pipeRes.json();
+        const oldScore = pipelineRun?.impactScore?.total ?? 0;
+        const newScore = pipeResult.impactScore?.total ?? 0;
+
+        setPipelineRun({
+          status: pipeResult.status,
+          checkpointResults: pipeResult.checkpointResults || [],
+          impactScore: pipeResult.impactScore || null,
+          humanVoiceTest: pipeResult.humanVoiceTest || null,
+          blockedAt: pipeResult.blockedAt,
+          finalDraft: pipeResult.finalDraft,
+        });
+
+        if (newScore > oldScore) {
+          toast(`Score improved: ${oldScore} → ${newScore}`);
+        } else {
+          toast("Score unchanged");
+        }
+
+        // Re-adapt formats with new draft
+        handleFormatAdaptation();
+      } else {
+        toast("No changes detected.");
+      }
+    } catch (err: any) {
+      console.error("[handleFixCheckpoint]", err);
+      toast("Fix failed. Try again.", "error");
+    } finally {
+      setFixingGate(null);
+    }
+  }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, pipelineRun, toast, handleFormatAdaptation]);
+
+  // ── REVIEW: Re-run pipeline (manual re-score) ─────────────────
+  const handleRerunPipeline = useCallback(async () => {
+    if (!draft || !user) return;
+    setRerunningPipeline(true);
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft,
+          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          voiceDnaMd,
+          brandDnaMd,
+          methodDnaMd,
+          userId: user.id,
+        }),
+      }, { timeout: 175000 });
+
+      if (!res.ok) throw new Error(`Pipeline re-run error ${res.status}`);
+      const result = await res.json();
+
+      setPipelineRun({
+        status: result.status,
+        checkpointResults: result.checkpointResults || [],
+        impactScore: result.impactScore || null,
+        humanVoiceTest: result.humanVoiceTest || null,
+        blockedAt: result.blockedAt,
+        finalDraft: result.finalDraft,
+      });
+
+      toast("Pipeline re-scored.");
+    } catch (err: any) {
+      console.error("[handleRerunPipeline]", err);
+      toast("Re-score failed.", "error");
+    } finally {
+      setRerunningPipeline(false);
+    }
+  }, [draft, user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, toast]);
+
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
     if (stage === "Review" || stage === "Approve") {
@@ -3010,6 +3125,10 @@ export default function WorkSession() {
               hvtAttempts={hvtAttempts}
               onRerunHVT={handleRerunHVT}
               hvtRunning={hvtRunning}
+              onFixCheckpoint={handleFixCheckpoint}
+              fixingGate={fixingGate}
+              onRerunPipeline={handleRerunPipeline}
+              rerunning={rerunningPipeline}
             />
           );
         case "Approve":
@@ -3047,6 +3166,7 @@ export default function WorkSession() {
     stage, selectedFormats, selectedTemplate, draft, generating, generatingLabel,
     pipelineRun, pipelineRunning, allExported, outputId,
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
+    handleFixCheckpoint, fixingGate, handleRerunPipeline, rerunningPipeline,
   ]);
 
   // Auto-open dashboard when pipeline finishes in Review
