@@ -1544,6 +1544,89 @@ function PipelineProgress({ running }: { running: boolean }) {
   );
 }
 
+// ── Format-aware review preview ──────────────────────────────────────────────
+function ReviewFormatPreview({
+  format, draft, hvtFlaggedLines,
+}: {
+  format: string;
+  draft: string;
+  hvtFlaggedLines: Array<{ lineIndex: number; original: string; issue: string; vector: string; suggestion: string }>;
+}) {
+  const paragraphs = draft.split("\n").filter(Boolean);
+  const title = cleanTitle(paragraphs[0] || "Draft");
+  const body = paragraphs.slice(1);
+
+  const renderPara = (p: string, i: number) => {
+    const flagged = hvtFlaggedLines.find(f => p.includes(f.original) || f.original.includes(p.slice(0, 40)));
+    return (
+      <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
+        <p style={flagged ? { borderBottom: "2px solid var(--gold)", paddingBottom: 2, background: "rgba(245,198,66,0.06)" } : undefined}>{p}</p>
+        {flagged && (
+          <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
+            {flagged.suggestion && (
+              <div style={{ color: "var(--fg-3)", marginTop: 2 }}>Suggestion: {flagged.suggestion}</div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (format === "Podcast" || format === "Podcast Script") {
+    return (
+      <div className="draft-body">
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 16 }}>Podcast Script Preview</div>
+        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 48, flexShrink: 0, paddingTop: 3 }}>OPEN</span>
+          <div style={{ flex: 1 }}><p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>Hey, welcome back. Today I want to start with something that keeps coming up.</p></div>
+        </div>
+        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--gold-bright)", width: 48, flexShrink: 0, paddingTop: 3 }}>HOOK</span>
+          <div style={{ flex: 1 }}><p style={{ fontSize: 14, color: "var(--fg)", fontWeight: 600, lineHeight: 1.7 }}>{title}</p></div>
+        </div>
+        {body.map((p, i) => (
+          <div key={i} style={{ display: "flex", gap: 12, marginTop: 10 }}>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 48, flexShrink: 0, paddingTop: 3 }}>{i === body.length - 1 ? "CLOSE" : "BODY"}</span>
+            <div style={{ flex: 1 }}>{renderPara(p, i)}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (format === "Sunday Story") {
+    return (
+      <div className="draft-body">
+        <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 20 }}>
+          Sunday, {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+        </div>
+        <div className="draft-title-text" style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.2, marginBottom: 20 }}>{title}</div>
+        {body.map((p, i) => renderPara(p, i))}
+      </div>
+    );
+  }
+
+  if (format === "Newsletter" || format === "Newsletter Issue") {
+    return (
+      <div className="draft-body">
+        <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 16 }}>Newsletter Preview</div>
+        <div className="draft-title-text" style={{ fontSize: 18, marginBottom: 12 }}>{title}</div>
+        <div style={{ width: 28, height: 3, background: "var(--gold-bright)", marginBottom: 16, borderRadius: 2 }} />
+        {body.map((p, i) => renderPara(p, i))}
+      </div>
+    );
+  }
+
+  // Default: LinkedIn / generic
+  return (
+    <div className="draft-body">
+      <div className="draft-title-text">{title}</div>
+      {body.map((p, i) => renderPara(p, i))}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // STAGE: REVIEW
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1612,33 +1695,11 @@ function StageReview({
           <PipelineProgress running={running} />
         ) : (
           <>
-            {/* Draft body matching wireframe typography */}
-            <div className="draft-body">
-              <div className="draft-title-text">{cleanTitle(draft.split("\n")[0] || "Draft")}</div>
-              {draft.split("\n").slice(1).filter(Boolean).map((p, i) => {
-                // Check if this line is flagged by HVT
-                const flagged = hvtFlaggedLines.find(f => p.includes(f.original) || f.original.includes(p.slice(0, 40)));
-                return (
-                  <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
-                    <p style={flagged ? {
-                      borderBottom: "2px solid var(--gold)",
-                      paddingBottom: 2,
-                      background: "rgba(245,198,66,0.06)",
-                    } : undefined}>{p}</p>
-                    {flagged && (
-                      <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, lineHeight: 1.5 }}>
-                        <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
-                        {flagged.suggestion && (
-                          <div style={{ color: "var(--fg-3)", marginTop: 2, fontStyle: "normal" }}>
-                            Suggestion: {flagged.suggestion}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <ReviewFormatPreview
+              format={activeTab}
+              draft={draft}
+              hvtFlaggedLines={hvtFlaggedLines}
+            />
 
             {/* Improve cards */}
             {currentCards.length > 0 && (
