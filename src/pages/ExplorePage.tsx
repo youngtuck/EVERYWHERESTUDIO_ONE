@@ -147,8 +147,6 @@ const CSS = `
   scroll-behavior: smooth;
 }
 
-/* em inherits section context: gold on dark, blue on light */
-.xp em { font-style: normal; }
 .xp a { color: inherit; text-decoration: none; }
 .xp button, .xp a { cursor: pointer; }
 
@@ -159,47 +157,6 @@ const CSS = `
 
 /* Active press feedback on buttons */
 .xp button:active, .xp a:active { transform: scale(0.98) !important; transition-duration: 0.1s !important; }
-
-/* Section gradient transitions via pseudo-elements */
-.xp-grad-top-dark {
-  position: relative;
-}
-.xp-grad-top-dark::before {
-  content: '';
-  position: absolute;
-  top: -120px;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy-rich) 100%);
-  pointer-events: none;
-}
-.xp-grad-top-navy {
-  position: relative;
-}
-.xp-grad-top-navy::before {
-  content: '';
-  position: absolute;
-  top: -120px;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: linear-gradient(180deg, var(--ew-offwhite) 0%, var(--ew-navy) 100%);
-  pointer-events: none;
-}
-.xp-grad-top-cta {
-  position: relative;
-}
-.xp-grad-top-cta::before {
-  content: '';
-  position: absolute;
-  top: -120px;
-  left: 0;
-  right: 0;
-  height: 120px;
-  background: linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy) 100%);
-  pointer-events: none;
-}
 
 /* Watson widget: showcase, not link */
 .xp-watson-widget { cursor: default; }
@@ -462,137 +419,38 @@ const CSS = `
 }
 `;
 
-// ── Watch. Work. Wrap. sticky scroll section ────────────────────────────────
+// ── Watch. Work. Wrap. section ───────────────────────────────────────────────
 const WWW_ROOMS = [
   { name: "Watch", body: "You arrive knowing what your audience is already thinking. Your ideas land in context, not into noise." },
   { name: "Work", body: "Your idea becomes publication-ready content. In your voice. Verified. Zero AI fingerprints. Nothing ships until it reads like a human made every decision." },
   { name: "Wrap", body: "One idea. Every channel. Simultaneously. Newsletter, LinkedIn, podcast, Substack, formatted for each, ready to publish." },
 ];
 
-function WatchWorkWrapSection({ howRef, isMobile }: { howRef: React.RefObject<HTMLDivElement | null>; isMobile: boolean }) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const progress = useElementScroll(sectionRef as React.RefObject<HTMLElement>);
-  // Map 0-1 progress to active index (0, 1, 2)
-  const activeIdx = Math.min(2, Math.floor(progress * 3));
-
-  if (isMobile) {
-    return (
-      <section ref={howRef} data-nav-theme="dark" style={{ padding: "80px 0 120px", background: "var(--ew-navy)" }}>
-        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 24px" }}>
-          <Reveal>
-            <div style={{ textAlign: "center", marginBottom: 48 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 16 }}>
-                Three rooms. One idea.
-              </div>
-              <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-0.02em", margin: 0, color: "var(--ew-white)" }}>
-                Watch. Work. Wrap.
-              </h2>
+function WatchWorkWrapSection({ howRef }: { howRef: React.RefObject<HTMLDivElement | null>; isMobile?: boolean }) {
+  return (
+    <section ref={howRef} data-nav-theme="dark" style={{ padding: "120px 0", background: "var(--ew-navy)" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 24px" }}>
+        <Reveal>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 16 }}>
+              Three rooms. One idea.
+            </div>
+            <h2 style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-0.02em", margin: 0, color: "var(--ew-white)" }}>
+              Watch. Work. Wrap.
+            </h2>
+          </div>
+        </Reveal>
+        {WWW_ROOMS.map((room, i) => (
+          <Reveal key={room.name} delay={i * 150}>
+            <div style={{ textAlign: "center" }}>
+              {i > 0 && (
+                <div style={{ width: 80, height: 1, background: "rgba(255,255,255,0.08)", margin: "24px auto" }} />
+              )}
+              <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ew-gold)", marginBottom: 12 }}>{room.name}</div>
+              <p style={{ fontSize: 16, color: "rgba(255,255,255,0.65)", lineHeight: 1.7, margin: 0 }}>{room.body}</p>
             </div>
           </Reveal>
-          {WWW_ROOMS.map((room, i) => (
-            <Reveal key={room.name} delay={i * 120}>
-              <div style={{ padding: "32px 0", borderTop: i > 0 ? "1px solid var(--ew-border-dark)" : "none" }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ew-gold)", marginBottom: 12 }}>{room.name}</div>
-                <p style={{ fontSize: 15, color: "var(--ew-text-light-dim)", lineHeight: 1.7, margin: 0 }}>{room.body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section data-nav-theme="dark" ref={(el) => { (sectionRef as any).current = el; if (howRef && "current" in howRef) (howRef as any).current = el; }} style={{ minHeight: "300vh", background: "var(--ew-navy)", position: "relative" }}>
-      <div style={{ position: "sticky", top: 0, height: "100vh", display: "flex", alignItems: "center" }}>
-        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px", display: "flex", width: "100%", gap: 80 }}>
-          {/* Left: Room names */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, flexShrink: 0, width: 280, justifyContent: "center" }}>
-            {/* Section label above names */}
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 12 }}>
-                Three rooms. One idea.
-              </div>
-              <h2 style={{ fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.02em", margin: 0, color: "var(--ew-white)" }}>
-                Watch. Work. Wrap.
-              </h2>
-            </div>
-            {WWW_ROOMS.map((room, i) => {
-              const isActive = i === activeIdx;
-              return (
-                <div
-                  key={room.name}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    cursor: "default",
-                    transition: `transform 0.2s ${EASE}, color 0.3s ${EASE}`,
-                    transform: isActive ? "translateX(0)" : "translateX(0)",
-                  }}
-                  onMouseEnter={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.transform = "translateX(4px)";
-                      (e.currentTarget.querySelector("[data-www-name]") as HTMLElement).style.color = "rgba(255,255,255,0.7)";
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = "translateX(0)";
-                    if (!isActive) {
-                      (e.currentTarget.querySelector("[data-www-name]") as HTMLElement).style.color = "var(--ew-text-light-dim)";
-                    }
-                  }}
-                >
-                  <div style={{
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: isActive ? "var(--ew-gold)" : "transparent",
-                    transition: `background 0.3s ${EASE}`,
-                    flexShrink: 0,
-                  }} />
-                  <div
-                    data-www-name=""
-                    style={{
-                      fontSize: "clamp(28px, 4vw, 48px)",
-                      fontWeight: 700,
-                      color: isActive ? "var(--ew-gold)" : "var(--ew-text-light-dim)",
-                      textShadow: isActive ? "0 0 40px rgba(245,198,66,0.15)" : "none",
-                      transition: `color 0.3s ${EASE}, text-shadow 0.3s ${EASE}`,
-                      lineHeight: 1.1,
-                    }}
-                  >
-                    {room.name}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Right: Sticky body text with cross-fade */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", position: "relative", minHeight: 200 }}>
-            {WWW_ROOMS.map((room, i) => (
-              <p
-                key={room.name}
-                style={{
-                  position: i === 0 ? "relative" : "absolute",
-                  top: i === 0 ? undefined : 0,
-                  left: 0,
-                  right: 0,
-                  maxWidth: 440,
-                  fontSize: 16,
-                  lineHeight: 1.7,
-                  color: "var(--ew-text-light-dim)",
-                  margin: 0,
-                  opacity: i === activeIdx ? 1 : 0,
-                  transform: i === activeIdx ? "translateY(0)" : "translateY(12px)",
-                  transition: `opacity 0.5s ${EASE}, transform 0.5s ${EASE}`,
-                  pointerEvents: i === activeIdx ? "auto" : "none",
-                }}
-              >
-                {room.body}
-              </p>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
     </section>
   );
@@ -906,15 +764,15 @@ export default function ExplorePage() {
               ))}
             </span>
             {/* Second line: single block fade-up at 400ms */}
-            <em style={{
+            <span style={{
               display: "block",
               color: "var(--ew-gold)",
-              fontWeight: 500,
-              fontStyle: "italic",
+              fontWeight: 600,
+              fontStyle: "normal",
               animation: `xpFadeUp 0.9s ${EASE} 500ms both`,
             }}>
               In your voice. Better than you'd write it yourself.
-            </em>
+            </span>
           </h1>
           <p style={{
             fontSize: "clamp(16px, 2vw, 22px)",
@@ -1033,7 +891,7 @@ export default function ExplorePage() {
                     color: "var(--ew-text-dark)",
                   }}>
                     The thought leaders you see everywhere aren't better thinkers.{" "}
-                    <em style={{ color: "var(--ew-blue)", fontWeight: 700, fontStyle: "normal" }}>They got their ideas out.</em>
+                    <span style={{ color: "var(--ew-blue)", fontWeight: 700 }}>They got their ideas out.</span>
                   </h2>
                 </Reveal>
                 <Reveal direction="up" distance={20} delay={150}>
@@ -1058,7 +916,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 03: WATSON (Dark: #1B263B, gold accent) ─────── */}
-      <section className="xp-grad-top-dark" data-nav-theme="dark" style={{ padding: "0 0 120px", background: "var(--ew-navy-rich)", marginTop: 120 }}>
+      <section data-nav-theme="dark" style={{ padding: "120px 0", background: "var(--ew-navy-rich)" }}>
         <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 80 }}>
           <Reveal>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 20, textAlign: "center" }}>
@@ -1292,68 +1150,40 @@ export default function ExplorePage() {
             </div>
           </Reveal>
 
-          {/* Stats grid with dividers */}
+          {/* Stats grid */}
           <div style={{
             display: "flex",
             justifyContent: "center",
             alignItems: isMobile ? "center" : "flex-start",
             flexDirection: isMobile ? "column" : "row",
-            gap: isMobile ? 40 : 0,
+            gap: isMobile ? 40 : 60,
             marginBottom: 72,
           }}>
             {[
               { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Watson is there. You talk. It's done." },
               { headline: "Every channel.", body: "Newsletter, LinkedIn, podcast, Substack, one idea, every format, native to each." },
               { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is done." },
-            ].map((block, i) => (
-              <Reveal key={block.headline} delay={i * 150}>
-                <div style={{ display: "flex", alignItems: "flex-start" }}>
-                  {/* Vertical divider (desktop only, not before first) */}
-                  {!isMobile && i > 0 && (
-                    <div style={{
-                      width: 1,
-                      height: 48,
-                      background: "var(--ew-border-light)",
-                      flexShrink: 0,
-                      alignSelf: "center",
-                      marginRight: 48,
-                    }} />
-                  )}
-                  <div
-                    style={{
-                      textAlign: "center",
-                      maxWidth: 260,
-                      paddingRight: !isMobile && i < 2 ? 48 : 0,
-                      cursor: "default",
-                    }}
-                    onMouseEnter={e => {
-                      const h = e.currentTarget.querySelector("[data-stat-head]") as HTMLElement;
-                      if (h) h.style.color = "var(--ew-blue)";
-                    }}
-                    onMouseLeave={e => {
-                      const h = e.currentTarget.querySelector("[data-stat-head]") as HTMLElement;
-                      if (h) h.style.color = "var(--ew-text-dark)";
-                    }}
-                  >
-                    <div
-                      data-stat-head=""
-                      style={{
-                        fontSize: 20,
-                        fontWeight: 700,
-                        color: "var(--ew-text-dark)",
-                        marginBottom: 8,
-                        transition: `color 0.3s ${EASE}`,
-                      }}
-                    >
+            ].flatMap((block, i) => {
+              const item = (
+                <Reveal key={block.headline} delay={i * 150}>
+                  <div style={{ textAlign: "center", maxWidth: 280 }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ew-text-dark)", marginBottom: 8 }}>
                       {block.headline}
                     </div>
                     <div style={{ fontSize: 15, color: "var(--ew-text-body)", lineHeight: 1.6 }}>
                       {block.body}
                     </div>
                   </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              );
+              if (!isMobile && i > 0) {
+                return [
+                  <div key={`d-${i}`} style={{ width: 1, height: 48, background: "var(--ew-border-light)", alignSelf: "center", flexShrink: 0 }} />,
+                  item,
+                ];
+              }
+              return [item];
+            })}
           </div>
 
           {/* Testimonial */}
@@ -1369,7 +1199,7 @@ export default function ExplorePage() {
                   fontWeight: 400,
                   lineHeight: 1.4,
                   color: "var(--ew-text-dark)",
-                  fontStyle: "italic",
+                  fontStyle: "normal",
                   margin: "0 0 12px",
                   letterSpacing: "-0.01em",
                 }}>
@@ -1399,9 +1229,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 06: WATCH. WORK. WRAP. (Dark: #0D1B2A, gold accent) */}
-      <div className="xp-grad-top-navy" style={{ marginTop: 120 }}>
-        <WatchWorkWrapSection howRef={howRef} isMobile={isMobile} />
-      </div>
+      <WatchWorkWrapSection howRef={howRef} />
 
       {/* ── SECTION 07: QUALITY STANDARD (Light: #FFFFFF, blue accent) */}
       <section ref={standardRef} data-nav-theme="light" style={{ padding: "140px 0", background: "var(--ew-white)" }}>
@@ -1445,15 +1273,15 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 08+09: CLOSING CTA (Dark: #0D1B2A, gold accent) ── */}
-      <section className="xp-grad-top-cta" data-nav-theme="dark" style={{ padding: "160px 0", background: "var(--ew-navy)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", marginTop: 120 }}>
+      <section data-nav-theme="dark" style={{ padding: "100px 0", background: "var(--ew-navy)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", maxWidth: 800, padding: "0 32px" }}>
           {/* Anchor statement */}
           <Reveal>
             <p style={{
-              fontSize: "clamp(28px, 4vw, 48px)",
+              fontSize: "clamp(24px, 3.5vw, 40px)",
               fontWeight: 400,
-              color: "var(--ew-text-light-dim)",
-              margin: "0 0 8px",
+              color: "rgba(255,255,255,0.5)",
+              margin: "0 0 16px",
               lineHeight: 1.2,
               letterSpacing: "-0.02em",
             }}>
@@ -1462,7 +1290,7 @@ export default function ExplorePage() {
           </Reveal>
           <Reveal delay={300} direction="scale" distance={0}>
             <p style={{
-              fontSize: "clamp(28px, 4vw, 48px)",
+              fontSize: "clamp(24px, 3.5vw, 40px)",
               fontWeight: 700,
               margin: "0 0 48px",
               lineHeight: 1.2,
@@ -1481,14 +1309,14 @@ export default function ExplorePage() {
             <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center", fontSize: 16, lineHeight: 1.7 }}>
               The output is yours because the input was yours.
             </p>
-            <p style={{ color: "var(--ew-gold)", maxWidth: 560, margin: "0 auto 56px", textAlign: "center", fontWeight: 500, fontSize: 16, lineHeight: 1.7 }}>
+            <p style={{ color: "var(--ew-gold)", maxWidth: 560, margin: "0 auto 48px", textAlign: "center", fontWeight: 500, fontSize: 16, lineHeight: 1.7 }}>
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
             </p>
           </Reveal>
 
           {/* CTA with pulse ring */}
           <Reveal delay={700} direction="up" distance={20}>
-            <div style={{ position: "relative", display: "inline-block", marginBottom: 32 }}>
+            <div style={{ position: "relative", display: "inline-block", marginBottom: 24 }}>
               {/* Sonar pulse ring */}
               <div style={{
                 position: "absolute",
