@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, MicOff, Send } from "lucide-react";
+import { Mic, Send } from "lucide-react";
 import type { VoiceDNA } from "../../utils/voiceDNAProcessor";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 
@@ -346,14 +346,14 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                     handleSend();
                   }
                 }}
-                placeholder="Write how you would actually respond. Short or long is fine."
+                placeholder={isListening ? "Listening..." : "Write how you would actually respond. Short or long is fine."}
                 rows={2}
                 style={{
                   width: "100%",
                   background: "rgba(255,255,255,0.04)",
                   border: "1.5px solid rgba(255,255,255,0.1)",
                   borderRadius: 12,
-                  padding: "14px 48px 14px 18px",
+                  padding: voiceSupported ? "14px 88px 14px 18px" : "14px 48px 14px 18px",
                   color: "#ffffff",
                   fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 15,
@@ -362,32 +362,62 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                   boxSizing: "border-box",
                 }}
               />
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={!input.trim() || loading}
-                style={{
-                  position: "absolute",
-                  right: 10,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  border: "none",
-                  background: input.trim() && !loading ? "#C8961A" : "rgba(255,255,255,0.08)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: input.trim() && !loading ? "pointer" : "default",
-                  transition: "background 0.15s ease",
-                }}
-              >
-                <Send
-                  size={18}
-                  color={input.trim() && !loading ? "#07090f" : "rgba(255,255,255,0.4)"}
-                />
-              </button>
+              <div style={{
+                position: "absolute",
+                right: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}>
+                {voiceSupported && (
+                  <button
+                    type="button"
+                    onClick={toggleListening}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      border: "none",
+                      background: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      animation: isListening ? "micPulse 1s ease-in-out infinite" : "none",
+                    }}
+                  >
+                    <Mic
+                      size={18}
+                      color={isListening ? "#D64545" : "rgba(255,255,255,0.35)"}
+                    />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={!input.trim() || loading}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    border: "none",
+                    background: input.trim() && !loading ? "#C8961A" : "rgba(255,255,255,0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: input.trim() && !loading ? "pointer" : "default",
+                    transition: "background 0.15s ease",
+                  }}
+                >
+                  <Send
+                    size={18}
+                    color={input.trim() && !loading ? "#07090f" : "rgba(255,255,255,0.4)"}
+                  />
+                </button>
+              </div>
+              <style>{`@keyframes micPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }`}</style>
             </div>
             {validationWarning && (
               <p style={{
@@ -412,29 +442,6 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                 alignItems: "center",
               }}
             >
-              {voiceSupported && (
-                <button
-                  type="button"
-                  onClick={toggleListening}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    background: isListening ? "rgba(214,69,69,0.12)" : "none",
-                    border: isListening ? "1px solid rgba(214,69,69,0.3)" : "none",
-                    borderRadius: 6,
-                    padding: isListening ? "4px 10px" : 0,
-                    fontSize: 12,
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    color: isListening ? "#D64545" : "rgba(255,255,255,0.45)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {isListening ? <MicOff size={14} /> : <Mic size={14} />}
-                  <span>{isListening ? "Stop recording" : "Switch to voice"}</span>
-                </button>
-              )}
               <button
                 type="button"
                 onClick={handleAnalyzeNow}
