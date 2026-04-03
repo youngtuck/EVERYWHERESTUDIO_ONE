@@ -1633,11 +1633,12 @@ function ReviewFormatPreview({
 
 function StageReview({
   draft, pipelineRun, running, activeTab, tabs,
-  onTabClick, onAdvance, onGoBack,
+  onTabClick, onAdvance, onGoBack, onFix,
 }: {
   draft: string; pipelineRun: PipelineRun | null; running: boolean;
   activeTab: string; tabs: string[]; onTabClick: (t: string) => void;
   onAdvance: () => void; onGoBack: (instructions: string) => void;
+  onFix: (instruction: string) => Promise<void>;
 }) {
   // Approve gate: both Impact Score >= 75 and HVT must PASS
   const scoreOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
@@ -1666,8 +1667,21 @@ function StageReview({
 
   const currentCards = improveCards[activeTab] || [];
   const [fixedCards, setFixedCards] = useState<Set<number>>(new Set());
+  const [fixing, setFixing] = useState<number | null>(null);
 
-  const handleFixOrSkip = (cardIdx: number) => {
+  const handleFix = async (cardIdx: number) => {
+    const card = currentCards[cardIdx];
+    if (!card || fixing !== null) return;
+    setFixing(cardIdx);
+    try {
+      await onFix(`${card.title}: ${card.desc}`);
+      setFixedCards(prev => new Set(prev).add(cardIdx));
+      setReviewedTabs(prev => new Set(prev).add(activeTab));
+    } catch { /* If fix fails, don't mark as fixed */ }
+    finally { setFixing(null); }
+  };
+
+  const handleSkip = (cardIdx: number) => {
     setFixedCards(prev => new Set(prev).add(cardIdx));
     setReviewedTabs(prev => new Set(prev).add(activeTab));
   };
@@ -1710,8 +1724,8 @@ function StageReview({
                     <div className="ric-title">{card.title}</div>
                     <div className="ric-desc">{card.desc}</div>
                     <div className="ric-actions">
-                      <button className="ric-fix" onClick={() => handleFixOrSkip(ci)}>Fix this</button>
-                      <button className="ric-skip" onClick={() => handleFixOrSkip(ci)}>Skip</button>
+                      <button className="ric-fix" disabled={fixing !== null} onClick={() => handleFix(ci)}>{fixing === ci ? "Revising..." : "Fix this"}</button>
+                      <button className="ric-skip" disabled={fixing !== null} onClick={() => handleSkip(ci)}>Skip</button>
                     </div>
                   </div>
                 ))}
@@ -2474,6 +2488,27 @@ export default function WorkSession() {
     handleRevise(instructions);
   }, [goToStage, handleRevise]);
 
+  // ── REVIEW: Fix a specific improvement card ─────────────────────
+  const handleReviewFix = useCallback(async (instruction: string) => {
+    if (!draft) return;
+    const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversationSummary: buildConvSummary(),
+        outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+        originalDraft: draft,
+        revisionNotes: `Apply this specific improvement to the draft. Keep everything else the same. Only change what is necessary to address this note: ${instruction}`,
+        userId: user?.id,
+        maxTokens: 4096,
+      }),
+    }, { timeout: 90000 });
+
+    if (!res.ok) throw new Error(`Fix error ${res.status}`);
+    const data = await res.json();
+    if (data.content) setDraft(data.content);
+  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id]);
+
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
     setDashOpen(false);
@@ -2615,6 +2650,7 @@ export default function WorkSession() {
           onTabClick={(t) => setActiveReviewTab(t as any)}
           onAdvance={() => goToStage("Approve")}
           onGoBack={handleGoBackToEdit}
+          onFix={handleReviewFix}
         />
       )}
       {stage === "Approve" && (
