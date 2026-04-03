@@ -170,39 +170,104 @@ export default function WrapPage() {
     );
   }
 
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!selectedOutput) return;
+    navigator.clipboard.writeText(selectedOutput.content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  };
+
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 700, fontFamily: FONT }}>
-      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>Your Content</div>
-      {outputs.map(o => {
-        const active = selectedId === o.id;
-        return (
-          <div
-            key={o.id}
-            onClick={() => setSelectedId(o.id)}
-            style={{
-              padding: "14px 18px", border: active ? "1px solid var(--gold)" : "1px solid var(--line)",
-              borderRadius: 8, marginBottom: 8, cursor: "pointer",
-              background: active ? "rgba(245,198,66,0.04)" : "var(--surface)",
-              transition: "border-color 0.15s",
-            }}
-            onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = "var(--line-2)"; }}
-            onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = active ? "var(--gold)" : "var(--line)"; }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{o.title || "Untitled"}</div>
-            <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4, display: "flex", gap: 8 }}>
-              <span>{o.output_type || "freestyle"}</span>
-              <span>&middot;</span>
-              <span>{new Date(o.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-              {typeof o.score === "number" && o.score > 0 && (
-                <>
-                  <span>&middot;</span>
-                  <span style={{ color: o.score >= 75 ? "var(--blue)" : "var(--gold)" }}>Score: {o.score}</span>
-                </>
-              )}
+    <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      {/* Left: content list */}
+      <div style={{ width: selectedOutput ? 280 : "100%", maxWidth: selectedOutput ? 280 : 700, flexShrink: 0, overflowY: "auto", padding: "24px 16px", borderRight: selectedOutput ? "1px solid var(--line)" : "none", transition: "width 0.2s" }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 12, fontFamily: FONT }}>Your Content</div>
+        {outputs.map(o => {
+          const active = selectedId === o.id;
+          return (
+            <div
+              key={o.id}
+              onClick={() => setSelectedId(active ? null : o.id)}
+              style={{
+                padding: "10px 12px", border: active ? "1px solid var(--gold)" : "1px solid var(--line)",
+                borderRadius: 8, marginBottom: 6, cursor: "pointer",
+                background: active ? "rgba(245,198,66,0.04)" : "var(--surface)",
+                transition: "border-color 0.15s",
+              }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = "var(--line-2)"; }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = active ? "var(--gold)" : "var(--line)"; }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", fontFamily: FONT }}>{o.title || "Untitled"}</div>
+              <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 3, display: "flex", gap: 6, fontFamily: FONT }}>
+                <span>{o.output_type || "freestyle"}</span>
+                <span>&middot;</span>
+                <span>{new Date(o.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                {typeof o.score === "number" && o.score > 0 && (
+                  <>
+                    <span>&middot;</span>
+                    <span style={{ color: o.score >= 75 ? "var(--blue)" : "var(--gold)" }}>Score: {o.score}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Right: content preview and actions */}
+      {selectedOutput && (
+        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px", fontFamily: FONT }}>
+          {/* Header with actions */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{selectedOutput.title || "Untitled"}</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button
+                onClick={handleCopy}
+                style={{ fontSize: 11, padding: "5px 12px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT, fontWeight: 500 }}
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+              <button
+                onClick={() => {
+                  sessionStorage.setItem("ew-reopen-output-id", selectedOutput.id);
+                  sessionStorage.setItem("ew-reopen-title", selectedOutput.title);
+                  nav("/studio/work");
+                }}
+                style={{ fontSize: 11, padding: "5px 12px", borderRadius: 5, border: "none", background: "var(--fg)", color: "var(--surface)", cursor: "pointer", fontFamily: FONT, fontWeight: 600 }}
+              >
+                Reopen in Work
+              </button>
             </div>
           </div>
-        );
-      })}
+          <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 16 }}>
+            {selectedOutput.output_type || "freestyle"} &middot; {new Date(selectedOutput.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+            {typeof selectedOutput.score === "number" && selectedOutput.score > 0 && (
+              <span style={{ color: selectedOutput.score >= 75 ? "var(--blue)" : "var(--gold)", marginLeft: 8 }}>Score: {selectedOutput.score}</span>
+            )}
+          </div>
+
+          {/* Content preview */}
+          <div style={{
+            background: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 8, padding: "22px 26px", fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7,
+            fontFamily: FONT,
+          }}>
+            {selectedOutput.content ? selectedOutput.content.split("\n").filter(Boolean).map((p, i) => (
+              <p key={i} style={{ margin: 0, marginTop: i > 0 ? 10 : 0 }}>{p}</p>
+            )) : <span style={{ color: "var(--fg-3)" }}>No content available.</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Empty state when nothing is selected */}
+      {!selectedOutput && outputs.length > 0 && (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fg-3)", fontSize: 13, fontFamily: FONT }}>
+          Select a piece to preview and export.
+        </div>
+      )}
     </div>
   );
 }

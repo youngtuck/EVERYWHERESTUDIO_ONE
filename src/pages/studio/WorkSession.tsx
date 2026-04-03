@@ -2438,6 +2438,7 @@ export default function WorkSession() {
   const [selectedFormats, setSelectedFormats] = useState<Format[]>(DEFAULT_FORMATS);
   const [selectedTemplate, setSelectedTemplate] = useState("Weekly Insight");
   const [sessionFiles, setSessionFiles] = useState<string[]>([]);
+  const [pendingFileContent, setPendingFileContent] = useState<string>("");
 
   const toggleFormat = (f: Format) => {
     setSelectedFormats(fs => fs.includes(f) ? fs.filter(x => x !== f) : [...fs, f]);
@@ -3083,6 +3084,14 @@ export default function WorkSession() {
     setDraftHighlights([]);
   }, []);
 
+  // ── New Session from top nav ─────────────────────────────────
+  useEffect(() => {
+    const flag = sessionStorage.getItem("ew-new-session");
+    if (!flag) return;
+    sessionStorage.removeItem("ew-new-session");
+    handleNewSession();
+  }, [handleNewSession]);
+
   const handleGoBackToEdit = useCallback((instructions: string) => {
     goToStage("Edit");
     handleRevise(instructions);
@@ -3303,7 +3312,22 @@ export default function WorkSession() {
               onSelectTemplate={setSelectedTemplate}
               sessionFiles={sessionFiles}
               outputType={outputType}
-              onSelectOutputType={setOutputType}
+              onSelectOutputType={(id: string) => {
+                setOutputType(id);
+                // When a specific output type is selected, set appropriate format
+                const typeToFormat: Record<string, Format[]> = {
+                  essay: ["Sunday Story"],
+                  socials: ["LinkedIn"],
+                  newsletter: ["Newsletter"],
+                  podcast: ["Podcast"],
+                  video_script: ["Video Script"],
+                  business: ["Case Study", "One-Pager"],
+                  presentation: ["Presentation"],
+                  book: ["Book Chapter"],
+                };
+                const mapped = typeToFormat[id];
+                if (mapped) setSelectedFormats(mapped);
+              }}
             />
           );
         case "Outline":
@@ -3406,9 +3430,47 @@ export default function WorkSession() {
           onAdvance={handleBuildOutline}
           userInitials={displayName ? displayName.split(" ").map(w => w[0]).join("").slice(0, 2) : "U"}
           firstName={displayName ? displayName.split(" ")[0] : undefined}
-          onFileAttach={(files) => {
-            const names = Array.from(files).map(f => f.name);
+          onFileAttach={async (files) => {
+            const fileArr = Array.from(files);
+            const names = fileArr.map(f => f.name);
             setSessionFiles(prev => [...prev, ...names]);
+
+            // Read file contents and send to Watson
+            const TEXT_EXTS = [".txt", ".md", ".csv", ".json", ".html", ".xml", ".yml", ".yaml"];
+            const contents: string[] = [];
+
+            for (const file of fileArr) {
+              const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+              try {
+                if (TEXT_EXTS.includes(ext) || file.type.startsWith("text/")) {
+                  const text = await file.text();
+                  if (text.trim()) {
+                    contents.push(`[File: ${file.name}]\n${text.slice(0, 12000)}`);
+                  }
+                } else if (ext === ".pdf") {
+                  // Read PDF as text (basic extraction)
+                  const text = await file.text();
+                  // PDF binary contains some readable text fragments
+                  const readable = text.replace(/[^\x20-\x7E\n\r\t]/g, " ").replace(/\s{3,}/g, " ").trim();
+                  if (readable.length > 50) {
+                    contents.push(`[File: ${file.name}]\n${readable.slice(0, 12000)}`);
+                  } else {
+                    contents.push(`[File: ${file.name}] (PDF attached, ${(file.size / 1024).toFixed(0)}KB)`);
+                  }
+                } else if (ext === ".doc" || ext === ".docx") {
+                  contents.push(`[File: ${file.name}] (Document attached, ${(file.size / 1024).toFixed(0)}KB)`);
+                } else {
+                  contents.push(`[File: ${file.name}] (${file.type || "file"} attached, ${(file.size / 1024).toFixed(0)}KB)`);
+                }
+              } catch {
+                contents.push(`[File: ${file.name}] (Could not read file)`);
+              }
+            }
+
+            if (contents.length > 0) {
+              const fileMsg = contents.join("\n\n");
+              handleIntakeSend(`I've attached the following content for this session:\n\n${fileMsg}`);
+            }
           }}
           onNewSession={handleNewSession}
         />

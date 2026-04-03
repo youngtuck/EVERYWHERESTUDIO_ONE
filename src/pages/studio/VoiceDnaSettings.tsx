@@ -174,6 +174,15 @@ export default function VoiceDnaSettings() {
   const [loading, setLoading] = useState(true);
   const [interviewOpen, setInterviewOpen] = useState(false);
 
+  // Ensure parent main is scrollable (WorkSession may have set overflow: hidden)
+  useEffect(() => {
+    const main = document.querySelector(".studio-main-inner") as HTMLElement;
+    if (main) {
+      main.style.overflow = "";
+      main.style.overflowY = "auto";
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     supabase

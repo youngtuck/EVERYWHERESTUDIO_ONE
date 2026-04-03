@@ -331,15 +331,14 @@ function DashboardPanel({ open, children }: { open: boolean; children: React.Rea
         <div style={{ flex: 1, overflowY: "auto", padding: "14px" }}>
           {children ?? <DefaultDashContent />}
         </div>
-        {/* Copyright footer, matches wireframe */}
+        {/* Single copyright footer */}
         <div style={{
-          padding: "10px 14px 12px",
+          padding: "8px 14px",
           fontSize: 9, color: "var(--line-2)",
           textAlign: "center" as const,
-          borderTop: "1px solid var(--line)",
           flexShrink: 0,
         }}>
-          © 2026 Mixed Grill, LLC
+          &copy; 2026 Mixed Grill, LLC
         </div>
       </div>
     </div>

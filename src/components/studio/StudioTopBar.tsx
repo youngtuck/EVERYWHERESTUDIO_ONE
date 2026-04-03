@@ -234,6 +234,7 @@ function UserAvatar() {
 
 // ── Main TopBar ─────────────────────────────────────────────────
 export default function StudioTopBar() {
+  const nav = useNavigate();
   const { dashOpen, setDashOpen, setAdvisorsOpen, setDiscoverOpen } = useShell();
   const { left, showAdvisors } = useBreadcrumbs();
 
@@ -255,6 +256,27 @@ export default function StudioTopBar() {
 
       {/* Right: actions */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        {/* +New Session button */}
+        <button
+          onClick={() => {
+            sessionStorage.setItem("ew-new-session", "1");
+            nav("/studio/work");
+          }}
+          style={{
+            fontSize: 11, fontWeight: 600, color: "var(--gold)",
+            cursor: "pointer", background: "none",
+            border: "1px solid rgba(245,198,66,0.3)",
+            borderRadius: 6, padding: "4px 10px",
+            fontFamily: "var(--font)", transition: "all 0.12s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.background = "rgba(245,198,66,0.06)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.3)"; e.currentTarget.style.background = "none"; }}
+        >
+          + New Session
+        </button>
+
+        <Divider />
+
         {showAdvisors && (
           <>
             <button
