@@ -1203,59 +1203,130 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* ── SECTION 08: ANCHOR LINE (Dark transition) ──────── */}
-      <section style={{ padding: isMobile ? "56px 0" : "100px 0", background: "var(--ew-navy)" }}>
-        <Reveal>
-          <div className="xp-inner" style={{ textAlign: "center" }}>
+      {/* Gradient transition: light to dark */}
+      <div style={{ height: 120, background: "linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy) 100%)" }} />
+
+      {/* ── SECTION 08+09: CLOSING CTA (Dark: #0D1B2A, gold accent) ── */}
+      <section style={{ padding: "160px 0", background: "var(--ew-navy)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <div style={{ textAlign: "center", maxWidth: 800, padding: "0 32px" }}>
+          {/* Anchor statement */}
+          <Reveal>
             <p style={{
               fontSize: "clamp(28px, 4vw, 48px)",
-              fontWeight: 700,
-              margin: 0,
+              fontWeight: 400,
+              color: "var(--ew-text-light-dim)",
+              margin: "0 0 8px",
               lineHeight: 1.2,
               letterSpacing: "-0.02em",
             }}>
-              Most AI writes for you. <em>EVERYWHERE</em> works for you.
+              Most AI writes for you.
             </p>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ── SECTION 09: FINAL CTA (Dark: #0D1B2A, gold accent) ── */}
-      <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--ew-navy)", padding: "120px 0" }}>
-        <Reveal>
-          <div style={{ textAlign: "center", maxWidth: 720, padding: "0 32px" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 20 }}>
-              Let's Talk
-            </div>
-            <h2 style={{
-              fontSize: "clamp(36px, 6vw, 72px)",
+          </Reveal>
+          <Reveal delay={300} direction="scale" distance={0}>
+            <p style={{
+              fontSize: "clamp(28px, 4vw, 48px)",
               fontWeight: 700,
-              lineHeight: 1.08,
-              letterSpacing: "-0.03em",
-              margin: "0 0 28px",
-              color: "var(--ew-text-light)",
+              margin: "0 0 48px",
+              lineHeight: 1.2,
+              letterSpacing: "-0.02em",
             }}>
-              Your thinking deserves to <em style={{ color: "var(--ew-gold)" }}>be heard.</em>
-            </h2>
-            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
+              <span style={{ color: "var(--ew-gold)" }}>EVERYWHERE</span>{" "}
+              <span style={{ color: "var(--ew-white)" }}>works for you.</span>
+            </p>
+          </Reveal>
+
+          {/* Supporting copy */}
+          <Reveal delay={500}>
+            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center", fontSize: 16, lineHeight: 1.7 }}>
               You don't need more discipline. You need a system that carries the idea from your head to your audience, every week, without it sitting on your to-do list.
             </p>
-            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center" }}>
+            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center", fontSize: 16, lineHeight: 1.7 }}>
               The output is yours because the input was yours.
             </p>
-            <p style={{ color: "var(--ew-gold)", maxWidth: 560, margin: "0 auto 44px", textAlign: "center", fontWeight: 500 }}>
+            <p style={{ color: "var(--ew-gold)", maxWidth: 560, margin: "0 auto 56px", textAlign: "center", fontWeight: 500, fontSize: 16, lineHeight: 1.7 }}>
               There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
             </p>
-            <div className="xp-hero-ctas" style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="xp-btn-gold" onClick={() => navigate("/auth?mode=signup")} style={{ border: "none", fontSize: 15, padding: "16px 44px" }}>
+          </Reveal>
+
+          {/* CTA with pulse ring */}
+          <Reveal delay={700} direction="up" distance={20}>
+            <div style={{ position: "relative", display: "inline-block", marginBottom: 32 }}>
+              {/* Sonar pulse ring */}
+              <div style={{
+                position: "absolute",
+                inset: -8,
+                borderRadius: 100,
+                border: "1px solid var(--ew-gold)",
+                animation: "xpSonarPing 3s ease-out infinite",
+                pointerEvents: "none",
+              }} />
+              <button
+                onClick={() => navigate("/auth?mode=signup")}
+                style={{
+                  background: "var(--ew-gold)",
+                  color: "var(--ew-navy)",
+                  border: "none",
+                  borderRadius: 100,
+                  padding: "18px 44px",
+                  fontWeight: 700,
+                  fontSize: 15,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase" as const,
+                  fontFamily: "var(--font)",
+                  cursor: "pointer",
+                  position: "relative",
+                  zIndex: 1,
+                  transition: `transform 0.35s ${EASE}, box-shadow 0.35s ${EASE}`,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(245,198,66,0.3)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+              >
                 Get Early Access
               </button>
-              <a href={CTA_MAILTO} className="xp-btn-outline" style={{ fontSize: 15, padding: "16px 44px" }}>
-                Let's Talk
+            </div>
+            <div>
+              <a
+                href="mailto:mark@coastalintelligence.ai"
+                style={{
+                  color: "var(--ew-text-light-dim)",
+                  fontSize: 13,
+                  textDecoration: "none",
+                  fontFamily: "var(--font)",
+                  display: "inline-block",
+                  position: "relative",
+                  paddingBottom: 2,
+                }}
+                onMouseEnter={e => {
+                  const underline = e.currentTarget.querySelector("[data-underline]") as HTMLElement;
+                  if (underline) underline.style.width = "100%";
+                }}
+                onMouseLeave={e => {
+                  const underline = e.currentTarget.querySelector("[data-underline]") as HTMLElement;
+                  if (underline) underline.style.width = "0";
+                }}
+              >
+                mark@coastalintelligence.ai
+                <span data-underline="" style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  height: 1,
+                  width: 0,
+                  background: "var(--ew-text-light-dim)",
+                  transition: `width 0.3s ${EASE}`,
+                }} />
               </a>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
+
+        <style>{`
+          @keyframes xpSonarPing {
+            0% { transform: scale(1); opacity: 0.1; }
+            70% { transform: scale(1.4); opacity: 0; }
+            100% { transform: scale(1.4); opacity: 0; }
+          }
+        `}</style>
       </section>
 
       {/* ── FOOTER (Light: #F7F9FC) ─────────────────────────── */}
