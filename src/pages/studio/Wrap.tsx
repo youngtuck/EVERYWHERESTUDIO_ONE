@@ -100,6 +100,7 @@ export default function WrapPage() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState("LinkedIn Post");
+  const [copied, setCopied] = useState(false);
 
   // Fetch outputs from Supabase
   const fetchOutputs = useCallback(() => {
@@ -169,8 +170,6 @@ export default function WrapPage() {
       </div>
     );
   }
-
-  const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     if (!selectedOutput) return;

@@ -499,12 +499,18 @@ export default async function handler(req, res) {
         }
       }
 
+      // Rebuild messages after URL/research mutations
+      const finalModeMessages = messages.map((m) => ({
+        role: m.role === "watson" ? "assistant" : "user",
+        content: m.content,
+      }));
+
       const response = await callWithRetry(() =>
         client.messages.create({
           model: "claude-sonnet-4-20250514",
           max_tokens: 2048,
           system: modeSystemPrompt,
-          messages: claudeMessages,
+          messages: finalModeMessages,
         })
       );
 

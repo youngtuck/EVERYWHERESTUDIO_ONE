@@ -2438,7 +2438,6 @@ export default function WorkSession() {
   const [selectedFormats, setSelectedFormats] = useState<Format[]>(DEFAULT_FORMATS);
   const [selectedTemplate, setSelectedTemplate] = useState("Weekly Insight");
   const [sessionFiles, setSessionFiles] = useState<string[]>([]);
-  const [pendingFileContent, setPendingFileContent] = useState<string>("");
 
   const toggleFormat = (f: Format) => {
     setSelectedFormats(fs => fs.includes(f) ? fs.filter(x => x !== f) : [...fs, f]);
@@ -2977,7 +2976,7 @@ export default function WorkSession() {
     } finally {
       setPipelineRunning(false);
     }
-  }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage]);
+  }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId]);
 
   // ── REVIEW: Export all ─────────────────────────────────────────
   const handleExportAll = useCallback(() => {
