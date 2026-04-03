@@ -1686,12 +1686,13 @@ function ReviewFormatPreview({
 
 function StageReview({
   draft, pipelineRun, running, activeTab, tabs,
-  onTabClick, onAdvance, onGoBack, onFix,
+  onTabClick, onAdvance, onGoBack, onFix, formatDrafts,
 }: {
   draft: string; pipelineRun: PipelineRun | null; running: boolean;
   activeTab: string; tabs: string[]; onTabClick: (t: string) => void;
   onAdvance: () => void; onGoBack: (instructions: string) => void;
   onFix: (instruction: string) => Promise<void>;
+  formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
 }) {
   // Approve gate: both Impact Score >= 75 and HVT must PASS
   const scoreOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
@@ -1762,11 +1763,53 @@ function StageReview({
           <PipelineProgress running={running} />
         ) : (
           <>
-            <ReviewFormatPreview
-              format={activeTab}
-              draft={draft}
-              hvtFlaggedLines={hvtFlaggedLines}
-            />
+            {(() => {
+              const fd = formatDrafts[activeTab];
+              const isAdapting = fd?.status === "generating" || fd?.status === "pending";
+              const adaptedContent = fd?.status === "done" ? fd.content : draft;
+              const metadata = fd?.metadata || {};
+
+              if (isAdapting) {
+                return (
+                  <div style={{ padding: "20px 0" }}>
+                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 8 }}>Adapting for {activeTab}...</div>
+                    <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: 2, background: "var(--gold-bright)", width: "60%", animation: "pulse-width 2s ease-in-out infinite" }} />
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <>
+                  {metadata.subject && (
+                    <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 4 }}>Subject line</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{metadata.subject}</div>
+                      {metadata.preview && (
+                        <>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginTop: 8, marginBottom: 4 }}>Preview text</div>
+                          <div style={{ fontSize: 12, color: "var(--fg-2)" }}>{metadata.preview}</div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {metadata.episodeTitle && (
+                    <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 4 }}>Episode title</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{metadata.episodeTitle}</div>
+                    </div>
+                  )}
+                  {metadata.subtitle && (
+                    <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16 }}>{metadata.subtitle}</div>
+                  )}
+                  <ReviewFormatPreview format={activeTab} draft={adaptedContent} hvtFlaggedLines={hvtFlaggedLines} />
+                  {fd?.status === "error" && (
+                    <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 8 }}>Format adaptation unavailable. Showing original draft.</div>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Improve cards */}
             {currentCards.length > 0 && (
@@ -2133,6 +2176,7 @@ export default function WorkSession() {
 
   // ── Review ───────────────────────────────────────────────────
   const [pipelineRun, setPipelineRun] = useState<PipelineRun | null>(null);
+  const [formatDrafts, setFormatDrafts] = useState<Record<string, { content: string; metadata: Record<string, string>; status: "pending" | "generating" | "done" | "error" }>>({});
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [activeReviewTab, setActiveReviewTab] = useState(selectedFormats[0] ?? "LinkedIn");
   const [hvtAttempts, setHvtAttempts] = useState(0);
@@ -2455,10 +2499,39 @@ export default function WorkSession() {
   }, [draft, generating, draftVersions, buildConvSummary, outputType, selectedFormats, user?.id, toast]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
+  // ── Format adaptation (parallel with pipeline) ──────────────
+  const handleFormatAdaptation = useCallback(async () => {
+    if (!draft || !user) return;
+    const initial: Record<string, { content: string; metadata: Record<string, string>; status: "pending" | "generating" | "done" | "error" }> = {};
+    selectedFormats.forEach(f => { initial[f] = { content: "", metadata: {}, status: "pending" }; });
+    setFormatDrafts(initial);
+
+    const promises = selectedFormats.map(async (format) => {
+      setFormatDrafts(prev => ({ ...prev, [format]: { ...prev[format], status: "generating" } }));
+      try {
+        const res = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ draft, format, voiceDnaMd, brandDnaMd, userId: user.id }),
+        }, { timeout: 60000 });
+        if (!res.ok) throw new Error(`Adapt error ${res.status}`);
+        const data = await res.json();
+        setFormatDrafts(prev => ({ ...prev, [format]: { content: data.content || draft, metadata: data.metadata || {}, status: "done" } }));
+      } catch (err) {
+        console.error(`[adapt-format] ${format} failed:`, err);
+        setFormatDrafts(prev => ({ ...prev, [format]: { content: draft, metadata: {}, status: "error" } }));
+      }
+    });
+    await Promise.allSettled(promises);
+  }, [draft, user, selectedFormats, voiceDnaMd, brandDnaMd]);
+
+  // ── EDIT -> REVIEW: Run pipeline ──────────────────────────────
   const handleRunPipeline = useCallback(async () => {
     goToStage("Review");
     if (!draft || !user) return;
     setPipelineRunning(true);
+    // Start format adaptation in parallel with pipeline
+    handleFormatAdaptation();
     setPipelineRun(null);
 
     try {
@@ -2615,6 +2688,7 @@ export default function WorkSession() {
     setProjectId(null);
     setDraftVersions([]);
     setActiveVersionIdx(0);
+    setFormatDrafts({});
   }, []);
 
   const handleGoBackToEdit = useCallback((instructions: string) => {
@@ -2793,11 +2867,12 @@ export default function WorkSession() {
           onAdvance={() => goToStage("Approve")}
           onGoBack={handleGoBackToEdit}
           onFix={handleReviewFix}
+          formatDrafts={formatDrafts}
         />
       )}
       {stage === "Approve" && (
         <StageExport
-          draft={draft}
+          draft={formatDrafts[activeExportTab]?.status === "done" ? formatDrafts[activeExportTab].content : draft}
           title={outlineRows[0]?.content || "Draft"}
           formats={selectedFormats}
           activeTab={activeExportTab}
