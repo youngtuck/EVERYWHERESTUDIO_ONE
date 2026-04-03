@@ -888,54 +888,108 @@ export default function ExplorePage() {
         </Reveal>
       </section>
 
-      {/* ── SECTION 05: THE SYSTEM (Light: #F7F9FC, blue accent) ── */}
-      <section style={{ padding: sectionPad, background: "var(--ew-offwhite)" }}>
-        <Reveal>
-          <div className="xp-inner" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--ew-blue)", marginBottom: 16 }}>
-              EVERYWHERE Studio
+      {/* ── SECTION 05: STATS + TESTIMONIAL (Light: #F7F9FC, blue accent) */}
+      <section style={{ padding: "100px 0", background: "var(--ew-offwhite)" }}>
+        <div className="xp-inner">
+          {/* Section intro */}
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 64 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-blue)", marginBottom: 16 }}>
+                EVERYWHERE Studio
+              </div>
+              <h2 style={{
+                fontSize: "clamp(28px, 4vw, 44px)",
+                fontWeight: 700,
+                lineHeight: 1.15,
+                letterSpacing: "-0.02em",
+                margin: "0 auto 28px",
+                maxWidth: 800,
+                color: "var(--ew-text-dark)",
+              }}>
+                You talk. Watson listens until he really gets it. Then {MARKETING_NUMBERS.specialistCount} specialists turn what you said into publication-ready content, in your voice, verified, every word traceable back to you.
+              </h2>
+              <p style={{ color: "var(--ew-text-body)", maxWidth: 600, margin: "0 auto", textAlign: "center", fontSize: 16, lineHeight: 1.7 }}>
+                You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
+              </p>
             </div>
-            <h2 style={{
-              fontSize: "clamp(28px, 4vw, 44px)",
-              fontWeight: 700,
-              lineHeight: 1.15,
-              letterSpacing: "-0.02em",
-              margin: "0 auto 28px",
-              maxWidth: 800,
-              color: "var(--ew-text-dark)",
-            }}>
-              You talk. Watson listens until he really gets it. Then {MARKETING_NUMBERS.specialistCount} specialists turn what you said into publication-ready content, in your voice, verified, every word traceable back to you.
-            </h2>
-            <p style={{ color: "var(--ew-text-body)", maxWidth: 600, margin: "0 auto 0", textAlign: "center" }}>
-              You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
-            </p>
-            <div style={{ display: "flex", gap: isMobile ? 32 : 56, justifyContent: "center", flexWrap: "wrap", marginTop: 56, flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "center" : "flex-start" }}>
-              {[
-                { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Watson is there. You talk. It's done." },
-                { headline: "Every channel.", body: "Newsletter, LinkedIn, podcast, Substack, one idea, every format, native to each." },
-                { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is done." },
-              ].map((block) => (
-                <div key={block.headline} style={{ textAlign: "center", maxWidth: 280 }}>
-                  <div style={{ fontSize: 19, fontWeight: 700, color: "var(--ew-text-dark)", marginBottom: 8 }}>
-                    {block.headline}
-                  </div>
-                  <div style={{ fontSize: 14, color: "var(--ew-text-body)", lineHeight: 1.6 }}>
-                    {block.body}
+          </Reveal>
+
+          {/* Stats grid with dividers */}
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: isMobile ? "center" : "flex-start",
+            flexDirection: isMobile ? "column" : "row",
+            gap: isMobile ? 40 : 0,
+            marginBottom: 72,
+          }}>
+            {[
+              { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Watson is there. You talk. It's done." },
+              { headline: "Every channel.", body: "Newsletter, LinkedIn, podcast, Substack, one idea, every format, native to each." },
+              { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is done." },
+            ].map((block, i) => (
+              <Reveal key={block.headline} delay={i * 150}>
+                <div style={{ display: "flex", alignItems: "flex-start" }}>
+                  {/* Vertical divider (desktop only, not before first) */}
+                  {!isMobile && i > 0 && (
+                    <div style={{
+                      width: 1,
+                      height: 48,
+                      background: "var(--ew-border-light)",
+                      flexShrink: 0,
+                      alignSelf: "center",
+                      marginRight: 48,
+                    }} />
+                  )}
+                  <div
+                    style={{
+                      textAlign: "center",
+                      maxWidth: 260,
+                      paddingRight: !isMobile && i < 2 ? 48 : 0,
+                      cursor: "default",
+                    }}
+                    onMouseEnter={e => {
+                      const h = e.currentTarget.querySelector("[data-stat-head]") as HTMLElement;
+                      if (h) h.style.color = "var(--ew-blue)";
+                    }}
+                    onMouseLeave={e => {
+                      const h = e.currentTarget.querySelector("[data-stat-head]") as HTMLElement;
+                      if (h) h.style.color = "var(--ew-text-dark)";
+                    }}
+                  >
+                    <div
+                      data-stat-head=""
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 700,
+                        color: "var(--ew-text-dark)",
+                        marginBottom: 8,
+                        transition: `color 0.3s ${EASE}`,
+                      }}
+                    >
+                      {block.headline}
+                    </div>
+                    <div style={{ fontSize: 15, color: "var(--ew-text-body)", lineHeight: 1.6 }}>
+                      {block.body}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-            {/* Testimonial */}
-            <div style={{ marginTop: 56, maxWidth: 640, marginInline: "auto", textAlign: "left" }}>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* Testimonial */}
+          <Reveal direction="left" distance={40} delay={400}>
+            <div style={{ maxWidth: 640, marginInline: "auto", textAlign: "left" }}>
               <blockquote style={{
                 margin: 0,
                 padding: "0 0 0 24px",
                 borderLeft: "3px solid var(--ew-blue)",
               }}>
                 <p style={{
-                  fontSize: "clamp(18px, 2.5vw, 22px)",
+                  fontSize: "clamp(20px, 2.5vw, 28px)",
                   fontWeight: 400,
-                  lineHeight: 1.5,
+                  lineHeight: 1.4,
                   color: "var(--ew-text-dark)",
                   fontStyle: "italic",
                   margin: "0 0 12px",
@@ -944,7 +998,7 @@ export default function ExplorePage() {
                   "Better than what I was writing myself."
                 </p>
                 <p style={{
-                  fontSize: 14,
+                  fontSize: 15,
                   color: "var(--ew-text-body)",
                   lineHeight: 1.6,
                   margin: "0 0 16px",
@@ -962,8 +1016,8 @@ export default function ExplorePage() {
                 </footer>
               </blockquote>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
       </section>
 
       {/* ── SECTION 06: WATCH. WORK. WRAP. (Dark: #0D1B2A, gold accent) */}
