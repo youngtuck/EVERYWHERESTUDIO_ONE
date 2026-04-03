@@ -1,6 +1,6 @@
 export const MARKETING_NUMBERS = {
   specialistCount: 40,
-  outputFormatCount: 22,
+  outputFormatCount: 12,
   qualityCheckpoints: 7,
   impactThreshold: 75,
   betterishThreshold: 75, // Legacy alias: v7 renamed Betterish to Impact Score

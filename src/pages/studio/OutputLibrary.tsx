@@ -43,7 +43,7 @@ function outputTypeToLabel(t: string): string {
 
 function scoreColor(score: number): string {
   if (score >= 90) return "var(--blue)";
-  if (score >= 700) return "var(--gold)";
+  if (score >= 70) return "var(--gold)";
   return "var(--fg-3)";
 }
 
@@ -79,7 +79,7 @@ function SessionDetailPanel({
             </svg>
             <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1 }}>{f}</span>
             <span
-              onClick={() => { if (output.content) navigator.clipboard.writeText(output.content); }}
+              onClick={() => { if (output.content) navigator.clipboard.writeText(output.content).catch(() => {}); }}
               style={{ fontSize: 9, color: "var(--blue)", cursor: "pointer", fontWeight: 600 }}
             >Copy</span>
           </div>
@@ -146,9 +146,10 @@ export default function OutputLibrary() {
   const [selectedContent, setSelectedContent] = useState<string>("");
   useEffect(() => {
     if (!selectedId || !user) return;
-    supabase.from("outputs").select("content").eq("id", selectedId).single().then(({ data }) => {
-      setSelectedContent(data?.content || "");
-    });
+    supabase.from("outputs").select("content").eq("id", selectedId).single().then(
+      ({ data }) => { setSelectedContent(data?.content || ""); },
+      (err) => console.error("Failed to load output content:", err)
+    );
   }, [selectedId, user]);
 
   const selectedOutput = outputs.find(o => o.id === selectedId) ?? null;

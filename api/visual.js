@@ -10,7 +10,7 @@
 const VIBES = {
   Sketchbook: {
     label: "Sketchbook",
-    prompt: `Loose hand-drawn sketchnote on cream textured notebook paper, 16:9 landscape. Casual watercolor marker swatches behind headers. Uneven hand-lettered text, wobbly arrows, organic doodle icons. 3-4 vertical columns. Warm notebook vibe. Professional enough for LinkedIn but genuinely human and imperfect. Yellow title banner, colorful section headers, hand-drawn bullet points with small relevant icons next to each.`,
+    prompt: `Loose hand-drawn sketchnote on cream textured notebook paper, 16:9 landscape. Casual watercolor marker swatches behind headers. Uneven hand-lettered text, wobbly arrows, organic doodle icons. 3-4 vertical columns. Warm notebook feel. Professional enough for LinkedIn but genuinely human and imperfect. Yellow title banner, colorful section headers, hand-drawn bullet points with small relevant icons next to each.`,
   },
   Blueprint: {
     label: "Blueprint",

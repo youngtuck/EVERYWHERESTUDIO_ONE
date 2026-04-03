@@ -62,12 +62,13 @@ export default function BrandDnaSettings() {
       .select("brand_dna, brand_dna_md, brand_dna_completed, brand_dna_completed_at")
       .eq("id", user.id)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error("Failed to load Brand DNA:", error);
         if (data?.brand_dna) setBrandDna(data.brand_dna);
         if (data?.brand_dna_md) setBrandDnaMd(data.brand_dna_md);
         if (data?.brand_dna_completed_at) setCompletedAt(data.brand_dna_completed_at);
         setLoading(false);
-      });
+      }, (err) => { console.error("Brand DNA fetch failed:", err); setLoading(false); });
   }, [user]);
 
   if (loading) {

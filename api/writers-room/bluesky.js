@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getUserResources } from "../_resources.js";
 import { callWithRetry } from "../_retry.js";
 
-const SYSTEM_PROMPT = `You are the Writer's Room for EVERYWHERE Studio. Sara (Chief of Staff) is orchestrating, and Josh (Category Designer) is leading the creative direction.
+const SYSTEM_PROMPT = `You are the Writer's Room for EVERYWHERE Studio. Sara (Chief of Staff) is composing, and Josh (Category Designer) is leading the creative direction.
 
 Your job: take the raw conversation between Watson and the Composer and generate exactly 2 genuinely different creative angles for this piece. Each angle should represent a fundamentally different approach, not variations on the same theme.
 

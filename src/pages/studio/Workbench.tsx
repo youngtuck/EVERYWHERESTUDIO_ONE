@@ -60,7 +60,7 @@ export default function Workbench() {
         if (error) console.error(error);
         setOutputs((data as OutputRow[]) ?? []);
       })
-      .finally(() => setLoading(false));
+      .then(() => setLoading(false), () => setLoading(false));
   }, [user]);
 
   const refresh = () => {
@@ -72,7 +72,10 @@ export default function Workbench() {
       .is("published_at", null)
       .lt("score", 900)
       .order("updated_at", { ascending: false })
-      .then(({ data }) => setOutputs((data as OutputRow[]) ?? []));
+      .then(
+        ({ data, error }) => { if (error) console.error(error); setOutputs((data as OutputRow[]) ?? []); },
+        (err) => console.error("Workbench refresh failed:", err)
+      );
   };
 
   const handleMoveToVault = async (id: string) => {

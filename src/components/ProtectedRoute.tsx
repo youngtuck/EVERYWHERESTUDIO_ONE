@@ -62,7 +62,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ codeId: data.codeId, userId: user.id }),
-        });
+        }).catch((err) => console.error("Failed to redeem access code:", err));
       }
     } catch {
       // Fallback: accept "oneidea" if API unreachable

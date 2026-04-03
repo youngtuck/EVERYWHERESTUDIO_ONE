@@ -1,7 +1,7 @@
 const STATS = [
   { num:"40", label:"Specialists" },
-  { num:"10", label:"Output Formats" },
-  { num:"8", label:"Quality Checkpoints" },
+  { num:"12", label:"Output Formats" },
+  { num:"7", label:"Quality Checkpoints" },
   { num:"100", label:"Impact Score Maximum" },
   { num:"3", label:"Layers" },
 ];

@@ -58,7 +58,7 @@ const DIVISIONS: Division[] = [
     title: "Operations",
     color: "#A080F5",
     agents: [
-      { name: "Sara", role: "Chief of Staff", description: "Orchestrates everything." },
+      { name: "Sara", role: "Chief of Staff", description: "Composes everything." },
       { name: "Martin", role: "CTO", description: "System architecture." },
       { name: "Riley", role: "Build Master", description: "Tracks versions and dependencies." },
       { name: "Diane", role: "Documentation", description: "System memory." },

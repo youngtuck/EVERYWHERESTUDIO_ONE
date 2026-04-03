@@ -9,13 +9,15 @@ const FORMATS = [
   { name: "Presentation", desc: "Talk outline, slide beats, keynote." },
   { name: "Business", desc: "Proposals, pitches, RFPs, sales docs." },
   { name: "Freestyle", desc: "Anything that does not fit the grid." },
+  { name: "Sunday Story", desc: "Weekly narrative for your audience." },
+  { name: "Email", desc: "Direct outreach, sequences, and campaigns." },
 ];
 export default function TwelveFormats() {
   return (
     <section style={{ padding:"100px 32px", background:"var(--bg)", borderTop:"1px solid var(--line)" }}>
       <div style={{ maxWidth:1160, margin:"0 auto" }}>
         <div style={{ maxWidth:480, marginBottom:64 }}>
-          <p className="eyebrow" style={{ marginBottom:20 }}>10 Output Formats</p>
+          <p className="eyebrow" style={{ marginBottom:20 }}>12 Output Formats</p>
           <h2 style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", lineHeight:1.08 }}>
             One idea,<br /><em style={{fontStyle:"italic"}}>twelve formats.</em>
           </h2>
