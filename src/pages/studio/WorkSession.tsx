@@ -1285,10 +1285,16 @@ function OutlineRowComponent({ label, content, indent, onChange }: {
 
 function StageEdit({
   draft, generating, generatingLabel, onDraftChange, onAdvance, onRevise,
+  versions, activeVersionIdx, onVersionSelect, onGenerateVersion, canGenerateMore,
 }: {
   draft: string; generating: boolean; generatingLabel: string;
   onDraftChange: (v: string) => void; onAdvance: () => void;
   onRevise: (instructions: string) => void;
+  versions: Array<{ content: string; label: string }>;
+  activeVersionIdx: number;
+  onVersionSelect: (idx: number) => void;
+  onGenerateVersion: () => void;
+  canGenerateMore: boolean;
 }) {
   const [input, setInput] = useState("");
   const [activePopover, setActivePopover] = useState<string | null>(null);
@@ -1447,6 +1453,53 @@ function StageEdit({
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
       <div className="edit-area" style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+        {/* Version tabs */}
+        {versions.length > 0 && !generating && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            marginBottom: 16, paddingBottom: 12,
+            borderBottom: "1px solid var(--line)",
+          }}>
+            {versions.map((v, i) => (
+              <button
+                key={i}
+                onClick={() => onVersionSelect(i)}
+                style={{
+                  padding: "4px 12px", borderRadius: 6,
+                  fontSize: 11, fontWeight: activeVersionIdx === i ? 600 : 400,
+                  color: activeVersionIdx === i ? "var(--fg)" : "var(--fg-3)",
+                  background: activeVersionIdx === i ? "var(--surface)" : "transparent",
+                  border: activeVersionIdx === i ? "1px solid var(--line)" : "1px solid transparent",
+                  cursor: "pointer", fontFamily: FONT,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {v.label}
+              </button>
+            ))}
+            {canGenerateMore && (
+              <button
+                onClick={onGenerateVersion}
+                disabled={generating}
+                style={{
+                  padding: "4px 12px", borderRadius: 6,
+                  fontSize: 11, fontWeight: 500,
+                  color: "var(--fg-3)",
+                  background: "transparent",
+                  border: "1px dashed var(--line)",
+                  cursor: generating ? "not-allowed" : "pointer",
+                  fontFamily: FONT,
+                  opacity: generating ? 0.5 : 1,
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={e => { if (!generating) { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.color = "var(--fg)"; } }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+              >
+                + New version
+              </button>
+            )}
+          </div>
+        )}
         {generating ? (
           <div className="draft-body">
             <LoadingDots label={generatingLabel} />
@@ -2073,6 +2126,8 @@ export default function WorkSession() {
 
   // ── Edit ─────────────────────────────────────────────────────
   const [draft, setDraft] = useState(persisted?.generatedContent || "");
+  const [draftVersions, setDraftVersions] = useState<Array<{ content: string; label: string }>>([]);
+  const [activeVersionIdx, setActiveVersionIdx] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [generatingLabel, setGeneratingLabel] = useState("Writing draft...");
 
@@ -2304,6 +2359,8 @@ export default function WorkSession() {
       const data = await res.json();
 
       setDraft(data.content || "");
+      setDraftVersions([{ content: data.content || "", label: "Version 1" }]);
+      setActiveVersionIdx(0);
       setGeneratingLabel("Done.");
     } catch (err: any) {
       toast("Draft generation failed. Please try again.", "error");
@@ -2336,7 +2393,15 @@ export default function WorkSession() {
 
       if (!res.ok) throw new Error(`Revision error ${res.status}`);
       const data = await res.json();
-      setDraft(data.content || draft);
+      const revised = data.content || draft;
+      setDraft(revised);
+      setDraftVersions(prev => {
+        const updated = [...prev];
+        if (updated[activeVersionIdx]) {
+          updated[activeVersionIdx] = { ...updated[activeVersionIdx], content: revised };
+        }
+        return updated;
+      });
     } catch (err: any) {
       toast("Revision failed. Your draft is unchanged.", "error");
       console.error("[WorkSession][revise]", err);
@@ -2344,6 +2409,50 @@ export default function WorkSession() {
       setGenerating(false);
     }
   }, [draft, buildConvSummary, selectedFormats, user?.id, toast]);
+
+  // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
+  // ── EDIT: Generate another draft version ─────────────────────
+  const handleGenerateVersion = useCallback(async () => {
+    if (!draft || generating) return;
+    setGenerating(true);
+    setGeneratingLabel("Generating another version...");
+
+    try {
+      const versionNum = draftVersions.length + 1;
+      const variationInstruction = versionNum === 2
+        ? "Write a distinctly different version of this content. Change the opening hook, restructure the argument flow, and try a different closing. Same core message, different execution."
+        : "Write a third variation. Try a bolder, more unexpected angle. Change the structure significantly. Take a creative risk with the opening.";
+
+      const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationSummary: buildConvSummary(),
+          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          originalDraft: draft,
+          revisionNotes: variationInstruction,
+          userId: user?.id,
+          maxTokens: 4096,
+        }),
+      }, { timeout: 90000 });
+
+      if (!res.ok) throw new Error(`Version error ${res.status}`);
+      const data = await res.json();
+      const newContent = data.content || "";
+
+      if (newContent) {
+        const newVersions = [...draftVersions, { content: newContent, label: `Version ${versionNum}` }];
+        setDraftVersions(newVersions);
+        setActiveVersionIdx(newVersions.length - 1);
+        setDraft(newContent);
+      }
+    } catch (err: any) {
+      toast("Failed to generate another version.", "error");
+      console.error("[WorkSession][version]", err);
+    } finally {
+      setGenerating(false);
+    }
+  }, [draft, generating, draftVersions, buildConvSummary, outputType, selectedFormats, user?.id, toast]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
   const handleRunPipeline = useCallback(async () => {
@@ -2504,6 +2613,8 @@ export default function WorkSession() {
     setExportedTabs({});
     setOutputId(null);
     setProjectId(null);
+    setDraftVersions([]);
+    setActiveVersionIdx(0);
   }, []);
 
   const handleGoBackToEdit = useCallback((instructions: string) => {
@@ -2661,6 +2772,14 @@ export default function WorkSession() {
           onDraftChange={setDraft}
           onAdvance={handleRunPipeline}
           onRevise={handleRevise}
+          versions={draftVersions}
+          activeVersionIdx={activeVersionIdx}
+          onVersionSelect={(idx) => {
+            setActiveVersionIdx(idx);
+            setDraft(draftVersions[idx].content);
+          }}
+          onGenerateVersion={handleGenerateVersion}
+          canGenerateMore={draftVersions.length < 3 && !generating}
         />
       )}
       {stage === "Review" && (
