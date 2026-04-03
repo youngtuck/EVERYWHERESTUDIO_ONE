@@ -465,7 +465,7 @@ function WatchWorkWrapSection({ howRef }: { howRef: React.RefObject<HTMLDivEleme
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 16 }}>
               Three rooms. One idea.
             </div>
-            <h2 style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-0.02em", margin: 0, color: "var(--ew-white)" }}>
+            <h2 style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-0.02em", margin: 0, color: "var(--ew-white)", textWrap: "balance" as any }}>
               Watch. Work. Wrap.
             </h2>
           </div>
@@ -772,12 +772,13 @@ export default function ExplorePage() {
             fontWeight: 700,
             lineHeight: 1.1,
             letterSpacing: "-0.03em",
+            textWrap: "balance" as any,
             margin: "0 0 28px",
             color: "var(--ew-white)",
           }}>
             {/* Word-by-word staggered reveal */}
             <span style={{ display: "block" }}>
-              {"Your thinking reaches your audience.".split(" ").map((word, i) => (
+              {"Your thinking reaches your\u00A0audience.".split(" ").map((word, i) => (
                 <span
                   key={i}
                   style={{
@@ -794,11 +795,11 @@ export default function ExplorePage() {
             <span style={{
               display: "block",
               color: "var(--ew-gold)",
-              fontWeight: 600,
+              fontWeight: 500,
               fontStyle: "normal",
               animation: `xpFadeUp 0.9s ${EASE} 500ms both`,
             }}>
-              In your voice. Better than you'd write it yourself.
+              In your voice. Better than you'd write it{"\u00A0"}yourself.
             </span>
           </h1>
           <p style={{
@@ -809,7 +810,7 @@ export default function ExplorePage() {
             lineHeight: 1.6,
             animation: `xpFadeUp 0.8s ${EASE} 700ms both`,
           }}>
-            Watson is your guide. You talk, and the world hears you.
+            Watson is your guide. You talk, and the world hears{"\u00A0"}you.
           </p>
           <div className="xp-hero-ctas" style={{
             display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
@@ -916,14 +917,15 @@ export default function ExplorePage() {
                     letterSpacing: "-0.02em",
                     margin: "0 0 32px",
                     color: "var(--ew-text-dark)",
+                    textWrap: "balance" as any,
                   }}>
                     The thought leaders you see everywhere aren't better thinkers.{" "}
-                    <span style={{ color: "var(--ew-blue)", fontWeight: 700 }}>They got their ideas out.</span>
+                    <span style={{ color: "var(--ew-blue)", fontWeight: 700 }}>They got their ideas{"\u00A0"}out.</span>
                   </h2>
                 </Reveal>
                 <Reveal direction="up" distance={20} delay={150}>
                   <p style={{ color: "var(--ew-text-body)", maxWidth: 540, marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
-                    You have the thinking. What you've been missing is someone to carry it, from your head, into the world, without you doing the work twice.
+                    You have the thinking. What you've been missing is someone to carry it, from your head, into the world, without you doing the work{"\u00A0"}twice.
                   </p>
                 </Reveal>
                 <Reveal direction="up" distance={20} delay={300}>
@@ -952,12 +954,12 @@ export default function ExplorePage() {
           </Reveal>
           <Reveal delay={100}>
             <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 620, textAlign: "center", marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
-              <span style={{ color: "var(--ew-text-light)", fontWeight: 600 }}>Watson is your thinking partner.</span> You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're done.
+              <span style={{ color: "var(--ew-text-light)", fontWeight: 600 }}>Watson is your thinking partner.</span> You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're{"\u00A0"}done.
             </p>
           </Reveal>
           <Reveal delay={200}>
             <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 620, textAlign: "center", marginBottom: 56, fontSize: 16, lineHeight: 1.7 }}>
-              No editing. No formatting. No chasing the idea across five tabs. Watson carries it. What comes back is done. In your voice. Ready to ship.
+              No editing. No formatting. No chasing the idea across five tabs. Watson carries it. What comes back is done. In your voice. Ready to{"\u00A0"}ship.
             </p>
           </Reveal>
 
@@ -1110,6 +1112,7 @@ export default function ExplorePage() {
                 lineHeight: 1.15,
                 letterSpacing: "-0.02em",
                 margin: "0 0 16px",
+                textWrap: "balance" as any,
                 color: "var(--ew-text-dark)",
               }}>
                 The idea is in your head. Not in the world.
@@ -1165,6 +1168,7 @@ export default function ExplorePage() {
                 fontWeight: 700,
                 lineHeight: 1.15,
                 letterSpacing: "-0.02em",
+                textWrap: "balance" as any,
                 margin: "0 auto 28px",
                 maxWidth: 800,
                 color: "var(--ew-text-dark)",
@@ -1187,9 +1191,9 @@ export default function ExplorePage() {
             marginBottom: 72,
           }}>
             {[
-              { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Watson is there. You talk. It's done." },
-              { headline: "Every channel.", body: "Newsletter, LinkedIn, podcast, Substack, one idea, every format, native to each." },
-              { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is done." },
+              { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Watson is there. You talk. It\u2019s\u00A0done." },
+              { headline: "Every channel.", body: "Newsletter, LinkedIn, podcast, Substack, one idea, every format, native to\u00A0each." },
+              { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is\u00A0done." },
             ].flatMap((block, i) => {
               const item = (
                 <Reveal key={block.headline} delay={i * 150}>
@@ -1230,7 +1234,7 @@ export default function ExplorePage() {
                   margin: "0 0 12px",
                   letterSpacing: "-0.01em",
                 }}>
-                  "Better than what I was writing myself."
+                  "Better than what I was writing{"\u00A0"}myself."
                 </p>
                 <p style={{
                   fontSize: 15,
@@ -1272,11 +1276,12 @@ export default function ExplorePage() {
                 fontSize: "clamp(32px, 5vw, 56px)",
                 fontWeight: 700,
                 lineHeight: 1.15,
+                textWrap: "balance" as any,
                 letterSpacing: "-0.02em",
                 margin: "0 0 28px",
                 color: "var(--ew-text-dark)",
               }}>
-                {"Nothing ships unless it would fool a skeptic.".split(" ").map((word, i) => (
+                {"Nothing ships unless it would fool a\u00A0skeptic.".split(" ").map((word, i) => (
                   <span
                     key={i}
                     style={{
@@ -1312,7 +1317,7 @@ export default function ExplorePage() {
               lineHeight: 1.2,
               letterSpacing: "-0.02em",
             }}>
-              Most AI writes for you.
+              Most AI writes for{"\u00A0"}you.
             </p>
           </Reveal>
           <Reveal delay={300} direction="scale" distance={0}>
@@ -1324,7 +1329,7 @@ export default function ExplorePage() {
               letterSpacing: "-0.02em",
             }}>
               <span style={{ color: "var(--ew-gold)" }}>EVERYWHERE</span>{" "}
-              <span style={{ color: "var(--ew-white)" }}>works for you.</span>
+              <span style={{ color: "var(--ew-white)" }}>works for{"\u00A0"}you.</span>
             </p>
           </Reveal>
 
@@ -1431,24 +1436,26 @@ export default function ExplorePage() {
         pointerEvents: "none",
         userSelect: "none",
       }}>
-        <div style={{
+        <div className="xp-marquee-track" style={{
           display: "flex",
           whiteSpace: "nowrap",
-          animation: "xpMarquee 30s linear infinite",
+          animation: "xpMarquee 40s linear infinite",
         }}>
+          {/* 4 repetitions duplicated (8 total) for seamless loop */}
           {Array.from({ length: 8 }).map((_, i) => (
             <span key={i} style={{
+              display: "inline-flex",
+              alignItems: "center",
               fontSize: "clamp(80px, 12vw, 200px)",
-              fontWeight: 800,
               fontFamily: "var(--font)",
-              color: "rgba(0,0,0,0.04)",
               textTransform: "uppercase" as const,
               letterSpacing: "-0.02em",
               flexShrink: 0,
-              paddingRight: 40,
+              marginRight: "0.5em",
             }}>
-              EVERYWHERE STUDIO
-              <span style={{ color: "rgba(245,198,66,0.08)", padding: "0 40px" }}>&middot;</span>
+              <span style={{ fontWeight: 800, color: "rgba(0,0,0,0.04)" }}>EVERYWHERE</span>
+              <span style={{ color: "rgba(245,198,66,0.08)", fontSize: "0.35em", margin: "0 0.15em", display: "inline-flex", alignItems: "center" }}>{"\u25CF"}</span>
+              <span style={{ fontWeight: 300, color: "rgba(0,0,0,0.04)" }}>STUDIO</span>
             </span>
           ))}
         </div>
@@ -1456,9 +1463,6 @@ export default function ExplorePage() {
           @keyframes xpMarquee {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
-          }
-          @media (max-width: 768px) {
-            .xp [style*="xpMarquee"] { animation-duration: 20s !important; }
           }
         `}</style>
       </div>
