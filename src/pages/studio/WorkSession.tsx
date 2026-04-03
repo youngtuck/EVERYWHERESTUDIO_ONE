@@ -2912,7 +2912,11 @@ export default function WorkSession() {
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
-    setDashOpen(false);
+    if (stage === "Review" || stage === "Approve") {
+      setDashOpen(true);
+    } else {
+      setDashOpen(false);
+    }
 
     const dashNode = (() => {
       switch (stage) {
@@ -2987,6 +2991,13 @@ export default function WorkSession() {
     pipelineRun, pipelineRunning, allExported, outputId,
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
   ]);
+
+  // Auto-open dashboard when pipeline finishes in Review
+  useEffect(() => {
+    if (stage === "Review" && pipelineRun && !pipelineRunning) {
+      setDashOpen(true);
+    }
+  }, [stage, pipelineRun, pipelineRunning, setDashOpen]);
 
   // ─────────────────────────────────────────────────────────────
   // RENDER
