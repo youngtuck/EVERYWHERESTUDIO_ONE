@@ -22,18 +22,18 @@ const INITIAL_PROMPT =
   "I am going to ask you a few questions to understand how you communicate. Not what you say, how you say it. Most people do not know what they sound like, but you know more than you think. Type anything to get started.";
 
 const QUESTION_SEQUENCE: string[] = [
-  "First thing: when people describe you, do they see you as more formal or more casual. Do you agree with them",
-  "When you are at your best in a conversation, how would you describe your energy",
-  "When you write something you are proud of, do the sentences tend to be short and punchy, long and flowing, or a mix",
-  "Do you tend to start with the point and then support it, or build up a story and arrive at the point",
-  "Are there words or phrases you find yourself using again and again. Things people associate with you",
-  "Are there words or phrases you hate. Things that make you cringe when AI writes them",
-  "How does humor show up in your communication, if it does at all",
-  "What do you believe about your field that most people get wrong",
-  "When you write or speak, who are you really talking to. Not the broadest audience, the specific person you imagine reading it",
-  "When you disagree with someone, how do you typically handle it in writing",
-  "If you were writing a LinkedIn post right now, how would you start it. Give me the first line",
-  "Last one. Read this sentence in your head: \"Innovation requires us to leverage synergies across our ecosystem.\" How does it make you feel, and why",
+  "First thing: when people describe you, do they see you as more formal or more casual? Do you agree with them?",
+  "When you are at your best in a conversation, how would you describe your energy?",
+  "When you write something you are proud of, do the sentences tend to be short and punchy, long and flowing, or a mix?",
+  "Do you tend to start with the point and then support it, or build up a story and arrive at the point?",
+  "Are there words or phrases you find yourself using again and again? Things people associate with you?",
+  "Are there words or phrases you hate? Things that make you cringe when AI writes them?",
+  "How does humor show up in your communication, if it does at all?",
+  "What do you believe about your field that most people get wrong?",
+  "When you write or speak, who are you really talking to? Not the broadest audience, the specific person you imagine reading it?",
+  "When you disagree with someone, how do you typically handle it in writing?",
+  "If you were writing a LinkedIn post right now, how would you start it? Give me the first line.",
+  "Last one. Read this sentence in your head: \"Innovation requires us to leverage synergies across our ecosystem.\" How does it make you feel, and why?",
 ];
 
 function validateResponse(text: string): boolean {
