@@ -21,13 +21,63 @@ interface TraitSet {
   structural_habits: number;
 }
 
-const TRAIT_META: { key: keyof TraitSet; label: string; strengthPhrase: string; distinctionPhrase: string }[] = [
-  { key: "vocabulary_and_syntax", label: "Vocabulary and Syntax", strengthPhrase: "precise, intentional word choice", distinctionPhrase: "instinct over ornamentation in vocabulary" },
-  { key: "tonal_register", label: "Tonal Register", strengthPhrase: "a distinctive tonal identity", distinctionPhrase: "tonal range that shifts with context" },
-  { key: "rhythm_and_cadence", label: "Rhythm and Cadence", strengthPhrase: "strong rhythmic patterns that carry ideas forward", distinctionPhrase: "content-first pacing over musical rhythm" },
-  { key: "metaphor_patterns", label: "Metaphor Patterns", strengthPhrase: "vivid metaphor to make abstract ideas tangible", distinctionPhrase: "direct language over figurative expression" },
-  { key: "structural_habits", label: "Structural Habits", strengthPhrase: "structurally driven writing with clear architecture", distinctionPhrase: "organic flow over rigid structure" },
+const TRAIT_META: { key: keyof TraitSet; label: string; strengthPhrase: string; distinctionPhrase: string; explanations: Record<string, string> }[] = [
+  {
+    key: "vocabulary_and_syntax", label: "Vocabulary and Syntax",
+    strengthPhrase: "precise, intentional word choice", distinctionPhrase: "instinct over ornamentation in vocabulary",
+    explanations: {
+      Dominant: "You use precise, intentional word choices. Watson will match this specificity.",
+      Strong: "Your word choice is deliberate. Watson will maintain your level of formality.",
+      Moderate: "You balance specialized and accessible language. Watson will mirror this range.",
+      default: "You keep your language simple and direct. Watson will avoid jargon.",
+    },
+  },
+  {
+    key: "tonal_register", label: "Tonal Register",
+    strengthPhrase: "a distinctive tonal identity", distinctionPhrase: "tonal range that shifts with context",
+    explanations: {
+      Dominant: "You have a strong, recognizable tone. Watson will preserve its distinctiveness.",
+      Strong: "Your tone is consistent and confident. Watson will maintain that register.",
+      Moderate: "You shift tone with context. Watson will adapt to match the situation.",
+      default: "You favor a neutral, even tone. Watson will keep things understated.",
+    },
+  },
+  {
+    key: "rhythm_and_cadence", label: "Rhythm and Cadence",
+    strengthPhrase: "strong rhythmic patterns that carry ideas forward", distinctionPhrase: "content-first pacing over musical rhythm",
+    explanations: {
+      Dominant: "Your writing has a strong rhythmic signature. Watson will match your pacing.",
+      Strong: "You write with clear momentum. Watson will carry that forward in drafts.",
+      Moderate: "Your rhythm varies with the content. Watson will follow your lead.",
+      default: "You prioritize clarity over rhythm. Watson will keep sentences functional.",
+    },
+  },
+  {
+    key: "metaphor_patterns", label: "Metaphor Patterns",
+    strengthPhrase: "vivid metaphor to make abstract ideas tangible", distinctionPhrase: "direct language over figurative expression",
+    explanations: {
+      Dominant: "You use vivid metaphors to make ideas concrete. Watson will lean into this.",
+      Strong: "You reach for figurative language when it earns its place. Watson will do the same.",
+      Moderate: "You use metaphor selectively. Watson will mirror that restraint.",
+      default: "You prefer direct language. Watson will avoid unnecessary figurative expression.",
+    },
+  },
+  {
+    key: "structural_habits", label: "Structural Habits",
+    strengthPhrase: "structurally driven writing with clear architecture", distinctionPhrase: "organic flow over rigid structure",
+    explanations: {
+      Dominant: "You build with clear architecture. Watson will create structured, deliberate drafts.",
+      Strong: "Your writing has a clear shape. Watson will maintain that organizational logic.",
+      Moderate: "You balance structure with flow. Watson will find the right mix.",
+      default: "You favor organic flow over rigid structure. Watson will keep things conversational.",
+    },
+  },
 ];
+
+function getTraitExplanation(meta: typeof TRAIT_META[number], score: number): string {
+  const label = scoreToLabel(score);
+  return meta.explanations[label] || meta.explanations.default;
+}
 
 function buildNarrativeSummary(traits: TraitSet): string {
   const entries = TRAIT_META.map(m => ({ ...m, score: traits[m.key] || 0 }));
@@ -45,26 +95,31 @@ function buildNarrativeSummary(traits: TraitSet): string {
   ].join(" ");
 }
 
-function TraitBar({ label, score, delay }: { label: string; score: number; delay: number }) {
+function TraitBar({ label, score, delay, explanation }: { label: string; score: number; delay: number; explanation: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-      <div style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, color: "var(--fg)", width: 180, flexShrink: 0 }}>{label}</div>
-      <div style={{ flex: 1, height: 8, borderRadius: 4, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
-        <div style={{ width: `${score}%`, height: "100%", overflow: "hidden", borderRadius: 4 }}>
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              borderRadius: 4,
-              background: "var(--gold)",
-              animation: "barFill 0.8s ease forwards",
-              animationDelay: `${delay}ms`,
-              transformOrigin: "left",
-            }}
-          />
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, color: "var(--fg)", width: 180, flexShrink: 0 }}>{label}</div>
+        <div style={{ flex: 1, height: 8, borderRadius: 4, background: "rgba(0,0,0,0.04)", overflow: "hidden" }}>
+          <div style={{ width: `${score}%`, height: "100%", overflow: "hidden", borderRadius: 4 }}>
+            <div
+              style={{
+                height: "100%",
+                width: "100%",
+                borderRadius: 4,
+                background: "var(--gold)",
+                animation: "barFill 0.8s ease forwards",
+                animationDelay: `${delay}ms`,
+                transformOrigin: "left",
+              }}
+            />
+          </div>
         </div>
+        <div style={{ fontFamily: "var(--font)", fontSize: 13, fontWeight: 600, color: "var(--gold)", width: 72, textAlign: "right" }}>{scoreToLabel(score)}</div>
       </div>
-      <div style={{ fontFamily: "var(--font)", fontSize: 13, fontWeight: 600, color: "var(--gold)", width: 72, textAlign: "right" }}>{scoreToLabel(score)}</div>
+      <div style={{ marginLeft: 196, fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, marginTop: 4 }}>
+        {explanation}
+      </div>
     </div>
   );
 }
@@ -72,8 +127,8 @@ function TraitBar({ label, score, delay }: { label: string; score: number; delay
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontFamily: "var(--font)", fontSize: 14, fontWeight: 500,
-      textTransform: "uppercase", letterSpacing: "0.05em",
+      fontFamily: "var(--font)", fontSize: 10, fontWeight: 700,
+      textTransform: "uppercase", letterSpacing: "0.08em",
       color: "var(--fg-3)", marginBottom: 12,
     }}>
       {children}
@@ -223,7 +278,7 @@ export default function VoiceDnaSettings() {
         <SectionLabel>Trait Profile</SectionLabel>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {TRAIT_META.map((t, i) => (
-            <TraitBar key={t.key} label={t.label} score={traits[t.key] || 0} delay={i * 100} />
+            <TraitBar key={t.key} label={t.label} score={traits[t.key] || 0} delay={i * 100} explanation={getTraitExplanation(t, traits[t.key] || 0)} />
           ))}
         </div>
         <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: "8px 0 0" }}>
@@ -283,8 +338,8 @@ export default function VoiceDnaSettings() {
         )}
       </Card>
 
-      {/* SECTION E: Interview Responses (only for interview method) */}
-      {(method === "interview" || voiceDna.method === "interview") && interviewResponses && Object.keys(interviewResponses).length > 0 && (
+      {/* SECTION E: Interview Responses or Upload note */}
+      {(method === "interview" || voiceDna.method === "interview") && interviewResponses && Object.keys(interviewResponses).length > 0 ? (
         <Card>
           <SectionLabel>Your Interview Responses</SectionLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -293,14 +348,21 @@ export default function VoiceDnaSettings() {
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, lineHeight: 1.5 }}>
                   {question}
                 </div>
-                <div style={{ fontSize: 14, color: "var(--fg)", lineHeight: 1.6 }}>
+                <div style={{ fontSize: 14, color: "var(--fg)", lineHeight: 1.65 }}>
                   {answer}
                 </div>
               </div>
             ))}
           </div>
         </Card>
-      )}
+      ) : (method === "upload" || voiceDna.method === "upload") ? (
+        <Card>
+          <SectionLabel>Source Material</SectionLabel>
+          <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.65, margin: 0 }}>
+            Voice DNA was captured from uploaded writing samples. Watson uses these samples to match your natural voice across all content.
+          </p>
+        </Card>
+      ) : null}
 
       {/* SECTION F: Retrain */}
       <Card style={{ marginBottom: 0 }}>
@@ -310,7 +372,11 @@ export default function VoiceDnaSettings() {
         </p>
         <button
           type="button"
-          onClick={() => navigate("/onboarding?retrain=voice")}
+          onClick={() => {
+            if (window.confirm("This will replace your current Voice DNA. Your existing profile will be archived. Continue?")) {
+              navigate("/onboarding?retrain=voice");
+            }
+          }}
           style={{
             background: "transparent", color: "var(--gold)",
             border: "2px solid var(--gold)", borderRadius: 8,

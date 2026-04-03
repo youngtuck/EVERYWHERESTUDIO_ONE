@@ -199,22 +199,37 @@ export default function Settings() {
         </PrefRowLast>
       </Card>
 
-      {/* Voice DNA link */}
+      {/* Voice & Brand DNA links */}
       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
-        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>Voice DNA is configured separately.</div>
-        <button
-          onClick={() => nav("/studio/settings/voice")}
-          style={{
-            fontSize: 12, padding: "8px 16px", borderRadius: 6,
-            border: "1px solid var(--line)", background: "var(--surface)",
-            color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
-            transition: "all 0.1s",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
-        >
-          Edit Voice DNA →
-        </button>
+        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>Voice and Brand DNA are configured separately.</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => nav("/studio/settings/voice")}
+            style={{
+              fontSize: 12, padding: "8px 16px", borderRadius: 6,
+              border: "1px solid var(--line)", background: "var(--surface)",
+              color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
+              transition: "all 0.1s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+          >
+            Voice DNA →
+          </button>
+          <button
+            onClick={() => nav("/studio/settings/brand")}
+            style={{
+              fontSize: 12, padding: "8px 16px", borderRadius: 6,
+              border: "1px solid var(--line)", background: "var(--surface)",
+              color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
+              transition: "all 0.1s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+          >
+            Brand Profile →
+          </button>
+        </div>
       </div>
     </div>
   );
