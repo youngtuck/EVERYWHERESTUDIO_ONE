@@ -6,6 +6,7 @@
  *  - Upload area calls upload-resource API
  */
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useShell } from "../../components/studio/StudioShell";
@@ -167,6 +168,7 @@ export default function Resources() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { setDashContent, setDashOpen } = useShell();
+  const nav = useNavigate();
 
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
@@ -174,6 +176,31 @@ export default function Resources() {
   const [viewingResource, setViewingResource] = useState<Resource | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Foundation items from profiles table
+  const [voiceDnaExists, setVoiceDnaExists] = useState(false);
+  const [brandDnaExists, setBrandDnaExists] = useState(false);
+  const [voiceDnaDate, setVoiceDnaDate] = useState("");
+  const [brandDnaDate, setBrandDnaDate] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("voice_dna_completed, voice_dna_completed_at, brand_dna_completed, brand_dna_completed_at")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.voice_dna_completed) {
+          setVoiceDnaExists(true);
+          setVoiceDnaDate(data.voice_dna_completed_at || "");
+        }
+        if (data?.brand_dna_completed) {
+          setBrandDnaExists(true);
+          setBrandDnaDate(data.brand_dna_completed_at || "");
+        }
+      });
+  }, [user]);
 
   // Load real resources from Supabase
   useEffect(() => {
@@ -322,6 +349,70 @@ export default function Resources() {
       <div style={{ padding: 20, fontFamily: FONT, maxWidth: 680 }}>
         <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>Project Files</div>
 
+        {/* Foundation section */}
+        {(voiceDnaExists || brandDnaExists) ? (
+          <>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Foundation</div>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)", marginBottom: 20 }}>
+              {voiceDnaExists && (
+                <div
+                  onClick={() => nav("/studio/settings/voice")}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "9px 8px", borderBottom: brandDnaExists ? "1px solid var(--line)" : "none",
+                    borderLeft: "3px solid var(--gold)",
+                    cursor: "pointer", transition: "background 0.1s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <div style={{ width: 30, height: 30, borderRadius: 6, flexShrink: 0, background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>V</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500, marginBottom: 1 }}>Voice DNA</div>
+                    <div style={{ fontSize: 10, color: "var(--fg-3)" }}>Your communication signature. Click to view.{voiceDnaDate ? ` · ${formatDate(voiceDnaDate)}` : ""}</div>
+                  </div>
+                  <svg style={{ width: 12, height: 12, stroke: "var(--fg-3)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </div>
+              )}
+              {brandDnaExists && (
+                <div
+                  onClick={() => nav("/studio/settings/brand")}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "9px 8px",
+                    borderLeft: "3px solid var(--gold)",
+                    cursor: "pointer", transition: "background 0.1s",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <div style={{ width: 30, height: 30, borderRadius: 6, flexShrink: 0, background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>B</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500, marginBottom: 1 }}>Brand DNA</div>
+                    <div style={{ fontSize: 10, color: "var(--fg-3)" }}>Your brand profile. Click to view.{brandDnaDate ? ` · ${formatDate(brandDnaDate)}` : ""}</div>
+                  </div>
+                  <svg style={{ width: 12, height: 12, stroke: "var(--fg-3)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div style={{
+            background: "rgba(245,198,66,0.04)", border: "1px solid rgba(245,198,66,0.12)",
+            borderRadius: 8, padding: "14px 16px", marginBottom: 20,
+            fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6,
+          }}>
+            Set up your <span onClick={() => nav("/onboarding")} style={{ color: "var(--gold)", fontWeight: 600, cursor: "pointer" }}>Voice DNA and Brand DNA</span> to give Watson your full context.
+          </div>
+        )}
+
+        {/* Project Files section */}
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Project Files</div>
+
         {loading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {[1, 2, 3].map(i => (
@@ -334,10 +425,10 @@ export default function Resources() {
             borderRadius: 8, padding: "32px 20px", textAlign: "center" as const,
             boxShadow: "var(--shadow-sm)", marginBottom: 10,
           }}>
-            <div style={{ fontSize: 22, color: "var(--line)", marginBottom: 12 }}>▤</div>
+            <div style={{ fontSize: 22, color: "var(--line)", marginBottom: 12 }}>&#9764;</div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>No project files yet</div>
             <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
-              Upload your Voice DNA, Brand Guide, or any reference files below. They'll be available to every Work session in this project.
+              Upload reference files, brand guides, or any documents Watson should know about.
             </div>
           </div>
         ) : (
@@ -366,7 +457,7 @@ export default function Resources() {
           <p style={{ fontSize: 11, color: "var(--fg-3)" }}>
             {uploading
               ? "Uploading..."
-              : <><span style={{ color: "var(--blue)", fontWeight: 600 }}>Upload a file</span>, PDF, doc, deck, or any reference</>
+              : <><span style={{ color: "var(--blue)", fontWeight: 600 }}>Upload a file</span>: reference files, brand guides, or any documents Watson should know about</>
             }
           </p>
         </div>
