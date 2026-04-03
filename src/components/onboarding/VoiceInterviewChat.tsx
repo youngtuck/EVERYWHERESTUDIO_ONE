@@ -40,8 +40,8 @@ function validateResponse(text: string): boolean {
   const trimmed = text.trim();
   const words = trimmed.split(/\s+/).filter(w => w.length > 0);
 
-  // Must have at least 3 words
-  if (words.length < 3) return false;
+  // Must have at least 2 words
+  if (words.length < 2) return false;
 
   // Check word-to-character ratio (random strings have very long "words")
   const avgWordLen = trimmed.replace(/\s+/g, "").length / words.length;
