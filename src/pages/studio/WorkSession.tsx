@@ -708,11 +708,11 @@ function ReviewDash({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StageIntake({
-  messages, onSend, sending, isReady, onAdvance, userInitials, firstName, onFileAttach,
+  messages, onSend, sending, isReady, onAdvance, userInitials, firstName, onFileAttach, onNewSession,
 }: {
   messages: ChatMessage[]; onSend: (text: string) => void;
   sending: boolean; isReady: boolean; onAdvance: () => void; userInitials?: string; firstName?: string;
-  onFileAttach?: (files: FileList) => void;
+  onFileAttach?: (files: FileList) => void; onNewSession?: () => void;
 }) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -784,6 +784,34 @@ function StageIntake({
   // Active chat state: messages + input bar at bottom
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)" }}>
+      {/* New Session button */}
+      {hasUserMessage && onNewSession && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 16px 0", flexShrink: 0 }}>
+          <button
+            onClick={() => {
+              if (window.confirm("Start a new session? Your current conversation will be cleared.")) {
+                onNewSession();
+              }
+            }}
+            style={{
+              background: "none",
+              border: "1px solid var(--line)",
+              borderRadius: 6,
+              padding: "5px 12px",
+              fontSize: 11,
+              fontWeight: 600,
+              fontFamily: FONT,
+              color: "var(--fg-3)",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+          >
+            + New Session
+          </button>
+        </div>
+      )}
       {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
@@ -2272,6 +2300,30 @@ export default function WorkSession() {
   }, [outputId, toast]);
 
   // ── REVIEW → EDIT: Send back ──────────────────────────────────
+  // ── NEW SESSION: Reset everything ────────────────────────────
+  const handleNewSession = useCallback(() => {
+    clearSession();
+    setMessages([{ role: "watson", content: "Good to see you. Who specifically needs to hear what you are working on?" }]);
+    setStage("Intake");
+    setIntakeSending(false);
+    setIntakeReady(false);
+    setReadySummary("");
+    setOutputType(null);
+    setSelectedFormats(DEFAULT_FORMATS);
+    setSessionFiles([]);
+    setOutlineRows([]);
+    setDraft("");
+    setGenerating(false);
+    setPipelineRun(null);
+    setPipelineRunning(false);
+    setHvtAttempts(0);
+    setHvtRunning(false);
+    setAllExported(false);
+    setExportedTabs({});
+    setOutputId(null);
+    setProjectId(null);
+  }, []);
+
   const handleGoBackToEdit = useCallback((instructions: string) => {
     goToStage("Edit");
     handleRevise(instructions);
@@ -2387,6 +2439,7 @@ export default function WorkSession() {
             const names = Array.from(files).map(f => f.name);
             setSessionFiles(prev => [...prev, ...names]);
           }}
+          onNewSession={handleNewSession}
         />
       )}
       {stage === "Outline" && (
