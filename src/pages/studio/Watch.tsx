@@ -88,8 +88,8 @@ function WatchDashboard({
   onAddThoughtLeader: (v: string) => void;
   onRemoveThoughtLeader: (v: string) => void;
 }) {
-  const [sourcesOpen, setSourcesOpen] = useState(true);
-  const [keywordsOpen, setKeywordsOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [keywordsOpen, setKeywordsOpen] = useState(true);
   const [competitorsOpen, setCompetitorsOpen] = useState(false);
   const [thoughtLeadersOpen, setThoughtLeadersOpen] = useState(false);
   const [openPlatform, setOpenPlatform] = useState<string | null>(null);
@@ -122,6 +122,20 @@ function WatchDashboard({
 
   return (
     <>
+      {/* Your Topics (keywords from onboarding) */}
+      <div style={{ marginBottom: 14 }}>
+        <DpLabel open={keywordsOpen} onToggle={() => setKeywordsOpen(o => !o)}>Your Topics</DpLabel>
+        {keywordsOpen && (
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 8, lineHeight: 1.4 }}>
+              These topics drive your Watch briefings. Add or remove to refine what Sentinel tracks.
+            </div>
+            <AddRow placeholder="Add a topic..." onAdd={onAddKeyword} />
+            {keywords.map(kw => <SrcRow key={kw} name={kw} onRemove={() => onRemoveKeyword(kw)} />)}
+          </div>
+        )}
+      </div>
+
       {/* Sources */}
       <div style={{ marginBottom: 14 }}>
         <DpLabel open={sourcesOpen} onToggle={() => setSourcesOpen(o => !o)}>Sources</DpLabel>
@@ -144,17 +158,6 @@ function WatchDashboard({
                 )}
               </div>
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* Keywords */}
-      <div style={{ marginBottom: 14 }}>
-        <DpLabel open={keywordsOpen} onToggle={() => setKeywordsOpen(o => !o)}>Keywords</DpLabel>
-        {keywordsOpen && (
-          <div style={{ marginTop: 6 }}>
-            <AddRow placeholder="Add keyword..." onAdd={onAddKeyword} />
-            {keywords.map(kw => <SrcRow key={kw} name={kw} onRemove={() => onRemoveKeyword(kw)} />)}
           </div>
         )}
       </div>
