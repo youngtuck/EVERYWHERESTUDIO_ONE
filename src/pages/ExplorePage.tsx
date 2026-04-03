@@ -461,7 +461,7 @@ export default function ExplorePage() {
         </div>
       </nav>
 
-      {/* ── SECTION 01: HERO ─────────────────────────────────── */}
+      {/* ── SECTION 01: HERO (Dark Navy, atmospheric) ─────────── */}
       <section
         ref={heroRef}
         style={{
@@ -470,65 +470,164 @@ export default function ExplorePage() {
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          background: "radial-gradient(ellipse at 50% 0%, rgba(107,143,212,0.06) 0%, transparent 60%), var(--ew-navy)",
+          background: "var(--ew-navy)",
+          overflow: "hidden",
         }}
       >
+        {/* Atmospheric radial glow */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "radial-gradient(ellipse 70% 50% at 50% 30%, rgba(74,144,217,0.06) 0%, transparent 60%)",
+          transform: `translateY(${heroParallax.y * -0.33}px)`,
+          pointerEvents: "none",
+        }} />
+        {/* Noise texture */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+          opacity: 0.025,
+          pointerEvents: "none",
+        }} />
+
         <div
           style={{
             textAlign: "center",
             maxWidth: 900,
             padding: "0 32px",
+            position: "relative",
+            zIndex: 1,
             transform: `translateY(${heroParallax.y}px)`,
             opacity: heroParallax.opacity,
             willChange: "transform, opacity",
           }}
         >
           <h1 style={{
-            fontSize: "clamp(42px, 7vw, 88px)",
+            fontSize: "clamp(36px, 6vw, 72px)",
             fontWeight: 700,
-            lineHeight: 1.08,
-            letterSpacing: "-0.035em",
+            lineHeight: 1.1,
+            letterSpacing: "-0.03em",
             margin: "0 0 28px",
-            color: "var(--ew-text-light)",
+            color: "var(--ew-white)",
           }}>
-            <span style={{
-              display: "block",
-              animation: "xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both",
-            }}>
-              Your thinking reaches your audience.
+            {/* Word-by-word staggered reveal */}
+            <span style={{ display: "block" }}>
+              {"Your thinking reaches your audience.".split(" ").map((word, i) => (
+                <span
+                  key={i}
+                  style={{
+                    display: "inline-block",
+                    animation: `xpWordUp 0.7s ${EASE} ${100 + i * 80}ms both`,
+                    marginRight: "0.27em",
+                  }}
+                >
+                  {word}
+                </span>
+              ))}
             </span>
+            {/* Second line: single block fade-up at 400ms */}
             <em style={{
               display: "block",
-              animation: "xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both",
               color: "var(--ew-gold)",
+              fontWeight: 500,
+              fontStyle: "italic",
+              animation: `xpFadeUp 0.9s ${EASE} 500ms both`,
             }}>
               In your voice. Better than you'd write it yourself.
             </em>
           </h1>
           <p style={{
-            fontSize: isMobile ? 17 : 20,
+            fontSize: "clamp(16px, 2vw, 22px)",
             color: "var(--ew-text-light-dim)",
             maxWidth: 540,
-            margin: "0 auto 40px",
+            margin: "0 auto 44px",
             lineHeight: 1.6,
-            animation: `xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both`,
+            animation: `xpFadeUp 0.8s ${EASE} 700ms both`,
           }}>
             Watson is your guide. You talk, and the world hears you.
           </p>
           <div className="xp-hero-ctas" style={{
             display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
-            animation: `xpFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both`,
+            animation: `xpFadeUp 0.8s ${EASE} 900ms both`,
           }}>
-            <button className="xp-btn-gold" onClick={() => navigate("/auth?mode=signup")} style={{ border: "none" }}>Get Early Access</button>
-            <a href="#how" className="xp-btn-outline" onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}>
+            <button
+              onClick={() => navigate("/auth?mode=signup")}
+              className="xp-hero-cta-primary"
+              style={{
+                background: "var(--ew-gold)",
+                color: "var(--ew-navy)",
+                border: "none",
+                borderRadius: 100,
+                padding: "16px 36px",
+                fontWeight: 700,
+                fontSize: 14,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase" as const,
+                fontFamily: "var(--font)",
+                cursor: "pointer",
+                transition: `transform 0.3s ${EASE}, box-shadow 0.3s ${EASE}`,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.03)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(245,198,66,0.25)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+            >
+              Get Early Access
+            </button>
+            <a
+              href="#how"
+              onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                background: "transparent",
+                color: "var(--ew-white)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: 100,
+                padding: "16px 36px",
+                fontWeight: 600,
+                fontSize: 14,
+                fontFamily: "var(--font)",
+                textDecoration: "none",
+                cursor: "pointer",
+                transition: `border-color 0.3s ${EASE}, background 0.3s ${EASE}`,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "transparent"; }}
+            >
               See How It Works
             </a>
           </div>
         </div>
+
+        {/* Scroll indicator */}
+        <div style={{
+          position: "absolute",
+          bottom: 40,
+          left: "50%",
+          transform: "translateX(-50%)",
+          animation: `xpScrollPulse 2s ease-in-out infinite`,
+          opacity: heroParallax.opacity,
+        }}>
+          <div style={{
+            width: 2,
+            height: 24,
+            background: "var(--ew-gold)",
+            borderRadius: 1,
+          }} />
+        </div>
+
         <style>{`
           @keyframes xpFadeUp {
             from { opacity: 0; transform: translateY(24px); }
             to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes xpWordUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes xpScrollPulse {
+            0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.6; }
+            50% { transform: translateX(-50%) translateY(8px); opacity: 1; }
           }
         `}</style>
       </section>
