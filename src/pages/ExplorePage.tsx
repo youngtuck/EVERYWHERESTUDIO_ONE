@@ -679,100 +679,147 @@ export default function ExplorePage() {
       </section>
 
       {/* ── SECTION 03: WATSON (Dark: #1B263B, gold accent) ─────── */}
-      <section style={{ padding: sectionPad, background: "var(--ew-navy-rich)" }}>
-        <Reveal>
-          <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 16 }}>
+      {/* Gradient transition from light to dark */}
+      <div style={{ height: 120, background: "linear-gradient(180deg, var(--ew-white) 0%, var(--ew-navy-rich) 100%)" }} />
+      <section style={{ padding: "0 0 120px", background: "var(--ew-navy-rich)" }}>
+        <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 80 }}>
+          <Reveal>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 20, textAlign: "center" }}>
               Watson
             </div>
-            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 640, textAlign: "center", marginBottom: 16 }}>
-              Watson is your thinking partner. You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're done.
+          </Reveal>
+          <Reveal delay={100}>
+            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 620, textAlign: "center", marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
+              <span style={{ color: "var(--ew-text-light)", fontWeight: 600 }}>Watson is your thinking partner.</span> You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're done.
             </p>
-            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 640, textAlign: "center", marginBottom: 48 }}>
+          </Reveal>
+          <Reveal delay={200}>
+            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 620, textAlign: "center", marginBottom: 56, fontSize: 16, lineHeight: 1.7 }}>
               No editing. No formatting. No chasing the idea across five tabs. Watson carries it. What comes back is done. In your voice. Ready to ship.
             </p>
-            {/* Watson demo widget */}
-            <div style={{
-              background: "#0E0E0C",
-              borderRadius: 14,
-              border: "1px solid var(--ew-border-dark)",
-              overflow: "hidden",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
-              maxWidth: 440,
-              width: "100%",
-              marginBottom: 48,
-            }}>
-              {/* Header */}
+          </Reveal>
+
+          {/* Watson demo widget with magnetic hover */}
+          <Reveal direction="scale" duration={1000}>
+            <div
+              style={{ perspective: 1000, maxWidth: 480, width: "100%", marginBottom: 56 }}
+              onMouseMove={e => {
+                const el = e.currentTarget.firstElementChild as HTMLElement;
+                if (!el) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const dx = (e.clientX - cx) / (rect.width / 2);
+                const dy = (e.clientY - cy) / (rect.height / 2);
+                el.style.transform = `rotateY(${dx * 3}deg) rotateX(${-dy * 3}deg)`;
+                el.style.boxShadow = `${-dx * 8}px ${-dy * 8}px 80px rgba(0,0,0,0.4), 0 0 60px rgba(74,144,217,0.06)`;
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget.firstElementChild as HTMLElement;
+                if (!el) return;
+                el.style.transform = "rotateY(0deg) rotateX(0deg)";
+                el.style.boxShadow = "0 24px 80px rgba(0,0,0,0.4)";
+              }}
+            >
               <div style={{
-                padding: "14px 20px",
-                borderBottom: "1px solid var(--ew-border-dark)",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
+                background: "rgba(255,255,255,0.03)",
+                borderRadius: 16,
+                border: "1px solid var(--ew-border-dark)",
+                overflow: "hidden",
+                boxShadow: "0 24px 80px rgba(0,0,0,0.4)",
+                width: "100%",
+                transition: `transform 0.6s ${EASE}, box-shadow 0.6s ${EASE}`,
+                position: "relative",
               }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ew-gold)", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ew-text-light-dim)", letterSpacing: "0.04em" }}>Watson is listening</span>
-              </div>
-              {/* Chat area */}
-              <div style={{ padding: "20px 20px 16px" }}>
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
-                  <div style={{
-                    background: "#1B263B",
-                    borderRadius: "14px 14px 4px 14px",
-                    padding: "10px 16px",
-                    maxWidth: "80%",
-                    fontSize: 13,
-                    color: "var(--ew-text-light)",
-                    lineHeight: 1.5,
-                  }}>
-                    The people in your market who show up everywhere aren't better thinkers. They got their ideas out. Every week. On every channel. Without doing it alone.
-                  </div>
-                </div>
-                <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
-                  <div style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid var(--ew-border-dark)",
-                    borderRadius: "14px 14px 14px 4px",
-                    padding: "10px 16px",
-                    maxWidth: "85%",
-                    fontSize: 13,
-                    color: "rgba(255,255,255,0.7)",
-                    lineHeight: 1.5,
-                  }}>
-                    <strong style={{ color: "var(--ew-gold)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
-                    Who specifically needs to hear this?
-                  </div>
-                </div>
+                {/* Subtle glow behind widget */}
                 <div style={{
+                  position: "absolute",
+                  inset: -40,
+                  background: "radial-gradient(circle at 50% 50%, rgba(74,144,217,0.08) 0%, transparent 70%)",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                }} />
+                {/* Header */}
+                <div style={{
+                  padding: "14px 20px",
+                  borderBottom: "1px solid var(--ew-border-dark)",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingTop: 12,
-                  borderTop: "1px solid var(--ew-border-dark)",
+                  gap: 10,
+                  position: "relative",
+                  zIndex: 1,
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 22, fontWeight: 700, color: "var(--ew-gold)", fontVariantNumeric: "tabular-nums" }}>86</span>
-                    <span style={{ fontSize: 11, color: "var(--ew-text-light-dim)", fontWeight: 500 }}>Impact Score</span>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ew-gold)", flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ew-text-light-dim)", letterSpacing: "0.04em" }}>Watson is listening</span>
+                </div>
+                {/* Chat area */}
+                <div style={{ padding: "20px 20px 16px", position: "relative", zIndex: 1 }}>
+                  {/* User bubble */}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+                    <div style={{
+                      background: "rgba(255,255,255,0.06)",
+                      borderRadius: "14px 14px 4px 14px",
+                      padding: "10px 16px",
+                      maxWidth: "80%",
+                      fontSize: 13,
+                      color: "var(--ew-text-light)",
+                      lineHeight: 1.5,
+                    }}>
+                      The people in your market who show up everywhere aren't better thinkers. They got their ideas out. Every week. On every channel. Without doing it alone.
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    {["LinkedIn", "Newsletter", "Podcast"].map((f, i) => (
-                      <span key={f} style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        padding: "4px 10px",
-                        borderRadius: 20,
-                        background: i < 2 ? "rgba(212,168,50,0.15)" : "rgba(255,255,255,0.04)",
-                        color: i < 2 ? "var(--ew-gold)" : "rgba(255,255,255,0.25)",
-                        letterSpacing: "0.02em",
-                      }}>
-                        {f}
-                      </span>
-                    ))}
+                  {/* Watson bubble */}
+                  <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+                    <div style={{
+                      background: "rgba(245,198,66,0.06)",
+                      border: "1px solid rgba(245,198,66,0.1)",
+                      borderRadius: "14px 14px 14px 4px",
+                      padding: "10px 16px",
+                      maxWidth: "85%",
+                      fontSize: 13,
+                      color: "var(--ew-text-light)",
+                      lineHeight: 1.5,
+                    }}>
+                      <strong style={{ color: "var(--ew-gold)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
+                      Who specifically needs to hear this?
+                    </div>
+                  </div>
+                  {/* Footer bar */}
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingTop: 12,
+                    borderTop: "1px solid var(--ew-border-dark)",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 22, fontWeight: 700, color: "var(--ew-gold)", fontVariantNumeric: "tabular-nums" }}>86</span>
+                      <span style={{ fontSize: 11, color: "var(--ew-text-light-dim)", fontWeight: 500 }}>Impact Score</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {["LinkedIn", "Newsletter", "Podcast"].map((f) => (
+                        <span key={f} style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: "4px 10px",
+                          borderRadius: 20,
+                          background: "rgba(255,255,255,0.06)",
+                          border: "1px solid var(--ew-border-dark)",
+                          color: "var(--ew-text-light-dim)",
+                          letterSpacing: "0.02em",
+                        }}>
+                          {f}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            {/* Supporting line */}
+          </Reveal>
+
+          {/* Supporting line */}
+          <Reveal delay={200}>
             <p style={{
               fontSize: "clamp(20px, 3vw, 28px)",
               fontWeight: 600,
@@ -785,8 +832,8 @@ export default function ExplorePage() {
             }}>
               The people in your market who show up everywhere aren't better thinkers. They have better infrastructure.
             </p>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
       </section>
 
       {/* ── SECTION 04: YOU KNOW THIS FEELING (Light: #F7F9FC, blue accent) */}
