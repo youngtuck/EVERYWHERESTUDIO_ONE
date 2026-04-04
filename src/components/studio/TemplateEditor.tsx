@@ -73,144 +73,112 @@ function LockIcon() {
   );
 }
 
-export default function TemplateEditor({ template, onSave, onSaveAsCustom }: TemplateEditorProps) {
-  const [settings, setSettings] = useState<TemplateSettings>(template.settings || DEFAULT_SETTINGS);
-  const [customName, setCustomName] = useState("");
+export default function TemplateEditor({ selected, onSelect, compact }: { selected?: string | null; onSelect?: (id: string) => void; compact?: boolean }) {
+  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const [watsonInput, setWatsonInput] = useState("");
 
-  const checkpoints = Object.entries(settings.qualitySettings.checkpointToggles);
+  const systemTemplates = [
+    { id: "the-edition", name: "The Edition", desc: "Full publication package from one draft" },
+    { id: "sunday-story", name: "Sunday Story", desc: "Weekly narrative essay" },
+    { id: "session-brief", name: "Session Brief", desc: "Decision-ready executive summary" },
+  ];
 
-  const toggleCheckpoint = (name: string) => {
-    if (template.isBase) return; // Base templates: checkpoints locked per output type
-    setSettings(prev => ({
-      ...prev,
-      qualitySettings: {
-        ...prev.qualitySettings,
-        checkpointToggles: {
-          ...prev.qualitySettings.checkpointToggles,
-          [name]: !prev.qualitySettings.checkpointToggles[name],
-        },
-      },
-    }));
-  };
+  const userTemplates = [
+    { id: "custom-1", name: "Weekly Coaching Email", desc: "Based on Email · Modified" },
+  ];
 
   return (
-    <div style={{ fontFamily: FONT, fontSize: 11 }}>
-      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>
-        Template: {template.name}
-        {template.isBase && <span style={{ color: "var(--gold)", marginLeft: 6 }}>(base)</span>}
-      </div>
-
-      {/* Word count range */}
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 4 }}>Word count range</div>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input
-            type="number"
-            value={settings.wordCountRange[0]}
-            onChange={e => setSettings(prev => ({ ...prev, wordCountRange: [+e.target.value, prev.wordCountRange[1]] }))}
-            style={{ width: 60, padding: 4, fontSize: 10, borderRadius: 4, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg)", fontFamily: FONT }}
-          />
-          <span style={{ color: "var(--fg-3)" }}>to</span>
-          <input
-            type="number"
-            value={settings.wordCountRange[1]}
-            onChange={e => setSettings(prev => ({ ...prev, wordCountRange: [prev.wordCountRange[0], +e.target.value] }))}
-            style={{ width: 60, padding: 4, fontSize: 10, borderRadius: 4, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg)", fontFamily: FONT }}
-          />
+    <div style={{ display: "flex", height: "100%", fontFamily: FONT }}>
+      {/* Left column: Template list */}
+      <div style={{ width: "44%", borderRight: "1px solid var(--line)", overflowY: "auto", padding: "16px 14px" }}>
+        {/* SYSTEM section */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>System</span>
+          <span style={{ fontSize: 9, color: "var(--fg-3)", padding: "1px 6px", borderRadius: 3, background: "var(--line)" }}>Read only</span>
         </div>
-      </div>
-
-      {/* Quality checkpoints */}
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 4 }}>Quality checkpoints</div>
-        {checkpoints.map(([name, enabled]) => (
-          <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0" }}>
-            <input
-              type="checkbox"
-              checked={enabled}
-              onChange={() => toggleCheckpoint(name)}
-              disabled={template.isBase}
-              style={{ accentColor: "var(--gold-bright)" }}
-            />
-            <span style={{ color: "var(--fg-2)", fontSize: 10 }}>{name}</span>
+        {systemTemplates.map(t => (
+          <div
+            key={t.id}
+            onClick={() => setActiveTemplate(t.id)}
+            style={{
+              padding: "10px 12px", borderRadius: 6, marginBottom: 4,
+              background: activeTemplate === t.id ? "rgba(245,198,66,0.08)" : "transparent",
+              border: activeTemplate === t.id ? "1px solid rgba(245,198,66,0.3)" : "1px solid transparent",
+              cursor: "pointer", transition: "all 0.12s",
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>{t.name}</div>
+            <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 2 }}>{t.desc}</div>
           </div>
         ))}
-        {/* HVT always locked on */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0" }}>
-          <input type="checkbox" checked disabled style={{ accentColor: "var(--gold-bright)" }} />
-          <span style={{ color: "var(--fg-2)", fontSize: 10 }}>Human Voice Test</span>
-          <LockIcon />
-          <span style={{ fontSize: 8, color: "var(--fg-3)" }}>always on</span>
+
+        {/* YOURS section */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16, marginBottom: 10 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Yours</span>
+          <span style={{ fontSize: 10, color: "var(--blue, #4A90D9)", cursor: "pointer" }}>+ New</span>
         </div>
+        {userTemplates.map(t => (
+          <div
+            key={t.id}
+            onClick={() => setActiveTemplate(t.id)}
+            style={{
+              padding: "10px 12px", borderRadius: 6, marginBottom: 4,
+              background: activeTemplate === t.id ? "rgba(245,198,66,0.08)" : "transparent",
+              border: activeTemplate === t.id ? "1px solid rgba(245,198,66,0.3)" : "1px solid transparent",
+              cursor: "pointer", transition: "all 0.12s",
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>{t.name}</div>
+            <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 2 }}>{t.desc}</div>
+          </div>
+        ))}
       </div>
 
-      {/* Impact threshold */}
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 4 }}>Impact threshold</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      {/* Right column: Watson conversation */}
+      <div style={{ width: "56%", display: "flex", flexDirection: "column", padding: "16px 14px" }}>
+        <div style={{ flex: 1, overflowY: "auto", marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "flex-start" }}>
+            <div style={{
+              width: 20, height: 20, borderRadius: "50%",
+              background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 8, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
+            }}>W</div>
+            <div style={{
+              background: "rgba(74,144,217,0.07)", border: "1px solid rgba(74,144,217,0.15)",
+              borderRadius: "0 8px 8px 8px", padding: "8px 10px",
+              fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, maxWidth: "85%",
+            }}>
+              What are we building? I can start from an existing output type, modify one of your current templates, or work from scratch.
+            </div>
+          </div>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          background: "var(--surface)", border: "1px solid var(--line)",
+          borderRadius: 8, padding: "8px 10px", flexShrink: 0,
+        }}>
           <input
-            type="number"
-            value={settings.qualitySettings.impactThreshold}
-            onChange={e => setSettings(prev => ({
-              ...prev,
-              qualitySettings: { ...prev.qualitySettings, impactThreshold: Math.max(0, Math.min(100, +e.target.value)) },
-            }))}
-            min={0} max={100}
-            style={{ width: 50, padding: 4, fontSize: 10, borderRadius: 4, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg)", fontFamily: FONT }}
+            value={watsonInput}
+            onChange={e => setWatsonInput(e.target.value)}
+            placeholder="Describe your template..."
+            style={{
+              flex: 1, background: "transparent", border: "none", outline: "none",
+              fontSize: 12, color: "var(--fg)", fontFamily: FONT,
+            }}
           />
-          <span style={{ color: "var(--fg-3)", fontSize: 10 }}>/ 100</span>
+          <button style={{
+            width: 28, height: 28, borderRadius: 6,
+            background: watsonInput.trim() ? "var(--fg)" : "var(--line)",
+            border: "none", cursor: watsonInput.trim() ? "pointer" : "not-allowed",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "background 0.15s",
+          }}>
+            <svg style={{ width: 11, height: 11, stroke: "#fff", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
+              <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
         </div>
-      </div>
-
-      {/* Options */}
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 4 }}>Options</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0" }}>
-          <input type="checkbox" checked={settings.options.cta} onChange={() => setSettings(prev => ({ ...prev, options: { ...prev.options, cta: !prev.options.cta } }))} style={{ accentColor: "var(--gold-bright)" }} />
-          <span style={{ color: "var(--fg-2)", fontSize: 10 }}>Include CTA</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0" }}>
-          <input type="checkbox" checked={settings.options.pullQuotes} onChange={() => setSettings(prev => ({ ...prev, options: { ...prev.options, pullQuotes: !prev.options.pullQuotes } }))} style={{ accentColor: "var(--gold-bright)" }} />
-          <span style={{ color: "var(--fg-2)", fontSize: 10 }}>Pull quotes</span>
-        </div>
-      </div>
-
-      {/* Save actions */}
-      {!template.isBase && (
-        <button
-          onClick={() => onSave({ ...template, settings })}
-          style={{
-            width: "100%", padding: 8, borderRadius: 5,
-            background: "var(--gold-bright)", border: "none",
-            fontSize: 11, fontWeight: 600, color: "var(--fg)",
-            cursor: "pointer", fontFamily: FONT, marginBottom: 6,
-          }}
-        >
-          Save
-        </button>
-      )}
-
-      <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-        <input
-          value={customName}
-          onChange={e => setCustomName(e.target.value)}
-          placeholder="Custom template name"
-          style={{ flex: 1, padding: 6, fontSize: 10, borderRadius: 4, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg)", fontFamily: FONT }}
-        />
-        <button
-          onClick={() => { if (customName.trim()) { onSaveAsCustom(customName.trim(), settings); setCustomName(""); } }}
-          disabled={!customName.trim()}
-          style={{
-            padding: "6px 10px", borderRadius: 4,
-            background: customName.trim() ? "var(--surface)" : "var(--bg)",
-            border: "1px solid var(--line)",
-            fontSize: 10, fontWeight: 600, color: "var(--fg-2)",
-            cursor: customName.trim() ? "pointer" : "not-allowed",
-            fontFamily: FONT, whiteSpace: "nowrap",
-          }}
-        >
-          Save as custom
-        </button>
       </div>
     </div>
   );

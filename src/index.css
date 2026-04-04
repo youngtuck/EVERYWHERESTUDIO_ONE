@@ -13,7 +13,7 @@
   /* Text */
   --fg: #0D1B2A;
   --fg-2: #334155;
-  --fg-3: #94A3B8;
+  --fg-3: #64748B;
 
   /* Borders */
   --line: #E2E8F0;
@@ -84,7 +84,7 @@
   --surface-elevated: #253040;
   --sidebar: #141C28;
   --fg: #F1F5F9;
-  --fg-2: #CBD5E1;
+  --fg-2: #E2E8F0;
   --fg-3: #64748B;
   --line: #1E2D3D;
   --line-2: #2A3D52;
@@ -509,7 +509,6 @@ button { font-family: var(--font); }
   font-size: 13px; font-weight: 700;
   letter-spacing: 0.5px; padding: 12px 24px;
   border-radius: 6px; font-family: var(--font);
-  text-transform: uppercase;
   transition: opacity 0.15s ease;
 }
 .btn-primary:hover { opacity: 0.88; }
@@ -520,7 +519,6 @@ button { font-family: var(--font); }
   font-size: 13px; font-weight: 700;
   letter-spacing: 0.5px; padding: 10px 22px;
   border-radius: 6px; font-family: var(--font);
-  text-transform: uppercase;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 .btn-ghost:hover { border-color: var(--cornflower); color: var(--cornflower); }
@@ -531,7 +529,6 @@ button { font-family: var(--font); }
   font-size: 13px; font-weight: 700;
   letter-spacing: 0.5px; padding: 12px 24px;
   border-radius: 6px; font-family: var(--font);
-  text-transform: uppercase;
   transition: opacity 0.15s ease;
 }
 .btn-gold:hover { opacity: 0.88; }

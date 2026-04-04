@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, useCallback } from "react";
+import { useState, useRef, useEffect, createContext, useContext, useCallback } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
 import StudioTopBar from "./StudioTopBar";
@@ -21,6 +21,16 @@ interface ShellCtx {
   setDiscoverOpen: (v: boolean) => void;
   dashContent: React.ReactNode | null;
   setDashContent: (node: React.ReactNode | null) => void;
+  activeDashTab: "feedback" | "watson" | "help";
+  setActiveDashTab: (tab: "feedback" | "watson" | "help") => void;
+  feedbackContent: React.ReactNode | null;
+  setFeedbackContent: (node: React.ReactNode | null) => void;
+  watsonPrefill: string;
+  setWatsonPrefill: (text: string) => void;
+  watsonThread: Array<{ type: "user" | "watson" | "note"; text: string; from?: string; to?: string }>;
+  setWatsonThread: (fn: (prev: any[]) => any[]) => void;
+  watsonPending: Record<string, Array<{ from: string; text: string }>>;
+  setWatsonPending: (fn: (prev: any) => any) => void;
 }
 
 const ShellContext = createContext<ShellCtx>({
@@ -32,6 +42,16 @@ const ShellContext = createContext<ShellCtx>({
   setDiscoverOpen: () => {},
   dashContent: null,
   setDashContent: () => {},
+  activeDashTab: "feedback" as const,
+  setActiveDashTab: () => {},
+  feedbackContent: null,
+  setFeedbackContent: () => {},
+  watsonPrefill: "",
+  setWatsonPrefill: () => {},
+  watsonThread: [],
+  setWatsonThread: () => {},
+  watsonPending: {},
+  setWatsonPending: () => {},
 });
 
 export function useShell() {
@@ -229,6 +249,11 @@ export default function StudioShell() {
   const [advisorsOpen, setAdvisorsOpen] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [dashContent, setDashContent] = useState<React.ReactNode | null>(null);
+  const [activeDashTab, setActiveDashTab] = useState<"feedback" | "watson" | "help">("feedback");
+  const [feedbackContent, setFeedbackContent] = useState<React.ReactNode | null>(null);
+  const [watsonPrefill, setWatsonPrefill] = useState("");
+  const [watsonThread, setWatsonThread] = useState<Array<{ type: "user" | "watson" | "note"; text: string; from?: string; to?: string }>>([]);
+  const [watsonPending, setWatsonPending] = useState<Record<string, Array<{ from: string; text: string }>>>({});
 
   return (
     <ShellContext.Provider value={{
@@ -236,6 +261,11 @@ export default function StudioShell() {
       advisorsOpen, setAdvisorsOpen,
       discoverOpen, setDiscoverOpen,
       dashContent, setDashContent,
+      activeDashTab, setActiveDashTab,
+      feedbackContent, setFeedbackContent,
+      watsonPrefill, setWatsonPrefill,
+      watsonThread, setWatsonThread,
+      watsonPending, setWatsonPending,
     }}>
       <div style={{
         display: "flex", height: "100vh",
@@ -282,9 +312,7 @@ export default function StudioShell() {
               <Outlet />
             </main>
             {!isMobile && (
-              <DashboardPanel open={dashOpen}>
-                {dashContent}
-              </DashboardPanel>
+              <RightPanel open={dashOpen} />
             )}
           </div>
         </div>
@@ -312,26 +340,56 @@ export default function StudioShell() {
 // DASHBOARD PANEL
 // ─────────────────────────────────────────────────────────────────────────────
 
-function DashboardPanel({ open, children }: { open: boolean; children: React.ReactNode }) {
+function RightPanel({ open }: { open: boolean }) {
+  const { activeDashTab, setActiveDashTab, feedbackContent, dashContent } = useShell();
+
   return (
-    <div
-      id="dash-panel"
-      style={{
-        width: open ? 240 : 0, flexShrink: 0,
-        background: "var(--bg-2)", borderLeft: "1px solid var(--line)",
-        overflow: "hidden", transition: "width 0.18s ease",
-      }}
-    >
+    <div style={{
+      width: open ? 240 : 0, flexShrink: 0,
+      background: "var(--bg-2)", borderLeft: "1px solid var(--line)",
+      overflow: "hidden", transition: "width 0.18s ease",
+      display: "flex", flexDirection: "column",
+    }}>
       <div style={{
         width: 240, height: "100%",
         display: "flex", flexDirection: "column",
         opacity: open ? 1 : 0, transition: "opacity 0.12s ease",
         pointerEvents: open ? "auto" : "none",
       }}>
-        <div style={{ flex: 1, overflowY: "auto", padding: "14px" }}>
-          {children ?? <DefaultDashContent />}
+        {/* Tab bar */}
+        <div style={{
+          display: "flex", borderBottom: "1px solid var(--line)",
+          background: "var(--bg)", flexShrink: 0,
+        }}>
+          {(["feedback", "watson", "help"] as const).map(tab => (
+            <div
+              key={tab}
+              onClick={() => setActiveDashTab(tab)}
+              style={{
+                flex: tab === "help" ? "none" : 1,
+                marginLeft: tab === "help" ? "auto" : 0,
+                textAlign: "center" as const,
+                fontSize: 11, fontWeight: activeDashTab === tab ? 600 : 500,
+                color: activeDashTab === tab ? "var(--fg)" : "var(--fg-3)",
+                padding: "10px 8px",
+                cursor: "pointer",
+                borderBottom: activeDashTab === tab ? "2px solid var(--fg)" : "2px solid transparent",
+                transition: "all 0.1s",
+              }}
+            >
+              {tab === "feedback" ? "Feedback" : tab === "watson" ? "Ask Watson" : "Help"}
+            </div>
+          ))}
         </div>
-        {/* Single copyright footer */}
+
+        {/* Tab content */}
+        <div style={{ flex: 1, overflowY: "auto", padding: 14 }}>
+          {activeDashTab === "feedback" && (feedbackContent ?? dashContent ?? <DefaultDashContent />)}
+          {activeDashTab === "watson" && <WatsonPanel />}
+          {activeDashTab === "help" && <HelpPanelPlaceholder />}
+        </div>
+
+        {/* Copyright footer */}
         <div style={{
           padding: "8px 14px",
           fontSize: 9, color: "var(--line-2)",
@@ -349,6 +407,167 @@ function DefaultDashContent() {
   return (
     <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
       Select a section to see your dashboard.
+    </div>
+  );
+}
+
+function WatsonPanel() {
+  const { watsonThread, setWatsonThread, watsonPrefill, setWatsonPrefill, watsonPending, setWatsonPending } = useShell();
+  const [input, setInput] = useState(watsonPrefill || "");
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const stage = (window as any).__ewWorkStage || "Intake";
+
+  // Pick up prefill
+  useEffect(() => {
+    if (watsonPrefill) {
+      setInput(watsonPrefill);
+      setWatsonPrefill("");
+    }
+  }, [watsonPrefill, setWatsonPrefill]);
+
+  // Auto-scroll
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [watsonThread.length]);
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    const message = input.trim();
+    setInput("");
+
+    const carryMap: Record<string, string> = {
+      Intake: "Outline",
+      Outline: "Edit",
+      Edit: "Review",
+    };
+    const nextStage = carryMap[stage];
+
+    // Add to thread
+    setWatsonThread(prev => [...prev, { type: "user", text: message }]);
+
+    // Generate Watson's reply
+    const replies: Record<string, string> = {
+      Intake: "Heard. I will carry this into Outline. It will shape how I read the structure.",
+      Outline: "Noted. I will adjust the structural read to account for that.",
+      Edit: "Looking at that in context. If it affects the argument it will show as a flag.",
+      Review: "Noted. I will factor that into the checkpoint review before you approve.",
+    };
+    setTimeout(() => {
+      setWatsonThread(prev => [...prev, { type: "watson", text: replies[stage] || "Noted." }]);
+    }, 300);
+
+    // Queue for carry-forward
+    if (nextStage) {
+      setWatsonPending(prev => ({
+        ...prev,
+        [nextStage]: [...(prev[nextStage] || []), { from: stage, text: message }],
+      }));
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
+        {watsonThread.length === 0 && (
+          <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 12 }}>
+            Ask Watson anything about your current session.
+          </div>
+        )}
+        {watsonThread.map((m, i) => {
+          if (m.type === "note") {
+            return (
+              <div key={i} style={{
+                marginBottom: 8, padding: "8px 10px",
+                borderLeft: "2px solid var(--gold-bright, #F5C642)",
+                background: "rgba(245,198,66,0.06)",
+                borderRadius: "0 6px 6px 0",
+              }}>
+                <div style={{
+                  fontSize: 9, fontWeight: 700, color: "#9A7030",
+                  letterSpacing: "0.06em", marginBottom: 3,
+                  textTransform: "uppercase" as const,
+                }}>
+                  CARRIED FROM {m.from?.toUpperCase()}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>{m.text}</div>
+              </div>
+            );
+          }
+          if (m.type === "watson") {
+            return (
+              <div key={i} style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "flex-start" }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: "50%",
+                  background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 8, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
+                }}>W</div>
+                <div style={{
+                  background: "rgba(74,144,217,0.07)", border: "1px solid rgba(74,144,217,0.15)",
+                  borderRadius: "0 8px 8px 8px", padding: "8px 10px",
+                  fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, maxWidth: "85%",
+                }}>{m.text}</div>
+              </div>
+            );
+          }
+          // User message
+          return (
+            <div key={i} style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+              <div style={{
+                background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.2)",
+                borderRadius: "8px 0 8px 8px", padding: "8px 10px",
+                fontSize: 11, color: "var(--fg)", lineHeight: 1.6, maxWidth: "85%",
+              }}>{m.text}</div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 6,
+        background: "var(--surface)", border: "1px solid var(--line)",
+        borderRadius: 8, padding: "8px 10px", flexShrink: 0,
+      }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+          placeholder="Reply to Watson..."
+          style={{
+            flex: 1, background: "transparent", border: "none", outline: "none",
+            fontSize: 12, color: "var(--fg)", fontFamily: "var(--font)",
+          }}
+        />
+        <button
+          onClick={handleSend}
+          style={{
+            width: 28, height: 28, borderRadius: 6, background: input.trim() ? "var(--fg)" : "var(--line)",
+            border: "none", cursor: input.trim() ? "pointer" : "not-allowed", display: "flex",
+            alignItems: "center", justifyContent: "center", transition: "background 0.15s",
+          }}
+        >
+          <svg style={{ width: 11, height: 11, stroke: "#fff", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
+            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HelpPanelPlaceholder() {
+  return (
+    <div>
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>START HERE</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", padding: "6px 0", cursor: "pointer" }}>Watson</div>
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginTop: 12, marginBottom: 8 }}>THE PIPELINE</div>
+      {["Watch", "Work", "Wrap"].map(item => (
+        <div key={item} style={{ fontSize: 12, color: "var(--fg-2)", padding: "4px 0", cursor: "pointer" }}>{item}</div>
+      ))}
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginTop: 12, marginBottom: 8 }}>QUALITY</div>
+      {["7 Checkpoints", "Impact Score", "Human Voice Test"].map(item => (
+        <div key={item} style={{ fontSize: 12, color: "var(--fg-2)", padding: "4px 0", cursor: "pointer" }}>{item}</div>
+      ))}
     </div>
   );
 }

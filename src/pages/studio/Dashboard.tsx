@@ -8,6 +8,15 @@ import { useShell } from "../../components/studio/StudioShell";
 import "./shared.css";
 
 // ── Helpers ────────────────────────────────────────────────────
+function formatFullDate(date: string | Date): string {
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", {
+    month: "long", day: "numeric", year: "numeric",
+  }) + " at " + d.toLocaleTimeString("en-US", {
+    hour: "numeric", minute: "2-digit", hour12: true,
+  });
+}
+
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -262,7 +271,7 @@ export default function Dashboard() {
             <HomeCard
               accentColor="var(--gold-bright)"
               title={inProgress.title}
-              meta={`Last edit ${timeAgo(inProgress.updated_at || inProgress.created_at)}`}
+              meta={`Last edit ${formatFullDate(inProgress.updated_at || inProgress.created_at)}`}
               cta="Resume"
               onCta={() => nav(`/studio/work`)}
             />

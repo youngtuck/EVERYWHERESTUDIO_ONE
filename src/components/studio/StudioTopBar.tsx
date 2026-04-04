@@ -61,7 +61,7 @@ function useBreadcrumbs(): {
 }
 
 // ── Work Pipeline Breadcrumb ────────────────────────────────────
-const WORK_STAGES = ["Intake", "Outline", "Edit", "Review", "Export"] as const;
+const WORK_STAGES = ["Intake", "Outline", "Edit", "Review"] as const;
 type WorkStage = typeof WORK_STAGES[number];
 
 function WorkBreadcrumb() {
@@ -120,6 +120,7 @@ function UserAvatar() {
   const { user, displayName, signOut } = useAuth();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   const initials = displayName
     ? displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
@@ -131,6 +132,7 @@ function UserAvatar() {
   };
 
   return (
+    <>
     <div style={{ position: "relative" }}>
       <div
         onClick={() => setOpen(o => !o)}
@@ -174,36 +176,17 @@ function UserAvatar() {
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)" }}>{displayName || "User"}</div>
                   <div style={{ fontSize: 10, color: "var(--fg-3)" }}>EVERYWHERE Studio</div>
+                  <div style={{ fontSize: 10, color: "var(--fg-3)" }}>Alpha 3.007</div>
                 </div>
               </div>
-            </div>
-
-            {/* Quick stats */}
-            <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--line)" }}>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Your profile</div>
-              {[
-                { label: "Voice DNA", value: "Active", valueColor: "#4CAF82", path: "/studio/settings/voice" },
-                { label: "Brand DNA", value: "Active", valueColor: "#4CAF82", path: "/studio/settings/brand" },
-              ].map(r => (
-                <div
-                  key={r.label}
-                  onClick={() => { nav(r.path); setOpen(false); }}
-                  style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "2px 0", cursor: "pointer", borderRadius: 3, transition: "opacity 0.15s" }}
-                  onMouseEnter={e => { e.currentTarget.style.opacity = "0.7"; }}
-                  onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
-                >
-                  <span style={{ color: "var(--fg-2)" }}>{r.label}</span>
-                  <span style={{ color: r.valueColor, fontWeight: 600 }}>{r.value}</span>
-                </div>
-              ))}
             </div>
 
             {/* Actions */}
             <div style={{ padding: 6 }}>
               {[
+                { label: "System Settings", action: () => { setActiveModal("system"); setOpen(false); } },
                 { label: "Preferences", action: () => { nav("/studio/settings"); setOpen(false); } },
-                { label: "Edit Voice DNA", action: () => { nav("/studio/settings/voice"); setOpen(false); } },
-                { label: "Edit Brand DNA", action: () => { nav("/studio/settings/brand"); setOpen(false); } },
+                { label: "Admin Panel", action: () => { setActiveModal("admin"); setOpen(false); } },
               ].map(item => (
                 <div
                   key={item.label}
@@ -218,24 +201,65 @@ function UserAvatar() {
               <div style={{ borderTop: "1px solid var(--line)", margin: "4px 0" }} />
               <div
                 onClick={handleSignOut}
-                style={{ padding: "7px 10px", fontSize: 12, color: "var(--fg-3)", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
+                style={{ padding: "7px 10px", fontSize: 12, color: "#e74c3c", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               >
-                Sign out
+                Logout
               </div>
             </div>
           </div>
         </>
       )}
     </div>
+      {activeModal === "system" && (
+        <div onClick={() => setActiveModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--surface)", borderRadius: 12, width: 420, maxHeight: 480, padding: "20px 24px", boxShadow: "0 16px 48px rgba(0,0,0,0.14)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>System Settings</span>
+              <button onClick={() => setActiveModal(null)} style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+            </div>
+            {[
+              { label: "Default AI Model", value: "Claude Opus 4" },
+              { label: "Session Timeout", value: "30 minutes" },
+              { label: "Data Region", value: "US East" },
+            ].map(field => (
+              <div key={field.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{field.label}</span>
+                <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>{field.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {activeModal === "admin" && (
+        <div onClick={() => setActiveModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--surface)", borderRadius: 12, width: 420, maxHeight: 480, padding: "20px 24px", boxShadow: "0 16px 48px rgba(0,0,0,0.14)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>Admin Panel</span>
+              <button onClick={() => setActiveModal(null)} style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+            </div>
+            {[
+              { label: "Organization", value: "Mixed Grill, LLC" },
+              { label: "Plan", value: "Alpha" },
+              { label: "Users", value: "1" },
+            ].map(field => (
+              <div key={field.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{field.label}</span>
+                <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>{field.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
 // ── Main TopBar ─────────────────────────────────────────────────
 export default function StudioTopBar() {
   const nav = useNavigate();
-  const { dashOpen, setDashOpen, setAdvisorsOpen, setDiscoverOpen } = useShell();
+  const { setAdvisorsOpen, setDiscoverOpen } = useShell();
   const { left, showAdvisors } = useBreadcrumbs();
 
   return (
@@ -294,22 +318,6 @@ export default function StudioTopBar() {
             <Divider />
           </>
         )}
-
-        <button
-          onClick={() => setDashOpen(!dashOpen)}
-          style={{
-            fontSize: 11, fontWeight: dashOpen ? 600 : 500,
-            color: dashOpen ? "var(--fg)" : "var(--fg-3)",
-            cursor: "pointer", background: "none", border: "none",
-            fontFamily: "var(--font)", padding: 0, transition: "color 0.12s",
-          }}
-          onMouseEnter={e => { if (!dashOpen) (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
-          onMouseLeave={e => { if (!dashOpen) (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
-        >
-          Dashboard
-        </button>
-
-        <Divider />
 
         <button
           onClick={() => setDiscoverOpen(true)}

@@ -519,7 +519,22 @@ export default async function handler(req, res) {
       const reply = sanitizeContent(text.replace(READY_MARKER, "").replace(/\n+$/, "").trim());
 
       const detectedFormat = readyToGenerate ? detectFormat(reply) : null;
-      return res.json({ reply, readyToGenerate, detectedFormat });
+
+      const challengePatterns = [
+        /are you sure/i,
+        /is that really/i,
+        /but (is|are|do|does|would|could|should)/i,
+        /what if .+ isn't/i,
+        /I('m| am) not sure that's/i,
+        /let me push back/i,
+        /that might not be/i,
+        /the real (question|goal|issue)/i,
+        /before we go there/i,
+        /hold on/i,
+      ];
+      const isChallenge = challengePatterns.some(p => p.test(reply));
+
+      return res.json({ reply, readyToGenerate, detectedFormat, isChallenge });
     } catch (err) {
       console.error(`[api/chat][${systemMode}]`, err);
       return res.status(err.status === 401 ? 401 : 502).json({ error: err.message || "Something went wrong." });
@@ -595,7 +610,22 @@ export default async function handler(req, res) {
     const reply = sanitizeContent(text.replace(READY_MARKER, "").replace(/\n+$/, "").trim());
 
     const detectedFormat = readyToGenerate ? detectFormat(reply) : null;
-    return res.json({ reply, readyToGenerate, detectedFormat });
+
+    const challengePatterns = [
+      /are you sure/i,
+      /is that really/i,
+      /but (is|are|do|does|would|could|should)/i,
+      /what if .+ isn't/i,
+      /I('m| am) not sure that's/i,
+      /let me push back/i,
+      /that might not be/i,
+      /the real (question|goal|issue)/i,
+      /before we go there/i,
+      /hold on/i,
+    ];
+    const isChallenge = challengePatterns.some(p => p.test(reply));
+
+    return res.json({ reply, readyToGenerate, detectedFormat, isChallenge });
   } catch (err) {
     console.error("[api/chat]", err);
     const status = err.status === 401 ? 401 : 502;

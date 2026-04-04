@@ -31,6 +31,15 @@ function formatDateShort(iso: string): string {
   return `${d.getMonth() + 1}.${d.getDate()}.${String(d.getFullYear()).slice(2)}`;
 }
 
+function formatFullDate(date: string | Date): string {
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", {
+    month: "long", day: "numeric", year: "numeric",
+  }) + " at " + d.toLocaleTimeString("en-US", {
+    hour: "numeric", minute: "2-digit", hour12: true,
+  });
+}
+
 function outputTypeToLabel(t: string): string {
   const map: Record<string, string> = {
     essay: "Essay", newsletter: "Newsletter", socials: "LinkedIn Post",
@@ -49,19 +58,27 @@ function scoreColor(score: number): string {
 
 // ── Session detail dashboard panel ────────────────────────────
 function SessionDetailPanel({
-  output, onReopen, onDelete,
+  output, onReopen, onDelete, onBack,
 }: {
   output: OutputRow;
   onReopen: () => void;
   onDelete: () => void;
+  onBack: () => void;
 }) {
   const formats = [outputTypeToLabel(output.output_type)];
 
   return (
     <>
+      <button
+        onClick={onBack}
+        style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", color: "var(--fg-3)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", padding: 0, marginBottom: 12 }}
+      >
+        <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+        Back
+      </button>
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>
-          {formatDateShort(output.created_at)}
+          {formatFullDate(output.created_at)}
         </div>
         <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 10, lineHeight: 1.4 }}>{output.title}</div>
 
@@ -181,6 +198,7 @@ export default function OutputLibrary() {
           output={{ ...selectedOutput, content: selectedContent }}
           onReopen={handleReopen}
           onDelete={handleDelete}
+          onBack={() => setSelectedId(null)}
         />
       );
     } else {

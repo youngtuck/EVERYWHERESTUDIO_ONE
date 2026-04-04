@@ -31,15 +31,15 @@ import "./shared.css";
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
 
-type WorkStage = "Intake" | "Outline" | "Edit" | "Review" | "Approve";
-const STAGES: WorkStage[] = ["Intake", "Outline", "Edit", "Review", "Approve"];
+type WorkStage = "Intake" | "Outline" | "Edit" | "Review";
+const STAGES: WorkStage[] = ["Intake", "Outline", "Edit", "Review"];
 
 type Format =
   | "LinkedIn" | "Newsletter" | "Podcast" | "Sunday Story"
   | "Article" | "Email" | "Thread" | "Video Script"
   | "Case Study" | "One-Pager" | "Presentation" | "Book Chapter";
 
-const DEFAULT_FORMATS: Format[] = ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
+const DEFAULT_FORMATS: Format[] = [];
 const ALL_FORMATS: Format[] = [
   "LinkedIn", "Newsletter", "Article", "Podcast",
   "Email", "Thread", "Video Script", "Case Study",
@@ -52,6 +52,14 @@ const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
   Thread: "socials", "Video Script": "video_script",
   "Case Study": "business", "One-Pager": "business",
   Presentation: "presentation", "Book Chapter": "book",
+};
+
+const WORD_TARGETS: Record<string, number> = {
+  essay: 2500, podcast: 1500, video_script: 800, email: 300,
+  presentation: 1200, proposal: 1500, one_pager: 400, report: 2000,
+  executive_summary: 500, case_study: 1200, sow: 1500,
+  meeting: 600, bio: 400, white_paper: 3000, session_brief: 600,
+  freestyle: 700,
 };
 
 const TEMPLATES = ["Essay", "LinkedIn Post", "Newsletter Issue", "Podcast Script", "Case Study", "One-Pager", "Email"];
@@ -174,6 +182,7 @@ const CHECKPOINT_LABELS: Record<string, string> = {
 interface ChatMessage {
   role: "watson" | "user";
   content: string;
+  isChallenge?: boolean;
 }
 
 interface OutlineRow {
@@ -887,6 +896,10 @@ function StageIntake({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile();
 
+  const watsonQuestionCount = messages.filter(m => m.role === "watson" && m.content.trim().endsWith("?")).length;
+  const totalQuestions = 5;
+  const progress = Math.min(watsonQuestionCount / totalQuestions, 1);
+
   // Welcome state: show centered greeting until user sends first message
   const hasUserMessage = messages.some(m => m.role === "user");
 
@@ -1013,7 +1026,7 @@ function StageIntake({
           flexDirection: "column",
           gap: isMobile ? 10 : 14,
         }}>
-          {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} />)}
+          {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} isChallenge={m.isChallenge} />)}
           {sending && (
             <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
               <WatsonAvatar />
@@ -1039,6 +1052,40 @@ function StageIntake({
           </button>
         </div>
       )}
+
+      {/* Intake progress bar */}
+      <div style={{
+        padding: "8px 14px 0",
+        background: "var(--bg)",
+        borderTop: "1px solid var(--line)",
+        flexShrink: 0,
+      }}>
+        <div style={{ width: "100%", height: 4, background: "var(--line)", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{
+            height: "100%", width: `${Math.round(progress * 100)}%`,
+            background: "var(--gold-bright, #F5C642)", borderRadius: 2,
+            transition: "width 0.3s ease",
+          }} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 5 }}>
+          <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
+            Question {Math.min(watsonQuestionCount, totalQuestions)} of {totalQuestions}
+          </span>
+          <button
+            onClick={onAdvance}
+            style={{
+              fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
+              border: "none", cursor: "pointer", padding: 0, fontFamily: FONT,
+              letterSpacing: "0.01em",
+            }}
+          >
+            Just write it →
+          </button>
+        </div>
+        <div style={{ textAlign: "right" as const, fontSize: 9, color: "var(--fg-3)", marginTop: 5, marginRight: 5, letterSpacing: "0.02em" }}>
+          Hold to speak · Release to send
+        </div>
+      </div>
 
       {/* Input bar */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--bg)", flexShrink: 0, borderTop: "1px solid var(--line)", zIndex: 10 }}>
@@ -1126,7 +1173,7 @@ function WatsonTextRenderer({ text }: { text: string }) {
   );
 }
 
-function ChatBubble({ role, text, userInitials }: { role: "watson" | "user"; text: string; userInitials?: string }) {
+function ChatBubble({ role, text, userInitials, isChallenge }: { role: "watson" | "user"; text: string; userInitials?: string; isChallenge?: boolean }) {
   const isWatson = role === "watson";
   return (
     <div style={{
@@ -1140,6 +1187,17 @@ function ChatBubble({ role, text, userInitials }: { role: "watson" | "user"; tex
         <>
           <WatsonAvatar />
           <div className="watson-bubble-wrap">
+            {isChallenge && (
+              <div style={{
+                display: "inline-block",
+                fontSize: 11, fontWeight: 500,
+                color: "#fff", background: "var(--blue, #4A90D9)",
+                borderRadius: 99, padding: "2px 10px",
+                marginBottom: 6, fontFamily: FONT,
+              }}>
+                Watson is pushing back
+              </div>
+            )}
             <WatsonTextRenderer text={text} />
           </div>
         </>
@@ -1297,9 +1355,6 @@ function ChatInputBar({
             <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
         </button>
-      </div>
-      <div style={{ fontSize: 9, color: isListening ? "var(--gold)" : "var(--fg-3)", textAlign: "center" as const, letterSpacing: "0.04em", transition: "color 0.15s" }}>
-        {isListening ? "Listening... release to send" : "Hold to speak · Release to send"}
       </div>
     </div>
   );
@@ -2503,11 +2558,42 @@ function ExportPreview({ format, draft, title }: { format: string; draft: string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ACTION CHIPS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ActionChips({ chips, onChipClick }: { chips: string[]; onChipClick: (text: string) => void }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
+      {chips.map(chip => (
+        <div
+          key={chip}
+          onClick={() => onChipClick(chip)}
+          style={{
+            fontSize: 10, color: "var(--blue, #4A90D9)",
+            padding: "4px 10px", borderRadius: 99,
+            border: "1px solid rgba(74,144,217,0.3)",
+            background: "rgba(74,144,217,0.04)",
+            cursor: "pointer", transition: "all 0.12s",
+            fontFamily: FONT,
+          }}
+        >
+          {chip}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function WorkSession() {
-  const { setDashContent, setDashOpen } = useShell();
+  const { setDashContent, setFeedbackContent, setDashOpen, setActiveDashTab, watsonPrefill, setWatsonPrefill, watsonThread, setWatsonThread, watsonPending, setWatsonPending } = useShell();
+  const prefillWatson = useCallback((text: string) => {
+    setActiveDashTab("watson");
+    setWatsonPrefill(text);
+  }, [setActiveDashTab, setWatsonPrefill]);
   const { user, displayName } = useAuth();
   const { toast } = useToast();
   const nav = useNavigate();
@@ -2522,6 +2608,36 @@ export default function WorkSession() {
   const [stage, setStage] = useState<WorkStage>(
     (persisted?.phase === "complete" ? "Edit" : persisted?.phase === "generating" ? "Edit" : "Intake") as WorkStage
   );
+
+  // Watson carry-forward: surface pending notes when stage changes
+  useEffect(() => {
+    const pending = watsonPending[stage];
+    if (pending && pending.length > 0) {
+      pending.forEach(note => {
+        setWatsonThread(prev => [
+          ...prev,
+          { type: "note", text: note.text, from: note.from, to: stage },
+        ]);
+      });
+
+      const followUps: Record<string, string> = {
+        Outline: "Your note is here. Structure is my read now. I will stress-test with this in mind.",
+        Edit: "Carried into Edit. I will watch for this as I review the draft.",
+        Review: "Noted at Review. This will factor into the checkpoint pass.",
+      };
+      if (followUps[stage]) {
+        setWatsonThread(prev => [...prev, { type: "watson", text: followUps[stage] }]);
+      }
+
+      setWatsonPending(prev => {
+        const next = { ...prev };
+        delete next[stage];
+        return next;
+      });
+
+      setActiveDashTab("watson");
+    }
+  }, [stage]);
 
   // ── Intake ───────────────────────────────────────────────────
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -2726,7 +2842,7 @@ export default function WorkSession() {
       // Sanitize: strip em-dashes, en-dashes, replace with commas or colons
       const reply = (data.reply ?? "").replace(/\u2014/g, ",").replace(/\u2013/g, ",");
 
-      setMessages(prev => [...prev, { role: "watson", content: reply }]);
+      setMessages(prev => [...prev, { role: "watson", content: reply, isChallenge: data.isChallenge }]);
 
       if (data.readyToGenerate) {
         setIntakeReady(true);
@@ -3454,7 +3570,7 @@ export default function WorkSession() {
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
-    if (stage === "Review" || stage === "Approve") {
+    if (stage === "Review") {
       setDashOpen(true);
     } else {
       setDashOpen(false);
@@ -3464,6 +3580,7 @@ export default function WorkSession() {
       switch (stage) {
         case "Intake":
           return (
+            <>
             <IntakeDash
               selectedFormats={selectedFormats}
               onToggleFormat={toggleFormat}
@@ -3488,70 +3605,96 @@ export default function WorkSession() {
                 if (mapped) setSelectedFormats(mapped);
               }}
             />
+              <ActionChips
+                chips={["Who is my reader?", "What's the structural problem?", "What should they feel?"]}
+                onChipClick={prefillWatson}
+              />
+            </>
           );
         case "Outline":
           return <OutlineDash selectedFormats={selectedFormats} />;
         case "Edit":
           return (
-            <EditDash
-              wordCount={draft ? draft.split(/\s+/).filter(Boolean).length : 0}
-              selectedFormats={selectedFormats}
-              generating={generating}
-              generatingLabel={generatingLabel}
-            />
+            <>
+              {/* Word Count */}
+              <DpSection>
+                <DpLabel>Word Count</DpLabel>
+                {(() => {
+                  const wordCount = (draft || "").split(/\s+/).filter(Boolean).length;
+                  const targetWords = WORD_TARGETS[outputType || "freestyle"] || 700;
+                  return (
+                    <>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
+                        <span style={{ fontWeight: 600, color: "var(--fg)" }}>{wordCount}</span>
+                        <span style={{ color: "var(--gold)" }}>
+                          {wordCount > targetWords ? `+${wordCount - targetWords}` : wordCount < targetWords ? `-${targetWords - wordCount}` : "on target"}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 9, color: "var(--fg-3)", marginBottom: 4 }}>optimum {targetWords}</div>
+                      <div style={{ height: 5, background: "var(--line)", borderRadius: 3, overflow: "hidden" }}>
+                        <div style={{
+                          height: "100%", borderRadius: 3,
+                          width: `${Math.min(100, (wordCount / targetWords) * 100)}%`,
+                          background: wordCount > targetWords * 1.2 ? "rgba(245,198,66,0.5)" : "var(--blue, #4A90D9)",
+                        }} />
+                      </div>
+                    </>
+                  );
+                })()}
+              </DpSection>
+              <EditDash
+                wordCount={draft ? draft.split(/\s+/).filter(Boolean).length : 0}
+                selectedFormats={selectedFormats}
+                generating={generating}
+                generatingLabel={generatingLabel}
+              />
+              <ActionChips
+                chips={[
+                  "Fix flagged lines",
+                  "Check voice match",
+                  "Tighten the hook",
+                  `Tighten to ${WORD_TARGETS[outputType || "freestyle"] || 700}. Cut what doesn't earn its place. Keep the voice.`,
+                  `Expand. Add a second example and deepen the stakes. Stay under ${Math.round((WORD_TARGETS[outputType || "freestyle"] || 700) * 1.3)} words.`,
+                ]}
+                onChipClick={prefillWatson}
+              />
+            </>
           );
         case "Review":
           return (
-            <ReviewDash
-              pipelineRun={pipelineRun}
-              running={pipelineRunning}
-              onExportAll={handleExportAll}
-              allExported={allExported}
-              hvtAttempts={hvtAttempts}
-              onRerunHVT={handleRerunHVT}
-              hvtRunning={hvtRunning}
-              onFixCheckpoint={handleFixCheckpoint}
-              fixingGate={fixingGate}
-              onRerunPipeline={handleRerunPipeline}
-              rerunning={rerunningPipeline}
-            />
-          );
-        case "Approve":
-          return (
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Session Files</div>
-              {selectedFormats.map(f => (
-                <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 5, marginBottom: 4 }}>
-                  <FileIcon />
-                  <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1 }}>{f}_Draft.md</span>
-                  <span
-                    onClick={() => navigator.clipboard.writeText(draft).then(() => toast("Copied")).catch(() => {})}
-                    style={{ fontSize: 9, color: "var(--blue)", fontWeight: 600, cursor: "pointer" }}
-                  >Copy</span>
-                </div>
-              ))}
-              {outputId && (
-                <button
-                  onClick={() => nav(`/studio/outputs/${outputId}`)}
-                  style={{ marginTop: 8, fontSize: 11, padding: "6px 12px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT, width: "100%" }}
-                >
-                  View in Catalog →
-                </button>
-              )}
-            </div>
+            <>
+              <ReviewDash
+                pipelineRun={pipelineRun}
+                running={pipelineRunning}
+                onExportAll={handleExportAll}
+                allExported={allExported}
+                hvtAttempts={hvtAttempts}
+                onRerunHVT={handleRerunHVT}
+                hvtRunning={hvtRunning}
+                onFixCheckpoint={handleFixCheckpoint}
+                fixingGate={fixingGate}
+                onRerunPipeline={handleRerunPipeline}
+                rerunning={rerunningPipeline}
+              />
+              <ActionChips
+                chips={["Run Human Voice Test", "Check for SLOP", "Raise the Impact Score", "Is this ready to publish?"]}
+                onChipClick={prefillWatson}
+              />
+            </>
           );
         default:
           return null;
       }
     })();
 
-    setDashContent(dashNode);
-    return () => setDashContent(null);
+    setFeedbackContent(dashNode);
+    return () => setFeedbackContent(null);
   }, [
     stage, selectedFormats, selectedTemplate, draft, generating, generatingLabel,
     pipelineRun, pipelineRunning, allExported, outputId,
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
     handleFixCheckpoint, fixingGate, handleRerunPipeline, rerunningPipeline,
+    prefillWatson,
   ]);
 
   // Auto-open dashboard when pipeline finishes in Review
@@ -3580,6 +3723,24 @@ export default function WorkSession() {
       display: "flex", flexDirection: "column",
       overflow: "hidden", fontFamily: FONT,
     }}>
+      <div style={{
+        padding: "6px 20px",
+        fontSize: 10, fontWeight: 600,
+        color: "var(--fg-3)",
+        letterSpacing: "0.05em",
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span style={{ textTransform: "uppercase" as const }}>Working on:</span>
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "3px 10px", borderRadius: 99,
+          background: "rgba(245,198,66,0.12)",
+          border: "1px solid rgba(245,198,66,0.3)",
+          fontSize: 10, fontWeight: 600, color: "#9A7030",
+        }}>
+          ■ {outputType ? OUTPUT_TYPES.find(t => t.id === outputType)?.label || outputType : "Freestyle"}
+        </span>
+      </div>
       {stage === "Intake" && (
         <StageIntake
           messages={messages}
@@ -3676,7 +3837,7 @@ export default function WorkSession() {
           activeTab={activeReviewTab}
           tabs={selectedFormats}
           onTabClick={(t) => setActiveReviewTab(t as any)}
-          onAdvance={() => goToStage("Approve")}
+          onAdvance={() => goToStage("Review")}
           onGoBack={handleGoBackToEdit}
           onFix={handleReviewFix}
           onDirectReplace={handleDirectReplace}
@@ -3684,7 +3845,7 @@ export default function WorkSession() {
           highlightedParas={draftHighlights}
         />
       )}
-      {stage === "Approve" && (
+      {(stage as string) === "Approve" && (
         <StageExport
           draft={formatDrafts[activeExportTab]?.status === "done" ? formatDrafts[activeExportTab].content : draft}
           title={outlineRows[0]?.content || "Draft"}

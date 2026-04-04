@@ -1,20 +1,20 @@
 /**
  * OutputTypePicker: Category/Type selector for Work sessions.
  *
- * Two categories + Freestyle:
- *   Content: Essay, Podcast, Book, Website Content, Website Audit, Video Script,
- *            Newsletter, Email, Social Media
+ * Four categories:
+ *   Content: Essay, Podcast, Video Script, Email (4)
  *   Business: Presentation, Proposal, One-Pager, Report, Executive Summary,
  *             Case Study, Statement of Work, Meeting Agenda/Recap,
- *             Bio/Speaker Profile, White Paper
- *   Freestyle: sits outside both categories
+ *             Bio/Speaker Profile, White Paper, Session Brief (11)
+ *   Extended: Book, Website, Newsletter, Social Media (4)
+ *   Freestyle: Freestyle (1)
  */
 
 import { useState } from "react";
 
 const FONT = "var(--font)";
 
-export type OutputCategory = "Content" | "Business" | "Freestyle";
+export type OutputCategory = "Content" | "Business" | "Extended" | "Freestyle";
 
 export interface OutputTypeOption {
   id: string;
@@ -24,17 +24,12 @@ export interface OutputTypeOption {
 }
 
 export const OUTPUT_TYPES: OutputTypeOption[] = [
-  // Content
+  // Content (4)
   { id: "essay", label: "Essay", category: "Content" },
   { id: "podcast", label: "Podcast", category: "Content" },
-  { id: "book", label: "Book", category: "Content", isProject: true },
-  { id: "website_content", label: "Website Content", category: "Content", isProject: true },
-  { id: "website_audit", label: "Website Audit", category: "Content" },
   { id: "video_script", label: "Video Script", category: "Content" },
-  { id: "newsletter", label: "Newsletter", category: "Content", isProject: true },
   { id: "email", label: "Email", category: "Content" },
-  { id: "social_media", label: "Social Media", category: "Content", isProject: true },
-  // Business
+  // Business (11)
   { id: "presentation", label: "Presentation", category: "Business" },
   { id: "proposal", label: "Proposal", category: "Business" },
   { id: "one_pager", label: "One-Pager", category: "Business" },
@@ -42,16 +37,22 @@ export const OUTPUT_TYPES: OutputTypeOption[] = [
   { id: "executive_summary", label: "Executive Summary", category: "Business" },
   { id: "case_study", label: "Case Study", category: "Business" },
   { id: "sow", label: "Statement of Work", category: "Business" },
-  { id: "meeting", label: "Meeting Agenda/Recap", category: "Business" },
-  { id: "bio", label: "Bio/Speaker Profile", category: "Business" },
+  { id: "meeting", label: "Meeting Agenda / Recap", category: "Business" },
+  { id: "bio", label: "Bio / Speaker Profile", category: "Business" },
   { id: "white_paper", label: "White Paper", category: "Business" },
-  // Freestyle
+  { id: "session_brief", label: "Session Brief", category: "Business" },
+  // Extended (4)
+  { id: "book", label: "Book", category: "Extended", isProject: true },
+  { id: "website", label: "Website", category: "Extended", isProject: true },
+  { id: "newsletter", label: "Newsletter", category: "Extended", isProject: true },
+  { id: "social_media", label: "Social Media", category: "Extended", isProject: true },
+  // Freestyle (1)
   { id: "freestyle", label: "Freestyle", category: "Freestyle" },
 ];
 
 export const PROJECT_TYPE_IDS = OUTPUT_TYPES.filter(t => t.isProject).map(t => t.id);
 
-const CATEGORIES: OutputCategory[] = ["Content", "Business", "Freestyle"];
+const CATEGORIES: OutputCategory[] = ["Content", "Business", "Extended", "Freestyle"];
 
 interface OutputTypePickerProps {
   selected: string | null;
@@ -138,7 +139,7 @@ export default function OutputTypePicker({ selected, onSelect, compact }: Output
                   borderRadius: 3, padding: "1px 4px",
                   flexShrink: 0,
                 }}>
-                  project
+                  extended
                 </span>
               )}
             </button>
