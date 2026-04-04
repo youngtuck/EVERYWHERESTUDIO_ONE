@@ -101,7 +101,7 @@ function ContentModal({ resource, onClose }: { resource: Resource; onClose: () =
               {resource.content}
             </pre>
           ) : (
-            <div style={{ fontSize: 13, color: "var(--fg-3)", fontStyle: "italic" }}>
+            <div style={{ fontSize: 13, color: "var(--fg-3)", fontStyle: "normal" }}>
               No text content was extracted from this file. The file may be an image or a non-text format.
             </div>
           )}

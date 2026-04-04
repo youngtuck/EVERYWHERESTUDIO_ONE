@@ -19,7 +19,7 @@ export default function TwelveFormats() {
         <div style={{ maxWidth:480, marginBottom:64 }}>
           <p className="eyebrow" style={{ marginBottom:20 }}>12 Output Formats</p>
           <h2 style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", lineHeight:1.08 }}>
-            One idea,<br /><em style={{fontStyle:"italic"}}>twelve formats.</em>
+            One idea,<br /><em style={{fontStyle:"normal"}}>twelve formats.</em>
           </h2>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }} className="fmt-g">

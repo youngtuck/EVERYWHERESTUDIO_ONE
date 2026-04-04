@@ -145,7 +145,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
     return <span key={i}>{part}</span>;
   });
   if (isBlockquote) {
-    return <span style={{ borderLeft: "3px solid var(--gold-bright)", paddingLeft: 12, display: "block", fontStyle: "italic", color: "var(--fg-2)" }}>{rendered}</span>;
+    return <span style={{ borderLeft: "3px solid var(--gold-bright)", paddingLeft: 12, display: "block", fontStyle: "normal", color: "var(--fg-2)" }}>{rendered}</span>;
   }
   return <>{rendered}</>;
 }
@@ -378,7 +378,7 @@ function InputBar({
           onChange={e => onChange(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !disabled) { e.preventDefault(); onSend(); } }}
           placeholder={placeholder}
-          disabled={disabled}
+          readOnly={disabled}
           style={{
             flex: 1, background: "var(--surface)", border: "1px solid var(--line)",
             borderRadius: 8, padding: "0 12px", fontSize: 13, color: "var(--fg)",
@@ -1740,7 +1740,7 @@ function StageEdit({
           value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRevise(); } }}
           placeholder="Tell Watson what to change, or edit above..."
-          disabled={generating}
+          readOnly={generating}
           style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, opacity: generating ? 0.5 : 1 }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
           onBlur={e => { e.target.style.borderColor = "var(--line)"; }}

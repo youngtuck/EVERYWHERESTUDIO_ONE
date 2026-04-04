@@ -92,7 +92,7 @@ export default function PolishLoadingAnimation({ currentIndex = 0, completedScor
           );
         })}
       </div>
-      <div style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif", textAlign: "center", fontStyle: "italic" }}>
+      <div style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif", textAlign: "center", fontStyle: "normal" }}>
         {AGENTS[Math.min(activeIndex, AGENTS.length - 1)]?.desc || "Finishing up..."}
       </div>
     </div>

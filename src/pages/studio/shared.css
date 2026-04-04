@@ -183,7 +183,7 @@
 .fp-type.gold { color: var(--gold); }
 .fp-type.blue { color: var(--blue); }
 .fp-msg { font-size: 11px; color: var(--fg-3); line-height: 1.5; display: block; margin-bottom: 4px; }
-.fp-suggestion { font-size: 11px; color: var(--fg); font-style: italic; display: block; margin-bottom: 8px; }
+.fp-suggestion { font-size: 11px; color: var(--fg); font-style: normal; display: block; margin-bottom: 8px; }
 .fp-actions { display: flex; gap: 6px; }
 .fp-fix { font-size: 10px; padding: 4px 10px; border-radius: 4px; background: var(--fg); border: none; color: #fff; cursor: pointer; font-family: var(--font); font-weight: 600; }
 .fp-dismiss { font-size: 10px; padding: 4px 10px; border-radius: 4px; background: transparent; border: 1px solid var(--line); color: var(--fg-3); cursor: pointer; font-family: var(--font); }

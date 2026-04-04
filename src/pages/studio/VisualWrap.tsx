@@ -815,7 +815,7 @@ export default function VisualWrap() {
               style={{
                 fontSize: 14,
                 color: resultRevealPhase === "complete" ? "var(--fg-2)" : "var(--fg-2)",
-                fontStyle: "italic",
+                fontStyle: "normal",
                 marginBottom: 24,
               }}
             >

@@ -176,7 +176,7 @@ function UserAvatar() {
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)" }}>{displayName || "User"}</div>
                   <div style={{ fontSize: 10, color: "var(--fg-3)" }}>EVERYWHERE Studio</div>
-                  <div style={{ fontSize: 10, color: "var(--fg-3)" }}>Alpha 3.007</div>
+                  <div style={{ fontSize: 10, color: "var(--fg-3)" }}>Alpha 3.015</div>
                 </div>
               </div>
             </div>

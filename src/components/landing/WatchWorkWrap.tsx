@@ -42,7 +42,7 @@ export default function WatchWorkWrap() {
               <div style={{ order:i===1?2:1 }}>
                 {/* Number + label */}
                 <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:24 }}>
-                  <span style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:14, color:"var(--fg-3)", fontStyle:"italic" }}>{s.num}</span>
+                  <span style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:14, color:"var(--fg-3)", fontStyle:"normal" }}>{s.num}</span>
                   <span style={{ width:24, height:1, background:"var(--line-2)", display:"block" }} />
                   <span style={{ fontSize:13, fontWeight:500, letterSpacing:"1px", textTransform:"uppercase", color:s.accent, fontFamily:"'Afacad Flux', sans-serif" }}>{s.label}</span>
                 </div>

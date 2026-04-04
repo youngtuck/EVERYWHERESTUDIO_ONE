@@ -34,6 +34,7 @@ import Workbench from "./pages/studio/Workbench";
 import Wrap from "./pages/studio/Wrap";
 import VisualWrap from "./pages/studio/VisualWrap";
 import AdminPanel from "./pages/studio/AdminPanel";
+import Templates from "./pages/studio/Templates";
 
 // Page transition: only for marketing/auth pages, not studio
 function PageTransition({ children }: { children: ReactNode }) {
@@ -88,6 +89,7 @@ const App = () => (
             <Route path="work/:id" element={<WorkSession />} />
             <Route path="watch" element={<Watch />} />
             <Route path="outputs" element={<OutputLibrary />} />
+            <Route path="outputs/templates" element={<Templates />} />
             <Route path="outputs/:id" element={<OutputDetail />} />
             <Route path="wrap" element={<Wrap />} />
             <Route path="wrap/visual/:outputId" element={<VisualWrap />} />

@@ -200,7 +200,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     launchLabel: "Go to Project Files", route: "/studio/resources",
   },
   {
-    id: "prefs", color: "#94A3B8", icon: "⚙", name: "Preferences",
+    id: "prefs", color: "#64748B", icon: "⚙", name: "Preferences",
     desc: "Configure how Studio works for you.",
     rationale: "Watch sources, Voice DNA, default formats.",
     detail: "Preferences is where you configure how Studio works for you.\n\nSet up Voice DNA to capture your communication signature. Configure Watch sources, which publications, people, and topics you want tracked. Set your default output formats and platform preferences.\n\nPreferences apply to every session in this project. Change them any time from the rail.",
@@ -797,7 +797,7 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
                   </div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)", marginBottom: 3 }}>{item.name}</div>
                   <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.4, marginBottom: 5 }}>{item.desc}</div>
-                  <div style={{ fontSize: 10, color: "var(--fg-3)", fontStyle: "italic", lineHeight: 1.4 }}>{item.rationale}</div>
+                  <div style={{ fontSize: 10, color: "var(--fg-3)", fontStyle: "normal", lineHeight: 1.4 }}>{item.rationale}</div>
                 </div>
               ))}
             </div>

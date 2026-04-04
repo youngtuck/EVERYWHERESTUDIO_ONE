@@ -10,7 +10,7 @@ export default function AboutMark() {
           <div>
             <h2 style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:"clamp(22px,2.5vw,34px)", fontWeight:400, color:"var(--fg)", marginBottom:20, letterSpacing:"-0.3px" }}>Mark Sylvester</h2>
             <blockquote style={{ borderLeft:"2px solid #F5C642", paddingLeft:24, marginBottom:20 }}>
-              <p style={{ fontSize:17, lineHeight:1.82, color:"var(--fg)", fontFamily:"'Afacad Flux', sans-serif", fontWeight:400, fontStyle:"italic" }}>
+              <p style={{ fontSize:17, lineHeight:1.82, color:"var(--fg)", fontFamily:"'Afacad Flux', sans-serif", fontWeight:400, fontStyle:"normal" }}>
                 "I spent years helping others find and share their voice. EVERYWHERE Studio is what I wish I'd had. It doesn't replace the thinking; it removes every obstacle between the thinking and the audience."
               </p>
             </blockquote>

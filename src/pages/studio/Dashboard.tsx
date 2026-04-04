@@ -106,7 +106,7 @@ function HomeDashContent({
       {/* Today's briefing */}
       <div style={{ marginBottom: 14 }}>
         <div style={S.label}>Today's briefing</div>
-        <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.7, fontStyle: "italic" }}>
+        <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.7, fontStyle: "normal" }}>
           Run a briefing in Watch to see today's signals here.
         </div>
         <button

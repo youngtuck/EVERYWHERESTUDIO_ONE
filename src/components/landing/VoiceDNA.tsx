@@ -10,7 +10,7 @@ export default function VoiceDNA() {
         <div>
           <p className="eyebrow" style={{ marginBottom:20 }}>Voice DNA</p>
           <h2 style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", marginBottom:22, lineHeight:1.08 }}>
-            It learns your voice.<br /><em style={{fontStyle:"italic"}}>Permanently.</em>
+            It learns your voice.<br /><em style={{fontStyle:"normal"}}>Permanently.</em>
           </h2>
           <p style={{ fontSize:16, lineHeight:1.82, color:"var(--fg-2)", fontFamily:"'Afacad Flux', sans-serif", fontWeight:300, marginBottom:14 }}>
             A 15-minute conversation. Three extracted layers. A Voice Fidelity Score that climbs with every session. The longer you use EVERYWHERE Studio, the more it sounds like you.

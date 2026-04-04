@@ -82,7 +82,7 @@ export default function Hero() {
           {/* Headline: very large, serif */}
           <h1 style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:"clamp(48px,5.8vw,82px)", fontWeight:400, lineHeight:1.0, letterSpacing:"-1px", color:headC, marginBottom:28 }}>
             Your thinking,<br />
-            <em style={{ fontStyle:"italic", color:"#F5C642" }}>composed.</em>
+            <em style={{ fontStyle:"normal", color:"#F5C642" }}>composed.</em>
           </h1>
 
           <p style={{ fontSize:"clamp(15px,1.4vw,17px)", lineHeight:1.82, color:bodyC, maxWidth:420, marginBottom:40, fontFamily:"'Afacad Flux', sans-serif", fontWeight:300 }}>

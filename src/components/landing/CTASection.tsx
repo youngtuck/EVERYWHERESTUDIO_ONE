@@ -11,7 +11,7 @@ export default function CTASection() {
     <section style={{ padding:"120px 40px", background:"#0D1B2A", borderTop:"1px solid rgba(255,255,255,0.1)", textAlign:"center" }}>
       <div style={{ maxWidth:560, margin:"0 auto" }}>
         <h2 style={{ fontSize:"clamp(36px,5vw,68px)", fontWeight:800, letterSpacing:"-0.04em", color:"var(--text-inverse)", marginBottom:20, fontFamily:"'Afacad Flux', sans-serif", lineHeight:0.96 }}>
-          Your thinking.<br /><span style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"italic", fontWeight:400, color:"#F5C642" }}>Composed.</span>
+          Your thinking.<br /><span style={{ fontFamily:"'Instrument Serif',serif", fontStyle:"normal", fontWeight:400, color:"#F5C642" }}>Composed.</span>
         </h2>
         <p style={{ fontSize:16, color:"rgba(255,255,255,0.4)", lineHeight:1.72, marginBottom:48, fontFamily:"'Afacad Flux', sans-serif", letterSpacing:"-0.01em" }}>
           Invitation only. Currently onboarding founding members.

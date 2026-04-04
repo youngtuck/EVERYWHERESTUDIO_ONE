@@ -21,7 +21,7 @@ export default function QualityCheckpoints() {
       <div style={{ maxWidth:760, margin:"0 auto" }}>
         <p className="eyebrow" style={{ marginBottom:20 }}>Quality Checkpoints</p>
         <h2 style={{ fontFamily:"'Afacad Flux', sans-serif", fontSize:"clamp(32px,3.8vw,56px)", fontWeight:400, letterSpacing:"-0.5px", color:"var(--fg)", marginBottom:16, lineHeight:1.08 }}>
-          Seven checkpoints.<br /><em style={{fontStyle:"italic"}}>Everything clears all of them.</em>
+          Seven checkpoints.<br /><em style={{fontStyle:"normal"}}>Everything clears all of them.</em>
         </h2>
         <p style={{ fontSize:15, color:"var(--fg-3)", lineHeight:1.78, marginBottom:52, fontFamily:"'Afacad Flux', sans-serif", fontWeight:300 }}>
           A pipeline, not a checklist. Each checkpoint's output feeds the next. Nothing ships without clearing all seven.
@@ -33,7 +33,7 @@ export default function QualityCheckpoints() {
                 style={{ display:"flex", alignItems:"center", gap:16, width:"100%", padding:"15px 18px", background:"var(--surface)", border:"1px solid var(--line)", borderRadius:open===i?"8px 8px 0 0":8, cursor:"pointer", textAlign:"left", transition:"background 0.12s", fontFamily:"'Afacad Flux', sans-serif" }}
                 onMouseEnter={e=>{ if(open!==i)(e.currentTarget as HTMLElement).style.background="var(--bg-3)"; }}
                 onMouseLeave={e=>{ if(open!==i)(e.currentTarget as HTMLElement).style.background="var(--surface)"; }}>
-                <span style={{ fontSize:13, color:"var(--fg-3)", fontFamily:"'Afacad Flux', sans-serif", fontStyle:"italic", minWidth:20, fontWeight:400 }}>{g.num}</span>
+                <span style={{ fontSize:13, color:"var(--fg-3)", fontFamily:"'Afacad Flux', sans-serif", fontStyle:"normal", minWidth:20, fontWeight:400 }}>{g.num}</span>
                 <span style={{ fontSize:14, fontWeight:400, color:"var(--fg)", flex:1 }}>{g.name}</span>
                 <span style={{ fontSize:14, color:"var(--fg-3)", transform:open===i?"rotate(45deg)":"none", transition:"transform 0.15s", display:"inline-block" }}>+</span>
               </button>

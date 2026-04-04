@@ -228,7 +228,7 @@ export function ImpactScoreCard({ score, compact }: ImpactScoreCardProps) {
           style={{
             marginTop: 6,
             fontSize: 13,
-            fontStyle: "italic",
+            fontStyle: "normal",
             color: "var(--text-secondary)",
           }}
         >

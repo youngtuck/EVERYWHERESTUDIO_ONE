@@ -20,7 +20,7 @@ function renderMarkdown(text: string): string {
     .replace(/^### (.+)$/gm, '<h3 style="font-size:18px;font-weight:700;margin:24px 0 8px;color:var(--fg)">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 style="font-size:22px;font-weight:700;margin:28px 0 12px;color:var(--fg)">$1</h2>')
     .replace(/^# (.+)$/gm, '<h1 style="font-size:26px;font-weight:700;margin:32px 0 16px;color:var(--fg)">$1</h1>')
-    .replace(/^> (.+)$/gm, '<blockquote style="border-left:3px solid var(--cornflower);padding-left:16px;margin:16px 0;color:var(--fg-2);font-style:italic">$1</blockquote>')
+    .replace(/^> (.+)$/gm, '<blockquote style="border-left:3px solid var(--cornflower);padding-left:16px;margin:16px 0;color:var(--fg-2);">$1</blockquote>')
     .replace(/\n\n/g, '</p><p style="margin:0 0 16px">')
     .replace(/\n/g, '<br/>');
 }
@@ -608,7 +608,7 @@ export default function OutputDetail() {
               Editing raw text. Markdown formatting (** for bold, ## for headings) will render when you save and exit edit mode.
             </div>
             {hasUnsavedChanges && (
-              <div style={{ fontSize: 12, color: "var(--gold)", fontStyle: "italic", marginBottom: 8 }}>Unsaved changes</div>
+              <div style={{ fontSize: 12, color: "var(--gold)", fontStyle: "normal", marginBottom: 8 }}>Unsaved changes</div>
             )}
             <textarea
               ref={editRef}
