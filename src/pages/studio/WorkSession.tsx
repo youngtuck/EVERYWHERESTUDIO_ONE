@@ -575,6 +575,111 @@ function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
   );
 }
 
+// ── Per-format improve cards (Review sidebar) ────────────────
+function ReviewFormatCards({
+  format, onFix, onSkip,
+}: {
+  format: string;
+  onFix: (instruction: string) => void;
+  onSkip: () => void;
+}) {
+  const cards: Record<string, Array<{ pts: number; title: string; desc: string }>> = {
+    LinkedIn: [
+      { pts: 4, title: "Tighten the close", desc: "One sharper final sentence closes the gap between agreement and action." },
+      { pts: 2, title: "Add one concrete example", desc: "A single sharp image moves readers from interest to action." },
+    ],
+    Newsletter: [
+      { pts: 5, title: "Personalize the opening", desc: "Newsletter readers expect a direct address. One sentence that speaks to them specifically." },
+    ],
+    Podcast: [
+      { pts: 8, title: "Conversational transition", desc: "Two sentences read as written, not spoken. Watson can soften them for audio." },
+    ],
+    "Sunday Story": [
+      { pts: 2, title: "Deepen the opening image", desc: "One more sensory detail in the first paragraph pulls readers fully in." },
+    ],
+  };
+
+  const formatCards = cards[format] || [
+    { pts: 3, title: "Strengthen the hook", desc: "The opening line should stop the reader mid-scroll." },
+    { pts: 2, title: "Sharpen the close", desc: "End with a line that earns the re-read." },
+  ];
+  const [fixed, setFixed] = useState<Set<number>>(new Set());
+  const [fixing, setFixing] = useState<number | null>(null);
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      {formatCards.map((card, i) => (
+        <div
+          key={i}
+          style={{
+            padding: "10px 12px", marginBottom: 8,
+            background: fixed.has(i) ? "var(--bg-2)" : "var(--surface)",
+            border: "1px solid var(--line)",
+            borderRadius: 8,
+            opacity: fixed.has(i) ? 0.4 : 1,
+            transition: "opacity 0.2s",
+          }}
+        >
+          <div style={{
+            display: "inline-block", fontSize: 9, fontWeight: 600,
+            color: "var(--blue, #4A90D9)",
+            padding: "2px 8px", borderRadius: 99,
+            border: "1px solid rgba(74,144,217,0.3)",
+            background: "rgba(74,144,217,0.06)",
+            marginBottom: 6,
+          }}>
+            +{card.pts} pts · {format}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)", marginBottom: 4 }}>{card.title}</div>
+          <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 8 }}>{card.desc}</div>
+          {!fixed.has(i) && (
+            <div style={{ display: "flex", gap: 6 }}>
+              <button
+                onClick={() => {
+                  setFixing(i);
+                  onFix(`${card.title}: ${card.desc}`);
+                  setTimeout(() => {
+                    setFixed(prev => new Set(prev).add(i));
+                    setFixing(null);
+                  }, 2000);
+                }}
+                disabled={fixing !== null}
+                style={{
+                  flex: 1, padding: "6px 12px", borderRadius: 6,
+                  background: fixing === i ? "var(--fg-2)" : "var(--fg)",
+                  border: "none", fontSize: 11, fontWeight: 700,
+                  color: "var(--surface, #fff)",
+                  cursor: fixing !== null ? "not-allowed" : "pointer",
+                  fontFamily: FONT,
+                }}
+              >
+                {fixing === i ? "Fixing..." : "Fix this"}
+              </button>
+              <button
+                onClick={() => {
+                  setFixed(prev => new Set(prev).add(i));
+                  onSkip();
+                }}
+                disabled={fixing !== null}
+                style={{
+                  padding: "6px 12px", borderRadius: 6,
+                  background: "transparent",
+                  border: "1px solid var(--line)",
+                  fontSize: 11, fontWeight: 500,
+                  color: "var(--fg-3)",
+                  cursor: "pointer", fontFamily: FONT,
+                }}
+              >
+                Skip
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Checkpoint row (expandable for FAIL/FLAG) ────────────────
 function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFixing: boolean; onFix: () => void }) {
   const canExpand = gate.status === "FAIL" || gate.status === "FLAG";
@@ -2593,33 +2698,46 @@ export default function WorkSession() {
     audience = audience || "Your target reader";
     hook = hook || "Opening that earns the read";
 
-    // Generate a short title from the thesis (cap at 80 chars)
-    let title = thesis;
-    if (thesis.length > 80) {
-      const firstClause = thesis.split(/,|and\s/)[0].trim();
-      title = firstClause.length > 10 && firstClause.length < 80 ? firstClause : thesis.slice(0, 80);
+    // Generate a real title, not a thesis truncation
+    let title = "";
+    if (hook && hook.length > 10 && hook.length < 80) {
+      title = hook;
+    } else if (thesis.length <= 80) {
+      title = thesis;
+    } else {
+      const sentences = thesis.split(/[.!?]+/).filter(s => s.trim().length > 10);
+      if (sentences.length > 0) {
+        const shortest = sentences.reduce((a, b) => a.length < b.length ? a : b).trim();
+        title = shortest.length < 80 ? shortest : shortest.slice(0, 77) + "...";
+      } else {
+        title = thesis.slice(0, 77) + "...";
+      }
     }
 
     // Angle A: thesis-led (analytical structure)
     const angleA: OutlineRow[] = [
       { label: "Title", content: title },
-      { label: "Hook", content: hook },
+      { label: "Hook", content: hook || "Strong opening statement that frames the argument" },
       { label: "Body", content: thesis },
       { label: "", content: "Supporting evidence and examples.", indent: true },
       { label: "", content: audience ? `Written for: ${audience}` : "Concrete implications for the reader.", indent: true },
       { label: "Stakes", content: goal || "What changes if the reader acts on this." },
       { label: "", content: "The cost of inaction.", indent: true },
-      { label: "Close", content: hook.length < 60 ? `Return to: ${hook}` : "Circle back to the opening image." },
+      { label: "Close", content: "Circle back to the opening image." },
     ];
 
-    // Angle B: hook-led (narrative structure)
+    // Angle B: hook-led (narrative structure) — genuinely different
+    const angleBTitle = hook && hook.length > 10 && hook.length < 80 && hook !== title
+      ? hook
+      : (thesis.split(/[.!?]+/)[1] || thesis.split(/,/)[0] || title).trim();
+
     const angleB: OutlineRow[] = [
-      { label: "Title", content: hook.length > 10 && hook.length < 80 ? hook : title },
-      { label: "Hook", content: "Open with the emotional center. Scene or image first, context second." },
+      { label: "Title", content: angleBTitle !== title ? angleBTitle : "A different take on: " + title.slice(0, 50) },
+      { label: "Hook", content: "Open with a scene or moment. Let the reader feel it before you explain it." },
       { label: "Body", content: "Build from the personal to the universal." },
       { label: "", content: thesis, indent: true },
       { label: "", content: audience ? `Resonates with: ${audience}` : "Why this matters beyond the personal.", indent: true },
-      { label: "Stakes", content: "What you are building toward." },
+      { label: "Stakes", content: "What you are building toward, not just what you are arguing." },
       { label: "", content: goal || "Invite the reader into the next chapter.", indent: true },
       { label: "Close", content: "Land on a question or an image, not a statement." },
     ];
@@ -3285,19 +3403,6 @@ export default function WorkSession() {
 
               {!generating && wordCount > 0 && (
                 <>
-                  {/* MODE */}
-                  <DpSection>
-                    <DpLabel>Mode</DpLabel>
-                    <div style={{
-                      display: "inline-flex", alignItems: "center", gap: 6,
-                      padding: "4px 10px", borderRadius: 99,
-                      background: "rgba(245,198,66,0.12)", border: "1px solid rgba(245,198,66,0.3)",
-                      fontSize: 10, fontWeight: 600, color: "#9A7030",
-                    }}>
-                      ■ {outputType ? (OUTPUT_TYPES.find(t => t.id === outputType)?.label || outputType) : "Freestyle"}
-                    </div>
-                  </DpSection>
-
                   {/* VOICE MATCH */}
                   <DpSection>
                     <DpLabel>Voice Match</DpLabel>
@@ -3352,46 +3457,109 @@ export default function WorkSession() {
               {/* ACTION CHIPS */}
               <ActionChips
                 chips={[
-                  "Fix flagged lines",
-                  "Check voice match",
+                  "Fix the flagged lines",
                   "Tighten the hook",
+                  `Tighten to ${targetWords}`,
+                  "Expand, add an example",
+                  "Check the voice match",
+                  "Cut 100 words without losing the point",
                 ]}
-                onChipClick={prefillWatson}
+                onChipClick={(chip) => {
+                  if (chip.startsWith("Tighten to")) {
+                    prefillWatson(`Tighten this to ${targetWords}. Cut what doesn't earn its place. Keep the voice.`);
+                  } else if (chip.startsWith("Expand")) {
+                    prefillWatson(`Expand this. Add a second example and deepen the stakes. Stay under ${Math.round(targetWords * 1.3)} words.`);
+                  } else {
+                    prefillWatson(chip);
+                  }
+                }}
               />
-              <div style={{ marginTop: 4 }}>
-                <ActionChips
-                  chips={[
-                    `↓ Tighten to ${targetWords}`,
-                    `↑ Expand it`,
-                  ]}
-                  onChipClick={(chip) => {
-                    if (chip.startsWith("↓")) {
-                      prefillWatson(`Tighten this to ${targetWords}. Cut what doesn't earn its place. Keep the voice.`);
-                    } else {
-                      prefillWatson(`Expand this. Add a second example and deepen the stakes. Stay under ${Math.round(targetWords * 1.3)} words.`);
-                    }
-                  }}
-                />
-              </div>
             </>
           );
         }
         case "Review":
           return (
             <>
-              <ReviewDash
-                pipelineRun={pipelineRun}
-                running={pipelineRunning}
-                onExportAll={handleExportAll}
-                allExported={allExported}
-                hvtAttempts={hvtAttempts}
-                onRerunHVT={handleRerunHVT}
-                hvtRunning={hvtRunning}
-                onFixCheckpoint={handleFixCheckpoint}
-                fixingGate={fixingGate}
-                onRerunPipeline={handleRerunPipeline}
-                rerunning={rerunningPipeline}
-              />
+              {/* Show full pipeline results when running or pipeline just finished */}
+              {(pipelineRunning || !activeReviewTab) && (
+                <ReviewDash
+                  pipelineRun={pipelineRun}
+                  running={pipelineRunning}
+                  onExportAll={handleExportAll}
+                  allExported={allExported}
+                  hvtAttempts={hvtAttempts}
+                  onRerunHVT={handleRerunHVT}
+                  hvtRunning={hvtRunning}
+                  onFixCheckpoint={handleFixCheckpoint}
+                  fixingGate={fixingGate}
+                  onRerunPipeline={handleRerunPipeline}
+                  rerunning={rerunningPipeline}
+                />
+              )}
+
+              {/* Per-format content when pipeline is done and a tab is active */}
+              {!pipelineRunning && pipelineRun && activeReviewTab && (
+                <>
+                  {/* Checkpoints summary (compact) */}
+                  <DpSection>
+                    <DpLabel>Checkpoints</DpLabel>
+                    <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.8 }}>
+                      {pipelineRun.checkpointResults.map((gate, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>{displayGateName(gate.gate)}</span>
+                          <span style={{
+                            color: gate.status === "PASS" ? "#22C55E" : gate.status === "FLAG" ? "var(--gold)" : "var(--danger)",
+                            fontWeight: 600,
+                          }}>
+                            {gate.status === "PASS" ? "Pass" : gate.status === "FLAG" ? "Review" : "Fail"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </DpSection>
+
+                  {/* Impact Score */}
+                  {pipelineRun.impactScore && (
+                    <DpSection>
+                      <DpLabel>Impact Score</DpLabel>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                        <span style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)" }}>
+                          {Math.round(pipelineRun.impactScore.total)}
+                        </span>
+                        <span style={{ fontSize: 10, color: "var(--fg-3)" }}>/ 100 &nbsp; threshold 75</span>
+                      </div>
+                    </DpSection>
+                  )}
+
+                  {/* Per-format improve cards */}
+                  <ReviewFormatCards
+                    format={activeReviewTab}
+                    onFix={(instruction) => handleReviewFix(instruction)}
+                    onSkip={() => {}}
+                  />
+
+                  {/* Export */}
+                  <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 12, marginBottom: 6 }}>
+                    {allExported ? "All formats exported." : `${selectedFormats.length || 1} format${(selectedFormats.length || 1) > 1 ? "s" : ""} ready.`}
+                  </div>
+                  <button
+                    onClick={handleExportAll}
+                    disabled={allExported}
+                    style={{
+                      width: "100%", padding: 10, borderRadius: 6,
+                      background: allExported ? "rgba(74,144,217,0.12)" : "var(--gold-bright)",
+                      border: allExported ? "1px solid rgba(74,144,217,0.3)" : "none",
+                      fontSize: 12, fontWeight: 700,
+                      color: allExported ? "var(--blue)" : "var(--fg)",
+                      cursor: allExported ? "default" : "pointer",
+                      fontFamily: FONT,
+                    }}
+                  >
+                    {allExported ? "Exported" : "Export all"}
+                  </button>
+                </>
+              )}
+
               <ActionChips
                 chips={["Run Human Voice Test", "Check for SLOP", "Raise the Impact Score", "Is this ready to publish?"]}
                 onChipClick={prefillWatson}
@@ -3410,7 +3578,7 @@ export default function WorkSession() {
     pipelineRun, pipelineRunning, allExported, outputId,
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
     handleFixCheckpoint, fixingGate, handleRerunPipeline, rerunningPipeline,
-    prefillWatson,
+    prefillWatson, activeReviewTab, handleReviewFix, handleExportAll,
   ]);
 
   // Auto-open dashboard when pipeline finishes in Review

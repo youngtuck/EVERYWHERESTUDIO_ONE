@@ -7,5 +7,5 @@ export const MARKETING_NUMBERS = {
   voiceDnaTarget: 95,
 } as const;
 
-export const APP_VERSION = "Alpha 3.017";
+export const APP_VERSION = "Alpha 3.018";
 
