@@ -2785,27 +2785,22 @@ export default function WorkSession() {
       setActiveVersionIdx(0);
       setGeneratingLabel("Done.");
 
-      // Save draft to Supabase immediately so it exists in Catalog even if pipeline never runs
+      // Save draft to Supabase immediately (fire and forget, don't block UI)
       if (user && data.content) {
-        try {
-          const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
-          const outputTypeId = outputType || "freestyle";
-          const { data: savedOutput } = await supabase.from("outputs").insert({
-            user_id: user.id,
-            title: title.slice(0, 200),
-            content: data.content,
-            output_type: outputTypeId,
-            output_type_id: outputTypeId,
-            content_state: "in_progress",
-            score: 0,
-          }).select("id").single();
-
-          if (savedOutput?.id) {
-            setOutputId(savedOutput.id);
-          }
-        } catch (e) {
-          console.error("[WorkSession] Failed to save draft:", e);
-        }
+        const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
+        const outputTypeId = outputType || "freestyle";
+        supabase.from("outputs").insert({
+          user_id: user.id,
+          title: title.slice(0, 200),
+          content: data.content,
+          output_type: outputTypeId,
+          output_type_id: outputTypeId,
+          content_state: "in_progress",
+          score: 0,
+        }).select("id").single().then(({ data: savedOutput, error }) => {
+          if (error) console.error("[Draft save] Error:", error.message, error.details, error.hint);
+          if (savedOutput?.id) setOutputId(savedOutput.id);
+        });
       }
     } catch (err: any) {
       toast("Draft generation failed. Please try again.", "error");
@@ -3016,51 +3011,69 @@ export default function WorkSession() {
   }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId]);
 
   // ── REVIEW: Export all ─────────────────────────────────────────
-  const handleExportAll = useCallback(async () => {
-    const formats = selectedFormats.length > 0 ? selectedFormats : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[];
+  const handleExportAll = useCallback(() => {
+    // 1. Mark all formats as exported (immediate, synchronous)
+    const formats: Format[] = selectedFormats.length > 0
+      ? selectedFormats
+      : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
     const exported: Record<string, boolean> = {};
     formats.forEach(f => { exported[f] = true; });
     setExportedTabs(exported);
     setAllExported(true);
 
-    // Save final content to Supabase
-    if (user && draft) {
-      try {
-        if (outputId) {
-          await supabase.from("outputs").update({
-            content: draft,
-            content_state: "vault",
-          }).eq("id", outputId);
-        } else {
-          const title = outlineRows[0]?.content || "Untitled";
-          const outputTypeId = outputType || "freestyle";
-          const { data: savedOutput } = await supabase.from("outputs").insert({
-            user_id: user.id,
-            title: title.slice(0, 200),
-            content: draft,
-            output_type: outputTypeId,
-            output_type_id: outputTypeId,
-            content_state: "vault",
-            score: pipelineRun?.impactScore?.total ?? 0,
-          }).select("id").single();
-
-          if (savedOutput?.id) {
-            setOutputId(savedOutput.id);
-          }
-        }
-      } catch (e) {
-        console.error("[Export] Failed to save:", e);
+    // 2. Store the draft in sessionStorage so Wrap can read it even if Supabase fails
+    try {
+      sessionStorage.setItem("ew-wrap-draft", draft || "");
+      sessionStorage.setItem("ew-wrap-title", outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled");
+      sessionStorage.setItem("ew-wrap-output-type", outputType || "freestyle");
+      if (outputId) {
+        sessionStorage.setItem("ew-wrap-output-id", outputId);
       }
+      const adaptedContent: Record<string, string> = {};
+      formats.forEach(f => {
+        if (formatDrafts[f]?.status === "done" && formatDrafts[f]?.content) {
+          adaptedContent[f] = formatDrafts[f].content;
+        }
+      });
+      if (Object.keys(adaptedContent).length > 0) {
+        sessionStorage.setItem("ew-wrap-formats", JSON.stringify(adaptedContent));
+      }
+    } catch (e) {
+      console.warn("[Export] sessionStorage write failed:", e);
     }
 
-    // Store outputId for Wrap to pick up
-    if (outputId) {
-      sessionStorage.setItem("ew-wrap-output-id", outputId);
-    }
+    // 3. Navigate to Wrap IMMEDIATELY (do not wait for anything)
+    nav("/studio/wrap");
 
-    // Navigate to Wrap
-    setTimeout(() => nav("/studio/wrap"), 800);
-  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun]);
+    // 4. Save to Supabase in the background (fire and forget)
+    if (user && draft) {
+      const saveToSupabase = async () => {
+        try {
+          if (outputId) {
+            await supabase.from("outputs").update({
+              content: draft,
+              content_state: "vault",
+            }).eq("id", outputId);
+          } else {
+            const title = outlineRows[0]?.content || "Untitled";
+            const outputTypeId = outputType || "freestyle";
+            await supabase.from("outputs").insert({
+              user_id: user.id,
+              title: title.slice(0, 200),
+              content: draft,
+              output_type: outputTypeId,
+              output_type_id: outputTypeId,
+              content_state: "vault",
+              score: pipelineRun?.impactScore?.total ?? 0,
+            });
+          }
+        } catch (e) {
+          console.error("[Export] Supabase save failed:", e);
+        }
+      };
+      saveToSupabase();
+    }
+  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts]);
 
   // ── REVIEW: Rerun Human Voice Test only ───────────────────────
   const handleRerunHVT = useCallback(async () => {

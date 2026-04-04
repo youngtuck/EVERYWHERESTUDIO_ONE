@@ -101,6 +101,36 @@ export default function WrapPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState("LinkedIn Post");
   const [copied, setCopied] = useState(false);
+  const [sessionDraft, setSessionDraft] = useState<OutputItem | null>(null);
+
+  // Read session data passed from Export (available immediately, even before Supabase syncs)
+  useEffect(() => {
+    const wrapDraft = sessionStorage.getItem("ew-wrap-draft");
+    const wrapTitle = sessionStorage.getItem("ew-wrap-title");
+    const wrapOutputType = sessionStorage.getItem("ew-wrap-output-type");
+    const wrapOutputId = sessionStorage.getItem("ew-wrap-output-id");
+
+    if (wrapDraft) {
+      const sessionOutput: OutputItem = {
+        id: wrapOutputId || "session-draft",
+        title: wrapTitle || "Untitled",
+        content: wrapDraft,
+        output_type: wrapOutputType || "freestyle",
+        created_at: new Date().toISOString(),
+        score: 0,
+      };
+      setSessionDraft(sessionOutput);
+      setSelectedId(sessionOutput.id);
+      setLoading(false);
+
+      // Clean up sessionStorage
+      sessionStorage.removeItem("ew-wrap-draft");
+      sessionStorage.removeItem("ew-wrap-title");
+      sessionStorage.removeItem("ew-wrap-output-type");
+      sessionStorage.removeItem("ew-wrap-output-id");
+      sessionStorage.removeItem("ew-wrap-formats");
+    }
+  }, []);
 
   // Fetch outputs from Supabase
   const fetchOutputs = useCallback(() => {
@@ -112,29 +142,32 @@ export default function WrapPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error("[Wrap] Fetch error:", error);
         setOutputs((data as OutputItem[]) || []);
         setLoading(false);
+
+        // If Supabase has the session draft's content, switch to that record
+        if (data && data.length > 0 && sessionDraft) {
+          const found = data.find((d: OutputItem) => d.content === sessionDraft.content);
+          if (found) {
+            setSelectedId(found.id);
+            setSessionDraft(null);
+          }
+        }
       });
-  }, [user]);
+  }, [user, sessionDraft]);
 
   // Refetch every time the page is navigated to (location.key changes on each navigation)
   useEffect(() => {
     fetchOutputs();
   }, [fetchOutputs, location.key]);
 
-  // Auto-select the most recent export
-  useEffect(() => {
-    const wrapOutputId = sessionStorage.getItem("ew-wrap-output-id");
-    if (wrapOutputId) {
-      setSelectedId(wrapOutputId);
-      sessionStorage.removeItem("ew-wrap-output-id");
-    } else if (outputs.length > 0 && !selectedId) {
-      setSelectedId(outputs[0].id);
-    }
-  }, [outputs, selectedId]);
-
-  const selectedOutput = outputs.find(o => o.id === selectedId) || null;
+  // Merge session draft with Supabase outputs
+  const allOutputs = sessionDraft
+    ? [sessionDraft, ...outputs.filter(o => o.id !== sessionDraft.id)]
+    : outputs;
+  const selectedOutput = allOutputs.find(o => o.id === selectedId) || null;
 
   // Dashboard panel
   useLayoutEffect(() => {
@@ -153,7 +186,7 @@ export default function WrapPage() {
     return <div style={{ padding: 40, textAlign: "center", color: "var(--fg-3)", fontSize: 13, fontFamily: FONT }}>Loading...</div>;
   }
 
-  if (outputs.length === 0) {
+  if (allOutputs.length === 0) {
     return (
       <div style={{
         display: "flex", flexDirection: "column", alignItems: "center",
@@ -195,7 +228,7 @@ export default function WrapPage() {
       {/* Left: content list */}
       <div style={{ width: selectedOutput ? 280 : "100%", maxWidth: selectedOutput ? 280 : 700, flexShrink: 0, overflowY: "auto", padding: "24px 16px", borderRight: selectedOutput ? "1px solid var(--line)" : "none", transition: "width 0.2s" }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 12, fontFamily: FONT }}>Your Content</div>
-        {outputs.map(o => {
+        {allOutputs.map(o => {
           const active = selectedId === o.id;
           return (
             <div
@@ -273,7 +306,7 @@ export default function WrapPage() {
       )}
 
       {/* Empty state when nothing is selected */}
-      {!selectedOutput && outputs.length > 0 && (
+      {!selectedOutput && allOutputs.length > 0 && (
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fg-3)", fontSize: 13, fontFamily: FONT }}>
           Select a piece to preview and export.
         </div>
