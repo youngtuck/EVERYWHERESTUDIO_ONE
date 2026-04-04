@@ -61,7 +61,7 @@ function parseGateResponse(text) {
         const s = String(parsed.status).toUpperCase();
         status = s === "PASS" ? "PASS" : (s === "FAIL" || s.includes("BLOCK")) ? "FAIL" : "FLAG";
       }
-      if (typeof parsed.score === "number") score = Math.min(100, Math.max(0, parsed.score));
+      if (typeof parsed.score === "number") score = Math.round(Math.min(100, Math.max(0, parsed.score)));
       if (parsed.feedback) feedback = String(parsed.feedback).slice(0, 500);
       if (Array.isArray(parsed.issues)) issues = parsed.issues.map(String).slice(0, 10);
       if (status === "FAIL") score = Math.min(score, 50);
@@ -99,7 +99,7 @@ function parseBetterishResponse(text) {
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      const total = parsed.total || parsed.totalScore || 0;
+      const total = Math.round(parsed.total || parsed.totalScore || 0);
       const verdict = parsed.verdict
         ? String(parsed.verdict).toUpperCase()
         : total >= 900 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
@@ -336,7 +336,7 @@ export default async function handler(req, res) {
 
     // Normalize Impact Score to 0-100 scale
     const rawTotal = betterishScore.total || 0;
-    const normalizedTotal = rawTotal > 100 ? Math.round(rawTotal / 10) : rawTotal;
+    const normalizedTotal = Math.round(rawTotal > 100 ? rawTotal / 10 : rawTotal);
     const impactScore = {
       total: normalizedTotal,
       verdict: normalizedTotal >= 60 ? "PUBLISH" : normalizedTotal >= 40 ? "REVISE" : "REJECT",

@@ -673,7 +673,7 @@ function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFi
       >
         <span style={{ color: iconColor, fontWeight: 700, flexShrink: 0 }}>{icon}</span>
         <span style={{ flex: 1, color: "var(--fg-2)", fontWeight: 500 }}>{displayGateName(gate.gate)}</span>
-        <span style={{ color: "var(--fg-3)", flexShrink: 0 }}>{gate.score}</span>
+        <span style={{ color: "var(--fg-3)", flexShrink: 0 }}>{Math.round(gate.score)}</span>
         {canExpand && (
           <span style={{ color: "var(--fg-3)", fontSize: 8, flexShrink: 0, transition: "transform 0.15s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
         )}
@@ -751,9 +751,9 @@ function ReviewDash({
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <svg viewBox="0 0 100 60" width="48" height="29">
                   <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
-                  <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke={score >= 90 ? "var(--blue)" : score >= 60 ? "var(--gold)" : "var(--danger)"} strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (score / 100) * 141} />
+                  <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke={score >= 90 ? "var(--blue)" : score >= 60 ? "var(--gold)" : "var(--danger)"} strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (Math.round(score) / 100) * 141} />
                 </svg>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{score}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{score !== null ? Math.round(score) : ""}</span>
                 <span style={{ fontSize: 9, color: "var(--fg-3)" }}>/100</span>
               </div>
               <div style={{ fontSize: 10, color: score >= 90 ? "var(--blue)" : "var(--gold)", marginTop: 4, fontWeight: 600 }}>
@@ -898,6 +898,20 @@ function StageIntake({
       bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages.length, sending]);
+
+  // Re-focus input after Watson finishes responding
+  const prevSending = useRef(sending);
+  useEffect(() => {
+    if (prevSending.current && !sending) {
+      setTimeout(() => {
+        const textarea = document.querySelector('.watson-input') as HTMLTextAreaElement;
+        if (textarea && !textarea.disabled) {
+          textarea.focus();
+        }
+      }, 100);
+    }
+    prevSending.current = sending;
+  }, [sending]);
 
   const handleSend = () => {
     if (!input.trim() || sending) return;
@@ -1239,10 +1253,10 @@ function ChatInputBar({
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={e => onChange(e.target.value)}
-          onKeyDown={handleKey}
+          onChange={e => { if (!disabled) onChange(e.target.value); }}
+          onKeyDown={e => { if (!disabled) handleKey(e); }}
           placeholder={placeholder}
-          disabled={disabled}
+          readOnly={disabled}
           rows={1}
           className="watson-input"
           style={{
@@ -1895,84 +1909,99 @@ function ReviewFormatPreview({
   const renderPara = (p: string, i: number) => {
     const flagged = hvtFlaggedLines.find(f => p.includes(f.original) || f.original.includes(p.slice(0, 40)));
     const isHighlighted = highlightedParas?.includes(i + 1);
-    const isHovered = hoveredFlag === i;
-    return (
-      <div key={i} style={{ marginTop: i > 0 ? 12 : 0, position: "relative" }}>
-        <div
-          onMouseEnter={() => flagged ? setHoveredFlag(i) : undefined}
-          onMouseLeave={() => setHoveredFlag(null)}
-          style={{ position: "relative" }}
-        >
-          <p
-            className={isHighlighted ? "para-highlight" : undefined}
-            style={flagged ? {
-              borderLeft: "3px solid var(--gold)",
-              paddingLeft: 12,
-              background: isHovered ? "rgba(245,198,66,0.10)" : "rgba(245,198,66,0.04)",
-              borderRadius: "0 4px 4px 0",
-              cursor: "pointer",
-              transition: "background 0.15s",
-            } : undefined}
-          >
+
+    // If no flag, render normally
+    if (!flagged) {
+      return (
+        <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
+          <p className={isHighlighted ? "para-highlight" : undefined}>
             {renderInlineMarkdown(p)}
           </p>
-
-          {/* Grammarly-style hover tooltip */}
-          {flagged && isHovered && flagged.suggestion && (
-            <div style={{
-              position: "absolute", bottom: "calc(100% + 6px)", left: 12,
-              background: "var(--surface)", border: "1px solid var(--line)",
-              borderRadius: 8, padding: "12px 14px", width: 320,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 50,
-              animation: "fadeUp 0.15s ease",
-            }}>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--gold)", marginBottom: 4 }}>
-                {flagged.vector}
-              </div>
-              <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 8 }}>
-                {flagged.issue}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--fg)", lineHeight: 1.5, padding: "8px 10px", background: "rgba(245,198,66,0.06)", borderRadius: 6, border: "1px solid rgba(245,198,66,0.15)", marginBottom: 8 }}>
-                {flagged.suggestion}
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onDirectReplace && flagged.suggestion) {
-                      onDirectReplace(p, flagged.suggestion);
-                    }
-                    setHoveredFlag(null);
-                  }}
-                  style={{
-                    fontSize: 10, fontWeight: 700, padding: "5px 14px", borderRadius: 5,
-                    background: "var(--gold-bright)", border: "none", color: "var(--fg)",
-                    cursor: "pointer", fontFamily: FONT, flex: 1,
-                  }}
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setHoveredFlag(null); }}
-                  style={{
-                    fontSize: 10, fontWeight: 500, padding: "5px 14px", borderRadius: 5,
-                    background: "transparent", border: "1px solid var(--line)", color: "var(--fg-3)",
-                    cursor: "pointer", fontFamily: FONT,
-                  }}
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
         </div>
+      );
+    }
 
-        {/* Inline annotation (visible without hover) */}
-        {flagged && (
-          <div style={{ fontSize: 10, color: "var(--gold)", marginTop: 4, marginLeft: 15, lineHeight: 1.5 }}>
-            <span style={{ fontWeight: 600 }}>{flagged.vector}:</span> {flagged.issue}
-          </div>
-        )}
+    // Find the flagged text within the paragraph to underline it specifically
+    const flagText = flagged.original || "";
+    const flagIdx = flagText.length > 10 ? p.indexOf(flagText.slice(0, 40)) : -1;
+
+    // If we can locate the flagged text, split the paragraph and underline just that part
+    // If we cannot locate it, underline the entire paragraph as fallback
+    const canLocate = flagIdx >= 0;
+    const beforeText = canLocate ? p.slice(0, flagIdx) : "";
+    const matchedText = canLocate ? p.slice(flagIdx, flagIdx + flagText.length) : p;
+    const afterText = canLocate ? p.slice(flagIdx + flagText.length) : "";
+
+    return (
+      <div key={i} style={{ marginTop: i > 0 ? 12 : 0, position: "relative" }}>
+        <p className={isHighlighted ? "para-highlight" : undefined}>
+          {canLocate && renderInlineMarkdown(beforeText)}
+          <span
+            className="flag-r"
+            style={{ position: "relative", cursor: "pointer" }}
+            onMouseEnter={() => setHoveredFlag(i)}
+            onMouseLeave={() => setHoveredFlag(null)}
+          >
+            {renderInlineMarkdown(matchedText)}
+
+            {/* Tooltip positioned above the underlined text */}
+            {hoveredFlag === i && flagged.suggestion && (
+              <span
+                className="flag-pop"
+                style={{ display: "block" }}
+                onMouseEnter={() => setHoveredFlag(i)}
+                onMouseLeave={() => setHoveredFlag(null)}
+              >
+                <span style={{
+                  display: "block", fontSize: 9, fontWeight: 700,
+                  letterSpacing: "0.08em", textTransform: "uppercase" as const,
+                  color: "var(--gold)", marginBottom: 4,
+                  textDecoration: "none",
+                }}>
+                  {flagged.vector}
+                </span>
+                <span style={{
+                  display: "block", fontSize: 11, color: "var(--fg-3)",
+                  lineHeight: 1.5, marginBottom: 8, textDecoration: "none",
+                }}>
+                  {flagged.issue}
+                </span>
+                <span style={{
+                  display: "block", fontSize: 12, color: "var(--fg)",
+                  lineHeight: 1.5, padding: "8px 10px",
+                  background: "rgba(245,198,66,0.06)",
+                  borderRadius: 6, border: "1px solid rgba(245,198,66,0.15)",
+                  marginBottom: 8, textDecoration: "none",
+                }}>
+                  {flagged.suggestion}
+                </span>
+                <span style={{ display: "flex", gap: 6, textDecoration: "none" }}>
+                  <button
+                    className="fp-fix"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onDirectReplace && flagged.suggestion) {
+                        onDirectReplace(p, flagged.suggestion);
+                      } else if (onApplySuggestion) {
+                        onApplySuggestion(`Replace "${flagText.slice(0, 60)}..." with: ${flagged.suggestion}`);
+                      }
+                      setHoveredFlag(null);
+                    }}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    className="fp-dismiss"
+                    onClick={(e) => { e.stopPropagation(); setHoveredFlag(null); }}
+                  >
+                    Dismiss
+                  </button>
+                </span>
+              </span>
+            )}
+          </span>
+          {canLocate && renderInlineMarkdown(afterText)}
+        </p>
       </div>
     );
   };
