@@ -2784,6 +2784,29 @@ export default function WorkSession() {
       setDraftVersions([{ content: data.content || "", label: "Version 1" }]);
       setActiveVersionIdx(0);
       setGeneratingLabel("Done.");
+
+      // Save draft to Supabase immediately so it exists in Catalog even if pipeline never runs
+      if (user && data.content) {
+        try {
+          const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
+          const outputTypeId = outputType || "freestyle";
+          const { data: savedOutput } = await supabase.from("outputs").insert({
+            user_id: user.id,
+            title: title.slice(0, 200),
+            content: data.content,
+            output_type: outputTypeId,
+            output_type_id: outputTypeId,
+            content_state: "in_progress",
+            score: 0,
+          }).select("id").single();
+
+          if (savedOutput?.id) {
+            setOutputId(savedOutput.id);
+          }
+        } catch (e) {
+          console.error("[WorkSession] Failed to save draft:", e);
+        }
+      }
     } catch (err: any) {
       toast("Draft generation failed. Please try again.", "error");
       setDraft("Could not generate draft. Please go back to Outline and try again.");
@@ -2880,11 +2903,12 @@ export default function WorkSession() {
   // ── Format adaptation (parallel with pipeline) ──────────────
   const handleFormatAdaptation = useCallback(async () => {
     if (!draft || !user) return;
+    const formatsToAdapt = selectedFormats.length > 0 ? selectedFormats : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[];
     const initial: Record<string, { content: string; metadata: Record<string, string>; status: "pending" | "generating" | "done" | "error" }> = {};
-    selectedFormats.forEach(f => { initial[f] = { content: "", metadata: {}, status: "pending" }; });
+    formatsToAdapt.forEach(f => { initial[f] = { content: "", metadata: {}, status: "pending" }; });
     setFormatDrafts(initial);
 
-    const promises = selectedFormats.map(async (format) => {
+    const promises = formatsToAdapt.map(async (format) => {
       setFormatDrafts(prev => ({ ...prev, [format]: { ...prev[format], status: "generating" } }));
       try {
         const res = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
@@ -2945,27 +2969,40 @@ export default function WorkSession() {
         setDraft(result.finalDraft);
       }
 
-      // Save to Supabase
+      // Save/update in Supabase
       if (user) {
         const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
         const score = result.impactScore?.total ?? 0;
         const outputTypeId = outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay";
         const outputCategory = OUTPUT_TYPES.find(t => t.id === outputTypeId)?.category?.toLowerCase() || null;
-        const { data: savedOutput } = await supabase.from("outputs").insert({
-          user_id: user.id,
-          title: title.slice(0, 200),
-          content: result.finalDraft || draft,
-          output_type: outputTypeId,
-          output_category: outputCategory,
-          output_type_id: outputTypeId,
-          project_id: projectId || undefined,
-          score,
-          gates: result.checkpointResults || null,
-          content_state: score >= 60 ? "vault" : "in_progress",
-        }).select("id").single();
 
-        if (savedOutput?.id) {
-          setOutputId(savedOutput.id);
+        if (outputId) {
+          // Update existing record with pipeline results
+          await supabase.from("outputs").update({
+            content: result.finalDraft || draft,
+            score: Math.round(score),
+            gates: result.checkpointResults || null,
+            content_state: score >= 60 ? "vault" : "in_progress",
+            output_category: outputCategory,
+          }).eq("id", outputId);
+        } else {
+          // Create new record
+          const { data: savedOutput } = await supabase.from("outputs").insert({
+            user_id: user.id,
+            title: title.slice(0, 200),
+            content: result.finalDraft || draft,
+            output_type: outputTypeId,
+            output_type_id: outputTypeId,
+            output_category: outputCategory,
+            project_id: projectId || undefined,
+            score: Math.round(score),
+            gates: result.checkpointResults || null,
+            content_state: score >= 60 ? "vault" : "in_progress",
+          }).select("id").single();
+
+          if (savedOutput?.id) {
+            setOutputId(savedOutput.id);
+          }
         }
       }
 
@@ -2979,18 +3016,51 @@ export default function WorkSession() {
   }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId]);
 
   // ── REVIEW: Export all ─────────────────────────────────────────
-  const handleExportAll = useCallback(() => {
+  const handleExportAll = useCallback(async () => {
+    const formats = selectedFormats.length > 0 ? selectedFormats : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[];
     const exported: Record<string, boolean> = {};
-    selectedFormats.forEach(f => { exported[f] = true; });
+    formats.forEach(f => { exported[f] = true; });
     setExportedTabs(exported);
     setAllExported(true);
-    // Update Supabase record
-    if (outputId) {
-      supabase.from("outputs").update({ content_state: "vault" }).eq("id", outputId).then(() => {}, () => {});
+
+    // Save final content to Supabase
+    if (user && draft) {
+      try {
+        if (outputId) {
+          await supabase.from("outputs").update({
+            content: draft,
+            content_state: "vault",
+          }).eq("id", outputId);
+        } else {
+          const title = outlineRows[0]?.content || "Untitled";
+          const outputTypeId = outputType || "freestyle";
+          const { data: savedOutput } = await supabase.from("outputs").insert({
+            user_id: user.id,
+            title: title.slice(0, 200),
+            content: draft,
+            output_type: outputTypeId,
+            output_type_id: outputTypeId,
+            content_state: "vault",
+            score: pipelineRun?.impactScore?.total ?? 0,
+          }).select("id").single();
+
+          if (savedOutput?.id) {
+            setOutputId(savedOutput.id);
+          }
+        }
+      } catch (e) {
+        console.error("[Export] Failed to save:", e);
+      }
     }
-    // Navigate to Wrap after brief delay
-    setTimeout(() => nav("/studio/wrap"), 1200);
-  }, [selectedFormats, outputId, nav]);
+
+    // Store outputId for Wrap to pick up
+    if (outputId) {
+      sessionStorage.setItem("ew-wrap-output-id", outputId);
+    }
+
+    // Navigate to Wrap
+    setTimeout(() => nav("/studio/wrap"), 800);
+  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun]);
 
   // ── REVIEW: Rerun Human Voice Test only ───────────────────────
   const handleRerunHVT = useCallback(async () => {
@@ -3719,9 +3789,9 @@ export default function WorkSession() {
           pipelineRun={pipelineRun}
           running={pipelineRunning}
           activeTab={activeReviewTab}
-          tabs={selectedFormats}
+          tabs={selectedFormats.length > 0 ? selectedFormats : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[]}
           onTabClick={(t) => setActiveReviewTab(t as any)}
-          onAdvance={() => goToStage("Review")}
+          onAdvance={() => handleExportAll()}
           onGoBack={handleGoBackToEdit}
           onFix={handleReviewFix}
           onDirectReplace={handleDirectReplace}

@@ -123,6 +123,17 @@ export default function WrapPage() {
     fetchOutputs();
   }, [fetchOutputs, location.key]);
 
+  // Auto-select the most recent export
+  useEffect(() => {
+    const wrapOutputId = sessionStorage.getItem("ew-wrap-output-id");
+    if (wrapOutputId) {
+      setSelectedId(wrapOutputId);
+      sessionStorage.removeItem("ew-wrap-output-id");
+    } else if (outputs.length > 0 && !selectedId) {
+      setSelectedId(outputs[0].id);
+    }
+  }, [outputs, selectedId]);
+
   const selectedOutput = outputs.find(o => o.id === selectedId) || null;
 
   // Dashboard panel
