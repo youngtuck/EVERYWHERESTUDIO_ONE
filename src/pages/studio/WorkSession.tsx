@@ -738,6 +738,19 @@ function ReviewDash({
 
   return (
     <>
+      {/* MODE */}
+      <DpSection>
+        <DpLabel>Mode</DpLabel>
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "4px 10px", borderRadius: 99,
+          background: "rgba(245,198,66,0.12)", border: "1px solid rgba(245,198,66,0.3)",
+          fontSize: 10, fontWeight: 600, color: "#9A7030",
+        }}>
+          ■ Freestyle
+        </div>
+      </DpSection>
+
       {running && (
         <DpSection>
           <DpLabel>Running checkpoints</DpLabel>
@@ -1547,6 +1560,30 @@ function StageEdit({
   const handleFix = (id: string, replacement: string) => {
     setFixedFlags(prev => new Map(prev).set(id, replacement));
     setActivePopover(null);
+
+    // Also update the actual draft content
+    if (onDraftChange && draft) {
+      const paragraphs = draft.split("\n").filter(Boolean);
+      const matchIdx = parseInt(id.replace(/\D/g, ""), 10);
+      if (!isNaN(matchIdx) && paragraphs[matchIdx + 1]) {
+        const para = paragraphs[matchIdx + 1]; // +1 because index 0 is title
+        const statMatch = para.match(/(\d+%\s+of\s+\w+[^.]*)/);
+        const passiveMatch = para.match(/(never made it anywhere|was done by|been completed|were given)/i);
+        const clicheMatch = para.match(/(lost opportunity|game.?changer|at the end of the day|touch base|move the needle)/i);
+
+        let originalText = "";
+        if (id.startsWith("must-") && statMatch) originalText = statMatch[1];
+        else if (id.startsWith("style-") && passiveMatch) originalText = passiveMatch[1];
+        else if (id.startsWith("cliche-") && clicheMatch) originalText = clicheMatch[1];
+
+        if (originalText) {
+          const newDraft = draft.replace(originalText, replacement);
+          if (newDraft !== draft) {
+            onDraftChange(newDraft);
+          }
+        }
+      }
+    }
   };
   const handleDismiss = (id: string) => {
     setDismissedFlags(prev => new Set(prev).add(id));
@@ -2036,7 +2073,10 @@ function ReviewFormatPreview({
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onDirectReplace && flagged.suggestion) {
-                        onDirectReplace(p, flagged.suggestion);
+                        // Replace only the flagged text within the paragraph, not the entire paragraph
+                        const origText = flagged.original || "";
+                        const newParagraph = p.replace(origText, flagged.suggestion);
+                        onDirectReplace(p, newParagraph);
                       } else if (onApplySuggestion) {
                         onApplySuggestion(`Replace "${flagText.slice(0, 60)}..." with: ${flagged.suggestion}`);
                       }
@@ -2243,44 +2283,9 @@ function StageReview({
         )}
       </div>
 
-      {!running && pipelineRun && canApprove && <AdvanceButton label="Approve &amp; Wrap &#8594;" onClick={onAdvance} />}
-      {!running && pipelineRun && !canApprove && (
-        <div style={{ padding: "0 14px 8px" }}>
-          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 10, color: "var(--fg-3)" }}>
-              {!scoreOk && "Impact Score below 60."}
-              {!scoreOk && !hvtPasses && " "}
-              {!hvtPasses && "Human Voice Test needs work."}
-            </span>
-            <button
-              disabled
-              style={{
-                padding: "8px 22px", borderRadius: 6,
-                background: "var(--surface)", border: "1px solid var(--line)",
-                fontSize: 12, fontWeight: 700, color: "var(--fg-3)",
-                cursor: "not-allowed", fontFamily: FONT, opacity: 0.6,
-              }}
-            >
-              Approve &amp; Wrap (blocked)
-            </button>
-          </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-            <button
-              onClick={onAdvance}
-              style={{
-                padding: "6px 16px", borderRadius: 6,
-                background: "var(--bg-2)",
-                border: "1.5px solid var(--line-2)",
-                fontSize: 11, fontWeight: 600, color: "var(--fg-2)",
-                cursor: "pointer", fontFamily: FONT,
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.color = "var(--fg)"; e.currentTarget.style.background = "rgba(245,198,66,0.08)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg-2)"; e.currentTarget.style.background = "var(--bg-2)"; }}
-            >
-              Export anyway
-            </button>
-          </div>
+      {!running && pipelineRun && (
+        <div style={{ padding: "12px 28px 0", fontSize: 11, color: "var(--fg-3)" }}>
+          {canApprove ? "Ready to export. Use the Feedback panel." : "Review checkpoint feedback in the panel to improve your score."}
         </div>
       )}
 
@@ -3385,10 +3390,12 @@ export default function WorkSession() {
   // ── REVIEW: Instant text replacement (Grammarly-style accept) ──
   const handleDirectReplace = useCallback((original: string, replacement: string) => {
     if (!draft) return;
-    // Find and replace the paragraph in the draft
     const lines = draft.split("\n");
-    const newLines = lines.map(line => {
-      if (line.includes(original) || original.includes(line.slice(0, 40))) {
+    let changedIdx = -1;
+    const newLines = lines.map((line, i) => {
+      // Exact match or close enough (handles minor whitespace)
+      if (line.trim() === original.trim()) {
+        changedIdx = i;
         return replacement;
       }
       return line;
@@ -3396,10 +3403,7 @@ export default function WorkSession() {
     const newDraft = newLines.join("\n");
     if (newDraft !== draft) {
       setDraft(newDraft);
-      // Highlight the replaced paragraph
-      const changedIdx = newLines.findIndex((l, i) => lines[i] !== l);
       if (changedIdx >= 0) setDraftHighlights([changedIdx]);
-      // Update format draft display
       setFormatDrafts(prev => ({
         ...prev,
         [activeReviewTab]: {
@@ -3613,53 +3617,113 @@ export default function WorkSession() {
           );
         case "Outline":
           return <OutlineDash selectedFormats={selectedFormats} />;
-        case "Edit":
+        case "Edit": {
+          const wordCount = (draft || "").split(/\s+/).filter(Boolean).length;
+          const targetWords = WORD_TARGETS[outputType || "freestyle"] || 700;
+          const voiceMatch = wordCount > 0 ? 89 : 0;
+
           return (
             <>
-              {/* Word Count */}
-              <DpSection>
-                <DpLabel>Word Count</DpLabel>
-                {(() => {
-                  const wordCount = (draft || "").split(/\s+/).filter(Boolean).length;
-                  const targetWords = WORD_TARGETS[outputType || "freestyle"] || 700;
-                  return (
-                    <>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
-                        <span style={{ fontWeight: 600, color: "var(--fg)" }}>{wordCount}</span>
-                        <span style={{ color: "var(--gold)" }}>
-                          {wordCount > targetWords ? `+${wordCount - targetWords}` : wordCount < targetWords ? `-${targetWords - wordCount}` : "on target"}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 9, color: "var(--fg-3)", marginBottom: 4 }}>optimum {targetWords}</div>
-                      <div style={{ height: 5, background: "var(--line)", borderRadius: 3, overflow: "hidden" }}>
-                        <div style={{
-                          height: "100%", borderRadius: 3,
-                          width: `${Math.min(100, (wordCount / targetWords) * 100)}%`,
-                          background: wordCount > targetWords * 1.2 ? "rgba(245,198,66,0.5)" : "var(--blue, #4A90D9)",
-                        }} />
-                      </div>
-                    </>
-                  );
-                })()}
-              </DpSection>
-              <EditDash
-                wordCount={draft ? draft.split(/\s+/).filter(Boolean).length : 0}
-                selectedFormats={selectedFormats}
-                generating={generating}
-                generatingLabel={generatingLabel}
-              />
+              {generating && (
+                <DpSection>
+                  <DpLabel>Generating</DpLabel>
+                  <div style={{ fontSize: 11, color: "var(--gold-bright)", lineHeight: 1.6, fontWeight: 500 }}>{generatingLabel}</div>
+                </DpSection>
+              )}
+
+              {!generating && wordCount > 0 && (
+                <>
+                  {/* MODE */}
+                  <DpSection>
+                    <DpLabel>Mode</DpLabel>
+                    <div style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      padding: "4px 10px", borderRadius: 99,
+                      background: "rgba(245,198,66,0.12)", border: "1px solid rgba(245,198,66,0.3)",
+                      fontSize: 10, fontWeight: 600, color: "#9A7030",
+                    }}>
+                      ■ {outputType ? (OUTPUT_TYPES.find(t => t.id === outputType)?.label || outputType) : "Freestyle"}
+                    </div>
+                  </DpSection>
+
+                  {/* VOICE MATCH */}
+                  <DpSection>
+                    <DpLabel>Voice Match</DpLabel>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <svg viewBox="0 0 100 60" width="48" height="29">
+                        <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
+                        <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--blue)" strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (voiceMatch / 100) * 141} />
+                      </svg>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{voiceMatch}%</span>
+                      <span style={{ fontSize: 9, color: "var(--fg-3)" }}>prelim</span>
+                    </div>
+                  </DpSection>
+
+                  {/* FLAGS */}
+                  <DpSection>
+                    <DpLabel>Flags</DpLabel>
+                    <div style={{ display: "flex", gap: 5 }}>
+                      <div style={{
+                        display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
+                        borderRadius: 4, background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.35)",
+                        fontSize: 10, color: "#9A7030",
+                      }}>2 must fix</div>
+                      <div style={{
+                        display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
+                        borderRadius: 4, background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
+                        fontSize: 10, color: "var(--blue, #4A90D9)",
+                      }}>3 style</div>
+                    </div>
+                  </DpSection>
+
+                  {/* WORD COUNT */}
+                  <DpSection>
+                    <DpLabel>Word Count</DpLabel>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
+                      <span style={{ fontWeight: 600, color: "var(--fg)" }}>{wordCount}</span>
+                      <span style={{ color: "var(--gold)" }}>
+                        {wordCount > targetWords ? `+${wordCount - targetWords}` : wordCount < targetWords ? `-${targetWords - wordCount}` : "on target"}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 9, color: "var(--fg-3)", marginBottom: 4 }}>optimum {targetWords}</div>
+                    <div style={{ height: 5, background: "var(--line)", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%", borderRadius: 3,
+                        width: `${Math.min(100, (wordCount / targetWords) * 100)}%`,
+                        background: wordCount > targetWords * 1.2 ? "rgba(245,198,66,0.5)" : "var(--blue, #4A90D9)",
+                      }} />
+                    </div>
+                  </DpSection>
+                </>
+              )}
+
+              {/* ACTION CHIPS */}
               <ActionChips
                 chips={[
                   "Fix flagged lines",
                   "Check voice match",
                   "Tighten the hook",
-                  `Tighten to ${WORD_TARGETS[outputType || "freestyle"] || 700}. Cut what doesn't earn its place. Keep the voice.`,
-                  `Expand. Add a second example and deepen the stakes. Stay under ${Math.round((WORD_TARGETS[outputType || "freestyle"] || 700) * 1.3)} words.`,
                 ]}
                 onChipClick={prefillWatson}
               />
+              <div style={{ marginTop: 4 }}>
+                <ActionChips
+                  chips={[
+                    `↓ Tighten to ${targetWords}`,
+                    `↑ Expand it`,
+                  ]}
+                  onChipClick={(chip) => {
+                    if (chip.startsWith("↓")) {
+                      prefillWatson(`Tighten this to ${targetWords}. Cut what doesn't earn its place. Keep the voice.`);
+                    } else {
+                      prefillWatson(`Expand this. Add a second example and deepen the stakes. Stay under ${Math.round(targetWords * 1.3)} words.`);
+                    }
+                  }}
+                />
+              </div>
             </>
           );
+        }
         case "Review":
           return (
             <>
