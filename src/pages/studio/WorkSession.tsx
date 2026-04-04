@@ -734,7 +734,9 @@ function ReviewDash({
   const canApprove = scoreOk && hvtPasses;
   const passed = pipelineRun?.status === "PASSED" && canApprove;
   const allGatesPass = pipelineRun?.checkpointResults?.every(g => g.status === "PASS" || g.status === "FLAG") ?? false;
-  const canExport = pipelineRun && !running && !allExported && canApprove;
+  // Export is available whenever the pipeline has finished running.
+  // Scores are advisory for alpha, not blocking.
+  const canExport = pipelineRun && !running && !allExported;
 
   return (
     <>
@@ -770,13 +772,9 @@ function ReviewDash({
           {score !== null && (
             <DpSection>
               <DpLabel>Impact Score</DpLabel>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <svg viewBox="0 0 100 60" width="48" height="29">
-                  <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
-                  <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke={score >= 90 ? "var(--blue)" : score >= 60 ? "var(--gold)" : "var(--danger)"} strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (Math.round(score) / 100) * 141} />
-                </svg>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{score !== null ? Math.round(score) : ""}</span>
-                <span style={{ fontSize: 9, color: "var(--fg-3)" }}>/100</span>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)" }}>{score !== null ? Math.round(score) : ""}</span>
+                <span style={{ fontSize: 10, color: "var(--fg-3)" }}>/ 100 &nbsp; threshold 75</span>
               </div>
               <div style={{ fontSize: 10, color: score >= 90 ? "var(--blue)" : "var(--gold)", marginTop: 4, fontWeight: 600 }}>
                 {pipelineRun.impactScore?.verdict ?? (score >= 60 ? "PUBLISH" : "REVISE")}
@@ -3389,21 +3387,38 @@ export default function WorkSession() {
 
   // ── REVIEW: Instant text replacement (Grammarly-style accept) ──
   const handleDirectReplace = useCallback((original: string, replacement: string) => {
-    if (!draft) return;
-    const lines = draft.split("\n");
-    let changedIdx = -1;
-    const newLines = lines.map((line, i) => {
-      // Exact match or close enough (handles minor whitespace)
-      if (line.trim() === original.trim()) {
-        changedIdx = i;
-        return replacement;
-      }
-      return line;
-    });
-    const newDraft = newLines.join("\n");
+    if (!draft || !original || !replacement) return;
+
+    // Strategy 1: Direct string replacement on the entire draft
+    let newDraft = draft;
+
+    if (draft.includes(original)) {
+      newDraft = draft.replace(original, replacement);
+    } else if (draft.includes(original.trim())) {
+      newDraft = draft.replace(original.trim(), replacement);
+    } else {
+      // Fallback: find the closest matching line
+      const lines = draft.split("\n");
+      const newLines = lines.map(line => {
+        if (line.trim() === original.trim() || (original.length > 20 && line.includes(original.slice(0, 30)))) {
+          return replacement;
+        }
+        return line;
+      });
+      newDraft = newLines.join("\n");
+    }
+
     if (newDraft !== draft) {
+      const oldParas = draft.split("\n").filter(Boolean);
+      const newParas = newDraft.split("\n").filter(Boolean);
+      const changedIndices: number[] = [];
+      newParas.forEach((p, i) => {
+        if (!oldParas[i] || oldParas[i] !== p) changedIndices.push(i);
+      });
+
       setDraft(newDraft);
-      if (changedIdx >= 0) setDraftHighlights([changedIdx]);
+      setDraftHighlights(changedIndices);
+
       setFormatDrafts(prev => ({
         ...prev,
         [activeReviewTab]: {
@@ -3413,6 +3428,8 @@ export default function WorkSession() {
         },
       }));
       toast("Fix applied.");
+    } else {
+      toast("Could not apply fix. Try using Ask Watson instead.", "info");
     }
   }, [draft, activeReviewTab, toast]);
 
