@@ -6,13 +6,13 @@
  *   Outline -> client-side state built from Watson's readiness summary
  *   Edit    -> /api/generate (draft generation + back-of-house auto-revision)
  *   Review  -> /api/run-pipeline (7 checkpoints + Impact Score + Human Voice Test)
- *   Approve -> save to Supabase outputs table + copy/download + send to Wrap
+ *   Review  includes export (save to Supabase outputs table + copy/download + send to Wrap)
  */
 
 import {
   useState, useRef, useEffect, useLayoutEffect, useCallback,
 } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -572,95 +572,6 @@ function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
         ))}
       </div>
     </DpSection>
-  );
-}
-
-// ── Edit dashboard ────────────────────────────────────────────
-function EditDash({
-  wordCount, selectedFormats, generating, generatingLabel,
-}: {
-  wordCount: number; selectedFormats: Format[]; generating: boolean; generatingLabel: string;
-}) {
-  const optimum = 700;
-  const fillPct = Math.min((wordCount / (optimum * 1.5)) * 100, 100);
-  const wordMap: Partial<Record<Format, string>> = {
-    LinkedIn: "700 words", Newsletter: "800 words",
-    Podcast: "1,200 words", "Sunday Story": "1,500 words",
-  };
-  // Simulated voice match and flags (in production these come from the pipeline)
-  const voiceMatch = wordCount > 0 ? 89 : 0;
-  const mustFixFlags = 2;
-  const styleFlags = 3;
-
-  return (
-    <>
-      {generating && (
-        <DpSection>
-          <DpLabel>Generating</DpLabel>
-          <div style={{ fontSize: 11, color: "var(--gold-bright)", lineHeight: 1.6, fontWeight: 500 }}>{generatingLabel}</div>
-        </DpSection>
-      )}
-
-      {/* Voice match gauge (wireframe v7.23) */}
-      {!generating && wordCount > 0 && (
-        <DpSection>
-          <DpLabel>Voice match</DpLabel>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <svg viewBox="0 0 100 60" width="48" height="29">
-              <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
-              <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--blue)" strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (voiceMatch / 100) * 141} />
-            </svg>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{voiceMatch}%</span>
-            <span style={{ fontSize: 9, color: "var(--fg-3)" }}>prelim</span>
-          </div>
-        </DpSection>
-      )}
-
-      {/* Flags (wireframe v7.23) */}
-      {!generating && wordCount > 0 && (
-        <DpSection>
-          <DpLabel>Flags</DpLabel>
-          <div style={{ display: "flex", gap: 5 }}>
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
-              borderRadius: 4, background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.35)",
-              fontSize: 10, color: "#9A7030",
-            }}>{mustFixFlags} must fix</div>
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
-              borderRadius: 4, background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
-              fontSize: 10, color: "var(--blue)",
-            }}>{styleFlags} style</div>
-          </div>
-        </DpSection>
-      )}
-
-      <DpSection>
-        <DpLabel>Words</DpLabel>
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
-            <span style={{ fontWeight: 600, color: "var(--fg)" }}>{wordCount}</span>
-            {wordCount > optimum && <span style={{ color: "var(--gold)" }}>+{wordCount - optimum}</span>}
-          </div>
-          <div style={{ fontSize: 9, color: "var(--fg-3)", marginBottom: 4 }}>optimum {optimum}</div>
-          <div style={{ height: 5, background: "var(--line)", borderRadius: 3, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${fillPct}%`, background: "rgba(245,198,66,0.35)", borderRadius: 3, transition: "width 0.3s" }} />
-          </div>
-        </div>
-      </DpSection>
-
-      <DpSection>
-        <DpLabel>Outputs in queue</DpLabel>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {selectedFormats.map(f => (
-            <div key={f} style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
-              <span style={{ color: "var(--fg-2)" }}>{f}</span>
-              <span style={{ color: "var(--blue)", fontSize: 10 }}>{wordMap[f] ?? "~"}</span>
-            </div>
-          ))}
-        </div>
-      </DpSection>
-    </>
   );
 }
 
@@ -2307,259 +2218,6 @@ function StageReview({
   );
 }
 
-function ReviewTabBtn({ label, active, reviewed, exported, onClick }: { label: string; active: boolean; reviewed: boolean; exported: boolean; onClick: () => void }) {
-  const dotColor = exported ? "var(--blue)" : reviewed ? "var(--gold-bright)" : "var(--line)";
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        fontSize: 11, fontWeight: active ? 600 : 500,
-        color: active ? "var(--fg)" : "var(--fg-3)",
-        padding: "12px 14px",
-        borderBottom: active ? "2px solid var(--fg)" : "2px solid transparent",
-        cursor: "pointer", whiteSpace: "nowrap" as const, flexShrink: 0, transition: "all 0.1s",
-      }}
-    >
-      {label}
-      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: dotColor, marginLeft: 5, verticalAlign: "middle", position: "relative", top: -1, transition: "background 0.2s" }} />
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STAGE: EXPORT
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Output handoff suggestions based on current output type
-const HANDOFF_MAP: Record<string, { label: string; targetType: string; prompt: string }[]> = {
-  proposal: [
-    { label: "Turn this into a Statement of Work", targetType: "sow", prompt: "Ready to turn this into a Statement of Work?" },
-    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
-  ],
-  report: [
-    { label: "Create an Executive Summary", targetType: "executive_summary", prompt: "Create an Executive Summary?" },
-    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
-  ],
-  case_study: [
-    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
-  ],
-  essay: [
-    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
-  ],
-  newsletter: [
-    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
-  ],
-  presentation: [
-    { label: "Create an Executive Summary", targetType: "executive_summary", prompt: "Create an Executive Summary?" },
-    { label: "Adapt for Social Media", targetType: "social_media", prompt: "Adapt for social media?" },
-  ],
-};
-
-function StageExport({
-  draft, title, formats, activeTab, onTabClick, exportedTabs, onExport, onCopy, outputId,
-  currentOutputType, onHandoff, onWrap,
-}: {
-  draft: string; title: string; formats: string[];
-  activeTab: string; onTabClick: (t: string) => void;
-  exportedTabs: Record<string, boolean>; onExport: (format: string) => void;
-  onCopy: () => void; outputId: string | null;
-  currentOutputType?: string | null; onHandoff?: (targetType: string) => void;
-  onWrap?: () => void;
-}) {
-  const labels: Record<string, string> = {
-    LinkedIn: "LinkedIn Post", Newsletter: "Newsletter",
-    Podcast: "Podcast Script", "Sunday Story": "Sunday Story",
-  };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--line)", padding: "0 20px", flexShrink: 0, background: "var(--bg)", overflowX: "auto" }}>
-        {formats.map(tab => (
-          <ReviewTabBtn
-            key={tab} label={tab}
-            active={activeTab === tab}
-            reviewed 
-            exported={exportedTabs[tab] ?? false}
-            onClick={() => onTabClick(tab)}
-          />
-        ))}
-      </div>
-
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px", maxWidth: 660 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fg)" }}>{labels[activeTab] ?? activeTab}</div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button
-              onClick={onCopy}
-              style={{ fontSize: 11, padding: "5px 12px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
-            >Copy</button>
-            <button
-              onClick={() => onExport(activeTab)}
-              style={{
-                fontSize: 11, padding: "5px 14px", borderRadius: 5,
-                border: exportedTabs[activeTab] ? "1px solid rgba(74,144,217,0.3)" : "none",
-                background: exportedTabs[activeTab] ? "rgba(74,144,217,0.1)" : "var(--fg)",
-                color: exportedTabs[activeTab] ? "var(--blue)" : "var(--surface)",
-                cursor: "pointer", fontFamily: FONT, fontWeight: 600, transition: "all 0.15s",
-              }}
-            >
-              {exportedTabs[activeTab] ? "Exported" : "Export"}
-            </button>
-          </div>
-        </div>
-        <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 18 }}>
-          Saves to Session Files on export.{outputId && <span style={{ color: "var(--blue)", marginLeft: 6 }}>Saved to Catalog.</span>}
-        </div>
-        <div style={{
-          background: "var(--surface)", border: "1px solid var(--line)",
-          borderRadius: 8, padding: "22px 26px", fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7,
-          fontFamily: FONT,
-        }}>
-          {draft ? (
-            <ExportPreview format={activeTab} draft={draft} title={title} />
-          ) : "No content yet."}
-        </div>
-
-        {/* WRAP IT CTA */}
-        {onWrap && (
-          <div style={{ marginTop: 32, textAlign: "center" }}>
-            <button
-              onClick={onWrap}
-              style={{
-                padding: "14px 48px", borderRadius: 10,
-                background: "var(--gold-bright)", border: "none",
-                fontSize: 16, fontWeight: 800, letterSpacing: "0.04em",
-                color: "#0D1B2A", cursor: "pointer", fontFamily: FONT,
-                transition: "all 0.15s ease",
-                boxShadow: "0 4px 16px rgba(245,198,66,0.3)",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(245,198,66,0.4)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(245,198,66,0.3)"; }}
-            >
-              Wrap It
-            </button>
-            <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8 }}>
-              Take your content to Wrap for final formatting and distribution.
-            </div>
-          </div>
-        )}
-
-        {/* What's Next: Output handoff suggestions */}
-        {currentOutputType && HANDOFF_MAP[currentOutputType] && HANDOFF_MAP[currentOutputType].length > 0 && (
-          <div style={{ marginTop: 24 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg-2)", marginBottom: 8 }}>What's Next</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {HANDOFF_MAP[currentOutputType].map(h => (
-                <button
-                  key={h.targetType}
-                  onClick={() => onHandoff?.(h.targetType)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "10px 14px", borderRadius: 6,
-                    border: "1px solid var(--line)", background: "var(--surface)",
-                    cursor: "pointer", fontFamily: FONT, textAlign: "left",
-                    transition: "all 0.12s",
-                  }}
-                >
-                  <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{h.label}</span>
-                  <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--gold)", fontWeight: 600 }}>Start</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EXPORT PREVIEW, format-specific rendering matching wireframe v7.23
-// ─────────────────────────────────────────────────────────────────────────────
-
-function ExportPreview({ format, draft, title }: { format: string; draft: string; title: string }) {
-  const paragraphs = draft.split("\n").filter(Boolean);
-  const firstLine = cleanTitle(paragraphs[0] || title);
-  const bodyParas = paragraphs.slice(1);
-
-  if (format === "Podcast" || format === "Podcast Script") {
-    const podcast = parsePodcastSections(draft);
-    return (
-      <>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 14 }}>
-          Podcast Script · {title}
-        </div>
-        {podcast.open && (
-          <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>OPEN</span>
-            <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.open)}</p>
-          </div>
-        )}
-        {podcast.hook && (
-          <div style={{ display: "flex", gap: 12 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--gold)", width: 44, flexShrink: 0, paddingTop: 2 }}>HOOK</span>
-            <p style={{ fontSize: 13, color: "var(--fg)", fontWeight: 600, lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.hook)}</p>
-          </div>
-        )}
-        {podcast.body.map((p, i) => (
-          <div key={i} style={{ display: "flex", gap: 12, marginTop: 10 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>BODY</span>
-            <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{renderInlineMarkdown(p)}</p>
-          </div>
-        ))}
-        {podcast.close && (
-          <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase" as const, color: "var(--fg-3)", width: 44, flexShrink: 0, paddingTop: 2 }}>CLOSE</span>
-            <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.7 }}>{renderInlineMarkdown(podcast.close)}</p>
-          </div>
-        )}
-      </>
-    );
-  }
-
-  if (format === "Sunday Story") {
-    return (
-      <>
-        <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 20 }}>
-          Sunday, {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-        </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)", lineHeight: 1.2, marginBottom: 8 }}>{firstLine}</div>
-        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, fontStyle: "normal" }}>
-          On the gap between having something to say and getting it into the world.
-        </div>
-        {bodyParas.map((p, i) => (
-          <p key={i} style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.8, marginTop: i > 0 ? 12 : 0 }}>{renderInlineMarkdown(p)}</p>
-        ))}
-      </>
-    );
-  }
-
-  if (format === "Newsletter") {
-    return (
-      <>
-        <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 16 }}>
-          {title} · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" })}
-        </div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: "var(--fg)", marginBottom: 12 }}>{firstLine}</div>
-        <div style={{ width: 28, height: 3, background: "var(--gold-bright)", marginBottom: 16, borderRadius: 2 }} />
-        {bodyParas.map((p, i) => (
-          <p key={i} style={{ marginTop: i > 0 ? 10 : 0 }}>{renderInlineMarkdown(p)}</p>
-        ))}
-      </>
-    );
-  }
-
-  // Default: LinkedIn
-  return (
-    <>
-      <p style={{ fontWeight: 700, color: "var(--fg)", marginBottom: 10 }}>{firstLine}</p>
-      {bodyParas.map((p, i) => (
-        <p key={i} style={{ marginTop: 10 }}>{renderInlineMarkdown(p)}</p>
-      ))}
-    </>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // ACTION CHIPS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2592,7 +2250,7 @@ function ActionChips({ chips, onChipClick }: { chips: string[]; onChipClick: (te
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function WorkSession() {
-  const { setDashContent, setFeedbackContent, setDashOpen, setActiveDashTab, watsonPrefill, setWatsonPrefill, watsonThread, setWatsonThread, watsonPending, setWatsonPending } = useShell();
+  const { setFeedbackContent, setDashOpen, setActiveDashTab, setWatsonPrefill, setWatsonThread, watsonPending, setWatsonPending } = useShell();
   const prefillWatson = useCallback((text: string) => {
     setActiveDashTab("watson");
     setWatsonPrefill(text);
@@ -2600,7 +2258,6 @@ export default function WorkSession() {
   const { user, displayName } = useAuth();
   const { toast } = useToast();
   const nav = useNavigate();
-  const [searchParams] = useSearchParams();
   const { voiceDnaMd, brandDnaMd, methodDnaMd } = useUserDNA(user?.id);
 
   // ── Restore persisted session on mount ────────────────────────
@@ -2703,7 +2360,6 @@ export default function WorkSession() {
 
   // ── Export ────────────────────────────────────────────────────
   const [exportedTabs, setExportedTabs] = useState<Record<string, boolean>>({});
-  const [activeExportTab, setActiveExportTab] = useState(selectedFormats[0] ?? "LinkedIn");
   const [outputId, setOutputId] = useState<string | null>(persisted?.generatedOutputId || null);
   const [allExported, setAllExported] = useState(false);
 
@@ -3056,7 +2712,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [draft, buildConvSummary, selectedFormats, user?.id, toast]);
+  }, [draft, buildConvSummary, selectedFormats, user?.id, activeVersionIdx, toast]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
   // ── EDIT: Generate another draft version ─────────────────────
@@ -3256,27 +2912,6 @@ export default function WorkSession() {
       setHvtRunning(false);
     }
   }, [draft, user, hvtAttempts, selectedFormats, voiceDnaMd, toast]);
-
-  // ── EXPORT: Copy to clipboard ─────────────────────────────────
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(draft).then(() => toast("Copied to clipboard")).catch(() => {});
-  }, [draft, toast]);
-
-  // ── EXPORT: Individual export ─────────────────────────────────
-  const handleExport = useCallback(async (format: string) => {
-    const updated = { ...exportedTabs, [format]: true };
-    setExportedTabs(updated);
-    // If we have an outputId, update the record
-    if (outputId) {
-      await supabase.from("outputs").update({ content_state: "vault" }).eq("id", outputId);
-    }
-    toast(`${format} exported.`);
-    // Auto-navigate to Wrap when all formats are exported, or immediately for single-format sessions
-    const allDone = selectedFormats.every(f => updated[f]);
-    if (allDone) {
-      setTimeout(() => nav("/studio/wrap"), 1000);
-    }
-  }, [outputId, toast, exportedTabs, selectedFormats, nav]);
 
   // ── REVIEW → EDIT: Send back ──────────────────────────────────
   // ── NEW SESSION: Reset everything ────────────────────────────
@@ -3924,32 +3559,6 @@ export default function WorkSession() {
           onDirectReplace={handleDirectReplace}
           formatDrafts={formatDrafts}
           highlightedParas={draftHighlights}
-        />
-      )}
-      {(stage as string) === "Approve" && (
-        <StageExport
-          draft={formatDrafts[activeExportTab]?.status === "done" ? formatDrafts[activeExportTab].content : draft}
-          title={outlineRows[0]?.content || "Draft"}
-          formats={selectedFormats}
-          activeTab={activeExportTab}
-          onTabClick={(t) => setActiveExportTab(t as any)}
-          exportedTabs={exportedTabs}
-          onExport={handleExport}
-          onCopy={handleCopy}
-          outputId={outputId}
-          currentOutputType={outputType}
-          onHandoff={(targetType) => {
-            // Store handoff context and start a new session
-            sessionStorage.setItem("ew-handoff-source-id", outputId || "");
-            sessionStorage.setItem("ew-handoff-target-type", targetType);
-            setOutputType(targetType);
-            setStage("Intake");
-            setMessages([{ role: "watson", content: "Good to see you. What are you working on?" }]);
-            setDraft("");
-            setPipelineRun(null);
-            setHvtAttempts(0);
-          }}
-          onWrap={() => nav("/studio/wrap")}
         />
       )}
     </div>

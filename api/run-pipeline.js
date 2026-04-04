@@ -159,7 +159,7 @@ function extractHVTSuggestion(feedback, flaggedLine) {
   return match ? match[1].trim() : "";
 }
 
-export const config = { maxDuration: 120 };
+export const config = { maxDuration: 180 };
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -262,7 +262,7 @@ export default async function handler(req, res) {
     for (let i = 0; i < gatesToRun.length; i++) {
       if (Date.now() - startTime > 155000) {
         for (let j = i; j < gatesToRun.length; j++) {
-          gateResults.push({ gate: gatesToRun[j].name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
+          gateResults.push({ gate: gatesToRun[j].displayName || gatesToRun[j].label, internalName: gatesToRun[j].name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
         }
         break;
       }
@@ -375,11 +375,15 @@ export default async function handler(req, res) {
     console.error("[run-pipeline] FATAL:", fatalErr.message, fatalErr.stack);
     return res.status(200).json({
       status: "BLOCKED",
-      gateResults,
-      betterishScore,
+      checkpointResults: gateResults.filter(g => g.gate !== "Human Voice Test" && g.internalName !== "Human Voice Test"),
+      impactScore: { total: 0, verdict: "REJECT", breakdown: {}, topIssue: fatalErr.message, gutCheck: "" },
+      humanVoiceTest: null,
       finalDraft: currentDraft || draft,
       blockedAt: blockedAt || `Fatal: ${fatalErr.message}`,
       totalDurationMs: Date.now() - startTime,
+      // Legacy fields for backward compat
+      gateResults,
+      betterishScore,
     });
   }
 }
