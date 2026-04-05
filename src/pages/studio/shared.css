@@ -42,8 +42,8 @@
   animation: fadeUp 0.5s ease forwards;
 }
 
-/* ── WATSON CHAT BUBBLES (matching wireframe v7.23) ── */
-.watson-bubble-wrap {
+/* ── REED CHAT BUBBLES (matching wireframe v7.23) ── */
+.reed-bubble-wrap {
   background: rgba(74,144,217,0.07);
   border: 1px solid rgba(74,144,217,0.15);
   border-radius: 0 10px 10px 10px;
@@ -53,10 +53,10 @@
   color: var(--fg-2);
   line-height: 1.35;
 }
-.watson-bubble-wrap p,
-.watson-bubble-wrap div { font-size: 13px; color: var(--fg-2); line-height: 1.35; }
-.watson-bubble-wrap p strong,
-.watson-bubble-wrap div strong { color: var(--fg); }
+.reed-bubble-wrap p,
+.reed-bubble-wrap div { font-size: 13px; color: var(--fg-2); line-height: 1.35; }
+.reed-bubble-wrap p strong,
+.reed-bubble-wrap div strong { color: var(--fg); }
 .user-bubble-wrap {
   background: rgba(245,198,66,0.08);
   border: 1px solid rgba(245,198,66,0.2);
@@ -67,7 +67,7 @@
 .user-bubble-wrap p { font-size: 13px; color: var(--fg); line-height: 1.35; }
 
 /* Dark mode bubble adjustments */
-[data-theme="dark"] .watson-bubble-wrap {
+[data-theme="dark"] .reed-bubble-wrap {
   background: rgba(74,144,217,0.12);
   border-color: rgba(74,144,217,0.25);
 }
@@ -77,7 +77,7 @@
 }
 
 @media (max-width: 768px) {
-  .watson-bubble-wrap { max-width: 85% !important; }
+  .reed-bubble-wrap { max-width: 85% !important; }
   .user-bubble-wrap { max-width: 80% !important; }
 }
 

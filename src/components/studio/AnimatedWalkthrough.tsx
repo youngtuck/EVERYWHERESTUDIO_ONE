@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import WelcomeScene from "./scenes/WelcomeScene";
-import WatsonScene from "./scenes/WatsonScene";
+import ReedScene from "./scenes/ReedScene";
 import RoomScene from "./scenes/RoomScene";
 import CheckpointsScene from "./scenes/CheckpointsScene";
 import EverywhereScene from "./scenes/EverywhereScene";
 
-const STEPS = [WelcomeScene, WatsonScene, RoomScene, CheckpointsScene, EverywhereScene];
+const STEPS = [WelcomeScene, ReedScene, RoomScene, CheckpointsScene, EverywhereScene];
 
 export default function AnimatedWalkthrough({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);

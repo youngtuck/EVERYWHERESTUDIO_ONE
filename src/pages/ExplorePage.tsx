@@ -157,8 +157,8 @@ const CSS = `
 /* Active press feedback on buttons */
 .xp button:active, .xp a:active { transform: scale(0.98) !important; transition-duration: 0.1s !important; }
 
-/* Watson widget: showcase, not link */
-.xp-watson-widget { cursor: default; }
+/* Reed widget: showcase, not link */
+.xp-reed-widget { cursor: default; }
 
 /* Watch.Work.Wrap columns */
 .xp-www-cols {
@@ -810,7 +810,7 @@ export default function ExplorePage() {
             lineHeight: 1.6,
             animation: `xpFadeUp 0.8s ${EASE} 700ms both`,
           }}>
-            Watson is your guide. You talk, and the world hears{"\u00A0"}you.
+            Reed is your guide. You talk, and the world hears{"\u00A0"}you.
           </p>
           <div className="xp-hero-ctas" style={{
             display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
@@ -935,7 +935,7 @@ export default function ExplorePage() {
                 </Reveal>
                 <Reveal direction="up" distance={20} delay={450}>
                   <p style={{ color: "var(--ew-text-body)", maxWidth: 540, fontSize: 16, lineHeight: 1.7 }}>
-                    It's an infrastructure problem. <span style={{ fontWeight: 600, color: "var(--ew-text-dark)" }}>Watson is the answer.</span>
+                    It's an infrastructure problem. <span style={{ fontWeight: 600, color: "var(--ew-text-dark)" }}>Reed is the answer.</span>
                   </p>
                 </Reveal>
               </div>
@@ -944,29 +944,29 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* ── SECTION 03: WATSON (Dark: #1B263B, gold accent) ─────── */}
+      {/* ── SECTION 03: REED (Dark: #1B263B, gold accent) ─────── */}
       <section data-nav-theme="dark" style={{ padding: "120px 0", background: "var(--ew-navy-rich)" }}>
         <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 80 }}>
           <Reveal>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 20, textAlign: "center" }}>
-              Watson
+              Reed
             </div>
           </Reveal>
           <Reveal delay={100}>
             <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 620, textAlign: "center", marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
-              <span style={{ color: "var(--ew-text-light)", fontWeight: 600 }}>Watson is your thinking partner.</span> You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're{"\u00A0"}done.
+              <span style={{ color: "var(--ew-text-light)", fontWeight: 600 }}>Reed is your thinking partner.</span> You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're{"\u00A0"}done.
             </p>
           </Reveal>
           <Reveal delay={200}>
             <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 620, textAlign: "center", marginBottom: 56, fontSize: 16, lineHeight: 1.7 }}>
-              No editing. No formatting. No chasing the idea across five tabs. Watson carries it. What comes back is done. In your voice. Ready to{"\u00A0"}ship.
+              No editing. No formatting. No chasing the idea across five tabs. Reed carries it. What comes back is done. In your voice. Ready to{"\u00A0"}ship.
             </p>
           </Reveal>
 
-          {/* Watson demo widget with magnetic hover */}
+          {/* Reed demo widget with magnetic hover */}
           <Reveal direction="scale" duration={1000}>
             <div
-              className="xp-watson-widget"
+              className="xp-reed-widget"
               style={{ perspective: 1000, maxWidth: 480, width: "100%", marginBottom: 56 }}
               onMouseMove={e => {
                 const el = e.currentTarget.firstElementChild as HTMLElement;
@@ -1015,7 +1015,7 @@ export default function ExplorePage() {
                   zIndex: 1,
                 }}>
                   <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ew-gold)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ew-text-light-dim)", letterSpacing: "0.04em" }}>Watson is listening</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ew-text-light-dim)", letterSpacing: "0.04em" }}>Reed is listening</span>
                 </div>
                 {/* Chat area */}
                 <div style={{ padding: "20px 20px 16px", position: "relative", zIndex: 1 }}>
@@ -1033,7 +1033,7 @@ export default function ExplorePage() {
                       The people in your market who show up everywhere aren't better thinkers. They got their ideas out. Every week. On every channel. Without doing it alone.
                     </div>
                   </div>
-                  {/* Watson bubble */}
+                  {/* Reed bubble */}
                   <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
                     <div style={{
                       background: "rgba(245,198,66,0.06)",
@@ -1173,7 +1173,7 @@ export default function ExplorePage() {
                 maxWidth: 800,
                 color: "var(--ew-text-dark)",
               }}>
-                You talk. Watson listens until he really gets it. Then {MARKETING_NUMBERS.specialistCount} specialists turn what you said into publication-ready content, in your voice, verified, every word traceable back to you.
+                You talk. Reed listens until he really gets it. Then {MARKETING_NUMBERS.specialistCount} specialists turn what you said into publication-ready content, in your voice, verified, every word traceable back to you.
               </h2>
               <p style={{ color: "var(--ew-text-body)", maxWidth: 600, margin: "0 auto", textAlign: "center", fontSize: 16, lineHeight: 1.7 }}>
                 You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
@@ -1191,9 +1191,9 @@ export default function ExplorePage() {
             marginBottom: 72,
           }}>
             {[
-              { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Watson is there. You talk. It\u2019s\u00A0done." },
+              { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Reed is there. You talk. It\u2019s\u00A0done." },
               { headline: "Every channel.", body: "Newsletter, LinkedIn, podcast, Substack, one idea, every format, native to\u00A0each." },
-              { headline: "Zero left to finish.", body: "You talk to Watson. What comes back is\u00A0done." },
+              { headline: "Zero left to finish.", body: "You talk to Reed. What comes back is\u00A0done." },
             ].flatMap((block, i) => {
               const item = (
                 <Reveal key={block.headline} delay={i * 150}>

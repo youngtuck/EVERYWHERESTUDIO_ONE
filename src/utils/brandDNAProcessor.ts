@@ -50,7 +50,7 @@ export async function generateBrandDNA(input: {
   return res.json();
 }
 
-/** Brand DNA from Watson conversation history (onboarding Brand DNA step). */
+/** Brand DNA from Reed conversation history (onboarding Brand DNA step). */
 export async function generateBrandDNAFromConversation(payload: {
   responses: { role: string; content: string }[];
   userName: string;

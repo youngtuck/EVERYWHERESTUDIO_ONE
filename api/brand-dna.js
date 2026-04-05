@@ -7,7 +7,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-const SYSTEM_PROMPT = `You are a Brand DNA analyst for EVERYWHERE Studio. Given a conversation history (Watson asking questions, user answering), produce a structured Brand DNA profile.
+const SYSTEM_PROMPT = `You are a Brand DNA analyst for EVERYWHERE Studio. Given a conversation history (Reed asking questions, user answering), produce a structured Brand DNA profile.
 
 CRITICAL: You must respond with ONLY a raw JSON object. No preamble, no markdown code fences, no explanation, no conversational text. Your entire response must be valid JSON that starts with { and ends with }. If you include ANY text outside the JSON object, the system will break.`;
 
@@ -15,7 +15,7 @@ function buildUserMessage(userName, responses) {
   const lines = [`Conversation from ${userName}:`];
   if (Array.isArray(responses)) {
     responses.forEach((m) => {
-      const role = m.role === "assistant" || m.role === "watson" ? "Watson" : "User";
+      const role = m.role === "assistant" || m.role === "reed" ? "Reed" : "User";
       lines.push(`${role}: ${String(m.content || "").trim()}`);
     });
   } else if (responses && typeof responses === "object") {
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
 
   if (!hasContent) {
     return res.status(400).json({
-      error: "No conversation content provided. Brand DNA requires Watson interview responses.",
+      error: "No conversation content provided. Brand DNA requires Reed interview responses.",
       hint: "Send { responses: [{ role: 'user', content: '...' }, { role: 'assistant', content: '...' }], userName: 'Name' }"
     });
   }

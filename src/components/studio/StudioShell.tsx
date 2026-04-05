@@ -21,16 +21,16 @@ interface ShellCtx {
   setDiscoverOpen: (v: boolean) => void;
   dashContent: React.ReactNode | null;
   setDashContent: (node: React.ReactNode | null) => void;
-  activeDashTab: "feedback" | "watson" | "help";
-  setActiveDashTab: (tab: "feedback" | "watson" | "help") => void;
+  activeDashTab: "feedback" | "reed" | "help";
+  setActiveDashTab: (tab: "feedback" | "reed" | "help") => void;
   feedbackContent: React.ReactNode | null;
   setFeedbackContent: (node: React.ReactNode | null) => void;
-  watsonPrefill: string;
-  setWatsonPrefill: (text: string) => void;
-  watsonThread: Array<{ type: "user" | "watson" | "note"; text: string; from?: string; to?: string }>;
-  setWatsonThread: (fn: (prev: any[]) => any[]) => void;
-  watsonPending: Record<string, Array<{ from: string; text: string }>>;
-  setWatsonPending: (fn: (prev: any) => any) => void;
+  reedPrefill: string;
+  setReedPrefill: (text: string) => void;
+  reedThread: Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>;
+  setReedThread: (fn: (prev: any[]) => any[]) => void;
+  reedPending: Record<string, Array<{ from: string; text: string }>>;
+  setReedPending: (fn: (prev: any) => any) => void;
 }
 
 const ShellContext = createContext<ShellCtx>({
@@ -46,12 +46,12 @@ const ShellContext = createContext<ShellCtx>({
   setActiveDashTab: () => {},
   feedbackContent: null,
   setFeedbackContent: () => {},
-  watsonPrefill: "",
-  setWatsonPrefill: () => {},
-  watsonThread: [],
-  setWatsonThread: () => {},
-  watsonPending: {},
-  setWatsonPending: () => {},
+  reedPrefill: "",
+  setReedPrefill: () => {},
+  reedThread: [],
+  setReedThread: () => {},
+  reedPending: {},
+  setReedPending: () => {},
 });
 
 export function useShell() {
@@ -116,10 +116,10 @@ interface DiscoverItem {
 
 const DISCOVER_ITEMS: DiscoverItem[] = [
   {
-    id: "watson", color: "#6B8FD4", icon: "✦", name: "Watson",
+    id: "reed", color: "#6B8FD4", icon: "✦", name: "Reed",
     desc: "Interview and excavate your thinking.",
     rationale: "Your thinking partner before the blank page.",
-    detail: "Watson runs in the Intake stage of Work. It opens as a conversation, not a form.\n\nYou talk. Watson listens and asks questions, pushing deeper, surfacing the specifics, finding the angles you did not know were there. When the session is done, Watson hands off a structured brief to Outline.\n\nHow to use it: Go to Work and start typing or speaking. You do not need to know what you want to write. Start with what is on your mind and Watson will help you find the shape of the idea.\n\nThe output is yours because the input was yours. Watson does not invent, it excavates.",
+    detail: "Reed runs in the Intake stage of Work. It opens as a conversation, not a form.\n\nYou talk. Reed listens and asks questions, pushing deeper, surfacing the specifics, finding the angles you did not know were there. When the session is done, Reed hands off a structured brief to Outline.\n\nHow to use it: Go to Work and start typing or speaking. You do not need to know what you want to write. Start with what is on your mind and Reed will help you find the shape of the idea.\n\nThe output is yours because the input was yours. Reed does not invent, it excavates.",
     launchLabel: "Open Intake", route: "/studio/work",
   },
   {
@@ -147,7 +147,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "work", color: "#6B8FD4", icon: "✎", name: "Work",
     desc: "Where ideas become drafts.",
     rationale: "Five stages: Intake, Outline, Edit, Review, Export.",
-    detail: "Work is where ideas become drafts. It moves in five stages:\n\nIntake, You talk, Watson listens. The idea gets excavated and shaped.\n\nOutline, The structure gets built. You choose the angle, the format, the arc.\n\nEdit, The draft appears. You write, refine, and resolve flags. Voice match runs in real time.\n\nReview, The draft is read by an adversarial reader. Flags surface. Score runs.\n\nExport, The final draft is saved to your session and sent to Wrap.",
+    detail: "Work is where ideas become drafts. It moves in five stages:\n\nIntake, You talk, Reed listens. The idea gets excavated and shaped.\n\nOutline, The structure gets built. You choose the angle, the format, the arc.\n\nEdit, The draft appears. You write, refine, and resolve flags. Voice match runs in real time.\n\nReview, The draft is read by an adversarial reader. Flags surface. Score runs.\n\nExport, The final draft is saved to your session and sent to Wrap.",
     launchLabel: "Go to Work", route: "/studio/work",
   },
   {
@@ -231,7 +231,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "session", color: "#6B8FD4", icon: "✎", name: "What is a Session?",
     desc: "One idea, worked all the way through.",
     rationale: "A session is one run through Watch, Work, Wrap.",
-    detail: "A Session is one idea worked all the way through, from Intake to Export.\n\nEvery time you start something new in Work, you are starting a session. When you finish and export, the session is saved to the Catalog with all its output files.\n\nSessions are not drafts. A draft is what lives in Edit. A session is the complete record: what you brought in, what Watson surfaced, what you wrote, what you exported, and what formats you produced.\n\nYou can resume a session any time from the Start screen or from the Catalog. Sessions do not expire. Everything you produced is there.",
+    detail: "A Session is one idea worked all the way through, from Intake to Export.\n\nEvery time you start something new in Work, you are starting a session. When you finish and export, the session is saved to the Catalog with all its output files.\n\nSessions are not drafts. A draft is what lives in Edit. A session is the complete record: what you brought in, what Reed surfaced, what you wrote, what you exported, and what formats you produced.\n\nYou can resume a session any time from the Start screen or from the Catalog. Sessions do not expire. Everything you produced is there.",
     launchLabel: "Start a session", route: "/studio/work",
   },
 ];
@@ -249,11 +249,11 @@ export default function StudioShell() {
   const [advisorsOpen, setAdvisorsOpen] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [dashContent, setDashContent] = useState<React.ReactNode | null>(null);
-  const [activeDashTab, setActiveDashTab] = useState<"feedback" | "watson" | "help">("feedback");
+  const [activeDashTab, setActiveDashTab] = useState<"feedback" | "reed" | "help">("feedback");
   const [feedbackContent, setFeedbackContent] = useState<React.ReactNode | null>(null);
-  const [watsonPrefill, setWatsonPrefill] = useState("");
-  const [watsonThread, setWatsonThread] = useState<Array<{ type: "user" | "watson" | "note"; text: string; from?: string; to?: string }>>([]);
-  const [watsonPending, setWatsonPending] = useState<Record<string, Array<{ from: string; text: string }>>>({});
+  const [reedPrefill, setReedPrefill] = useState("");
+  const [reedThread, setReedThread] = useState<Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>>([]);
+  const [reedPending, setReedPending] = useState<Record<string, Array<{ from: string; text: string }>>>({});
 
   return (
     <ShellContext.Provider value={{
@@ -263,9 +263,9 @@ export default function StudioShell() {
       dashContent, setDashContent,
       activeDashTab, setActiveDashTab,
       feedbackContent, setFeedbackContent,
-      watsonPrefill, setWatsonPrefill,
-      watsonThread, setWatsonThread,
-      watsonPending, setWatsonPending,
+      reedPrefill, setReedPrefill,
+      reedThread, setReedThread,
+      reedPending, setReedPending,
     }}>
       <div style={{
         display: "flex", height: "100vh",
@@ -361,7 +361,7 @@ function RightPanel({ open }: { open: boolean }) {
           display: "flex", borderBottom: "1px solid var(--line)",
           background: "var(--bg)", flexShrink: 0,
         }}>
-          {(["feedback", "watson", "help"] as const).map(tab => (
+          {(["feedback", "reed", "help"] as const).map(tab => (
             <div
               key={tab}
               onClick={() => setActiveDashTab(tab)}
@@ -377,7 +377,7 @@ function RightPanel({ open }: { open: boolean }) {
                 transition: "all 0.1s",
               }}
             >
-              {tab === "feedback" ? "Feedback" : tab === "watson" ? "Ask Watson" : "Help"}
+              {tab === "feedback" ? "Feedback" : tab === "reed" ? "Ask Reed" : "Help"}
             </div>
           ))}
         </div>
@@ -385,7 +385,7 @@ function RightPanel({ open }: { open: boolean }) {
         {/* Tab content */}
         <div style={{ flex: 1, overflowY: "auto", padding: 14 }}>
           {activeDashTab === "feedback" && (feedbackContent ?? dashContent ?? <DefaultDashContent />)}
-          {activeDashTab === "watson" && <WatsonPanel />}
+          {activeDashTab === "reed" && <ReedPanel />}
           {activeDashTab === "help" && <HelpPanelPlaceholder />}
         </div>
 
@@ -411,24 +411,24 @@ function DefaultDashContent() {
   );
 }
 
-function WatsonPanel() {
-  const { watsonThread, setWatsonThread, watsonPrefill, setWatsonPrefill, watsonPending, setWatsonPending } = useShell();
-  const [input, setInput] = useState(watsonPrefill || "");
+function ReedPanel() {
+  const { reedThread, setReedThread, reedPrefill, setReedPrefill, reedPending, setReedPending } = useShell();
+  const [input, setInput] = useState(reedPrefill || "");
   const bottomRef = useRef<HTMLDivElement>(null);
   const stage = (window as any).__ewWorkStage || "Intake";
 
   // Pick up prefill
   useEffect(() => {
-    if (watsonPrefill) {
-      setInput(watsonPrefill);
-      setWatsonPrefill("");
+    if (reedPrefill) {
+      setInput(reedPrefill);
+      setReedPrefill("");
     }
-  }, [watsonPrefill, setWatsonPrefill]);
+  }, [reedPrefill, setReedPrefill]);
 
   // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [watsonThread.length]);
+  }, [reedThread.length]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -443,9 +443,9 @@ function WatsonPanel() {
     const nextStage = carryMap[stage];
 
     // Add to thread
-    setWatsonThread(prev => [...prev, { type: "user", text: message }]);
+    setReedThread(prev => [...prev, { type: "user", text: message }]);
 
-    // Generate Watson's reply
+    // Generate Reed's reply
     const replies: Record<string, string> = {
       Intake: "Heard. I will carry this into Outline. It will shape how I read the structure.",
       Outline: "Noted. I will adjust the structural read to account for that.",
@@ -453,12 +453,12 @@ function WatsonPanel() {
       Review: "Noted. I will factor that into the checkpoint review before you approve.",
     };
     setTimeout(() => {
-      setWatsonThread(prev => [...prev, { type: "watson", text: replies[stage] || "Noted." }]);
+      setReedThread(prev => [...prev, { type: "reed", text: replies[stage] || "Noted." }]);
     }, 300);
 
     // Queue for carry-forward
     if (nextStage) {
-      setWatsonPending(prev => ({
+      setReedPending(prev => ({
         ...prev,
         [nextStage]: [...(prev[nextStage] || []), { from: stage, text: message }],
       }));
@@ -468,12 +468,12 @@ function WatsonPanel() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
-        {watsonThread.length === 0 && (
+        {reedThread.length === 0 && (
           <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 12 }}>
-            Ask Watson anything about your current session.
+            Ask Reed anything about your current session.
           </div>
         )}
-        {watsonThread.map((m, i) => {
+        {reedThread.map((m, i) => {
           if (m.type === "note") {
             return (
               <div key={i} style={{
@@ -493,7 +493,7 @@ function WatsonPanel() {
               </div>
             );
           }
-          if (m.type === "watson") {
+          if (m.type === "reed") {
             return (
               <div key={i} style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "flex-start" }}>
                 <div style={{
@@ -501,7 +501,7 @@ function WatsonPanel() {
                   background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 8, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
-                }}>W</div>
+                }}>R</div>
                 <div style={{
                   background: "rgba(74,144,217,0.07)", border: "1px solid rgba(74,144,217,0.15)",
                   borderRadius: "0 8px 8px 8px", padding: "8px 10px",
@@ -532,7 +532,7 @@ function WatsonPanel() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Reply to Watson..."
+          placeholder="Reply to Reed..."
           style={{
             flex: 1, background: "transparent", border: "none", outline: "none",
             fontSize: 12, color: "var(--fg)", fontFamily: "var(--font)",
@@ -559,7 +559,7 @@ function HelpPanelPlaceholder() {
   return (
     <div>
       <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>START HERE</div>
-      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", padding: "6px 0", cursor: "pointer" }}>Watson</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", padding: "6px 0", cursor: "pointer" }}>Reed</div>
       <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginTop: 12, marginBottom: 8 }}>THE PIPELINE</div>
       {["Watch", "Work", "Wrap"].map(item => (
         <div key={item} style={{ fontSize: 12, color: "var(--fg-2)", padding: "4px 0", cursor: "pointer" }}>{item}</div>

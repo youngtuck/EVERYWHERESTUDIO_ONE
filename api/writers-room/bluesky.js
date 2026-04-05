@@ -4,7 +4,7 @@ import { callWithRetry } from "../_retry.js";
 
 const SYSTEM_PROMPT = `You are the Writer's Room for EVERYWHERE Studio. Sara (Chief of Staff) is composing, and Josh (Category Designer) is leading the creative direction.
 
-Your job: take the raw conversation between Watson and the Composer and generate exactly 2 genuinely different creative angles for this piece. Each angle should represent a fundamentally different approach, not variations on the same theme.
+Your job: take the raw conversation between Reed and the Composer and generate exactly 2 genuinely different creative angles for this piece. Each angle should represent a fundamentally different approach, not variations on the same theme.
 
 Think like a real writer's room. One angle might be provocative and contrarian. Another might be deeply personal. Another might lead with data. Another might use narrative structure. They should make the Composer say "I hadn't thought of it that way."
 
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
         system: systemPrompt,
         messages: [{
           role: "user",
-          content: `Output type: ${outputType}\n\nConversation between Watson and the Composer:\n\n${conversationSummary.slice(0, 6000)}\n\nGenerate exactly 2 creative angles for this piece. Return ONLY valid JSON.`,
+          content: `Output type: ${outputType}\n\nConversation between Reed and the Composer:\n\n${conversationSummary.slice(0, 6000)}\n\nGenerate exactly 2 creative angles for this piece. Return ONLY valid JSON.`,
         }],
       })
     );

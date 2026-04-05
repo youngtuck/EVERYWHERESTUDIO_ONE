@@ -72,10 +72,10 @@ export const WRAP_AGENTS = [
   { id: "dmitri", name: "Dmitri", label: "Platform", promptFile: "dmitri-platform.md" },
 ] as const;
 
-/** Map of agent keys to prompt filenames for agent-runner.ts (e.g. sara-routing, watson-capture). */
+/** Map of agent keys to prompt filenames for agent-runner.ts (e.g. sara-routing, reed-capture). */
 export const AGENT_PROMPTS: Record<string, string> = {
   "sara-routing": "sara-routing.md",
-  "watson-capture": "watson-capture.md",
+  "reed-capture": "reed-capture.md",
   "sentinel-intel": "sentinel-intel.md",
   scout: "scout.md",
 };

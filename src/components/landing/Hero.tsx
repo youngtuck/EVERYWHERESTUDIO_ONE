@@ -33,7 +33,7 @@ function Demo() {
       {/* Header bar */}
       <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:16, paddingBottom:12, borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
         <div style={{ width:6, height:6, borderRadius:"50%", background:"#F5C642", boxShadow:"0 0 6px rgba(245,198,66,0.5)" }} />
-        <span style={{ fontSize:13, color:"rgba(255,255,255,0.2)", fontFamily:"'Afacad Flux', sans-serif", letterSpacing:"0.5px" }}>Watson is listening</span>
+        <span style={{ fontSize:13, color:"rgba(255,255,255,0.2)", fontFamily:"'Afacad Flux', sans-serif", letterSpacing:"0.5px" }}>Reed is listening</span>
       </div>
       {/* Input */}
       <div style={{ marginBottom:16, minHeight:56 }}>

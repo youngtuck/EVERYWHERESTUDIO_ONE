@@ -42,50 +42,50 @@ const TRAIT_META: { key: keyof TraitSet; label: string; strengthPhrase: string; 
     key: "vocabulary_and_syntax", label: "Vocabulary and Syntax",
     strengthPhrase: "precise, intentional word choice", distinctionPhrase: "instinct over ornamentation in vocabulary",
     explanations: {
-      Dominant: "You use precise, intentional word choices. Watson will match this specificity.",
-      Strong: "Your word choice is deliberate. Watson will maintain your level of formality.",
-      Moderate: "You balance specialized and accessible language. Watson will mirror this range.",
-      default: "You keep your language simple and direct. Watson will avoid jargon.",
+      Dominant: "You use precise, intentional word choices. Reed will match this specificity.",
+      Strong: "Your word choice is deliberate. Reed will maintain your level of formality.",
+      Moderate: "You balance specialized and accessible language. Reed will mirror this range.",
+      default: "You keep your language simple and direct. Reed will avoid jargon.",
     },
   },
   {
     key: "tonal_register", label: "Tonal Register",
     strengthPhrase: "a distinctive tonal identity", distinctionPhrase: "tonal range that shifts with context",
     explanations: {
-      Dominant: "You have a strong, recognizable tone. Watson will preserve its distinctiveness.",
-      Strong: "Your tone is consistent and confident. Watson will maintain that register.",
-      Moderate: "You shift tone with context. Watson will adapt to match the situation.",
-      default: "You favor a neutral, even tone. Watson will keep things understated.",
+      Dominant: "You have a strong, recognizable tone. Reed will preserve its distinctiveness.",
+      Strong: "Your tone is consistent and confident. Reed will maintain that register.",
+      Moderate: "You shift tone with context. Reed will adapt to match the situation.",
+      default: "You favor a neutral, even tone. Reed will keep things understated.",
     },
   },
   {
     key: "rhythm_and_cadence", label: "Rhythm and Cadence",
     strengthPhrase: "strong rhythmic patterns that carry ideas forward", distinctionPhrase: "content-first pacing over musical rhythm",
     explanations: {
-      Dominant: "Your writing has a strong rhythmic signature. Watson will match your pacing.",
-      Strong: "You write with clear momentum. Watson will carry that forward in drafts.",
-      Moderate: "Your rhythm varies with the content. Watson will follow your lead.",
-      default: "You prioritize clarity over rhythm. Watson will keep sentences functional.",
+      Dominant: "Your writing has a strong rhythmic signature. Reed will match your pacing.",
+      Strong: "You write with clear momentum. Reed will carry that forward in drafts.",
+      Moderate: "Your rhythm varies with the content. Reed will follow your lead.",
+      default: "You prioritize clarity over rhythm. Reed will keep sentences functional.",
     },
   },
   {
     key: "metaphor_patterns", label: "Metaphor Patterns",
     strengthPhrase: "vivid metaphor to make abstract ideas tangible", distinctionPhrase: "direct language over figurative expression",
     explanations: {
-      Dominant: "You use vivid metaphors to make ideas concrete. Watson will lean into this.",
-      Strong: "You reach for figurative language when it earns its place. Watson will do the same.",
-      Moderate: "You use metaphor selectively. Watson will mirror that restraint.",
-      default: "You prefer direct language. Watson will avoid unnecessary figurative expression.",
+      Dominant: "You use vivid metaphors to make ideas concrete. Reed will lean into this.",
+      Strong: "You reach for figurative language when it earns its place. Reed will do the same.",
+      Moderate: "You use metaphor selectively. Reed will mirror that restraint.",
+      default: "You prefer direct language. Reed will avoid unnecessary figurative expression.",
     },
   },
   {
     key: "structural_habits", label: "Structural Habits",
     strengthPhrase: "structurally driven writing with clear architecture", distinctionPhrase: "organic flow over rigid structure",
     explanations: {
-      Dominant: "You build with clear architecture. Watson will create structured, deliberate drafts.",
-      Strong: "Your writing has a clear shape. Watson will maintain that organizational logic.",
-      Moderate: "You balance structure with flow. Watson will find the right mix.",
-      default: "You favor organic flow over rigid structure. Watson will keep things conversational.",
+      Dominant: "You build with clear architecture. Reed will create structured, deliberate drafts.",
+      Strong: "Your writing has a clear shape. Reed will maintain that organizational logic.",
+      Moderate: "You balance structure with flow. Reed will find the right mix.",
+      default: "You favor organic flow over rigid structure. Reed will keep things conversational.",
     },
   },
 ];
@@ -217,7 +217,7 @@ export default function VoiceDnaSettings() {
         </header>
         <Card>
           <p style={{ fontSize: 15, color: "var(--fg-2)", margin: "0 0 20px", lineHeight: 1.6 }}>
-            Your Voice DNA has not been captured yet. Voice DNA teaches Watson how you communicate so every piece of content sounds like you wrote it.
+            Your Voice DNA has not been captured yet. Voice DNA teaches Reed how you communicate so every piece of content sounds like you wrote it.
           </p>
           <button
             onClick={() => navigate("/onboarding?retrain=voice")}
@@ -318,7 +318,7 @@ export default function VoiceDnaSettings() {
         <SectionLabel>Your Signature</SectionLabel>
         {voiceDna.signature_phrases && voiceDna.signature_phrases.length > 0 && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-3)", marginBottom: 6 }}>Phrases Watson will use</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-3)", marginBottom: 6 }}>Phrases Reed will use</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {voiceDna.signature_phrases.map((p: string, i: number) => (
                 <span key={i} style={{
@@ -334,7 +334,7 @@ export default function VoiceDnaSettings() {
         )}
         {voiceDna.prohibited_words && voiceDna.prohibited_words.length > 0 && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-3)", marginBottom: 6 }}>Words Watson will never use</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg-3)", marginBottom: 6 }}>Words Reed will never use</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {voiceDna.prohibited_words.map((w: string, i: number) => (
                 <span key={i} style={{
@@ -413,7 +413,7 @@ export default function VoiceDnaSettings() {
         <Card>
           <SectionLabel>Source Material</SectionLabel>
           <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.65, margin: 0 }}>
-            Voice DNA was captured from uploaded writing samples. Watson uses these samples to match your natural voice across all content.
+            Voice DNA was captured from uploaded writing samples. Reed uses these samples to match your natural voice across all content.
           </p>
         </Card>
       ) : null}
@@ -422,7 +422,7 @@ export default function VoiceDnaSettings() {
       <Card style={{ marginBottom: 0 }}>
         <SectionLabel>Retrain</SectionLabel>
         <p style={{ fontSize: 14, color: "var(--fg-2)", margin: "0 0 16px", lineHeight: 1.6 }}>
-          Re-run the voice interview or upload new writing samples to improve how Watson matches your voice.
+          Re-run the voice interview or upload new writing samples to improve how Reed matches your voice.
         </p>
         <button
           type="button"

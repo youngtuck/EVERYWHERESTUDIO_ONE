@@ -98,7 +98,7 @@ export default function BrandDnaSettings() {
         </header>
         <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: 32 }}>
           <p style={{ fontSize: 15, color: "var(--fg-2)", margin: "0 0 20px", lineHeight: 1.6 }}>
-            Your Brand DNA has not been captured yet. Brand DNA teaches Watson your brand voice, values, and positioning so content stays on-brand.
+            Your Brand DNA has not been captured yet. Brand DNA teaches Reed your brand voice, values, and positioning so content stays on-brand.
           </p>
           <button
             onClick={() => navigate("/onboarding?retrain=brand")}
@@ -132,7 +132,7 @@ export default function BrandDnaSettings() {
           Brand DNA
         </h1>
         <p style={{ fontFamily: "var(--font)", fontSize: 14, color: "var(--fg-2)", marginTop: 4, marginBottom: 0 }}>
-          How Watson stays on-brand across everything it produces
+          How Reed stays on-brand across everything it produces
         </p>
       </header>
 
@@ -185,7 +185,7 @@ export default function BrandDnaSettings() {
           Retrain
         </div>
         <p style={{ fontSize: 14, color: "var(--fg-2)", margin: "0 0 16px", lineHeight: 1.6 }}>
-          Re-run the brand conversation with Watson to update your brand positioning, values, or voice guidelines.
+          Re-run the brand conversation with Reed to update your brand positioning, values, or voice guidelines.
         </p>
         <button
           type="button"

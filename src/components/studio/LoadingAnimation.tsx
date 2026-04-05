@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-type LoadingVariant = 'watson' | 'sentinel' | 'generate';
+type LoadingVariant = 'reed' | 'sentinel' | 'generate';
 
 interface LoadingAnimationProps {
   variant?: LoadingVariant;
@@ -9,7 +9,7 @@ interface LoadingAnimationProps {
   agentName?: string;
 }
 
-export default function LoadingAnimation({ variant = 'watson', progress, message, agentName }: LoadingAnimationProps) {
+export default function LoadingAnimation({ variant = 'reed', progress, message, agentName }: LoadingAnimationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [displayProgress, setDisplayProgress] = useState(0);
 
@@ -31,8 +31,8 @@ export default function LoadingAnimation({ variant = 'watson', progress, message
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const w = variant === 'watson' ? 200 : 300;
-    const h = variant === 'watson' ? 60 : 40;
+    const w = variant === 'reed' ? 200 : 300;
+    const h = variant === 'reed' ? 60 : 40;
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     ctx.scale(dpr, dpr);
@@ -40,7 +40,7 @@ export default function LoadingAnimation({ variant = 'watson', progress, message
     let t = 0;
     let animId: number;
 
-    function drawWatson() {
+    function drawReed() {
       ctx!.clearRect(0, 0, w, h);
       const cy = h / 2;
       const colors = ['#4A90D9', '#F5C642', '#4A90D9'];
@@ -143,7 +143,7 @@ export default function LoadingAnimation({ variant = 'watson', progress, message
     }
 
     function animate() {
-      if (variant === 'watson') drawWatson();
+      if (variant === 'reed') drawReed();
       else if (variant === 'sentinel') drawSentinel();
       else drawGenerate();
       animId = requestAnimationFrame(animate);
@@ -158,8 +158,8 @@ export default function LoadingAnimation({ variant = 'watson', progress, message
       <canvas
         ref={canvasRef}
         style={{
-          width: variant === 'watson' ? 200 : 300,
-          height: variant === 'watson' ? 60 : 40,
+          width: variant === 'reed' ? 200 : 300,
+          height: variant === 'reed' ? 60 : 40,
           pointerEvents: 'none',
         }}
       />

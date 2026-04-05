@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export default function WatsonOrb({ size = 90, breathing = true }: { size?: number; breathing?: boolean }) {
+export default function ReedOrb({ size = 90, breathing = true }: { size?: number; breathing?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-export default function WatsonScene({ isActive }: { isActive: boolean }) {
+export default function ReedScene({ isActive }: { isActive: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [textVisible, setTextVisible] = useState(false);
 
@@ -30,7 +30,7 @@ export default function WatsonScene({ isActive }: { isActive: boolean }) {
       ctx!.clearRect(0, 0, w, h);
       t += 0.02;
 
-      // Watson orb
+      // Reed orb
       const orbR = 24;
       const grad = ctx!.createRadialGradient(cx, cy, 0, cx, cy, orbR);
       grad.addColorStop(0, "rgba(107, 127, 242, 0.8)");
@@ -80,7 +80,7 @@ export default function WatsonScene({ isActive }: { isActive: boolean }) {
         marginTop: 160,
       }}>
         <p style={{ fontSize: 20, fontWeight: 600, color: "#fff", lineHeight: 1.5, margin: "0 0 12px", fontFamily: "'Afacad Flux', sans-serif" }}>
-          Watson is your First Listener.
+          Reed is your First Listener.
         </p>
         <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, margin: 0, fontFamily: "'Afacad Flux', sans-serif" }}>
           He interviews you until he fully understands what you're trying to say. Not a form. Not a prompt. A conversation.

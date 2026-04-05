@@ -75,7 +75,7 @@ function LockIcon() {
 
 export default function TemplateEditor({ selected, onSelect, compact }: { selected?: string | null; onSelect?: (id: string) => void; compact?: boolean }) {
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
-  const [watsonInput, setWatsonInput] = useState("");
+  const [reedInput, setReedInput] = useState("");
 
   const systemTemplates = [
     { id: "the-edition", name: "The Edition", desc: "Full publication package from one draft" },
@@ -134,7 +134,7 @@ export default function TemplateEditor({ selected, onSelect, compact }: { select
         ))}
       </div>
 
-      {/* Right column: Watson conversation */}
+      {/* Right column: Reed conversation */}
       <div style={{ width: "56%", display: "flex", flexDirection: "column", padding: "16px 14px" }}>
         <div style={{ flex: 1, overflowY: "auto", marginBottom: 12 }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "flex-start" }}>
@@ -143,7 +143,7 @@ export default function TemplateEditor({ selected, onSelect, compact }: { select
               background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 8, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
-            }}>W</div>
+            }}>R</div>
             <div style={{
               background: "rgba(74,144,217,0.07)", border: "1px solid rgba(74,144,217,0.15)",
               borderRadius: "0 8px 8px 8px", padding: "8px 10px",
@@ -159,8 +159,8 @@ export default function TemplateEditor({ selected, onSelect, compact }: { select
           borderRadius: 8, padding: "8px 10px", flexShrink: 0,
         }}>
           <input
-            value={watsonInput}
-            onChange={e => setWatsonInput(e.target.value)}
+            value={reedInput}
+            onChange={e => setReedInput(e.target.value)}
             placeholder="Describe your template..."
             style={{
               flex: 1, background: "transparent", border: "none", outline: "none",
@@ -169,8 +169,8 @@ export default function TemplateEditor({ selected, onSelect, compact }: { select
           />
           <button style={{
             width: 28, height: 28, borderRadius: 6,
-            background: watsonInput.trim() ? "var(--fg)" : "var(--line)",
-            border: "none", cursor: watsonInput.trim() ? "pointer" : "not-allowed",
+            background: reedInput.trim() ? "var(--fg)" : "var(--line)",
+            border: "none", cursor: reedInput.trim() ? "pointer" : "not-allowed",
             display: "flex", alignItems: "center", justifyContent: "center",
             transition: "background 0.15s",
           }}>

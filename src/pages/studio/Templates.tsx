@@ -88,10 +88,10 @@ export default function Templates() {
         ))}
       </div>
 
-      {/* Right Watson pane (56%) */}
+      {/* Right Reed pane (56%) */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
-          {/* Watson greeting */}
+          {/* Reed greeting */}
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 16 }}>
             <div style={{
               width: 26, height: 26, borderRadius: "50%",
@@ -116,7 +116,7 @@ export default function Templates() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <input
-              placeholder="Reply to Watson..."
+              placeholder="Reply to Reed..."
               style={{
                 flex: 1, background: "var(--surface)", border: "1px solid var(--line)",
                 borderRadius: 8, padding: "0 12px", fontSize: 13,

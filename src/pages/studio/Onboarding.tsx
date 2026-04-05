@@ -7,7 +7,7 @@ const STEPS = [
   {
     id: "role",
     title: "What do you do?",
-    subtitle: "Help Watson understand your world.",
+    subtitle: "Help Reed understand your world.",
     type: "text",
     placeholder: "Executive coach, consultant, keynote speaker...",
     field: "role",

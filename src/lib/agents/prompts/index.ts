@@ -31,7 +31,7 @@ import sentinelIntel from './sentinel-intel.md?raw';
 import tempo from './tempo.md?raw';
 import victor from './victor.md?raw';
 import ward from './ward.md?raw';
-import watsonCapture from './watson-capture.md?raw';
+import reedCapture from './reed-capture.md?raw';
 import zara from './zara.md?raw';
 
 export const PROMPTS: Record<string, string> = {
@@ -68,6 +68,6 @@ export const PROMPTS: Record<string, string> = {
   'tempo.md': tempo,
   'victor.md': victor,
   'ward.md': ward,
-  'watson-capture.md': watsonCapture,
+  'reed-capture.md': reedCapture,
   'zara.md': zara,
 };

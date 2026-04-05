@@ -534,7 +534,7 @@ export default function OutputDetail() {
                   onClick={() => navigate("/studio/work", { state: { reviseOutputId: output!.id, reviseContent: output!.content, reviseTitle: output!.title, reviseType: output!.output_type, reviseScore: output!.score, reviseGates: output!.gates || null, revisePipelineRun: pipelineRun || null } })}
                   style={{ ...toolbarBtn(true), border: "none" }}
                 >
-                  Revise with Watson
+                  Revise with Reed
                 </button>
               )}
             </>

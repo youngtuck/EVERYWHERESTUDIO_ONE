@@ -359,7 +359,7 @@ export default function OnboardingPage() {
   const showStep2Interview = step === 2 && method === "interview";
   const showStep2Upload = step === 2 && method === "upload";
   const showStep3 = step === 3 && voiceDNA; // Voice DNA review
-  const showStep4 = step === 4; // Brand DNA (Watson conversation)
+  const showStep4 = step === 4; // Brand DNA (Reed conversation)
   const showStep5 = step === 5; // Watch topics
   const showStep6 = step === 6; // Complete
 

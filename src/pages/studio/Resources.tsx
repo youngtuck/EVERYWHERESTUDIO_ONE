@@ -406,7 +406,7 @@ export default function Resources() {
             borderRadius: 8, padding: "14px 16px", marginBottom: 20,
             fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6,
           }}>
-            Set up your <span onClick={() => nav("/onboarding")} style={{ color: "var(--gold)", fontWeight: 600, cursor: "pointer" }}>Voice DNA and Brand DNA</span> to give Watson your full context.
+            Set up your <span onClick={() => nav("/onboarding")} style={{ color: "var(--gold)", fontWeight: 600, cursor: "pointer" }}>Voice DNA and Brand DNA</span> to give Reed your full context.
           </div>
         )}
 
@@ -428,7 +428,7 @@ export default function Resources() {
             <div style={{ fontSize: 22, color: "var(--line)", marginBottom: 12 }}>&#9764;</div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>No project files yet</div>
             <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
-              Upload reference files, brand guides, or any documents Watson should know about.
+              Upload reference files, brand guides, or any documents Reed should know about.
             </div>
           </div>
         ) : (
@@ -457,7 +457,7 @@ export default function Resources() {
           <p style={{ fontSize: 11, color: "var(--fg-3)" }}>
             {uploading
               ? "Uploading..."
-              : <><span style={{ color: "var(--blue)", fontWeight: 600 }}>Upload a file</span>: reference files, brand guides, or any documents Watson should know about</>
+              : <><span style={{ color: "var(--blue)", fontWeight: 600 }}>Upload a file</span>: reference files, brand guides, or any documents Reed should know about</>
             }
           </p>
         </div>

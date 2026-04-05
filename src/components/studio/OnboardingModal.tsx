@@ -121,12 +121,12 @@ export default function OnboardingModal({ onComplete }: { onComplete: () => void
         {step === 2 && (
           <div>
             <h2 id="onboarding-title" style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.03em", marginBottom: 10 }}>
-              Tell Watson how you write
+              Tell Reed how you write
             </h2>
             <textarea
               value={voiceSample}
               onChange={(e) => setVoiceSample(e.target.value)}
-              placeholder="Paste a few paragraphs you've written: a post, an email, anything. Watson will do the rest."
+              placeholder="Paste a few paragraphs you've written: a post, an email, anything. Reed will do the rest."
               rows={6}
               className="input-field"
               style={{

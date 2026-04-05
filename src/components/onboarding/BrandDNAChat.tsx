@@ -9,7 +9,7 @@ const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const OPENING_QUESTION =
   "Before we do anything else, tell me a little about what you are building. Not the features or the deliverables. The thing underneath that. What does this exist to do in the world?";
 
-const BRAND_DNA_WATSON_SYSTEM = `You are Dr. John Watson conducting a Brand DNA extraction for EVERYWHERE Studio. Your role is to have a natural conversation that uncovers the user's brand: what they are building, who it is for, what they are against, and how they want to sound.
+const BRAND_DNA_REED_SYSTEM = `You are Reed conducting a Brand DNA extraction for EVERYWHERE Studio. Your role is to have a natural conversation that uncovers the user's brand: what they are building, who it is for, what they are against, and how they want to sound.
 
 RULES:
 - Ask ONE question per response. Never ask multiple questions at once.
@@ -27,6 +27,7 @@ QUESTION BANK (use these when they fit; don't ask all of them):
 - "What does success look like 3 years from now, in a specific scene, not metrics?"
 
 Continue for 8-12 exchanges. When you have enough to build a Brand DNA profile, keep asking until the user clicks "Build My Brand DNA". Do not output READY_TO_GENERATE.`;
+
 
 interface BrandDNAChatProps {
   userName: string;
@@ -73,7 +74,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
 
     try {
       const chatHistory = [...messages, userMsg].map((m) => ({
-        role: m.role === "assistant" ? "watson" : "user",
+        role: m.role === "assistant" ? "reed" : "user",
         content: m.content,
       }));
       const res = await fetchWithRetry(`${API_BASE}/api/chat`, {
@@ -82,7 +83,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
         body: JSON.stringify({
           messages: chatHistory,
           outputType: "freestyle",
-          systemPromptOverride: BRAND_DNA_WATSON_SYSTEM,
+          systemPromptOverride: BRAND_DNA_REED_SYSTEM,
         }),
       });
       if (!res.ok) {
@@ -190,7 +191,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                     fontWeight: 700,
                     color: "rgba(200,150,26,0.85)",
                     lineHeight: 1,
-                  }}>W</span>
+                  }}>R</span>
                 </div>
               )}
               {m.content}
@@ -238,7 +239,7 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                     sendMessage();
                   }
                 }}
-                placeholder="Tell Watson what you're building..."
+                placeholder="Tell Reed what you're building..."
                 rows={2}
                 style={{
                   width: "100%",

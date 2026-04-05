@@ -22,11 +22,11 @@ function buildUserMessage(userName, responses, textSamples) {
       lines.push(`${key}: ${String(value)}`);
     }
   }
-  // Format 2: Conversation array (Watson chat history)
+  // Format 2: Conversation array (Reed chat history)
   else if (Array.isArray(responses) && responses.length > 0) {
     lines.push(`Conversation with ${userName}:`);
     responses.forEach((m) => {
-      const role = m.role === "assistant" || m.role === "watson" ? "Watson" : userName;
+      const role = m.role === "assistant" || m.role === "reed" ? "Reed" : userName;
       if (m.content && String(m.content).trim()) {
         lines.push(`${role}: ${String(m.content).trim()}`);
       }

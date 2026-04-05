@@ -114,7 +114,7 @@ Ask which sub-mode the user wants, then execute. Be ruthless but constructive. O
 Run all three. Output specific, actionable recommendations. This runs after Checkpoint 6, before final Wrap.`,
 };
 
-const WATSON_SYSTEM = `You are Dr. John Watson, the First Listener for EVERYWHERE Studio. You are a 47-year-old former research psychiatrist turned strategic intelligence analyst. You hear not just what people say but what they mean, what they avoid, what they circle back to, and what they have not yet found words for.
+const REED_SYSTEM = `You are Dr. John Reed, the First Listener for EVERYWHERE Studio. You are a 47-year-old former research psychiatrist turned strategic intelligence analyst. You hear not just what people say but what they mean, what they avoid, what they circle back to, and what they have not yet found words for.
 
 Your job is to capture the user's ideas and shape them into something ready for production. You are the front door to the entire system. Every idea is heard here before it becomes a draft, before checkpoints touch it, before it ships.
 
@@ -250,7 +250,7 @@ SIGNATURE PHRASES (use naturally, not forced):
 - "I have it. Here's what I heard."
 `;
 
-/** Per-output-type Watson behavior instructions. */
+/** Per-output-type Reed behavior instructions. */
 const OUTPUT_TYPE_BEHAVIORS = {
   essay: "OUTPUT TYPE: ESSAY. Always produce an outline before the draft. All 7 checkpoints are active. Focus on thesis clarity, argument strength, and narrative structure.",
   podcast: "OUTPUT TYPE: PODCAST. Ask the user for format: solo, two hosts, interview, or panel. If they mention music beds, note that Suno prompt integration is available. Deliverables: complete script, host script, show notes, source links. Write for the ear, not the eye.",
@@ -268,13 +268,13 @@ const OUTPUT_TYPE_BEHAVIORS = {
   executive_summary: "OUTPUT TYPE: EXECUTIVE SUMMARY. If a source Report or Proposal exists in EVERYWHERE, auto-pull the content. Maximum 2 pages. Lead with the recommendation.",
   case_study: "OUTPUT TYPE: CASE STUDY. Run a structured intake interview: Challenge, Solution, Results, Lessons. Social media version is built in as a standard deliverable.",
   sow: "OUTPUT TYPE: STATEMENT OF WORK. Out-of-scope section is always on. If this came from a Proposal handoff, pre-populate from the source. Precise deliverables, timelines, and responsibilities.",
-  meeting: "OUTPUT TYPE: MEETING AGENDA/RECAP. Ask the type: (1) Decision meeting, Watson challenges 'could this be an email?'; (2) Information sharing, pre-read is mandatory; (3) Working session, advance prompts required; (4) Social/standup, minimal structure.",
+  meeting: "OUTPUT TYPE: MEETING AGENDA/RECAP. Ask the type: (1) Decision meeting, Reed challenges 'could this be an email?'; (2) Information sharing, pre-read is mandatory; (3) Working session, advance prompts required; (4) Social/standup, minimal structure.",
   bio: "OUTPUT TYPE: BIO/SPEAKER PROFILE. Produce all 4 lengths in one session: one-liner, short (50 words), standard (150 words), long (300 words).",
   white_paper: "OUTPUT TYPE: WHITE PAPER. Checkpoint 6 (Perspective) is locked on. Academic rigor with practitioner accessibility. Original research or analysis required.",
   freestyle: "OUTPUT TYPE: FREESTYLE. Pattern-match the user's description against all defined output types. If a match is found, offer to redirect: 'This sounds like it might be a [Type]. Want to use that template instead, or keep it custom?' Let the user decide.",
 };
 
-function buildWatsonSystem(outputType, voiceProfile, voiceDnaMd, resources) {
+function buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources) {
   let system = "";
   const voiceContext = ((resources?.voiceDna || "") + "\n" + (voiceDnaMd || "")).trim();
   if (voiceContext) {
@@ -289,7 +289,7 @@ function buildWatsonSystem(outputType, voiceProfile, voiceDnaMd, resources) {
   if (resources?.references) {
     system += "REFERENCE MATERIALS:\n\n" + resources.references.trim() + "\n\n---\n\n";
   }
-  system += WATSON_SYSTEM;
+  system += REED_SYSTEM;
   if (voiceProfile) {
     system += `\n\nUSER VOICE PROFILE:\n- Role: ${voiceProfile.role}\n- Audience: ${voiceProfile.audience}\n- Tone: ${voiceProfile.tone}\n- Writing sample: "${voiceProfile.writing_sample?.slice(0, 400)}"\n\nMatch this person's voice exactly when summarizing their ideas.`;
   }
@@ -472,7 +472,7 @@ export default async function handler(req, res) {
     try {
       const client = new Anthropic({ apiKey });
       const claudeMessages = messages.map((m) => ({
-        role: m.role === "watson" ? "assistant" : "user",
+        role: m.role === "reed" ? "assistant" : "user",
         content: m.content,
       }));
 
@@ -482,7 +482,7 @@ export default async function handler(req, res) {
         : Array.isArray(lastMsg?.content)
           ? lastMsg.content.filter(p => p.type === "text").map(p => p.text).join("\n")
           : "";
-      if (lastMsg && (lastMsg.role === "user" || lastMsg.role === "watson" === false)) {
+      if (lastMsg && (lastMsg.role === "user" || lastMsg.role === "reed" === false)) {
         const urls = extractUrls(lastMsgText);
         if (urls.length > 0) {
           let urlCtx = "";
@@ -501,7 +501,7 @@ export default async function handler(req, res) {
 
       // Rebuild messages after URL/research mutations
       const finalModeMessages = messages.map((m) => ({
-        role: m.role === "watson" ? "assistant" : "user",
+        role: m.role === "reed" ? "assistant" : "user",
         content: m.content,
       }));
 
@@ -547,14 +547,14 @@ export default async function handler(req, res) {
   } else if (systemMode === "PATH_DETERMINATION") {
     systemPrompt = loadPathDeterminationSystemPrompt();
   } else {
-    // CONTENT_PRODUCTION or default: full Watson + Voice DNA
-    systemPrompt = buildWatsonSystem(outputType, voiceProfile, voiceDnaMd, resources);
+    // CONTENT_PRODUCTION or default: full Reed + Voice DNA
+    systemPrompt = buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources);
   }
 
   try {
     const client = new Anthropic({ apiKey });
     const claudeMessages = messages.map((m) => ({
-      role: m.role === "watson" ? "assistant" : "user",
+      role: m.role === "reed" ? "assistant" : "user",
       content: m.content,
     }));
 
@@ -573,7 +573,7 @@ export default async function handler(req, res) {
       });
     }
 
-    if (lastMsg && (lastMsg.role === "user" || lastMsg.role === "watson" === false)) {
+    if (lastMsg && (lastMsg.role === "user" || lastMsg.role === "reed" === false)) {
       const urls = extractUrls(latestMsgText);
       if (urls.length > 0) {
         let urlCtx = "";
@@ -592,7 +592,7 @@ export default async function handler(req, res) {
 
     // Rebuild claudeMessages after mutations to lastMsg
     const finalMessages = messages.map((m) => ({
-      role: m.role === "watson" ? "assistant" : "user",
+      role: m.role === "reed" ? "assistant" : "user",
       content: m.content,
     }));
 

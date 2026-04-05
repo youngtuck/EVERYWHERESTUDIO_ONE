@@ -141,7 +141,7 @@ export default function Workbench() {
             color: "var(--text-secondary)",
           }}
         >
-          Nothing on the workbench. Start a Watson session to create something.
+          Nothing on the workbench. Start a Reed session to create something.
         </div>
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>

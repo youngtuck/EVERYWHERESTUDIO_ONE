@@ -2,8 +2,8 @@
  * WorkSession.tsx, v7.0 Quality Checkpoint Framework
  *
  * Flow:
- *   Intake  -> /api/chat (Watson conversation, READY_TO_GENERATE detection)
- *   Outline -> client-side state built from Watson's readiness summary
+ *   Intake  -> /api/chat (Reed conversation, READY_TO_GENERATE detection)
+ *   Outline -> client-side state built from Reed's readiness summary
  *   Edit    -> /api/generate (draft generation + back-of-house auto-revision)
  *   Review  -> /api/run-pipeline (7 checkpoints + Impact Score + Human Voice Test)
  *   Review  includes export (save to Supabase outputs table + copy/download + send to Wrap)
@@ -180,7 +180,7 @@ const CHECKPOINT_LABELS: Record<string, string> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
-  role: "watson" | "user";
+  role: "reed" | "user";
   content: string;
   isChallenge?: boolean;
 }
@@ -592,7 +592,7 @@ function ReviewFormatCards({
       { pts: 5, title: "Personalize the opening", desc: "Newsletter readers expect a direct address. One sentence that speaks to them specifically." },
     ],
     Podcast: [
-      { pts: 8, title: "Conversational transition", desc: "Two sentences read as written, not spoken. Watson can soften them for audio." },
+      { pts: 8, title: "Conversational transition", desc: "Two sentences read as written, not spoken. Reed can soften them for audio." },
     ],
     "Sunday Story": [
       { pts: 2, title: "Deepen the opening image", desc: "One more sensory detail in the first paragraph pulls readers fully in." },
@@ -923,9 +923,9 @@ function StageIntake({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile();
 
-  const watsonQuestionCount = messages.filter(m => m.role === "watson" && m.content.trim().endsWith("?")).length;
+  const reedQuestionCount = messages.filter(m => m.role === "reed" && m.content.trim().endsWith("?")).length;
   const totalQuestions = 5;
-  const progress = Math.min(watsonQuestionCount / totalQuestions, 1);
+  const progress = Math.min(reedQuestionCount / totalQuestions, 1);
 
   // Welcome state: show centered greeting until user sends first message
   const hasUserMessage = messages.some(m => m.role === "user");
@@ -939,12 +939,12 @@ function StageIntake({
     }
   }, [messages.length, sending]);
 
-  // Re-focus input after Watson finishes responding
+  // Re-focus input after Reed finishes responding
   const prevSending = useRef(sending);
   useEffect(() => {
     if (prevSending.current && !sending) {
       setTimeout(() => {
-        const textarea = document.querySelector('.watson-input') as HTMLTextAreaElement;
+        const textarea = document.querySelector('.reed-input') as HTMLTextAreaElement;
         if (textarea && !textarea.disabled) {
           textarea.focus();
         }
@@ -1056,7 +1056,7 @@ function StageIntake({
           {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} isChallenge={m.isChallenge} />)}
           {sending && (
             <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
-              <WatsonAvatar />
+              <ReedAvatar />
               <LoadingDots label="" />
             </div>
           )}
@@ -1096,7 +1096,7 @@ function StageIntake({
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 5 }}>
           <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
-            Question {Math.min(watsonQuestionCount, totalQuestions)} of {totalQuestions}
+            Question {Math.min(reedQuestionCount, totalQuestions)} of {totalQuestions}
           </span>
           <button
             onClick={onAdvance}
@@ -1132,7 +1132,7 @@ function StageIntake({
   );
 }
 
-function WatsonAvatar() {
+function ReedAvatar() {
   return (
     <div style={{
       width: 28, height: 28, borderRadius: "50%",
@@ -1145,13 +1145,13 @@ function WatsonAvatar() {
   );
 }
 
-/** Parse Watson text: render **bold** as <strong>, strip raw **, detect questions vs statements, detect search indicators */
-function WatsonTextRenderer({ text }: { text: string }) {
+/** Parse Reed text: render **bold** as <strong>, strip raw **, detect questions vs statements, detect search indicators */
+function ReedTextRenderer({ text }: { text: string }) {
   // Detect search/research lines
   const isSearchLine = (line: string) =>
     /^(searching|looking up|researching|checking|scanning|analyzing|pulling data)/i.test(line.trim());
 
-  // Detect if a line ends with a question mark (Watson is asking the user)
+  // Detect if a line ends with a question mark (Reed is asking the user)
   const isQuestion = (line: string) => /\?\s*$/.test(line.trim());
 
   const lines = text.split("\n");
@@ -1185,7 +1185,7 @@ function WatsonTextRenderer({ text }: { text: string }) {
           return <span key={pi}>{part}</span>;
         });
 
-        // If Watson is asking a question, render bold
+        // If Reed is asking a question, render bold
         if (isQuestion(line)) {
           return (
             <div key={li} style={{ fontWeight: 600, color: "var(--fg)" }}>
@@ -1200,20 +1200,20 @@ function WatsonTextRenderer({ text }: { text: string }) {
   );
 }
 
-function ChatBubble({ role, text, userInitials, isChallenge }: { role: "watson" | "user"; text: string; userInitials?: string; isChallenge?: boolean }) {
-  const isWatson = role === "watson";
+function ChatBubble({ role, text, userInitials, isChallenge }: { role: "reed" | "user"; text: string; userInitials?: string; isChallenge?: boolean }) {
+  const isReed = role === "reed";
   return (
     <div style={{
       display: "flex",
       gap: 10,
       alignItems: "flex-start",
       padding: "6px 0",
-      justifyContent: isWatson ? "flex-start" : "flex-end",
+      justifyContent: isReed ? "flex-start" : "flex-end",
     }}>
-      {isWatson ? (
+      {isReed ? (
         <>
-          <WatsonAvatar />
-          <div className="watson-bubble-wrap">
+          <ReedAvatar />
+          <div className="reed-bubble-wrap">
             {isChallenge && (
               <div style={{
                 display: "inline-block",
@@ -1222,10 +1222,10 @@ function ChatBubble({ role, text, userInitials, isChallenge }: { role: "watson" 
                 borderRadius: 99, padding: "2px 10px",
                 marginBottom: 6, fontFamily: FONT,
               }}>
-                Watson is pushing back
+                Reed is pushing back
               </div>
             )}
-            <WatsonTextRenderer text={text} />
+            <ReedTextRenderer text={text} />
           </div>
         </>
       ) : (
@@ -1343,7 +1343,7 @@ function ChatInputBar({
           placeholder={placeholder}
           readOnly={disabled}
           rows={1}
-          className="watson-input"
+          className="reed-input"
           style={{
             flex: 1, resize: "none",
             background: "transparent", border: "none", outline: "none",
@@ -1480,7 +1480,7 @@ function StageOutline({
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
           value={input} onChange={e => setInput(e.target.value)}
-          placeholder="Ask Watson to restructure, or click any line to edit..."
+          placeholder="Ask Reed to restructure, or click any line to edit..."
           style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36 }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
           onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
@@ -1790,7 +1790,7 @@ function StageEdit({
         <input
           value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRevise(); } }}
-          placeholder="Tell Watson what to change, or edit above..."
+          placeholder="Tell Reed what to change, or edit above..."
           readOnly={generating}
           style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, opacity: generating ? 0.5 : 1 }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
@@ -2306,7 +2306,7 @@ function StageReview({
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
           value={input} onChange={e => setInput(e.target.value)}
-          placeholder="Send back to Edit, tell Watson what to change..."
+          placeholder="Send back to Edit, tell Reed what to change..."
           style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36 }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
           onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
@@ -2355,11 +2355,11 @@ function ActionChips({ chips, onChipClick }: { chips: string[]; onChipClick: (te
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function WorkSession() {
-  const { setFeedbackContent, setDashOpen, setActiveDashTab, setWatsonPrefill, setWatsonThread, watsonPending, setWatsonPending } = useShell();
-  const prefillWatson = useCallback((text: string) => {
-    setActiveDashTab("watson");
-    setWatsonPrefill(text);
-  }, [setActiveDashTab, setWatsonPrefill]);
+  const { setFeedbackContent, setDashOpen, setActiveDashTab, setReedPrefill, setReedThread, reedPending, setReedPending } = useShell();
+  const prefillReed = useCallback((text: string) => {
+    setActiveDashTab("reed");
+    setReedPrefill(text);
+  }, [setActiveDashTab, setReedPrefill]);
   const { user, displayName } = useAuth();
   const { toast } = useToast();
   const nav = useNavigate();
@@ -2374,12 +2374,12 @@ export default function WorkSession() {
     (persisted?.phase === "complete" ? "Edit" : persisted?.phase === "generating" ? "Edit" : "Intake") as WorkStage
   );
 
-  // Watson carry-forward: surface pending notes when stage changes
+  // Reed carry-forward: surface pending notes when stage changes
   useEffect(() => {
-    const pending = watsonPending[stage];
+    const pending = reedPending[stage];
     if (pending && pending.length > 0) {
       pending.forEach(note => {
-        setWatsonThread(prev => [
+        setReedThread(prev => [
           ...prev,
           { type: "note", text: note.text, from: note.from, to: stage },
         ]);
@@ -2391,16 +2391,16 @@ export default function WorkSession() {
         Review: "Noted at Review. This will factor into the checkpoint pass.",
       };
       if (followUps[stage]) {
-        setWatsonThread(prev => [...prev, { type: "watson", text: followUps[stage] }]);
+        setReedThread(prev => [...prev, { type: "reed", text: followUps[stage] }]);
       }
 
-      setWatsonPending(prev => {
+      setReedPending(prev => {
         const next = { ...prev };
         delete next[stage];
         return next;
       });
 
-      setActiveDashTab("watson");
+      setActiveDashTab("reed");
     }
   }, [stage]);
 
@@ -2408,11 +2408,11 @@ export default function WorkSession() {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     if (persisted?.messages && persisted.messages.length > 0) {
       return persisted.messages.map(m => ({
-        role: m.role === "assistant" ? "watson" as const : "user" as const,
+        role: m.role === "assistant" ? "reed" as const : "user" as const,
         content: m.content,
       }));
     }
-    return [{ role: "watson", content: "Good to see you. What are you working on?" }];
+    return [{ role: "reed", content: "Good to see you. What are you working on?" }];
   });
   const [intakeSending, setIntakeSending] = useState(false);
   const [intakeReady, setIntakeReady] = useState(persisted?.isReady ?? false);
@@ -2480,7 +2480,7 @@ export default function WorkSession() {
     saveSession({
       messages: messages.map((m, i) => ({
         id: String(i),
-        role: m.role === "watson" ? "assistant" : "user",
+        role: m.role === "reed" ? "assistant" : "user",
         content: m.content,
         ts: Date.now(),
       })),
@@ -2505,7 +2505,7 @@ export default function WorkSession() {
   // ── Prefill from Watch/Pipeline signal ───────────────────────
   // When "Use this in Work" is clicked from Watch or TheLot,
   // sessionStorage has the signal title and detail.
-  // We seed Watson with the context so the user lands in a live conversation.
+  // We seed Reed with the context so the user lands in a live conversation.
   useEffect(() => {
     const signalText = sessionStorage.getItem("ew-signal-text");
     const signalDetail = sessionStorage.getItem("ew-signal-detail");
@@ -2516,11 +2516,11 @@ export default function WorkSession() {
 
     const detail = signalDetail ? ` ${signalDetail}` : "";
     setMessages([
-      { role: "watson", content: "Good to see you. What are you working on?" },
+      { role: "reed", content: "Good to see you. What are you working on?" },
       { role: "user", content: `I want to write about this: ${signalText}.${detail}` },
-      { role: "watson", content: `Good signal. Let me shape this into something worth publishing.\n\nTell me more about what you want to say.` },
+      { role: "reed", content: `Good signal. Let me shape this into something worth publishing.\n\nTell me more about what you want to say.` },
     ]);
-    // Keep stage at Intake so Watson continues the conversation naturally
+    // Keep stage at Intake so Reed continues the conversation naturally
   }, []);
 
   // ── Reopen from Catalog or Pipeline ──────────────────────────
@@ -2549,9 +2549,9 @@ export default function WorkSession() {
       // Seed the conversation with the title as context
       if (reopenTitle) {
         setMessages([
-          { role: "watson", content: "What's on your mind?" },
+          { role: "reed", content: "What's on your mind?" },
           { role: "user", content: `I want to continue working on: ${reopenTitle}` },
-          { role: "watson", content: `Picking up where we left off. I've loaded your draft. Jump to Edit to continue, or tell me what you'd like to change.` },
+          { role: "reed", content: `Picking up where we left off. I've loaded your draft. Jump to Edit to continue, or tell me what you'd like to change.` },
         ]);
       }
 
@@ -2577,12 +2577,12 @@ export default function WorkSession() {
   // ── Build conversation summary for API calls ──────────────────
   const buildConvSummary = useCallback(() =>
     messages
-      .filter(m => m.role === "user" || m.role === "watson")
-      .map(m => `${m.role === "watson" ? "Watson" : "User"}: ${m.content}`)
+      .filter(m => m.role === "user" || m.role === "reed")
+      .map(m => `${m.role === "reed" ? "Reed" : "User"}: ${m.content}`)
       .join("\n\n")
   , [messages]);
 
-  // ── INTAKE: Send message to Watson ────────────────────────────
+  // ── INTAKE: Send message to Reed ────────────────────────────
   const handleIntakeSend = useCallback(async (text: string) => {
     const newMessages: ChatMessage[] = [...messages, { role: "user", content: text }];
     setMessages(newMessages);
@@ -2593,7 +2593,7 @@ export default function WorkSession() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role === "watson" ? "assistant" : "user", content: m.content })),
+          messages: newMessages.map(m => ({ role: m.role === "reed" ? "assistant" : "user", content: m.content })),
           outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle",
           voiceDnaMd,
           userId: user?.id,
@@ -2606,14 +2606,14 @@ export default function WorkSession() {
       // Sanitize: strip em-dashes, en-dashes, replace with commas or colons
       const reply = (data.reply ?? "").replace(/\u2014/g, ",").replace(/\u2013/g, ",");
 
-      setMessages(prev => [...prev, { role: "watson", content: reply, isChallenge: data.isChallenge }]);
+      setMessages(prev => [...prev, { role: "reed", content: reply, isChallenge: data.isChallenge }]);
 
       if (data.readyToGenerate) {
         setIntakeReady(true);
         setReadySummary(reply);
       }
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: "watson", content: "Something went wrong. Please try again." }]);
+      setMessages(prev => [...prev, { role: "reed", content: "Something went wrong. Please try again." }]);
       console.error("[WorkSession][intake]", err);
     } finally {
       setIntakeSending(false);
@@ -2627,7 +2627,7 @@ export default function WorkSession() {
 
     const summary = readySummary || buildConvSummary();
 
-    // Parse Watson's summary by finding labeled sections.
+    // Parse Reed's summary by finding labeled sections.
     // Handles: "Thesis: value", "**Thesis:** value", "- Thesis: value", "Thesis - value"
     function extractField(text: string, field: string, nextFields: string[]): string {
       // Try multiple patterns in order of specificity
@@ -2671,15 +2671,15 @@ export default function WorkSession() {
 
     // Fallback: if structured parsing fails, extract from conversation intelligently
     if (!thesis && !hook) {
-      // Try to find Watson's last substantive message (the readiness signal)
-      const watsonMessages = messages.filter(m => m.role === "watson").map(m => m.content);
-      const lastWatson = watsonMessages[watsonMessages.length - 1] || "";
-      // Try parsing the last Watson message too
-      if (lastWatson !== summary) {
-        thesis = thesis || extractField(lastWatson, "thesis", allLabels.filter(l => l !== "thesis"));
-        audience = audience || extractField(lastWatson, "audience", allLabels.filter(l => l !== "audience"));
-        hook = hook || extractField(lastWatson, "hook", allLabels.filter(l => l !== "hook"));
-        goal = goal || extractField(lastWatson, "goal", allLabels.filter(l => l !== "goal"));
+      // Try to find Reed's last substantive message (the readiness signal)
+      const reedMessages = messages.filter(m => m.role === "reed").map(m => m.content);
+      const lastReed = reedMessages[reedMessages.length - 1] || "";
+      // Try parsing the last Reed message too
+      if (lastReed !== summary) {
+        thesis = thesis || extractField(lastReed, "thesis", allLabels.filter(l => l !== "thesis"));
+        audience = audience || extractField(lastReed, "audience", allLabels.filter(l => l !== "audience"));
+        hook = hook || extractField(lastReed, "hook", allLabels.filter(l => l !== "hook"));
+        goal = goal || extractField(lastReed, "goal", allLabels.filter(l => l !== "goal"));
       }
 
       // Last resort: extract from conversation context
@@ -3118,7 +3118,7 @@ export default function WorkSession() {
   // ── NEW SESSION: Reset everything ────────────────────────────
   const handleNewSession = useCallback(() => {
     clearSession();
-    setMessages([{ role: "watson", content: "Good to see you. What are you working on?" }]);
+    setMessages([{ role: "reed", content: "Good to see you. What are you working on?" }]);
     setStage("Intake");
     setIntakeSending(false);
     setIntakeReady(false);
@@ -3265,7 +3265,7 @@ export default function WorkSession() {
       }));
       toast("Fix applied.");
     } else {
-      toast("Could not apply fix. Try using Ask Watson instead.", "info");
+      toast("Could not apply fix. Try using Ask Reed instead.", "info");
     }
   }, [draft, activeReviewTab, toast]);
 
@@ -3464,7 +3464,7 @@ export default function WorkSession() {
             />
               <ActionChips
                 chips={["Who is my reader?", "What's the structural problem?", "What should they feel?"]}
-                onChipClick={prefillWatson}
+                onChipClick={prefillReed}
               />
             </>
           );
@@ -3549,11 +3549,11 @@ export default function WorkSession() {
                 ]}
                 onChipClick={(chip) => {
                   if (chip.startsWith("Tighten to")) {
-                    prefillWatson(`Tighten this to ${targetWords}. Cut what doesn't earn its place. Keep the voice.`);
+                    prefillReed(`Tighten this to ${targetWords}. Cut what doesn't earn its place. Keep the voice.`);
                   } else if (chip.startsWith("Expand")) {
-                    prefillWatson(`Expand this. Add a second example and deepen the stakes. Stay under ${Math.round(targetWords * 1.3)} words.`);
+                    prefillReed(`Expand this. Add a second example and deepen the stakes. Stay under ${Math.round(targetWords * 1.3)} words.`);
                   } else {
-                    prefillWatson(chip);
+                    prefillReed(chip);
                   }
                 }}
               />
@@ -3645,7 +3645,7 @@ export default function WorkSession() {
 
               <ActionChips
                 chips={["Run Human Voice Test", "Check for SLOP", "Raise the Impact Score", "Is this ready to publish?"]}
-                onChipClick={prefillWatson}
+                onChipClick={prefillReed}
               />
             </>
           );
@@ -3661,7 +3661,7 @@ export default function WorkSession() {
     pipelineRun, pipelineRunning, allExported, outputId,
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
     handleFixCheckpoint, fixingGate, handleRerunPipeline, rerunningPipeline,
-    prefillWatson, activeReviewTab, handleReviewFix, handleExportAll,
+    prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
   ]);
 
   // Auto-open dashboard when pipeline finishes in Review
@@ -3722,7 +3722,7 @@ export default function WorkSession() {
             const names = fileArr.map(f => f.name);
             setSessionFiles(prev => [...prev, ...names]);
 
-            // Read file contents and send to Watson
+            // Read file contents and send to Reed
             const TEXT_EXTS = [".txt", ".md", ".csv", ".json", ".html", ".xml", ".yml", ".yaml"];
             const contents: string[] = [];
 

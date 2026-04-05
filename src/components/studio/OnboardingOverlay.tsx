@@ -3,15 +3,15 @@ import { useState } from "react";
 const STEPS = [
   {
     title: "Welcome to the Studio",
-    body: "You're about to work with a team of 40 specialists. Watson listens first. Then the Room shapes your idea. Then the team writes, reviews, and polishes until it's publication-ready.\n\nEvery word is yours. Every claim is verified. Nothing ships without passing 7 quality checkpoints.",
+    body: "You're about to work with a team of 40 specialists. Reed listens first. Then the Room shapes your idea. Then the team writes, reviews, and polishes until it's publication-ready.\n\nEvery word is yours. Every claim is verified. Nothing ships without passing 7 quality checkpoints.",
   },
   {
-    title: "Watson, Your First Listener",
-    body: "Watson interviews you until he fully understands what you're trying to say. Not a form. Not a prompt. A real conversation. He'll ask until he has your thesis, your audience, your hook, and your format.\n\nTake your time. The better Watson understands you, the better the Room performs.",
+    title: "Reed, Your First Listener",
+    body: "Reed interviews you until he fully understands what you're trying to say. Not a form. Not a prompt. A real conversation. He'll ask until he has your thesis, your audience, your hook, and your format.\n\nTake your time. The better Reed understands you, the better the Room performs.",
   },
   {
     title: "The Room",
-    body: "After Watson, your idea goes to the Writer's Room. The team explores angles, builds a structure, writes a first draft, and then stress-tests it from every direction: Can you sell this? Does the logic hold? Would a stranger get it?\n\nYou're in control at every step. Edit the outline. Revise the draft. Accept or reject suggestions.",
+    body: "After Reed, your idea goes to the Writer's Room. The team explores angles, builds a structure, writes a first draft, and then stress-tests it from every direction: Can you sell this? Does the logic hold? Would a stranger get it?\n\nYou're in control at every step. Edit the outline. Revise the draft. Accept or reject suggestions.",
   },
   {
     title: "Quality Checkpoints",
@@ -19,7 +19,7 @@ const STEPS = [
   },
 ];
 
-const PHASE_LABELS = ["Watson", "Room", "Draft", "Edit", "Review", "Done"];
+const PHASE_LABELS = ["Reed", "Room", "Draft", "Edit", "Review", "Done"];
 
 export default function OnboardingOverlay({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);

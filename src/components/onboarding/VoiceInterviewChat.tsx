@@ -245,7 +245,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                     fontWeight: 700,
                     color: "rgba(200,150,26,0.85)",
                     lineHeight: 1,
-                  }}>W</span>
+                  }}>R</span>
                 </div>
                 <div
                   style={{
@@ -431,7 +431,7 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                 color: "rgba(255,255,255,0.7)",
                 lineHeight: 1.4,
               }}>
-                Could you say a bit more? Even a sentence or two helps Watson understand your voice.
+                Could you say a bit more? Even a sentence or two helps Reed understand your voice.
               </p>
             )}
             <div

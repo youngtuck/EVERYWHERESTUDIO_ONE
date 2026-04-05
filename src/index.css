@@ -279,7 +279,7 @@ body {
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
-[data-theme="dark"] .watson-input::placeholder {
+[data-theme="dark"] .reed-input::placeholder {
   color: rgba(240,240,238,0.3) !important;
 }
 
@@ -474,7 +474,7 @@ button { font-family: var(--font); }
 .studio-interactive-link:hover { color: var(--studio-interactive-hover); }
 
 /* ─── CHAT ───────────────────────────────────────────────────── */
-.chat-bubble-watson {
+.chat-bubble-reed {
   background: var(--soft-gray); border: 1px solid var(--border-light);
   border-radius: 2px 8px 8px 8px; padding: 12px 16px; max-width: 72%;
 }

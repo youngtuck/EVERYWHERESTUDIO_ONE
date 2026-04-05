@@ -293,7 +293,7 @@ export default function Dashboard() {
             <HomeCard
               accentColor="var(--blue)"
               title="Your first session is waiting"
-              meta="Everything you need is ready. Just start talking to Watson."
+              meta="Everything you need is ready. Just start talking to Reed."
               cta="Get started"
               onCta={() => nav("/studio/work")}
             />
