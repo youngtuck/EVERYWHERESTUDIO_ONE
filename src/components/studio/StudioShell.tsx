@@ -7,6 +7,7 @@ import MobileBottomNav from "./MobileBottomNav";
 import { useMobile } from "../../hooks/useMobile";
 import Logo from "../Logo";
 import NotificationBell from "./NotificationBell";
+import { REED_STAGE_CHIPS } from "../../lib/constants";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHELL CONTEXT
@@ -415,13 +416,16 @@ function ReedPanel() {
   const { reedThread, setReedThread, reedPrefill, setReedPrefill, reedPending, setReedPending } = useShell();
   const [input, setInput] = useState(reedPrefill || "");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const stage = (window as any).__ewWorkStage || "Intake";
+  const stageChips = REED_STAGE_CHIPS[stage] || [];
 
   // Pick up prefill
   useEffect(() => {
     if (reedPrefill) {
       setInput(reedPrefill);
       setReedPrefill("");
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   }, [reedPrefill, setReedPrefill]);
 
@@ -429,6 +433,24 @@ function ReedPanel() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [reedThread.length]);
+
+  // Carry forward notes on stage change
+  const [carriedStage, setCarriedStage] = useState<string | null>(null);
+  useEffect(() => {
+    const pending = reedPending[stage];
+    if (pending && pending.length > 0 && carriedStage !== stage) {
+      // Inject carried notes at top of thread
+      const noteEntries = pending.map(n => ({ type: "note" as const, text: n.text, from: n.from, to: stage }));
+      setReedThread(prev => [...noteEntries, ...prev]);
+      setReedPending(prev => { const next = { ...prev }; delete next[stage]; return next; });
+      setCarriedStage(stage);
+    }
+  }, [stage, reedPending, carriedStage, setReedThread, setReedPending]);
+
+  const prefillAndFocus = (text: string) => {
+    setInput(text);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -439,6 +461,7 @@ function ReedPanel() {
       Intake: "Outline",
       Outline: "Edit",
       Edit: "Review",
+      Review: "Wrap",
     };
     const nextStage = carryMap[stage];
 
@@ -478,7 +501,7 @@ function ReedPanel() {
             return (
               <div key={i} style={{
                 marginBottom: 8, padding: "8px 10px",
-                borderLeft: "2px solid var(--gold-bright, #F5C642)",
+                borderLeft: "2px solid #F5C642",
                 background: "rgba(245,198,66,0.06)",
                 borderRadius: "0 6px 6px 0",
               }}>
@@ -489,7 +512,12 @@ function ReedPanel() {
                 }}>
                   CARRIED FROM {m.from?.toUpperCase()}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>{m.text}</div>
+                <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.6, marginBottom: 6 }}>{m.text}</div>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  <button onClick={() => prefillAndFocus(`Let's work on this now: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "#0D1B2A", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Work on this now</button>
+                  <button onClick={() => prefillAndFocus(`Apply this to the current ${stage} context: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "#0D1B2A", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Apply to {stage}</button>
+                  <button onClick={() => prefillAndFocus("Set this aside for now. Flag it for Review.")} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "#0D1B2A", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Set aside</button>
+                </div>
               </div>
             );
           }
@@ -523,12 +551,30 @@ function ReedPanel() {
         })}
         <div ref={bottomRef} />
       </div>
+      {stageChips.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6, flexShrink: 0 }}>
+          {stageChips.map((chip, ci) => (
+            <button
+              key={ci}
+              onClick={() => prefillAndFocus(chip.prefill)}
+              style={{
+                fontSize: 10, padding: "4px 10px", borderRadius: 99,
+                background: "#EDF1F5", border: "1px solid #CBD5E1",
+                color: "#334155", cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div style={{
         display: "flex", alignItems: "center", gap: 6,
         background: "var(--surface)", border: "1px solid var(--line)",
         borderRadius: 8, padding: "8px 10px", flexShrink: 0,
       }}>
         <input
+          ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}

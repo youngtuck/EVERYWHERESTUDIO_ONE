@@ -83,6 +83,167 @@ function scoreColor(score: number): string {
   return "#E53935";
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ADVISOR CARDS (Strategic Advice mode)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AdvisorCardData {
+  role: string;
+  color: string;
+  take: string;
+}
+
+const DEFAULT_ADVISORS: AdvisorCardData[] = [
+  {
+    role: "CATEGORY DESIGN",
+    color: "#4A90D9",
+    take: "This is a positioning piece, not a thought leadership piece. The question is whether you are defining a new category or competing in an existing one. If you are competing, the draft needs to work harder to earn the reader's attention.",
+  },
+  {
+    role: "MARKET POSITIONING",
+    color: "#B8860B",
+    take: "The opening paragraph assumes the reader already agrees with your premise. Strongest positioning pieces open with the world the reader already lives in, then show them the gap.",
+  },
+  {
+    role: "MARKET REALITY",
+    color: "#C0622A",
+    take: "The claim in paragraph 2 is directionally correct but unsourced. This is the kind of statement that builds trust if verified and destroys it if not.",
+  },
+];
+
+interface AdvisorCardsProps {
+  onDiscuss?: (role: string) => void;
+}
+
+export function AdvisorCards({ onDiscuss }: AdvisorCardsProps) {
+  const [cardStates, setCardStates] = useState<Record<number, "default" | "applied" | "discussing" | "passed">>({});
+
+  const handleApply = (idx: number) => {
+    setCardStates(prev => ({ ...prev, [idx]: "applied" }));
+  };
+
+  const handleDiscuss = (idx: number, role: string) => {
+    setCardStates(prev => ({ ...prev, [idx]: "discussing" }));
+    onDiscuss?.(role);
+  };
+
+  const handlePass = (idx: number) => {
+    setCardStates(prev => ({ ...prev, [idx]: "passed" }));
+  };
+
+  return (
+    <div>
+      {DEFAULT_ADVISORS.map((advisor, i) => {
+        const state = cardStates[i] || "default";
+        return (
+          <div
+            key={i}
+            style={{
+              border: "1px solid #E2E8F0",
+              borderRadius: 6,
+              marginBottom: 8,
+              overflow: "hidden",
+              opacity: state === "passed" ? 0.4 : 1,
+              transition: "opacity 0.2s",
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: "10px 12px" }}>
+              <div style={{
+                fontSize: 9, fontWeight: 800, letterSpacing: "0.1em",
+                textTransform: "uppercase" as const, color: advisor.color,
+                marginBottom: 4,
+              }}>
+                {advisor.role}
+              </div>
+              <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.5 }}>
+                {advisor.take}
+              </div>
+            </div>
+
+            {/* Actions bar */}
+            <div style={{
+              borderTop: "1px solid #F1F5F9",
+              display: "flex", gap: 0,
+            }}>
+              {/* Apply */}
+              <button
+                className="apply"
+                disabled={state === "applied"}
+                onClick={() => handleApply(i)}
+                style={{
+                  flex: 1, padding: "7px 4px", fontSize: 10, fontWeight: 600,
+                  border: "none", background: "transparent", cursor: state === "applied" ? "default" : "pointer",
+                  fontFamily: "inherit", transition: "0.12s",
+                  color: state === "applied" ? "#4A90D9" : "#64748B",
+                  borderRight: "1px solid #F1F5F9",
+                }}
+                onMouseEnter={e => { if (state !== "applied") { e.currentTarget.style.background = "#EFF6FF"; e.currentTarget.style.color = "#4A90D9"; } }}
+                onMouseLeave={e => { if (state !== "applied") { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#64748B"; } }}
+              >
+                {state === "applied" ? "Shown" : "Apply"}
+              </button>
+
+              {/* Change All (only when applied) */}
+              {state === "applied" && (
+                <button
+                  style={{
+                    padding: "7px 4px", fontSize: 10, fontWeight: 600,
+                    border: "none", background: "transparent", cursor: "pointer",
+                    fontFamily: "inherit", color: "#4A90D9",
+                    borderRight: "1px solid #F1F5F9",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#EFF6FF"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  Change All
+                </button>
+              )}
+
+              {/* Discuss */}
+              <button
+                className="discuss"
+                onClick={() => handleDiscuss(i, advisor.role)}
+                style={{
+                  flex: 1, padding: "7px 4px", fontSize: 10, fontWeight: 600,
+                  border: "none", background: "transparent", cursor: "pointer",
+                  fontFamily: "inherit", transition: "0.12s",
+                  color: state === "discussing" ? "#0D1B2A" : "#64748B",
+                  borderRight: "1px solid #F1F5F9",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#F7F9FC"; e.currentTarget.style.color = "#0D1B2A"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = state === "discussing" ? "#0D1B2A" : "#64748B"; }}
+              >
+                {state === "discussing" ? "In thread" : "Discuss"}
+              </button>
+
+              {/* Pass */}
+              <button
+                className="pass"
+                onClick={() => handlePass(i)}
+                style={{
+                  flex: 1, padding: "7px 4px", fontSize: 10, fontWeight: 600,
+                  border: "none", background: "transparent", cursor: "pointer",
+                  fontFamily: "inherit", transition: "0.12s",
+                  color: state === "passed" ? "#94A3B8" : "#64748B",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#FFF8F0"; e.currentTarget.style.color = "#94A3B8"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = state === "passed" ? "#94A3B8" : "#64748B"; }}
+              >
+                {state === "passed" ? "Passed" : "Pass"}
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QUALITY PIPELINE (existing checkpoint display)
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function SpecialistPanel({
   pipelineCheckpointResults,
   simpleCheckpoints,
