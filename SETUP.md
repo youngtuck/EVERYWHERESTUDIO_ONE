@@ -78,7 +78,7 @@ That starts both the Vite dev server and the API server. You’ll see logs from 
 - [ ] `npm install` run
 - [ ] Both `npm run dev` and `npm run server` running (or `npm run dev:all`)
 
-Once that’s done, the Work section can use Watson (Claude) for the conversation and for generating the output.
+Once that’s done, the Work section can use Reed (Claude) for the conversation and for generating the output.
 
 If the API returns a **model not found** error, edit `server/index.js` and change the `model` in the `client.messages.create` calls to a current model id (e.g. `claude-sonnet-4` or the latest from [Anthropic’s models page](https://docs.anthropic.com/en/docs/models-overview)).
 
@@ -90,7 +90,7 @@ The repo includes **Vercel serverless API routes** in the `api/` folder (`api/ch
 
 1. **Deploy** the project to Vercel (connect the repo and deploy as usual).
 2. **Environment variables** (Vercel Dashboard → Project → Settings → Environment Variables):
-   - **`ANTHROPIC_API_KEY`** — Your Anthropic API key (e.g. `sk-ant-...`). Required for Watson and content generation.
+   - **`ANTHROPIC_API_KEY`** — Your Anthropic API key (e.g. `sk-ant-...`). Required for Reed and content generation.
    - **`VITE_API_BASE`** — Set to **empty string** `""` (or leave unset). The frontend will use relative URLs like `/api/chat`, which resolve to the same Vercel deployment.
 3. **Redeploy** after adding or changing environment variables so the build picks them up.
 

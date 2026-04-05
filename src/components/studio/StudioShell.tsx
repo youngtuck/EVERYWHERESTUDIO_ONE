@@ -412,6 +412,152 @@ function DefaultDashContent() {
   );
 }
 
+function ReedStageContext({ stage }: { stage: string }) {
+  const calloutStyle: React.CSSProperties = {
+    border: "1px solid rgba(74,144,217,0.25)", borderRadius: 8,
+    padding: "10px 12px", background: "rgba(74,144,217,0.04)",
+    fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 8,
+  };
+  const pillGold: React.CSSProperties = {
+    display: "inline-flex", padding: "2px 8px", borderRadius: 99,
+    background: "rgba(245,198,66,0.15)", fontSize: 10, fontWeight: 600, color: "#9A7030",
+  };
+  const pillBlue: React.CSSProperties = {
+    display: "inline-flex", padding: "2px 8px", borderRadius: 99,
+    background: "rgba(74,144,217,0.1)", fontSize: 10, fontWeight: 600, color: "#4A90D9",
+  };
+
+  if (stage === "Watch") {
+    return (
+      <div style={{ marginBottom: 10, flexShrink: 0 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
+          Reed has read your sources. Signals are surfaced by relevance. Competitors going quiet is treated as a signal, not silence.
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "Intake") {
+    return (
+      <div style={{ marginBottom: 10, flexShrink: 0 }}>
+        <span style={{
+          display: "inline-flex", padding: "4px 10px", borderRadius: 99,
+          background: "rgba(245,198,66,0.12)", border: "1px solid rgba(245,198,66,0.3)",
+          fontSize: 10, fontWeight: 600, color: "#9A7030", marginBottom: 6,
+        }}>Freestyle</span>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 6 }}>
+          No output format selected. Freestyle mode. Answer Reed's questions and the system shapes your thinking. You can pick a format at the end of Outline.
+        </div>
+        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6, marginTop: 6 }}>
+          What helps: Name the specific reader. State the structural problem, not the symptom. Say what you want the reader to do or feel.
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "Outline") {
+    return (
+      <div style={{ marginBottom: 10, flexShrink: 0 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
+          Structure is sound. Confirm the close mirrors the title before moving to Edit.
+        </div>
+        <div style={calloutStyle}>
+          You've been freestyling. Want to pick a format before Edit, or keep freestyle?
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Move to Edit</button>
+            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "transparent", border: "1px solid var(--line)", color: "var(--fg-2)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Keep Freestyle</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "Edit") {
+    return (
+      <div style={{ marginBottom: 10, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <div style={{ position: "relative", width: 48, height: 29 }}>
+            <svg viewBox="0 0 100 60" width="48" height="29">
+              <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="#E2E8F0" strokeWidth="10" strokeLinecap="round"/>
+              <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="#4A90D9" strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset="16"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>89%</div>
+            <div style={{ fontSize: 9, color: "var(--fg-3)", fontWeight: 600 }}>Voice Match <span style={{ fontWeight: 400 }}>(prelim)</span></div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+          <span style={pillGold}>2 must fix</span>
+          <span style={pillBlue}>3 style</span>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
+          2 passive constructions, 1 hedged claim. Style: paragraph 3 opens with 3 weak sentences in a row.
+        </div>
+        <div style={{ marginBottom: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--fg-3)", marginBottom: 3 }}>
+            <span>Word count</span>
+            <span>682 / 700</span>
+          </div>
+          <div style={{ height: 4, borderRadius: 2, background: "var(--bg-3, #E2E8F0)", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: "97%", background: "#4A90D9", borderRadius: 2 }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "Review") {
+    const checkpoints = [
+      { name: "SLOP Detection", status: "Pass", color: "#50c8a0" },
+      { name: "Human Voice Test", status: "Pass", color: "#50c8a0" },
+      { name: "Humanization", status: "Review", color: "var(--gold, #D4A832)" },
+      { name: "Deduplication", status: "Pass", color: "#50c8a0" },
+    ];
+    return (
+      <div style={{ marginBottom: 10, flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+          {checkpoints.map((cp, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
+              <span style={{ color: "var(--fg-2)" }}>{cp.name}</span>
+              <span style={{ fontWeight: 600, color: cp.color }}>{cp.status}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)", marginBottom: 6 }}>
+          Impact Score: <span style={{ color: "#4A90D9" }}>81</span> <span style={{ fontWeight: 400, color: "var(--fg-3)", fontSize: 11 }}>/ 100, threshold 75</span>
+        </div>
+        <div style={calloutStyle}>
+          This is ready. The humanization flag is paragraph 4. It opens with a pattern I have seen in your last three pieces. Worth breaking the habit here.
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "Wrap") {
+    return (
+      <div style={{ marginBottom: 10, flexShrink: 0 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
+          Freestyle mode. No format review required. Reed has packaged your content for every channel. Export All gives you clean, formatted outputs ready to publish.
+        </div>
+        <div style={calloutStyle}>
+          This piece has good legs. The LinkedIn version is strong. The essay close would make a solid standalone Sunday post if you want to file it separately.
+        </div>
+        <button style={{
+          width: "100%", padding: 8, borderRadius: 6,
+          background: "#0D1B2A", color: "#F5C642",
+          fontSize: 11, fontWeight: 700, border: "none",
+          cursor: "pointer", fontFamily: "inherit", marginTop: 8,
+        }}>
+          Export All
+        </button>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function ReedPanel() {
   const { reedThread, setReedThread, reedPrefill, setReedPrefill, reedPending, setReedPending } = useShell();
   const [input, setInput] = useState(reedPrefill || "");
@@ -490,6 +636,8 @@ function ReedPanel() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Stage-aware context message */}
+      <ReedStageContext stage={stage} />
       <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
         {reedThread.length === 0 && (
           <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 12 }}>
