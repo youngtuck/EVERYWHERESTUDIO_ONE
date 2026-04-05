@@ -1396,7 +1396,7 @@ function StageOutline({
 }: {
   outlineRows: OutlineRow[]; onUpdateRow: (i: number, v: string) => void;
   onAdvance: () => void; building: boolean;
-  angles?: { a: OutlineRow[]; b: OutlineRow[] } | null;
+  angles?: { a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null;
   currentAngle?: "a" | "b";
   onSelectAngle?: (angle: "a" | "b") => void;
 }) {
@@ -1404,12 +1404,12 @@ function StageOutline({
   const activeAngle = currentAngle || "a";
 
   const lensA = {
-    title: (angles?.a.find(r => r.label === "Title")?.content) || outlineRows.find(r => r.label === "Title")?.content || "Angle A",
-    desc: "Thesis-led structure. Strong opening statement, analytical flow.",
+    title: angles?.aMeta?.name || (angles?.a.find(r => r.label === "Title")?.content) || outlineRows.find(r => r.label === "Title")?.content || "Angle A",
+    desc: angles?.aMeta?.description || "Thesis-led structure. Strong opening statement, analytical flow.",
   };
   const lensB = {
-    title: (angles?.b.find(r => r.label === "Title")?.content) || "Alternative angle",
-    desc: "Hook-led structure. Emotional opening, narrative build, reflective close.",
+    title: angles?.bMeta?.name || (angles?.b.find(r => r.label === "Title")?.content) || "Alternative angle",
+    desc: angles?.bMeta?.description || "Hook-led structure. Emotional opening, narrative build, reflective close.",
   };
 
   return (
@@ -1437,7 +1437,7 @@ function StageOutline({
                   </div>
                 </div>
                 <div className="lens-desc">{lensA.desc}</div>
-                {activeAngle === "a" && <div className="lens-selected-badge">Selected &#10003;</div>}
+                {activeAngle === "a" && <div className="lens-selected-badge">SELECTED &#10003;</div>}
               </div>
               <div
                 className={`lens-card${activeAngle === "b" ? " selected" : ""}`}
@@ -1455,7 +1455,7 @@ function StageOutline({
                   </div>
                 </div>
                 <div className="lens-desc">{lensB.desc}</div>
-                {activeAngle === "b" && <div className="lens-selected-badge">Selected &#10003;</div>}
+                {activeAngle === "b" && <div className="lens-selected-badge">SELECTED &#10003;</div>}
               </div>
             </div>
 
@@ -2433,7 +2433,7 @@ export default function WorkSession() {
 
   // ── Outline ──────────────────────────────────────────────────
   const [outlineRows, setOutlineRows] = useState<OutlineRow[]>([]);
-  const [outlineAngles, setOutlineAngles] = useState<{ a: OutlineRow[]; b: OutlineRow[] } | null>(null);
+  const [outlineAngles, setOutlineAngles] = useState<{ a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null>(null);
   const [selectedAngle, setSelectedAngle] = useState<"a" | "b">("a");
   const [buildingOutline, setBuildingOutline] = useState(false);
 
@@ -2625,128 +2625,70 @@ export default function WorkSession() {
     goToStage("Outline");
     setBuildingOutline(true);
 
-    const summary = readySummary || buildConvSummary();
+    try {
+      const ot = outputType || (selectedFormats.length > 0
+        ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle"
+        : "freestyle");
 
-    // Parse Reed's summary by finding labeled sections.
-    // Handles: "Thesis: value", "**Thesis:** value", "- Thesis: value", "Thesis - value"
-    function extractField(text: string, field: string, nextFields: string[]): string {
-      // Try multiple patterns in order of specificity
-      const patterns = [
-        new RegExp(`(?:^|\\n)\\s*(?:\\*\\*)?${field}(?:\\*\\*)?\\s*[::]\\s*(?:\\*\\*)?`, "im"),  // **Thesis:** or Thesis: at line start
-        new RegExp(`(?:^|\\n)\\s*[-•]\\s*(?:\\*\\*)?${field}(?:\\*\\*)?\\s*[::]\\s*`, "im"),     // - Thesis: or • Thesis:
-        new RegExp(`(?:\\*\\*)?${field}(?:\\*\\*)?\\s*[::]\\s*(?:\\*\\*)?`, "i"),                   // Thesis: anywhere
-        new RegExp(`\\b${field}\\s+is\\s*[::]?\\s*`, "i"),                                        // "thesis is:" or "thesis is"
+      const res = await fetchWithRetry(`${API_BASE}/api/outline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          userId: user?.id,
+          outputType: ot,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Outline API returned ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      const mapRows = (rows: Array<{ label: string; content: string; indent?: boolean }>): OutlineRow[] =>
+        rows.map(r => ({ label: r.label || "", content: r.content || "", ...(r.indent ? { indent: true } : {}) }));
+
+      const angleA = mapRows(data.angleA.rows);
+      const angleB = mapRows(data.angleB.rows);
+
+      setOutlineAngles({
+        a: angleA,
+        b: angleB,
+        aMeta: { name: data.angleA.name, description: data.angleA.description },
+        bMeta: { name: data.angleB.name, description: data.angleB.description },
+      });
+      setSelectedAngle("a");
+      setOutlineRows(angleA);
+    } catch (err: any) {
+      console.error("[handleBuildOutline]", err);
+      toast?.("Outline generation failed. Using fallback.", "error");
+
+      // Fallback: minimal outline from user's first message
+      const userMsgs = messages.filter(m => m.role === "user").map(m => m.content);
+      const firstMsg = userMsgs.find(m => m.length > 20) || userMsgs[0] || "Untitled piece";
+      const fallbackTitle = firstMsg.length > 80 ? firstMsg.slice(0, 77) + "..." : firstMsg;
+
+      const fallback: OutlineRow[] = [
+        { label: "Title", content: fallbackTitle },
+        { label: "Hook", content: "Opening that earns the read" },
+        { label: "Body", content: "Core argument" },
+        { label: "Stakes", content: "Why this matters now" },
+        { label: "Close", content: "Landing" },
       ];
-
-      for (const pattern of patterns) {
-        const match = text.match(pattern);
-        if (!match || match.index === undefined) continue;
-        const startIdx = match.index + match[0].length;
-        // Strip any leading markdown bold closers
-        let cleanStart = startIdx;
-        while (cleanStart < text.length && text[cleanStart] === "*") cleanStart++;
-        if (cleanStart < text.length && text[cleanStart] === " ") cleanStart++;
-
-        let endIdx = text.length;
-        for (const next of nextFields) {
-          // Match next field label (with optional markdown bold, bullet prefix)
-          const nextPattern = new RegExp(`(?:^|\\n)\\s*(?:[-•]\\s*)?(?:\\*\\*)?${next}(?:\\*\\*)?\\s*[::]`, "im");
-          const nextMatch = text.slice(cleanStart).match(nextPattern);
-          if (nextMatch && nextMatch.index !== undefined) {
-            const candidateEnd = cleanStart + nextMatch.index;
-            if (candidateEnd < endIdx) endIdx = candidateEnd;
-          }
-        }
-        const result = text.slice(cleanStart, endIdx).replace(/[\s.*]+$/, "").replace(/^\*+/, "").trim();
-        if (result.length > 0) return result;
-      }
-      return "";
+      setOutlineAngles({
+        a: fallback,
+        b: fallback,
+        aMeta: { name: "Draft Outline", description: "Fallback outline. Edit freely." },
+        bMeta: { name: "Draft Outline", description: "Fallback outline. Edit freely." },
+      });
+      setSelectedAngle("a");
+      setOutlineRows(fallback);
+    } finally {
+      setBuildingOutline(false);
     }
-
-    const allLabels = ["thesis", "audience", "goal", "hook", "format", "tone", "angle"];
-    let thesis = extractField(summary, "thesis", allLabels.filter(l => l !== "thesis"));
-    let audience = extractField(summary, "audience", allLabels.filter(l => l !== "audience"));
-    let hook = extractField(summary, "hook", allLabels.filter(l => l !== "hook"));
-    let goal = extractField(summary, "goal", allLabels.filter(l => l !== "goal"));
-
-    // Fallback: if structured parsing fails, extract from conversation intelligently
-    if (!thesis && !hook) {
-      // Try to find Reed's last substantive message (the readiness signal)
-      const reedMessages = messages.filter(m => m.role === "reed").map(m => m.content);
-      const lastReed = reedMessages[reedMessages.length - 1] || "";
-      // Try parsing the last Reed message too
-      if (lastReed !== summary) {
-        thesis = thesis || extractField(lastReed, "thesis", allLabels.filter(l => l !== "thesis"));
-        audience = audience || extractField(lastReed, "audience", allLabels.filter(l => l !== "audience"));
-        hook = hook || extractField(lastReed, "hook", allLabels.filter(l => l !== "hook"));
-        goal = goal || extractField(lastReed, "goal", allLabels.filter(l => l !== "goal"));
-      }
-
-      // Last resort: extract from conversation context
-      if (!thesis) {
-        // Use the user's first substantial message as a rough thesis
-        const userMessages = messages.filter(m => m.role === "user").map(m => m.content);
-        const firstSubstantial = userMessages.find(m => m.length > 20) || userMessages[0] || "";
-        if (firstSubstantial.length > 0) {
-          thesis = firstSubstantial.length > 120 ? firstSubstantial.slice(0, 120).replace(/\s+\S*$/, "") : firstSubstantial;
-        }
-      }
-    }
-
-    // Only use defaults if we truly have nothing
-    thesis = thesis || "Core argument";
-    audience = audience || "Your target reader";
-    hook = hook || "Opening that earns the read";
-
-    // Generate a real title, not a thesis truncation
-    let title = "";
-    if (hook && hook.length > 10 && hook.length < 80) {
-      title = hook;
-    } else if (thesis.length <= 80) {
-      title = thesis;
-    } else {
-      const sentences = thesis.split(/[.!?]+/).filter(s => s.trim().length > 10);
-      if (sentences.length > 0) {
-        const shortest = sentences.reduce((a, b) => a.length < b.length ? a : b).trim();
-        title = shortest.length < 80 ? shortest : shortest.slice(0, 77) + "...";
-      } else {
-        title = thesis.slice(0, 77) + "...";
-      }
-    }
-
-    // Angle A: thesis-led (analytical structure)
-    const angleA: OutlineRow[] = [
-      { label: "Title", content: title },
-      { label: "Hook", content: hook || "Strong opening statement that frames the argument" },
-      { label: "Body", content: thesis },
-      { label: "", content: "Supporting evidence and examples.", indent: true },
-      { label: "", content: audience ? `Written for: ${audience}` : "Concrete implications for the reader.", indent: true },
-      { label: "Stakes", content: goal || "What changes if the reader acts on this." },
-      { label: "", content: "The cost of inaction.", indent: true },
-      { label: "Close", content: "Circle back to the opening image." },
-    ];
-
-    // Angle B: hook-led (narrative structure) — genuinely different
-    const angleBTitle = hook && hook.length > 10 && hook.length < 80 && hook !== title
-      ? hook
-      : (thesis.split(/[.!?]+/)[1] || thesis.split(/,/)[0] || title).trim();
-
-    const angleB: OutlineRow[] = [
-      { label: "Title", content: angleBTitle !== title ? angleBTitle : "A different take on: " + title.slice(0, 50) },
-      { label: "Hook", content: "Open with a scene or moment. Let the reader feel it before you explain it." },
-      { label: "Body", content: "Build from the personal to the universal." },
-      { label: "", content: thesis, indent: true },
-      { label: "", content: audience ? `Resonates with: ${audience}` : "Why this matters beyond the personal.", indent: true },
-      { label: "Stakes", content: "What you are building toward, not just what you are arguing." },
-      { label: "", content: goal || "Invite the reader into the next chapter.", indent: true },
-      { label: "Close", content: "Land on a question or an image, not a statement." },
-    ];
-
-    setOutlineAngles({ a: angleA, b: angleB });
-    setSelectedAngle("a");
-    setOutlineRows(angleA);
-    setBuildingOutline(false);
-  }, [readySummary, buildConvSummary, selectedFormats, goToStage, messages]);
+  }, [messages, selectedFormats, goToStage, outputType, user?.id, toast]);
 
   // ── OUTLINE → EDIT: Generate draft ───────────────────────────
   const handleGenerateDraft = useCallback(async () => {
