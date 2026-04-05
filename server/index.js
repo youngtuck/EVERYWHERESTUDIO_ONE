@@ -1,6 +1,6 @@
 /**
  * EVERYWHERE Studio — Work API
- * Watson (Claude) conversation + generation. Keep API key server-side only.
+ * Reed (Claude) conversation + generation. Keep API key server-side only.
  */
 import "dotenv/config";
 import express from "express";
@@ -23,7 +23,7 @@ app.use(express.json());
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const READY_MARKER = "READY_TO_GENERATE";
 
-const WATSON_SYSTEM = `You are Dr. John Watson, the First Listener for EVERYWHERE Studio. Your role is to capture the user's ideas, not to write for them.
+const REED_SYSTEM = `You are Reed, the First Listener for EVERYWHERE Studio. Your role is to capture the user's ideas, not to write for them.
 
 RULES:
 - Ask ONE question per response. Never ask multiple questions at once.
@@ -35,8 +35,8 @@ RULES:
 
 OUTPUT TYPES (for context): essay, newsletter, presentation, social, podcast, video, sunday_story, freestyle.`;
 
-function buildWatsonSystem(outputType) {
-  return `${WATSON_SYSTEM}
+function buildReedSystem(outputType) {
+  return `${REED_SYSTEM}
 
 Current output type for this session: ${outputType || "freestyle"}. Ask questions that clarify the idea, the audience, and any specifics needed to create it.`;
 }
@@ -90,11 +90,11 @@ app.post("/api/chat", async (req, res) => {
 
   try {
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-    const system = buildWatsonSystem(outputType);
+    const system = buildReedSystem(outputType);
 
     // Build messages for Claude: user/assistant alternating
     const claudeMessages = messages.map((m) => ({
-      role: m.role === "watson" ? "assistant" : "user",
+      role: m.role === "reed" ? "assistant" : "user",
       content: typeof m.content === "string" ? m.content : m.content,
     }));
 

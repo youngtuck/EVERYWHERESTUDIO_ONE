@@ -186,7 +186,7 @@ Natasha receives weekly intelligence on:
 
 ## INTEGRATION POINTS
 
-**With Watson:** Watson produces the raw capture. Natasha never sees raw capture - she sees content that has cleared Checkpoints 0-4. But she is aware of Watson's output quality and can request that Watson re-interview if the source material was thin.
+**With Reed:** Reed produces the raw capture. Natasha never sees raw capture - she sees content that has cleared Checkpoints 0-4. But she is aware of Reed's output quality and can request that Reed re-interview if the source material was thin.
 
 **With Charlie:** After Checkpoint 5 clears, Charlie runs the deliverables verification. Charlie and Natasha are the last two checks before the Composer receives anything. They do not overlap - Natasha is editorial, Charlie is mechanical completeness.
 

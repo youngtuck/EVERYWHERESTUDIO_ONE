@@ -19,7 +19,7 @@ Strategic Foundation is Mixed Grill's consulting engagement for thought leaders,
 
 Mark IS the extraction mechanism. Not questionnaires. Not pre-submitted samples.
 
-The differentiator: Mark walks into sessions knowing more about the client than they expect. He asks questions that go deeper than any form could reach. Watson captures. The team extracts.
+The differentiator: Mark walks into sessions knowing more about the client than they expect. He asks questions that go deeper than any form could reach. Reed captures. The team extracts.
 
 **This is premium positioning.** Mass-market sells automation. Strategic Foundation sells Mark plus orchestration.
 
@@ -52,7 +52,7 @@ The differentiator: Mark walks into sessions knowing more about the client than 
 **Purpose:** Deep discovery. Mark conducts extraction through conversation.
 
 **Agents Active:**
-- Dr. John Watson -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â Captures entire session
+- Dr. John Reed -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â Captures entire session
 - Tony -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â Frames Result and Purpose (What outcome are we after?)
 - Josh -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â Category positioning discovery
 - Jordan Lane -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â Voice DNA extraction from conversation itself
@@ -62,7 +62,7 @@ The differentiator: Mark walks into sessions knowing more about the client than 
 | Time | Focus | Owner |
 |---|---|---|
 | 0:00-0:30 | The Sherlock Reveal -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â Mark shares what Scout found | Mark |
-| 0:30-1:30 | Voice DNA validation -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â confirm patterns, uncover edge cases | Jordan + Watson |
+| 0:30-1:30 | Voice DNA validation -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â confirm patterns, uncover edge cases | Jordan + Reed |
 | 1:30-2:30 | Category positioning -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â finding their different game | Josh |
 | 2:30-3:00 | Purpose alignment -Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢'-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|...-Æ'-Â¢-Â¢"Å¡-Â¬-Â¢"Å¾-Â¢|-Æ'-" Â¢-Æ'"Å¡ Â why this matters to them (7 Levels Deep equivalent) | Tony |
 
@@ -153,7 +153,7 @@ Strategic Foundation is premium positioning. This is not a $997/year automated e
 | Phase | Primary Agent | Supporting Agents |
 |---|---|---|
 | Pre-engagement | Scout | Basil, Josh, Jordan |
-| Session 1 | Dr. Watson | Tony, Josh, Jordan |
+| Session 1 | Dr. Reed | Tony, Josh, Jordan |
 | Session 2 | Basil | Lea, Guy, Ward, Sara |
 | Documentation | Sara | All findings compiled |
 

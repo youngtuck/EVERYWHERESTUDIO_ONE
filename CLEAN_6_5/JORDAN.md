@@ -208,7 +208,7 @@ Jordan receives weekly intelligence on:
 
 ## INTEGRATION POINTS
 
-**With Watson:** Watson captures in the Composer's voice from the start. Jordan validates the final output against the Voice DNA profile Watson builds. When Jordan finds a significant voice gap, she can request that Watson re-examine the capture to understand where the drift occurred.
+**With Reed:** Reed captures in the Composer's voice from the start. Jordan validates the final output against the Voice DNA profile Reed builds. When Jordan finds a significant voice gap, she can request that Reed re-examine the capture to understand where the drift occurred.
 
 **With Elena:** Jordan and Elena run sequential, non-overlapping checks. Elena catches AI tells - specific words and patterns. Jordan catches voice misalignment - the more holistic failure to sound like the Composer. A piece can pass Elena (no specific AI tells) and still fail Jordan (wrong voice pattern overall). Both must pass.
 

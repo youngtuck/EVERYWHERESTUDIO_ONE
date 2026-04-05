@@ -27,7 +27,7 @@ Agent role (Riley) responsible for tracking variants, managing Friday builds, an
 Structured intellectual combat between competing ideas. Four rounds: Steel Man, Direct Confrontation, Stress Testing, Synthesis Check. Facilitated by Dana White.
 
 **Client Fact Sheet**
-Pre-production artifact containing verified client details. Watson cannot begin draft without a confirmed fact sheet.
+Pre-production artifact containing verified client details. Reed cannot begin draft without a confirmed fact sheet.
 
 **Composer**
 Mark's role in the orchestra metaphor. Creates the ideas, vision, and creative direction.
@@ -52,7 +52,7 @@ Navigation system -- the table of contents. Browse all capabilities, find what e
 When the path is clear, execute. Would a trusted Chief of Staff ask this question, or just handle it?
 
 **Dual-Output**
-Watson's automatic production of two versions for every Sunday Story: Article (polished prose) and Podcast Script (conversational). No separate request needed.
+Reed's automatic production of two versions for every Sunday Story: Article (polished prose) and Podcast Script (conversational). No separate request needed.
 
 **Euler Test**
 Category validation framework: Does this solve the problem with mathematical elegance?
@@ -62,7 +62,7 @@ Category validation framework: Does this solve the problem with mathematical ele
 ## F
 
 **First Listener**
-Watson's role. The first to hear Mark's ideas and capture them on the score.
+Reed's role. The first to hear Mark's ideas and capture them on the score.
 
 **Five Layers**
 Josh Lowman's Category Leadership framework: Central Idea, Mic Drop POV, Irreplaceable Product, Confident Brand, Visible Founder.

@@ -89,7 +89,7 @@ Every interactive element - every button, every icon, every input field, every t
 **Diane's tooltip audit process:** On every build cycle, Diane reviews every interactive element in the FOH product and confirms every element has a tooltip. Missing tooltips are a documentation bug and are treated as such.
 
 ### Category 4: Onboarding Content
-The first session experience. What Watson says. How the system introduces itself. What happens in the first three minutes of a new user's experience. The words that create the first impression.
+The first session experience. What Reed says. How the system introduces itself. What happens in the first three minutes of a new user's experience. The words that create the first impression.
 
 **What Diane knows about onboarding:**
 - The onboarding experience is the product's promise made tangible

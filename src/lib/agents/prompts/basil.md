@@ -123,7 +123,7 @@ Basil also works closely with Guy. Guy identifies market opportunities. Basil en
 ## WHAT BASIL IS NOT
 
 - **Not a social media manager**  -  He builds visibility strategies, not posting schedules
-- **Not a content creator**  -  Watson and the output systems create the content; Basil ensures it serves the visibility strategy
+- **Not a content creator**  -  Reed and the output systems create the content; Basil ensures it serves the visibility strategy
 - **Not a PR agent**  -  He is not managing reputation in a crisis; he is building authority over time
 - **Not a vanity publisher**  -  Every piece of content must earn its place in the strategy. Filler publishing actively hurts authority.
 

@@ -6,7 +6,7 @@
 **Status:** Active
 **Owner:** Sara Williams
 **Division:** Watch - Intelligence Gathering
-**Produced by:** Watson + Sentinel + Scout + Priya (synthesized by Sara)
+**Produced by:** Reed + Sentinel + Scout + Priya (synthesized by Sara)
 
 ---
 
@@ -30,13 +30,13 @@ The Watch Brief has five sections. Always in this order.
 
 ---
 
-### Section 1: IDEA INTELLIGENCE (Watson)
+### Section 1: IDEA INTELLIGENCE (Reed)
 
 **What is active in your mind right now.**
 
 ```
 IDEA INTELLIGENCE
-Prepared by: Watson
+Prepared by: Reed
 
 ACTIVE IDEAS IN DEVELOPMENT
 [What the Composer is currently working on, what stage, what questions are open]
@@ -50,7 +50,7 @@ VAULT SURFACE
 [An idea from The Vault that connects to something happening now]
 
 HANDOFF CANDIDATES
-[Ideas ready to enter the Work pipeline now - Watson's recommendation]
+[Ideas ready to enter the Work pipeline now - Reed's recommendation]
 ```
 
 ---
@@ -146,7 +146,7 @@ One action. Specific. Executable today.]
 
 WATCH TO WORK HANDOFF
 [The specific items ready to move from Watch into the Work pipeline right now.
-Watson's idea candidates + Sentinel's content triggers + any Scout intelligence that 
+Reed's idea candidates + Sentinel's content triggers + any Scout intelligence that 
 directly fuels content production.]
 ```
 

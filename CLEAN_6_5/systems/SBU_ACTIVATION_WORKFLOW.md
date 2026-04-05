@@ -193,8 +193,8 @@ When a decision is validated (GREEN) and the composer commits, the content syste
 **Trigger:** Sara says "GREEN. Activating communication cascade."
 
 **What happens:**
-1. Watson receives the validated decision
-2. Watson produces stakeholder-specific communications:
+1. Reed receives the validated decision
+2. Reed produces stakeholder-specific communications:
    - Board version
    - Investor version
    - Team version

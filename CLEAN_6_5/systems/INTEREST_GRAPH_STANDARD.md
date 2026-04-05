@@ -171,7 +171,7 @@ Every piece of content passing through this standard must satisfy five requireme
 ## PIPELINE POSITION
 
 ```
-Content Creation (Watson + Team)
+Content Creation (Reed + Team)
         ↓
 Quality Checkpoints (Betterish + Editorial - Checkpoints 0-6)
         ↓
@@ -234,7 +234,7 @@ For major pieces (book launches, keynote content, campaign anchors), full SBU co
 
 **Single filter failure:** Specific revision guidance provided. Content returns to relevant team member for targeted fix. Re-review on failed filter only.
 
-**Multiple filter failure:** SBU provides comprehensive revision brief. Content may need structural rework, not just polish. Watson or originating team member leads revision. Full re-review required.
+**Multiple filter failure:** SBU provides comprehensive revision brief. Content may need structural rework, not just polish. Reed or originating team member leads revision. Full re-review required.
 
 **Persistent failure (two rounds):** Escalate to Mark. Options: significant rework, repurpose for different channel, or accept as documented exception.
 

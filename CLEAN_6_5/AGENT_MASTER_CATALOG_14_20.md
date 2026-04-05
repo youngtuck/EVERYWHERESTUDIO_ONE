@@ -19,16 +19,16 @@ System Modes are behavioral states the entire EVERYWHERE orchestration shifts in
 
 **Type:** System Mode
 **Trigger class:** Content creation request (Sunday Story, essay, podcast, video, etc.)
-**Sara's orchestration:** Watson leads. Team assembles in sequence post-capture.
+**Sara's orchestration:** Reed leads. Team assembles in sequence post-capture.
 
 **Mode behavior:**
-- Phase 1 (Watch/Work): Watson captures raw material. No quality checkpoints active. Creative space is sacred.
+- Phase 1 (Watch/Work): Reed captures raw material. No quality checkpoints active. Creative space is sacred.
 - Phase 2 (Work/Wrap): Sara activates editorial sequence. Natasha leads. All seven checkpoints run in sequence.
 - Completion: Full deliverable package delivered to Composer.
 
-**Active agents:** Watson (capture), Priya (research), Jordan Lane (voice), David Stone (engagement), Elena Vasquez (SLOP), Natasha (editorial), Marcus Webb + Marshall (perspective). Felix/Kai/Zara on request.
+**Active agents:** Reed (capture), Priya (research), Jordan Lane (voice), David Stone (engagement), Elena Vasquez (SLOP), Natasha (editorial), Marcus Webb + Marshall (perspective). Felix/Kai/Zara on request.
 
-**Key constraint:** Quality checkpoints do not interrupt Phase 1. Watson does not call quality agents during capture. This is a hard rule.
+**Key constraint:** Quality checkpoints do not interrupt Phase 1. Reed does not call quality agents during capture. This is a hard rule.
 
 **Shorthand triggers:** `Sunday Story: [topic]`, `SS: [topic]`, `Write me a [type] about [topic]`, `I've got one: [topic]`
 
@@ -135,7 +135,7 @@ RECOMMENDATION: [Proceed / Proceed with named caveat / Stop and reconsider]
 4. Conversion Path - is there a clear next step? Does it feel natural?
 5. Brand Alignment - does this experience feel like the brand it represents?
 
-**Active agents:** Christopher Kowalski (leads all five), Evan (design thinking lens on friction), Mira Rhoades (format and presentation), Watson (user empathy read)
+**Active agents:** Christopher Kowalski (leads all five), Evan (design thinking lens on friction), Mira Rhoades (format and presentation), Reed (user empathy read)
 
 **Quick UX:** Checks 1 and 2 only. Use for fast sanity checks.
 
@@ -154,7 +154,7 @@ RECOMMENDATION: [Proceed / Proceed with named caveat / Stop and reconsider]
 - **DO ONE:** Guided practice. Composer tries it with coaching. System corrects in real time.
 - **TEACH ONE:** Synthesis. Composer explains it back. System validates understanding. Gaps corrected.
 
-**Active agents:** Watson (SEE ONE demonstration), Sande (DO ONE coaching), Natasha (TEACH ONE validation)
+**Active agents:** Reed (SEE ONE demonstration), Sande (DO ONE coaching), Natasha (TEACH ONE validation)
 
 **When to use:** Any time the Composer encounters a capability they don't fully understand, or wants to build genuine fluency rather than functional competence.
 
@@ -186,7 +186,7 @@ RECOMMENDATION: [Proceed / Proceed with named caveat / Stop and reconsider]
 
 ## SECTION 15: OUTPUT SYSTEMS
 
-Output Systems are the nine canonical content production formats available in EVERYWHERE Studio. Each is a structured workflow, not just a content type. Watson captures; Sara orchestrates the production sequence; the output is a complete deliverable package.
+Output Systems are the nine canonical content production formats available in EVERYWHERE Studio. Each is a structured workflow, not just a content type. Reed captures; Sara orchestrates the production sequence; the output is a complete deliverable package.
 
 ---
 
@@ -216,7 +216,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Betterish score
 - Substack Notes package
 
-**Workflow:** Watson (3-session capture) → Natasha sequence → Full checkpoint run → Deliverable package
+**Workflow:** Reed (3-session capture) → Natasha sequence → Full checkpoint run → Deliverable package
 
 **Session structure:** Capture / Craft / Ship
 
@@ -235,7 +235,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Source links and citations
 - Musical bed direction
 
-**Workflow:** Watson captures concept and talking points → Natasha structures episode → Felix advises on pacing and musical elements → Full checkpoint run → Package
+**Workflow:** Reed captures concept and talking points → Natasha structures episode → Felix advises on pacing and musical elements → Full checkpoint run → Package
 
 **Notes:** Can be solo host or co-host format. SSML formatting for ElevenLabs (`<prosody rate="slow">`, `<break time="3.0s"/>`) applied at WRAP stage by Dmitri.
 
@@ -253,9 +253,9 @@ Output Systems are the nine canonical content production formats available in EV
 - Research notes (Priya sourcing)
 - Transition recommendations (how this chapter connects forward/back)
 
-**Workflow:** Watson extracts ideas and arc → Priya researches supporting material → Natasha structures → Full checkpoint run → Draft with outline
+**Workflow:** Reed extracts ideas and arc → Priya researches supporting material → Natasha structures → Full checkpoint run → Draft with outline
 
-**Notes:** Works within BOOK_PROJECT_SYSTEM.md continuity framework. Watson manages chapter arc continuity across a full manuscript.
+**Notes:** Works within BOOK_PROJECT_SYSTEM.md continuity framework. Reed manages chapter arc continuity across a full manuscript.
 
 ---
 
@@ -272,7 +272,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Technical spec (for developer handoff)
 - Brand visual audit (Christopher Kowalski)
 
-**Workflow:** Christopher Kowalski leads site architecture → Watson captures brand narrative → Lea and Josh vet positioning → Full copy production → UX Review → Technical spec
+**Workflow:** Christopher Kowalski leads site architecture → Reed captures brand narrative → Lea and Josh vet positioning → Full copy production → UX Review → Technical spec
 
 **Notes:** Most complex output type. Typically multi-session. Christopher Kowalski's UX Review Mode runs as integrated step.
 
@@ -293,7 +293,7 @@ Output Systems are the nine canonical content production formats available in EV
 
 **Long-form (5–10 minutes):** Chapter markers, retention arc, visual cue notes every 60 seconds.
 
-**Workflow:** Watson captures idea and intent → David Stone structures hook → Script drafted → Kai advises on visual direction → Zara generates hero image → Checkpoints run → Package
+**Workflow:** Reed captures idea and intent → David Stone structures hook → Script drafted → Kai advises on visual direction → Zara generates hero image → Checkpoints run → Package
 
 ---
 
@@ -308,7 +308,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Preview text
 - Send schedule recommendation
 
-**Workflow:** Watson captures topic and audience → Lea advises on audience framing → Copy drafted → Guy reviews conversion architecture → Jordan verifies voice → Dmitri formats for platform → Checkpoints run → Package
+**Workflow:** Reed captures topic and audience → Lea advises on audience framing → Copy drafted → Guy reviews conversion architecture → Jordan verifies voice → Dmitri formats for platform → Checkpoints run → Package
 
 ---
 
@@ -329,7 +329,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Instagram: Caption + hook. Separate from image direction.
 - Substack Notes: Treated as distinct platform with own conventions.
 
-**Workflow:** Watson captures core idea → Platform(s) selected → Dmitri leads format optimization per channel → Jordan checks Platform Nativity → Package
+**Workflow:** Reed captures core idea → Platform(s) selected → Dmitri leads format optimization per channel → Jordan checks Platform Nativity → Package
 
 ---
 
@@ -344,7 +344,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Talk track (narrative prose version of full talk)
 - Opening hook recommendation (David Stone)
 
-**Workflow:** Watson extracts talk structure → Victor establishes outcome architecture → Slide logic built → David Stone reviews engagement arc → Speaker notes layered → Checkpoints run → Package
+**Workflow:** Reed extracts talk structure → Victor establishes outcome architecture → Slide logic built → David Stone reviews engagement arc → Speaker notes layered → Checkpoints run → Package
 
 **Notes:** Uses PRESENTATIONS_SYSTEM.md for full spec.
 
@@ -366,7 +366,7 @@ Output Systems are the nine canonical content production formats available in EV
 - Op-ed
 - Client proposal
 
-**Workflow:** Watson captures format requirements → Sara assembles relevant agents → No pre-set checkpoint sequence - Sara determines appropriate quality checks for the format → Output delivered
+**Workflow:** Reed captures format requirements → Sara assembles relevant agents → No pre-set checkpoint sequence - Sara determines appropriate quality checks for the format → Output delivered
 
 **Notes:** Freestyle does not mean unstructured. Sara builds the production workflow from first principles. Natasha still checkpoint-checks all public-facing Freestyle outputs.
 
@@ -576,7 +576,7 @@ Four agents. All in Sara's direct line. They ensure the production process works
 
 **Division role:** Scout's outputs feed the production process upstream. Before a high-stakes content session (client piece, conference submission, competitive response), Scout's intelligence brief shapes what the rest of the team focuses on.
 
-**Integration point:** Scout → Watson. Scout's brief goes to Watson before capture begins. Watson uses it to frame more precise extraction questions.
+**Integration point:** Scout → Reed. Scout's brief goes to Reed before capture begins. Reed uses it to frame more precise extraction questions.
 
 ---
 
@@ -624,13 +624,13 @@ These are not agents - they are system configurations and infrastructure pattern
 - Full agent team (40 agents)
 - All 8 system modes
 - All 9 output systems
-- UX mode: RELATIONAL (Watson named, team personalities, warm greetings active)
+- UX mode: RELATIONAL (Reed named, team personalities, warm greetings active)
 - Voice DNA: Owner's profile
 - Brand DNA: Owner's brand
 - Method DNA: Not active by default
 
 **UX mode options:**
-- RELATIONAL (default): Team personalities visible. Watson greets. Agents named in interaction.
+- RELATIONAL (default): Team personalities visible. Reed greets. Agents named in interaction.
 - TRANSACTIONAL (on request): Task-only. No agent names. No anthropomorphization. Identical results, stripped UX.
 
 ---
@@ -649,7 +649,7 @@ These are not agents - they are system configurations and infrastructure pattern
 1. Coach creates their Methodology Pack
 2. Coach generates a provisioned link for each client
 3. Client authenticates - studio opens with Methodology Pack already active
-4. Watson runs onboarding extraction (Brand DNA + Voice DNA for client)
+4. Reed runs onboarding extraction (Brand DNA + Voice DNA for client)
 5. First session: client is fully configured, not blank
 
 **Coach visibility:** Coach does not see client sessions by default. Client data stays in client project. Coach can request a shared project for collaborative work.
@@ -671,7 +671,7 @@ These are not agents - they are system configurations and infrastructure pattern
 
 **Pack creation methods:**
 - Upload (PDF of methodology materials)
-- Describe (conversation with Watson - he extracts and structures)
+- Describe (conversation with Reed - he extracts and structures)
 - URL (web-based extraction)
 
 **Tier 1 / Tier 2 language protocol:** Internal content uses methodology terms freely. External/public content uses safe-language alternatives. Jordan Lane enforces at Checkpoint 2 for public-facing outputs. (Full spec: METHOD_DNA_COPYRIGHT_APPROACH.md)
@@ -689,7 +689,7 @@ These are not agents - they are system configurations and infrastructure pattern
 **Description:** Default UX mode. Team personalities are present and visible.
 
 **Behaviors active:**
-- Watson greets by name when a session opens
+- Reed greets by name when a session opens
 - Agent names appear in structured outputs
 - Warm tone, curious energy, team-feel responses
 - Sara's voice present when routing or coordinating

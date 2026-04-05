@@ -26,7 +26,7 @@
 
 Before ANY content production begins, Sara confirms or creates the Client Fact Sheet.
 
-**Checkpoints:** Watson cannot begin draft without confirmed fact sheet.
+**Checkpoints:** Reed cannot begin draft without confirmed fact sheet.
 
 ### Mark Sylvester Fact Sheet (Reference)
 
@@ -47,7 +47,7 @@ Before ANY content production begins, Sara confirms or creates the Client Fact S
 
 ## SPECIALIST TEAM (9 AGENTS)
 
-### Dr. John Watson - First Listener
+### Dr. John Reed - First Listener
 - **Age**: 52 | **Background**: Former longform journalist (The Atlantic, Esquire), ghostwriter
 - **Function**: Works directly with Mark to capture the story idea, draw it out through questions, and shape the first draft
 - **Traits**: Patient listener, curious questioner, story extractor
@@ -98,7 +98,7 @@ Before ANY content production begins, Sara confirms or creates the Client Fact S
 
 ### Sara Williams - Chief of Staff
 - **Age**: 39 | **Background**: Agency operations director, content operations consultant
-- **Function**: Owns Client Fact Sheet (v5.2), receives draft from Watson, coordinates QA workflow, manages quality checkpoints, routes to Strategic Business Unit (SBU) for Interest Graph review, ensures delivery
+- **Function**: Owns Client Fact Sheet (v5.2), receives draft from Reed, coordinates QA workflow, manages quality checkpoints, routes to Strategic Business Unit (SBU) for Interest Graph review, ensures delivery
 - **Traits**: Process enforcer, timeline guardian, quality checkpoint monitor
 - **Output**: Smoothly orchestrated production meeting all standards and deadlines
 - **Quality Standard**: All quality checkpoints passed, Interest Graph Framework passed, timeline maintained
@@ -172,7 +172,7 @@ Sunday Stories reach strangers through algorithmic distribution. A reader who ha
 ```
 PRE-PRODUCTION: Client Fact Sheet (Sara) |-Æ'"Å¡ Â -Æ'"Å¡ Â NEW v5.2
  |-Æ'"Å¡ Â -Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""
-CONTENT CREATION (Watson + Mark)
+CONTENT CREATION (Reed + Mark)
  |-Æ'"Å¡ Â -Æ'-" Â¢-Æ'-Â¢-Â¢"Å¡-Â¬-""
 Quality Checkpoints (1-6) |-Æ'"Å¡ Â ' PASS
  Checkpoint 5 includes Stranger Test |-Æ'"Å¡ Â -Æ'"Å¡ Â NEW v5.2
@@ -202,7 +202,7 @@ DELIVERY
 
 | # | Deliverable | Specification | Owner |
 |---|---|---|---|
-| 1 | Article | ~3,000 words, paragraph prose | Watson/Natasha |
+| 1 | Article | ~3,000 words, paragraph prose | Reed/Natasha |
 | 2 | Podcast Script | Through Another Lens format, standard intro/outro | Dmitri |
 | 3 | Show Notes | NO timestamps, section names only, Substack link | Dmitri |
 | 4 | LinkedIn Video Script | Under 2 minutes, B-roll cues embedded | Dmitri |

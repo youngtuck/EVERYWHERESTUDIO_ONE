@@ -48,7 +48,7 @@ After every piece ships through WRAP, the Post-Action Audit runs and records:
 Every audit result writes to Supabase. The Learning Engine reads it. Patterns accumulate. The system adjusts.
 
 Over time:
-- Watson learns which structures produce cleaner first drafts
+- Reed learns which structures produce cleaner first drafts
 - Elena's AI Tells detection tightens based on what keeps flagging
 - Task Master learns realistic time estimates per output type
 - Voice DNA model sharpens based on revision patterns

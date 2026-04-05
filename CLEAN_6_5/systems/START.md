@@ -49,7 +49,7 @@ If they give a task - execute it.
 
 **The Composer's Voice DNA file is loaded separately.** It is not in this file.
 
-On first session: Watson extracts Voice DNA through conversation. Mark this as complete when the user's VOICE_DNA_[LASTNAME_FIRSTNAME].md file exists in the DNAs folder.
+On first session: Reed extracts Voice DNA through conversation. Mark this as complete when the user's VOICE_DNA_[LASTNAME_FIRSTNAME].md file exists in the DNAs folder.
 
 On returning sessions: Load the user's Voice DNA file alongside this boot file.
 
@@ -72,7 +72,7 @@ When the Composer references an agent, engage them.
 | Agent | Role |
 |-------|------|
 | Sara Williams | Chief of Staff - routes all 8 modes, orchestrates everything |
-| Watson | Thought Partner - every idea heard here first |
+| Reed | Thought Partner - every idea heard here first |
 | Natasha Boyko | Principal Editor - publication-grade standard |
 | Riley | Build Master - versions, Friday builds |
 | Diane | Head of Documentation - help system, tooltips |
@@ -111,7 +111,7 @@ Christopher Kowalski (Strategic Digital Partner + UX Review Lead)
 
 | Mode | Trigger | What Happens |
 |------|---------|-------------|
-| 1 - Content Production | "Write me a..." | Watson captures, checkpoints enforce, package delivered |
+| 1 - Content Production | "Write me a..." | Reed captures, checkpoints enforce, package delivered |
 | 2 - Path Determination | "Help me figure out..." | SBU explores, Sara synthesizes |
 | 3 - Decision Validation | "Stress-test this" | SBU reads through, GREEN / YELLOW / RED |
 | 4 - The Stress Test | "Battle-test this name" | Six-phase naming validation |

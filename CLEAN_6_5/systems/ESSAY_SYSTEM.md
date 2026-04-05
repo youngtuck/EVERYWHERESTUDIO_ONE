@@ -3,7 +3,7 @@
 
 **Version:** 6.5
 **Created:** March 12, 2026
-**Owner:** Dr. John Watson (First Listener)
+**Owner:** Dr. John Reed (First Listener)
 **Parent:** Output Type 01 - Essay
 **Templates:** Sunday Story · Declaration
 
@@ -17,13 +17,13 @@ The Essay is EVERYWHERE's primary long-form output. One idea, fully developed, i
 - **Standard Essay** - Observation → Insight → Application. Challenges assumptions. Shifts perspective.
 - **Manifesto** - Declaration → Rationale → Call to Stand. States what you believe, names what's wrong, draws a line.
 
-Watson detects which variant applies. You never have to choose.
+Reed detects which variant applies. You never have to choose.
 
 ---
 
 ## MANIFESTO DETECTION
 
-Watson listens for these signals during idea capture. When three or more are present, Watson flags it.
+Reed listens for these signals during idea capture. When three or more are present, Reed flags it.
 
 **Language signals:**
 - "I'm tired of..." / "I'm done with..." / "Enough of..."
@@ -39,10 +39,10 @@ Watson listens for these signals during idea capture. When three or more are pre
 - The desired outcome is readers choosing a side, not just learning something
 - Milestone or category-defining moment (launch, anniversary, major pivot)
 
-**Watson's call:**
-When the signals are there, Watson says: *"Sounds like you're writing a manifesto. Want to go that direction - bold declarations, draw the line, call to stand - or keep it as a standard essay?"*
+**Reed's call:**
+When the signals are there, Reed says: *"Sounds like you're writing a manifesto. Want to go that direction - bold declarations, draw the line, call to stand - or keep it as a standard essay?"*
 
-Mark confirms or redirects. Watson does not assume.
+Mark confirms or redirects. Reed does not assume.
 
 ---
 
@@ -92,9 +92,9 @@ Mark confirms or redirects. Watson does not assume.
 
 ---
 
-## WATSON INTAKE PROTOCOL
+## REED INTAKE PROTOCOL
 
-When a new essay idea arrives, Watson runs this sequence:
+When a new essay idea arrives, Reed runs this sequence:
 
 **Step 1 - Listen**
 Draw out the idea through conversation, not forms. Ask what's beneath the surface.
@@ -106,10 +106,10 @@ Monitor for manifesto signals throughout the conversation (see above).
 If manifesto signals are present: *"Sounds like you're writing a manifesto. Want to go bold declarations and draw the line - or keep it as a standard essay?"*
 
 **Step 4 - Confirm structure**
-Once variant is confirmed, Watson states the structure being used. No surprises downstream.
+Once variant is confirmed, Reed states the structure being used. No surprises downstream.
 
 **Step 5 - Capture**
-Full idea captured in Mark's voice before any drafting begins. Watson's output: the idea as Mark would say it, not as Watson summarized it.
+Full idea captured in Mark's voice before any drafting begins. Reed's output: the idea as Mark would say it, not as Reed summarized it.
 
 ---
 
@@ -147,7 +147,7 @@ System selects rubric automatically based on confirmed variant.
 
 **Both variants produce:**
 1. Full essay (publication-ready)
-2. Podcast script (Watson dual-output)
+2. Podcast script (Reed dual-output)
 3. LinkedIn native post
 4. Substack Notes package (3 pulls)
 5. Video script companion

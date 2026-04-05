@@ -6,13 +6,13 @@
 **Status:** Active
 **Owner:** Sara Williams
 **Parent:** Output Systems (OS-06)
-**Execution Mode:** Autonomous with Watson capture
+**Execution Mode:** Autonomous with Reed capture
 
 ---
 
 ## WHAT THIS IS
 
-The Email Newsletter system produces complete, delivery-ready email campaigns for the Composer's subscriber list. Not a template. Not a fill-in-the-blank framework. A complete production workflow that begins with Watson capturing the topic and idea, runs through the standard quality checkpoint sequence, and delivers a packaged campaign ready for scheduling.
+The Email Newsletter system produces complete, delivery-ready email campaigns for the Composer's subscriber list. Not a template. Not a fill-in-the-blank framework. A complete production workflow that begins with Reed capturing the topic and idea, runs through the standard quality checkpoint sequence, and delivers a packaged campaign ready for scheduling.
 
 Email is the highest-value distribution channel for most thought leaders. Unlike social platforms, the Composer owns the relationship. The audience opted in. The content reaches them directly. A great email newsletter compounds trust. A mediocre one erodes it.
 
@@ -46,12 +46,12 @@ When the subject line decision is close, Dmitri provides specific A/B testing gu
 
 ## PRODUCTION WORKFLOW
 
-### Phase 1: Watson Capture
-Watson opens the email newsletter session and captures the core idea. One focused question: "What is the one thing this email delivers to the reader?"
+### Phase 1: Reed Capture
+Reed opens the email newsletter session and captures the core idea. One focused question: "What is the one thing this email delivers to the reader?"
 
-Email newsletters fail when they try to do too much. Watson enforces the single-focus discipline at capture. If the Composer has multiple ideas, Watson helps identify the primary one and routes the others to the Vault for future newsletters.
+Email newsletters fail when they try to do too much. Reed enforces the single-focus discipline at capture. If the Composer has multiple ideas, Reed helps identify the primary one and routes the others to the Vault for future newsletters.
 
-Watson also captures:
+Reed also captures:
 - Target audience segment (if the Composer sends to segmented lists)
 - Any timing requirements or hooks to current events
 - Whether this is a standalone email or part of a series
@@ -177,7 +177,7 @@ Ward and Guy both review the CTA at Interest Graph Standard review.
 
 ## SERIES MANAGEMENT
 
-When the Composer runs a multi-email series (a launch sequence, an onboarding sequence, a course), Watson tracks the series arc and ensures each email advances the narrative without repeating what previous emails established.
+When the Composer runs a multi-email series (a launch sequence, an onboarding sequence, a course), Reed tracks the series arc and ensures each email advances the narrative without repeating what previous emails established.
 
 Echo's deduplication check becomes a cross-email check in series mode - against the series as a whole, not just within the current email.
 

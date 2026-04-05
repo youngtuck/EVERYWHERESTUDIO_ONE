@@ -163,7 +163,7 @@ Format Optimization
 PRE-PRODUCTION: Client Fact Sheet (Sara)
         |
         v
-CONTENT CREATION (Watson + Mark)
+CONTENT CREATION (Reed + Mark)
         |
         v
 Checkpoint 0: Deduplication (Echo)
@@ -246,8 +246,8 @@ DELIVERY
 
 ### Checkpoint 0 Failure (v5.3)
 1. Echo identifies redundancy
-2. Content returns to Watson for deduplication
-3. Watson fixes, resubmits
+2. Content returns to Reed for deduplication
+3. Reed fixes, resubmits
 4. Echo re-reviews
 5. Must pass before proceeding to Checkpoint 1
 
@@ -260,8 +260,8 @@ DELIVERY
 
 ### Stranger Test Failure (Checkpoint 5)
 1. Natasha identifies undefined terms
-2. Flags for Watson
-3. Watson adds context paragraph before first use
+2. Flags for Reed
+3. Reed adds context paragraph before first use
 4. Natasha re-reviews
 5. Must pass before proceeding
 

@@ -117,7 +117,7 @@ What happens when things go wrong?
 
 ### 4. Integration Test
 Do components work together?
-- Does Watson hand off correctly to Sara?
+- Does Reed hand off correctly to Sara?
 - Does Sara route correctly to the right checkpoint?
 - Does a Charlie hold stop delivery at the right point?
 - Does Tempo track correctly across session transitions?

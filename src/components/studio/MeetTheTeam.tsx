@@ -18,7 +18,7 @@ const DIVISIONS: Division[] = [
     title: "Watch Division",
     color: "var(--cornflower)",
     agents: [
-      { name: "Reed", role: "First Listener", description: "Every idea is heard here first." },
+      { name: "Reed", role: "First Listener", description: "Named for the reading that built him. Built for the writing that matters." },
       { name: "Sentinel", role: "Category Intelligence", description: "Always monitoring your market." },
       { name: "Scout", role: "Special Intelligence", description: "Deploys on command for specific recon." },
     ],

@@ -141,7 +141,7 @@ UNTRAINED:
 Every capability in EVERYWHERE Studio can be trained via SODOTU. Sande's active training curriculum covers:
 
 **Core production capabilities:**
-- Sunday Story workflow: Watson capture through Charlie verification
+- Sunday Story workflow: Reed capture through Charlie verification
 - LinkedIn content production
 - Podcast script production
 - Video script production
@@ -155,10 +155,10 @@ Every capability in EVERYWHERE Studio can be trained via SODOTU. Sande's active 
 **Watch capabilities:**
 - Sentinel briefing: how to read it and how to route from it to content production
 - Scout activation: when and how to deploy pre-engagement intelligence
-- Watson advanced: using the Vault, understanding pattern recognition, feeding the system over time
+- Reed advanced: using the Vault, understanding pattern recognition, feeding the system over time
 
 **System capabilities:**
-- Voice DNA extraction: how Watson builds the profile and how to strengthen it
+- Voice DNA extraction: how Reed builds the profile and how to strengthen it
 - Mode activation: all eight modes and when each is appropriate
 - Discover: navigating the capability map
 

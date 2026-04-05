@@ -3,7 +3,7 @@
 
 **Version:** 1.0 (v6.5 system)
 **Created:** March 13, 2026
-**Owner:** Dr. John Watson (First Listener) / Jordan Lane (Brand DNA Guardian)
+**Owner:** Dr. John Reed (First Listener) / Jordan Lane (Brand DNA Guardian)
 **Status:** Production Ready
 **Classification:** BOH System Specification - FOH UX Behavior
 
@@ -13,7 +13,7 @@
 
 The person using EVERYWHERE Studio during onboarding is not filling out a brand questionnaire. They're having a conversation.
 
-Watson extracts Brand DNA the way Sherlock Holmes reads a room - through inference, not interrogation. Every question Watson asks during onboarding is doing double work: it feels like orientation, but it's actually extraction. The Composer never says "I'm building your Brand DNA now." They simply talk. Watson builds.
+Reed extracts Brand DNA the way Sherlock Holmes reads a room - through inference, not interrogation. Every question Reed asks during onboarding is doing double work: it feels like orientation, but it's actually extraction. The Composer never says "I'm building your Brand DNA now." They simply talk. Reed builds.
 
 This is non-negotiable UX. Brand DNA built through form-filling feels like homework. Brand DNA built through conversation feels like being understood.
 
@@ -23,9 +23,9 @@ This is non-negotiable UX. Brand DNA built through form-filling feels like homew
 
 | Agent | Role |
 |---|---|
-| Watson | Conducts the onboarding conversation. Asks the questions. Infers the signals. |
-| Jordan Lane | Receives Watson's raw extraction. Structures it as canonical Brand DNA. Flags gaps. |
-| Sara | Activates Watson at onboarding entry. Receives Jordan's structured output. Files to project. |
+| Reed | Conducts the onboarding conversation. Asks the questions. Infers the signals. |
+| Jordan Lane | Receives Reed's raw extraction. Structures it as canonical Brand DNA. Flags gaps. |
+| Sara | Activates Reed at onboarding entry. Receives Jordan's structured output. Files to project. |
 
 The Composer (Mark or any end user) is not in this loop as a visible participant. They experience it as a friendly conversation.
 
@@ -33,12 +33,12 @@ The Composer (Mark or any end user) is not in this loop as a visible participant
 
 ## TRIGGER
 
-Watson activates when:
+Reed activates when:
 - A new user completes authentication and enters their first project for the first time
 - A returning user creates a new project (separate trigger - lighter version)
 - A Coach activates a client's project for the first time
 
-**Entry line (Watson):**
+**Entry line (Reed):**
 > "Before we do anything else - tell me a little about what you're building. Not the features or the deliverables. The thing underneath that. What does this exist to do in the world?"
 
 This single open question yields more Brand DNA signal than any form.
@@ -47,7 +47,7 @@ This single open question yields more Brand DNA signal than any form.
 
 ## THE SHERLOCKIAN QUESTION SET
 
-Watson does not ask all of these questions in every session. He reads the conversation and deploys the questions that will fill the gaps in what he's already inferred. The goal is 25–30 minutes of natural conversation that yields a complete Brand DNA draft.
+Reed does not ask all of these questions in every session. He reads the conversation and deploys the questions that will fill the gaps in what he's already inferred. The goal is 25–30 minutes of natural conversation that yields a complete Brand DNA draft.
 
 ### Category: Brand Foundation
 
@@ -144,9 +144,9 @@ Watson does not ask all of these questions in every session. He reads the conver
 
 ---
 
-## WATSON'S INFERENCE LOGIC
+## REED'S INFERENCE LOGIC
 
-Watson is not transcribing. He's inferring. After each response, Watson runs a silent check:
+Reed is not transcribing. He's inferring. After each response, Reed runs a silent check:
 
 1. **What did this confirm?** Signals that reinforce a pattern already forming.
 2. **What did this reveal?** New signal not previously visible.
@@ -154,7 +154,7 @@ Watson is not transcribing. He's inferring. After each response, Watson runs a s
 
 The next question addresses the largest remaining gap. This is the Sherlockian method: accumulate inference, fill gaps systematically, trust the pattern.
 
-Watson's internal working model after each exchange:
+Reed's internal working model after each exchange:
 
 ```
 BRAND DNA SIGNAL LOG (internal - not shown to user)
@@ -166,20 +166,20 @@ Visual: [building / confirmed / gap]
 Positioning: [building / confirmed / gap]
 ```
 
-When all five dimensions reach "confirmed," Watson closes the extraction sequence and hands off to Jordan Lane.
+When all five dimensions reach "confirmed," Reed closes the extraction sequence and hands off to Jordan Lane.
 
 ---
 
 ## HANDOFF TO JORDAN LANE
 
-When Watson's extraction is complete, he does not announce it. He closes naturally:
+When Reed's extraction is complete, he does not announce it. He closes naturally:
 
 > "This is exactly what I needed. I have a real sense of what you're building now. I'll use this as the foundation for everything we do together."
 
-Then internally, Watson packages the extraction as a structured handoff:
+Then internally, Reed packages the extraction as a structured handoff:
 
 ```
-WATSON → JORDAN LANE HANDOFF
+REED → JORDAN LANE HANDOFF
 
 Project: [Name]
 Extraction Date: [Date]
@@ -216,7 +216,7 @@ Jordan Lane structures the raw signal into canonical Brand DNA format. The outpu
 
 Nothing about Brand DNA extraction. They see:
 - A warm, curious conversation about their work
-- Watson reflecting back what they said in their own language
+- Reed reflecting back what they said in their own language
 - The sense that the system already understands them before they've done any setup
 
 The Brand DNA file exists in the background. It runs through Jordan Lane on every output. The user experiences it as "this thing sounds exactly right" - not "I filled out a brand form."
@@ -225,7 +225,7 @@ The Brand DNA file exists in the background. It runs through Jordan Lane on ever
 
 ## NEW PROJECT (RETURNING USER)
 
-For a returning user creating a second project, Watson runs a lighter version:
+For a returning user creating a second project, Reed runs a lighter version:
 
 **Q-Return-1:**
 > "This is a different project - tell me one thing about this one that's distinct from what we've built before."
@@ -233,7 +233,7 @@ For a returning user creating a second project, Watson runs a lighter version:
 **Q-Return-2:**
 > "Who are you talking to here that might be different from your other work?"
 
-Watson infers from prior Brand DNA plus new signals. Jordan Lane produces a delta update, not a full rebuild, unless the signals diverge significantly.
+Reed infers from prior Brand DNA plus new signals. Jordan Lane produces a delta update, not a full rebuild, unless the signals diverge significantly.
 
 ---
 
@@ -242,11 +242,11 @@ Watson infers from prior Brand DNA plus new signals. Jordan Lane produces a delt
 When a coach activates a new client project using a provisioned link:
 
 1. The Methodology Pack is already active (pre-provisioned by coach)
-2. Watson runs a condensed Brand DNA extraction (Foundation + Audience + Voice only - 3 exchanges)
+2. Reed runs a condensed Brand DNA extraction (Foundation + Audience + Voice only - 3 exchanges)
 3. Visual and Positioning dimensions are deferred to first work session, populated organically
 4. Jordan Lane produces a starter Brand DNA with explicit GAP markers
 
-The client's first experience is the coach's methodology already active, combined with Watson having learned who they are in 15 minutes.
+The client's first experience is the coach's methodology already active, combined with Reed having learned who they are in 15 minutes.
 
 ---
 
@@ -255,10 +255,10 @@ The client's first experience is the coach's methodology already active, combine
 Jordan Lane validates the extracted Brand DNA against three criteria before filing:
 
 1. **Completeness:** All five dimensions have at least one strong signal
-2. **Authenticity:** Signal comes from the user's own language, not Watson's interpretations
+2. **Authenticity:** Signal comes from the user's own language, not Reed's interpretations
 3. **Distinctiveness:** Brand DNA is specific enough to differentiate output - "warm and professional" fails; "wry and unhurried with a precision bias" passes
 
-If Brand DNA does not pass Jordan's validation, he flags for a targeted follow-up conversation. Sara routes the flag. Watson initiates a brief second extraction focused on the gap dimension.
+If Brand DNA does not pass Jordan's validation, he flags for a targeted follow-up conversation. Sara routes the flag. Reed initiates a brief second extraction focused on the gap dimension.
 
 ---
 
@@ -266,7 +266,7 @@ If Brand DNA does not pass Jordan's validation, he flags for a targeted follow-u
 
 - `BRAND_DNA_BUILDER_SYSTEM.md` - Full technical spec for Brand DNA creation and format
 - `JORDAN_LANE.md` - Jordan's role in Voice and Brand DNA validation
-- `DR_JOHN_WATSON.md` - Watson's role and approach
+- `DR_JOHN_REED.md` - Reed's role and approach
 - `EVERYWHERE_STUDIO_FOH_SPEC_v6_1.md` - FOH onboarding experience context
 - `METHODOLOGY_PACKS.md` - Coach channel infrastructure
 

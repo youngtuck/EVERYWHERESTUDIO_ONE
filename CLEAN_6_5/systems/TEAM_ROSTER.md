@@ -39,7 +39,7 @@ MARK SYLVESTER " Composer
     |   +-- Diane " Head of Documentation
     |
     |-- CONTENT ORIGIN (1)
-    |   +-- Dr. John Watson " First Listener
+    |   +-- Dr. John Reed " First Listener
     |
     |-- QUALITY CHECKPOINT OFFICERS (8) " Report to Natasha
     |   |-- Checkpoint 0: Echo " Deduplication
@@ -85,7 +85,7 @@ MARK SYLVESTER " Composer
 
 **Natasha (Principal Editor)** sets the quality standard the entire orchestra tunes to. All checkpoint officers and quality specialists report to her.
 
-**Dr. Watson (First Listener)** hears every idea first and captures it before it becomes a draft.
+**Dr. Reed (First Listener)** hears every idea first and captures it before it becomes a draft.
 
 **The SBU " 11 members.** One ethos: Value is the only conversation. Scott Cole speaks ninth " market reality before Dana's challenge.
 
@@ -159,7 +159,7 @@ Checkpoints are blockers, not suggestions. Sara cannot override. Mark can " docu
 **Operations Leadership (5):**
 Sara Williams, Natasha Boyko, Isabella Quinn, Martin Rhodes, Riley, Diane
 
-**Content Origin (1):** Dr. John Watson
+**Content Origin (1):** Dr. John Reed
 
 **Quality Checkpoint Officers (8):**
 Echo, Priya Kumar, Jordan Lane, David Stone, Dr. Elena Vasquez, Natasha Boyko, Dr. Marcus Webb, Marshall

@@ -252,12 +252,12 @@ MASTERY CONFIRMED
 ```
 "Starting a Sunday Story on 'The AI Paradox.' Watch how this works.
 
-Watson opens the conversation -- he's the First Listener. 
+Reed opens the conversation -- he's the First Listener. 
 His job is drawing out the story, not writing it.
 
-[Watson engages with the topic, produces draft]
+[Reed engages with the topic, produces draft]
 
-Draft done. Now Sara takes over -- Watson's job is finished.
+Draft done. Now Sara takes over -- Reed's job is finished.
 
 First up: Echo runs Checkpoint 0. Checking for repeated ideas 
 before the editorial team touches it.

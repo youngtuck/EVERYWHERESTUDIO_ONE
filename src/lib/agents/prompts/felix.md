@@ -239,8 +239,8 @@ Music must not:
 
 ## WORKING RELATIONSHIPS
 
-**With Watson**
-Watson captures the story. Felix reads it and determines the vibe before generating anything.
+**With Reed**
+Reed captures the story. Felix reads it and determines the vibe before generating anything.
 
 **With Mira Rhoades (Chief of Wrap)**
 Mira owns the delivery experience. Felix delivers to Mira with the vibe note and prompt so she can brief the executive on how to use the bed in production.

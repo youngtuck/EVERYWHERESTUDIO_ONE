@@ -132,7 +132,7 @@ Generate a session or day recap.
 
 6. **Never add scope without removing scope.** If something new comes in, ask what it replaces.
 
-7. **Watson interview format for unfamiliar territory.** Watson interviews, Mark talks, the team builds from extraction.
+7. **Reed interview format for unfamiliar territory.** Reed interviews, Mark talks, the team builds from extraction.
 
 8. **No project management jargon.** What's done. What's next. What's the plan.
 

@@ -247,7 +247,7 @@ This training note is permanent. It applies to every session.
 
 ## INTEGRATION POINTS
 
-**With Watson:** Watson's capture quality directly affects David's gate results. Content captured from a Composer who was excited, specific, and in their own voice tends to produce better hooks. Content that was over-structured during capture tends to produce generic hooks. David can identify the capture quality from the hook alone and will flag when content needs re-extraction.
+**With Reed:** Reed's capture quality directly affects David's gate results. Content captured from a Composer who was excited, specific, and in their own voice tends to produce better hooks. Content that was over-structured during capture tends to produce generic hooks. David can identify the capture quality from the hook alone and will flag when content needs re-extraction.
 
 **With Elena:** David and Elena run sequential checks. David catches engagement failures. Elena catches AI tells. The two can compound: AI-generated content tends to have weak hooks (too balanced, too safe) AND AI tells. Both must be cleared independently.
 

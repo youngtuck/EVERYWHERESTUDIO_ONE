@@ -7,7 +7,7 @@ const STEPS = [
   },
   {
     title: "Reed, Your First Listener",
-    body: "Reed interviews you until he fully understands what you're trying to say. Not a form. Not a prompt. A real conversation. He'll ask until he has your thesis, your audience, your hook, and your format.\n\nTake your time. The better Reed understands you, the better the Room performs.",
+    body: "Reed reads. Deeply, across your industry, your competitors, your audience's conversations. He distills what matters into signal you can act on. He does not just surface information. He challenges it. He asks better questions than most people do.\n\nTake your time with Reed. The better he understands your thinking, the stronger the Room performs.",
   },
   {
     title: "The Room",

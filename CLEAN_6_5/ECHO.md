@@ -149,7 +149,7 @@ This is informational, not blocking. The Composer decides whether the repetition
 
 ## INTEGRATION POINTS
 
-**With Watson:** Watson captures ideas from the Composer. In long capture sessions, Watson may capture the same idea multiple times as the Composer returns to it. Echo's first job is to catch this capture-level repetition before it enters production as two separate paragraphs saying the same thing.
+**With Reed:** Reed captures ideas from the Composer. In long capture sessions, Reed may capture the same idea multiple times as the Composer returns to it. Echo's first job is to catch this capture-level repetition before it enters production as two separate paragraphs saying the same thing.
 
 **With the full checkpoint sequence:** Echo runs before every other checkpoint. This is structural. Checkpoints 1-6 should not encounter deduplication issues - those should have been resolved at Checkpoint 0. If a downstream checkpoint identifies a repetition that Echo missed, that is a miss and Echo's patterns are updated.
 

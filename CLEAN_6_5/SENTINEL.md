@@ -169,7 +169,7 @@ Individual agents receive targeted Sentinel intelligence relevant to their funct
 
 ## INTEGRATION WITH WATCH DIVISION
 
-**Watson** gives Sentinel the internal map - what the Composer cares about, thinks about, keeps returning to. Sentinel uses that map to weight external signals. A development that connects to the Composer's recurring themes gets elevated. A development with no connection to the internal map gets suppressed.
+**Reed** gives Sentinel the internal map - what the Composer cares about, thinks about, keeps returning to. Sentinel uses that map to weight external signals. A development that connects to the Composer's recurring themes gets elevated. A development with no connection to the internal map gets suppressed.
 
 **Scout** receives specific targets from Sentinel's competitive intelligence section. When Sentinel detects a competitor making a significant move, Scout can be tasked for deeper intelligence on that specific actor.
 

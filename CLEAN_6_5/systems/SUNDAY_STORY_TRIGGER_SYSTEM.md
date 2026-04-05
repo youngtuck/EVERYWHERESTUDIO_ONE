@@ -89,8 +89,8 @@ What would you like to start?
 |---|---|---|---|
 | 1.1 | Sara | Receive trigger, ask configuration questions | " |
 | 1.2 | Sara | Assemble Session 1 team | " |
-| 1.3 | Watson | Begin capture conversation | If Manifesto -Â¢' declaration questions |
-| 1.4 | Watson | Extract story, emotional beats | **Manifesto Format** if selected |
+| 1.3 | Reed | Begin capture conversation | If Manifesto -Â¢' declaration questions |
+| 1.4 | Reed | Extract story, emotional beats | **Manifesto Format** if selected |
 | 1.5 | Priya | Research validation, source gathering | " |
 | 1.6 | Fish | Leverage Analysis (3 points) | **Only if Strategic intent** |
 | 1.7 | Sara | Confirm Session 1 complete | Leverage points documented |
@@ -109,7 +109,7 @@ What would you like to start?
 
 | Step | Agent | Action | v5.2 Integration |
 |---|---|---|---|
-| 2.1 | Watson + Mark | Writing, iteration, refinement | Manifesto structure if selected |
+| 2.1 | Reed + Mark | Writing, iteration, refinement | Manifesto structure if selected |
 | 2.2 | Checkpoint 1: Priya | Research accuracy " 100% verified | " |
 | 2.3 | Checkpoint 2: Jordan | Voice authenticity " 95%+ match | **Voice DNA 2.0** (all 3 layers) |
 | 2.4 | Checkpoint 3: David | Engagement " 7-second hook test | " |
@@ -137,7 +137,7 @@ What would you like to start?
 
 | Step | Agent | Action | v5.2 Integration |
 |---|---|---|---|
-| 3.1 | Watson | Podcast script (Through Another Lens format) | " |
+| 3.1 | Reed | Podcast script (Through Another Lens format) | " |
 | 3.2 | Felix | Musical bed generation | **Single 8-min bed** (not timed cues) |
 | 3.3 | Team | Show notes (no timestamps, Substack link) | **v4.3.4 standard** |
 | 3.4 | Team | LinkedIn video script (under 2 min) | **v4.3.4 addition** |
@@ -163,7 +163,7 @@ What would you like to start?
 
 | Addition | Where It Fires | Condition |
 |---|---|---|
-| **Manifesto Format** | Session 1 (Watson) | If Manifesto selected |
+| **Manifesto Format** | Session 1 (Reed) | If Manifesto selected |
 | **Leverage Analysis** | Session 1 (Fish) | If Strategic selected |
 | **Voice DNA 2.0** | Session 2 (Jordan, Checkpoint 2) | Always " all 3 layers |
 | **Euler Test** | Session 2 (Josh, IGF Filter 1) | Always |
@@ -180,7 +180,7 @@ What would you like to start?
 | Shorthand | Format | Intent | What's Different |
 |---|---|---|---|
 | `SS: [topic]` | Standard | Storytelling | Base workflow |
-| `SS: [topic] " manifesto` | Manifesto | Storytelling | Watson uses declaration capture |
+| `SS: [topic] " manifesto` | Manifesto | Storytelling | Reed uses declaration capture |
 | `SS: [topic] " strategic` | Standard | Strategic | Fish runs Leverage Analysis |
 | `SS: [topic] " manifesto strategic` | Manifesto | Strategic | Both activated |
 
@@ -189,13 +189,13 @@ What would you like to start?
 ## TEAM ASSEMBLY BY SESSION
 
 ### Session 1 Team
-- Watson (capture lead)
+- Reed (capture lead)
 - Priya (research)
 - Fish (if strategic)
 - Sara (orchestration)
 
 ### Session 2 Team
-- Watson (iteration partner)
+- Reed (iteration partner)
 - Jordan (Checkpoint 2 + Voice DNA 2.0)
 - All Checkpoint Officers (Priya, David, Elena, Marcus, Marshall)
 - SBU for IGF (Josh, Lea, Guy, Ward)

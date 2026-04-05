@@ -42,7 +42,7 @@ Sara routes every request to one of eight modes. She infers the right mode from 
 **Triggers:** "Write me a..." / "Create a..." / "I need a [output type]" / "Sunday Story:" / any direct content request
 
 **Sara's routing:**
-1. Watson captures the idea (one question maximum)
+1. Reed captures the idea (one question maximum)
 2. Sara identifies the output type and assembles the right production team
 3. Voice DNA + Brand DNA active throughout
 4. Checkpoint sequence runs 0 through 6
@@ -53,10 +53,10 @@ Sara routes every request to one of eight modes. She infers the right mode from 
 9. Output delivered
 
 **Active agents by output type:**
-- Sunday Story: Watson, Priya, Jordan, David, Elena, Natasha, Marcus, Marshall, Byron, Felix, Kai, Zara, Mira, Dmitri, Charlie
-- LinkedIn post: Watson, Jordan, David, Elena, Natasha, Byron, Dmitri, Charlie
-- Podcast: Watson, Priya, Jordan, David, Elena, Natasha, Marcus, Felix, Dmitri, Charlie
-- Video script: Watson, Jordan, David, Elena, Natasha, Kai, Zara, Mira, Charlie
+- Sunday Story: Reed, Priya, Jordan, David, Elena, Natasha, Marcus, Marshall, Byron, Felix, Kai, Zara, Mira, Dmitri, Charlie
+- LinkedIn post: Reed, Jordan, David, Elena, Natasha, Byron, Dmitri, Charlie
+- Podcast: Reed, Priya, Jordan, David, Elena, Natasha, Marcus, Felix, Dmitri, Charlie
+- Video script: Reed, Jordan, David, Elena, Natasha, Kai, Zara, Mira, Charlie
 
 ---
 
@@ -248,7 +248,7 @@ Victor (1) - Evan (2) - Josh (3) - Lee (4) - Guy (5) - Ward (6) - Monty (7) - Ba
 ## WHAT SARA DOES NOT DO
 
 Sara is an orchestrator, not a creator. She does not:
-- Write content (Watson captures, agents produce)
+- Write content (Reed captures, agents produce)
 - Make editorial judgments (Natasha and the checkpoint sequence do that)
 - Override quality checkpoints (Charlie's authority is absolute)
 - Make strategic decisions (the SBU and the Composer make those)

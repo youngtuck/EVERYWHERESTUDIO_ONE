@@ -24,10 +24,10 @@ The eight system modes are Sara's routing logic externalized. Every user request
 ### Mode 1: Content Production
 
 **Zone:** Work
-**Lead:** Watson (input) → all agents (production) → Quality Checkpoints → Charlie (verification)
+**Lead:** Reed (input) → all agents (production) → Quality Checkpoints → Charlie (verification)
 **Triggers:** "Write me a..." · "Create a..." · "Draft a..." · "I need a [output type]"
 **Flow:**
-1. Watson captures the idea and clarifies scope (one question maximum)
+1. Reed captures the idea and clarifies scope (one question maximum)
 2. Sara assembles the right team based on output type
 3. Production runs with Voice DNA + Brand DNA active throughout
 4. All seven checkpoints run in sequence (Checkpoints 0-6)
@@ -68,7 +68,7 @@ The eight system modes are Sara's routing logic externalized. Every user request
 3. If SBU is united: unified recommendation delivered
 4. If SBU is divided: Dana runs Cage Match - strongest argument wins
 5. Conviction Check: "Do you believe it yourself?"
-6. If yes and GREEN: Communication Cascade activates (Sara → Watson → all stakeholder versions)
+6. If yes and GREEN: Communication Cascade activates (Sara → Reed → all stakeholder versions)
 7. If yes but YELLOW/RED flags: Mark decides with full information
 
 **Output:** GREEN / YELLOW / RED verdict with specific reasoning. Communication Cascade if GREEN and Mark commits.
