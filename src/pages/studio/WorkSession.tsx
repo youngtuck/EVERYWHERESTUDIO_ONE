@@ -576,249 +576,91 @@ function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
 }
 
 // ── Per-format improve cards (Review sidebar) ────────────────
-function scrollDraftToSection(title: string) {
-  const main = document.querySelector(".studio-main-inner");
-  if (!main) return;
-  const paras = main.querySelectorAll(".rfp-body p, .rfp-body div > p");
-  if (!paras.length) return;
-  const lower = title.toLowerCase();
-  let target: Element | null = null;
-  if (lower.includes("close") || lower.includes("ending")) {
-    target = paras[paras.length - 1];
-  } else if (lower.includes("hook") || lower.includes("opening")) {
-    target = paras[0];
-  } else if (lower.includes("example") || lower.includes("evidence")) {
-    target = paras[Math.floor(paras.length / 2)];
-  }
-  target?.scrollIntoView({ behavior: "smooth", block: "center" });
+// ── Review helpers ────────────────────────────────────────────
+function deriveReviewGateStatus(score: number): "Pass" | "Review" | "Fail" {
+  if (score >= 70) return "Pass";
+  if (score >= 50) return "Review";
+  return "Fail";
 }
 
-function ReviewFormatCards({
-  format, onFix, onSkip,
-}: {
-  format: string;
-  onFix: (instruction: string) => void;
-  onSkip: () => void;
-}) {
-  const cards: Record<string, Array<{ pts: number; title: string; desc: string }>> = {
-    LinkedIn: [
-      { pts: 4, title: "Tighten the close", desc: "One sharper final sentence closes the gap between agreement and action." },
-      { pts: 2, title: "Add one concrete example", desc: "A single sharp image moves readers from interest to action." },
-    ],
-    Newsletter: [
-      { pts: 5, title: "Personalize the opening", desc: "Newsletter readers expect a direct address. One sentence that speaks to them specifically." },
-    ],
-    Podcast: [
-      { pts: 8, title: "Conversational transition", desc: "Two sentences read as written, not spoken. Reed can soften them for audio." },
-    ],
-    "Sunday Story": [
-      { pts: 2, title: "Deepen the opening image", desc: "One more sensory detail in the first paragraph pulls readers fully in." },
-    ],
-  };
+function deriveReviewDisplayGates(
+  checkpoints: CheckpointResult[],
+  hvt: { verdict: string; score: number } | null,
+): Array<{ name: string; status: "Pass" | "Review" | "Fail" }> {
+  const find = (gate: string) => checkpoints.find(g => g.gate === gate);
+  const slopGate = find("checkpoint-4");
+  const voiceGate = find("checkpoint-2");
+  const editGate = find("checkpoint-5");
+  const engageGate = find("checkpoint-3");
+  const dedup = find("checkpoint-0");
 
-  const formatCards = cards[format] || [
-    { pts: 3, title: "Strengthen the hook", desc: "The opening line should stop the reader mid-scroll." },
-    { pts: 2, title: "Sharpen the close", desc: "End with a line that earns the re-read." },
+  // Humanization: whichever of editorial / engagement scored lower
+  const humScore = Math.min(editGate?.score ?? 100, engageGate?.score ?? 100);
+
+  return [
+    { name: "SLOP Detection", status: deriveReviewGateStatus(slopGate?.score ?? 0) },
+    { name: "Human Voice Test", status: hvt ? (hvt.verdict === "PASSES" ? "Pass" : deriveReviewGateStatus(hvt.score)) : deriveReviewGateStatus(voiceGate?.score ?? 0) },
+    { name: "Humanization", status: deriveReviewGateStatus(humScore) },
+    { name: "Deduplication", status: deriveReviewGateStatus(dedup?.score ?? 0) },
   ];
-  const [fixed, setFixed] = useState<Set<number>>(new Set());
-  const [fixing, setFixing] = useState<number | null>(null);
-
-  return (
-    <div style={{ marginTop: 8 }}>
-      {formatCards.map((card, i) => (
-        <div
-          key={i}
-          onMouseEnter={() => scrollDraftToSection(card.title)}
-          style={{
-            padding: "10px 12px", marginBottom: 8,
-            background: fixed.has(i) ? "var(--bg-2)" : "var(--surface)",
-            border: "1px solid var(--line)",
-            borderRadius: 8,
-            opacity: fixed.has(i) ? 0.4 : 1,
-            transition: "opacity 0.2s",
-          }}
-        >
-          <div style={{
-            display: "inline-block", fontSize: 9, fontWeight: 600,
-            color: "var(--blue, #4A90D9)",
-            padding: "2px 8px", borderRadius: 99,
-            border: "1px solid rgba(74,144,217,0.3)",
-            background: "rgba(74,144,217,0.06)",
-            marginBottom: 6,
-          }}>
-            +{card.pts} pts · {format}
-          </div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)", marginBottom: 4 }}>{card.title}</div>
-          <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 8 }}>{card.desc}</div>
-          {!fixed.has(i) && (
-            <div style={{ display: "flex", gap: 6 }}>
-              <button
-                onClick={() => {
-                  setFixing(i);
-                  onFix(`${card.title}: ${card.desc}`);
-                  setTimeout(() => {
-                    setFixed(prev => new Set(prev).add(i));
-                    setFixing(null);
-                  }, 2000);
-                }}
-                disabled={fixing !== null}
-                style={{
-                  flex: 1, padding: "6px 12px", borderRadius: 6,
-                  background: fixing === i ? "var(--fg-2)" : "var(--fg)",
-                  border: "none", fontSize: 11, fontWeight: 700,
-                  color: "var(--surface, #fff)",
-                  cursor: fixing !== null ? "not-allowed" : "pointer",
-                  fontFamily: FONT,
-                }}
-              >
-                {fixing === i ? "Fixing..." : "Fix this"}
-              </button>
-              <button
-                onClick={() => {
-                  setFixed(prev => new Set(prev).add(i));
-                  onSkip();
-                }}
-                disabled={fixing !== null}
-                style={{
-                  padding: "6px 12px", borderRadius: 6,
-                  background: "transparent",
-                  border: "1px solid var(--line)",
-                  fontSize: 11, fontWeight: 500,
-                  color: "var(--fg-3)",
-                  cursor: "pointer", fontFamily: FONT,
-                }}
-              >
-                Skip
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Checkpoint row (expandable for FAIL/FLAG) ────────────────
-const GATE_FIX_HINTS: Record<string, string> = {
-  "checkpoint-0": "Remove repeated arguments or redundant phrasing across paragraphs.",
-  "checkpoint-1": "Every statistic and factual claim needs a named source. Remove or reframe unsourced claims.",
-  "checkpoint-2": "Adjust sentences that do not match the Voice DNA. The piece should sound like the author, not a polished approximation.",
-  "checkpoint-3": "The opening must earn the read in 7 seconds. Rewrite the hook to stop the scroll.",
-  "checkpoint-4": "Remove AI-pattern language: over-hedging, formulaic transitions, generic parallel structures.",
-  "checkpoint-5": "Publication-grade means every sentence does work. Cut filler. Tighten logic. Strengthen the close.",
-  "checkpoint-6": "Check for unexamined assumptions, cultural blind spots, or exclusionary framing.",
-};
-
-function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFixing: boolean; onFix: () => void }) {
-  const canExpand = gate.status === "FAIL" || gate.status === "FLAG";
-  const isFail = gate.status === "FAIL";
-  // FAIL gates auto-expand and stay expanded
-  const [expanded, setExpanded] = useState(isFail);
-  const icon = gate.status === "PASS" ? "✓" : gate.status === "FLAG" ? "⚑" : "✗";
-  const iconColor = gate.status === "PASS" ? "var(--blue)" : gate.status === "FLAG" ? "var(--gold)" : "var(--danger)";
-  const hint = GATE_FIX_HINTS[gate.gate] || "";
-
-  return (
-    <div style={{ borderBottom: "1px solid var(--line)" }}>
-      <div
-        onClick={canExpand ? () => setExpanded(e => !e) : undefined}
-        style={{
-          display: "flex", alignItems: "center", gap: 6, padding: "5px 0", fontSize: 10,
-          cursor: canExpand ? "pointer" : "default",
-        }}
-      >
-        <span style={{ color: iconColor, fontWeight: 700, flexShrink: 0 }}>{icon}</span>
-        <span style={{ flex: 1, color: "var(--fg-2)", fontWeight: 500 }}>{displayGateName(gate.gate)}</span>
-        <span style={{ color: "var(--fg-3)", flexShrink: 0 }}>{Math.round(gate.score)}</span>
-        {canExpand && (
-          <span style={{ color: "var(--fg-3)", fontSize: 8, flexShrink: 0, transition: "transform 0.15s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-        )}
-      </div>
-      {/* FAIL gates always show feedback; FLAG gates show when expanded */}
-      {((isFail) || (canExpand && expanded)) && (
-        <div style={{ padding: "4px 0 8px 18px" }}>
-          {gate.feedback && (
-            <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.5, marginBottom: 4 }}>{gate.feedback}</div>
-          )}
-          {hint && isFail && (
-            <div style={{ fontSize: 10, color: "#4A90D9", fontStyle: "italic", marginTop: 4, marginBottom: 8, lineHeight: 1.5 }}>{hint}</div>
-          )}
-          {isFixing ? (
-            <div style={{ fontSize: 10, color: "var(--gold-bright)", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ animation: "pulse-dot 1.5s infinite" }}>&#9679;</span>
-              Revising draft...
-            </div>
-          ) : isFail ? (
-            <button
-              onClick={(e) => { e.stopPropagation(); onFix(); }}
-              style={{
-                width: "100%", padding: "6px 12px", borderRadius: 5,
-                background: "#0D1B2A", border: "none",
-                fontSize: 11, fontWeight: 700, color: "#F5C642",
-                cursor: "pointer", fontFamily: FONT,
-              }}
-            >
-              Fix: {displayGateName(gate.gate)}
-            </button>
-          ) : (
-            <button
-              onClick={(e) => { e.stopPropagation(); onFix(); }}
-              style={{
-                padding: "4px 10px", borderRadius: 4,
-                background: "rgba(245,198,66,0.12)", border: "1px solid var(--gold)",
-                fontSize: 10, fontWeight: 600, color: "var(--gold)",
-                cursor: "pointer", fontFamily: FONT,
-              }}
-            >
-              Fix this issue
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
-  pipelineRun, running, onExportAll, allExported, hvtAttempts, onRerunHVT, hvtRunning,
-  onFixCheckpoint, fixingGate, onRerunPipeline, rerunning, onFixAll,
+  pipelineRun, running, onExportAll, allExported, onRaiseScore, fixingGate, rerunning,
+  prefillReed,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
-  hvtAttempts: number; onRerunHVT: () => void; hvtRunning: boolean;
-  onFixCheckpoint: (gateName: string, feedback: string) => void;
+  onRaiseScore: () => void;
   fixingGate: string | null;
-  onRerunPipeline: () => void;
   rerunning: boolean;
-  onFixAll?: () => void;
+  prefillReed: (text: string) => void;
 }) {
   const score = pipelineRun?.impactScore?.total ?? null;
-  const hvt = pipelineRun?.humanVoiceTest;
-  const hvtPasses = hvt?.verdict === "PASSES";
-  const scoreOk = score !== null && score >= 60;
-  const canApprove = scoreOk && hvtPasses;
-  const passed = pipelineRun?.status === "PASSED" && canApprove;
-  const allGatesPass = pipelineRun?.checkpointResults?.every(g => g.status === "PASS" || g.status === "FLAG") ?? false;
-  // Export is available whenever the pipeline has finished running.
-  // Scores are advisory for alpha, not blocking.
-  const canExport = pipelineRun && !running && !allExported;
+  const scoreOk = score !== null && score >= 75;
+
+  // Derive 4 display gates from pipeline results
+  const displayGates = pipelineRun
+    ? deriveReviewDisplayGates(pipelineRun.checkpointResults, pipelineRun.humanVoiceTest)
+    : [];
+  const nonPassGates = displayGates.filter(g => g.status !== "Pass");
+  const allPass = nonPassGates.length === 0;
+  const needsRaise = !scoreOk || !allPass;
+
+  // Generate Reed's assessment
+  const reedAssessment = (() => {
+    if (!pipelineRun) return "";
+    if (allPass && scoreOk) return "This is ready. The writing is clean, the voice matches, and the argument holds.";
+    if (nonPassGates.length === 1) {
+      const g = nonPassGates[0];
+      const lowestGate = pipelineRun.checkpointResults.reduce((a, b) => (a.score < b.score ? a : b));
+      return `This is close. The ${g.name} flag is the only open item. ${lowestGate.feedback || "Review before export."}`;
+    }
+    const lowestGate = pipelineRun.checkpointResults.reduce((a, b) => (a.score < b.score ? a : b));
+    return `Not ready yet. ${nonPassGates.length} checkpoints need attention. The biggest issue is ${displayGateName(lowestGate.gate)}.`;
+  })();
+
+  // Score context line
+  const scoreContext = (() => {
+    if (score === null) return "";
+    if (scoreOk && allPass) return "Above threshold. Ready to export.";
+    if (scoreOk && !allPass) return `Above threshold. ${nonPassGates.length} item${nonPassGates.length !== 1 ? "s" : ""} to review before export.`;
+    return "Below threshold. Fix flagged items to raise the score.";
+  })();
+
+  // Suggestion chips
+  const chips: Array<{ label: string; prefill: string }> = [];
+  nonPassGates.forEach(g => chips.push({ label: `Fix ${g.name}`, prefill: `Fix the ${g.name} issue in this draft.` }));
+  chips.push({ label: "Final read", prefill: "Do a final read of this piece as an adversarial editor. What would make someone stop reading?" });
+  chips.push({ label: "Write the pull quote", prefill: "Pull the single most quotable line from this piece for social." });
+  chips.push({ label: "Is this ready to publish?", prefill: "Is this ready to publish? Give me your honest assessment." });
+
+  const statusColor = (s: "Pass" | "Review" | "Fail") =>
+    s === "Pass" ? "#22C55E" : s === "Review" ? "#F5C642" : "#EF4444";
 
   return (
     <>
-      {/* MODE */}
-      <DpSection>
-        <DpLabel>Mode</DpLabel>
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "4px 10px", borderRadius: 99,
-          background: "rgba(245,198,66,0.12)", border: "1px solid rgba(245,198,66,0.3)",
-          fontSize: 10, fontWeight: 600, color: "#9A7030",
-        }}>
-          ■ Freestyle
-        </div>
-      </DpSection>
-
       {running && (
         <DpSection>
           <DpLabel>Running checkpoints</DpLabel>
@@ -833,145 +675,109 @@ function ReviewDash({
         </DpSection>
       )}
 
+      {(fixingGate || rerunning) && !running && (
+        <div style={{ fontSize: 10, color: "var(--gold-bright)", marginBottom: 8, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ animation: "pulse-dot 1.5s infinite" }}>&#9679;</span>
+          {fixingGate ? "Fixing and re-scoring..." : "Re-scoring..."}
+        </div>
+      )}
+
       {pipelineRun && !running && (
         <>
-          {score !== null && (
-            <DpSection>
-              <DpLabel>Impact Score</DpLabel>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)" }}>{score !== null ? Math.round(score) : ""}</span>
-                <span style={{ fontSize: 10, color: "var(--fg-3)" }}>/ 100 &nbsp; threshold 75</span>
-              </div>
-              <div style={{ fontSize: 10, color: score >= 90 ? "var(--blue)" : "var(--gold)", marginTop: 4, fontWeight: 600 }}>
-                {pipelineRun.impactScore?.verdict ?? (score >= 60 ? "PUBLISH" : "REVISE")}
-              </div>
-              {pipelineRun.impactScore?.topIssue && (
-                <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 4, lineHeight: 1.5 }}>{pipelineRun.impactScore.topIssue}</div>
-              )}
-            </DpSection>
-          )}
-
+          {/* CHECKPOINTS */}
           <DpSection>
-            <DpLabel>Checkpoints</DpLabel>
-            {(() => {
-              const failGates = pipelineRun.checkpointResults.filter(g => g.status === "FAIL");
-              return failGates.length >= 2 && onFixAll ? (
-                <button
-                  onClick={onFixAll}
-                  disabled={!!fixingGate || rerunning}
-                  style={{
-                    width: "100%", padding: 10, borderRadius: 6, marginBottom: 8,
-                    background: "#0D1B2A", border: "none",
-                    fontSize: 12, fontWeight: 700, color: "#F5C642",
-                    cursor: fixingGate || rerunning ? "not-allowed" : "pointer",
-                    fontFamily: FONT, opacity: fixingGate || rerunning ? 0.6 : 1,
-                    transition: "opacity 0.15s",
-                  }}
-                >
-                  {fixingGate ? `Fixing issues...` : `Fix all ${failGates.length} issues`}
-                </button>
-              ) : null;
-            })()}
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-              {pipelineRun.checkpointResults.map((gate, i) => (
-                <CheckpointRow
-                  key={i}
-                  gate={gate}
-                  isFixing={fixingGate === gate.gate}
-                  onFix={() => onFixCheckpoint(gate.gate, gate.feedback)}
-                />
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>
+              CHECKPOINTS
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {displayGates.map((g, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0" }}>
+                  <span style={{ fontSize: 11, color: "var(--fg-2)" }}>{g.name}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: statusColor(g.status) }}>{g.status}</span>
+                </div>
               ))}
             </div>
           </DpSection>
 
-          {/* Human Voice Test status */}
-          {hvt && (
+          {/* IMPACT SCORE */}
+          {score !== null && (
             <DpSection>
-              <DpLabel>Human Voice Test</DpLabel>
-              <div style={{
-                fontSize: 11, fontWeight: 700,
-                color: hvtPasses ? "var(--blue)" : "var(--gold)",
-                marginBottom: 4,
-              }}>
-                {hvtPasses ? "PASSES" : "NEEDS WORK"}
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>
+                IMPACT SCORE
               </div>
-              {!hvtPasses && hvt.flaggedLines.length > 0 && (
-                <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 6 }}>
-                  {hvt.flaggedLines.length} line{hvt.flaggedLines.length !== 1 ? "s" : ""} flagged
-                </div>
-              )}
-              {!hvtPasses && hvtAttempts < 3 && (
-                <button
-                  onClick={onRerunHVT}
-                  disabled={hvtRunning}
-                  style={{
-                    width: "100%", padding: 6, borderRadius: 5,
-                    background: "rgba(245,198,66,0.12)", border: "1px solid var(--gold)",
-                    fontSize: 10, fontWeight: 600, color: "var(--gold)",
-                    cursor: hvtRunning ? "not-allowed" : "pointer",
-                    fontFamily: FONT, marginBottom: 4,
-                  }}
-                >
-                  {hvtRunning ? "Running..." : "Rerun Voice Test"}
-                </button>
-              )}
-              {!hvtPasses && hvtAttempts >= 3 && (
-                <div style={{ fontSize: 10, color: "var(--danger)", lineHeight: 1.5, fontWeight: 600 }}>
-                  Voice issues are structural. Consider a full rewrite.
-                </div>
-              )}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)" }}>{Math.round(score)}</span>
+                <span style={{ fontSize: 10, color: "var(--fg-3)" }}>/ 100 &nbsp; threshold 75</span>
+              </div>
+              <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 4, lineHeight: 1.5 }}>{scoreContext}</div>
             </DpSection>
           )}
 
-          {pipelineRun.blockedAt && (
-            <DpSection>
-              <DpLabel>Blocked at</DpLabel>
-              <div style={{ fontSize: 10, color: "var(--danger)", lineHeight: 1.5 }}>{pipelineRun.blockedAt}</div>
-            </DpSection>
+          {/* REED CALLOUT */}
+          {reedAssessment && (
+            <div style={{
+              border: "1px solid rgba(74,144,217,0.25)", borderRadius: 8,
+              padding: "10px 12px", background: "rgba(74,144,217,0.04)",
+              marginBottom: 12,
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: "#4A90D9", marginBottom: 6 }}>Reed</div>
+              <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>{reedAssessment}</div>
+            </div>
           )}
-        </>
-      )}
 
-      {pipelineRun && !running && (
-        rerunning ? (
-          <div style={{ fontSize: 10, color: "var(--gold-bright)", marginBottom: 6, fontWeight: 500 }}>Re-scoring all checkpoints...</div>
-        ) : (
+          {/* SUGGESTION CHIPS */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+            {chips.map((chip, i) => (
+              <button
+                key={i}
+                onClick={() => prefillReed(chip.prefill)}
+                style={{
+                  fontSize: 10, padding: "4px 10px", borderRadius: 99,
+                  background: "#EDF1F5", border: "1px solid #CBD5E1",
+                  color: "#334155", cursor: "pointer", fontFamily: "inherit",
+                }}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          {/* RAISE THE IMPACT SCORE */}
+          {needsRaise && (
+            <button
+              onClick={onRaiseScore}
+              disabled={!!fixingGate || rerunning}
+              style={{
+                width: "100%", padding: 8, borderRadius: 6, marginBottom: 8,
+                background: "var(--fg)", border: "none",
+                fontSize: 11, fontWeight: 700, color: "var(--gold)",
+                cursor: fixingGate || rerunning ? "not-allowed" : "pointer",
+                fontFamily: FONT, opacity: fixingGate || rerunning ? 0.5 : 1,
+              }}
+            >
+              Raise the Impact Score
+            </button>
+          )}
+
+          {/* EXPORT ALL */}
           <button
-            onClick={onRerunPipeline}
-            disabled={!!fixingGate}
+            onClick={onExportAll}
+            disabled={allExported}
             style={{
-              width: "100%", padding: 8, borderRadius: 6, marginBottom: 6,
-              background: "transparent", border: "1px solid var(--line)",
-              fontSize: 11, fontWeight: 600, color: "var(--fg-2)",
-              cursor: fixingGate ? "not-allowed" : "pointer",
-              fontFamily: FONT, transition: "all 0.15s",
+              width: "100%", padding: 10, borderRadius: 6,
+              background: allExported ? "rgba(74,144,217,0.12)" : "var(--gold)",
+              border: allExported ? "1px solid rgba(74,144,217,0.3)" : "none",
+              fontSize: 12, fontWeight: 700,
+              color: allExported ? "var(--blue)" : "var(--fg)",
+              cursor: allExported ? "default" : "pointer",
+              opacity: allExported ? 1 : (scoreOk ? 1 : 0.4),
+              fontFamily: FONT, transition: "all 0.2s",
             }}
           >
-            Re-score all checkpoints
+            {allExported ? "Exported" : "Export all"}
           </button>
-        )
+        </>
       )}
-
-      <div style={{ fontSize: 10, color: allExported ? "var(--blue)" : "var(--fg-3)", marginBottom: 6, transition: "color 0.2s" }}>
-        {allExported ? "All formats exported to Session Files." : running ? "Pipeline in progress. This takes 2-3 minutes." : pipelineRun ? (passed ? "Pipeline passed. Ready to export." : canApprove ? "Pipeline passed. Ready to export." : "Pipeline complete. Review results above.") : "Run pipeline to check your draft."}
-      </div>
-
-      <button
-        onClick={onExportAll}
-        disabled={!canExport || running}
-        style={{
-          width: "100%", padding: 10, borderRadius: 6,
-          background: allExported ? "rgba(74,144,217,0.12)" : canExport ? "var(--gold-bright)" : "var(--bg-2)",
-          border: allExported ? "1px solid rgba(74,144,217,0.3)" : canExport ? "none" : "1.5px solid var(--line-2)",
-          fontSize: 12, fontWeight: 700,
-          color: allExported ? "var(--blue)" : canExport ? "var(--fg)" : "var(--fg-2)",
-          cursor: canExport ? "pointer" : "not-allowed",
-          opacity: !pipelineRun && !running ? 0.5 : 1,
-          transition: "all 0.2s", fontFamily: FONT,
-        }}
-      >
-        {allExported ? "Exported" : "Export all"}
-      </button>
     </>
   );
 }
@@ -2255,7 +2061,7 @@ function ReviewFormatPreview({
 
 function StageReview({
   draft, pipelineRun, running, activeTab, tabs,
-  onTabClick, onAdvance, onGoBack, onFix, onDirectReplace, formatDrafts, highlightedParas,
+  onTabClick, onAdvance, onGoBack, onFix, onDirectReplace, formatDrafts,
 }: {
   draft: string; pipelineRun: PipelineRun | null; running: boolean;
   activeTab: string; tabs: string[]; onTabClick: (t: string) => void;
@@ -2263,7 +2069,6 @@ function StageReview({
   onFix: (instruction: string) => Promise<void>;
   onDirectReplace: (original: string, replacement: string) => void;
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
-  highlightedParas?: number[];
 }) {
   // Approve gate: both Impact Score >= 60 and HVT must PASS
   const scoreOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
@@ -2354,7 +2159,6 @@ function StageReview({
                       try { await onFix(suggestion); } finally { setHvtFixing(false); }
                     }}
                     onDirectReplace={onDirectReplace}
-                    highlightedParas={highlightedParas}
                   />
                   {fd?.status === "error" && (
                     <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 8 }}>Format adaptation unavailable. Showing original draft.</div>
@@ -2518,15 +2322,6 @@ export default function WorkSession() {
   const [formatDrafts, setFormatDrafts] = useState<Record<string, { content: string; metadata: Record<string, string>; status: "pending" | "generating" | "done" | "error" }>>({});
   const [fixingGate, setFixingGate] = useState<string | null>(null);
   const [rerunningPipeline, setRerunningPipeline] = useState(false);
-  const [draftHighlights, setDraftHighlights] = useState<number[]>([]);
-
-  // Auto-clear diff highlights after 5 seconds
-  useEffect(() => {
-    if (draftHighlights.length > 0) {
-      const timer = setTimeout(() => setDraftHighlights([]), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [draftHighlights]);
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [activeReviewTab, setActiveReviewTab] = useState(selectedFormats[0] ?? "LinkedIn");
   const [hvtAttempts, setHvtAttempts] = useState(0);
@@ -3153,7 +2948,6 @@ export default function WorkSession() {
     setFormatDrafts({});
     setOutlineAngles(null);
     setSelectedAngle("a");
-    setDraftHighlights([]);
   }, []);
 
   // ── New Session from top nav ─────────────────────────────────
@@ -3256,15 +3050,7 @@ export default function WorkSession() {
     }
 
     if (newDraft !== draft) {
-      const oldParas = draft.split("\n").filter(Boolean);
-      const newParas = newDraft.split("\n").filter(Boolean);
-      const changedIndices: number[] = [];
-      newParas.forEach((p, i) => {
-        if (!oldParas[i] || oldParas[i] !== p) changedIndices.push(i);
-      });
-
       setDraft(newDraft);
-      setDraftHighlights(changedIndices);
 
       setFormatDrafts(prev => ({
         ...prev,
@@ -3323,12 +3109,25 @@ export default function WorkSession() {
     }
   }, [draft, user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, toast]);
 
-  const handleFixCheckpoint = useCallback(async (gateName: string, feedback: string) => {
-    if (!draft || !user) return;
-    setFixingGate(gateName);
+  // ── REVIEW: Raise impact score (fix all non-passing gates + re-run pipeline) ──
+  const handleRaiseScore = useCallback(async () => {
+    if (!draft || !user || !pipelineRun) return;
+    setFixingGate("raise-score");
 
     try {
-      // Phase 1: Revise the draft
+      // Collect feedback from all non-passing gates
+      const issues = pipelineRun.checkpointResults
+        .filter(g => g.status !== "PASS")
+        .map(g => `[${displayGateName(g.gate)}]: ${g.feedback}`)
+        .join("\n");
+
+      if (!issues) {
+        // All gates pass, just re-run pipeline for fresh scores
+        await handleRerunPipeline();
+        return;
+      }
+
+      // Revise the draft
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3336,7 +3135,7 @@ export default function WorkSession() {
           conversationSummary: buildConvSummary(),
           outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
           originalDraft: draft,
-          revisionNotes: `A quality checkpoint ("${gateName}") flagged this issue. Revise the draft to fix it while preserving everything else:\n\n${feedback}`,
+          revisionNotes: `Fix these quality checkpoint issues while preserving the voice and argument:\n\n${issues}`,
           userId: user.id,
           maxTokens: 4096,
         }),
@@ -3351,18 +3150,7 @@ export default function WorkSession() {
         return;
       }
 
-      // Phase 2: Update draft + compute diff highlights
-      const oldParas = draft.split("\n").filter(Boolean);
-      const newParas = newDraft.split("\n").filter(Boolean);
-      const changedIndices: number[] = [];
-      newParas.forEach((p: string, i: number) => {
-        if (!oldParas[i] || oldParas[i] !== p) changedIndices.push(i);
-      });
-
       setDraft(newDraft);
-      setDraftHighlights(changedIndices);
-
-      // Immediately update current format tab so user sees the change
       setFormatDrafts(prev => ({
         ...prev,
         [activeReviewTab]: {
@@ -3372,73 +3160,18 @@ export default function WorkSession() {
         },
       }));
 
-      // Optimistically update the fixed checkpoint and bump the score
-      if (pipelineRun) {
-        setPipelineRun(prev => {
-          if (!prev) return prev;
-          const updatedResults = prev.checkpointResults.map(g => {
-            if (g.gate === gateName) {
-              return { ...g, status: "PASS" as const, score: 90, feedback: `Addressed: ${g.feedback}` };
-            }
-            return g;
-          });
-          // Recompute: average of all gate scores + 5 bonus per PASS gate, capped at 100
-          const avgScore = updatedResults.reduce((sum, g) => sum + (g.score || 0), 0) / updatedResults.length;
-          const passBonus = updatedResults.filter(g => g.status === "PASS").length * 5;
-          const newTotal = Math.min(100, Math.round(avgScore + passBonus));
-          return {
-            ...prev,
-            checkpointResults: updatedResults,
-            impactScore: prev.impactScore ? {
-              ...prev.impactScore,
-              total: newTotal,
-              verdict: newTotal >= 60 ? "PUBLISH" : "REVISE",
-            } : prev.impactScore,
-          };
-        });
-      }
-
       setFixingGate(null);
-      toast("Fix applied. Re-scoring...");
+      toast("Draft revised. Re-scoring...");
 
-      // Re-adapt the current format in background (non-blocking)
-      try {
-        const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ draft: newDraft, format: activeReviewTab, voiceDnaMd, brandDnaMd, userId: user.id }),
-        }, { timeout: 60000 });
-        if (adaptRes.ok) {
-          const adaptData = await adaptRes.json();
-          setFormatDrafts(prev => ({
-            ...prev,
-            [activeReviewTab]: { content: adaptData.content || newDraft, metadata: adaptData.metadata || {}, status: "done" as const },
-          }));
-        }
-      } catch { /* format re-adaptation is non-critical */ }
-
-      // Auto-trigger full pipeline re-run to verify the fix
-      handleRerunPipeline();
+      // Re-run full pipeline with the fixed draft
+      await handleRerunPipeline();
     } catch (err: any) {
-      console.error("[handleFixCheckpoint]", err);
+      console.error("[handleRaiseScore]", err);
       toast("Fix failed. Try again.", "error");
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, pipelineRun, toast, activeReviewTab, handleRerunPipeline]);
-
-  // ── REVIEW: Fix all failing checkpoints at once ──
-  const handleFixAll = useCallback(async () => {
-    if (!pipelineRun || !draft || !user) return;
-    const failGates = pipelineRun.checkpointResults.filter(g => g.status === "FAIL");
-    if (failGates.length === 0) return;
-
-    const combinedFeedback = failGates
-      .map(g => `[${displayGateName(g.gate)}]: ${g.feedback}`)
-      .join("\n");
-
-    await handleFixCheckpoint("fix-all", `Fix these issues in the draft:\n${combinedFeedback}`);
-  }, [pipelineRun, draft, user, handleFixCheckpoint]);
+  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, toast, activeReviewTab, handleRerunPipeline]);
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
@@ -3577,93 +3310,16 @@ export default function WorkSession() {
         }
         case "Review":
           return (
-            <>
-              {/* Show full pipeline results when running or pipeline just finished */}
-              {(pipelineRunning || !activeReviewTab) && (
-                <ReviewDash
-                  pipelineRun={pipelineRun}
-                  running={pipelineRunning}
-                  onExportAll={handleExportAll}
-                  allExported={allExported}
-                  hvtAttempts={hvtAttempts}
-                  onRerunHVT={handleRerunHVT}
-                  hvtRunning={hvtRunning}
-                  onFixCheckpoint={handleFixCheckpoint}
-                  fixingGate={fixingGate}
-                  onRerunPipeline={handleRerunPipeline}
-                  rerunning={rerunningPipeline}
-                  onFixAll={handleFixAll}
-                />
-              )}
-
-              {/* Per-format content when pipeline is done and a tab is active */}
-              {!pipelineRunning && pipelineRun && activeReviewTab && (
-                <>
-                  {/* Checkpoints summary (compact) */}
-                  <DpSection>
-                    <DpLabel>Checkpoints</DpLabel>
-                    <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.8 }}>
-                      {pipelineRun.checkpointResults.map((gate, i) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between" }}>
-                          <span>{displayGateName(gate.gate)}</span>
-                          <span style={{
-                            color: gate.status === "PASS" ? "#22C55E" : gate.status === "FLAG" ? "var(--gold)" : "var(--danger)",
-                            fontWeight: 600,
-                          }}>
-                            {gate.status === "PASS" ? "Pass" : gate.status === "FLAG" ? "Review" : "Fail"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </DpSection>
-
-                  {/* Impact Score */}
-                  {pipelineRun.impactScore && (
-                    <DpSection>
-                      <DpLabel>Impact Score</DpLabel>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                        <span style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)" }}>
-                          {Math.round(pipelineRun.impactScore.total)}
-                        </span>
-                        <span style={{ fontSize: 10, color: "var(--fg-3)" }}>/ 100 &nbsp; threshold 75</span>
-                      </div>
-                    </DpSection>
-                  )}
-
-                  {/* Per-format improve cards */}
-                  <ReviewFormatCards
-                    format={activeReviewTab}
-                    onFix={(instruction) => handleReviewFix(instruction)}
-                    onSkip={() => {}}
-                  />
-
-                  {/* Export */}
-                  <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 12, marginBottom: 6 }}>
-                    {allExported ? "All formats exported." : `${selectedFormats.length || 1} format${(selectedFormats.length || 1) > 1 ? "s" : ""} ready.`}
-                  </div>
-                  <button
-                    onClick={handleExportAll}
-                    disabled={allExported}
-                    style={{
-                      width: "100%", padding: 10, borderRadius: 6,
-                      background: allExported ? "rgba(74,144,217,0.12)" : "var(--gold-bright)",
-                      border: allExported ? "1px solid rgba(74,144,217,0.3)" : "none",
-                      fontSize: 12, fontWeight: 700,
-                      color: allExported ? "var(--blue)" : "var(--fg)",
-                      cursor: allExported ? "default" : "pointer",
-                      fontFamily: FONT,
-                    }}
-                  >
-                    {allExported ? "Exported" : "Export all"}
-                  </button>
-                </>
-              )}
-
-              <ActionChips
-                chips={["Run Human Voice Test", "Check for SLOP", "Raise the Impact Score", "Is this ready to publish?"]}
-                onChipClick={prefillReed}
-              />
-            </>
+            <ReviewDash
+              pipelineRun={pipelineRun}
+              running={pipelineRunning}
+              onExportAll={handleExportAll}
+              allExported={allExported}
+              onRaiseScore={handleRaiseScore}
+              fixingGate={fixingGate}
+              rerunning={rerunningPipeline}
+              prefillReed={prefillReed}
+            />
           );
         default:
           return null;
@@ -3676,7 +3332,7 @@ export default function WorkSession() {
     stage, selectedFormats, selectedTemplate, draft, generating, generatingLabel,
     pipelineRun, pipelineRunning, allExported, outputId,
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
-    handleFixCheckpoint, fixingGate, handleRerunPipeline, rerunningPipeline,
+    handleRaiseScore, fixingGate, handleRerunPipeline, rerunningPipeline,
     prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
   ]);
 
@@ -3825,7 +3481,6 @@ export default function WorkSession() {
           onFix={handleReviewFix}
           onDirectReplace={handleDirectReplace}
           formatDrafts={formatDrafts}
-          highlightedParas={draftHighlights}
         />
       )}
     </div>
