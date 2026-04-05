@@ -576,6 +576,23 @@ function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
 }
 
 // ── Per-format improve cards (Review sidebar) ────────────────
+function scrollDraftToSection(title: string) {
+  const main = document.querySelector(".studio-main-inner");
+  if (!main) return;
+  const paras = main.querySelectorAll(".rfp-body p, .rfp-body div > p");
+  if (!paras.length) return;
+  const lower = title.toLowerCase();
+  let target: Element | null = null;
+  if (lower.includes("close") || lower.includes("ending")) {
+    target = paras[paras.length - 1];
+  } else if (lower.includes("hook") || lower.includes("opening")) {
+    target = paras[0];
+  } else if (lower.includes("example") || lower.includes("evidence")) {
+    target = paras[Math.floor(paras.length / 2)];
+  }
+  target?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 function ReviewFormatCards({
   format, onFix, onSkip,
 }: {
@@ -611,6 +628,7 @@ function ReviewFormatCards({
       {formatCards.map((card, i) => (
         <div
           key={i}
+          onMouseEnter={() => scrollDraftToSection(card.title)}
           style={{
             padding: "10px 12px", marginBottom: 8,
             background: fixed.has(i) ? "var(--bg-2)" : "var(--surface)",
@@ -681,11 +699,24 @@ function ReviewFormatCards({
 }
 
 // ── Checkpoint row (expandable for FAIL/FLAG) ────────────────
+const GATE_FIX_HINTS: Record<string, string> = {
+  "checkpoint-0": "Remove repeated arguments or redundant phrasing across paragraphs.",
+  "checkpoint-1": "Every statistic and factual claim needs a named source. Remove or reframe unsourced claims.",
+  "checkpoint-2": "Adjust sentences that do not match the Voice DNA. The piece should sound like the author, not a polished approximation.",
+  "checkpoint-3": "The opening must earn the read in 7 seconds. Rewrite the hook to stop the scroll.",
+  "checkpoint-4": "Remove AI-pattern language: over-hedging, formulaic transitions, generic parallel structures.",
+  "checkpoint-5": "Publication-grade means every sentence does work. Cut filler. Tighten logic. Strengthen the close.",
+  "checkpoint-6": "Check for unexamined assumptions, cultural blind spots, or exclusionary framing.",
+};
+
 function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFixing: boolean; onFix: () => void }) {
   const canExpand = gate.status === "FAIL" || gate.status === "FLAG";
-  const [expanded, setExpanded] = useState(gate.status === "FAIL");
+  const isFail = gate.status === "FAIL";
+  // FAIL gates auto-expand and stay expanded
+  const [expanded, setExpanded] = useState(isFail);
   const icon = gate.status === "PASS" ? "✓" : gate.status === "FLAG" ? "⚑" : "✗";
   const iconColor = gate.status === "PASS" ? "var(--blue)" : gate.status === "FLAG" ? "var(--gold)" : "var(--danger)";
+  const hint = GATE_FIX_HINTS[gate.gate] || "";
 
   return (
     <div style={{ borderBottom: "1px solid var(--line)" }}>
@@ -703,14 +734,32 @@ function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFi
           <span style={{ color: "var(--fg-3)", fontSize: 8, flexShrink: 0, transition: "transform 0.15s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
         )}
       </div>
-      {canExpand && expanded && (
+      {/* FAIL gates always show feedback; FLAG gates show when expanded */}
+      {((isFail) || (canExpand && expanded)) && (
         <div style={{ padding: "4px 0 8px 18px" }}>
-          <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 6 }}>{gate.feedback}</div>
+          {gate.feedback && (
+            <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.5, marginBottom: 4 }}>{gate.feedback}</div>
+          )}
+          {hint && isFail && (
+            <div style={{ fontSize: 10, color: "#4A90D9", fontStyle: "italic", marginTop: 4, marginBottom: 8, lineHeight: 1.5 }}>{hint}</div>
+          )}
           {isFixing ? (
             <div style={{ fontSize: 10, color: "var(--gold-bright)", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ animation: "pulse-dot 1.5s infinite" }}>&#9679;</span>
               Revising draft...
             </div>
+          ) : isFail ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onFix(); }}
+              style={{
+                width: "100%", padding: "6px 12px", borderRadius: 5,
+                background: "#0D1B2A", border: "none",
+                fontSize: 11, fontWeight: 700, color: "#F5C642",
+                cursor: "pointer", fontFamily: FONT,
+              }}
+            >
+              Fix: {displayGateName(gate.gate)}
+            </button>
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); onFix(); }}
@@ -733,7 +782,7 @@ function CheckpointRow({ gate, isFixing, onFix }: { gate: CheckpointResult; isFi
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
   pipelineRun, running, onExportAll, allExported, hvtAttempts, onRerunHVT, hvtRunning,
-  onFixCheckpoint, fixingGate, onRerunPipeline, rerunning,
+  onFixCheckpoint, fixingGate, onRerunPipeline, rerunning, onFixAll,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
@@ -742,6 +791,7 @@ function ReviewDash({
   fixingGate: string | null;
   onRerunPipeline: () => void;
   rerunning: boolean;
+  onFixAll?: () => void;
 }) {
   const score = pipelineRun?.impactScore?.total ?? null;
   const hvt = pipelineRun?.humanVoiceTest;
@@ -803,6 +853,25 @@ function ReviewDash({
 
           <DpSection>
             <DpLabel>Checkpoints</DpLabel>
+            {(() => {
+              const failGates = pipelineRun.checkpointResults.filter(g => g.status === "FAIL");
+              return failGates.length >= 2 && onFixAll ? (
+                <button
+                  onClick={onFixAll}
+                  disabled={!!fixingGate || rerunning}
+                  style={{
+                    width: "100%", padding: 10, borderRadius: 6, marginBottom: 8,
+                    background: "#0D1B2A", border: "none",
+                    fontSize: 12, fontWeight: 700, color: "#F5C642",
+                    cursor: fixingGate || rerunning ? "not-allowed" : "pointer",
+                    fontFamily: FONT, opacity: fixingGate || rerunning ? 0.6 : 1,
+                    transition: "opacity 0.15s",
+                  }}
+                >
+                  {fixingGate ? `Fixing issues...` : `Fix all ${failGates.length} issues`}
+                </button>
+              ) : null;
+            })()}
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {pipelineRun.checkpointResults.map((gate, i) => (
                 <CheckpointRow
@@ -865,20 +934,20 @@ function ReviewDash({
 
       {pipelineRun && !running && (
         rerunning ? (
-          <div style={{ fontSize: 10, color: "var(--gold-bright)", marginBottom: 6, fontWeight: 500 }}>Re-running pipeline...</div>
+          <div style={{ fontSize: 10, color: "var(--gold-bright)", marginBottom: 6, fontWeight: 500 }}>Re-scoring all checkpoints...</div>
         ) : (
           <button
             onClick={onRerunPipeline}
             disabled={!!fixingGate}
             style={{
-              width: "100%", padding: 7, borderRadius: 5, marginBottom: 6,
-              background: "var(--surface)", border: "1px solid var(--line)",
-              fontSize: 10, fontWeight: 600, color: "var(--fg-2)",
+              width: "100%", padding: 8, borderRadius: 6, marginBottom: 6,
+              background: "transparent", border: "1px solid var(--line)",
+              fontSize: 11, fontWeight: 600, color: "var(--fg-2)",
               cursor: fixingGate ? "not-allowed" : "pointer",
               fontFamily: FONT, transition: "all 0.15s",
             }}
           >
-            Re-score draft
+            Re-score all checkpoints
           </button>
         )
       )}
@@ -3212,6 +3281,48 @@ export default function WorkSession() {
   }, [draft, activeReviewTab, toast]);
 
   // ── REVIEW: Fix a specific checkpoint gate ─────────────────────
+  // ── REVIEW: Re-run pipeline (all 7 gates) ──
+  const handleRerunPipeline = useCallback(async () => {
+    if (!draft || !user) return;
+    setRerunningPipeline(true);
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft,
+          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          voiceDnaMd,
+          brandDnaMd,
+          methodDnaMd,
+          userId: user.id,
+        }),
+      }, { timeout: 180000 });
+
+      if (!res.ok) throw new Error(`Pipeline re-run error ${res.status}`);
+      const result = await res.json();
+
+      setPipelineRun(prev => {
+        const newResults = (result.checkpointResults || []) as CheckpointResult[];
+        return {
+          status: result.status || prev?.status || "BLOCKED",
+          checkpointResults: newResults.length > 0 ? newResults : (prev?.checkpointResults || []),
+          impactScore: result.impactScore || prev?.impactScore || null,
+          humanVoiceTest: result.humanVoiceTest || prev?.humanVoiceTest || null,
+          blockedAt: result.blockedAt || null,
+          finalDraft: result.finalDraft || prev?.finalDraft,
+        } as PipelineRun;
+      });
+
+      toast("Re-scored.");
+    } catch (err: any) {
+      console.error("[handleRerunPipeline]", err);
+      toast("Re-score failed.", "error");
+    } finally {
+      setRerunningPipeline(false);
+    }
+  }, [draft, user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, toast]);
+
   const handleFixCheckpoint = useCallback(async (gateName: string, feedback: string) => {
     if (!draft || !user) return;
     setFixingGate(gateName);
@@ -3267,21 +3378,20 @@ export default function WorkSession() {
           if (!prev) return prev;
           const updatedResults = prev.checkpointResults.map(g => {
             if (g.gate === gateName) {
-              // Bump the fixed gate's score by 25-40 points (capped at 85)
-              const newScore = Math.min(85, (g.score || 0) + 30);
-              return { ...g, status: "PASS" as const, score: newScore, feedback: `Addressed: ${g.feedback}` };
+              return { ...g, status: "PASS" as const, score: 90, feedback: `Addressed: ${g.feedback}` };
             }
             return g;
           });
-          // Recompute total as average of all gate scores
-          const avgScore = Math.round(updatedResults.reduce((sum, g) => sum + (g.score || 0), 0) / updatedResults.length);
-          const newTotal = Math.max(avgScore, (prev.impactScore?.total ?? 0) + 8);
+          // Recompute: average of all gate scores + 5 bonus per PASS gate, capped at 100
+          const avgScore = updatedResults.reduce((sum, g) => sum + (g.score || 0), 0) / updatedResults.length;
+          const passBonus = updatedResults.filter(g => g.status === "PASS").length * 5;
+          const newTotal = Math.min(100, Math.round(avgScore + passBonus));
           return {
             ...prev,
             checkpointResults: updatedResults,
             impactScore: prev.impactScore ? {
               ...prev.impactScore,
-              total: Math.min(100, newTotal),
+              total: newTotal,
               verdict: newTotal >= 60 ? "PUBLISH" : "REVISE",
             } : prev.impactScore,
           };
@@ -3289,9 +3399,9 @@ export default function WorkSession() {
       }
 
       setFixingGate(null);
-      toast("Fix applied. Score updated.");
+      toast("Fix applied. Re-scoring...");
 
-      // Re-adapt the current format in background (non-blocking, won't trigger pipeline re-run)
+      // Re-adapt the current format in background (non-blocking)
       try {
         const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
           method: "POST",
@@ -3306,66 +3416,29 @@ export default function WorkSession() {
           }));
         }
       } catch { /* format re-adaptation is non-critical */ }
+
+      // Auto-trigger full pipeline re-run to verify the fix
+      handleRerunPipeline();
     } catch (err: any) {
       console.error("[handleFixCheckpoint]", err);
       toast("Fix failed. Try again.", "error");
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, pipelineRun, toast, activeReviewTab]);
+  }, [draft, user, buildConvSummary, outputType, selectedFormats, voiceDnaMd, brandDnaMd, pipelineRun, toast, activeReviewTab, handleRerunPipeline]);
 
-  // ── REVIEW: Re-run pipeline (quick re-score with fewer gates) ──
-  const handleRerunPipeline = useCallback(async () => {
-    if (!draft || !user) return;
-    setRerunningPipeline(true);
-    try {
-      // Run only the 3 fastest/most impactful gates for a quick re-score
-      const res = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft,
-          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
-          voiceDnaMd,
-          brandDnaMd,
-          methodDnaMd,
-          userId: user.id,
-          gateSubset: ["Echo", "Jordan", "Elena"],
-        }),
-      }, { timeout: 90000 });
+  // ── REVIEW: Fix all failing checkpoints at once ──
+  const handleFixAll = useCallback(async () => {
+    if (!pipelineRun || !draft || !user) return;
+    const failGates = pipelineRun.checkpointResults.filter(g => g.status === "FAIL");
+    if (failGates.length === 0) return;
 
-      if (!res.ok) throw new Error(`Pipeline re-run error ${res.status}`);
-      const result = await res.json();
+    const combinedFeedback = failGates
+      .map(g => `[${displayGateName(g.gate)}]: ${g.feedback}`)
+      .join("\n");
 
-      // Merge new gate results with existing ones (keep gates that weren't re-run)
-      setPipelineRun(prev => {
-        const newResults = (result.checkpointResults || []) as CheckpointResult[];
-        const newGateMap = new Map(newResults.map(g => [g.gate, g]));
-        const mergedCheckpoints: CheckpointResult[] = (prev?.checkpointResults || []).map(g =>
-          newGateMap.has(g.gate) ? (newGateMap.get(g.gate) as CheckpointResult) : g
-        );
-        // Add any new gates not in the previous run
-        newResults.forEach(g => {
-          if (!mergedCheckpoints.find(m => m.gate === g.gate)) mergedCheckpoints.push(g);
-        });
-        return {
-          status: result.status || prev?.status || "BLOCKED",
-          checkpointResults: mergedCheckpoints,
-          impactScore: result.impactScore || prev?.impactScore || null,
-          humanVoiceTest: result.humanVoiceTest || prev?.humanVoiceTest || null,
-          blockedAt: result.blockedAt || null,
-          finalDraft: result.finalDraft || prev?.finalDraft,
-        } as PipelineRun;
-      });
-
-      toast("Re-scored.");
-    } catch (err: any) {
-      console.error("[handleRerunPipeline]", err);
-      toast("Re-score failed.", "error");
-    } finally {
-      setRerunningPipeline(false);
-    }
-  }, [draft, user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, toast]);
+    await handleFixCheckpoint("fix-all", `Fix these issues in the draft:\n${combinedFeedback}`);
+  }, [pipelineRun, draft, user, handleFixCheckpoint]);
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
@@ -3519,6 +3592,7 @@ export default function WorkSession() {
                   fixingGate={fixingGate}
                   onRerunPipeline={handleRerunPipeline}
                   rerunning={rerunningPipeline}
+                  onFixAll={handleFixAll}
                 />
               )}
 

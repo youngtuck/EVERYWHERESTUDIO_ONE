@@ -86,13 +86,14 @@
   50% { width: 80%; }
 }
 .para-highlight {
-  background: rgba(74, 175, 130, 0.10);
-  border-left: 3px solid rgba(74, 175, 130, 0.7);
-  padding-left: 12px;
+  background: rgba(74, 144, 217, 0.08);
+  border-left: 3px solid #4A90D9;
+  padding-left: 10px;
   padding-top: 4px;
   padding-bottom: 4px;
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 4px 4px 0;
   position: relative;
+  transition: background 0.3s ease;
   animation: highlight-pop 0.3s ease-out, highlight-fade 6s ease-out 0.3s forwards;
 }
 .para-highlight::after {
@@ -104,7 +105,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(74, 175, 130, 0.8);
+  color: rgba(74, 144, 217, 0.8);
   animation: highlight-badge-fade 4s ease-out 1s forwards;
 }
 @keyframes highlight-pop {
