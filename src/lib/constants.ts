@@ -46,3 +46,57 @@ export const REED_STAGE_CHIPS: Record<string, Array<{ label: string; prefill: st
     { label: "What else can I make from this?", prefill: "What other content can I extract or adapt from this piece?" },
   ],
 };
+
+export const OUTPUT_TYPES = {
+  content: {
+    label: "Content",
+    description: "Single-session outputs that build your reputation, audience, and authority over time.",
+    types: [
+      { id: "essay", name: "Essay", format: ".md / .html", shortDesc: "Long-form writing that establishes your thinking on a subject." },
+      { id: "podcast", name: "Podcast", format: ".md", shortDesc: "Scripted audio show in any format: solo, two hosts, interview, or panel." },
+      { id: "video_script", name: "Video Script", format: ".md", shortDesc: "Scripts built for the platform. The algorithm decides in the first three seconds." },
+      { id: "email", name: "Email", format: "Plain text", shortDesc: "Any email, any purpose. 2 to 3 strategic variants, each aimed at a different outcome." },
+    ],
+  },
+  social: {
+    label: "Social Media",
+    description: "Content built for the interest graph. Each platform has its own rules.",
+    types: [
+      { id: "linkedin", name: "LinkedIn Post", format: "Plain text", shortDesc: "Short-form professional post built for the interest graph." },
+      { id: "x_post", name: "X Post", format: "Plain text", shortDesc: "A short, sharp take built for speed and signal. 280 characters." },
+      { id: "social_post", name: "Social Post", format: "Plain text", shortDesc: "Content adapted for Instagram, Facebook, or other platforms." },
+    ],
+  },
+  business: {
+    label: "Business",
+    description: "Single-session structured documents for the normal course of business.",
+    types: [
+      { id: "presentation", name: "Presentation", format: ".html / .pdf", shortDesc: "A slide narrative built around what the audience needs to believe." },
+      { id: "proposal", name: "Proposal", format: ".html / .pdf", shortDesc: "A document that makes the client feel understood before it asks for anything." },
+      { id: "one_pager", name: "One-Pager", format: ".html / .pdf", shortDesc: "One page, one idea, one ask. The hardest document to write well." },
+      { id: "report", name: "Report", format: ".pdf / .html", shortDesc: "Structured findings that enable a decision." },
+      { id: "executive_summary", name: "Executive Summary", format: ".pdf / .html", shortDesc: "A standalone argument for a decision-maker. Not a shortened version." },
+      { id: "case_study", name: "Case Study", format: ".html / .pdf", shortDesc: "Proof that you deliver. A story about what changed." },
+      { id: "sow", name: "Statement of Work", format: ".pdf", shortDesc: "Specific, unambiguous commitments: what, when, and out of scope." },
+      { id: "meeting", name: "Meeting Agenda / Recap", format: ".md / .html", shortDesc: "Pre-meeting structure or post-meeting record of what matters." },
+      { id: "bio", name: "Bio / Speaker Profile", format: "Plain text", shortDesc: "All four lengths in one session plus a speaker introduction." },
+      { id: "white_paper", name: "White Paper", format: ".html / .pdf", shortDesc: "Your longest bet on your own thinking. A position backed by evidence." },
+    ],
+  },
+  extended: {
+    label: "Extended",
+    description: "Built across multiple sessions. Each session adds to something larger.",
+    types: [
+      { id: "book", name: "Book", format: ".md per chapter", shortDesc: "Your most ambitious output. A project, not a single session." },
+      { id: "website", name: "Website", format: ".md / .html", shortDesc: "A full website built page by page, each page its own session." },
+      { id: "newsletter", name: "Newsletter", format: ".html", shortDesc: "A recurring publication. Each issue is its own session." },
+    ],
+  },
+  freestyle: {
+    label: "Freestyle",
+    description: "When what you need does not fit a category.",
+    types: [
+      { id: "freestyle", name: "Freestyle", format: "Varies", shortDesc: "You describe it, Reed builds it. Same quality standards." },
+    ],
+  },
+};
