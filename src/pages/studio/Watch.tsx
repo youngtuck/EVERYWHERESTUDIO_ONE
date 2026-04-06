@@ -229,29 +229,54 @@ export default function Watch() {
   const [substacks, setSubstacks] = useState<string[]>([]);
   const [redditCommunities, setRedditCommunities] = useState<string[]>([]);
 
-  // Initialize source lists from DEFAULT_SOURCES
-  useEffect(() => {
-    const byType: Record<string, string[]> = { newsletter: [], podcast: [], publication: [], substack: [] };
-    DEFAULT_SOURCES.forEach(s => { if (byType[s.type]) byType[s.type].push(s.name); });
-    setNewsletters(byType.newsletter);
-    setPodcasts(byType.podcast);
-    setPublications(byType.publication);
-    setSubstacks(byType.substack);
-  }, []);
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "realtime">("daily");
+  const [saving, setSaving] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Array<{ title?: string; url?: string; description?: string }>>([]);
 
-  // Load user's sentinel_topics from profile
+  // Load user profile (sentinel_topics + watch_config) and watch_sources
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("sentinel_topics")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data?.sentinel_topics && Array.isArray(data.sentinel_topics) && data.sentinel_topics.length > 0) {
-          setKeywords(data.sentinel_topics);
-        }
-      });
+    (async () => {
+      // Load profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("sentinel_topics, watch_config")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.sentinel_topics && Array.isArray(profile.sentinel_topics) && profile.sentinel_topics.length > 0) {
+        setKeywords(profile.sentinel_topics);
+      }
+      if (profile?.watch_config && typeof profile.watch_config === "object") {
+        const wc = profile.watch_config as any;
+        if (Array.isArray(wc.competitors)) setCompetitors(wc.competitors);
+        if (Array.isArray(wc.thoughtLeaders)) setThoughtLeaders(wc.thoughtLeaders);
+        if (Array.isArray(wc.reddit)) setRedditCommunities(wc.reddit);
+        if (wc.frequency) setFrequency(wc.frequency);
+      }
+
+      // Load watch_sources
+      const { data: srcData } = await supabase
+        .from("watch_sources")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (srcData && srcData.length > 0) {
+        setNewsletters(srcData.filter((s: any) => s.type === "Newsletter").map((s: any) => s.name));
+        setPodcasts(srcData.filter((s: any) => s.type === "Podcast").map((s: any) => s.name));
+        setPublications(srcData.filter((s: any) => s.type === "Publication").map((s: any) => s.name));
+        setSubstacks(srcData.filter((s: any) => s.type === "Substack").map((s: any) => s.name));
+      } else {
+        // Fall back to defaults if no saved sources
+        const byType: Record<string, string[]> = { newsletter: [], podcast: [], publication: [], substack: [] };
+        DEFAULT_SOURCES.forEach(s => { if (byType[s.type]) byType[s.type].push(s.name); });
+        setNewsletters(byType.newsletter);
+        setPodcasts(byType.podcast);
+        setPublications(byType.publication);
+        setSubstacks(byType.substack);
+      }
+    })();
   }, [user]);
 
   // Briefing state
@@ -394,6 +419,71 @@ export default function Watch() {
     setter(prev => prev.filter(x => x !== v));
   };
 
+  // Save all settings to Supabase
+  const handleSaveSettings = useCallback(async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await supabase.from("profiles").update({
+        sentinel_topics: keywords,
+        watch_config: {
+          competitors,
+          thoughtLeaders,
+          frequency,
+          reddit: redditCommunities,
+        },
+      }).eq("id", user.id);
+
+      // Sync watch_sources: delete existing and re-insert
+      await supabase.from("watch_sources").delete().eq("user_id", user.id);
+      const sourceRows = [
+        ...newsletters.map(name => ({ user_id: user.id, type: "Newsletter" as const, name })),
+        ...podcasts.map(name => ({ user_id: user.id, type: "Podcast" as const, name })),
+        ...publications.map(name => ({ user_id: user.id, type: "Publication" as const, name })),
+        ...substacks.map(name => ({ user_id: user.id, type: "Substack" as const, name })),
+      ];
+      if (sourceRows.length > 0) {
+        await supabase.from("watch_sources").insert(sourceRows);
+      }
+      toast("Settings saved.");
+    } catch (err) {
+      console.error("[Watch] Save settings error:", err);
+      toast("Failed to save settings.", "error");
+    } finally {
+      setSaving(false);
+    }
+  }, [user, keywords, competitors, thoughtLeaders, frequency, redditCommunities, newsletters, podcasts, publications, substacks, toast]);
+
+  // Research via Firecrawl
+  const handleResearch = useCallback(async () => {
+    if (!researchQuery.trim()) return;
+    setSearching(true);
+    setSearchResults([]);
+    setResearchMessage("");
+
+    try {
+      const res = await fetch(`${API_BASE}/api/firecrawl-search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: researchQuery.trim(), limit: 5 }),
+      });
+      if (!res.ok) throw new Error("Search failed");
+      const data = await res.json();
+      const results = data.results || [];
+
+      setSearchResults(results);
+      if (results.length > 0) {
+        setResearchMessage(`Found ${results.length} result${results.length !== 1 ? "s" : ""} for "${researchQuery}". Review the results below. You can add any of these to your Watch sources.`);
+      } else {
+        setResearchMessage(`No results found for "${researchQuery}". Try a different search term, or add it directly as a keyword in Settings.`);
+      }
+    } catch {
+      setResearchMessage("Search failed. Check your connection and try again.");
+    } finally {
+      setSearching(false);
+    }
+  }, [researchQuery]);
+
   // Prefill Reed and switch to Ask Reed tab
   const prefillReed = useCallback((text: string) => {
     setReedPrefill(text);
@@ -459,16 +549,17 @@ export default function Watch() {
           {activeTab === "settings" && (
             <>
               <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>FREQ</span>
-              {["Daily", "Weekly", "Real-time"].map(opt => (
-                <label key={opt} style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 10, color: "var(--fg-2)", cursor: "pointer" }}>
-                  <input type="radio" name="freq" defaultChecked={opt === "Daily"} style={{ accentColor: "var(--blue, #4A90D9)" }} />{opt}
+              {([["Daily", "daily"], ["Weekly", "weekly"], ["Real-time", "realtime"]] as const).map(([label, val]) => (
+                <label key={val} style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 10, color: "var(--fg-2)", cursor: "pointer" }}>
+                  <input type="radio" name="freq" checked={frequency === val} onChange={() => setFrequency(val as any)} style={{ accentColor: "var(--blue, #4A90D9)" }} />{label}
                 </label>
               ))}
-              <button style={{
+              <button onClick={handleSaveSettings} disabled={saving} style={{
                 fontSize: 10, fontWeight: 600, padding: "4px 14px", borderRadius: 5,
                 background: "var(--fg)", color: "var(--gold, #F5C642)", border: "none",
-                cursor: "pointer", fontFamily: FONT, letterSpacing: "0.02em",
-              }}>Save</button>
+                cursor: saving ? "not-allowed" : "pointer", fontFamily: FONT, letterSpacing: "0.02em",
+                opacity: saving ? 0.5 : 1,
+              }}>{saving ? "Saving..." : "Save"}</button>
             </>
           )}
         </div>
@@ -544,11 +635,13 @@ export default function Watch() {
               <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 12 }}>Reed searches across podcasts, newsletters, Substack, Reddit, and publications. You decide what to follow.</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <input value={researchQuery} onChange={e => setResearchQuery(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && researchQuery.trim()) { setResearchMessage(`Searching for '${researchQuery.trim()}' across sources. Results will appear here when the research API is connected.`); } }}
+                  onKeyDown={e => { if (e.key === "Enter") handleResearch(); }}
                   placeholder="e.g. Scott Galloway, Stratechery, fractional CAIO..."
                   style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none" }} />
-                <button onClick={() => { if (researchQuery.trim()) setResearchMessage(`Searching for '${researchQuery.trim()}' across sources. Results will appear here when the research API is connected.`); }}
-                  style={{ padding: "8px 16px", borderRadius: 6, background: "var(--fg)", color: "var(--surface)", border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>Search</button>
+                <button onClick={handleResearch} disabled={searching}
+                  style={{ padding: "8px 16px", borderRadius: 6, background: "var(--fg)", color: "var(--surface)", border: "none", fontSize: 12, fontWeight: 600, cursor: searching ? "not-allowed" : "pointer", fontFamily: FONT, opacity: searching ? 0.5 : 1 }}>
+                  {searching ? "Searching..." : "Search"}
+                </button>
               </div>
             </div>
 
@@ -561,11 +654,47 @@ export default function Watch() {
               </div>
             )}
 
-            {!researchMessage && (
-              <div style={{ fontSize: 11, color: "var(--fg-3)", textAlign: "center" as const, paddingTop: 40 }}>
-                Search to see results. Reed will help you decide what is worth following.
-              </div>
-            )}
+            {/* Results */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "0 20px" }}>
+              {searching && (
+                <div style={{ fontSize: 12, color: "var(--fg-3)", textAlign: "center" as const, paddingTop: 40 }}>Searching...</div>
+              )}
+
+              {!searching && searchResults.length > 0 && searchResults.map((result, i) => (
+                <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                  {result.url ? (
+                    <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", textDecoration: "none" }}>
+                      {result.title || result.url}
+                    </a>
+                  ) : (
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>{result.title || "Untitled"}</div>
+                  )}
+                  {result.url && (
+                    <div style={{ fontSize: 10, color: "var(--fg-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, maxWidth: 400 }}>{result.url}</div>
+                  )}
+                  {result.description && (
+                    <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5, marginTop: 4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{result.description}</div>
+                  )}
+                  <button onClick={() => {
+                    const name = result.title || result.url || "";
+                    if (name) {
+                      setPublications(prev => prev.includes(name) ? prev : [...prev, name]);
+                      toast("Added to Watch sources.");
+                    }
+                  }} style={{
+                    marginTop: 6, fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 4,
+                    background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
+                    color: "var(--blue, #4A90D9)", cursor: "pointer", fontFamily: FONT,
+                  }}>Add to Watch</button>
+                </div>
+              ))}
+
+              {!searching && searchResults.length === 0 && !researchMessage && (
+                <div style={{ fontSize: 11, color: "var(--fg-3)", textAlign: "center" as const, paddingTop: 40 }}>
+                  Search to see results. Reed will help you decide what is worth following.
+                </div>
+              )}
+            </div>
           </div>
         )}
 
