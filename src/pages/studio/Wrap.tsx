@@ -1,8 +1,8 @@
 /**
  * Wrap.tsx, Format tabs + centered preview + export controls
- * Rewritten to match Alpha 3.001 wireframe
+ * Wired: format adaptation via /api/adapt-format, export to Supabase, per-format copy
  */
-import { useState, useLayoutEffect, useEffect, useCallback } from "react";
+import { useState, useLayoutEffect, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
@@ -13,6 +13,7 @@ import "./shared.css";
 
 const FONT = "var(--font)";
 const DEFAULT_FORMATS = ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 interface OutputItem {
   id: string;
@@ -23,14 +24,21 @@ interface OutputItem {
   score?: number;
 }
 
+interface FormatEntry {
+  content: string;
+  metadata: Record<string, string>;
+  status: "pending" | "loading" | "done" | "error";
+}
+
 // ── Right Panel Dashboard ─────────────────────────────────────
 function WrapDashPanel({
-  outputType, formatCount, onExportAll, exported, prefillReed,
+  outputType, formatCount, onExportAll, exported, exporting, prefillReed,
 }: {
   outputType: string;
   formatCount: number;
   onExportAll: () => void;
   exported: boolean;
+  exporting: boolean;
   prefillReed: (text: string) => void;
 }) {
   const isFreestyle = !outputType || outputType === "freestyle";
@@ -47,7 +55,6 @@ function WrapDashPanel({
 
   return (
     <>
-      {/* MODE */}
       <div style={{ marginBottom: 14 }}>
         <DpLabel>Mode</DpLabel>
         <div style={{
@@ -60,7 +67,6 @@ function WrapDashPanel({
         </div>
       </div>
 
-      {/* READY TO EXPORT */}
       <div style={{ marginBottom: 14 }}>
         <DpLabel>Ready to Export</DpLabel>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
@@ -70,23 +76,23 @@ function WrapDashPanel({
         </div>
       </div>
 
-      {/* EXPORT ALL */}
       <button
         onClick={onExportAll}
-        disabled={exported}
+        disabled={exported || exporting}
         style={{
           width: "100%", padding: 8, borderRadius: 6, marginBottom: 12,
           background: exported ? "rgba(74,144,217,0.12)" : "var(--fg)",
           color: exported ? "var(--blue, #4A90D9)" : "var(--gold, #F5C642)",
           border: exported ? "1px solid rgba(74,144,217,0.3)" : "none",
-          fontSize: 11, fontWeight: 700, cursor: exported ? "default" : "pointer",
+          fontSize: 11, fontWeight: 700,
+          cursor: exported || exporting ? "default" : "pointer",
           fontFamily: FONT, letterSpacing: "0.04em",
+          opacity: exporting ? 0.6 : 1,
         }}
       >
-        {exported ? "Exported" : "Export All"}
+        {exported ? "Exported" : exporting ? "Exporting..." : "Export All"}
       </button>
 
-      {/* REED CALLOUT */}
       <div style={{
         border: "1px solid rgba(74,144,217,0.25)", borderRadius: 8,
         padding: "10px 12px", background: "rgba(74,144,217,0.04)", marginBottom: 12,
@@ -97,7 +103,6 @@ function WrapDashPanel({
         </div>
       </div>
 
-      {/* SUGGESTION CHIPS */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
         {chips.map((chip, i) => (
           <button key={i} onClick={() => prefillReed(chip.prefill)} style={{
@@ -127,6 +132,11 @@ export default function WrapPage() {
   const [activeFormat, setActiveFormat] = useState(DEFAULT_FORMATS[0]);
   const [copied, setCopied] = useState(false);
   const [exported, setExported] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [formatContents, setFormatContents] = useState<Record<string, FormatEntry>>({});
+
+  // Track which formats we've already started adapting to avoid duplicates
+  const adaptingRef = useRef<Set<string>>(new Set());
 
   // Read session data passed from Work Export
   useEffect(() => {
@@ -187,9 +197,70 @@ export default function WrapPage() {
     if (!sessionDraft) fetchOutputs();
   }, [fetchOutputs, location.key, sessionDraft]);
 
-  // Active content: session draft takes priority
+  // Active content
   const activeOutput = sessionDraft || (outputs.length > 0 ? outputs[0] : null);
   const hasContent = !!activeOutput;
+
+  // Adapt format via API
+  const adaptFormat = useCallback(async (format: string) => {
+    if (!activeOutput?.content || !user) return;
+    if (adaptingRef.current.has(format)) return;
+    adaptingRef.current.add(format);
+
+    setFormatContents(prev => ({ ...prev, [format]: { content: "", metadata: {}, status: "loading" } }));
+
+    try {
+      const res = await fetch(`${API_BASE}/api/adapt-format`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft: activeOutput.content,
+          format,
+          voiceDnaMd: "",
+          brandDnaMd: "",
+          userId: user.id,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Adapt error ${res.status}`);
+      const data = await res.json();
+
+      setFormatContents(prev => ({
+        ...prev,
+        [format]: {
+          content: data.content || activeOutput.content,
+          metadata: data.metadata || {},
+          status: "done",
+        },
+      }));
+    } catch (err) {
+      console.error("[Wrap] adapt error:", err);
+      setFormatContents(prev => ({
+        ...prev,
+        [format]: { content: activeOutput.content, metadata: {}, status: "error" },
+      }));
+    } finally {
+      adaptingRef.current.delete(format);
+    }
+  }, [activeOutput, user]);
+
+  // Auto-adapt first format when content loads
+  useEffect(() => {
+    if (!activeOutput?.content) return;
+    const entry = formatContents[activeFormat];
+    if (!entry || entry.status === "pending") {
+      adaptFormat(activeFormat);
+    }
+  }, [activeOutput, activeFormat, formatContents, adaptFormat]);
+
+  // Handle format tab change
+  const handleFormatChange = useCallback((format: string) => {
+    setActiveFormat(format);
+    const entry = formatContents[format];
+    if (!entry || entry.status === "pending") {
+      adaptFormat(format);
+    }
+  }, [formatContents, adaptFormat]);
 
   // Prefill Reed
   const prefillReed = useCallback((text: string) => {
@@ -197,25 +268,48 @@ export default function WrapPage() {
     setActiveDashTab("reed");
   }, [setReedPrefill, setActiveDashTab]);
 
-  // Export all
-  const handleExportAll = useCallback(() => {
-    if (!activeOutput) return;
-    navigator.clipboard.writeText(activeOutput.content).then(() => {
-      setExported(true);
-      toast("All formats exported.");
-    }).catch(() => {
-      toast("Export failed.", "error");
-    });
-  }, [activeOutput, toast]);
+  // Export all formats
+  const handleExportAll = useCallback(async () => {
+    if (!activeOutput || !user) return;
+    setExporting(true);
 
-  // Copy active format
-  const handleCopy = () => {
-    if (!activeOutput) return;
-    navigator.clipboard.writeText(activeOutput.content).then(() => {
+    try {
+      // Adapt any pending formats first
+      const pendingFormats = formats.filter(f => {
+        const entry = formatContents[f];
+        return !entry || entry.status !== "done";
+      });
+      for (const fmt of pendingFormats) {
+        await adaptFormat(fmt);
+      }
+
+      // Save to Supabase
+      if (activeOutput.id !== "session-draft") {
+        await supabase.from("outputs").update({
+          content_state: "vault",
+          published_at: new Date().toISOString(),
+        }).eq("id", activeOutput.id);
+      }
+
+      setExported(true);
+      toast("All formats exported and saved.");
+    } catch (err) {
+      console.error("[Wrap] export error:", err);
+      toast("Export failed.", "error");
+    } finally {
+      setExporting(false);
+    }
+  }, [activeOutput, user, formats, formatContents, adaptFormat, toast]);
+
+  // Copy adapted content for active format
+  const handleCopy = useCallback(() => {
+    const textToCopy = formatContents[activeFormat]?.content || activeOutput?.content || "";
+    navigator.clipboard.writeText(textToCopy).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      toast(`${activeFormat} version copied.`);
     }).catch(() => {});
-  };
+  }, [activeFormat, formatContents, activeOutput, toast]);
 
   // Right panel dashboard
   useLayoutEffect(() => {
@@ -227,6 +321,7 @@ export default function WrapPage() {
           formatCount={formats.length}
           onExportAll={handleExportAll}
           exported={exported}
+          exporting={exporting}
           prefillReed={prefillReed}
         />
       );
@@ -234,13 +329,12 @@ export default function WrapPage() {
       setFeedbackContent(null);
     }
     return () => setFeedbackContent(null);
-  }, [activeOutput, formats, exported, hasContent, handleExportAll, prefillReed, setDashOpen, setFeedbackContent]);
+  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setDashOpen, setFeedbackContent]);
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: "center", color: "var(--fg-3)", fontSize: 13, fontFamily: FONT }}>Loading...</div>;
   }
 
-  // ── Full-page empty state ──
   if (!hasContent) {
     return (
       <div style={{
@@ -272,9 +366,13 @@ export default function WrapPage() {
     );
   }
 
-  // Parse content for display
+  // Display content: use adapted version if available, else raw
+  const formatEntry = formatContents[activeFormat];
+  const displayContent = formatEntry?.content || activeOutput.content || "";
+  const displayMetadata = formatEntry?.metadata || {};
+  const isAdapting = formatEntry?.status === "loading";
   const contentTitle = activeOutput.title || "Untitled";
-  const contentParas = activeOutput.content ? activeOutput.content.split("\n").filter(Boolean) : [];
+  const contentParas = displayContent ? displayContent.split("\n").filter(Boolean) : [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
@@ -284,7 +382,7 @@ export default function WrapPage() {
         padding: "0 20px", flexShrink: 0, background: "var(--bg)", overflowX: "auto",
       }}>
         {formats.map(fmt => (
-          <button key={fmt} onClick={() => setActiveFormat(fmt)} style={{
+          <button key={fmt} onClick={() => handleFormatChange(fmt)} style={{
             fontSize: 11, fontWeight: activeFormat === fmt ? 600 : 500,
             color: activeFormat === fmt ? "var(--fg)" : "var(--fg-3)",
             padding: "11px 14px",
@@ -302,8 +400,29 @@ export default function WrapPage() {
         display: "flex", alignItems: "flex-start", justifyContent: "center",
       }}>
         <div style={{ width: "100%", maxWidth: 580 }}>
-          {contentParas.length > 0 ? (
+          {isAdapting ? (
+            <div style={{ textAlign: "center", paddingTop: 80 }}>
+              <div style={{ fontSize: 13, color: "var(--fg-3)", animation: "pulse 2s ease-in-out infinite" }}>
+                Adapting for {activeFormat}...
+              </div>
+              <style>{`@keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }`}</style>
+            </div>
+          ) : contentParas.length > 0 ? (
             <>
+              {/* Metadata (subject line, preview text) */}
+              {displayMetadata.subject && (
+                <div style={{ marginBottom: displayMetadata.preview ? 4 : 16 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>SUBJECT: </span>
+                  <span style={{ fontSize: 11, color: "var(--fg)" }}>{displayMetadata.subject}</span>
+                </div>
+              )}
+              {displayMetadata.preview && (
+                <div style={{ marginBottom: 16 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>PREVIEW: </span>
+                  <span style={{ fontSize: 11, color: "var(--fg-2)" }}>{displayMetadata.preview}</span>
+                </div>
+              )}
+
               <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", margin: "0 0 20px", lineHeight: 1.3 }}>
                 {contentTitle}
               </h1>
@@ -311,7 +430,6 @@ export default function WrapPage() {
                 <p key={i} style={{ fontSize: 13, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 12 : 0 }}>{p}</p>
               ))}
 
-              {/* Action buttons */}
               <div style={{ display: "flex", gap: 8, marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
                 <button onClick={handleCopy} style={{
                   fontSize: 11, padding: "6px 16px", borderRadius: 5,
@@ -330,12 +448,11 @@ export default function WrapPage() {
               </div>
             </>
           ) : (
-            /* Per-format empty state */
             <div style={{ textAlign: "center", paddingTop: 80 }}>
               <div style={{ fontSize: 28, color: "var(--gold, #F5C642)", marginBottom: 14 }}>&#10022;</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>Ready to wrap {activeFormat}</div>
               <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16 }}>Choose a template in the dashboard, then hit Wrap it.</div>
-              <button onClick={() => toast("Format adaptation will be available soon.")} style={{
+              <button onClick={() => adaptFormat(activeFormat)} style={{
                 fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 6,
                 background: "var(--fg)", border: "none", color: "var(--surface)",
                 cursor: "pointer", fontFamily: FONT,
