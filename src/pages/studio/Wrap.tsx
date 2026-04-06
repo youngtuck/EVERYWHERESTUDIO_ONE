@@ -192,13 +192,13 @@ export default function WrapPage() {
   const hasContent = !!activeOutput;
 
   // Prefill Reed
-  const prefillReed = (text: string) => {
+  const prefillReed = useCallback((text: string) => {
     setReedPrefill(text);
     setActiveDashTab("reed");
-  };
+  }, [setReedPrefill, setActiveDashTab]);
 
   // Export all
-  const handleExportAll = () => {
+  const handleExportAll = useCallback(() => {
     if (!activeOutput) return;
     navigator.clipboard.writeText(activeOutput.content).then(() => {
       setExported(true);
@@ -206,7 +206,7 @@ export default function WrapPage() {
     }).catch(() => {
       toast("Export failed.", "error");
     });
-  };
+  }, [activeOutput, toast]);
 
   // Copy active format
   const handleCopy = () => {
@@ -234,7 +234,7 @@ export default function WrapPage() {
       setFeedbackContent(null);
     }
     return () => setFeedbackContent(null);
-  }, [activeOutput, formats, exported, setDashOpen, setFeedbackContent, setReedPrefill, setActiveDashTab]);
+  }, [activeOutput, formats, exported, hasContent, handleExportAll, prefillReed, setDashOpen, setFeedbackContent]);
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: "center", color: "var(--fg-3)", fontSize: 13, fontFamily: FONT }}>Loading...</div>;

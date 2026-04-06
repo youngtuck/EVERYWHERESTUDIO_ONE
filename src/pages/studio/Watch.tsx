@@ -2,7 +2,7 @@
  * Watch.tsx, Sentinel Briefing + Research + Settings
  * Rewritten to match Alpha 3.001 wireframe: three center tabs, simplified right panel
  */
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
@@ -395,16 +395,16 @@ export default function Watch() {
   };
 
   // Prefill Reed and switch to Ask Reed tab
-  const prefillReed = (text: string) => {
+  const prefillReed = useCallback((text: string) => {
     setReedPrefill(text);
     setActiveDashTab("reed");
-  };
+  }, [setReedPrefill, setActiveDashTab]);
 
-  // Extract briefing sections
+  // Extract briefing sections (memoized to prevent re-render loops)
   const sections = briefing?.sections;
-  const contentTriggers = sections?.content_triggers ?? sections?.whats_moving ?? [];
-  const opportunities = sections?.opportunities ?? [];
-  const marketSignals = sections?.threats ?? [];
+  const contentTriggers = useMemo(() => sections?.content_triggers ?? sections?.whats_moving ?? [], [sections]);
+  const opportunities = useMemo(() => sections?.opportunities ?? [], [sections]);
+  const marketSignals = useMemo(() => sections?.threats ?? [], [sections]);
 
   const now = new Date();
   const displayDate = briefingDate || now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
@@ -421,7 +421,7 @@ export default function Watch() {
       />
     );
     return () => setFeedbackContent(null);
-  }, [briefing, contentTriggers, opportunities, setDashOpen, setFeedbackContent, setReedPrefill, setActiveDashTab]);
+  }, [briefing, contentTriggers, opportunities, prefillReed, setDashOpen, setFeedbackContent]);
 
   // ── Settings tab content ─────────────────────────────────────
   const SettingsLabel = ({ children }: { children: React.ReactNode }) => (
