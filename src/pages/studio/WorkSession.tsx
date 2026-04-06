@@ -244,14 +244,41 @@ function useUserDNA(userId: string | undefined) {
   useEffect(() => {
     if (!userId) return;
     (async () => {
+      // Try resources table first (preferred, structured DNA)
       const { data } = await supabase
         .from("resources")
         .select("resource_type, content")
         .eq("user_id", userId);
-      if (!data) return;
-      setVoiceDnaMd(data.filter(r => r.resource_type === "voice_dna").map(r => r.content || "").join("\n"));
-      setBrandDnaMd(data.filter(r => r.resource_type === "brand_dna").map(r => r.content || "").join("\n"));
-      setMethodDnaMd(data.filter(r => r.resource_type === "method_dna").map(r => r.content || "").join("\n"));
+
+      if (data && data.length > 0) {
+        const voice = data.filter(r => r.resource_type === "voice_dna").map(r => r.content || "").join("\n").trim();
+        const brand = data.filter(r => r.resource_type === "brand_dna").map(r => r.content || "").join("\n").trim();
+        const method = data.filter(r => r.resource_type === "method_dna").map(r => r.content || "").join("\n").trim();
+        if (voice) setVoiceDnaMd(voice);
+        if (brand) setBrandDnaMd(brand);
+        if (method) setMethodDnaMd(method);
+        if (voice || brand) return;
+      }
+
+      // Fallback: load from profiles table (onboarding data)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("voice_dna_md, brand_dna_md, voice_profile")
+        .eq("id", userId)
+        .single();
+
+      if (profile) {
+        if (profile.voice_dna_md) setVoiceDnaMd(profile.voice_dna_md);
+        if (profile.brand_dna_md) setBrandDnaMd(profile.brand_dna_md);
+        if (!profile.voice_dna_md && profile.voice_profile) {
+          const vp = profile.voice_profile as Record<string, any>;
+          const vpMd = Object.entries(vp)
+            .filter(([, v]) => v && typeof v === "string")
+            .map(([k, v]) => `**${k}**: ${v}`)
+            .join("\n");
+          if (vpMd) setVoiceDnaMd(vpMd);
+        }
+      }
     })();
   }, [userId]);
 
@@ -576,6 +603,34 @@ function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
 }
 
 // ── Per-format improve cards (Review sidebar) ────────────────
+// ── Draft flag counting ──────────────────────────────────────
+const PASSIVE_REGEX = /(was\s+\w+ed\b|were\s+\w+ed\b|has been\s+\w+ed\b|have been\s+\w+ed\b|had been\s+\w+ed\b|is being\s+\w+ed\b|are being\s+\w+ed\b|was being\s+\w+ed\b|never made it anywhere)/i;
+const CLICHE_REGEX = /(lost opportunity|game.?changer|at the end of the day|touch base|move the needle|deep dive|circle back|low.?hanging fruit|synergy|leverage|paradigm shift|think outside|best practices|value.?add)/i;
+
+function countDraftFlags(draft: string, dismissedFlags: Set<string>, fixedFlags: Map<string, string>): { must: number; style: number } {
+  if (!draft) return { must: 0, style: 0 };
+  let must = 0;
+  let style = 0;
+  const paragraphs = draft.split("\n").filter(Boolean).slice(1);
+
+  paragraphs.forEach((para, i) => {
+    const isSubhead = para.length < 60 && !para.endsWith(".");
+    if (isSubhead) return;
+
+    if (para.match(/(\d+%\s+of\s+\w+[^.]*)/) && !fixedFlags.has(`must-${i}`) && !dismissedFlags.has(`must-${i}`)) {
+      must++;
+    }
+    if (para.match(PASSIVE_REGEX) && !fixedFlags.has(`style-${i}`) && !dismissedFlags.has(`style-${i}`)) {
+      style++;
+    }
+    if (para.match(CLICHE_REGEX) && !fixedFlags.has(`cliche-${i}`) && !dismissedFlags.has(`cliche-${i}`)) {
+      style++;
+    }
+  });
+
+  return { must, style };
+}
+
 // ── Review helpers ────────────────────────────────────────────
 function deriveReviewGateStatus(score: number): "Pass" | "Review" | "Fail" {
   if (score >= 70) return "Pass";
@@ -1412,6 +1467,7 @@ function OutlineRowComponent({ label, content, indent, onChange }: {
 function StageEdit({
   draft, generating, generatingLabel, onDraftChange, onAdvance, onRevise,
   versions, activeVersionIdx, onVersionSelect, onGenerateVersion, canGenerateMore,
+  dismissedFlags, setDismissedFlags, fixedFlags, setFixedFlags,
 }: {
   draft: string; generating: boolean; generatingLabel: string;
   onDraftChange: (v: string) => void; onAdvance: () => void;
@@ -1421,11 +1477,13 @@ function StageEdit({
   onVersionSelect: (idx: number) => void;
   onGenerateVersion: () => void;
   canGenerateMore: boolean;
+  dismissedFlags: Set<string>;
+  setDismissedFlags: React.Dispatch<React.SetStateAction<Set<string>>>;
+  fixedFlags: Map<string, string>;
+  setFixedFlags: React.Dispatch<React.SetStateAction<Map<string, string>>>;
 }) {
   const [input, setInput] = useState("");
   const [activePopover, setActivePopover] = useState<string | null>(null);
-  const [dismissedFlags, setDismissedFlags] = useState<Set<string>>(new Set());
-  const [fixedFlags, setFixedFlags] = useState<Map<string, string>>(new Map());
   const popoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleRevise = () => {
@@ -1539,9 +1597,9 @@ function StageEdit({
           // Flag: unverified statistics/claims (must fix)
           const statMatch = para.match(/(\d+%\s+of\s+\w+[^.]*)/);
           // Flag: cliche/weak phrases (style)
-          const clicheMatch = para.match(/(lost opportunity|game.?changer|at the end of the day|touch base|move the needle)/i);
+          const clicheMatch = para.match(CLICHE_REGEX);
           // Flag: passive voice (style)
-          const passiveMatch = para.match(/(never made it anywhere|was done by|been completed|were given)/i);
+          const passiveMatch = para.match(PASSIVE_REGEX);
 
           if (statMatch && !fixedFlags.has(`must-${i}`) && !dismissedFlags.has(`must-${i}`)) {
             const idx = para.indexOf(statMatch[1]);
@@ -2316,6 +2374,8 @@ export default function WorkSession() {
   const [activeVersionIdx, setActiveVersionIdx] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [generatingLabel, setGeneratingLabel] = useState("Writing draft...");
+  const [dismissedFlags, setDismissedFlags] = useState<Set<string>>(new Set());
+  const [fixedFlags, setFixedFlags] = useState<Map<string, string>>(new Map());
 
   // ── Review ───────────────────────────────────────────────────
   const [pipelineRun, setPipelineRun] = useState<PipelineRun | null>(null);
@@ -2587,6 +2647,8 @@ export default function WorkSession() {
       const data = await res.json();
 
       setDraft(data.content || "");
+      setDismissedFlags(new Set());
+      setFixedFlags(new Map());
       setDraftVersions([{ content: data.content || "", label: "Version 1" }]);
       setActiveVersionIdx(0);
       setGeneratingLabel("Done.");
@@ -2641,6 +2703,8 @@ export default function WorkSession() {
       const data = await res.json();
       const revised = data.content || draft;
       setDraft(revised);
+      setDismissedFlags(new Set());
+      setFixedFlags(new Map());
       setDraftVersions(prev => {
         const updated = [...prev];
         if (updated[activeVersionIdx]) {
@@ -2959,6 +3023,16 @@ export default function WorkSession() {
   }, [handleNewSession]);
 
   const handleGoBackToEdit = useCallback((instructions: string) => {
+    // Clear stale Review data
+    setPipelineRun(null);
+    setFormatDrafts({});
+    setAllExported(false);
+    setExportedTabs({});
+    setFixingGate(null);
+    setRerunningPipeline(false);
+    setDismissedFlags(new Set());
+    setFixedFlags(new Map());
+
     goToStage("Edit");
     handleRevise(instructions);
   }, [goToStage, handleRevise]);
@@ -3222,6 +3296,7 @@ export default function WorkSession() {
           const wordCount = (draft || "").split(/\s+/).filter(Boolean).length;
           const targetWords = WORD_TARGETS[outputType || "freestyle"] || 700;
           const voiceMatch = wordCount > 0 ? 89 : 0;
+          const flagCounts = countDraftFlags(draft, dismissedFlags, fixedFlags);
 
           return (
             <>
@@ -3250,18 +3325,26 @@ export default function WorkSession() {
                   {/* FLAGS */}
                   <DpSection>
                     <DpLabel>Flags</DpLabel>
-                    <div style={{ display: "flex", gap: 5 }}>
-                      <div style={{
-                        display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
-                        borderRadius: 4, background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.35)",
-                        fontSize: 10, color: "#9A7030",
-                      }}>2 must fix</div>
-                      <div style={{
-                        display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
-                        borderRadius: 4, background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
-                        fontSize: 10, color: "var(--blue, #4A90D9)",
-                      }}>3 style</div>
-                    </div>
+                    {(flagCounts.must > 0 || flagCounts.style > 0) ? (
+                      <div style={{ display: "flex", gap: 5 }}>
+                        {flagCounts.must > 0 && (
+                          <div style={{
+                            display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
+                            borderRadius: 4, background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.35)",
+                            fontSize: 10, color: "#9A7030",
+                          }}>{flagCounts.must} must fix</div>
+                        )}
+                        {flagCounts.style > 0 && (
+                          <div style={{
+                            display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px",
+                            borderRadius: 4, background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
+                            fontSize: 10, color: "var(--blue, #4A90D9)",
+                          }}>{flagCounts.style} style</div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 10, color: "var(--fg-3)" }}>No flags detected</div>
+                    )}
                   </DpSection>
 
                   {/* WORD COUNT */}
@@ -3334,6 +3417,7 @@ export default function WorkSession() {
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
     handleRaiseScore, fixingGate, handleRerunPipeline, rerunningPipeline,
     prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
+    dismissedFlags, fixedFlags,
   ]);
 
   // Auto-open dashboard when pipeline finishes in Review
@@ -3466,6 +3550,10 @@ export default function WorkSession() {
           }}
           onGenerateVersion={handleGenerateVersion}
           canGenerateMore={draftVersions.length < 3 && !generating}
+          dismissedFlags={dismissedFlags}
+          setDismissedFlags={setDismissedFlags}
+          fixedFlags={fixedFlags}
+          setFixedFlags={setFixedFlags}
         />
       )}
       {stage === "Review" && (
