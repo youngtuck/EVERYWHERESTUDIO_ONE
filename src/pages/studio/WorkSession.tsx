@@ -937,34 +937,6 @@ function StageIntake({
   // Active chat state: messages + input bar at bottom
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)" }}>
-      {/* New Session button */}
-      {hasUserMessage && onNewSession && (
-        <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 24px 0", flexShrink: 0, maxWidth: 748, margin: "0 auto", width: "100%" }}>
-          <button
-            onClick={() => {
-              if (window.confirm("Start a new session? Your current conversation will be cleared.")) {
-                onNewSession();
-              }
-            }}
-            style={{
-              background: "none",
-              border: "1px solid var(--line)",
-              borderRadius: 6,
-              padding: isMobile ? "4px 10px" : "5px 12px",
-              fontSize: isMobile ? 10 : 11,
-              fontWeight: 600,
-              fontFamily: FONT,
-              color: "var(--fg-3)",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-3)"; }}
-          >
-            + New Session
-          </button>
-        </div>
-      )}
       {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
@@ -1038,9 +1010,6 @@ function StageIntake({
           >
             Just write it →
           </button>
-        </div>
-        <div style={{ textAlign: "right" as const, fontSize: 9, color: "var(--fg-3)", marginTop: 5, marginRight: 5, letterSpacing: "0.02em" }}>
-          Hold to speak · Release to send
         </div>
       </div>
 
@@ -2535,6 +2504,34 @@ export default function WorkSession() {
       if (data.readyToGenerate) {
         setIntakeReady(true);
         setReadySummary(reply);
+      } else if (!intakeReady) {
+        // Client-side fallback: detect readiness from conversation state
+        const userMsgs = newMessages.filter(m => m.role === "user");
+        const latestUserMsg = text.toLowerCase();
+        const intentSignals = [
+          "produce", "write it", "go ahead", "let's go", "build it", "generate",
+          "ready", "do it", "make it", "ship it", "just write", "start writing",
+          "that's it", "that's all", "nothing else", "good to go", "sounds good",
+          "yes", "yeah", "yep", "let's do this", "proceed",
+        ];
+        const userWantsToGenerate = intentSignals.some(signal => latestUserMsg.includes(signal));
+
+        const reedLower = reply.toLowerCase();
+        const reedSignalsReady =
+          reedLower.includes("anything you want to add") ||
+          reedLower.includes("ready to produce") ||
+          reedLower.includes("ready to write") ||
+          reedLower.includes("i have what i need") ||
+          reedLower.includes("i have enough") ||
+          reedLower.includes("let me produce") ||
+          reedLower.includes("shall i produce") ||
+          reedLower.includes("here is what i will produce") ||
+          reedLower.includes("here's what i'll produce");
+
+        if ((userWantsToGenerate && userMsgs.length >= 2) || reedSignalsReady || userMsgs.length >= 5) {
+          setIntakeReady(true);
+          setReadySummary(reply);
+        }
       }
     } catch (err: any) {
       setMessages(prev => [...prev, { role: "reed", content: "Something went wrong. Please try again." }]);
