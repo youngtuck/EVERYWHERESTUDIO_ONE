@@ -6,6 +6,7 @@
  */
 
 import { showGlobalToast } from "../context/ToastContext";
+import { supabase } from "./supabase";
 
 type RetryOptions = {
   maxRetries?: number;
@@ -31,6 +32,15 @@ export async function fetchWithRetry(
   let lastError: Error | null = null;
   let hadFailure = false;
 
+  // Inject auth token
+  let authHeaders: Record<string, string> = {};
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      authHeaders = { Authorization: `Bearer ${session.access_token}` };
+    }
+  } catch {}
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const controller = new AbortController();
@@ -38,6 +48,10 @@ export async function fetchWithRetry(
 
       const response = await fetch(url, {
         ...options,
+        headers: {
+          ...options.headers,
+          ...authHeaders,
+        },
         signal: controller.signal,
       });
 

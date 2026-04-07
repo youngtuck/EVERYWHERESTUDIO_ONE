@@ -75,6 +75,9 @@
     },
     "api/brand-assets.js": {
       "maxDuration": 30
+    },
+    "api/kajabi-webhook.js": {
+      "maxDuration": 10
     }
   },
   "rewrites": [
