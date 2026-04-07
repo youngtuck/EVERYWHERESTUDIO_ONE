@@ -104,7 +104,7 @@ function parseBetterishResponse(text) {
       const total = Math.round(parsed.total || parsed.totalScore || 0);
       const verdict = parsed.verdict
         ? String(parsed.verdict).toUpperCase()
-        : total >= 900 ? "PUBLISH" : total >= 600 ? "REVISE" : "REJECT";
+        : total >= 75 ? "PUBLISH" : total >= 50 ? "REVISE" : "REJECT";
       return {
         total,
         verdict,
@@ -263,9 +263,14 @@ export default async function handler(req, res) {
 
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    // Run all gates in parallel (with small stagger to avoid rate limits)
+    // Run gates in parallel with 800ms stagger to avoid rate limits
     const gatePromises = gatesToRun.map((gate, i) =>
-      delay(i * 800).then(() => runGate(gate, i))
+      delay(i * 800).then(() => {
+        if (Date.now() - startTime > 155000) {
+          return { gate: gate.displayName || gate.label, internalName: gate.name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] };
+        }
+        return runGate(gate, i);
+      })
     );
     const gateSettled = await Promise.allSettled(gatePromises);
 
@@ -301,9 +306,9 @@ export default async function handler(req, res) {
               messages: [{
                 role: "user",
                 content: [
-                  `Score this ${outputType || "essay"} on a 0-1000 scale.`,
+                  `Score this ${outputType || "essay"} on a 0-100 scale where 100 is perfect and 60 is competent professional writing. Most LinkedIn posts from experienced professionals score 70-85. A post that reads naturally, has a clear point, and sounds like a real person wrote it should score at least 75.`,
                   "Return ONLY valid JSON:",
-                  '{ "total": <0-1000>, "verdict": "PUBLISH"/"REVISE"/"REJECT", "breakdown": { "voiceAuthenticity": <0-100>, "researchDepth": <0-100>, "hookStrength": <0-100>, "slopScore": <0-100>, "editorialQuality": <0-100>, "perspective": <0-100>, "engagement": <0-100>, "platformFit": <0-100>, "strategicValue": <0-100>, "nvcCompliance": <0-100> }, "topIssue": "biggest issue", "gutCheck": "one sentence" }',
+                  '{ "total": <0-100>, "verdict": "PUBLISH"/"REVISE"/"REJECT", "breakdown": { "voiceAuthenticity": <0-100>, "researchDepth": <0-100>, "hookStrength": <0-100>, "slopScore": <0-100>, "editorialQuality": <0-100>, "perspective": <0-100>, "engagement": <0-100>, "platformFit": <0-100>, "strategicValue": <0-100>, "nvcCompliance": <0-100> }, "topIssue": "biggest issue", "gutCheck": "one sentence" }',
                   "",
                   "Do not include any text outside the JSON object.",
                   "",
@@ -348,10 +353,10 @@ export default async function handler(req, res) {
 
     // Normalize Impact Score to 0-100 scale
     const rawTotal = betterishScore.total || 0;
-    const normalizedTotal = Math.round(rawTotal > 100 ? rawTotal / 10 : rawTotal);
+    const normalizedTotal = Math.round(Math.min(100, Math.max(0, rawTotal)));
     const impactScore = {
       total: normalizedTotal,
-      verdict: normalizedTotal >= 60 ? "PUBLISH" : normalizedTotal >= 40 ? "REVISE" : "REJECT",
+      verdict: normalizedTotal >= 75 ? "PUBLISH" : normalizedTotal >= 50 ? "REVISE" : "REJECT",
       breakdown: betterishScore.breakdown || {},
       topIssue: betterishScore.topIssue || "",
       gutCheck: betterishScore.gutCheck || "",

@@ -1723,89 +1723,11 @@ function ReviewFormatPreview({
       );
     }
 
-    // Find the flagged text within the paragraph to underline it specifically
-    const flagText = flagged.original || "";
-    const flagIdx = flagText.length > 10 ? p.indexOf(flagText.slice(0, 40)) : -1;
-
-    // If we can locate the flagged text, split the paragraph and underline just that part
-    // If we cannot locate it, underline the entire paragraph as fallback
-    const canLocate = flagIdx >= 0;
-    const beforeText = canLocate ? p.slice(0, flagIdx) : "";
-    const matchedText = canLocate ? p.slice(flagIdx, flagIdx + flagText.length) : p;
-    const afterText = canLocate ? p.slice(flagIdx + flagText.length) : "";
-
+    // Render flagged paragraphs as normal text (no visual flags)
     return (
-      <div key={i} style={{ marginTop: i > 0 ? 12 : 0, position: "relative" }}>
+      <div key={i} style={{ marginTop: i > 0 ? 12 : 0 }}>
         <p className={isHighlighted ? "para-highlight" : undefined}>
-          {canLocate && renderInlineMarkdown(beforeText)}
-          <span
-            className="flag-r"
-            style={{ position: "relative", cursor: "pointer" }}
-            onMouseEnter={() => setHoveredFlag(i)}
-            onMouseLeave={() => setHoveredFlag(null)}
-          >
-            {renderInlineMarkdown(matchedText)}
-
-            {/* Tooltip positioned above the underlined text */}
-            {hoveredFlag === i && flagged.suggestion && (
-              <span
-                className="flag-pop"
-                style={{ display: "block" }}
-                onMouseEnter={() => setHoveredFlag(i)}
-                onMouseLeave={() => setHoveredFlag(null)}
-              >
-                <span style={{
-                  display: "block", fontSize: 9, fontWeight: 700,
-                  letterSpacing: "0.08em", textTransform: "uppercase" as const,
-                  color: "var(--gold)", marginBottom: 4,
-                  textDecoration: "none",
-                }}>
-                  {flagged.vector}
-                </span>
-                <span style={{
-                  display: "block", fontSize: 11, color: "var(--fg-3)",
-                  lineHeight: 1.5, marginBottom: 8, textDecoration: "none",
-                }}>
-                  {flagged.issue}
-                </span>
-                <span style={{
-                  display: "block", fontSize: 12, color: "var(--fg)",
-                  lineHeight: 1.5, padding: "8px 10px",
-                  background: "rgba(245,198,66,0.06)",
-                  borderRadius: 6, border: "1px solid rgba(245,198,66,0.15)",
-                  marginBottom: 8, textDecoration: "none",
-                }}>
-                  {flagged.suggestion}
-                </span>
-                <span style={{ display: "flex", gap: 6, textDecoration: "none" }}>
-                  <button
-                    className="fp-fix"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onDirectReplace && flagged.suggestion) {
-                        // Replace only the flagged text within the paragraph, not the entire paragraph
-                        const origText = flagged.original || "";
-                        const newParagraph = p.replace(origText, flagged.suggestion);
-                        onDirectReplace(p, newParagraph);
-                      } else if (onApplySuggestion) {
-                        onApplySuggestion(`Replace "${flagText.slice(0, 60)}..." with: ${flagged.suggestion}`);
-                      }
-                      setHoveredFlag(null);
-                    }}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className="fp-dismiss"
-                    onClick={(e) => { e.stopPropagation(); setHoveredFlag(null); }}
-                  >
-                    Dismiss
-                  </button>
-                </span>
-              </span>
-            )}
-          </span>
-          {canLocate && renderInlineMarkdown(afterText)}
+          {renderInlineMarkdown(p)}
         </p>
       </div>
     );
@@ -3176,7 +3098,30 @@ export default function WorkSession() {
       }));
 
       setFixingGate(null);
-      toast("Draft revised. Re-scoring...");
+
+      // Count changes
+      const oldWords = draft.split(/\s+/).length;
+      const newWords = newDraft.split(/\s+/).length;
+      const oldParagraphs = draft.split("\n").filter(Boolean).length;
+      const newParagraphs = newDraft.split("\n").filter(Boolean).length;
+
+      const changes: string[] = [];
+      if (Math.abs(newWords - oldWords) > 10) {
+        changes.push(newWords > oldWords ? `added ${newWords - oldWords} words` : `cut ${oldWords - newWords} words`);
+      }
+      if (oldParagraphs !== newParagraphs) {
+        changes.push(`${newParagraphs} paragraphs (was ${oldParagraphs})`);
+      }
+
+      const failingGateNames = pipelineRun.checkpointResults
+        .filter(g => g.status !== "PASS")
+        .map(g => displayGateName(g.gate).toLowerCase());
+
+      toast(
+        changes.length > 0
+          ? `Reed revised the draft: ${changes.join(", ")}. Addressed: ${failingGateNames.join(", ")}. Re-scoring...`
+          : `Reed revised the draft to address ${failingGateNames.join(", ")}. Re-scoring...`
+      );
 
       // Only re-run the gates that failed, not all 7
       const failedGateNames = pipelineRun?.checkpointResults
@@ -3227,6 +3172,15 @@ export default function WorkSession() {
         });
 
         toast("Re-scored.");
+
+        // Update Supabase if we have an output
+        if (outputId) {
+          const newScore = reResult.impactScore?.total ?? pipelineRun?.impactScore?.total ?? 0;
+          await supabase.from("outputs").update({
+            content: newDraft,
+            score: Math.round(newScore),
+          }).eq("id", outputId);
+        }
       } else {
         await handleRerunPipeline();
       }
@@ -3236,7 +3190,7 @@ export default function WorkSession() {
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd]);
+  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd, outputId]);
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
