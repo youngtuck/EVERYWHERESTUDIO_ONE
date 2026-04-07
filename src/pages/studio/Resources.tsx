@@ -87,6 +87,7 @@ function ContentModal({ resource, onClose }: { resource: Resource; onClose: () =
             </button>
             <button
               onClick={onClose}
+              aria-label="Close resource viewer"
               style={{ background: "none", border: "none", color: "var(--fg-3)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 2 }}
             >✕</button>
           </div>

@@ -106,34 +106,3 @@ const MODE_TRIGGERS: { mode: SystemMode; triggers: string[] }[] = [
   },
 ];
 
-/**
- * Infer the system mode from the user's message.
- * Uses the first matching mode in the trigger list.
- * Defaults to CONTENT_PRODUCTION when no trigger matches.
- */
-export function inferMode(userMessage: string): SystemMode {
-  const text = (userMessage || "").trim().toLowerCase();
-  if (!text) return "CONTENT_PRODUCTION";
-
-  for (const { mode, triggers } of MODE_TRIGGERS) {
-    for (const trigger of triggers) {
-      if (text.startsWith(trigger) || text.includes(" " + trigger) || text.includes("\n" + trigger)) {
-        return mode;
-      }
-    }
-  }
-
-  return "CONTENT_PRODUCTION";
-}
-
-/** Human-readable label for each mode (for UI). */
-export const SYSTEM_MODE_LABELS: Record<SystemMode, string> = {
-  CONTENT_PRODUCTION: "Content Production",
-  PATH_DETERMINATION: "Path Determination",
-  DECISION_VALIDATION: "Decision Validation",
-  STRESS_TEST: "Stress Test",
-  QUICK_REVIEW: "Quick Review",
-  UX_REVIEW: "UX Review",
-  LEARNING_MODE: "Learning Mode",
-  RED_TEAM: "Red Team",
-};

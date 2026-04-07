@@ -128,7 +128,7 @@ function ToastContainer({
           <button
             type="button"
             onClick={() => onDismiss(t.id)}
-            aria-label="Dismiss"
+            aria-label="Dismiss notification"
             style={{
               background: "none",
               border: "none",

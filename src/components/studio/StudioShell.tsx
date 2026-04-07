@@ -684,7 +684,7 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
             <span style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>Advisors</span>
             <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "var(--bg-2)", color: "var(--fg-3)", fontWeight: 600 }}>{stageLabel}</span>
           </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
+          <button onClick={onClose} aria-label="Close panel" style={{ background: "transparent", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
         </div>
 
         {/* Body */}
@@ -806,7 +806,7 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
                 <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
                 All tools
               </button>
-              <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--fg-3)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "var(--fg-3)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
             </div>
 
             {/* Detail header */}
@@ -843,7 +843,7 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
           <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.01em" }}>Discover</div>
-              <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--fg-3)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "var(--fg-3)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
             </div>
 
             <input

@@ -52,20 +52,17 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
       }
 
       const combined = finalRef.current + interimTranscript;
-      console.log("[VoiceInput] onresult: final so far:", finalRef.current, "interim:", interimTranscript);
       setTranscript(combined);
       if (callbackRef.current) callbackRef.current(combined);
     };
 
     recognition.onerror = (event: any) => {
-      console.log("[VoiceInput] onerror:", event.error);
       if (event.error !== "no-speech") {
         setIsListening(false);
       }
     };
 
     recognition.onend = () => {
-      console.log("[VoiceInput] onend: shouldListen:", recognitionRef.current?._shouldListen);
       if (recognitionRef.current?._shouldListen) {
         try {
           recognition.start();
@@ -90,10 +87,7 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
     try {
       recognitionRef.current.start();
       setIsListening(true);
-      console.log("[VoiceInput] recognition.start() called");
-    } catch (e) {
-      console.log("[VoiceInput] start() error (already started?):", e);
-    }
+    } catch (e) {}
   }, []);
 
   const stopListening = useCallback(() => {
@@ -101,7 +95,6 @@ export function useVoiceInput(onTranscript?: (text: string) => void): UseVoiceIn
     recognitionRef.current._shouldListen = false;
     recognitionRef.current.stop();
     setIsListening(false);
-    console.log("[VoiceInput] recognition.stop() called");
   }, []);
 
   const toggleListening = useCallback(() => {

@@ -208,7 +208,6 @@ function PeopleTab() {
   useEffect(() => {
     adminFetch("get_users")
       .then(d => {
-        console.log("[Admin] Users response:", d);
         setUsers(d.users || []);
         setLoading(false);
       })

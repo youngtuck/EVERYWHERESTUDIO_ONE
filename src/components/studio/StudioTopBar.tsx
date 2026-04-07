@@ -217,7 +217,7 @@ function UserAvatar() {
           <div onClick={e => e.stopPropagation()} style={{ background: "var(--surface)", borderRadius: 12, width: 420, maxHeight: 480, padding: "20px 24px", boxShadow: "0 16px 48px rgba(0,0,0,0.14)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <span style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>System Settings</span>
-              <button onClick={() => setActiveModal(null)} style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+              <button onClick={() => setActiveModal(null)} aria-label="Close dialog" style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16 }}>✕</button>
             </div>
             {[
               { label: "Default AI Model", value: "Claude Opus 4" },
@@ -237,7 +237,7 @@ function UserAvatar() {
           <div onClick={e => e.stopPropagation()} style={{ background: "var(--surface)", borderRadius: 12, width: 420, maxHeight: 480, padding: "20px 24px", boxShadow: "0 16px 48px rgba(0,0,0,0.14)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <span style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>Admin Panel</span>
-              <button onClick={() => setActiveModal(null)} style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+              <button onClick={() => setActiveModal(null)} aria-label="Close dialog" style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16 }}>✕</button>
             </div>
             {[
               { label: "Organization", value: "Mixed Grill, LLC" },

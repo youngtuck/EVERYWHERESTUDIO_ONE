@@ -25,38 +25,6 @@ export interface HVTResult {
   feedback: string;
 }
 
-/**
- * Parse a gate-7 (Human Voice Test) checkpoint result into a structured HVTResult.
- * The gate returns JSON with status, score, feedback, and issues (flagged lines).
- */
-export function parseHVTFromGateResult(
-  gateResult: { status: string; score: number; feedback: string; issues?: string[] },
-  attemptNumber: number
-): HVTResult {
-  const verdict: HVTResult["verdict"] =
-    gateResult.status === "PASS" ? "PASSES" : "NEEDS_WORK";
-
-  // Parse flagged lines from the feedback field.
-  // The gate-7 prompt returns feedback like:
-  //   "TOTAL FLAGS: 3\n[quoted line] | [vector] | [reason] | [rewrite]\n..."
-  const flaggedLines: HVTFlaggedLine[] = [];
-
-  if (gateResult.issues && gateResult.issues.length > 0) {
-    gateResult.issues.forEach((line, i) => {
-      // Try to parse structured feedback entries from the feedback text
-      const entry = extractFlagEntry(gateResult.feedback, line, i);
-      flaggedLines.push(entry);
-    });
-  }
-
-  return {
-    verdict,
-    flaggedLines,
-    attemptNumber,
-    score: gateResult.score,
-    feedback: gateResult.feedback,
-  };
-}
 
 /**
  * Extract a structured flag entry from the feedback text for a given flagged line.
@@ -110,13 +78,3 @@ function extractFlagEntry(
   };
 }
 
-/**
- * Maximum HVT rerun attempts before showing structural rewrite message.
- */
-export const HVT_MAX_ATTEMPTS = 3;
-
-/**
- * Message shown after max HVT failures.
- */
-export const HVT_STRUCTURAL_MESSAGE =
-  "Voice issues are structural. Consider a full rewrite.";

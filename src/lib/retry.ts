@@ -68,12 +68,12 @@ export async function fetchWithRetry(
 
       hadFailure = true;
       lastError = new Error(`HTTP ${response.status}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       hadFailure = true;
-      lastError = err;
+      lastError = err as Error;
       // Don't retry short-timeout requests on first abort (likely too slow)
       // But DO retry long-running operations (timeout > 60s) since slowness is expected
-      if (err.name === "AbortError" && attempt === 0 && timeout <= 60000) {
+      if ((err as any).name === "AbortError" && attempt === 0 && timeout <= 60000) {
         throw new Error("Request timed out. Please try again.");
       }
     }

@@ -85,6 +85,7 @@ export default function InstallPrompt() {
       </button>
       <button
         onClick={handleDismiss}
+        aria-label="Close install prompt"
         style={{
           background: "none",
           border: "none",

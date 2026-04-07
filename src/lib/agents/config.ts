@@ -72,31 +72,3 @@ export const WRAP_AGENTS = [
   { id: "dmitri", name: "Dmitri", label: "Platform", promptFile: "dmitri-platform.md" },
 ] as const;
 
-/** Map of agent keys to prompt filenames for agent-runner.ts (e.g. sara-routing, reed-capture). */
-export const AGENT_PROMPTS: Record<string, string> = {
-  "sara-routing": "sara-routing.md",
-  "reed-capture": "reed-capture.md",
-  "sentinel-intel": "sentinel-intel.md",
-  scout: "scout.md",
-};
-
-/**
- * Per-output-type locked checkpoints.
- * These checkpoints cannot be disabled in templates for the given output type.
- * Human Voice Test is always locked on for ALL types (enforced separately).
- */
-export const LOCKED_CHECKPOINTS_BY_TYPE: Record<string, string[]> = {
-  essay: ["gate-0", "gate-1", "gate-2", "gate-3", "gate-4", "gate-5", "gate-6"],
-  video_script: ["gate-3"], // Hook check locked on, hard-blocks if fails
-  newsletter: ["gate-4"],   // Spam/SLOP locked on
-  email: ["gate-2", "gate-4"], // Voice + SLOP locked on
-  one_pager: ["gate-4"],    // SLOP locked on
-  report: ["gate-1"],       // Research locked on
-  white_paper: ["gate-6"],  // Perspective locked on
-  social_media: ["gate-3"], // Engagement/Interest Graph locked on
-};
-
-/**
- * Project output types: these create project containers.
- */
-export const PROJECT_OUTPUT_TYPES = ["book", "website_content", "newsletter", "social_media"] as const;

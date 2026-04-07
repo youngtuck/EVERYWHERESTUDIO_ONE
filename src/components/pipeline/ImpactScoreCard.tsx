@@ -48,7 +48,7 @@ export function ImpactScoreCard({ score, compact }: ImpactScoreCardProps) {
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
           <span style={{ fontFamily: "'Afacad Flux', sans-serif", fontSize: 28, fontWeight: 600, color }}>{Math.round(total / 10)}%</span>
         </div>
-        {(score as any).topIssue && <div style={{ fontSize: 13, color: "var(--text-primary)", marginTop: 8 }}><strong>Top issue:</strong> {(score as any).topIssue}</div>}
+        {score.topIssue && <div style={{ fontSize: 13, color: "var(--text-primary)", marginTop: 8 }}><strong>Top issue:</strong> {score.topIssue}</div>}
       </div>
     );
   }

@@ -71,18 +71,3 @@ export const DEFAULT_KEYWORDS = [
   "digital transformation", "AI readiness",
 ];
 
-export const DEFAULT_CONFIG = {
-  keywords: DEFAULT_KEYWORDS,
-  watchlist: {
-    competitors: [] as string[],
-    industryOrgs: [] as string[],
-    techInfra: [] as string[],
-    thoughtLeaders: [] as string[],
-  },
-  signalRanking: {
-    relevance: 5,
-    actionability: 3,
-    urgency: 2,
-  },
-  tonePreferences: ["contrarian", "practitioner-credible", "framework-driven", "story-led"],
-};
