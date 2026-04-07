@@ -301,6 +301,8 @@ function buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources) {
   if (OUTPUT_TYPE_BEHAVIORS[typeKey]) {
     system += `\n\n${OUTPUT_TYPE_BEHAVIORS[typeKey]}`;
   }
+  console.log("[chat] Voice context length:", voiceContext.length, "chars");
+  console.log("[chat] Brand context included:", !!resources?.brandDna);
   return system;
 }
 

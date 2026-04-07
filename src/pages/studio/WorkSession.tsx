@@ -779,18 +779,18 @@ function ReviewDash({
 
           <button
             onClick={onExportAll}
-            disabled={allExported || !scoreOk}
+            disabled={allExported}
             style={{
               width: "100%", padding: 10, borderRadius: 6,
               background: allExported ? "rgba(74,144,217,0.12)" : (scoreOk ? "var(--gold)" : "var(--surface)"),
               border: scoreOk ? "none" : "1px solid var(--line)",
               fontSize: 12, fontWeight: 700,
-              color: allExported ? "var(--blue)" : (scoreOk ? "var(--fg)" : "var(--fg-3)"),
-              cursor: allExported || !scoreOk ? "default" : "pointer",
+              color: allExported ? "var(--blue)" : (scoreOk ? "var(--fg)" : "var(--fg)"),
+              cursor: allExported ? "default" : "pointer",
               fontFamily: FONT, transition: "all 0.2s",
             }}
           >
-            {allExported ? "Exported" : "Export all"}
+            {allExported ? "Exported" : (scoreOk ? "Export all" : "Export anyway")}
           </button>
         </>
       )}
@@ -1618,41 +1618,11 @@ function ReviewProgress({
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
   selectedFormats: string[];
 }) {
-  const [elapsed, setElapsed] = useState(0);
-  const startRef = useRef(Date.now());
-
-  useEffect(() => {
-    if (!pipelineRunning) { setElapsed(0); return; }
-    startRef.current = Date.now();
-    const interval = setInterval(() => setElapsed(Date.now() - startRef.current), 500);
-    return () => clearInterval(interval);
-  }, [pipelineRunning]);
-
-  const STEPS = [
-    { label: "Deduplication", at: 0 },
-    { label: "Research validation", at: 15000 },
-    { label: "Voice authenticity", at: 30000 },
-    { label: "Engagement", at: 45000 },
-    { label: "SLOP detection", at: 60000 },
-    { label: "Editorial excellence", at: 75000 },
-    { label: "Perspective", at: 90000 },
-    { label: "Impact Score", at: 110000 },
-    { label: "Human Voice Test", at: 130000 },
-  ];
-
-  const currentStepIdx = STEPS.reduce((acc, s, i) => elapsed >= s.at ? i : acc, 0);
-  const pipelineProgress = Math.min(elapsed / 160000, 0.95);
-  const easedPipeline = 1 - Math.pow(1 - pipelineProgress, 2);
-
   const formatStatuses = selectedFormats.map(f => ({
     name: f,
     status: formatDrafts[f]?.status || "pending",
   }));
   const allFormatsComplete = formatStatuses.every(f => f.status === "done" || f.status === "error");
-
-  const minutes = Math.floor(elapsed / 60000);
-  const seconds = Math.floor((elapsed % 60000) / 1000);
-  const timeStr = minutes > 0 ? `${minutes}:${String(seconds).padStart(2, "0")}` : `${seconds}s`;
 
   return (
     <div style={{ padding: "32px 28px", maxWidth: 600 }}>
@@ -1701,40 +1671,22 @@ function ReviewProgress({
         </div>
       </div>
 
-      {/* Quality Pipeline */}
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.03em" }}>Quality pipeline</div>
-          <span style={{ fontSize: 10, color: "var(--fg-3)" }}>{timeStr}</span>
+      {/* Quality Pipeline - simplified */}
+      <div style={{ padding: "0", textAlign: "center" }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: "50%",
+          border: "3px solid var(--line)",
+          borderTopColor: "var(--gold-bright)",
+          animation: "spin 1s linear infinite",
+          margin: "0 auto 20px",
+        }} />
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
+          Reed is reviewing your draft
         </div>
-        <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden", marginBottom: 16 }}>
-          <div style={{ height: "100%", borderRadius: 2, background: "var(--gold-bright)", width: `${Math.round(easedPipeline * 100)}%`, transition: "width 0.5s ease-out" }} />
+        <div style={{ fontSize: 12, color: "var(--fg-3)" }}>
+          Checking voice, clarity, and originality
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {STEPS.map((step, i) => {
-            const isActive = i === currentStepIdx;
-            const isDone = i < currentStepIdx;
-            return (
-              <div key={step.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0", opacity: isDone ? 0.4 : isActive ? 1 : 0.25, transition: "all 0.4s ease" }}>
-                <div style={{
-                  width: 14, height: 14, borderRadius: "50%",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  border: isDone ? "none" : isActive ? "2px solid var(--gold-bright)" : "1px solid var(--line)",
-                  background: isDone ? "var(--gold-bright)" : "transparent",
-                  transition: "all 0.3s ease",
-                }}>
-                  {isDone && (
-                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="var(--bg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  )}
-                  {isActive && (
-                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--gold-bright)" }} />
-                  )}
-                </div>
-                <span style={{ fontSize: 11, fontWeight: isActive ? 600 : 400, color: isActive ? "var(--fg)" : "var(--fg-3)" }}>{step.label}</span>
-              </div>
-            );
-          })}
-        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     </div>
   );
@@ -3226,15 +3178,65 @@ export default function WorkSession() {
       setFixingGate(null);
       toast("Draft revised. Re-scoring...");
 
-      // Re-run full pipeline with the fixed draft
-      await handleRerunPipeline();
+      // Only re-run the gates that failed, not all 7
+      const failedGateNames = pipelineRun?.checkpointResults
+        ?.filter(g => g.status === "FAIL" || g.status === "FLAG")
+        ?.map(g => g.gate)
+        ?.filter(Boolean) || [];
+
+      if (failedGateNames.length > 0) {
+        const reRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            draft: newDraft,
+            outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+            voiceDnaMd,
+            brandDnaMd,
+            methodDnaMd,
+            userId: user.id,
+            gateSubset: failedGateNames,
+          }),
+        }, { timeout: 60000 });
+
+        if (!reRes.ok) throw new Error(`Re-score error ${reRes.status}`);
+        const reResult = await reRes.json();
+
+        setPipelineRun(prev => {
+          // Merge: keep passing gates from previous run, update failed gates with new results
+          const prevResults = prev?.checkpointResults || [];
+          const newResults = (reResult.checkpointResults || []) as CheckpointResult[];
+          const merged = prevResults.map(pg => {
+            const updated = newResults.find(ng => ng.gate === pg.gate);
+            return updated || pg;
+          });
+          // Add any new results not in previous
+          for (const nr of newResults) {
+            if (!merged.find(m => m.gate === nr.gate)) {
+              merged.push(nr);
+            }
+          }
+          return {
+            status: reResult.status || prev?.status || "BLOCKED",
+            checkpointResults: merged,
+            impactScore: reResult.impactScore || prev?.impactScore || null,
+            humanVoiceTest: reResult.humanVoiceTest || prev?.humanVoiceTest || null,
+            blockedAt: reResult.blockedAt || null,
+            finalDraft: reResult.finalDraft || prev?.finalDraft,
+          } as PipelineRun;
+        });
+
+        toast("Re-scored.");
+      } else {
+        await handleRerunPipeline();
+      }
     } catch (err: any) {
       console.error("[handleRaiseScore]", err);
       toast("Fix failed. Try again.", "error");
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, toast, activeReviewTab, handleRerunPipeline]);
+  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd]);
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {

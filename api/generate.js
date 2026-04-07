@@ -43,6 +43,9 @@ export default async function handler(req, res) {
     }
   }
 
+  console.log("[generate] Voice DNA length:", resources.voiceDna?.length || 0);
+  console.log("[generate] Brand DNA length:", resources.brandDna?.length || 0);
+  console.log("[generate] Method DNA length:", resources.methodDna?.length || 0);
   console.log("[generate] Request received:", req.method, Object.keys(req.body || {}));
 
   try {
@@ -105,6 +108,7 @@ ${resources.methodDna}`;
     }
 
     system += "\n\nCRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead. This is non-negotiable.";
+    system += "\n\nWORD BAN: Never use the word \"vibes\" or \"vibe.\" Use atmosphere, energy, tone, character, or feel instead.";
 
     // Add outline to system prompt if provided
     if (outline && Array.isArray(outline) && outline.length > 0) {
@@ -147,6 +151,7 @@ ABSOLUTE RULES:
 YOUR JOB: Make the minimum changes necessary to address the specific feedback. A good revision is one where a reader can barely tell what changed, but the flagged issues are gone.
 
 CRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead.
+WORD BAN: Never use the word "vibes" or "vibe." Use atmosphere, energy, tone, character, or feel instead.
 
 Output ONLY the complete revised draft. No commentary, no explanation.`;
 
@@ -239,6 +244,7 @@ ABSOLUTE RULES:
 7. PRESERVE ALL FORMATTING.
 
 CRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead.
+WORD BAN: Never use the word "vibes" or "vibe." Use atmosphere, energy, tone, character, or feel instead.
 
 Output ONLY the complete revised draft. No commentary, no explanation.`
             + (resources.voiceDna ? `\n\nVOICE DNA - The revision MUST match this voice:\n${resources.voiceDna}` : "")
