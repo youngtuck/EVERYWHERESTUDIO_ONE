@@ -30,8 +30,6 @@ interface ShellCtx {
   setReedPrefill: (text: string) => void;
   reedThread: Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>;
   setReedThread: (fn: (prev: any[]) => any[]) => void;
-  reedPending: Record<string, Array<{ from: string; text: string }>>;
-  setReedPending: (fn: (prev: any) => any) => void;
 }
 
 const ShellContext = createContext<ShellCtx>({
@@ -51,8 +49,6 @@ const ShellContext = createContext<ShellCtx>({
   setReedPrefill: () => {},
   reedThread: [],
   setReedThread: () => {},
-  reedPending: {},
-  setReedPending: () => {},
 });
 
 export function useShell() {
@@ -254,7 +250,6 @@ export default function StudioShell() {
   const [feedbackContent, setFeedbackContent] = useState<React.ReactNode | null>(null);
   const [reedPrefill, setReedPrefill] = useState("");
   const [reedThread, setReedThread] = useState<Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>>([]);
-  const [reedPending, setReedPending] = useState<Record<string, Array<{ from: string; text: string }>>>({});
 
   return (
     <ShellContext.Provider value={{
@@ -266,7 +261,6 @@ export default function StudioShell() {
       feedbackContent, setFeedbackContent,
       reedPrefill, setReedPrefill,
       reedThread, setReedThread,
-      reedPending, setReedPending,
     }}>
       <div style={{
         display: "flex", height: "100vh",
@@ -374,17 +368,9 @@ function RightPanel({ open }: { open: boolean }) {
           <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
         </div>
 
-        {/* Unified content: stage context + feedback + conversation */}
-        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-          {/* Stage feedback and context */}
-          <div style={{ padding: 14, flexShrink: 0 }}>
-            {feedbackContent ?? dashContent ?? <DefaultDashContent />}
-          </div>
-
-          {/* Conversation */}
-          <div style={{ borderTop: "1px solid var(--line)", flex: 1, display: "flex", flexDirection: "column" }}>
-            <ReedPanel />
-          </div>
+        {/* Stage feedback and context */}
+        <div style={{ padding: 14, flex: 1, overflowY: "auto" }}>
+          {feedbackContent ?? dashContent ?? <DefaultDashContent />}
         </div>
 
         {/* Copyright footer */}
@@ -476,7 +462,7 @@ function ReedStageContext({ stage }: { stage: string }) {
           Read through the draft. Edit anything that does not sound like you. When you are done, click Finish and Review.
         </div>
         <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
-          Click into any paragraph to edit directly, or tell Reed what to change using the input below.
+          Click into any paragraph to edit directly.
         </div>
       </div>
     );
@@ -486,7 +472,7 @@ function ReedStageContext({ stage }: { stage: string }) {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
-          Reed is reviewing your draft against 7 quality checkpoints. See the Feedback panel for checkpoint results, or ask Reed anything about this session.
+          Reed is reviewing your draft against 7 quality checkpoints.
         </div>
       </div>
     );
@@ -517,7 +503,7 @@ function ReedStageContext({ stage }: { stage: string }) {
 }
 
 function ReedPanel() {
-  const { reedThread, setReedThread, reedPrefill, setReedPrefill, reedPending, setReedPending } = useShell();
+  const { reedThread, setReedThread, reedPrefill, setReedPrefill } = useShell();
   const [input, setInput] = useState(reedPrefill || "");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -538,19 +524,6 @@ function ReedPanel() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [reedThread.length]);
 
-  // Carry forward notes on stage change
-  const [carriedStage, setCarriedStage] = useState<string | null>(null);
-  useEffect(() => {
-    const pending = reedPending[stage];
-    if (pending && pending.length > 0 && carriedStage !== stage) {
-      // Inject carried notes at top of thread
-      const noteEntries = pending.map(n => ({ type: "note" as const, text: n.text, from: n.from, to: stage }));
-      setReedThread(prev => [...noteEntries, ...prev]);
-      setReedPending(prev => { const next = { ...prev }; delete next[stage]; return next; });
-      setCarriedStage(stage);
-    }
-  }, [stage, reedPending, carriedStage, setReedThread, setReedPending]);
-
   const prefillAndFocus = (text: string) => {
     setInput(text);
     setTimeout(() => inputRef.current?.focus(), 0);
@@ -561,35 +534,8 @@ function ReedPanel() {
     const message = input.trim();
     setInput("");
 
-    const carryMap: Record<string, string> = {
-      Intake: "Outline",
-      Outline: "Edit",
-      Edit: "Review",
-      Review: "Wrap",
-    };
-    const nextStage = carryMap[stage];
-
-    // Add to thread
+    // Add to thread (no fake reply)
     setReedThread(prev => [...prev, { type: "user", text: message }]);
-
-    // Generate Reed's reply
-    const replies: Record<string, string> = {
-      Intake: "Heard. I will carry this into Outline. It will shape how I read the structure.",
-      Outline: "Noted. I will adjust the structural read to account for that.",
-      Edit: "Looking at that in context. If it affects the argument it will show as a flag.",
-      Review: "Noted. I will factor that into the checkpoint review before you approve.",
-    };
-    setTimeout(() => {
-      setReedThread(prev => [...prev, { type: "reed", text: replies[stage] || "Noted." }]);
-    }, 300);
-
-    // Queue for carry-forward
-    if (nextStage) {
-      setReedPending(prev => ({
-        ...prev,
-        [nextStage]: [...(prev[nextStage] || []), { from: stage, text: message }],
-      }));
-    }
   };
 
   return (

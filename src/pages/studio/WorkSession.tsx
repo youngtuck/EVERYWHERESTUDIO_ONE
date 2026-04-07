@@ -663,7 +663,6 @@ function deriveReviewDisplayGates(
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
   pipelineRun, running, onExportAll, allExported, onRaiseScore, fixingGate, rerunning,
-  prefillReed,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
@@ -675,157 +674,103 @@ function ReviewDash({
   const score = pipelineRun?.impactScore?.total ?? null;
   const scoreOk = score !== null && score >= 75;
 
-  // Derive 4 display gates from pipeline results
   const displayGates = pipelineRun
     ? deriveReviewDisplayGates(pipelineRun.checkpointResults, pipelineRun.humanVoiceTest)
     : [];
   const nonPassGates = displayGates.filter(g => g.status !== "Pass");
   const allPass = nonPassGates.length === 0;
-  const needsRaise = !scoreOk || !allPass;
 
-  // Generate Reed's assessment
-  const reedAssessment = (() => {
+  // Reed's natural language assessment
+  const reedMessage = (() => {
     if (!pipelineRun) return "";
-    if (allPass && scoreOk) return "This is ready. The writing is clean, the voice matches, and the argument holds.";
+    if (allPass && scoreOk) return "This is ready to publish. The writing is clean and the voice matches.";
     if (nonPassGates.length === 1) {
-      const g = nonPassGates[0];
-      const lowestGate = pipelineRun.checkpointResults.reduce((a, b) => (a.score < b.score ? a : b));
-      return `This is close. The ${g.name} flag is the only open item. ${lowestGate.feedback || "Review before export."}`;
+      const issue = nonPassGates[0].name;
+      return `Almost there. One thing to address: ${issue.toLowerCase()}. Let me fix it, or you can edit it yourself.`;
     }
-    const lowestGate = pipelineRun.checkpointResults.reduce((a, b) => (a.score < b.score ? a : b));
-    return `Not ready yet. ${nonPassGates.length} checkpoints need attention. The biggest issue is ${displayGateName(lowestGate.gate)}.`;
+    if (nonPassGates.length > 1) {
+      return `${nonPassGates.length} items need attention before this is ready. Let me fix them automatically, or go back to Edit to handle it yourself.`;
+    }
+    return "Reviewing...";
   })();
-
-  // Score context line
-  const scoreContext = (() => {
-    if (score === null) return "";
-    if (scoreOk && allPass) return "Above threshold. Ready to export.";
-    if (scoreOk && !allPass) return `Above threshold. ${nonPassGates.length} item${nonPassGates.length !== 1 ? "s" : ""} to review before export.`;
-    return "Below threshold. Fix flagged items to raise the score.";
-  })();
-
-  // Suggestion chips
-  const chips: Array<{ label: string; prefill: string }> = [];
-  nonPassGates.forEach(g => chips.push({ label: `Fix ${g.name}`, prefill: `Fix the ${g.name} issue in this draft.` }));
-  chips.push({ label: "Final read", prefill: "Do a final read of this piece as an adversarial editor. What would make someone stop reading?" });
-  chips.push({ label: "Write the pull quote", prefill: "Pull the single most quotable line from this piece for social." });
-  chips.push({ label: "Is this ready to publish?", prefill: "Is this ready to publish? Give me your honest assessment." });
-
-  const statusColor = (s: "Pass" | "Review" | "Fail") =>
-    s === "Pass" ? "#22C55E" : s === "Review" ? "#F5C642" : "#EF4444";
 
   return (
     <>
+      {/* Running state */}
       {running && (
         <DpSection>
-          <DpLabel>Running checkpoints</DpLabel>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
-            {["Deduplication", "Research Validation", "Voice Authenticity", "Engagement Optimization", "SLOP Detection", "Editorial Excellence", "Perspective & Risk"].map((name, i) => (
-              <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--fg-2)" }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--fg-3)", animation: `pulse ${0.5 * i + 1}s infinite` }} />
-                {name}
-              </div>
-            ))}
+          <DpLabel>Reed is reviewing your draft...</DpLabel>
+          <div style={{ marginTop: 8, height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
+            <div style={{ height: "100%", borderRadius: 2, background: "var(--gold-bright)", width: "60%", animation: "pulse-width 2s ease-in-out infinite" }} />
           </div>
         </DpSection>
       )}
 
+      {/* Fixing/rerunning state */}
       {(fixingGate || rerunning) && !running && (
-        <div style={{ fontSize: 10, color: "var(--gold-bright)", marginBottom: 8, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ fontSize: 11, color: "var(--gold-bright)", marginBottom: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ animation: "pulse-dot 1.5s infinite" }}>&#9679;</span>
-          {fixingGate ? "Fixing and re-scoring..." : "Re-scoring..."}
+          Reed is improving the draft...
         </div>
       )}
 
+      {/* Results */}
       {pipelineRun && !running && (
         <>
-          {/* CHECKPOINTS */}
-          <DpSection>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>
-              CHECKPOINTS
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {displayGates.map((g, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0" }}>
-                  <span style={{ fontSize: 11, color: "var(--fg-2)" }}>{g.name}</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: statusColor(g.status) }}>{g.status}</span>
-                </div>
-              ))}
-            </div>
-          </DpSection>
-
-          {/* IMPACT SCORE */}
+          {/* Impact Score: single prominent number */}
           {score !== null && (
             <DpSection>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>
-                IMPACT SCORE
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 28, fontWeight: 800, color: scoreOk ? "#22C55E" : "var(--fg)" }}>
+                  {Math.round(score)}
+                </span>
+                <span style={{ fontSize: 11, color: "var(--fg-3)" }}>/ 100</span>
               </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span style={{ fontSize: 22, fontWeight: 800, color: "var(--fg)" }}>{Math.round(score)}</span>
-                <span style={{ fontSize: 10, color: "var(--fg-3)" }}>/ 100 &nbsp; threshold 75</span>
+              <div style={{ fontSize: 11, color: scoreOk ? "#22C55E" : "var(--fg-3)", fontWeight: 500 }}>
+                {scoreOk ? "Ready to publish" : "Threshold is 75"}
               </div>
-              <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 4, lineHeight: 1.5 }}>{scoreContext}</div>
             </DpSection>
           )}
 
-          {/* REED CALLOUT */}
-          {reedAssessment && (
+          {/* Reed's assessment in plain language */}
+          {reedMessage && (
             <div style={{
               border: "1px solid rgba(74,144,217,0.25)", borderRadius: 8,
               padding: "10px 12px", background: "rgba(74,144,217,0.04)",
               marginBottom: 12,
             }}>
               <div style={{ fontSize: 9, fontWeight: 700, color: "#4A90D9", marginBottom: 6 }}>Reed</div>
-              <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>{reedAssessment}</div>
+              <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>{reedMessage}</div>
             </div>
           )}
 
-          {/* SUGGESTION CHIPS */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-            {chips.map((chip, i) => (
-              <button
-                key={i}
-                onClick={() => prefillReed(chip.prefill)}
-                style={{
-                  fontSize: 10, padding: "4px 10px", borderRadius: 99,
-                  background: "#EDF1F5", border: "1px solid #CBD5E1",
-                  color: "#334155", cursor: "pointer", fontFamily: "inherit",
-                }}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-
-          {/* RAISE THE IMPACT SCORE */}
-          {needsRaise && (
+          {/* Primary action buttons */}
+          {!scoreOk && (
             <button
               onClick={onRaiseScore}
               disabled={!!fixingGate || rerunning}
               style={{
-                width: "100%", padding: 8, borderRadius: 6, marginBottom: 8,
+                width: "100%", padding: 10, borderRadius: 6, marginBottom: 8,
                 background: "var(--fg)", border: "none",
                 fontSize: 11, fontWeight: 700, color: "var(--gold)",
                 cursor: fixingGate || rerunning ? "not-allowed" : "pointer",
                 fontFamily: FONT, opacity: fixingGate || rerunning ? 0.5 : 1,
               }}
             >
-              Raise the Impact Score
+              Let Reed fix it
             </button>
           )}
 
-          {/* EXPORT ALL */}
           <button
             onClick={onExportAll}
-            disabled={allExported}
+            disabled={allExported || !scoreOk}
             style={{
               width: "100%", padding: 10, borderRadius: 6,
-              background: allExported ? "rgba(74,144,217,0.12)" : "var(--gold)",
-              border: allExported ? "1px solid rgba(74,144,217,0.3)" : "none",
+              background: allExported ? "rgba(74,144,217,0.12)" : (scoreOk ? "var(--gold)" : "var(--surface)"),
+              border: scoreOk ? "none" : "1px solid var(--line)",
               fontSize: 12, fontWeight: 700,
-              color: allExported ? "var(--blue)" : "var(--fg)",
-              cursor: allExported ? "default" : "pointer",
-              opacity: allExported ? 1 : (scoreOk ? 1 : 0.4),
+              color: allExported ? "var(--blue)" : (scoreOk ? "var(--fg)" : "var(--fg-3)"),
+              cursor: allExported || !scoreOk ? "default" : "pointer",
               fontFamily: FONT, transition: "all 0.2s",
             }}
           >
@@ -2210,7 +2155,7 @@ function StageReview({
 
       {!running && pipelineRun && (
         <div style={{ padding: "12px 28px 0", fontSize: 11, color: "var(--fg-3)" }}>
-          {canApprove ? "Ready to export. Use the Feedback panel." : "Review checkpoint feedback in the panel to improve your score."}
+          {canApprove ? "Ready to export." : "Reed will tell you what needs attention."}
         </div>
       )}
 
@@ -2266,7 +2211,7 @@ function ActionChips({ chips, onChipClick }: { chips: string[]; onChipClick: (te
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function WorkSession() {
-  const { setFeedbackContent, setDashOpen, setActiveDashTab, setReedPrefill, setReedThread, reedPending, setReedPending } = useShell();
+  const { setFeedbackContent, setDashOpen, setActiveDashTab, setReedPrefill, setReedThread } = useShell();
   const prefillReed = useCallback((text: string) => {
     setActiveDashTab("reed");
     setReedPrefill(text);
@@ -2284,36 +2229,6 @@ export default function WorkSession() {
   const [stage, setStage] = useState<WorkStage>(
     (persisted?.phase === "complete" ? "Edit" : persisted?.phase === "generating" ? "Edit" : "Intake") as WorkStage
   );
-
-  // Reed carry-forward: surface pending notes when stage changes
-  useEffect(() => {
-    const pending = reedPending[stage];
-    if (pending && pending.length > 0) {
-      pending.forEach(note => {
-        setReedThread(prev => [
-          ...prev,
-          { type: "note", text: note.text, from: note.from, to: stage },
-        ]);
-      });
-
-      const followUps: Record<string, string> = {
-        Outline: "Your note is here. Structure is my read now. I will stress-test with this in mind.",
-        Edit: "Carried into Edit. I will watch for this as I review the draft.",
-        Review: "Noted at Review. This will factor into the checkpoint pass.",
-      };
-      if (followUps[stage]) {
-        setReedThread(prev => [...prev, { type: "reed", text: followUps[stage] }]);
-      }
-
-      setReedPending(prev => {
-        const next = { ...prev };
-        delete next[stage];
-        return next;
-      });
-
-      setActiveDashTab("reed");
-    }
-  }, [stage]);
 
   // ── Intake ───────────────────────────────────────────────────
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
