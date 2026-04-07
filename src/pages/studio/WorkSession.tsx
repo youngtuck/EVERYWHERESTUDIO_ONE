@@ -685,11 +685,11 @@ function ReviewDash({
     if (!pipelineRun) return "";
     if (allPass && scoreOk) return "This is ready to publish. The writing is clean and the voice matches.";
     if (nonPassGates.length === 1) {
-      const issue = nonPassGates[0].name;
-      return `Almost there. One thing to address: ${issue.toLowerCase()}. Let me fix it, or you can edit it yourself.`;
+      return `Almost there. ${nonPassGates[0].name} needs a small fix. Let me handle it, or go back to Edit and adjust it yourself.`;
     }
     if (nonPassGates.length > 1) {
-      return `${nonPassGates.length} items need attention before this is ready. Let me fix them automatically, or go back to Edit to handle it yourself.`;
+      const issueNames = nonPassGates.map(g => g.name.toLowerCase()).join(", ");
+      return `${nonPassGates.length} items need attention: ${issueNames}. Let me fix them automatically, or go back to Edit to handle it yourself.`;
     }
     return "Reviewing...";
   })();
@@ -758,6 +758,22 @@ function ReviewDash({
               }}
             >
               Let Reed fix it
+            </button>
+          )}
+
+          {!scoreOk && (
+            <button
+              onClick={() => {
+                (window as any).__ewSetWorkStage?.("Edit");
+              }}
+              style={{
+                width: "100%", padding: 10, borderRadius: 6, marginBottom: 8,
+                background: "transparent", border: "1px solid var(--line)",
+                fontSize: 11, fontWeight: 600, color: "var(--fg-2)",
+                cursor: "pointer", fontFamily: FONT,
+              }}
+            >
+              Go back to Edit
             </button>
           )}
 
@@ -1381,7 +1397,6 @@ function OutlineRowComponent({ label, content, indent, onChange }: {
 function StageEdit({
   draft, generating, generatingLabel, onDraftChange, onAdvance, onRevise,
   versions, activeVersionIdx, onVersionSelect, onGenerateVersion, canGenerateMore,
-  dismissedFlags, setDismissedFlags, fixedFlags, setFixedFlags,
 }: {
   draft: string; generating: boolean; generatingLabel: string;
   onDraftChange: (v: string) => void; onAdvance: () => void;
@@ -1391,185 +1406,13 @@ function StageEdit({
   onVersionSelect: (idx: number) => void;
   onGenerateVersion: () => void;
   canGenerateMore: boolean;
-  dismissedFlags: Set<string>;
-  setDismissedFlags: React.Dispatch<React.SetStateAction<Set<string>>>;
-  fixedFlags: Map<string, string>;
-  setFixedFlags: React.Dispatch<React.SetStateAction<Map<string, string>>>;
 }) {
   const [input, setInput] = useState("");
-  const [activePopover, setActivePopover] = useState<string | null>(null);
-  const popoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleRevise = () => {
     if (!input.trim() || generating) return;
     onRevise(input.trim());
     setInput("");
-  };
-
-  const showPopover = (id: string) => {
-    if (popoverTimerRef.current) clearTimeout(popoverTimerRef.current);
-    setActivePopover(id);
-  };
-  const delayHidePopover = (id: string) => {
-    popoverTimerRef.current = setTimeout(() => {
-      setActivePopover(prev => prev === id ? null : prev);
-    }, 200);
-  };
-  const cancelHide = () => {
-    if (popoverTimerRef.current) clearTimeout(popoverTimerRef.current);
-  };
-  const handleFix = (id: string, replacement: string) => {
-    setFixedFlags(prev => new Map(prev).set(id, replacement));
-    setActivePopover(null);
-
-    // Also update the actual draft content
-    if (onDraftChange && draft) {
-      const paragraphs = draft.split("\n").filter(Boolean);
-      const matchIdx = parseInt(id.replace(/\D/g, ""), 10);
-      if (!isNaN(matchIdx) && paragraphs[matchIdx + 1]) {
-        const para = paragraphs[matchIdx + 1]; // +1 because index 0 is title
-        const statMatch = para.match(/(\d+%\s+of\s+\w+[^.]*)/);
-        const passiveMatch = para.match(/(never made it anywhere|was done by|been completed|were given)/i);
-        const clicheMatch = para.match(/(lost opportunity|game.?changer|at the end of the day|touch base|move the needle)/i);
-
-        let originalText = "";
-        if (id.startsWith("must-") && statMatch) originalText = statMatch[1];
-        else if (id.startsWith("style-") && passiveMatch) originalText = passiveMatch[1];
-        else if (id.startsWith("cliche-") && clicheMatch) originalText = clicheMatch[1];
-
-        if (originalText) {
-          const newDraft = draft.replace(originalText, replacement);
-          if (newDraft !== draft) {
-            onDraftChange(newDraft);
-          }
-        }
-      }
-    }
-  };
-  const handleDismiss = (id: string) => {
-    setDismissedFlags(prev => new Set(prev).add(id));
-    setActivePopover(null);
-  };
-
-  // Render a flagged span with popover
-  const FlagSpan = ({ id, type, text, message, suggestion }: {
-    id: string; type: "must" | "style"; text: string; message: string; suggestion: string;
-  }) => {
-    const isDismissed = dismissedFlags.has(id);
-    const fixedText = fixedFlags.get(id);
-    const displayText = fixedText || text;
-    const className = isDismissed ? "flag-dismissed" : type === "must" ? "flag-r" : "flag-b";
-
-    return (
-      <span
-        className={className}
-        style={{ position: "relative", cursor: "pointer" }}
-        onMouseEnter={() => !isDismissed && !fixedText && showPopover(id)}
-        onMouseLeave={() => delayHidePopover(id)}
-      >
-        {displayText}
-        {activePopover === id && !isDismissed && !fixedText && (
-          <span
-            className="flag-pop"
-            style={{ display: "block" }}
-            onMouseEnter={cancelHide}
-            onMouseLeave={() => delayHidePopover(id)}
-          >
-            <span className={`fp-type ${type === "must" ? "gold" : "blue"}`}>
-              {type === "must" ? "Must fix" : "Style suggestion"}
-            </span>
-            <span className="fp-msg">{message}</span>
-            <span className="fp-suggestion">{suggestion}</span>
-            <span className="fp-actions">
-              <button className="fp-fix" onClick={() => handleFix(id, suggestion)}>Fix</button>
-              <button className="fp-dismiss" onClick={() => handleDismiss(id)}>Dismiss</button>
-            </span>
-          </span>
-        )}
-      </span>
-    );
-  };
-
-  // Parse draft and inject flags into rendered output
-  const renderDraftWithFlags = () => {
-    if (!draft) return <div style={{ color: "var(--fg-3)", fontSize: 13 }}>No draft yet.</div>;
-
-    const paragraphs = draft.split("\n").filter(Boolean);
-    const title = cleanTitle(paragraphs[0] || "");
-    const body = paragraphs.slice(1);
-
-    return (
-      <>
-        <div className="draft-title-text">{title}</div>
-        {body.map((para, i) => {
-          const isSubhead = para.length < 60 && !para.endsWith(".");
-          if (isSubhead) {
-            return <div key={i} className="draft-subhead">{para}</div>;
-          }
-
-          // Scan for potential flag patterns in text
-          // Flag: unverified statistics/claims (must fix)
-          const statMatch = para.match(/(\d+%\s+of\s+\w+[^.]*)/);
-          // Flag: cliche/weak phrases (style)
-          const clicheMatch = para.match(CLICHE_REGEX);
-          // Flag: passive voice (style)
-          const passiveMatch = para.match(PASSIVE_REGEX);
-
-          if (statMatch && !fixedFlags.has(`must-${i}`) && !dismissedFlags.has(`must-${i}`)) {
-            const idx = para.indexOf(statMatch[1]);
-            return (
-              <p key={i} style={{ marginTop: 12, position: "relative" }}>
-                {para.slice(0, idx)}
-                <FlagSpan
-                  id={`must-${i}`}
-                  type="must"
-                  text={statMatch[1]}
-                  message="No source found. Remove or verify before Review."
-                  suggestion={`Most executives I speak with ${statMatch[1].replace(/\d+%\s+of\s+/, "").toLowerCase()}`}
-                />
-                {para.slice(idx + statMatch[1].length)}
-              </p>
-            );
-          }
-
-          if (passiveMatch && !fixedFlags.has(`style-${i}`) && !dismissedFlags.has(`style-${i}`)) {
-            const idx = para.indexOf(passiveMatch[1]);
-            return (
-              <p key={i} style={{ marginTop: 12, position: "relative" }}>
-                {para.slice(0, idx)}
-                <FlagSpan
-                  id={`style-${i}`}
-                  type="style"
-                  text={passiveMatch[1]}
-                  message="Slightly passive. Consider making this more direct."
-                  suggestion="never gets out"
-                />
-                {para.slice(idx + passiveMatch[1].length)}
-              </p>
-            );
-          }
-
-          if (clicheMatch && !fixedFlags.has(`cliche-${i}`) && !dismissedFlags.has(`cliche-${i}`)) {
-            const idx = para.indexOf(clicheMatch[1]);
-            return (
-              <p key={i} style={{ marginTop: 12, position: "relative" }}>
-                {para.slice(0, idx)}
-                <FlagSpan
-                  id={`cliche-${i}`}
-                  type="style"
-                  text={clicheMatch[1]}
-                  message="Voice drift. You usually land harder."
-                  suggestion="Every week without it, someone else says what you have been thinking."
-                />
-                {para.slice(idx + clicheMatch[1].length)}
-              </p>
-            );
-          }
-
-          return <p key={i} style={{ marginTop: 12 }}>{fixedFlags.get(`must-${i}`) || fixedFlags.get(`style-${i}`) || fixedFlags.get(`cliche-${i}`) || para}</p>;
-        })}
-      </>
-    );
   };
 
   return (
@@ -1625,8 +1468,51 @@ function StageEdit({
         {generating ? (
           <GenerationProgress />
         ) : (
-          <div className="draft-body">
-            {renderDraftWithFlags()}
+          <div className="draft-body" style={{ position: "relative" }}>
+            {(() => {
+              const lines = draft.split("\n");
+              const title = lines[0] || "";
+              const body = lines.slice(1).join("\n");
+              return (
+                <>
+                  <input
+                    value={title}
+                    onChange={(e) => onDraftChange(e.target.value + "\n" + body)}
+                    style={{
+                      width: "100%",
+                      fontFamily: "var(--font)",
+                      fontSize: "clamp(22px, 3vw, 32px)",
+                      fontWeight: 700,
+                      color: "var(--fg)",
+                      background: "transparent",
+                      border: "none",
+                      outline: "none",
+                      padding: 0,
+                      marginBottom: 16,
+                      lineHeight: 1.2,
+                    }}
+                  />
+                  <textarea
+                    value={body}
+                    onChange={(e) => onDraftChange(title + "\n" + e.target.value)}
+                    style={{
+                      width: "100%",
+                      minHeight: 400,
+                      background: "transparent",
+                      border: "none",
+                      outline: "none",
+                      resize: "vertical",
+                      fontFamily: "var(--font)",
+                      fontSize: 15,
+                      lineHeight: 1.75,
+                      color: "var(--fg)",
+                      padding: 0,
+                    }}
+                    spellCheck
+                  />
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -3660,10 +3546,6 @@ export default function WorkSession() {
           }}
           onGenerateVersion={handleGenerateVersion}
           canGenerateMore={draftVersions.length < 3 && !generating}
-          dismissedFlags={dismissedFlags}
-          setDismissedFlags={setDismissedFlags}
-          fixedFlags={fixedFlags}
-          setFixedFlags={setFixedFlags}
         />
       )}
       {stage === "Review" && (

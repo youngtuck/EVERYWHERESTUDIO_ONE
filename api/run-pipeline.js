@@ -259,22 +259,30 @@ export default async function handler(req, res) {
 
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    for (let i = 0; i < gatesToRun.length; i++) {
-      if (Date.now() - startTime > 155000) {
-        for (let j = i; j < gatesToRun.length; j++) {
-          gateResults.push({ gate: gatesToRun[j].displayName || gatesToRun[j].label, internalName: gatesToRun[j].name, status: "FLAG", score: 0, feedback: "Skipped: time budget exceeded.", issues: ["TIME_BUDGET"] });
-        }
-        break;
+    // Run all gates in parallel (with small stagger to avoid rate limits)
+    const gatePromises = gatesToRun.map((gate, i) =>
+      delay(i * 800).then(() => runGate(gate, i))
+    );
+    const gateSettled = await Promise.allSettled(gatePromises);
+
+    for (let i = 0; i < gateSettled.length; i++) {
+      const result = gateSettled[i];
+      if (result.status === "fulfilled") {
+        gateResults.push(result.value);
+        if (result.value.status === "FAIL" && !blockedAt) blockedAt = result.value.gate;
+      } else {
+        gateResults.push({
+          gate: gatesToRun[i].displayName || gatesToRun[i].label,
+          internalName: gatesToRun[i].name,
+          status: "FLAG",
+          score: 0,
+          feedback: "This specialist could not complete their review. Try again.",
+          issues: ["PARALLEL_ERROR"],
+        });
       }
-      const gate = gatesToRun[i];
-      const result = await runGate(gate, i);
-      gateResults.push(result);
-      if (result.status === "FAIL" && !blockedAt) blockedAt = result.gate;
-      if (i < gatesToRun.length - 1) await delay(4000);
     }
 
     // Betterish scorer
-    await delay(4000);
     const elapsed2 = Date.now() - startTime;
     if (elapsed2 < 155000) {
       const betterishPrompt = getPrompt("betterish.md");
