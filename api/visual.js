@@ -179,15 +179,15 @@ export default async function handler(req, res) {
       lastError = `Model ${model} returned no image data`;
       continue;
     } catch (err) {
-      lastError = err.name === "AbortError" ? `Timeout with ${model}` : (err.message || "Failed");
-      console.error(`[api/visual] ${lastError}`);
+      lastError = err.name === "AbortError" ? "Visual generation timed out." : "Visual generation failed.";
+      console.error(`[api/visual]`, err);
       continue;
     }
   }
 
   return res.status(502).json({
     success: false,
-    error: lastError || "No image generated. Try a different style or shorter content.",
+    error: "Visual generation failed. Try a different style or shorter content.",
     modelsAttempted: MODELS,
   });
 }

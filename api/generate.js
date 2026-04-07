@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { scoreContent } from "./_score.js";
 import { getUserResources } from "./_resources.js";
 import { callWithRetry } from "./_retry.js";
+import { CLAUDE_MODEL } from "./_config.js";
 
 function sanitizeContent(text) {
   if (!text) return text;
@@ -177,7 +178,7 @@ Output ONLY the complete revised draft. No commentary, no explanation.`;
     const response = await Promise.race([
       callWithRetry(() =>
         client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: CLAUDE_MODEL,
           max_tokens: Math.min(req.body.maxTokens || 4096, 8192),
           system,
           messages: [{ role: "user", content: userContent }],
@@ -195,7 +196,7 @@ Output ONLY the complete revised draft. No commentary, no explanation.`;
         // Step 1: Internal quality review
         const reviewResponse = await callWithRetry(() =>
           client.messages.create({
-            model: "claude-sonnet-4-20250514",
+            model: CLAUDE_MODEL,
             max_tokens: 1024,
             system: `You are an internal quality reviewer. Read this draft and identify the 3 most critical issues from this checklist:
 - Repeated concepts (same idea restated in different words)
@@ -246,7 +247,7 @@ Output ONLY the complete revised draft. No commentary, no explanation.`
 
           const revisionResponse = await callWithRetry(() =>
             client.messages.create({
-              model: "claude-sonnet-4-20250514",
+              model: CLAUDE_MODEL,
               max_tokens: 4096,
               system: revisionSystemPrompt,
               messages: [{ role: "user", content: `ORIGINAL DRAFT:\n${content}\n\nREVISION NOTES:\nFix these issues identified by internal review:\n${reviewResult.issues.map((issue, i) => `${i + 1}. ${issue}`).join("\n")}` }],

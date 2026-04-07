@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
 import { timeAgo } from "../../utils/timeAgo";
 import { getScoreColor } from "../../utils/scoreColor";
@@ -38,6 +39,7 @@ const OUTPUT_TYPE_DOT: Record<string, string> = {
 
 export default function Workbench() {
   const navigate = useNavigate();
+  const isMobile = useMobile();
   const { user } = useAuth();
   const [outputs, setOutputs] = useState<OutputRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +107,7 @@ export default function Workbench() {
       style={{
         maxWidth: 720,
         margin: "0 auto",
-        padding: "24px 24px",
+        padding: isMobile ? "20px 16px" : "24px 24px",
         fontFamily: "'Afacad Flux', sans-serif",
       }}
     >

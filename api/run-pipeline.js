@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { callWithRetry } from "./_retry.js";
+import { CLAUDE_MODEL } from "./_config.js";
 
 const CHECKPOINT_GATES = [
   { name: "Echo", file: "gate-0-echo.md", label: "Deduplication", displayName: "Deduplication" },
@@ -190,7 +191,6 @@ export default async function handler(req, res) {
 
   try {
     const client = new Anthropic({ apiKey });
-    const model = "claude-sonnet-4-20250514";
 
     console.log(`[run-pipeline] Starting for output ${outputId}`);
 
@@ -225,7 +225,7 @@ export default async function handler(req, res) {
           console.log(`[run-pipeline] Gate ${index}: ${gate.name} - calling API (attempt ${attempt + 1})`);
           const response = await callWithRetry(() =>
             client.messages.create({
-              model,
+              model: CLAUDE_MODEL,
               max_tokens: 4096,
               system: prompt,
               messages: [{ role: "user", content: userMessage }],
@@ -283,7 +283,7 @@ export default async function handler(req, res) {
           console.log("[run-pipeline] Running Betterish scorer");
           const response = await callWithRetry(() =>
             client.messages.create({
-              model,
+              model: CLAUDE_MODEL,
               max_tokens: 4096,
               system: betterishPrompt,
               messages: [{

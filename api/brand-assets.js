@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { callWithRetry } from "./_retry.js";
+import { CLAUDE_MODEL } from "./_config.js";
 
 const SYSTEM_PROMPT = `You are a Brand DNA analyst for EVERYWHERE Studio. You are given uploaded brand assets (documents, images described as text, etc.). Extract and synthesize a structured Brand DNA profile from these materials. If the assets are incomplete, infer where reasonable and note gaps. Respond with ONLY a raw JSON object. No preamble. No markdown code fences. No explanation. Pure JSON only. The JSON must be parseable by JSON.parse() with no preprocessing.
 
@@ -76,7 +77,7 @@ export default async function handler(req, res) {
     const client = new Anthropic({ apiKey });
     const response = await callWithRetry(() =>
       client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: 4000,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],

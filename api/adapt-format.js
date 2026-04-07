@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getUserResources } from "./_resources.js";
 import { callWithRetry } from "./_retry.js";
+import { CLAUDE_MODEL } from "./_config.js";
 import fs from "fs";
 import path from "path";
 
@@ -193,7 +194,7 @@ export default async function handler(req, res) {
     const tokenLimit = (format === "Podcast" || format === "Podcast Script") ? 6144 : 4096;
     const response = await callWithRetry(() =>
       client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: tokenLimit,
         system,
         messages: [{ role: "user", content: userContent }],

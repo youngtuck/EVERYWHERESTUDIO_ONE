@@ -4,6 +4,7 @@ import { Folder, FileText, BarChart3, X, MoreVertical } from "lucide-react";
 import { getScoreColor } from "../../utils/scoreColor";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { useMobile } from "../../hooks/useMobile";
 import LoadingAnimation from "../../components/studio/LoadingAnimation";
 import "./shared.css";
 
@@ -30,6 +31,7 @@ const PROJECT_ACCENTS = ["var(--cornflower)", "var(--gold)", "#E8B4A0", "#64748B
 
 export default function Projects() {
   const navigate = useNavigate();
+  const isMobile = useMobile();
   const { user } = useAuth();
 
   const [projects, setProjects] = useState<ProjectRow[]>([]);
@@ -343,7 +345,7 @@ export default function Projects() {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
+        gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
         gap: 16,
       }}
       className="projects-grid"
@@ -641,7 +643,7 @@ export default function Projects() {
       style={{
         maxWidth: 960,
         margin: "0 auto",
-        padding: "32px 24px",
+        padding: isMobile ? "20px 16px" : "32px 24px",
         fontFamily: "'Afacad Flux', sans-serif",
       }}
       onClick={() => { if (menuOpenId) setMenuOpenId(null); }}

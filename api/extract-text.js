@@ -62,7 +62,7 @@ export default async function handler(req, res) {
 
     return res.json({ text, filename: name, length: text.length });
   } catch (err) {
-    console.error("[extract-text] Error:", err);
-    return res.status(500).json({ error: err.message });
+    console.error("[extract-text] error:", err);
+    return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 }

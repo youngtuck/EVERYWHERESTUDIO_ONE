@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
+import { CLAUDE_MODEL } from "./_config.js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,15 @@ export const config = {
     },
   },
 };
+
+function safeFileName(name) {
+  if (typeof name !== "string") return "upload";
+  return name
+    .replace(/[\/\\]/g, "_")
+    .replace(/\.\./g, "_")
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .slice(0, 100);
+}
 
 export default async function handler(req, res) {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
@@ -38,7 +48,7 @@ export default async function handler(req, res) {
 
   try {
     // Store the file in Supabase Storage
-    const filePath = `${userId}/${Date.now()}_${fileName || "upload"}`;
+    const filePath = `${userId}/${Date.now()}_${safeFileName(fileName)}`;
     const buffer = Buffer.from(fileContent, "base64");
 
     const { error: uploadError } = await supabase.storage
@@ -62,7 +72,7 @@ export default async function handler(req, res) {
         const client = new Anthropic({ apiKey: anthropicKey });
         const mediaType = fileType || "application/pdf";
         const response = await client.beta.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: CLAUDE_MODEL,
           max_tokens: 4000,
           betas: ["pdfs-2024-09-25"],
           messages: [
@@ -105,19 +115,19 @@ export default async function handler(req, res) {
         description: safeName(description) || `Uploaded from ${safeName(fileName) || "file"}`,
         content: (extractedContent || "(No text content extracted)").slice(0, 100000),
         is_active: true,
-        metadata: { original_file: filePath, file_name: fileName, file_type: fileType },
+        metadata: { original_file: filePath, file_name: safeFileName(fileName), file_type: fileType },
       })
       .select()
       .single();
 
     if (insertError) {
       console.error("[api/upload-resource] Insert failed", insertError);
-      return res.status(500).json({ error: insertError.message });
+      return res.status(500).json({ error: "Upload failed. Please try again." });
     }
 
     return res.status(200).json({ resource: data });
   } catch (err) {
     console.error("[api/upload-resource]", err);
-    return res.status(502).json({ error: err.message || "Upload failed" });
+    return res.status(502).json({ error: "Upload failed. Please try again." });
   }
 }

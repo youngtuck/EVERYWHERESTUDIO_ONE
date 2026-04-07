@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getUserResources } from "./_resources.js";
 import { callWithRetry } from "./_retry.js";
+import { CLAUDE_MODEL } from "./_config.js";
 
 function sanitizeEmDashes(text) {
   if (!text) return text;
@@ -126,7 +127,7 @@ export default async function handler(req, res) {
     const client = new Anthropic({ apiKey });
     const response = await callWithRetry(() =>
       client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: 2048,
         system: systemPrompt,
         messages: claudeMessages,
@@ -173,6 +174,6 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("[api/outline]", err);
     const status = err.status === 401 ? 401 : 502;
-    return res.status(status).json({ error: err.message || "Outline generation failed." });
+    return res.status(status).json({ error: "Outline generation failed. Please try again." });
   }
 }

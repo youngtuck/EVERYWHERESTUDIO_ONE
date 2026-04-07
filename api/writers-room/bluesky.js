@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getUserResources } from "../_resources.js";
 import { callWithRetry } from "../_retry.js";
+import { CLAUDE_MODEL } from "../_config.js";
 
 const SYSTEM_PROMPT = `You are the Writer's Room for EVERYWHERE Studio. Sara (Chief of Staff) is composing, and Josh (Category Designer) is leading the creative direction.
 
@@ -61,7 +62,7 @@ export default async function handler(req, res) {
     const client = new Anthropic({ apiKey });
     const response = await callWithRetry(() =>
       client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: 2048,
         system: systemPrompt,
         messages: [{
@@ -85,6 +86,6 @@ export default async function handler(req, res) {
     return res.json({ angles: [] });
   } catch (err) {
     console.error("[bluesky]", err);
-    return res.status(err.status === 401 ? 401 : 502).json({ error: err.message || "Failed to generate angles" });
+    return res.status(err.status === 401 ? 401 : 502).json({ error: "Something went wrong. Please try again." });
   }
 }

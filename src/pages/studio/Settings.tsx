@@ -8,6 +8,7 @@ import { useState, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useTheme } from "../../context/ThemeContext";
+import { useMobile } from "../../hooks/useMobile";
 import "./shared.css";
 
 const FONT = "var(--font)";
@@ -106,6 +107,7 @@ const PrefRowLast = ({ label, sublabel, children }: { label: string; sublabel?: 
 
 export default function Settings() {
   const nav = useNavigate();
+  const isMobile = useMobile();
   const { setDashContent, setDashOpen } = useShell();
   const { theme, toggleTheme } = useTheme();
 
@@ -146,7 +148,7 @@ export default function Settings() {
   }, [setDashContent, setDashOpen]);
 
   return (
-    <div style={{ padding: 20, fontFamily: FONT, maxWidth: 560 }}>
+    <div style={{ padding: isMobile ? "20px 16px" : "32px 24px", fontFamily: FONT, maxWidth: isMobile ? "100%" : 560 }}>
       <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>Preferences</div>
 
       {/* Display */}

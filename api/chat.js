@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { getUserResources } from "./_resources.js";
 import { callWithRetry } from "./_retry.js";
+import { CLAUDE_MODEL } from "./_config.js";
 
 function sanitizeContent(text) {
   if (!text) return text;
@@ -509,7 +510,7 @@ export default async function handler(req, res) {
 
       const response = await callWithRetry(() =>
         client.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: CLAUDE_MODEL,
           max_tokens: 2048,
           system: modeSystemPrompt,
           messages: finalModeMessages,
@@ -539,7 +540,7 @@ export default async function handler(req, res) {
       return res.json({ reply, readyToGenerate, detectedFormat, isChallenge });
     } catch (err) {
       console.error(`[api/chat][${systemMode}]`, err);
-      return res.status(err.status === 401 ? 401 : 502).json({ error: err.message || "Something went wrong." });
+      return res.status(err.status === 401 ? 401 : 502).json({ error: "Something went wrong. Please try again." });
     }
   }
 
@@ -600,7 +601,7 @@ export default async function handler(req, res) {
 
     const response = await callWithRetry(() =>
       client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: 2048,
         system: systemPrompt,
         messages: finalMessages,
@@ -631,6 +632,6 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("[api/chat]", err);
     const status = err.status === 401 ? 401 : 502;
-    return res.status(status).json({ error: err.message || "Something went wrong." });
+    return res.status(status).json({ error: "Something went wrong. Please try again." });
   }
 }

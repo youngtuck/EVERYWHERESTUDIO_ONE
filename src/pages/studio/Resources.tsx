@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useShell } from "../../components/studio/StudioShell";
+import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
 import { fetchWithRetry } from "../../lib/retry";
 import "./shared.css";
@@ -165,6 +166,7 @@ function FileDetailPanel({
 
 // ── Main Component ─────────────────────────────────────────────
 export default function Resources() {
+  const isMobile = useMobile();
   const { user } = useAuth();
   const { toast } = useToast();
   const { setDashContent, setDashOpen } = useShell();
@@ -346,7 +348,7 @@ export default function Resources() {
 
   return (
     <>
-      <div style={{ padding: 20, fontFamily: FONT, maxWidth: 680 }}>
+      <div style={{ padding: isMobile ? "20px 16px" : 20, fontFamily: FONT, maxWidth: isMobile ? "100%" : 680 }}>
         <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>Project Files</div>
 
         {/* Foundation section */}

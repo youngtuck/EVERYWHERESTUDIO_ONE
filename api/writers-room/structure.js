@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getUserResources } from "../_resources.js";
 import { callWithRetry } from "../_retry.js";
+import { CLAUDE_MODEL } from "../_config.js";
 
 const SYSTEM_PROMPT = `You are the Writer's Room structuring a piece for EVERYWHERE Studio. Your job: take the selected angle(s) and the Composer's conversation, and produce a detailed section-by-section outline (beat sheet).
 
@@ -76,7 +77,7 @@ export default async function handler(req, res) {
     const client = new Anthropic({ apiKey });
     const response = await callWithRetry(() =>
       client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: 2048,
         system: systemPrompt,
         messages: [{
@@ -100,6 +101,6 @@ export default async function handler(req, res) {
     return res.json({ thesis: "", estimatedLength: 0, outline: [] });
   } catch (err) {
     console.error("[structure]", err);
-    return res.status(err.status === 401 ? 401 : 502).json({ error: err.message || "Failed to generate outline" });
+    return res.status(err.status === 401 ? 401 : 502).json({ error: "Something went wrong. Please try again." });
   }
 }

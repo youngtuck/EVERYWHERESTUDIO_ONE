@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { CLAUDE_MODEL } from "./_config.js";
 
 const BLOCKED_DOMAINS = [
   "linkedin.com", "www.linkedin.com", "facebook.com", "www.facebook.com",
@@ -200,7 +201,7 @@ Return ONLY valid JSON:
 
     const client = new Anthropic({ apiKey: anthropicKey });
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: CLAUDE_MODEL,
       max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: "user", content: `REAL ARTICLES (ONLY THESE MAY BE USED):\n\n${articlesContext}` }],
@@ -243,6 +244,6 @@ Return ONLY valid JSON:
     return res.json({ ...briefing, cached: false });
   } catch (err) {
     console.error("[sentinel] Fatal error:", err);
-    return res.status(500).json({ error: err.message || "Sentinel failed." });
+    return res.status(500).json({ error: "Briefing generation failed. Please try again." });
   }
 }

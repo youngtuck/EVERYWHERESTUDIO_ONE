@@ -10,6 +10,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useShell } from "../../components/studio/StudioShell";
+import { useMobile } from "../../hooks/useMobile";
 import { timeAgo } from "../../utils/timeAgo";
 import "./shared.css";
 
@@ -113,11 +114,6 @@ function SessionDetailPanel({
             Reopen in Work
           </button>
           <button
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
-          >
-            Rename session
-          </button>
-          <button
             onClick={onDelete}
             style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.04)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
           >
@@ -132,6 +128,7 @@ function SessionDetailPanel({
 // ── Main Component ─────────────────────────────────────────────
 export default function OutputLibrary() {
   const nav = useNavigate();
+  const isMobile = useMobile();
   const { user } = useAuth();
   const { toast } = useToast();
   const { setDashContent, setDashOpen } = useShell();
@@ -223,7 +220,7 @@ export default function OutputLibrary() {
   );
 
   return (
-    <div style={{ padding: 20, fontFamily: FONT, maxWidth: 680 }}>
+    <div style={{ padding: isMobile ? "20px 16px" : 20, fontFamily: FONT, maxWidth: isMobile ? "100%" : 680 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)" }}>The Catalog</div>
         <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{outputs.length} session{outputs.length !== 1 ? "s" : ""}</div>

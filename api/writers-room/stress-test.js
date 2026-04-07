@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { callWithRetry } from "../_retry.js";
+import { CLAUDE_MODEL } from "../_config.js";
 
 const SBU_AGENTS = [
   { name: "Josh", lens: "Category Designer", question: "Is this a different game or competing on someone else's terms?", file: "josh.md" },
@@ -65,7 +66,6 @@ export default async function handler(req, res) {
 
   try {
     const client = new Anthropic({ apiKey });
-    const model = "claude-sonnet-4-20250514";
 
     // Run all 6 SBU agents in parallel
     async function runAgent(agent) {
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
       try {
         const response = await callWithRetry(() =>
           client.messages.create({
-            model,
+            model: CLAUDE_MODEL,
             max_tokens: 1024,
             system: systemPrompt,
             messages: [{ role: "user", content: `Evaluate this ${outputType} draft through your lens.\n\n${draft.slice(0, 4000)}` }],
@@ -127,7 +127,7 @@ export default async function handler(req, res) {
         const feedbackSummary = results.map(r => `${r.agent} (${r.lens}): ${r.verdict.toUpperCase()}. ${r.feedback}${r.suggestion ? ` Suggestion: ${r.suggestion}` : ""}`).join("\n");
         const saraResponse = await callWithRetry(() =>
           client.messages.create({
-            model,
+            model: CLAUDE_MODEL,
             max_tokens: 1024,
             system: SARA_SYNTHESIS_PROMPT,
             messages: [{ role: "user", content: `SBU feedback on this ${outputType}:\n\n${feedbackSummary}\n\nSynthesize into exactly 3 action items. Return ONLY valid JSON.` }],

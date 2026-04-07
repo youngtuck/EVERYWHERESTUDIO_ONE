@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { callWithRetry } from "./_retry.js";
+import { CLAUDE_MODEL } from "./_config.js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -88,7 +89,7 @@ export default async function handler(req, res) {
     const client = new Anthropic({ apiKey });
     const response = await callWithRetry(() =>
       client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: 4000,
         system: SYSTEM_PROMPT,
         messages: [{

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { callWithRetry } from "./_retry.js";
+import { CLAUDE_MODEL } from "./_config.js";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -111,7 +112,7 @@ export default async function handler(req, res) {
     const client = new Anthropic({ apiKey });
     const response = await callWithRetry(() =>
       client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: 4000,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: buildUserMessage(userName ?? "User", topics ?? [], dateLabel) }],
@@ -168,6 +169,6 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("[api/sentinel-generate]", err);
     const status = err.status === 401 ? 401 : 502;
-    return res.status(status).json({ error: err.message || "Something went wrong." });
+    return res.status(status).json({ error: "Something went wrong. Please try again." });
   }
 }

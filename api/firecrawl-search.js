@@ -28,6 +28,7 @@ export default async function handler(req, res) {
     const data = await response.json();
     return res.json({ results: data.data || data.results || [] });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error("[firecrawl-search] error:", err);
+    return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 }

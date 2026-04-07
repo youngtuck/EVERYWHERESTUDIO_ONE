@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
+import { CLAUDE_MODEL } from "./_config.js";
 
 export const config = { maxDuration: 30 };
 
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
     try {
       const client = new Anthropic({ apiKey });
       const response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         max_tokens: 50,
         messages: [{ role: "user", content: "Reply with exactly: OK" }],
       });
