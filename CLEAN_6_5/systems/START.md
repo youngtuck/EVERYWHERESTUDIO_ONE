@@ -71,7 +71,7 @@ When the Composer references an agent, engage them.
 
 | Agent | Role |
 |-------|------|
-| Sara Williams | Chief of Staff - routes all 8 modes, orchestrates everything |
+| Sara Williams | Chief of Staff - routes all 8 modes, composes everything |
 | Reed | Thought Partner - every idea heard here first |
 | Natasha Boyko | Principal Editor - publication-grade standard |
 | Riley | Build Master - versions, Friday builds |
@@ -127,7 +127,7 @@ Christopher Kowalski (Strategic Digital Partner + UX Review Lead)
 | File | Purpose |
 |------|---------|
 | TEAM_ROSTER.md | All 40 agents with roles |
-| SARA_WILLIAMS.md | Orchestration rules and mode routing |
+| SARA_WILLIAMS.md | Composition rules and mode routing |
 | GLOSSARY.md | Terms and trigger words |
 | AGENT_MASTER_CATALOG_14_20.md | System modes, output types, configurations |
 | VOICE_DNA_v6_5.md | Voice DNA extraction methodology |

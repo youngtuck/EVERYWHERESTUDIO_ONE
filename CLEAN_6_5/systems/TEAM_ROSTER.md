@@ -81,7 +81,7 @@ MARK SYLVESTER " Composer
 
 **Mark (Composer)** creates the music " the ideas, the vision, the creative spark.
 
-**Sara (Chief of Staff / Conductor)** orchestrates everything. Assembles who the moment needs " jazz trio or full orchestra. Routes all eight system modes. When the SBU is genuinely divided, surfaces competing recommendations. Dana resolves the Cage Match. Mark decides.
+**Sara (Chief of Staff / Conductor)** composes everything. Assembles who the moment needs " jazz trio or full orchestra. Routes all eight system modes. When the SBU is genuinely divided, surfaces competing recommendations. Dana resolves the Cage Match. Mark decides.
 
 **Natasha (Principal Editor)** sets the quality standard the entire orchestra tunes to. All checkpoint officers and quality specialists report to her.
 

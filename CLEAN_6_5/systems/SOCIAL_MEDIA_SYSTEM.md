@@ -53,7 +53,7 @@ Every piece of social content must:
 
 **Filter 1: Category Signal (Josh)**
 - Even short posts must signal the different game
-- Orchestrated Intelligence vs. AI tools
+- Composed Intelligence vs. AI tools
 - Distinctive framing in the first line
 - Reader thinks this is different not that's smart
 

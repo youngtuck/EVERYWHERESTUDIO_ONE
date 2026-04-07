@@ -73,10 +73,8 @@ const AuthPage = () => {
         }
         (window as any).__ewCodeId = codeData.codeId;
       } catch {
-        if (accessCode.trim().toLowerCase() !== "oneidea") {
-          setSubmitError("Invalid access code.");
-          return;
-        }
+        setSubmitError("Could not verify access code. Please try again.");
+        return;
       }
       if (password !== confirmPassword) {
         setSubmitError("Passwords don't match.");
@@ -102,7 +100,7 @@ const AuthPage = () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ codeId }),
-          });
+          }).catch((err) => console.error("Failed to redeem access code:", err));
           delete (window as any).__ewCodeId;
         }
         setSubmitError("Check your email to confirm your account.");

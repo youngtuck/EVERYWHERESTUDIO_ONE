@@ -97,8 +97,6 @@ export default async function handler(req, res) {
         }],
       })
     );
-      }],
-    });
 
     const block = response.content?.[0];
     let text = block?.type === "text" ? block.text : "";
@@ -114,8 +112,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json(parsed);
   } catch (err) {
-    const message = err.name === "AbortError" ? "Timed out fetching the website. Try again." : (err.message || "Something went wrong.");
     console.error("[api/brand-dna-from-url]", err);
+    const message = err.name === "AbortError" ? "Timed out fetching the website. Try again." : "Something went wrong. Please try again.";
     return res.status(502).json({ error: message });
   }
 }

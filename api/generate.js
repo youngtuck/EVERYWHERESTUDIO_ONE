@@ -279,10 +279,9 @@ Output ONLY the complete revised draft. No commentary, no explanation.`
 
     return res.json({ content, score, gates });
   } catch (err) {
-    console.error("[api/generate] Error:", err.message || err);
-    const status = err.status === 401 ? 401 : 500;
-    return res.status(status).json({
-      error: err.message || "Generation failed",
+    console.error("[api/generate] Error:", err);
+    return res.status(500).json({
+      error: "Something went wrong. Please try again.",
       content: null,
     });
   }

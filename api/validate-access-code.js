@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) {
     // Fallback: hardcoded universal code if Supabase not configured
-    if ((process.env.FALLBACK_ACCESS_CODE || "oneidea") === code.trim().toLowerCase()) {
+    if (process.env.FALLBACK_ACCESS_CODE && process.env.FALLBACK_ACCESS_CODE === code.trim().toLowerCase()) {
       return res.status(200).json({ valid: true, codeId: null, assignedName: null });
     }
     return res.status(200).json({ valid: false, error: "Invalid access code." });
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     if (error) {
       // Table might not exist yet - fall back to hardcoded
       console.error("[validate-access-code] DB error:", error.message);
-      if ((process.env.FALLBACK_ACCESS_CODE || "oneidea") === code.trim().toLowerCase()) {
+      if (process.env.FALLBACK_ACCESS_CODE && process.env.FALLBACK_ACCESS_CODE === code.trim().toLowerCase()) {
         return res.status(200).json({ valid: true, codeId: null, assignedName: null });
       }
       return res.status(200).json({ valid: false, error: "Invalid access code." });
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("[validate-access-code]", err);
     // Ultimate fallback
-    if ((process.env.FALLBACK_ACCESS_CODE || "oneidea") === code.trim().toLowerCase()) {
+    if (process.env.FALLBACK_ACCESS_CODE && process.env.FALLBACK_ACCESS_CODE === code.trim().toLowerCase()) {
       return res.status(200).json({ valid: true, codeId: null, assignedName: null });
     }
     return res.status(200).json({ valid: false, error: "Validation failed. Try again." });

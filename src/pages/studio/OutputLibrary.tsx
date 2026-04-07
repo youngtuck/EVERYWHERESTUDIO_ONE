@@ -183,10 +183,16 @@ export default function OutputLibrary() {
     if (!selectedOutput || !user) return;
     const confirmed = window.confirm(`Delete "${selectedOutput.title}"? This cannot be undone.`);
     if (!confirmed) return;
-    await supabase.from("outputs").delete().eq("id", selectedOutput.id).eq("user_id", user.id);
-    setOutputs(prev => prev.filter(o => o.id !== selectedOutput.id));
-    setSelectedId(null);
-    toast("Session deleted.");
+    try {
+      const { error } = await supabase.from("outputs").delete().eq("id", selectedOutput.id).eq("user_id", user.id);
+      if (error) throw error;
+      setOutputs(prev => prev.filter(o => o.id !== selectedOutput.id));
+      setSelectedId(null);
+      toast("Session deleted.");
+    } catch (err) {
+      console.error("Failed to delete output:", err);
+      toast("Failed to delete session. Please try again.");
+    }
   }, [selectedOutput, user, toast]);
 
   // Dashboard panel

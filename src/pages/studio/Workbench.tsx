@@ -49,29 +49,29 @@ export default function Workbench() {
       setLoading(false);
       return;
     }
-    supabase
-      .from("outputs")
-      .select("id, title, output_type, score, updated_at, published_at")
-      .eq("user_id", user.id)
-      .is("published_at", null)
-      .lt("score", 900)
-      .order("updated_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) console.error(error);
-        setOutputs((data as OutputRow[]) ?? []);
-      })
-      .then(() => setLoading(false), () => setLoading(false));
+    Promise.resolve(
+      supabase
+        .from("outputs")
+        .select("id, title, output_type, score, updated_at, published_at")
+        .eq("user_id", user.id)
+        .is("published_at", null)
+        .lt("score", 100)
+        .order("updated_at", { ascending: false })
+    ).then(({ data, error }) => {
+      if (error) console.error(error);
+      setOutputs((data as OutputRow[]) ?? []);
+    }).finally(() => setLoading(false));
   }, [user]);
 
   const refresh = () => {
     if (!user) return;
-    supabase
+    Promise.resolve(supabase
       .from("outputs")
       .select("id, title, output_type, score, updated_at, published_at")
       .eq("user_id", user.id)
       .is("published_at", null)
-      .lt("score", 900)
-      .order("updated_at", { ascending: false })
+      .lt("score", 100)
+      .order("updated_at", { ascending: false }))
       .then(
         ({ data, error }) => { if (error) console.error(error); setOutputs((data as OutputRow[]) ?? []); },
         (err) => console.error("Workbench refresh failed:", err)

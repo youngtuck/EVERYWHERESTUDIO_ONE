@@ -65,12 +65,9 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         }).catch((err) => console.error("Failed to redeem access code:", err));
       }
     } catch {
-      // Fallback: accept "oneidea" if API unreachable
-      if (googleAccessCode.trim().toLowerCase() !== "oneidea") {
-        setGoogleCodeError("Invalid access code.");
-        signOut();
-        return;
-      }
+      setGoogleCodeError("Could not verify access code. Please try again.");
+      signOut();
+      return;
     }
     setGoogleAccessCodeVerified(true);
     refreshProfile();

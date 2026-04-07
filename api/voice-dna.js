@@ -156,7 +156,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ voiceDna, markdown });
   } catch (err) {
     console.error("[api/voice-dna]", err);
-    const status = err.status === 401 ? 401 : 502;
-    return res.status(status).json({ error: err.message || "Something went wrong." });
+    return res.status(502).json({ error: "Something went wrong. Please try again." });
   }
 }

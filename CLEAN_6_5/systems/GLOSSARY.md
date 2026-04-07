@@ -124,7 +124,7 @@ Core UX principle: Never ask more than one question per turn.
 **OPAT**
 Outcome, Purpose, Action, Timing -- Victor's strategic framing framework.
 
-**Orchestrated Intelligence**
+**Composed Intelligence**
 The core concept of EVERYWHERE. Multiple specialized AI agents working together. The difference between a one-person band and a symphony.
 
 **Output System**
