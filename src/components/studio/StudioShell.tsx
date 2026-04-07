@@ -342,7 +342,7 @@ export default function StudioShell() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function RightPanel({ open }: { open: boolean }) {
-  const { activeDashTab, setActiveDashTab, feedbackContent, dashContent } = useShell();
+  const { feedbackContent, dashContent } = useShell();
 
   return (
     <div style={{
@@ -357,37 +357,34 @@ function RightPanel({ open }: { open: boolean }) {
         opacity: open ? 1 : 0, transition: "opacity 0.12s ease",
         pointerEvents: open ? "auto" : "none",
       }}>
-        {/* Tab bar */}
+        {/* Header */}
         <div style={{
-          display: "flex", borderBottom: "1px solid var(--line)",
+          display: "flex", alignItems: "center",
+          borderBottom: "1px solid var(--line)",
           background: "var(--bg)", flexShrink: 0,
+          padding: "10px 14px",
         }}>
-          {(["feedback", "reed", "help"] as const).map(tab => (
-            <div
-              key={tab}
-              onClick={() => setActiveDashTab(tab)}
-              style={{
-                flex: tab === "help" ? "none" : 1,
-                marginLeft: tab === "help" ? "auto" : 0,
-                textAlign: "center" as const,
-                fontSize: 11, fontWeight: activeDashTab === tab ? 600 : 500,
-                color: activeDashTab === tab ? "var(--fg)" : "var(--fg-3)",
-                padding: "10px 8px",
-                cursor: "pointer",
-                borderBottom: activeDashTab === tab ? "2px solid var(--fg)" : "2px solid transparent",
-                transition: "all 0.1s",
-              }}
-            >
-              {tab === "feedback" ? "Feedback" : tab === "reed" ? "Ask Reed" : "Help"}
-            </div>
-          ))}
+          <div style={{
+            width: 20, height: 20, borderRadius: "50%",
+            background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 8, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
+            marginRight: 8,
+          }}>R</div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
         </div>
 
-        {/* Tab content */}
-        <div style={{ flex: 1, overflowY: "auto", padding: 14 }}>
-          {activeDashTab === "feedback" && (feedbackContent ?? dashContent ?? <DefaultDashContent />)}
-          {activeDashTab === "reed" && <ReedPanel />}
-          {activeDashTab === "help" && <HelpPanelPlaceholder />}
+        {/* Unified content: stage context + feedback + conversation */}
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+          {/* Stage feedback and context */}
+          <div style={{ padding: 14, flexShrink: 0 }}>
+            {feedbackContent ?? dashContent ?? <DefaultDashContent />}
+          </div>
+
+          {/* Conversation */}
+          <div style={{ borderTop: "1px solid var(--line)", flex: 1, display: "flex", flexDirection: "column" }}>
+            <ReedPanel />
+          </div>
         </div>
 
         {/* Copyright footer */}
@@ -475,60 +472,21 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Edit") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-          <div style={{ position: "relative", width: 48, height: 29 }}>
-            <svg viewBox="0 0 100 60" width="48" height="29">
-              <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="#E2E8F0" strokeWidth="10" strokeLinecap="round"/>
-              <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="#4A90D9" strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset="16"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>89%</div>
-            <div style={{ fontSize: 9, color: "var(--fg-3)", fontWeight: 600 }}>Voice Match <span style={{ fontWeight: 400 }}>(prelim)</span></div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-          <span style={pillGold}>2 must fix</span>
-          <span style={pillBlue}>3 style</span>
-        </div>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
-          2 passive constructions, 1 hedged claim. Style: paragraph 3 opens with 3 weak sentences in a row.
+          Read through the draft. Edit anything that does not sound like you. When you are done, click Finish and Review.
         </div>
-        <div style={{ marginBottom: 4 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--fg-3)", marginBottom: 3 }}>
-            <span>Word count</span>
-            <span>682 / 700</span>
-          </div>
-          <div style={{ height: 4, borderRadius: 2, background: "var(--bg-3, #E2E8F0)", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: "97%", background: "#4A90D9", borderRadius: 2 }} />
-          </div>
+        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+          Click into any paragraph to edit directly, or tell Reed what to change using the input below.
         </div>
       </div>
     );
   }
 
   if (stage === "Review") {
-    const checkpoints = [
-      { name: "SLOP Detection", status: "Pass", color: "#50c8a0" },
-      { name: "Human Voice Test", status: "Pass", color: "#50c8a0" },
-      { name: "Humanization", status: "Review", color: "var(--gold, #D4A832)" },
-      { name: "Deduplication", status: "Pass", color: "#50c8a0" },
-    ];
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
-          {checkpoints.map((cp, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
-              <span style={{ color: "var(--fg-2)" }}>{cp.name}</span>
-              <span style={{ fontWeight: 600, color: cp.color }}>{cp.status}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)", marginBottom: 6 }}>
-          Impact Score: <span style={{ color: "#4A90D9" }}>81</span> <span style={{ fontWeight: 400, color: "var(--fg-3)", fontSize: 11 }}>/ 100, threshold 75</span>
-        </div>
-        <div style={calloutStyle}>
-          This is ready. The humanization flag is paragraph 4. It opens with a pattern I have seen in your last three pieces. Worth breaking the habit here.
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
+          Reed is reviewing your draft against 7 quality checkpoints. See the Feedback panel for checkpoint results, or ask Reed anything about this session.
         </div>
       </div>
     );
@@ -635,7 +593,7 @@ function ReedPanel() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "10px 14px" }}>
       {/* Stage-aware context message */}
       <ReedStageContext stage={stage} />
       <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
@@ -749,22 +707,7 @@ function ReedPanel() {
   );
 }
 
-function HelpPanelPlaceholder() {
-  return (
-    <div>
-      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>START HERE</div>
-      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", padding: "6px 0", cursor: "pointer" }}>Reed</div>
-      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginTop: 12, marginBottom: 8 }}>THE PIPELINE</div>
-      {["Watch", "Work", "Wrap"].map(item => (
-        <div key={item} style={{ fontSize: 12, color: "var(--fg-2)", padding: "4px 0", cursor: "pointer" }}>{item}</div>
-      ))}
-      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginTop: 12, marginBottom: 8 }}>QUALITY</div>
-      {["7 Checkpoints", "Impact Score", "Human Voice Test"].map(item => (
-        <div key={item} style={{ fontSize: 12, color: "var(--fg-2)", padding: "4px 0", cursor: "pointer" }}>{item}</div>
-      ))}
-    </div>
-  );
-}
+// Help panel removed: Reed is the help system (Redesign 3)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADVISORS MODAL, context-aware per page

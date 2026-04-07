@@ -1686,7 +1686,18 @@ function StageEdit({
         )}
       </div>
 
-      {!generating && draft && <AdvanceButton label="Move to Review &#8594;" onClick={onAdvance} />}
+      {/* Word count bar visible in edit area */}
+      {!generating && draft && (
+        <div style={{
+          padding: "6px 28px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          borderTop: "1px solid var(--line)", background: "var(--bg)", flexShrink: 0,
+          fontSize: 11, color: "var(--fg-3)",
+        }}>
+          <span>{draft.split(/\s+/).filter(Boolean).length} words</span>
+        </div>
+      )}
+
+      {!generating && draft && <AdvanceButton label="Finish and Review &#8594;" onClick={onAdvance} />}
 
       <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
         <input
@@ -2356,6 +2367,12 @@ export default function WorkSession() {
   const [hvtAttempts, setHvtAttempts] = useState(0);
   const [hvtRunning, setHvtRunning] = useState(false);
 
+  // ── Background pipeline (Redesign 2: run quality check during generation) ──
+  const [backgroundPipelineRun, setBackgroundPipelineRun] = useState<PipelineRun | null>(null);
+  const [backgroundPipelineRunning, setBackgroundPipelineRunning] = useState(false);
+  const [draftChangedSinceBackground, setDraftChangedSinceBackground] = useState(false);
+  const backgroundDraftRef = useRef<string>("");
+
   // ── Export ────────────────────────────────────────────────────
   const [exportedTabs, setExportedTabs] = useState<Record<string, boolean>>({});
   const [outputId, setOutputId] = useState<string | null>(persisted?.generatedOutputId || null);
@@ -2611,6 +2628,125 @@ export default function WorkSession() {
     }
   }, [messages, selectedFormats, goToStage, outputType, user?.id, toast]);
 
+  // ── BACKGROUND: Silent quality check after draft generation (Redesign 2) ──
+  const handleBackgroundQualityCheck = useCallback(async (generatedDraft: string) => {
+    if (!user || !generatedDraft) return;
+    setBackgroundPipelineRunning(true);
+    setBackgroundPipelineRun(null);
+    backgroundDraftRef.current = generatedDraft;
+
+    try {
+      const res = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft: generatedDraft,
+          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          voiceDnaMd,
+          brandDnaMd,
+          methodDnaMd,
+          userId: user.id,
+        }),
+      }, { timeout: 175000 });
+
+      if (!res.ok) throw new Error(`Background pipeline error ${res.status}`);
+      const result = await res.json();
+
+      const bgResult: PipelineRun = {
+        status: result.status,
+        checkpointResults: result.checkpointResults || [],
+        impactScore: result.impactScore || null,
+        humanVoiceTest: result.humanVoiceTest || null,
+        blockedAt: result.blockedAt,
+        finalDraft: result.finalDraft,
+      };
+
+      // If gates fail and score < 75, auto-revise in the background
+      const score = result.impactScore?.total ?? 0;
+      const failingGates = (result.checkpointResults || []).filter((g: CheckpointResult) => g.status !== "PASS");
+
+      if (score < 75 && failingGates.length > 0 && backgroundDraftRef.current === generatedDraft) {
+        const issues = failingGates
+          .map((g: CheckpointResult) => `[${displayGateName(g.gate)}]: ${g.feedback}`)
+          .join("\n");
+
+        try {
+          const revRes = await fetchWithRetry(`${API_BASE}/api/generate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              conversationSummary: "",
+              outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+              originalDraft: result.finalDraft || generatedDraft,
+              revisionNotes: `Fix these quality checkpoint issues while preserving the voice and argument:\n\n${issues}`,
+              userId: user.id,
+              maxTokens: 4096,
+            }),
+          }, { timeout: 90000 });
+
+          if (revRes.ok) {
+            const revData = await revRes.json();
+            if (revData.content && revData.content !== generatedDraft) {
+              if (!draftChangedSinceBackground && backgroundDraftRef.current === generatedDraft) {
+                setDraft(revData.content);
+                backgroundDraftRef.current = revData.content;
+                setDismissedFlags(new Set());
+                setFixedFlags(new Map());
+                setDraftVersions(prev => {
+                  const updated = [...prev];
+                  if (updated[0]) updated[0] = { ...updated[0], content: revData.content };
+                  return updated;
+                });
+              }
+
+              const reRes = await fetchWithRetry(`${API_BASE}/api/run-pipeline`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  draft: revData.content,
+                  outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+                  voiceDnaMd,
+                  brandDnaMd,
+                  methodDnaMd,
+                  userId: user.id,
+                }),
+              }, { timeout: 175000 });
+
+              if (reRes.ok) {
+                const reResult = await reRes.json();
+                setBackgroundPipelineRun({
+                  status: reResult.status,
+                  checkpointResults: reResult.checkpointResults || [],
+                  impactScore: reResult.impactScore || null,
+                  humanVoiceTest: reResult.humanVoiceTest || null,
+                  blockedAt: reResult.blockedAt,
+                  finalDraft: reResult.finalDraft || revData.content,
+                });
+                return;
+              }
+            }
+          }
+        } catch (revErr) {
+          console.warn("[Background auto-revise] Failed, using initial results:", revErr);
+        }
+      }
+
+      setBackgroundPipelineRun(bgResult);
+    } catch (err) {
+      console.warn("[Background pipeline] Failed:", err);
+    } finally {
+      setBackgroundPipelineRunning(false);
+    }
+  }, [user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, draftChangedSinceBackground]);
+
+  // Track when user edits draft after background check started
+  const handleDraftChangeWithTracking = useCallback((newDraft: string) => {
+    setDraft(newDraft);
+    if (backgroundDraftRef.current && newDraft !== backgroundDraftRef.current) {
+      setDraftChangedSinceBackground(true);
+    }
+  }, []);
+
   // ── OUTLINE → EDIT: Generate draft ───────────────────────────
   const handleGenerateDraft = useCallback(async () => {
     goToStage("Edit");
@@ -2649,6 +2785,12 @@ export default function WorkSession() {
       setDraftVersions([{ content: data.content || "", label: "Version 1" }]);
       setActiveVersionIdx(0);
       setGeneratingLabel("Done.");
+      setDraftChangedSinceBackground(false);
+
+      // Run quality gates in background (Redesign 2)
+      if (data.content) {
+        handleBackgroundQualityCheck(data.content);
+      }
 
       // Save draft to Supabase immediately (fire and forget, don't block UI)
       if (user && data.content) {
@@ -2674,7 +2816,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage]);
+  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage, handleBackgroundQualityCheck]);
 
   // ── EDIT: Revise draft ────────────────────────────────────────
   const handleRevise = useCallback(async (instructions: string) => {
@@ -2793,9 +2935,54 @@ export default function WorkSession() {
   const handleRunPipeline = useCallback(async () => {
     goToStage("Review");
     if (!draft || !user) return;
-    setPipelineRunning(true);
-    // Start format adaptation in parallel with pipeline
+
+    // Start format adaptation in parallel
     handleFormatAdaptation();
+
+    // If background pipeline already completed and user has not edited the draft, use cached results
+    if (backgroundPipelineRun && !draftChangedSinceBackground) {
+      setPipelineRun(backgroundPipelineRun);
+      setHvtAttempts(1);
+
+      // Use the background pipeline's final draft if it differs
+      if (backgroundPipelineRun.finalDraft && backgroundPipelineRun.finalDraft !== draft) {
+        setDraft(backgroundPipelineRun.finalDraft);
+      }
+
+      // Save to Supabase
+      const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
+      const score = backgroundPipelineRun.impactScore?.total ?? 0;
+      const outputTypeId = outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay";
+      const outputCategory = OUTPUT_TYPES.find(t => t.id === outputTypeId)?.category?.toLowerCase() || null;
+
+      if (outputId) {
+        await supabase.from("outputs").update({
+          content: backgroundPipelineRun.finalDraft || draft,
+          score: Math.round(score),
+          gates: backgroundPipelineRun.checkpointResults || null,
+          content_state: score >= 60 ? "vault" : "in_progress",
+          output_category: outputCategory,
+        }).eq("id", outputId);
+      } else {
+        const { data: savedOutput } = await supabase.from("outputs").insert({
+          user_id: user.id,
+          title: title.slice(0, 200),
+          content: backgroundPipelineRun.finalDraft || draft,
+          output_type: outputTypeId,
+          output_type_id: outputTypeId,
+          output_category: outputCategory,
+          project_id: projectId || undefined,
+          score: Math.round(score),
+          gates: backgroundPipelineRun.checkpointResults || null,
+          content_state: score >= 60 ? "vault" : "in_progress",
+        }).select("id").single();
+        if (savedOutput?.id) setOutputId(savedOutput.id);
+      }
+      return;
+    }
+
+    // If background pipeline is still running, wait briefly then fall through to full pipeline
+    setPipelineRunning(true);
     setPipelineRun(null);
 
     try {
@@ -2875,7 +3062,7 @@ export default function WorkSession() {
     } finally {
       setPipelineRunning(false);
     }
-  }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId]);
+  }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId, backgroundPipelineRun, draftChangedSinceBackground]);
 
   // ── REVIEW: Export all ─────────────────────────────────────────
   const handleExportAll = useCallback(() => {
@@ -2998,6 +3185,10 @@ export default function WorkSession() {
     setGenerating(false);
     setPipelineRun(null);
     setPipelineRunning(false);
+    setBackgroundPipelineRun(null);
+    setBackgroundPipelineRunning(false);
+    setDraftChangedSinceBackground(false);
+    backgroundDraftRef.current = "";
     setHvtAttempts(0);
     setHvtRunning(false);
     setAllExported(false);
@@ -3246,11 +3437,8 @@ export default function WorkSession() {
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
-    if (stage === "Review") {
-      setDashOpen(true);
-    } else {
-      setDashOpen(false);
-    }
+    // Keep the Reed panel open across all stages
+    setDashOpen(true);
 
     const dashNode = (() => {
       switch (stage) {
@@ -3292,7 +3480,6 @@ export default function WorkSession() {
         case "Edit": {
           const wordCount = (draft || "").split(/\s+/).filter(Boolean).length;
           const targetWords = WORD_TARGETS[outputType || "freestyle"] || 700;
-          const voiceMatch = wordCount > 0 ? 89 : 0;
           const flagCounts = countDraftFlags(draft, dismissedFlags, fixedFlags);
 
           return (
@@ -3306,19 +3493,6 @@ export default function WorkSession() {
 
               {!generating && wordCount > 0 && (
                 <>
-                  {/* VOICE MATCH */}
-                  <DpSection>
-                    <DpLabel>Voice Match</DpLabel>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <svg viewBox="0 0 100 60" width="48" height="29">
-                        <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--line)" strokeWidth="10" strokeLinecap="round" />
-                        <path d="M10 55 A45 45 0 0 1 90 55" fill="none" stroke="var(--blue)" strokeWidth="10" strokeLinecap="round" strokeDasharray="141" strokeDashoffset={141 - (voiceMatch / 100) * 141} />
-                      </svg>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)" }}>{voiceMatch}%</span>
-                      <span style={{ fontSize: 9, color: "var(--fg-3)" }}>prelim</span>
-                    </div>
-                  </DpSection>
-
                   {/* FLAGS */}
                   <DpSection>
                     <DpLabel>Flags</DpLabel>
@@ -3362,6 +3536,30 @@ export default function WorkSession() {
                       }} />
                     </div>
                   </DpSection>
+
+                  {/* BACKGROUND PIPELINE STATUS */}
+                  {backgroundPipelineRun && (
+                    <DpSection>
+                      <div style={{
+                        fontSize: 10, color: "#22C55E", fontWeight: 500,
+                        display: "flex", alignItems: "center", gap: 6,
+                      }}>
+                        <span>&#10003;</span>
+                        <span>Reed has pre-checked this draft. {backgroundPipelineRun.checkpointResults.filter(g => g.status === "PASS").length} of 7 gates pass.</span>
+                      </div>
+                    </DpSection>
+                  )}
+                  {backgroundPipelineRunning && (
+                    <DpSection>
+                      <div style={{
+                        fontSize: 10, color: "var(--fg-3)", fontWeight: 500,
+                        display: "flex", alignItems: "center", gap: 6,
+                      }}>
+                        <span style={{ animation: "pulse 1.5s infinite" }}>&#9679;</span>
+                        <span>Reed is pre-checking your draft...</span>
+                      </div>
+                    </DpSection>
+                  )}
                 </>
               )}
 
@@ -3414,7 +3612,7 @@ export default function WorkSession() {
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
     handleRaiseScore, fixingGate, handleRerunPipeline, rerunningPipeline,
     prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
-    dismissedFlags, fixedFlags,
+    dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
   ]);
 
   // Auto-open dashboard when pipeline finishes in Review
@@ -3536,7 +3734,7 @@ export default function WorkSession() {
           draft={draft}
           generating={generating}
           generatingLabel={generatingLabel}
-          onDraftChange={setDraft}
+          onDraftChange={handleDraftChangeWithTracking}
           onAdvance={handleRunPipeline}
           onRevise={handleRevise}
           versions={draftVersions}
