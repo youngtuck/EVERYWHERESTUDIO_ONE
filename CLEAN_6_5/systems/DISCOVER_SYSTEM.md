@@ -463,7 +463,7 @@ Learn EVERYWHERE by using EVERYWHERE.
 THE METHODOLOGY
 See One, Do One, Teach One -- adapted from medical training.
 You don't learn surgery by reading about it.
-You don't learn orchestrated intelligence by reading about it either.
+You don't learn composed intelligence by reading about it either.
 
 THREE PHASES
 

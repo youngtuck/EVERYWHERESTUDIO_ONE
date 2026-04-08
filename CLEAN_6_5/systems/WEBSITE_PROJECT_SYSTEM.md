@@ -3,7 +3,7 @@
 
 **Version:** 6.0
 **Date:** October 9, 2025
-**Integration:** EVERYWHERE Orchestrated Intelligence Platform
+**Integration:** EVERYWHERE Composed Intelligence Platform
 
 ---
 
@@ -513,7 +513,7 @@ Christopher's capabilities are proven through deep partnership work spanning mul
 ---
 
  2025 Mixed Grill, LLC. All rights reserved.
-**Orchestrated Intelligence is a trademark of Mixed Grill, LLC
+**Composed Intelligence is a trademark of Mixed Grill, LLC
 Patent Pending
 
 ---
@@ -523,7 +523,7 @@ Patent Pending
 
 **Version:** 6.0
 **Date:** October 9, 2025
-**Integration:** EVERYWHERE Orchestrated Intelligence Platform
+**Integration:** EVERYWHERE Composed Intelligence Platform
 
 ---
 
@@ -1268,7 +1268,7 @@ YOUR ESTIMATED TIMELINE:
 ---
 
  2025 Mixed Grill, LLC. All rights reserved.
-**Orchestrated Intelligence is a trademark of Mixed Grill, LLC
+**Composed Intelligence is a trademark of Mixed Grill, LLC
 Patent Pending
 
 ---

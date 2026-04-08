@@ -3332,7 +3332,7 @@ export default function WorkSession() {
                         display: "flex", alignItems: "center", gap: 6,
                       }}>
                         <span>&#10003;</span>
-                        <span>Reed has pre-checked this draft. {backgroundPipelineRun.checkpointResults.filter(g => g.status === "PASS").length} of 7 gates pass.</span>
+                        <span>Reed has pre-checked this draft. {backgroundPipelineRun.checkpointResults.filter(g => g.status === "PASS").length} of 7 checkpoints pass.</span>
                       </div>
                     </DpSection>
                   )}

@@ -157,7 +157,7 @@ What Dr. Elena Vasquez detects: Superfluity, Loops, Overwrought prose, Pretensio
 Nine agents ensuring content works for strangers AND handles business outcomes. Members: Victor, Josh, Lea, Guy, Ward, Fish, Basil Drake, Dana White, Betterish.
 
 **SODOTU** (NEW v5.4)
-See One, Do One, Teach One. Medical training methodology adapted for orchestrated intelligence. The three phases of Learning Mode. See also: Learning Mode, Sande.
+See One, Do One, Teach One. Medical training methodology adapted for composed intelligence. The three phases of Learning Mode. See also: Learning Mode, Sande.
 
 **Solo (formerly Vanilla)**
 Core-only variant with no agent names visible. Functions presented instead of personalities.
@@ -202,7 +202,7 @@ The sequence of steps within an Output System.
 ## Usage Notes
 
 **When introducing EVERYWHERE to someone new:**
-Start with Orchestrated Intelligence, then explain Core, then describe the specific Variant they'll use.
+Start with Composed Intelligence, then explain Core, then describe the specific Variant they'll use.
 
 **When explaining why this is different:**
 Lead with Interest Graph (the world changed), then Voice DNA (we solve the authenticity problem), then Quality Checkpoints (we enforce standards).

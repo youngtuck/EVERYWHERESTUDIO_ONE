@@ -147,7 +147,7 @@ Christopher Kowalski (Strategic Digital Partner + UX Review Lead)
 - Martin Rhodes - CTO + SBU seat
 - Checkpoints renamed Checkpoints throughout
 - Betterish publication threshold: 900 (was 800)
-- Composed Intelligence (not Orchestrated Intelligence)
+- Composed Intelligence (as official terminology)
 - Watch. Work. Wrap. (not Write)
 - AEO owned by Priya (Mode 9: Discoverability)
 - Claude native graphics available March 2026 - SVG/HTML inline

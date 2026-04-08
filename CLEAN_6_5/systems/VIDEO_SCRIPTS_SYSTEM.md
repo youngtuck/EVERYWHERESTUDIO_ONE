@@ -52,7 +52,7 @@ If the first frame doesn't announce a different game, the algorithm won't show i
 **Filter 1: Category Signal (Josh)**
 - First FRAME must announce different game
 - Visual + text + voice all signal category
-- Orchestrated Intelligence positioning visible immediately
+- Composed Intelligence positioning visible immediately
 - Viewer knows in 3 seconds this isn't generic content
 
 **Filter 2: Worldview Marker (Lee)**

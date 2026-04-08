@@ -37,7 +37,7 @@ Before ANY content production begins, Sara confirms or creates the Client Fact S
 | **Company** | Coastal Intelligence |
 | **Company Tagline** | Santa Barbara's AI thinktank |
 | **Partners/Co-founders** | Jim Sterne, Mike Wald |
-| **Platform/Product** | EVERYWHERE-Æ'-Â¢-Â¢â‚¬-Â¾ Â¢ - 35-agent orchestrated intelligence platform |
+| **Platform/Product** | EVERYWHERE-Æ'-Â¢-Â¢â‚¬-Â¾ Â¢ - 35-agent composed intelligence platform |
 | **Key Verb** | built not hired (he creates agents, doesn't employ them) |
 | **Primary Link** | marksylvester.substack.com |
 | **Company Link** | coastalintelligence.ai |
@@ -118,7 +118,7 @@ Sunday Stories reach strangers through algorithmic distribution. A reader who ha
 ### The Four Filters
 
 **Filter 1: Category Signal (Josh)**
-- Does this story announce Orchestrated Intelligence or Through Another Lens as a different category?
+- Does this story announce Composed Intelligence or Through Another Lens as a different category?
 - Does the framing itself feel distinctive, not just the insight?
 - Would a reader think I didn't know this existed rather than that's smart?
 

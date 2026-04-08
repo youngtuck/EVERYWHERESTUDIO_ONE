@@ -36,7 +36,7 @@ Capabilities are being added faster than users can internalize them. The Navigat
 
 ### 1. Learning Mode / SODOTU (System Mode 7)
 
-**What it is:** See One, Do One, Teach One -- medical training methodology adapted for orchestrated intelligence.
+**What it is:** See One, Do One, Teach One -- medical training methodology adapted for composed intelligence.
 
 **Why it matters:** Nobody learns a system by reading docs. Sande demonstrates, guides practice, then validates mastery. You learn EVERYWHERE by using EVERYWHERE.
 

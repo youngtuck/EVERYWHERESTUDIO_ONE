@@ -29,7 +29,7 @@ Every piece of content passing through this standard must satisfy five requireme
 **Question:** Does this piece announce a different game, not just a good take?
 
 **What we're looking for:**
-- Content signals that a new category exists (Orchestrated Intelligence, not AI tools)
+- Content signals that a new category exists (Composed Intelligence, not AI tools)
 - Viewer/reader recognizes this isn't the same conversation everyone else is having
 - The framing itself is distinctive, not just the insight
 

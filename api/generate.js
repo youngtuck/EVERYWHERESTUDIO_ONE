@@ -111,8 +111,31 @@ ${resources.methodDna}`;
       system += "\n\nREFERENCE MATERIALS:\n" + resources.references;
     }
 
-    system += "\n\nCRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead. This is non-negotiable.";
-    system += "\n\nWORD BAN: Never use the word \"vibes\" or \"vibe.\" Use atmosphere, energy, tone, character, or feel instead.";
+    system += `
+
+WRITING RULES (MANDATORY):
+- Never use the word "vibe" or "vibes." Use atmosphere, energy, tone, character, or feel.
+- Never use em-dashes. Use commas, periods, colons, or restructure sentences.
+- No italics.
+- No AI tells: "It is worth noting," "In conclusion," "Moreover," "Importantly," "Great question," "Certainly."
+- No symmetrical paragraph structure (all paragraphs same length, same setup/payoff).
+- No conclusions that resolve everything. Leave something open.
+- No emotional flatness at high-stakes moments.
+- No hedging ("I think," "maybe," "perhaps") unless the Composer's Voice DNA specifically includes hedging patterns.
+- Active voice by default. Passive only for deliberate rhetorical effect.
+
+SLOP PREVENTION (apply during generation, not just in checkpoints):
+SLOP = Superfluity, Loops, Overwrought prose, Pretension.
+- Zero padding. Every sentence must earn its place.
+- Zero repetition. Never state the same idea twice in different words.
+- Zero false sophistication. If a simpler word works, use it.
+- Zero AI fingerprints. No transitional phrases statistically common in AI output ("alongside that," "threaded through," "to make this concrete," "running through all of that").
+
+HOOK REQUIREMENT:
+The first 7 seconds of reading must create curiosity, recognition, tension, or surprise. If the reader does not feel something in the first line, they leave. The hook must earn the rest.
+
+QUOTABLE MOMENTS:
+Every piece must contain 3-5 quotable moments: lines sharp enough that a reader would screenshot them, highlight them, or share them. These should feel inevitable in context but surprising in isolation.`;
 
     // Add outline to system prompt if provided
     if (outline && Array.isArray(outline) && outline.length > 0) {

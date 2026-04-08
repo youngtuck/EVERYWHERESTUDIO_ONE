@@ -15,7 +15,7 @@
 
 Learning Mode doesn't explain the system. It runs the system with you watching, then hands you the wheel.
 
-Based on SODOTU -- See One, Do One, Teach One -- the medical training methodology adapted for orchestrated intelligence. You learn EVERYWHERE by using EVERYWHERE, not by reading about it.
+Based on SODOTU -- See One, Do One, Teach One -- the medical training methodology adapted for composed intelligence. You learn EVERYWHERE by using EVERYWHERE, not by reading about it.
 
 **Owner:** Sande runs the sessions. Diane documents them. Sara tracks what you've learned and offers training at the right moment.
 
