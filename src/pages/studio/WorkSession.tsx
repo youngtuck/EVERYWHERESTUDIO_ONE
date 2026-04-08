@@ -891,35 +891,6 @@ function StageIntake({
             />
           </div>
 
-          {/* Starter prompts */}
-          <div style={{
-            display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16,
-            justifyContent: "center",
-          }}>
-            {[
-              "I just started a new role and want to write about what I am seeing",
-              "I have a framework I teach my clients and want to turn it into a post",
-              "Something happened this week that I cannot stop thinking about",
-              "I need to write a proposal for a potential client",
-            ].map((prompt, i) => (
-              <button
-                key={i}
-                onClick={() => { setInput(prompt); }}
-                style={{
-                  padding: "8px 14px", borderRadius: 99,
-                  background: "var(--surface)", border: "1px solid var(--line)",
-                  fontSize: 12, color: "var(--fg-2)", cursor: "pointer",
-                  fontFamily: FONT, transition: "all 0.15s",
-                  maxWidth: 320, textAlign: "left" as const,
-                  lineHeight: 1.4,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.4)"; e.currentTarget.style.color = "var(--fg)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     );
