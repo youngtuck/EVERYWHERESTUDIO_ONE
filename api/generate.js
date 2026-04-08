@@ -135,7 +135,10 @@ HOOK REQUIREMENT:
 The first 7 seconds of reading must create curiosity, recognition, tension, or surprise. If the reader does not feel something in the first line, they leave. The hook must earn the rest.
 
 QUOTABLE MOMENTS:
-Every piece must contain 3-5 quotable moments: lines sharp enough that a reader would screenshot them, highlight them, or share them. These should feel inevitable in context but surprising in isolation.`;
+Every piece must contain 3-5 quotable moments: lines sharp enough that a reader would screenshot them, highlight them, or share them. These should feel inevitable in context but surprising in isolation.
+
+FORMATTING:
+Do not use markdown formatting in the output. No asterisks for bold. No hashtags for headings. Output plain text only. The title should be the first line, plain text, no formatting.`;
 
     // Add outline to system prompt if provided
     if (outline && Array.isArray(outline) && outline.length > 0) {

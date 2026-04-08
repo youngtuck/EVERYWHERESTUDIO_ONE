@@ -306,7 +306,17 @@ export default async function handler(req, res) {
               messages: [{
                 role: "user",
                 content: [
-                  `Score this ${outputType || "essay"} on a 0-100 scale where 100 is perfect and 60 is competent professional writing. Most LinkedIn posts from experienced professionals score 70-85. A post that reads naturally, has a clear point, and sounds like a real person wrote it should score at least 75.`,
+                  `Score this ${outputType || "essay"} on a 0-100 scale.
+
+CALIBRATION (use these as anchors):
+- 90-100: Exceptional. Could be published in a major outlet tomorrow.
+- 80-89: Strong. Publication-ready with minor polish.
+- 75-79: Good. Meets the bar for professional publication.
+- 65-74: Decent but needs revision. One or two issues holding it back.
+- 50-64: Below standard. Multiple issues.
+- Below 50: Not ready.
+
+Most content written by a competent professional with a clear point, good structure, and authentic voice should score 75-85. Do not penalize for being concise. Do not penalize for conversational tone if the platform is LinkedIn or social. Score based on: does this accomplish what it set out to do, for the audience it targets, on the platform it will appear?`,
                   "Return ONLY valid JSON:",
                   '{ "total": <0-100>, "verdict": "PUBLISH"/"REVISE"/"REJECT", "breakdown": { "voiceAuthenticity": <0-100>, "researchDepth": <0-100>, "hookStrength": <0-100>, "slopScore": <0-100>, "editorialQuality": <0-100>, "perspective": <0-100>, "engagement": <0-100>, "platformFit": <0-100>, "strategicValue": <0-100>, "nvcCompliance": <0-100> }, "topIssue": "biggest issue", "gutCheck": "one sentence" }',
                   "",

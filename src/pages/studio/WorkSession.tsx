@@ -684,14 +684,27 @@ function ReviewDash({
   const reedMessage = (() => {
     if (!pipelineRun) return "";
     if (allPass && scoreOk) return "This is ready to publish. The writing is clean and the voice matches.";
-    if (nonPassGates.length === 1) {
-      return `Almost there. ${nonPassGates[0].name} needs a small fix. Let me handle it, or go back to Edit and adjust it yourself.`;
+
+    const issueDescriptions = nonPassGates.map(g => {
+      const name = (g.name || "").toLowerCase();
+      if (name.includes("dedup")) return "some repeated ideas";
+      if (name.includes("research") || name.includes("validation")) return "an unverified claim";
+      if (name.includes("voice")) return "a few lines that drift from your voice";
+      if (name.includes("engagement") || name.includes("hook")) return "the opening could hit harder";
+      if (name.includes("slop")) return "some AI-sounding language";
+      if (name.includes("editorial")) return "a section that needs tightening";
+      if (name.includes("perspective") || name.includes("risk")) return "a perspective gap";
+      if (name.includes("human voice")) return "a few lines that read as generated";
+      return g.name.toLowerCase();
+    });
+
+    if (issueDescriptions.length === 1) {
+      return `Almost there. Reed found ${issueDescriptions[0]}. One fix and this is ready.`;
     }
-    if (nonPassGates.length > 1) {
-      const issueNames = nonPassGates.map(g => g.name.toLowerCase()).join(", ");
-      return `${nonPassGates.length} items need attention: ${issueNames}. Let me fix them automatically, or go back to Edit to handle it yourself.`;
+    if (issueDescriptions.length <= 3) {
+      return `A few things to address: ${issueDescriptions.join(", ")}. Let Reed handle it, or go back and edit.`;
     }
-    return "Reviewing...";
+    return `${issueDescriptions.length} items need work. Let Reed fix them automatically for the fastest path to publish.`;
   })();
 
   return (
@@ -898,7 +911,7 @@ function StageIntake({
 
   // Active chat state: messages + input bar at bottom
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)", height: "100%" }}>
       {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
@@ -1002,7 +1015,7 @@ function ReedAvatar() {
       display: "flex", alignItems: "center", justifyContent: "center",
       fontSize: 10, fontWeight: 700, color: "var(--blue)",
       flexShrink: 0, marginTop: 2, letterSpacing: "0.03em",
-    }}>W</div>
+    }}>R</div>
   );
 }
 
@@ -1219,15 +1232,6 @@ function ChatInputBar({
           }}
         />
         <IaBtn title="Attach file" onClick={handleFileClick}><AttachIcon /></IaBtn>
-        <IaBtn
-          title={isSupported ? "Hold to speak" : "Voice not supported in this browser"}
-          active={isListening}
-          onMouseDown={handleMicDown}
-          onMouseUp={handleMicUp}
-          onMouseLeave={handleMicUp}
-        >
-          <MicIcon />
-        </IaBtn>
         <button
           onClick={onSend}
           disabled={disabled || !value.trim()}
@@ -1472,7 +1476,8 @@ function StageEdit({
           <div className="draft-body" style={{ position: "relative" }}>
             {(() => {
               const lines = draft.split("\n");
-              const title = lines[0] || "";
+              const rawTitle = lines[0] || "";
+              const title = rawTitle.replace(/^\*+|\*+$/g, "").replace(/^#+\s*/, "").trim();
               const body = lines.slice(1).join("\n");
               return (
                 <>
@@ -3202,17 +3207,10 @@ export default function WorkSession() {
       switch (stage) {
         case "Intake":
           return (
-            <>
-            <IntakeDash
-              selectedFormats={selectedFormats}
-              onToggleFormat={toggleFormat}
-              selectedTemplate={selectedTemplate}
-              onSelectTemplate={setSelectedTemplate}
-              sessionFiles={sessionFiles}
-              outputType={outputType}
-              onSelectOutputType={(id: string) => {
+            <OutputTypePicker
+              selected={outputType}
+              onSelect={(id: string) => {
                 setOutputType(id);
-                // When a specific output type is selected, set appropriate format
                 const typeToFormat: Record<string, Format[]> = {
                   essay: ["Sunday Story"],
                   socials: ["LinkedIn"],
@@ -3226,12 +3224,8 @@ export default function WorkSession() {
                 const mapped = typeToFormat[id];
                 if (mapped) setSelectedFormats(mapped);
               }}
+              compact
             />
-              <ActionChips
-                chips={["Who is my reader?", "What's the structural problem?", "What should they feel?"]}
-                onChipClick={prefillReed}
-              />
-            </>
           );
         case "Outline":
           return <OutlineDash selectedFormats={selectedFormats} />;
@@ -3298,23 +3292,17 @@ export default function WorkSession() {
                   {/* BACKGROUND PIPELINE STATUS */}
                   {backgroundPipelineRun && (
                     <DpSection>
-                      <div style={{
-                        fontSize: 10, color: "#22C55E", fontWeight: 500,
-                        display: "flex", alignItems: "center", gap: 6,
-                      }}>
+                      <div style={{ fontSize: 10, color: "#22C55E", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
                         <span>&#10003;</span>
-                        <span>Reed has pre-checked this draft. {backgroundPipelineRun.checkpointResults.filter(g => g.status === "PASS").length} of 7 checkpoints pass.</span>
+                        <span>Reed has reviewed your draft.</span>
                       </div>
                     </DpSection>
                   )}
                   {backgroundPipelineRunning && (
                     <DpSection>
-                      <div style={{
-                        fontSize: 10, color: "var(--fg-3)", fontWeight: 500,
-                        display: "flex", alignItems: "center", gap: 6,
-                      }}>
+                      <div style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ animation: "pulse 1.5s infinite" }}>&#9679;</span>
-                        <span>Reed is pre-checking your draft...</span>
+                        <span>Reed is reviewing your draft...</span>
                       </div>
                     </DpSection>
                   )}

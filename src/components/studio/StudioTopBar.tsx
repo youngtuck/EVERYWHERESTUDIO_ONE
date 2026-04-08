@@ -78,7 +78,7 @@ function WorkBreadcrumb() {
       {stages.map((s, i) => {
         const isDone = i < activeIdx;
         const isActive = i === activeIdx;
-        const canClick = true;
+        const canClick = i <= activeIdx;
 
         return (
           <div key={s} style={{ display: "flex", alignItems: "center" }}>
@@ -97,9 +97,9 @@ function WorkBreadcrumb() {
                 fontSize: 11,
                 padding: "3px 8px",
                 borderRadius: 4,
-                cursor: "pointer",
+                cursor: canClick ? "pointer" : "default",
                 fontWeight: isActive ? 700 : 500,
-                color: isActive ? "#0D1B2A" : isDone ? "var(--fg-3)" : "var(--fg-3)",
+                color: isActive ? "#0D1B2A" : isDone ? "var(--fg-3)" : "var(--line-2, rgba(0,0,0,0.15))",
                 background: isActive ? "var(--gold-bright)" : "transparent",
                 transition: "all 0.1s",
               }}
