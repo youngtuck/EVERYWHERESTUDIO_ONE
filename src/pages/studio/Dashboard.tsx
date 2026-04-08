@@ -124,6 +124,34 @@ function HomeDashContent({
   );
 }
 
+// ── StepHint helper ───────────────────────────────────────────
+function StepHint({ number, text, active }: { number: number; text: string; active?: boolean }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "flex-start", gap: 12,
+      opacity: active ? 1 : 0.4,
+      transition: "opacity 0.3s",
+    }}>
+      <div style={{
+        width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 11, fontWeight: 700,
+        background: active ? "var(--fg)" : "var(--surface)",
+        color: active ? "var(--bg)" : "var(--fg-3)",
+        border: active ? "none" : "1px solid var(--line)",
+      }}>
+        {number}
+      </div>
+      <p style={{
+        fontSize: 13, color: active ? "var(--fg-2)" : "var(--fg-3)",
+        lineHeight: 1.5, margin: 0,
+      }}>
+        {text}
+      </p>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────
 export default function Dashboard() {
   const nav = useNavigate();
@@ -173,6 +201,65 @@ export default function Dashboard() {
   }, [outputs, setDashContent, nav]);
 
   const firstName = displayName ? displayName.split(" ")[0] : "there";
+  const isFirstTime = outputs.length === 0 && !loading;
+
+  if (isFirstTime) {
+    return (
+      <div style={{
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        flex: 1, padding: "40px 24px", textAlign: "center",
+        fontFamily: "var(--font)",
+      }}>
+        <div style={{
+          fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" as const,
+          color: "var(--gold-bright)", marginBottom: 16,
+        }}>
+          EVERYWHERE Studio
+        </div>
+
+        <h1 style={{
+          fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 700, color: "var(--fg)",
+          lineHeight: 1.2, marginBottom: 12, letterSpacing: "-0.02em",
+        }}>
+          {firstName !== "there" ? `Welcome, ${firstName}.` : "Welcome to your studio."}
+        </h1>
+
+        <p style={{
+          fontSize: 14, color: "var(--fg-3)", lineHeight: 1.6,
+          maxWidth: 440, marginBottom: 40,
+        }}>
+          Reed is your writing partner. Tell him what you are thinking about,
+          and he will help you turn it into something worth publishing.
+        </p>
+
+        <button
+          onClick={() => nav("/studio/work")}
+          style={{
+            padding: "14px 32px", borderRadius: 8,
+            background: "var(--fg)", border: "none",
+            fontSize: 14, fontWeight: 700, color: "var(--gold)",
+            cursor: "pointer", fontFamily: "var(--font)",
+            transition: "transform 0.1s",
+          }}
+          onMouseDown={e => (e.currentTarget.style.transform = "scale(0.98)")}
+          onMouseUp={e => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          Start your first session
+        </button>
+
+        <div style={{
+          marginTop: 48, display: "flex", flexDirection: "column", gap: 12,
+          maxWidth: 400, width: "100%",
+        }}>
+          <StepHint number={1} text="Talk to Reed about an idea, a topic, or a problem you are working through." active />
+          <StepHint number={2} text="Reed builds an outline. You pick the structure that fits." />
+          <StepHint number={3} text="Reed writes the draft in your voice. You edit and refine." />
+          <StepHint number={4} text="Export to LinkedIn, newsletter, podcast, and more." />
+        </div>
+      </div>
+    );
+  }
+
   const inProgress = outputs.find(o => !o.score || o.score < 75);
   const pipelineIdea = outputs[1] ?? null;
 

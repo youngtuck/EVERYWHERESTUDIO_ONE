@@ -298,6 +298,7 @@ function buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources) {
     system += `\n\nUSER VOICE PROFILE:\n- Role: ${voiceProfile.role}\n- Audience: ${voiceProfile.audience}\n- Tone: ${voiceProfile.tone}\n- Writing sample: "${voiceProfile.writing_sample?.slice(0, 400)}"\n\nMatch this person's voice exactly when summarizing their ideas.`;
   }
   const typeKey = outputType || "freestyle";
+  system += `\n\nFIRST RESPONSE BEHAVIOR: Your first response to any new conversation should: acknowledge what the user said in one sentence, then ask one specific question to sharpen the angle. Never ask more than one question at a time. Keep every response under 4 sentences until the user has answered at least 3 questions.`;
   system += `\n\nCurrent output type: ${typeKey}.`;
   if (OUTPUT_TYPE_BEHAVIORS[typeKey]) {
     system += `\n\n${OUTPUT_TYPE_BEHAVIORS[typeKey]}`;
