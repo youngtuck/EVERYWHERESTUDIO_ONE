@@ -252,10 +252,6 @@ const CSS = `
   border-radius: 16px;
   transition: opacity .4s ${EASE_SMOOTH};
 }
-.xp-glass-nav.xp-nav-hidden {
-  opacity: 0; pointer-events: none;
-}
-
 .xp-nav-link {
   font-size: 13px; font-weight: 500; cursor: pointer;
   background: none; border: none; font-family: var(--xp-font); transition: opacity .2s;
@@ -396,23 +392,15 @@ export default function ExplorePage() {
   const navigate = useNavigate();
   const isMobile = useMobile();
   const [navTheme, setNavTheme] = useState<"dark" | "light">("dark");
-  const [navVisible, setNavVisible] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
+  const [logoProgress, setLogoProgress] = useState(0);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   // Page load
   useEffect(() => {
     const t = setTimeout(() => setPageLoaded(true), 100);
     return () => clearTimeout(t);
-  }, []);
-
-  // Show nav after user scrolls past hero threshold
-  useEffect(() => {
-    const onScroll = () => {
-      setNavVisible(window.scrollY > 80);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Nav theme from data attributes
@@ -432,6 +420,18 @@ export default function ExplorePage() {
     );
     sections.forEach(s => obs.observe(s));
     return () => obs.disconnect();
+  }, []);
+
+  // Logo scroll animation
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+      const threshold = 300;
+      setLogoProgress(Math.min(1, scrollY / threshold));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Scroll progress bar
@@ -457,14 +457,48 @@ export default function ExplorePage() {
       {/* Scroll progress */}
       <div style={{ position: "fixed", top: 0, left: 0, height: 2, width: `${scrollProgress * 100}%`, background: "var(--xp-gold)", zIndex: 200, transition: "width .06s linear", pointerEvents: "none" }} />
 
+      {/* Animated Logo: hero -> nav */}
+      {(() => {
+        const heroSize = isMobile ? 28 : 42;
+        const navSize = 20;
+        const scale = heroSize - (heroSize - navSize) * easeOut(Math.min(1, logoProgress));
+        const currentSize = Math.round(scale);
+        const heroX = typeof window !== 'undefined' ? window.innerWidth / 2 : 500;
+        const navX = isMobile ? 22 : 44;
+        const heroY = typeof window !== 'undefined' ? window.innerHeight * 0.42 : 400;
+        const navY = isMobile ? 20 : 24;
+        const p = easeOut(Math.min(1, logoProgress));
+        const x = heroX - (heroX - navX) * p;
+        const y = heroY - (heroY - navY) * p;
+        return (
+          <div style={{
+            position: "fixed",
+            left: x,
+            top: y,
+            transform: `translate(${-50 * (1 - p)}%, -50%)`,
+            zIndex: 101,
+            pointerEvents: logoProgress >= 0.95 ? "auto" : "none",
+            cursor: "pointer",
+            transition: "none",
+          }} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <Logo
+              size={currentSize as any}
+              variant={logoProgress < 0.5 ? "dark" : isDarkNav ? "dark" : "light"}
+            />
+          </div>
+        );
+      })()}
+
       {/* ═══ LIQUID GLASS NAV ═══ */}
-      <nav className={`xp-glass-nav xp-liquid-glass ${isDarkNav ? "xp-lg-dark" : "xp-lg-light"} ${!navVisible ? "xp-nav-hidden" : ""}`}>
+      <nav className={`xp-glass-nav xp-liquid-glass ${isDarkNav ? "xp-lg-dark" : "xp-lg-light"}`}>
         <div className="xp-liquid-glass-border" />
-        <Logo
-          size="sm"
-          variant={isDarkNav ? "dark" : "light"}
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        />
+        <div style={{ opacity: logoProgress >= 0.9 ? 0 : 0, pointerEvents: "none", width: 0, overflow: "hidden" }}>
+          <Logo
+            size="sm"
+            variant={isDarkNav ? "dark" : "light"}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          />
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {!isMobile && (
             <div className="xp-nav-links-desktop" style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -513,7 +547,7 @@ export default function ExplorePage() {
           Geometric rings with float animation.
           Logo prominent. No cinema, just precision.
           ═══════════════════════════════════════════ */}
-      <section data-nav-theme="dark" style={{
+      <section ref={heroRef} data-nav-theme="dark" style={{
         minHeight: "100vh", background: "var(--xp-navy-deep)", position: "relative",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "80px 48px", overflow: "hidden",
@@ -535,10 +569,12 @@ export default function ExplorePage() {
 
         {/* Hero content — staggered CSS entries */}
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          {/* Logo at the top of hero */}
+          {/* Logo placeholder to maintain layout spacing */}
           <div style={{
             marginBottom: 48,
             animation: `xpFadeUp 1s ${EASE} 0.2s both`,
+            opacity: 0,
+            pointerEvents: "none",
           }}>
             <Logo size={isMobile ? "md" : "lg"} variant="dark" />
           </div>
@@ -1104,7 +1140,7 @@ function NumbersSection() {
       }}>
         {[
           { v: a, label: "Specialists", size: "clamp(80px, 15vw, 180px)" },
-          { v: b, label: "Output Formats", size: "clamp(60px, 12vw, 140px)" },
+          { v: b, label: "Output Formats", size: "clamp(80px, 15vw, 180px)" },
           { v: c, label: "Quality Gates", size: "clamp(80px, 15vw, 180px)" },
         ].map((s, i) => (
           <div key={s.label} style={{
@@ -1169,7 +1205,7 @@ function GlassCardsSection() {
               transform: isVisible
                 ? "translateY(0) rotate(0deg)"
                 : `translateY(${60 + i * 20}px) rotate(${(i - 1) * 2}deg)`,
-              transition: `opacity 0.7s ${EASE} ${200 + i * 120}ms, transform 0.7s ${EASE} ${200 + i * 120}ms`,
+              transition: `opacity 0.7s ${EASE} ${200 + i * 200}ms, transform 0.7s ${EASE} ${200 + i * 200}ms`,
             }}>
               {/* Glass card border */}
               <div style={{
@@ -1177,18 +1213,6 @@ function GlassCardsSection() {
                 border: "1px solid rgba(255,255,255,0.5)",
                 pointerEvents: "none", zIndex: 3,
               }} />
-
-              {/* Icon */}
-              <div style={{
-                width: 48, height: 48, borderRadius: 12,
-                background: "rgba(200,169,110,0.06)",
-                border: "1px solid rgba(200,169,110,0.12)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 20, color: "var(--xp-gold)",
-                marginBottom: 28,
-              }}>
-                {rm.icon}
-              </div>
 
               <h3 style={{
                 fontSize: 24, fontWeight: 600,
@@ -1246,31 +1270,26 @@ function QualitySection() {
         <Reveal delay={200}>
           <div className="xp-gates-track" style={{
             display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 28,
           }}>
             {GATES.map((g, i) => {
               const on = i < lit;
               const justLit = i === lit - 1;
               return (
                 <React.Fragment key={g}>
-                  {i > 0 && (
-                    <div className="xp-gate-line" style={{
-                      width: 32, height: 1, flexShrink: 0,
-                      background: on ? "var(--xp-gold)" : "var(--xp-border)",
-                      transition: "background .3s ease",
-                      boxShadow: on ? "0 0 8px rgba(200,169,110,0.15)" : "none",
-                    }} />
-                  )}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7 }}>
-                    <div className="xp-mono" style={{
+                    <div className="xp-mono xp-liquid-glass xp-lg-light" style={{
                       width: 44, height: 44, borderRadius: "50%",
                       border: `1.5px solid ${on ? "var(--xp-gold)" : "var(--xp-border)"}`,
                       background: on
                         ? "radial-gradient(circle at 40% 35%, rgba(200,169,110,0.12), rgba(200,169,110,0.03))"
-                        : "transparent",
+                        : "rgba(255,255,255,0.55)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: 13, fontWeight: 500,
                       color: on ? "var(--xp-gold)" : "var(--xp-ter)",
                       transition: `all .35s ${EASE}`,
+                      isolation: "isolate",
+                      overflow: "hidden",
                       boxShadow: on
                         ? "0 2px 12px rgba(200,169,110,0.12), inset 0 0 8px rgba(200,169,110,0.06), inset 0 1px 0 rgba(255,255,255,0.15)"
                         : "0 1px 4px rgba(0,0,0,0.03)",
