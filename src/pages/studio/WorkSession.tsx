@@ -20,7 +20,7 @@ import { supabase } from "../../lib/supabase";
 import { fetchWithRetry } from "../../lib/retry";
 import { useMobile } from "../../hooks/useMobile";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
-import { useVoiceInput } from "../../hooks/useVoiceInput";
+
 import OutputTypePicker, { OUTPUT_TYPES, PROJECT_TYPE_IDS } from "../../components/studio/OutputTypePicker";
 import "./shared.css";
 
@@ -1132,11 +1132,6 @@ function ChatInputBar({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Wire up real voice input
-  const { isListening, isSupported, startListening, stopListening } = useVoiceInput((transcript) => {
-    onChange(transcript);
-  });
-
   // Focus on mount when autoFocus is set
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
@@ -1149,20 +1144,6 @@ function ChatInputBar({
       e.preventDefault();
       onSend();
     }
-  };
-
-  const handleMicDown = () => {
-    if (!isSupported) return;
-    startListening();
-  };
-
-  const handleMicUp = () => {
-    if (!isSupported) return;
-    stopListening();
-    // Auto-send after voice stops if there's content
-    setTimeout(() => {
-      if (value.trim()) onSend();
-    }, 300);
   };
 
   const handleFileClick = () => {
@@ -2188,6 +2169,7 @@ export default function WorkSession() {
           outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle",
           voiceDnaMd,
           userId: user?.id,
+          userName: displayName || undefined,
           systemMode: "CONTENT_PRODUCTION",
         }),
       }, { timeout: 60000 });
@@ -3206,27 +3188,7 @@ export default function WorkSession() {
     const dashNode = (() => {
       switch (stage) {
         case "Intake":
-          return (
-            <OutputTypePicker
-              selected={outputType}
-              onSelect={(id: string) => {
-                setOutputType(id);
-                const typeToFormat: Record<string, Format[]> = {
-                  essay: ["Sunday Story"],
-                  socials: ["LinkedIn"],
-                  newsletter: ["Newsletter"],
-                  podcast: ["Podcast"],
-                  video_script: ["Video Script"],
-                  business: ["Case Study", "One-Pager"],
-                  presentation: ["Presentation"],
-                  book: ["Book Chapter"],
-                };
-                const mapped = typeToFormat[id];
-                if (mapped) setSelectedFormats(mapped);
-              }}
-              compact
-            />
-          );
+          return null;
         case "Outline":
           return <OutlineDash selectedFormats={selectedFormats} />;
         case "Edit": {

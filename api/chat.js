@@ -278,8 +278,11 @@ const OUTPUT_TYPE_BEHAVIORS = {
   freestyle: "OUTPUT TYPE: FREESTYLE. Pattern-match the user's description against all defined output types. If a match is found, offer to redirect: 'This sounds like it might be a [Type]. Want to use that template instead, or keep it custom?' Let the user decide.",
 };
 
-function buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources) {
+function buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources, userName) {
   let system = "";
+  if (userName) {
+    system = `The person you are talking to is named ${userName}. Use their first name naturally in conversation. Do not use labels like "user," "composer," "writer," or "the client." Use their name.\n\n`;
+  }
   const voiceContext = ((resources?.voiceDna || "") + "\n" + (voiceDnaMd || "")).trim();
   if (voiceContext) {
     system += "VOICE DNA - Write exactly like this person:\n\n" + voiceContext + "\n\n---\n\n";
@@ -476,6 +479,7 @@ export default async function handler(req, res) {
     systemPromptOverride,
     systemMode = "CONTENT_PRODUCTION",
     userId,
+    userName,
   } = req.body;
 
   let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
@@ -578,7 +582,7 @@ export default async function handler(req, res) {
     systemPrompt = loadPathDeterminationSystemPrompt();
   } else {
     // CONTENT_PRODUCTION or default: full Reed + Voice DNA
-    systemPrompt = buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources);
+    systemPrompt = buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources, userName);
   }
 
   try {
