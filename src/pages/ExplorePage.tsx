@@ -251,7 +251,25 @@ const CSS = `
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 28px; height: 52px;
   border-radius: 16px;
-  transition: opacity .4s ${EASE_SMOOTH};
+  background: rgba(12, 26, 41, 0.85);
+  transition: background 0.4s ${EASE_SMOOTH};
+}
+/* Override liquid-glass overflow/isolation that breaks fixed positioning */
+.xp-glass-nav.xp-liquid-glass {
+  overflow: visible;
+  isolation: auto;
+}
+.xp-glass-nav.xp-liquid-glass::before,
+.xp-glass-nav.xp-liquid-glass::after {
+  border-radius: 16px;
+  overflow: hidden;
+}
+/* Nav-specific opaque glass backgrounds for legibility */
+.xp-glass-nav.xp-lg-dark {
+  background: rgba(10, 12, 18, 0.82);
+}
+.xp-glass-nav.xp-lg-light {
+  background: rgba(255, 255, 255, 0.82);
 }
 .xp-nav-link {
   font-size: 13px; font-weight: 500; cursor: pointer;
