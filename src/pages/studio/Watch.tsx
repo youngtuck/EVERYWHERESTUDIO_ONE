@@ -26,6 +26,7 @@ interface Signal {
   severity?: string;
   effort?: number;
   impact?: number;
+  score?: number;
   cta_label?: string;
   cta_prompt?: string;
   recommended_action?: string;
@@ -48,8 +49,20 @@ interface BriefingData {
 function SignalCard({ signal, ctaLabel, ctaColor, onCta }: {
   signal: Signal; ctaLabel: string; ctaColor: string; onCta?: () => void;
 }) {
+  const scoreColor = signal.score != null
+    ? signal.score >= 4 ? "#16A34A" : signal.score >= 2.5 ? "#D97706" : "var(--fg-3)"
+    : undefined;
+
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+      {signal.score != null && (
+        <div style={{
+          width: 26, height: 26, borderRadius: 6, flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: `${scoreColor}11`, border: `1px solid ${scoreColor}33`,
+          fontSize: 10, fontWeight: 700, color: scoreColor, marginTop: 1,
+        }}>{signal.score.toFixed(1)}</div>
+      )}
       <div style={{ flex: 1, fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
         <strong style={{ color: "var(--fg)" }}>{signal.title}</strong>
         {signal.summary ? `, ${signal.summary}` : ""}
@@ -81,7 +94,10 @@ function OpportunityRow({ signal, active }: { signal: Signal; active: boolean })
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0", opacity: active ? 1 : 0.5 }}>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: active ? "var(--blue)" : "var(--line-2)", flexShrink: 0, marginTop: 5 }} />
-      <span style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>{signal.title}{signal.summary ? `, ${signal.summary}` : ""}</span>
+      <span style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5, flex: 1 }}>{signal.title}{signal.summary ? `, ${signal.summary}` : ""}</span>
+      {signal.score != null && (
+        <span style={{ fontSize: 9, fontWeight: 700, color: signal.score >= 4 ? "#16A34A" : "var(--fg-3)", flexShrink: 0 }}>{signal.score.toFixed(1)}</span>
+      )}
     </div>
   );
 }
@@ -218,9 +234,8 @@ export default function Watch() {
 
   const [activeTab, setActiveTab] = useState<"briefing" | "research" | "settings">("briefing");
 
-  // Sources & config
-  const [sources, setSources] = useState<WatchSource[]>(DEFAULT_SOURCES);
-  const [keywords, setKeywords] = useState<string[]>(DEFAULT_KEYWORDS || []);
+  // Sources & config: start empty for new users, load from Supabase
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [competitors, setCompetitors] = useState<string[]>([]);
   const [thoughtLeaders, setThoughtLeaders] = useState<string[]>([]);
   const [newsletters, setNewsletters] = useState<string[]>([]);
@@ -228,6 +243,7 @@ export default function Watch() {
   const [publications, setPublications] = useState<string[]>([]);
   const [substacks, setSubstacks] = useState<string[]>([]);
   const [redditCommunities, setRedditCommunities] = useState<string[]>([]);
+  const [hasSetup, setHasSetup] = useState(true); // assume true until profile loads
 
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "realtime">("daily");
   const [saving, setSaving] = useState(false);
@@ -245,14 +261,17 @@ export default function Watch() {
         .eq("id", user.id)
         .single();
 
-      if (profile?.sentinel_topics && Array.isArray(profile.sentinel_topics) && profile.sentinel_topics.length > 0) {
+      const hasKeywords = profile?.sentinel_topics && Array.isArray(profile.sentinel_topics) && profile.sentinel_topics.length > 0;
+      if (hasKeywords) {
         setKeywords(profile.sentinel_topics);
       }
+
+      let hasConfig = false;
       if (profile?.watch_config && typeof profile.watch_config === "object") {
         const wc = profile.watch_config as any;
-        if (Array.isArray(wc.competitors)) setCompetitors(wc.competitors);
-        if (Array.isArray(wc.thoughtLeaders)) setThoughtLeaders(wc.thoughtLeaders);
-        if (Array.isArray(wc.reddit)) setRedditCommunities(wc.reddit);
+        if (Array.isArray(wc.competitors) && wc.competitors.length > 0) { setCompetitors(wc.competitors); hasConfig = true; }
+        if (Array.isArray(wc.thoughtLeaders) && wc.thoughtLeaders.length > 0) { setThoughtLeaders(wc.thoughtLeaders); hasConfig = true; }
+        if (Array.isArray(wc.reddit) && wc.reddit.length > 0) setRedditCommunities(wc.reddit);
         if (wc.frequency) setFrequency(wc.frequency);
       }
 
@@ -267,15 +286,11 @@ export default function Watch() {
         setPodcasts(srcData.filter((s: any) => s.type === "Podcast").map((s: any) => s.name));
         setPublications(srcData.filter((s: any) => s.type === "Publication").map((s: any) => s.name));
         setSubstacks(srcData.filter((s: any) => s.type === "Substack").map((s: any) => s.name));
-      } else {
-        // Fall back to defaults if no saved sources
-        const byType: Record<string, string[]> = { newsletter: [], podcast: [], publication: [], substack: [] };
-        DEFAULT_SOURCES.forEach(s => { if (byType[s.type]) byType[s.type].push(s.name); });
-        setNewsletters(byType.newsletter);
-        setPodcasts(byType.podcast);
-        setPublications(byType.publication);
-        setSubstacks(byType.substack);
       }
+
+      // Detect new user: no keywords, no config, no sources
+      const hasSources = srcData && srcData.length > 0;
+      setHasSetup(!!(hasKeywords || hasConfig || hasSources));
     })();
   }, [user]);
 
@@ -309,11 +324,13 @@ export default function Watch() {
             content_triggers: (b.signals || []).map((s: any) => ({
               title: s.headline || s.title || "",
               summary: s.relevance || s.description || "",
+              score: s.scores?.composite ?? undefined,
               cta_label: s.track === "competitor" ? "Note it" : "Use this",
             })),
             opportunities: (b.suggestions || []).map((s: any) => ({
               title: s.topic || s.title || "",
               summary: s.oneLiner || s.anglePrompt || "",
+              score: s.scores?.composite ?? undefined,
               priority: "High" as const,
             })),
             threats: (b.signals || [])
@@ -321,6 +338,7 @@ export default function Watch() {
               .map((s: any) => ({
                 title: s.source ? `${s.track === "competitor" ? "Competitor" : "Thought leader"}: ${s.source}` : s.headline || "",
                 summary: s.relevance || "",
+                score: s.scores?.composite ?? undefined,
                 priority: (s.scores?.composite ?? 0) >= 4 ? "High" as const : "Low" as const,
               })),
           },
@@ -350,7 +368,7 @@ export default function Watch() {
             rankingWeights: { relevance: 5, actionability: 3, urgency: 2 },
             tracks: { competitors, thoughtLeaders },
           },
-          sources: sources.map(s => ({ name: s.name, type: s.type, track: s.track })),
+          sources: activeSources.map(s => ({ name: s.name, type: s.type, track: s.track })),
         }),
       }, { timeout: 120000 });
 
@@ -363,11 +381,13 @@ export default function Watch() {
             content_triggers: (data.signals || []).map((s: any) => ({
               title: s.headline || s.title || "",
               summary: s.relevance || s.description || "",
+              score: s.scores?.composite ?? undefined,
               cta_label: s.track === "competitor" ? "Note it" : "Use this",
             })),
             opportunities: (data.suggestions || []).map((s: any) => ({
               title: s.topic || s.title || "",
               summary: s.oneLiner || s.anglePrompt || "",
+              score: s.scores?.composite ?? undefined,
               priority: "High" as const,
             })),
             threats: (data.signals || [])
@@ -375,6 +395,7 @@ export default function Watch() {
               .map((s: any) => ({
                 title: s.source ? `${s.track === "competitor" ? "Competitor" : "Thought leader"}: ${s.source}` : s.headline || "",
                 summary: s.relevance || "",
+                score: s.scores?.composite ?? undefined,
                 priority: (s.scores?.composite ?? 0) >= 4 ? "High" as const : "Low" as const,
               })),
           },
@@ -483,6 +504,16 @@ export default function Watch() {
       setSearching(false);
     }
   }, [researchQuery]);
+
+  // Reconstruct sources array from user-configured items for briefing generation
+  const activeSources = useMemo<WatchSource[]>(() => {
+    const s: WatchSource[] = [];
+    newsletters.forEach(name => s.push({ name, type: "newsletter", track: "industry" }));
+    podcasts.forEach(name => s.push({ name, type: "podcast", track: "industry" }));
+    publications.forEach(name => s.push({ name, type: "publication", track: "industry" }));
+    substacks.forEach(name => s.push({ name, type: "substack", track: "industry" }));
+    return s;
+  }, [newsletters, podcasts, publications, substacks]);
 
   // Prefill Reed and switch to Ask Reed tab
   const prefillReed = useCallback((text: string) => {
@@ -675,17 +706,32 @@ export default function Watch() {
                   {result.description && (
                     <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5, marginTop: 4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{result.description}</div>
                   )}
-                  <button onClick={() => {
-                    const name = result.title || result.url || "";
-                    if (name) {
-                      setPublications(prev => prev.includes(name) ? prev : [...prev, name]);
-                      toast("Added to Watch sources.");
-                    }
-                  }} style={{
-                    marginTop: 6, fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 4,
-                    background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
-                    color: "var(--blue, #4A90D9)", cursor: "pointer", fontFamily: FONT,
-                  }}>Add to Watch</button>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                    <button onClick={() => {
+                      const name = result.title || result.url || "";
+                      if (name) { addKeyword(name); toast("Added as keyword."); }
+                    }} style={{
+                      fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 4,
+                      background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
+                      color: "var(--blue, #4A90D9)", cursor: "pointer", fontFamily: FONT,
+                    }}>+ Keyword</button>
+                    <button onClick={() => {
+                      const name = result.title || result.url || "";
+                      if (name) { addItem(setPublications)(name); toast("Added as source."); }
+                    }} style={{
+                      fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 4,
+                      background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)",
+                      color: "#7C3AED", cursor: "pointer", fontFamily: FONT,
+                    }}>+ Source</button>
+                    <button onClick={() => {
+                      const name = result.title || result.url || "";
+                      if (name) { addItem(setCompetitors)(name); toast("Added as competitor."); }
+                    }} style={{
+                      fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 4,
+                      background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                      color: "#DC2626", cursor: "pointer", fontFamily: FONT,
+                    }}>+ Competitor</button>
+                  </div>
                 </div>
               ))}
 
@@ -701,6 +747,64 @@ export default function Watch() {
         {/* ── SETTINGS TAB ── */}
         {activeTab === "settings" && (
           <div style={{ padding: 20 }}>
+            {/* New user setup guide: show suggested defaults they can add */}
+            {!hasSetup && keywords.length === 0 && competitors.length === 0 && newsletters.length === 0 && (
+              <div style={{
+                background: "rgba(245,198,66,0.06)", border: "1px solid rgba(245,198,66,0.2)",
+                borderRadius: 10, padding: "16px 20px", marginBottom: 20,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
+                  Set up your Watch
+                </div>
+                <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 12 }}>
+                  Tell Reed what to track. Add a few keywords about your industry, name your competitors, and pick some sources you read. You can always change these later.
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Suggested keywords (click to add)</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                    {DEFAULT_KEYWORDS.filter(k => !keywords.includes(k)).map(k => (
+                      <button key={k} onClick={() => addKeyword(k)} style={{
+                        fontSize: 10, padding: "3px 10px", borderRadius: 4,
+                        background: "var(--surface)", border: "1px solid var(--line)",
+                        color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
+                        transition: "border-color 0.1s",
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; }}
+                      >+ {k}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Suggested sources (click to add)</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                    {DEFAULT_SOURCES.filter(s => s.type === "newsletter" || s.type === "substack").slice(0, 12).map(s => {
+                      const isAdded = (s.type === "newsletter" ? newsletters : substacks).includes(s.name);
+                      return (
+                        <button key={s.name} onClick={() => {
+                          if (!isAdded) {
+                            if (s.type === "newsletter") addItem(setNewsletters)(s.name);
+                            else addItem(setSubstacks)(s.name);
+                          }
+                        }} disabled={isAdded} style={{
+                          fontSize: 10, padding: "3px 10px", borderRadius: 4,
+                          background: isAdded ? "rgba(34,197,94,0.08)" : "var(--surface)",
+                          border: isAdded ? "1px solid rgba(34,197,94,0.3)" : "1px solid var(--line)",
+                          color: isAdded ? "#16A34A" : "var(--fg-2)", cursor: isAdded ? "default" : "pointer",
+                          fontFamily: FONT, transition: "border-color 0.1s",
+                        }}
+                          onMouseEnter={e => { if (!isAdded) e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
+                          onMouseLeave={e => { if (!isAdded) e.currentTarget.style.borderColor = "var(--line)"; }}
+                        >{isAdded ? "Added" : "+"} {s.name}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 24 }}>
               {/* LEFT COLUMN */}
               <div>
