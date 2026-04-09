@@ -273,7 +273,11 @@ const CSS = `
   background: rgba(10, 12, 18, 0.55);
 }
 .xp-glass-nav.xp-lg-light {
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.06);
+}
+.xp-glass-nav.xp-lg-light .xp-liquid-glass-border {
+  border-color: rgba(0,0,0,0.06);
 }
 .xp-nav-link {
   font-size: 13px; font-weight: 500; cursor: pointer;
@@ -662,7 +666,7 @@ export default function ExplorePage() {
 
         {/* Scroll hint */}
         <div style={{
-          position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)",
+          position: "absolute", bottom: 40, left: 0, right: 0,
           display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
           animation: `xpFadeUp 0.6s ${EASE} 2.2s both`,
         }}>
@@ -1384,23 +1388,23 @@ function QualitySection() {
               return (
                 <React.Fragment key={g}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7 }}>
-                    <div className="xp-mono xp-liquid-glass xp-lg-light" style={{
-                      width: 44, height: 44, borderRadius: "50%",
-                      border: `1.5px solid ${on ? "var(--xp-gold)" : "var(--xp-border)"}`,
+                    <div className="xp-mono" style={{
+                      width: 52, height: 52, borderRadius: "50%",
+                      border: `1.5px solid ${on ? "rgba(200,169,110,0.5)" : "var(--xp-border)"}`,
                       background: on
-                        ? "radial-gradient(circle at 40% 35%, rgba(200,169,110,0.12), rgba(200,169,110,0.03))"
-                        : "rgba(255,255,255,0.55)",
+                        ? "radial-gradient(circle at 38% 32%, rgba(200,169,110,0.22), rgba(200,169,110,0.06))"
+                        : "radial-gradient(circle at 38% 32%, rgba(248,249,250,0.9), rgba(240,238,230,0.6))",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 13, fontWeight: 500,
+                      fontSize: 14, fontWeight: 500,
                       color: on ? "var(--xp-gold)" : "var(--xp-ter)",
                       transition: `all .35s ${EASE}`,
-                      isolation: "isolate",
-                      overflow: "hidden",
+                      backdropFilter: "blur(12px) saturate(140%)",
+                      WebkitBackdropFilter: "blur(12px) saturate(140%)",
                       boxShadow: on
-                        ? "0 2px 12px rgba(200,169,110,0.12), inset 0 0 8px rgba(200,169,110,0.06), inset 0 1px 0 rgba(255,255,255,0.15)"
-                        : "0 1px 4px rgba(0,0,0,0.03)",
+                        ? "0 4px 16px rgba(200,169,110,0.18), inset 0 0 12px rgba(200,169,110,0.08), inset 0 1px 0 rgba(255,255,255,0.25), inset -1px -1px 1px rgba(200,169,110,0.1)"
+                        : "0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0.5px rgba(255,255,255,0.15)",
                       animation: justLit ? "xpGatePulse 0.6s ease" : "none",
-                    }}>{i + 1}</div>
+                    }}><span style={{ position: "relative", zIndex: 5 }}>{i + 1}</span></div>
                     <span className="xp-mono" style={{
                       fontSize: 9, letterSpacing: "0.07em", textTransform: "uppercase",
                       color: on ? "var(--xp-gold)" : "var(--xp-ter)",
