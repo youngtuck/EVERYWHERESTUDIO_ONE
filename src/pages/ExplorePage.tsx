@@ -1,678 +1,303 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import { MARKETING_NUMBERS } from "../lib/constants";
 
+/* ═══════════════════════════════════════════════════════════
+   EVERYWHERE STUDIO — EXPLORE PAGE
+   Design: Instrument Sans. White-first. One dark moment.
+   CSS geometry in hero. Light-mode Reed demo.
+   ═══════════════════════════════════════════════════════════ */
+
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
-// ── Scroll reveal hook ──────────────────────────────────────────────────────
-function useScrollReveal(threshold = 0.15) {
+function easeOut(t: number) { return 1 - Math.pow(1 - t, 3); }
+
+// ── Hooks ──
+
+function useScrollReveal(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
-      { threshold },
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setIsVisible(true); obs.disconnect(); } },
+      { threshold, rootMargin: "0px 0px -40px 0px" },
     );
-    observer.observe(el);
-    return () => observer.disconnect();
+    obs.observe(el);
+    return () => obs.disconnect();
   }, [threshold]);
   return { ref, isVisible };
 }
 
-// ── Scroll progress (0-1 through entire page) ──────────────────────────────
-function useScrollProgress() {
-  const [progress, setProgress] = useState(0);
+function useCountUp(target: number, duration: number, trigger: boolean) {
+  const [val, setVal] = useState(0);
+  const ran = useRef(false);
   useEffect(() => {
-    const handleScroll = () => {
-      const total = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(total > 0 ? window.scrollY / total : 0);
+    if (!trigger || ran.current) return;
+    ran.current = true;
+    const t0 = performance.now();
+    const go = (now: number) => {
+      const p = Math.min(1, (now - t0) / duration);
+      setVal(Math.round(target * easeOut(p)));
+      if (p < 1) requestAnimationFrame(go);
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-  return progress;
+    requestAnimationFrame(go);
+  }, [trigger, target, duration]);
+  return val;
 }
 
-// ── Element scroll progress (0-1 as element traverses viewport) ─────────────
-function useElementScroll(ref: React.RefObject<HTMLElement | null>) {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const handleScroll = () => {
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const p = 1 - (rect.top + rect.height) / (vh + rect.height);
-      setProgress(Math.max(0, Math.min(1, p)));
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-  return progress;
-}
-
-// ── Reveal wrapper (enhanced with direction support) ────────────────────────
-type RevealDirection = "up" | "left" | "right" | "scale" | "none";
+// ── Reveal wrapper ──
 
 function Reveal({
-  children,
-  delay = 0,
-  threshold = 0.15,
-  direction = "up",
-  distance = 40,
-  duration = 900,
-  once = true,
-  scale,
+  children, delay = 0, threshold = 0.12,
   style,
 }: {
   children: React.ReactNode;
   delay?: number;
   threshold?: number;
-  direction?: RevealDirection;
-  distance?: number;
-  duration?: number;
-  once?: boolean;
-  scale?: boolean;
   style?: React.CSSProperties;
 }) {
   const { ref, isVisible } = useScrollReveal(threshold);
-
-  const hiddenTransform = (() => {
-    switch (direction) {
-      case "up": return `translateY(${distance}px)`;
-      case "left": return `translateX(${distance}px)`;
-      case "right": return `translateX(-${distance}px)`;
-      case "scale": return "scale(0.92)";
-      case "none": return "none";
-      default: return `translateY(${distance}px)`;
-    }
-  })();
-
-  const show = once ? isVisible : isVisible;
-
   return (
-    <div
-      ref={ref}
-      style={{
-        opacity: show ? 1 : 0,
-        transform: show
-          ? `translateY(0) translateX(0) scale(1)`
-          : `${hiddenTransform}${scale && direction !== "scale" ? " scale(0.95)" : ""}`,
-        transition: `opacity ${duration}ms ${EASE} ${delay}ms, transform ${duration}ms ${EASE} ${delay}ms`,
-        ...style,
-      }}
-    >
+    <div ref={ref} style={{
+      opacity: isVisible ? 1 : 0,
+      transform: isVisible ? "translateY(0)" : "translateY(24px)",
+      transition: `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
+      ...style,
+    }}>
       {children}
     </div>
   );
 }
 
-// ── CSS ─────────────────────────────────────────────────────────────────────
+// ── CSS ──
+
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --ew-navy: #0D1B2A;
-  --ew-navy-rich: #1B263B;
-  --ew-gold: #F5C642;
-  --ew-blue: #4A90D9;
-  --ew-coral: #E8B4A0;
-  --ew-white: #FFFFFF;
-  --ew-offwhite: #F7F9FC;
-  --ew-text-dark: #111111;
-  --ew-text-body: #64748B;
-  --ew-text-light: rgba(255,255,255,0.85);
-  --ew-text-light-dim: rgba(255,255,255,0.5);
-  --ew-border-light: #E2E8F0;
-  --ew-border-dark: rgba(255,255,255,0.08);
-  --ew-ease: ${EASE};
-  --font: 'Afacad Flux', sans-serif;
+  --xp-navy: #0C1A29;
+  --xp-gold: #C8A96E;
+  --xp-blue: #6B7FF2;
+  --xp-white: #FFFFFF;
+  --xp-off: #F8F9FA;
+  --xp-text: #0A0A0A;
+  --xp-sec: #6B7280;
+  --xp-ter: #A1A1AA;
+  --xp-on-dark: #F0EDE4;
+  --xp-dim-dark: rgba(255,255,255,0.38);
+  --xp-border: #E4E4E7;
+  --xp-border-dark: rgba(255,255,255,0.06);
+  --xp-font: 'Instrument Sans', -apple-system, system-ui, sans-serif;
+  --xp-mono: 'DM Mono', monospace;
+  --xp-ease: ${EASE};
 }
 
 .xp {
-  background: var(--ew-navy);
-  color: var(--ew-text-light);
-  font-family: var(--font);
+  font-family: var(--xp-font);
   font-size: 17px;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--xp-white);
+  color: var(--xp-text);
   overflow-x: hidden;
-  position: relative;
   scroll-behavior: smooth;
 }
-
 .xp a { color: inherit; text-decoration: none; }
-.xp button, .xp a { cursor: pointer; }
+.xp ::selection { background: var(--xp-gold); color: var(--xp-navy); }
+.xp button:active { transform: scale(0.97) !important; transition-duration: 0.1s !important; }
+.xp-mono { font-family: var(--xp-mono); }
 
-/* Text selection: dark surface */
-.xp ::selection { background: rgba(245,198,66,0.3); color: white; }
-/* Light surface selection overrides */
-[data-nav-theme="light"] ::selection { background: rgba(74,144,217,0.2); color: #111; }
+/* Keyframes */
+@keyframes xpUp { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+@keyframes xpFade { from{opacity:0;} to{opacity:1;} }
+@keyframes xpLine { from{width:0;opacity:0;} to{width:64px;opacity:1;} }
+@keyframes xpSpin { from{transform:translate(-50%,-50%) rotate(0deg);} to{transform:translate(-50%,-50%) rotate(360deg);} }
+@keyframes xpSpinR { from{transform:translate(-50%,-50%) rotate(0deg);} to{transform:translate(-50%,-50%) rotate(-360deg);} }
+@keyframes xpDot { 0%,100%{opacity:.25;} 50%{opacity:1;} }
+@keyframes xpGlow { 0%,100%{opacity:.03;} 50%{opacity:.07;} }
+@keyframes xpScrollPulse { 0%,100%{transform:translateX(-50%) translateY(0);opacity:.5;} 50%{transform:translateX(-50%) translateY(8px);opacity:.9;} }
+@keyframes xpSlideIn { from{opacity:0;transform:translateX(40px);} to{opacity:1;transform:translateX(0);} }
 
-/* Active press feedback on buttons */
-.xp button:active, .xp a:active { transform: scale(0.98) !important; transition-duration: 0.1s !important; }
+/* Hero staggered entries */
+.xp-h-label { animation: xpUp .8s var(--xp-ease) .4s both; }
+.xp-h-head  { animation: xpUp 1s var(--xp-ease) .7s both; }
+.xp-h-rule  { animation: xpLine 1.2s var(--xp-ease) 1.3s both; }
+.xp-h-sub   { animation: xpUp .8s var(--xp-ease) 1.5s both; }
+.xp-h-cta   { animation: xpUp .7s var(--xp-ease) 1.8s both; }
 
-/* Reed widget: showcase, not link */
-.xp-reed-widget { cursor: default; }
-
-/* Watch.Work.Wrap columns */
-.xp-www-cols {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 0;
+/* Pulse dots for composing */
+.xp-dots span {
+  display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--xp-gold);animation:xpDot 1.2s infinite;
 }
-.xp-www-col {
-  flex: 1;
-  padding: 0 40px;
-  text-align: center;
-}
-.xp-www-col-border {
-  border-right: 1px solid rgba(255,255,255,0.1);
-}
-.xp-www-mob-divider { display: none; }
+.xp-dots span:nth-child(2){animation-delay:.2s;}
+.xp-dots span:nth-child(3){animation-delay:.4s;}
 
-@media (max-width: 768px) {
-  .xp-www-cols { flex-direction: column; gap: 0; }
-  .xp-www-col { padding: 0; text-align: center; }
-  .xp-www-col-border { border-right: none; }
-  .xp-www-mob-divider {
-    display: block;
-    width: 60px;
-    height: 1px;
-    background: rgba(255,255,255,0.08);
-    margin: 32px auto;
-  }
-}
-
-/* Nav: starts transparent over dark hero, darkens on scroll */
+/* Nav */
 .xp-nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
-  transition: background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease;
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:56px;
+  transition:all .5s var(--xp-ease);
 }
-.xp-nav.scrolled {
-  background: rgba(13, 27, 42, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--ew-border-dark);
-}
-.xp-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 32px;
+.xp-nav-dark { background:transparent; }
+.xp-nav-light {
+  background:rgba(255,255,255,.9);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--xp-border);
 }
 .xp-nav-link {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ew-text-light-dim);
-  transition: color 0.2s ease;
-  cursor: pointer;
-  background: none;
-  border: none;
-  font-family: var(--font);
-  padding: 0;
+  font-size:13px;font-weight:500;cursor:pointer;
+  background:none;border:none;font-family:var(--xp-font);transition:opacity .2s;
 }
-.xp-nav-link:hover { color: var(--ew-text-light); }
-
-/* Buttons: dark surface variants (gold accent) */
-.xp-btn-gold {
-  display: inline-block;
-  padding: 14px 36px;
-  background: var(--ew-gold);
-  color: var(--ew-navy);
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  font-family: var(--font);
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: opacity 0.25s ${EASE}, transform 0.25s ${EASE};
-  text-decoration: none;
-}
-.xp-btn-gold:hover { opacity: 0.88; transform: translateY(-1px); }
-/* Light surface variant: blue accent */
-.xp-btn-blue {
-  display: inline-block;
-  padding: 14px 36px;
-  background: var(--ew-blue);
-  color: var(--ew-white);
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  font-family: var(--font);
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: opacity 0.25s ${EASE}, transform 0.25s ${EASE};
-  text-decoration: none;
-}
-.xp-btn-blue:hover { opacity: 0.88; transform: translateY(-1px); }
-.xp-btn-outline {
-  display: inline-block;
-  padding: 14px 36px;
-  background: transparent;
-  color: var(--ew-text-light);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font);
-  cursor: pointer;
-  transition: border-color 0.25s ${EASE}, transform 0.25s ${EASE};
-  text-decoration: none;
-}
-.xp-btn-outline:hover { border-color: rgba(255, 255, 255, 0.4); transform: translateY(-1px); }
-/* Outline on light surfaces */
-.xp-btn-outline-light {
-  display: inline-block;
-  padding: 14px 36px;
-  background: transparent;
-  color: var(--ew-text-dark);
-  border: 1px solid var(--ew-border-light);
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font);
-  cursor: pointer;
-  transition: border-color 0.25s ${EASE}, transform 0.25s ${EASE};
-  text-decoration: none;
-}
-.xp-btn-outline-light:hover { border-color: #CBD5E1; transform: translateY(-1px); }
-
-/* Section container */
-.xp-inner {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 0 40px;
+.xp-nav-cta {
+  font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  padding:9px 22px;border-radius:999px;cursor:pointer;font-family:var(--xp-font);transition:all .3s;
 }
 
-/* Grid */
-.xp-grid-2 {
-  display: grid;
-  grid-template-columns: 5fr 6fr;
-  gap: 80px;
-  align-items: start;
+/* Buttons */
+.xp-btn {
+  display:inline-flex;align-items:center;gap:8px;
+  padding:15px 34px;font-family:var(--xp-font);
+  font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  border:none;border-radius:999px;cursor:pointer;
+  transition:all .35s var(--xp-ease);
 }
+.xp-btn-w { background:var(--xp-white);color:var(--xp-navy); }
+.xp-btn-w:hover { background:var(--xp-gold); }
+.xp-btn-n { background:var(--xp-navy);color:var(--xp-white); }
+.xp-btn-n:hover { background:#15283d; }
 
-/* Rooms: dark surface (Watch.Work.Wrap on navy) */
-.xp-rooms {
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr 1px 1fr;
-  gap: 0;
+/* Responsive */
+@media(max-width:900px){
+  .xp-nav{padding:0 24px;}
+  .xp-nav-links-desktop{display:none !important;}
+  .xp-3col{grid-template-columns:1fr !important;}
+  .xp-3col>div+div{border-left:none !important;border-top:1px solid var(--xp-border);padding-top:40px !important;padding-left:0 !important;}
+  .xp-3col>div:first-child{padding-right:0 !important;}
+  .xp-3col>div:last-child{padding-right:0 !important;}
+  .xp-reed-side{display:none !important;}
+  .xp-reed-met{display:none !important;}
+  .xp-stats-row{flex-direction:column !important;}
+  .xp-stats-row>div+div{border-left:none !important;border-top:1px solid var(--xp-border);padding-top:32px !important;}
+  .xp-gates-track{flex-wrap:wrap !important;gap:12px !important;}
+  .xp-gate-line{display:none !important;}
+  .xp-footer-inner{flex-direction:column !important;text-align:center !important;gap:16px !important;}
 }
-.xp-room-divider {
-  background: var(--ew-border-dark);
-  width: 1px;
-  align-self: stretch;
-}
-.xp-room { padding: 0 36px; }
-.xp-room:first-child { padding-left: 0; }
-.xp-room:last-child { padding-right: 0; }
-.xp-room-name {
-  font-size: clamp(36px, 4vw, 56px);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: var(--ew-text-light);
-  margin: 0 0 8px;
-}
-.xp-room-tag {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ew-gold);
-  margin-bottom: 20px;
-}
-.xp-room-body {
-  font-size: 15px;
-  color: var(--ew-text-light-dim);
-  line-height: 1.65;
-  margin-bottom: 24px;
-}
-.xp-room-items {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.xp-room-items li {
-  font-size: 14px;
-  color: var(--ew-text-light-dim);
-  padding: 8px 0;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-.xp-room-items li::before {
-  content: '';
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ew-gold);
-  flex-shrink: 0;
-  position: relative;
-  top: -2px;
-}
-
-/* Checkpoints */
-.xp-cp {
-  padding: 18px 0;
-  border-bottom: 1px solid var(--ew-border-dark);
-  line-height: 1.6;
-}
-.xp-cp-num {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ew-gold);
-  margin-right: 10px;
-  font-variant-numeric: tabular-nums;
-}
-.xp-cp-name {
-  font-weight: 700;
-  color: var(--ew-text-light);
-  margin-right: 6px;
-}
-.xp-cp-desc {
-  color: var(--ew-text-light-dim);
-  font-size: 15px;
-}
-
-/* Moments */
-.xp-moment {
-  padding: 24px 0;
-  border-bottom: 1px solid var(--ew-border-dark);
-}
-.xp-moment:first-child { border-top: 1px solid var(--ew-border-dark); }
-.xp-moment-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ew-gold);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 6px;
-}
-.xp-moment-text {
-  color: var(--ew-text-light-dim);
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-/* Footer */
-.xp-footer {
-  padding: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1080px;
-  margin: 0 auto;
-  font-size: 13px;
-  color: var(--ew-text-body);
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .xp-nav { padding: 0 20px; }
-  .xp-nav-links-desktop { display: none !important; }
-  .xp-inner { padding: 0 24px; }
-  .xp-grid-2 { grid-template-columns: 1fr; gap: 48px; }
-  .xp-rooms { grid-template-columns: 1fr; gap: 0; }
-  .xp-room-divider { width: 100%; height: 1px; align-self: auto; }
-  .xp-room { padding: 32px 0; }
-  .xp-room:first-child { padding-left: 0; padding-top: 0; }
-  .xp-room:last-child { padding-right: 0; }
-  .xp-footer { flex-direction: column; gap: 16px; text-align: center; padding: 32px 24px; }
-}
-@media (max-width: 820px) {
-  .xp-problem-grid { grid-template-columns: 1fr !important; gap: 40px !important; padding: 0 24px !important; }
-}
-@media (max-width: 400px) {
-  .xp-hero-ctas { flex-direction: column !important; width: 100% !important; }
-  .xp-hero-ctas > * { width: 100% !important; text-align: center !important; }
+@media(max-width:600px){
+  .xp-sect{padding-left:20px !important;padding-right:20px !important;}
 }
 `;
 
-// ── Watch. Work. Wrap. section ───────────────────────────────────────────────
-const WWW_ROOMS = [
-  { name: "Watch", body: "You arrive knowing what your audience is already thinking. Your ideas land in context, not into noise." },
-  { name: "Work", body: "Your idea becomes publication-ready content. In your voice. Verified. Zero AI fingerprints. Nothing ships until it reads like a human made every decision." },
-  { name: "Wrap", body: "One idea. Every channel. Simultaneously. Newsletter, LinkedIn, podcast, Substack, formatted for each, ready to publish." },
+// ── Data ──
+
+const PROBLEMS = [
+  "Your team produces 200 pieces of content a month. You have no idea which 10 moved the needle.",
+  "You hired specialists for strategy, brand voice, SEO, and distribution. They have never been in the same room.",
+  "Your AI tools generate fast. Your audience can tell.",
+  "Quality review happens after publishing. If it happens at all.",
 ];
 
-function WatchWorkWrapSection({ howRef }: { howRef: React.RefObject<HTMLDivElement | null> }) {
-  return (
-    <section ref={howRef} data-nav-theme="dark" style={{ padding: "120px 0", background: "var(--ew-navy)" }}>
-      <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 24px" }}>
-        <Reveal>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 16 }}>
-              Three rooms. One idea.
-            </div>
-            <h2 style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-0.02em", margin: 0, color: "var(--ew-white)", textWrap: "balance" as any }}>
-              Watch. Work. Wrap.
-            </h2>
-          </div>
-        </Reveal>
-        <div className="xp-www-cols">
-          {WWW_ROOMS.map((room, i) => (
-            <Reveal key={room.name} delay={i * 150}>
-              <div className={`xp-www-col${i < 2 ? " xp-www-col-border" : ""}`}>
-                {/* Mobile divider */}
-                {i > 0 && <div className="xp-www-mob-divider" />}
-                <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ew-gold)", marginBottom: 12 }}>{room.name}</div>
-                <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, margin: 0 }}>{room.body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+const ROOMS = [
+  { name: "Watch", body: "The intelligence layer. Reed monitors your industry, tracks competitor moves, surfaces opportunities, and builds the strategic foundation before creation begins." },
+  { name: "Work", body: "The creation engine. 40 specialists collaborate in real time across copywriting, brand voice, SEO, design direction, and distribution strategy." },
+  { name: "Wrap", body: "The quality standard. Seven gates verify every output against voice DNA, strategic alignment, factual accuracy, and audience relevance before it ships." },
+];
 
-// ─────────────────────────────────────────────────────────────────────────────
+const GATES = ["Voice", "Strategy", "Accuracy", "Audience", "Format", "Brand", "Final"];
+
+const SPECIALIST_TAGS = ["Brand Voice", "Enterprise Copy", "SEO", "Distribution", "Analytics"];
+
+// ═══════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════
 
 export default function ExplorePage() {
   const navigate = useNavigate();
   const isMobile = useMobile();
-  const howRef = useRef<HTMLDivElement>(null);
-  const standardRef = useRef<HTMLDivElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const [heroParallax, setHeroParallax] = useState({ y: 0, opacity: 1 });
   const [navScrolled, setNavScrolled] = useState(false);
   const [navTheme, setNavTheme] = useState<"dark" | "light">("dark");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [pageLoaded, setPageLoaded] = useState(false);
-  const scrollProgress = useScrollProgress();
 
-  // Page load entrance
+  // Page load
   useEffect(() => {
     const t = setTimeout(() => setPageLoaded(true), 100);
     return () => clearTimeout(t);
   }, []);
 
-  // Hero parallax + nav scroll state
+  // Scroll state
   useEffect(() => {
     const onScroll = () => {
-      const sy = window.scrollY;
-      const vh = window.innerHeight;
-      setHeroParallax({
-        y: sy * -0.3,
-        opacity: Math.max(0, 1 - sy / (vh * 0.55)),
-      });
-      setNavScrolled(sy > 50);
+      setNavScrolled(window.scrollY > 60);
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(total > 0 ? window.scrollY / total : 0);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Nav theme detection: observe which section is behind the nav
+  // Nav theme from data attributes
   useEffect(() => {
     const sections = document.querySelectorAll("[data-nav-theme]");
-    if (sections.length === 0) return;
-    const observer = new IntersectionObserver(
+    if (!sections.length) return;
+    const obs = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const theme = (entry.target as HTMLElement).dataset.navTheme as "dark" | "light";
-            if (theme) setNavTheme(theme);
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const t = (e.target as HTMLElement).dataset.navTheme as "dark" | "light";
+            if (t) setNavTheme(t);
           }
         }
       },
-      { rootMargin: "-1px 0px -95% 0px", threshold: 0 }
+      { rootMargin: "-1px 0px -95% 0px", threshold: 0 },
     );
-    sections.forEach(s => observer.observe(s));
-    return () => observer.disconnect();
+    sections.forEach(s => obs.observe(s));
+    return () => obs.disconnect();
   }, []);
 
-  const scrollTo = useCallback((ref: React.RefObject<HTMLDivElement | null>) => {
-    ref.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  const sectionPad = isMobile ? "64px 0" : "120px 0";
+  const goSignup = useCallback(() => navigate("/auth?mode=signup"), [navigate]);
+  const goSignin = useCallback(() => navigate("/auth"), [navigate]);
 
   return (
-    <div className="xp" style={{
-      opacity: pageLoaded ? 1 : 0,
-      transition: `opacity 0.4s ${EASE}`,
-    }}>
+    <div className="xp" style={{ opacity: pageLoaded ? 1 : 0, transition: `opacity 0.4s ${EASE}` }}>
       <style>{CSS}</style>
 
-      {/* Scroll progress indicator */}
-      <div style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        height: 2,
-        width: `${scrollProgress * 100}%`,
-        background: navTheme === "dark" ? "var(--ew-gold)" : "var(--ew-blue)",
-        zIndex: 9999,
-        transition: "background 0.4s ease",
-        pointerEvents: "none",
-      }} />
+      {/* ── Scroll progress bar ── */}
+      <div style={{ position: "fixed", top: 0, left: 0, height: 2, width: `${scrollProgress * 100}%`, background: "var(--xp-gold)", zIndex: 200, transition: "width .06s linear", pointerEvents: "none" }} />
 
-      {/* ── NAV ──────────────────────────────────────────────── */}
-      <nav style={{
-        position: "fixed",
-        top: 0, left: 0, right: 0,
-        zIndex: 100,
-        height: 56,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: isMobile ? "0 20px" : "0 40px",
-        background: navScrolled
-          ? (navTheme === "dark" ? "rgba(13,27,42,0.92)" : "rgba(255,255,255,0.85)")
-          : "transparent",
-        backdropFilter: navScrolled ? "blur(16px)" : "none",
-        WebkitBackdropFilter: navScrolled ? "blur(16px)" : "none",
-        borderBottom: navScrolled
-          ? (navTheme === "dark" ? "1px solid var(--ew-border-dark)" : "1px solid var(--ew-border-light)")
-          : "1px solid transparent",
-        transition: "background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease",
-      }}>
+      {/* ── NAV ── */}
+      <nav className={`xp-nav ${navTheme === "dark" && !navScrolled ? "xp-nav-dark" : "xp-nav-light"}`}>
         <Logo
           size="sm"
-          variant={navTheme === "dark" ? "dark" : "light"}
+          variant={navTheme === "dark" && !navScrolled ? "dark" : "light"}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         />
-        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {!isMobile && (
-            <>
-              {[
-                { label: "Sign In", action: () => navigate("/auth") },
-              ].map(link => (
-                <button
-                  key={link.label}
-                  onClick={link.action}
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase" as const,
-                    color: navTheme === "dark" ? "rgba(255,255,255,0.7)" : "var(--ew-text-body)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontFamily: "var(--font)",
-                    padding: "4px 0",
-                    position: "relative",
-                    transition: "color 0.3s ease",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.color = navTheme === "dark" ? "var(--ew-white)" : "var(--ew-text-dark)";
-                    const dot = e.currentTarget.querySelector("[data-nav-dot]") as HTMLElement;
-                    if (dot) { dot.style.opacity = "1"; dot.style.transform = "translateX(-50%) translateY(-2px)"; }
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.color = navTheme === "dark" ? "rgba(255,255,255,0.7)" : "var(--ew-text-body)";
-                    const dot = e.currentTarget.querySelector("[data-nav-dot]") as HTMLElement;
-                    if (dot) { dot.style.opacity = "0"; dot.style.transform = "translateX(-50%) translateY(0)"; }
-                  }}
-                >
-                  {link.label}
-                  <span data-nav-dot="" style={{
-                    position: "absolute",
-                    bottom: -4,
-                    left: "50%",
-                    transform: "translateX(-50%) translateY(0)",
-                    width: 4,
-                    height: 4,
-                    borderRadius: "50%",
-                    background: "var(--ew-gold)",
-                    opacity: 0,
-                    transition: `opacity 0.2s ${EASE}, transform 0.2s ${EASE}`,
-                  }} />
-                </button>
-              ))}
-            </>
-          )}
-          {!isMobile && (
-            <button
-              onClick={() => navigate("/auth?mode=signup")}
-              style={{
-                padding: "8px 22px",
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase" as const,
-                fontFamily: "var(--font)",
-                borderRadius: 100,
-                cursor: "pointer",
-                transition: `all 0.4s ease`,
-                ...(navTheme === "dark"
-                  ? { border: "1px solid rgba(255,255,255,0.2)", color: "var(--ew-white)", background: "transparent" }
-                  : { border: "none", color: "var(--ew-white)", background: "var(--ew-text-dark)" }
-                ),
-              }}
-            >
-              Get Early Access
-            </button>
+            <div className="xp-nav-links-desktop" style={{ display: "flex", alignItems: "center", gap: 24 }}>
+              <button className="xp-nav-link" onClick={goSignin} style={{
+                color: navTheme === "dark" && !navScrolled ? "rgba(255,255,255,0.55)" : "var(--xp-sec)",
+                opacity: 1,
+              }}>Sign In</button>
+              <button className="xp-nav-cta" onClick={goSignup} style={
+                navTheme === "dark" && !navScrolled
+                  ? { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--xp-on-dark)" }
+                  : { background: "var(--xp-navy)", border: "1px solid var(--xp-navy)", color: "var(--xp-white)" }
+              }>Get Early Access</button>
+            </div>
           )}
           {isMobile && (
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", flexDirection: "column", gap: 5 }}
-            >
-              {[0, 1, 2].map(i => (
-                <span key={i} style={{ display: "block", width: 20, height: 2, background: navTheme === "dark" ? "var(--ew-white)" : "var(--ew-text-dark)", borderRadius: 1 }} />
+            <button onClick={() => setMobileMenuOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", flexDirection: "column", gap: 5 }}>
+              {[0,1,2].map(i => (
+                <span key={i} style={{ display: "block", width: 20, height: 2, background: navTheme === "dark" && !navScrolled ? "var(--xp-on-dark)" : "var(--xp-text)", borderRadius: 1 }} />
               ))}
             </button>
           )}
@@ -681,797 +306,483 @@ export default function ExplorePage() {
 
       {/* Mobile menu overlay */}
       {isMobile && mobileMenuOpen && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 200,
-          background: "var(--ew-navy)",
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center",
-          gap: 32,
-        }}>
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            style={{
-              position: "absolute", top: 16, right: 20,
-              background: "none", border: "none", cursor: "pointer",
-              fontSize: 28, color: "var(--ew-gold)", fontFamily: "var(--font)", fontWeight: 300,
-            }}
-          >
-            &times;
-          </button>
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--xp-navy)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 32 }}>
+          <button onClick={() => setMobileMenuOpen(false)} style={{ position: "absolute", top: 16, right: 20, background: "none", border: "none", cursor: "pointer", fontSize: 28, color: "var(--xp-gold)", fontFamily: "var(--xp-font)", fontWeight: 300 }}>&times;</button>
           {[
-            { label: "Sign In", action: () => { setMobileMenuOpen(false); navigate("/auth"); } },
-            { label: "Get Early Access", action: () => { setMobileMenuOpen(false); navigate("/auth?mode=signup"); } },
+            { label: "Sign In", action: () => { setMobileMenuOpen(false); goSignin(); } },
+            { label: "Get Early Access", action: () => { setMobileMenuOpen(false); goSignup(); } },
           ].map((link, i) => (
-            <button
-              key={link.label}
-              onClick={link.action}
-              style={{
-                background: "none", border: "none", cursor: "pointer",
-                fontSize: 24, fontWeight: 600, color: "var(--ew-white)",
-                fontFamily: "var(--font)", letterSpacing: "0.04em",
-                animation: `xpSlideInRight 0.5s ${EASE} ${i * 80}ms both`,
-              }}
-            >
+            <button key={link.label} onClick={link.action} style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 24, fontWeight: 600, color: "var(--xp-white)",
+              fontFamily: "var(--xp-font)", letterSpacing: "0.04em",
+              animation: `xpSlideIn 0.5s ${EASE} ${i * 80}ms both`,
+            }}>
               {link.label}
             </button>
           ))}
         </div>
       )}
-      <style>{`
-        @keyframes xpSlideInRight {
-          from { opacity: 0; transform: translateX(40px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
 
-      {/* ── SECTION 01: HERO (Dark Navy, atmospheric) ─────────── */}
-      <section
-        ref={heroRef}
-        data-nav-theme="dark"
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-          background: "var(--ew-navy)",
-          overflow: "hidden",
-        }}
-      >
-        {/* Atmospheric radial glow */}
+      {/* ═══ HERO (Dark) ═══ */}
+      <section data-nav-theme="dark" className="xp-sect" style={{
+        minHeight: "100vh", background: "var(--xp-navy)", position: "relative",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "80px 48px", overflow: "hidden",
+      }}>
+        {/* Radial glow */}
         <div style={{
-          position: "absolute",
-          inset: 0,
-          background: "radial-gradient(ellipse 70% 50% at 50% 30%, rgba(74,144,217,0.06) 0%, transparent 60%)",
-          transform: `translateY(${heroParallax.y * -0.33}px)`,
-          pointerEvents: "none",
-        }} />
-        {/* Noise texture */}
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-          opacity: 0.025,
-          pointerEvents: "none",
+          position: "absolute", top: "50%", left: "50%",
+          width: "120%", height: "120%", transform: "translate(-50%,-50%)",
+          background: "radial-gradient(ellipse at 50% 45%, rgba(200,169,110,0.04) 0%, transparent 60%)",
+          animation: "xpGlow 8s ease-in-out infinite", pointerEvents: "none",
         }} />
 
-        <div
-          style={{
-            textAlign: "center",
-            maxWidth: 900,
-            padding: "0 32px",
-            position: "relative",
-            zIndex: 1,
-            transform: `translateY(${heroParallax.y}px)`,
-            opacity: heroParallax.opacity,
-            willChange: "transform, opacity",
-          }}
-        >
-          <h1 style={{
-            fontSize: "clamp(36px, 6vw, 72px)",
-            fontWeight: 700,
-            lineHeight: 1.1,
-            letterSpacing: "-0.03em",
-            textWrap: "balance" as any,
-            margin: "0 0 28px",
-            color: "var(--ew-white)",
-          }}>
-            {/* Word-by-word staggered reveal */}
-            <span style={{ display: "block" }}>
-              {"Your thinking reaches your\u00A0audience.".split(" ").map((word, i) => (
-                <span
-                  key={i}
-                  style={{
-                    display: "inline-block",
-                    animation: `xpWordUp 0.7s ${EASE} ${100 + i * 80}ms both`,
-                    marginRight: "0.27em",
-                  }}
-                >
-                  {word}
-                </span>
-              ))}
-            </span>
-            {/* Second line: single block fade-up at 400ms */}
-            <span style={{
-              display: "block",
-              color: "var(--ew-gold)",
-              fontWeight: 500,
-              fontStyle: "normal",
-              animation: `xpFadeUp 0.9s ${EASE} 500ms both`,
-            }}>
-              In your voice. Better than you'd write it{"\u00A0"}yourself.
-            </span>
+        {/* Geometric rings */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 320, height: 320, borderRadius: "50%", border: "0.5px solid rgba(200,169,110,0.055)", animation: "xpSpin 80s linear infinite" }} />
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 520, height: 520, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.035)", animation: "xpSpinR 140s linear infinite" }} />
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 740, height: 740, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.025)", animation: "xpSpin 200s linear infinite" }} />
+        </div>
+
+        <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div className="xp-mono xp-h-label" style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-dim-dark)", marginBottom: 28 }}>
+            {MARKETING_NUMBERS.specialistCount} Specialists. {MARKETING_NUMBERS.qualityCheckpoints} Gates. One Intelligence.
+          </div>
+          <h1 className="xp-h-head" style={{ fontSize: "clamp(52px, 8.5vw, 100px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.02, color: "var(--xp-on-dark)", marginBottom: 24 }}>
+            Composed<br />Intelligence
           </h1>
-          <p style={{
-            fontSize: "clamp(16px, 2vw, 22px)",
-            color: "var(--ew-text-light-dim)",
-            maxWidth: 540,
-            margin: "0 auto 44px",
-            lineHeight: 1.6,
-            animation: `xpFadeUp 0.8s ${EASE} 700ms both`,
-          }}>
-            Reed is your guide. You talk, and the world hears{"\u00A0"}you.
+          <div className="xp-h-rule" style={{ height: 1, background: "var(--xp-gold)", marginBottom: 28 }} />
+          <p className="xp-h-sub" style={{ fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 400, marginBottom: 44 }}>
+            Content that performs. Quality that scales.<br />Intelligence that compounds.
           </p>
-          <div className="xp-hero-ctas" style={{
-            display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap",
-            animation: `xpFadeUp 0.8s ${EASE} 900ms both`,
-          }}>
-            <button
-              onClick={() => navigate("/auth?mode=signup")}
-              className="xp-hero-cta-primary"
-              style={{
-                background: "var(--ew-gold)",
-                color: "var(--ew-navy)",
-                border: "none",
-                borderRadius: 100,
-                padding: "16px 36px",
-                fontWeight: 700,
-                fontSize: 14,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase" as const,
-                fontFamily: "var(--font)",
-                cursor: "pointer",
-                transition: `transform 0.3s ${EASE}, box-shadow 0.3s ${EASE}`,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.03)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(245,198,66,0.25)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-            >
-              Get Early Access
-            </button>
-            <a
-              href="#how"
-              onClick={(e) => { e.preventDefault(); scrollTo(howRef); }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                background: "transparent",
-                color: "var(--ew-white)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: 100,
-                padding: "16px 36px",
-                fontWeight: 600,
-                fontSize: 14,
-                fontFamily: "var(--font)",
-                textDecoration: "none",
-                cursor: "pointer",
-                transition: `border-color 0.3s ${EASE}, background 0.3s ${EASE}`,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.background = "transparent"; }}
-            >
-              See How It Works
-            </a>
+          <div className="xp-h-cta">
+            <button className="xp-btn xp-btn-w" onClick={goSignup}>Get Early Access</button>
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div style={{
-          position: "absolute",
-          bottom: 40,
-          left: "50%",
-          transform: "translateX(-50%)",
-          animation: `xpScrollPulse 2s ease-in-out infinite`,
-          opacity: heroParallax.opacity,
-        }}>
-          <div style={{
-            width: 2,
-            height: 24,
-            background: "var(--ew-gold)",
-            borderRadius: 1,
-          }} />
-        </div>
-
-        <style>{`
-          @keyframes xpFadeUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes xpWordUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes xpScrollPulse {
-            0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.6; }
-            50% { transform: translateX(-50%) translateY(8px); opacity: 1; }
-          }
-        `}</style>
-      </section>
-
-      {/* ── SECTION 02: THE PROBLEM (Light: #FFFFFF, blue accent) ── */}
-      <section data-nav-theme="light" style={{ padding: "140px 0", background: "var(--ew-white)" }}>
-        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px" }}>
-          <div style={{ marginLeft: isMobile ? 0 : "clamp(40px, 12vw, 160px)", maxWidth: 600 }}>
-            <div style={{ display: "flex", gap: 0 }}>
-              <div style={{
-                width: 3,
-                background: "var(--ew-blue)",
-                borderRadius: 2,
-                flexShrink: 0,
-              }} />
-              <div style={{ paddingLeft: isMobile ? 20 : 32 }}>
-                <Reveal direction="left" distance={30} duration={800}>
-                  <h2 style={{
-                    fontSize: "clamp(26px, 3.5vw, 42px)",
-                    fontWeight: 700,
-                    lineHeight: 1.2,
-                    letterSpacing: "-0.02em",
-                    margin: "0 0 32px",
-                    color: "var(--ew-text-dark)",
-                    textWrap: "balance" as any,
-                  }}>
-                    The thought leaders you see everywhere aren't better thinkers.{" "}
-                    <span style={{ color: "var(--ew-blue)", fontWeight: 700 }}>They got their ideas{"\u00A0"}out.</span>
-                  </h2>
-                </Reveal>
-                <Reveal direction="up" distance={20} delay={150}>
-                  <p style={{ color: "var(--ew-text-body)", maxWidth: 540, marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
-                    You have the thinking. What you've been missing is someone to carry it, from your head, into the world, without you doing the work{"\u00A0"}twice.
-                  </p>
-                </Reveal>
-                <Reveal direction="up" distance={20} delay={300}>
-                  <p style={{ color: "var(--ew-text-body)", maxWidth: 540, marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
-                    This isn't about discipline or talent.
-                  </p>
-                </Reveal>
-                <Reveal direction="up" distance={20} delay={450}>
-                  <p style={{ color: "var(--ew-text-body)", maxWidth: 540, fontSize: 16, lineHeight: 1.7 }}>
-                    It's an infrastructure problem. <span style={{ fontWeight: 600, color: "var(--ew-text-dark)" }}>Reed is the answer.</span>
-                  </p>
-                </Reveal>
-              </div>
-            </div>
-          </div>
+        {/* Scroll hint */}
+        <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", animation: "xpScrollPulse 2s ease-in-out infinite" }}>
+          <div style={{ width: 2, height: 24, background: "var(--xp-gold)", borderRadius: 1 }} />
         </div>
       </section>
 
-      {/* ── SECTION 03: REED (Dark: #1B263B, gold accent) ─────── */}
-      <section data-nav-theme="dark" style={{ padding: "120px 0", background: "var(--ew-navy-rich)" }}>
-        <div className="xp-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 80 }}>
+      {/* ═══ PROBLEM (White) ═══ */}
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "140px 48px", background: "var(--xp-white)" }}>
+        <div style={{ maxWidth: 840, margin: "0 auto" }}>
           <Reveal>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-gold)", marginBottom: 20, textAlign: "center" }}>
-              Reed
-            </div>
+            <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>01 / The Problem</div>
+            <h2 style={{ fontSize: "clamp(30px, 4vw, 48px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.12, maxWidth: 640, marginBottom: 56 }}>
+              Content teams are drowning in tools.{" "}
+              <span style={{ color: "var(--xp-ter)" }}>Starving for strategy.</span>
+            </h2>
           </Reveal>
-          <Reveal delay={100}>
-            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 620, textAlign: "center", marginBottom: 16, fontSize: 16, lineHeight: 1.7 }}>
-              <span style={{ color: "var(--ew-text-light)", fontWeight: 600 }}>Reed is your thinking partner.</span> You talk. He listens. He asks until he finds what you actually mean, not what you said first. Then you're{"\u00A0"}done.
-            </p>
-          </Reveal>
-          <Reveal delay={200}>
-            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 620, textAlign: "center", marginBottom: 56, fontSize: 16, lineHeight: 1.7 }}>
-              No editing. No formatting. No chasing the idea across five tabs. Reed carries it. What comes back is done. In your voice. Ready to{"\u00A0"}ship.
-            </p>
-          </Reveal>
-
-          {/* Reed demo widget with magnetic hover */}
-          <Reveal direction="scale" duration={1000}>
-            <div
-              className="xp-reed-widget"
-              style={{ perspective: 1000, maxWidth: 480, width: "100%", marginBottom: 56 }}
-              onMouseMove={e => {
-                const el = e.currentTarget.firstElementChild as HTMLElement;
-                if (!el) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                const cx = rect.left + rect.width / 2;
-                const cy = rect.top + rect.height / 2;
-                const dx = (e.clientX - cx) / (rect.width / 2);
-                const dy = (e.clientY - cy) / (rect.height / 2);
-                el.style.transform = `rotateY(${dx * 3}deg) rotateX(${-dy * 3}deg)`;
-                el.style.boxShadow = `${-dx * 8}px ${-dy * 8}px 80px rgba(0,0,0,0.4), 0 0 60px rgba(74,144,217,0.06)`;
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget.firstElementChild as HTMLElement;
-                if (!el) return;
-                el.style.transform = "rotateY(0deg) rotateX(0deg)";
-                el.style.boxShadow = "0 24px 80px rgba(0,0,0,0.4)";
-              }}
-            >
+          {PROBLEMS.map((txt, i) => (
+            <Reveal key={i} delay={100 + i * 100}>
               <div style={{
-                background: "rgba(255,255,255,0.03)",
-                borderRadius: 16,
-                border: "1px solid var(--ew-border-dark)",
-                overflow: "hidden",
-                boxShadow: "0 24px 80px rgba(0,0,0,0.4)",
-                width: "100%",
-                transition: `transform 0.6s ${EASE}, box-shadow 0.6s ${EASE}`,
-                position: "relative",
+                padding: "28px 0",
+                borderTop: i === 0 ? "1px solid var(--xp-border)" : "none",
+                borderBottom: "1px solid var(--xp-border)",
+                display: "flex", gap: 24, alignItems: "baseline",
               }}>
-                {/* Subtle glow behind widget */}
-                <div style={{
-                  position: "absolute",
-                  inset: -40,
-                  background: "radial-gradient(circle at 50% 50%, rgba(74,144,217,0.08) 0%, transparent 70%)",
-                  pointerEvents: "none",
-                  zIndex: 0,
-                }} />
-                {/* Header */}
-                <div style={{
-                  padding: "14px 20px",
-                  borderBottom: "1px solid var(--ew-border-dark)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  position: "relative",
-                  zIndex: 1,
-                }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ew-gold)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ew-text-light-dim)", letterSpacing: "0.04em" }}>Reed is listening</span>
-                </div>
-                {/* Chat area */}
-                <div style={{ padding: "20px 20px 16px", position: "relative", zIndex: 1 }}>
-                  {/* User bubble */}
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
-                    <div style={{
-                      background: "rgba(255,255,255,0.06)",
-                      borderRadius: "14px 14px 4px 14px",
-                      padding: "10px 16px",
-                      maxWidth: "80%",
-                      fontSize: 13,
-                      color: "var(--ew-text-light)",
-                      lineHeight: 1.5,
-                    }}>
-                      The people in your market who show up everywhere aren't better thinkers. They got their ideas out. Every week. On every channel. Without doing it alone.
-                    </div>
-                  </div>
-                  {/* Reed bubble */}
-                  <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
-                    <div style={{
-                      background: "rgba(245,198,66,0.06)",
-                      border: "1px solid rgba(245,198,66,0.1)",
-                      borderRadius: "14px 14px 14px 4px",
-                      padding: "10px 16px",
-                      maxWidth: "85%",
-                      fontSize: 13,
-                      color: "var(--ew-text-light)",
-                      lineHeight: 1.5,
-                    }}>
-                      <strong style={{ color: "var(--ew-gold)" }}>Core thesis:</strong> Infrastructure, not talent, separates visible thought leaders from invisible ones.<br /><br />
-                      Who specifically needs to hear this?
-                    </div>
-                  </div>
-                  {/* Footer bar */}
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingTop: 12,
-                    borderTop: "1px solid var(--ew-border-dark)",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 22, fontWeight: 700, color: "var(--ew-gold)", fontVariantNumeric: "tabular-nums" }}>86</span>
-                      <span style={{ fontSize: 11, color: "var(--ew-text-light-dim)", fontWeight: 500 }}>Impact Score</span>
-                    </div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {["LinkedIn", "Newsletter", "Podcast"].map((f) => (
-                        <span key={f} style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          padding: "4px 10px",
-                          borderRadius: 20,
-                          background: "rgba(255,255,255,0.06)",
-                          border: "1px solid var(--ew-border-dark)",
-                          color: "var(--ew-text-light-dim)",
-                          letterSpacing: "0.02em",
-                        }}>
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <span className="xp-mono" style={{ fontSize: 12, color: "var(--xp-gold)", letterSpacing: "0.06em", flexShrink: 0 }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <p style={{ fontSize: 18, fontWeight: 500, letterSpacing: "-0.01em", lineHeight: 1.5, margin: 0 }}>{txt}</p>
               </div>
-            </div>
-          </Reveal>
-
-          {/* Supporting line */}
-          <Reveal delay={200}>
-            <p style={{
-              fontSize: "clamp(20px, 3vw, 28px)",
-              fontWeight: 600,
-              color: "var(--ew-gold)",
-              margin: 0,
-              maxWidth: 720,
-              textAlign: "center",
-              lineHeight: 1.4,
-              letterSpacing: "-0.01em",
-            }}>
-              The people in your market who show up everywhere aren't better thinkers. They have better infrastructure.
-            </p>
-          </Reveal>
+            </Reveal>
+          ))}
         </div>
       </section>
 
-      {/* ── SECTION 04: YOU KNOW THIS FEELING (Light: #F7F9FC, blue accent) */}
-      <section data-nav-theme="light" style={{ padding: sectionPad, background: "var(--ew-offwhite)" }}>
-        <Reveal>
-          <div className="xp-inner">
-            <div style={{ textAlign: "center", marginBottom: isMobile ? 36 : 56 }}>
-              <h2 style={{
-                fontSize: "clamp(28px, 3.5vw, 40px)",
-                fontWeight: 700,
-                lineHeight: 1.15,
-                letterSpacing: "-0.02em",
-                margin: "0 0 16px",
-                textWrap: "balance" as any,
-                color: "var(--ew-text-dark)",
-              }}>
-                The idea is in your head. Not in the world.
-              </h2>
-              <p style={{ color: "var(--ew-text-body)", maxWidth: 540, margin: "0 auto" }}>
-                You've been carrying ideas that deserve an audience. The problem was never the thinking. It was the distance between having the thought and getting it out. In your voice, at the quality it deserves, on every channel that matters.
-              </p>
-            </div>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-              gap: 20,
-            }}>
-              {[
-                { label: "Sunday night", text: "The week is ending. You had three ideas worth writing about. None of them made it out." },
-                { label: "On a plane", text: "You write two pages of thinking in a notebook. It never becomes anything." },
-                { label: "Watching someone else", text: "You see someone on stage or in your feed saying something you've thought for years. They just got it out first." },
-                { label: "After the conversation", text: "You just explained something perfectly to a client. Room changed. No one else will ever hear that version of it." },
-              ].map((m) => (
-                <div key={m.label} style={{
-                  background: "var(--ew-white)",
-                  border: "1px solid var(--ew-border-light)",
-                  borderRadius: 8,
-                  padding: "28px 32px",
+      {/* ═══ REED DEMO (Light mode) ═══ */}
+      <ReedSection isMobile={isMobile} />
+
+      {/* ═══ STATS ═══ */}
+      <StatsSection isMobile={isMobile} />
+
+      {/* ═══ WATCH. WORK. WRAP. ═══ */}
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "140px 48px", background: "var(--xp-off)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <Reveal>
+            <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>03 / The System</div>
+            <h2 style={{ fontSize: "clamp(34px, 5vw, 56px)", fontWeight: 600, letterSpacing: "-0.035em", lineHeight: 1.08, marginBottom: 64 }}>Watch. Work. Wrap.</h2>
+          </Reveal>
+          <Reveal delay={200}>
+            <div className="xp-3col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
+              {ROOMS.map((rm, i) => (
+                <div key={rm.name} style={{
+                  padding: i === 0 ? "0 40px 0 0" : i === 2 ? "0 0 0 40px" : "0 40px",
+                  borderLeft: i > 0 ? "1px solid var(--xp-border)" : "none",
                 }}>
-                  <div style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "var(--ew-blue)",
-                    textTransform: "uppercase" as const,
-                    letterSpacing: "0.1em",
-                    marginBottom: 8,
-                  }}>{m.label}</div>
-                  <div style={{ color: "var(--ew-text-body)", fontSize: 16, lineHeight: 1.6 }}>{m.text}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+                    <div style={{ height: 1, width: 28, background: "var(--xp-gold)" }} />
+                    <h3 style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em", margin: 0 }}>{rm.name}</h3>
+                  </div>
+                  <p style={{ fontSize: 15, lineHeight: 1.75, color: "var(--xp-sec)", margin: 0 }}>{rm.body}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ── SECTION 05: STATS + TESTIMONIAL (Light: #F7F9FC, blue accent) */}
-      <section data-nav-theme="light" style={{ padding: "100px 0", background: "var(--ew-offwhite)" }}>
-        <div className="xp-inner">
-          {/* Section intro */}
-          <Reveal>
-            <div style={{ textAlign: "center", marginBottom: 64 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-blue)", marginBottom: 16 }}>
-                EVERYWHERE Studio
-              </div>
-              <h2 style={{
-                fontSize: "clamp(28px, 4vw, 44px)",
-                fontWeight: 700,
-                lineHeight: 1.15,
-                letterSpacing: "-0.02em",
-                textWrap: "balance" as any,
-                margin: "0 auto 28px",
-                maxWidth: 800,
-                color: "var(--ew-text-dark)",
-              }}>
-                You talk. Reed listens until he really gets it. Then {MARKETING_NUMBERS.specialistCount} specialists turn what you said into publication-ready content, in your voice, verified, every word traceable back to you.
-              </h2>
-              <p style={{ color: "var(--ew-text-body)", maxWidth: 600, margin: "0 auto", textAlign: "center", fontSize: 16, lineHeight: 1.7 }}>
-                You talk. They work. You publish. Every word sounds like you. Every claim is verified. Nothing ships without passing {MARKETING_NUMBERS.qualityCheckpoints} quality checkpoints.
-              </p>
-            </div>
-          </Reveal>
-
-          {/* Stats grid */}
-          <div style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: isMobile ? "center" : "flex-start",
-            flexDirection: isMobile ? "column" : "row",
-            gap: isMobile ? 40 : 60,
-            marginBottom: 72,
-          }}>
-            {[
-              { headline: "Always ready.", body: "Whenever you have something to say, a post, a brief, a board deck, a newsletter, Reed is there. You talk. It\u2019s\u00A0done." },
-              { headline: "Every channel.", body: "Newsletter, LinkedIn, podcast, Substack, one idea, every format, native to\u00A0each." },
-              { headline: "Zero left to finish.", body: "You talk to Reed. What comes back is\u00A0done." },
-            ].flatMap((block, i) => {
-              const item = (
-                <Reveal key={block.headline} delay={i * 150}>
-                  <div style={{ textAlign: "center", maxWidth: 280 }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ew-text-dark)", marginBottom: 8 }}>
-                      {block.headline}
-                    </div>
-                    <div style={{ fontSize: 15, color: "var(--ew-text-body)", lineHeight: 1.6 }}>
-                      {block.body}
-                    </div>
-                  </div>
-                </Reveal>
-              );
-              if (!isMobile && i > 0) {
-                return [
-                  <div key={`d-${i}`} style={{ width: 1, height: 48, background: "var(--ew-border-light)", alignSelf: "center", flexShrink: 0 }} />,
-                  item,
-                ];
-              }
-              return [item];
-            })}
-          </div>
-
-          {/* Testimonial */}
-          <Reveal direction="left" distance={40} delay={400}>
-            <div style={{ maxWidth: 640, marginInline: "auto", textAlign: "left" }}>
-              <blockquote style={{
-                margin: 0,
-                padding: "0 0 0 24px",
-                borderLeft: "3px solid var(--ew-blue)",
-              }}>
-                <p style={{
-                  fontSize: "clamp(20px, 2.5vw, 28px)",
-                  fontWeight: 400,
-                  lineHeight: 1.4,
-                  color: "var(--ew-text-dark)",
-                  fontStyle: "normal",
-                  margin: "0 0 12px",
-                  letterSpacing: "-0.01em",
-                }}>
-                  "Better than what I was writing{"\u00A0"}myself."
-                </p>
-                <p style={{
-                  fontSize: 15,
-                  color: "var(--ew-text-body)",
-                  lineHeight: 1.6,
-                  margin: "0 0 16px",
-                }}>
-                  Doug C. had a decade of thinking that never made it out. Now it does, in his voice.
-                </p>
-                <footer style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase" as const,
-                  color: "var(--ew-text-body)",
-                }}>
-                  Doug C., Executive Coach
-                </footer>
-              </blockquote>
-            </div>
           </Reveal>
         </div>
       </section>
 
-      {/* ── SECTION 06: WATCH. WORK. WRAP. (Dark: #0D1B2A, gold accent) */}
-      <WatchWorkWrapSection howRef={howRef} />
+      {/* ═══ QUALITY GATES ═══ */}
+      <QualitySection />
 
-      {/* ── SECTION 07: QUALITY STANDARD (Light: #FFFFFF, blue accent) */}
-      <section ref={standardRef} data-nav-theme="light" style={{ padding: "140px 0", background: "var(--ew-white)" }}>
-        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 40px" }}>
-          <div style={{ marginLeft: isMobile ? 0 : "clamp(40px, 12vw, 160px)", maxWidth: 680 }}>
-            <Reveal direction="up" distance={20}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" as const, color: "var(--ew-blue)", marginBottom: 20 }}>
-                Quality Standard
-              </div>
-            </Reveal>
-            <Reveal direction="none">
-              <h2 style={{
-                fontSize: "clamp(32px, 5vw, 56px)",
-                fontWeight: 700,
-                lineHeight: 1.15,
-                textWrap: "balance" as any,
-                letterSpacing: "-0.02em",
-                margin: "0 0 28px",
-                color: "var(--ew-text-dark)",
-              }}>
-                {"Nothing ships unless it would fool a\u00A0skeptic.".split(" ").map((word, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      display: "inline-block",
-                      animation: `xpWordUp 0.6s ${EASE} ${i * 60}ms both`,
-                      marginRight: "0.25em",
-                    }}
-                  >
-                    {word}
-                  </span>
-                ))}
-              </h2>
-            </Reveal>
-            <Reveal direction="up" distance={20} delay={600}>
-              <p style={{ color: "var(--ew-text-body)", maxWidth: 520, fontSize: 16, lineHeight: 1.7 }}>
-                Before any content reaches you, a hostile reader runs through it. Looking for AI patterns, assembled phrases, anything that doesn't sound like a human made a real decision. If it fails, it doesn't ship. Not once. Not ever. AI slop is everywhere. This is the only standard that keeps your name off it.
-              </p>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 08+09: CLOSING CTA (Dark: #0D1B2A, gold accent) ── */}
-      <section data-nav-theme="dark" style={{ padding: "100px 0", background: "var(--ew-navy)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", maxWidth: 800, padding: "0 32px" }}>
-          {/* Anchor statement */}
+      {/* ═══ CTA (Dark bookend) ═══ */}
+      <section data-nav-theme="dark" className="xp-sect" style={{
+        padding: "160px 48px", background: "var(--xp-navy)",
+        textAlign: "center", position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", top: "50%", left: "50%", width: 500, height: 500, borderRadius: "50%", border: "0.5px solid rgba(200,169,110,0.04)", animation: "xpSpin 120s linear infinite", pointerEvents: "none" }} />
+        <div style={{ position: "relative", zIndex: 1 }}>
           <Reveal>
-            <p style={{
-              fontSize: "clamp(24px, 3.5vw, 40px)",
-              fontWeight: 400,
-              color: "rgba(255,255,255,0.5)",
-              margin: "0 0 16px",
-              lineHeight: 1.2,
-              letterSpacing: "-0.02em",
-            }}>
-              Most AI writes for{"\u00A0"}you.
-            </p>
-          </Reveal>
-          <Reveal delay={300} direction="scale" distance={0}>
-            <p style={{
-              fontSize: "clamp(24px, 3.5vw, 40px)",
-              fontWeight: 700,
-              margin: "0 0 48px",
-              lineHeight: 1.2,
-              letterSpacing: "-0.02em",
-            }}>
-              <span style={{ color: "var(--ew-gold)" }}>EVERYWHERE</span>{" "}
-              <span style={{ color: "var(--ew-white)" }}>works for{"\u00A0"}you.</span>
-            </p>
-          </Reveal>
-
-          {/* Supporting copy */}
-          <Reveal delay={500}>
-            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center", fontSize: 16, lineHeight: 1.7 }}>
-              You don't need more discipline. You need a system that carries the idea from your head to your audience, every week, without it sitting on your to-do list.
-            </p>
-            <p style={{ color: "var(--ew-text-light-dim)", maxWidth: 560, margin: "0 auto 12px", textAlign: "center", fontSize: 16, lineHeight: 1.7 }}>
-              The output is yours because the input was yours.
-            </p>
-            <p style={{ color: "var(--ew-gold)", maxWidth: 560, margin: "0 auto 48px", textAlign: "center", fontWeight: 500, fontSize: 16, lineHeight: 1.7 }}>
-              There's a mountain between the idea and the audience. EVERYWHERE Studio carries the mountain.
-            </p>
-          </Reveal>
-
-          {/* CTA with pulse ring */}
-          <Reveal delay={700} direction="up" distance={20}>
-            <div style={{ position: "relative", display: "inline-block", marginBottom: 24 }}>
-              {/* Sonar pulse ring */}
-              <div style={{
-                position: "absolute",
-                inset: -8,
-                borderRadius: 100,
-                border: "1px solid var(--ew-gold)",
-                animation: "xpSonarPing 3s ease-out infinite",
-                pointerEvents: "none",
-              }} />
-              <button
-                onClick={() => navigate("/auth?mode=signup")}
-                style={{
-                  background: "var(--ew-gold)",
-                  color: "var(--ew-navy)",
-                  border: "none",
-                  borderRadius: 100,
-                  padding: "18px 44px",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase" as const,
-                  fontFamily: "var(--font)",
-                  cursor: "pointer",
-                  position: "relative",
-                  zIndex: 1,
-                  transition: `transform 0.35s ${EASE}, box-shadow 0.35s ${EASE}`,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(245,198,66,0.3)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
-              >
-                Get Early Access
-              </button>
-            </div>
-            <div>
-              <a
-                href="mailto:mark@coastalintelligence.ai"
-                style={{
-                  color: "var(--ew-text-light-dim)",
-                  fontSize: 13,
-                  textDecoration: "none",
-                  fontFamily: "var(--font)",
-                  display: "inline-block",
-                  position: "relative",
-                  paddingBottom: 2,
-                }}
-                onMouseEnter={e => {
-                  const underline = e.currentTarget.querySelector("[data-underline]") as HTMLElement;
-                  if (underline) underline.style.width = "100%";
-                }}
-                onMouseLeave={e => {
-                  const underline = e.currentTarget.querySelector("[data-underline]") as HTMLElement;
-                  if (underline) underline.style.width = "0";
-                }}
-              >
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-dim-dark)", marginBottom: 32 }}>Everywhere Studio</div>
+              <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 600, letterSpacing: "-0.035em", lineHeight: 1.1, color: "var(--xp-on-dark)", maxWidth: 560, marginBottom: 24 }}>
+                Your content deserves<br />composed intelligence.
+              </h2>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 44 }}>
+                Join the teams replacing content chaos with a system that compounds.
+              </p>
+              <button className="xp-btn xp-btn-w" onClick={goSignup} style={{ marginBottom: 28 }}>Get Early Access</button>
+              <a href="mailto:mark@coastalintelligence.ai" className="xp-mono" style={{ fontSize: 12, color: "var(--xp-dim-dark)", textDecoration: "none" }}>
                 mark@coastalintelligence.ai
-                <span data-underline="" style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  height: 1,
-                  width: 0,
-                  background: "var(--ew-text-light-dim)",
-                  transition: `width 0.3s ${EASE}`,
-                }} />
               </a>
             </div>
           </Reveal>
         </div>
-
-        <style>{`
-          @keyframes xpSonarPing {
-            0% { transform: scale(1); opacity: 0.1; }
-            70% { transform: scale(1.4); opacity: 0; }
-            100% { transform: scale(1.4); opacity: 0; }
-          }
-        `}</style>
       </section>
 
-      {/* ── MARQUEE WATERMARK ────────────────────────────────── */}
-      <div style={{
-        width: "100%",
-        overflow: "hidden",
-        padding: "40px 0",
-        background: "var(--ew-offwhite)",
-        pointerEvents: "none",
-        userSelect: "none",
-      }}>
-        <div className="xp-marquee-track" style={{
-          display: "flex",
-          whiteSpace: "nowrap",
-          animation: "xpMarquee 40s linear infinite",
-        }}>
-          {/* 4 repetitions duplicated (8 total) for seamless loop */}
-          {Array.from({ length: 8 }).map((_, i) => (
-            <span key={i} style={{
-              display: "inline-flex",
-              alignItems: "center",
-              fontSize: "clamp(80px, 12vw, 200px)",
-              fontFamily: "var(--font)",
-              textTransform: "uppercase" as const,
-              letterSpacing: "-0.02em",
-              flexShrink: 0,
-              marginRight: "0.5em",
-            }}>
-              <span style={{ fontWeight: 800, color: "rgba(0,0,0,0.04)" }}>EVERYWHERE</span>
-              <span style={{ color: "rgba(245,198,66,0.08)", fontSize: "0.35em", margin: "0 0.15em", display: "inline-flex", alignItems: "center" }}>{"\u25CF"}</span>
-              <span style={{ fontWeight: 300, color: "rgba(0,0,0,0.04)" }}>STUDIO</span>
-            </span>
-          ))}
-        </div>
-        <style>{`
-          @keyframes xpMarquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-        `}</style>
-      </div>
-      <footer style={{ background: "var(--ew-offwhite)", borderTop: "1px solid var(--ew-border-light)" }}>
-        <div className="xp-footer">
+      {/* ═══ FOOTER ═══ */}
+      <footer style={{ padding: "36px 48px", background: "var(--xp-white)", borderTop: "1px solid var(--xp-border)" }}>
+        <div className="xp-footer-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
           <Logo size="sm" variant="light" />
-          <span style={{ color: "#AAAAAA", fontSize: 11 }}>&copy; 2026 Mixed Grill, LLC</span>
+          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+            {["Terms of Service", "Privacy Policy", "Cookie Policy"].map(label => (
+              <button key={label} style={{
+                fontSize: 12, color: "var(--xp-ter)", cursor: "pointer",
+                background: "none", border: "none", fontFamily: "var(--xp-font)",
+                transition: "color 0.2s",
+              }}
+              onMouseOver={e => (e.currentTarget.style.color = "var(--xp-text)")}
+              onMouseOut={e => (e.currentTarget.style.color = "var(--xp-ter)")}
+              >{label}</button>
+            ))}
+          </div>
+          <span style={{ fontSize: 12, color: "var(--xp-ter)" }}>&copy; {new Date().getFullYear()} Mixed Grill LLC / Coastal Intelligence. All rights reserved.</span>
         </div>
       </footer>
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+// REED SECTION — Light mode product mockup
+// ═══════════════════════════════════════════
+
+function ReedSection({ isMobile }: { isMobile: boolean }) {
+  const { ref, isVisible } = useScrollReveal(0.05);
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    const timers = [
+      setTimeout(() => setStep(1), 500),
+      setTimeout(() => setStep(2), 1400),
+      setTimeout(() => setStep(3), 2600),
+      setTimeout(() => setStep(4), 3500),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [isVisible]);
+
+  const sideItem = (label: string, active: boolean) => (
+    <div style={{
+      padding: "7px 12px", borderRadius: 6, fontSize: 13,
+      color: active ? "var(--xp-text)" : "var(--xp-ter)",
+      background: active ? "rgba(0,0,0,0.03)" : "transparent",
+      display: "flex", alignItems: "center", gap: 8,
+      fontWeight: active ? 500 : 400, cursor: "pointer",
+    }}>
+      {active && <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--xp-gold)" }} />}
+      {label}
+    </div>
+  );
+
+  const metric = (label: string, val: string, pct: number, delay: number) => (
+    <div style={{ marginBottom: 18, opacity: step >= 4 ? 1 : 0, transition: `opacity .5s ease ${delay}s` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+        <span className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</span>
+        <span className="xp-mono" style={{ fontSize: 11, color: "var(--xp-gold)", fontWeight: 500 }}>{val}</span>
+      </div>
+      <div style={{ height: 2, background: "var(--xp-border)", borderRadius: 1, overflow: "hidden" }}>
+        <div style={{
+          height: "100%", background: "var(--xp-gold)", borderRadius: 1,
+          width: step >= 4 ? `${pct}%` : "0%",
+          transition: `width 1s ${EASE} ${delay + 0.2}s`,
+        }} />
+      </div>
+    </div>
+  );
+
+  return (
+    <section data-nav-theme="light" className="xp-sect" ref={ref} style={{ padding: "140px 48px", background: "var(--xp-off)" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <Reveal>
+          <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>02 / Meet Reed</div>
+          <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, maxWidth: 600, marginBottom: 16 }}>
+            Intelligence that thinks<br />before it writes.
+          </h2>
+          <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", maxWidth: 520, marginBottom: 56 }}>
+            Reed coordinates {MARKETING_NUMBERS.specialistCount} specialists across research, strategy, voice calibration, and quality review before a single word reaches your audience.
+          </p>
+        </Reveal>
+
+        {/* Light-mode interface mockup */}
+        <Reveal delay={200}>
+          <div style={{
+            borderRadius: 14, overflow: "hidden",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.06), 0 0 0 1px var(--xp-border)",
+            background: "var(--xp-white)",
+          }}>
+            {/* Title bar */}
+            <div style={{
+              display: "flex", alignItems: "center", padding: "11px 18px",
+              background: "var(--xp-off)", borderBottom: "1px solid var(--xp-border)",
+            }}>
+              <div style={{ display: "flex", gap: 7 }}>
+                <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#FF5F57" }} />
+                <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#FEBC2E" }} />
+                <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#28C840" }} />
+              </div>
+              <div style={{ flex: 1, textAlign: "center", fontSize: 12, color: "var(--xp-ter)", fontWeight: 500 }}>Everywhere Studio</div>
+              <div style={{ width: 48 }} />
+            </div>
+
+            <div style={{ display: "flex", minHeight: isMobile ? 360 : 420 }}>
+              {/* Sidebar */}
+              <div className="xp-reed-side" style={{
+                width: 172, background: "var(--xp-off)",
+                borderRight: "1px solid var(--xp-border)",
+                padding: "18px 10px", flexShrink: 0, display: "flex", flexDirection: "column", gap: 1,
+              }}>
+                <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", padding: "6px 12px 4px", textTransform: "uppercase" }}>Studio</div>
+                {sideItem("Watch", false)}
+                {sideItem("Work", true)}
+                {sideItem("Wrap", false)}
+                <div style={{ height: 1, background: "var(--xp-border)", margin: "10px 0" }} />
+                <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", padding: "6px 12px 4px", textTransform: "uppercase" }}>Library</div>
+                {sideItem("Catalog", false)}
+                {sideItem("Pipeline", false)}
+                {sideItem("Resources", false)}
+                <div style={{ flex: 1 }} />
+                <div style={{ padding: "8px 12px", display: "flex", alignItems: "center", gap: 7 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#28C840" }} />
+                  <span style={{ fontSize: 11, color: "var(--xp-ter)" }}>Reed Active</span>
+                </div>
+              </div>
+
+              {/* Chat */}
+              <div style={{ flex: 1, background: "var(--xp-white)", padding: "24px 28px", display: "flex", flexDirection: "column" }}>
+                <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", textAlign: "center", marginBottom: 20 }}>Today at 10:42 AM</div>
+
+                {/* User message */}
+                <div style={{
+                  opacity: step >= 1 ? 1 : 0, transform: step >= 1 ? "translateY(0)" : "translateY(8px)",
+                  transition: `all .5s ${EASE}`,
+                  alignSelf: "flex-end", maxWidth: "78%", marginBottom: 18,
+                }}>
+                  <div style={{
+                    padding: "13px 17px", borderRadius: "13px 13px 3px 13px",
+                    background: "var(--xp-off)", border: "1px solid var(--xp-border)",
+                    fontSize: 14, color: "var(--xp-text)", lineHeight: 1.6,
+                  }}>
+                    Write a product launch email for our Q2 feature release targeting enterprise design teams.
+                  </div>
+                </div>
+
+                {/* Composing indicator */}
+                <div style={{
+                  opacity: step === 2 ? 1 : 0, transition: "opacity .25s ease",
+                  marginBottom: 14, display: "flex", alignItems: "center", gap: 10, minHeight: 32,
+                }}>
+                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(200,169,110,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--xp-gold)" }} />
+                  </div>
+                  <div className="xp-dots" style={{ display: "flex", gap: 3 }}><span /><span /><span /></div>
+                  <span className="xp-mono" style={{ fontSize: 11, color: "var(--xp-ter)" }}>Composing with 12 specialists...</span>
+                </div>
+
+                {/* Reed response */}
+                <div style={{
+                  opacity: step >= 3 ? 1 : 0, transform: step >= 3 ? "translateY(0)" : "translateY(8px)",
+                  transition: `all .6s ${EASE}`, maxWidth: "88%", marginBottom: 16,
+                }}>
+                  <div style={{ display: "flex", gap: 11 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(200,169,110,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--xp-gold)" }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--xp-gold)", marginBottom: 7 }}>Reed</div>
+                      <div style={{
+                        padding: "14px 18px", borderRadius: "3px 13px 13px 13px",
+                        background: "var(--xp-off)",
+                        border: "1px solid var(--xp-border)",
+                        fontSize: 14, color: "var(--xp-text)", lineHeight: 1.7,
+                      }}>
+                        I analyzed your brand voice profile, reviewed the Q2 feature documentation, and cross-referenced engagement patterns from your last three launches. The draft targets the strategic pain points your enterprise segment flagged in March. Copy maintains a 96% voice DNA match with your established tone.
+                      </div>
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 12 }}>
+                        {SPECIALIST_TAGS.map((tag, i) => (
+                          <span key={tag} className="xp-mono" style={{
+                            padding: "3px 9px", borderRadius: 999,
+                            background: "rgba(200,169,110,0.06)",
+                            border: "1px solid rgba(200,169,110,0.15)",
+                            fontSize: 10, color: "var(--xp-gold)",
+                            opacity: step >= 4 ? 1 : 0,
+                            transition: `opacity .4s ease ${0.3 + i * 0.07}s`,
+                          }}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ flex: 1 }} />
+
+                {/* Input */}
+                <div style={{
+                  padding: "11px 16px", borderRadius: 9,
+                  background: "var(--xp-off)", border: "1px solid var(--xp-border)",
+                  display: "flex", alignItems: "center",
+                }}>
+                  <span style={{ fontSize: 13, color: "var(--xp-ter)" }}>Ask Reed anything...</span>
+                </div>
+              </div>
+
+              {/* Metrics panel */}
+              <div className="xp-reed-met" style={{
+                width: 192, background: "var(--xp-off)",
+                borderLeft: "1px solid var(--xp-border)",
+                padding: "18px 14px", flexShrink: 0,
+              }}>
+                <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 22 }}>Composition</div>
+                {metric("Voice DNA", "96%", 96, 0)}
+                {metric("Impact", "High", 88, 0.12)}
+                {metric("Brand Match", "94%", 94, 0.24)}
+
+                <div style={{ height: 1, background: "var(--xp-border)", margin: "14px 0" }} />
+
+                <div style={{ opacity: step >= 4 ? 1 : 0, transition: "opacity .5s ease .4s" }}>
+                  <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Gates</div>
+                  <div style={{ display: "flex", gap: 3, marginBottom: 18 }}>
+                    {Array.from({ length: 7 }, (_, n) => (
+                      <div key={n} className="xp-mono" style={{
+                        width: 18, height: 18, borderRadius: "50%",
+                        border: "1px solid var(--xp-gold)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 8, color: "var(--xp-gold)",
+                      }}>{n + 1}</div>
+                    ))}
+                  </div>
+                  <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Specialists</div>
+                  <div style={{ fontSize: 22, fontWeight: 600, lineHeight: 1 }}>
+                    12 <span style={{ fontSize: 12, color: "var(--xp-ter)", fontWeight: 400 }}>activated</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════
+// STATS — Count up
+// ═══════════════════════════════════════════
+
+function StatsSection({ isMobile }: { isMobile: boolean }) {
+  const { ref, isVisible } = useScrollReveal(0.15);
+  const a = useCountUp(MARKETING_NUMBERS.specialistCount, 1600, isVisible);
+  const b = useCountUp(MARKETING_NUMBERS.outputFormatCount, 1200, isVisible);
+  const c = useCountUp(MARKETING_NUMBERS.qualityCheckpoints, 900, isVisible);
+
+  return (
+    <section data-nav-theme="light" className="xp-sect" ref={ref} style={{ padding: "100px 48px", background: "var(--xp-white)" }}>
+      <Reveal>
+        <div className="xp-stats-row" style={{ maxWidth: 880, margin: "0 auto", display: "flex", alignItems: "center" }}>
+          {[{ v: a, t: "Specialists" }, { v: b, t: "Output Formats" }, { v: c, t: "Quality Gates" }].map((s, i) => (
+            <React.Fragment key={s.t}>
+              {i > 0 && <div style={{ width: 1, background: "var(--xp-border)", alignSelf: "stretch" }} />}
+              <div style={{ flex: 1, textAlign: "center", padding: "0 32px" }}>
+                <div style={{ fontSize: "clamp(48px, 6.5vw, 76px)", fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 1 }}>{s.v}</div>
+                <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--xp-ter)", marginTop: 10 }}>{s.t}</div>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════
+// QUALITY GATES — Sequential light-up
+// ═══════════════════════════════════════════
+
+function QualitySection() {
+  const { ref, isVisible } = useScrollReveal(0.12);
+  const [lit, setLit] = useState(0);
+  useEffect(() => {
+    if (!isVisible) return;
+    let i = 0;
+    const iv = setInterval(() => { i++; setLit(i); if (i >= 7) clearInterval(iv); }, 220);
+    return () => clearInterval(iv);
+  }, [isVisible]);
+
+  return (
+    <section data-nav-theme="light" className="xp-sect" ref={ref} style={{ padding: "140px 48px", background: "var(--xp-white)", textAlign: "center" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto" }}>
+        <Reveal>
+          <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>04 / Quality Standard</div>
+          <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
+            Seven gates. Zero compromises.
+          </h2>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--xp-sec)", maxWidth: 520, margin: "0 auto 56px" }}>
+            Every piece of content passes through seven independent quality checkpoints before reaching your audience.
+          </p>
+        </Reveal>
+        <Reveal delay={200}>
+          <div className="xp-gates-track" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {GATES.map((g, i) => {
+              const on = i < lit;
+              return (
+                <React.Fragment key={g}>
+                  {i > 0 && <div className="xp-gate-line" style={{ width: 32, height: 1, background: on ? "var(--xp-gold)" : "var(--xp-border)", transition: "background .3s ease", flexShrink: 0 }} />}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7 }}>
+                    <div className="xp-mono" style={{
+                      width: 40, height: 40, borderRadius: "50%",
+                      border: `1.5px solid ${on ? "var(--xp-gold)" : "var(--xp-border)"}`,
+                      background: on ? "rgba(200,169,110,0.05)" : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 13, fontWeight: 500,
+                      color: on ? "var(--xp-gold)" : "var(--xp-ter)",
+                      transition: `all .35s ${EASE}`,
+                    }}>{i + 1}</div>
+                    <span className="xp-mono" style={{
+                      fontSize: 9, letterSpacing: "0.07em", textTransform: "uppercase",
+                      color: on ? "var(--xp-gold)" : "var(--xp-ter)", transition: "color .3s ease",
+                    }}>{g}</span>
+                  </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </Reveal>
+      </div>
+    </section>
   );
 }
