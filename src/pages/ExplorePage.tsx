@@ -1,21 +1,20 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import { MARKETING_NUMBERS } from "../lib/constants";
 
 /* ═══════════════════════════════════════════════════════════
-   EVERYWHERE STUDIO — EXPLORE PAGE v4
-   Logo Cinema. Liquid Glass. Scroll-earned reveals.
-   Instrument Sans + DM Mono. Apple-grade precision.
+   EVERYWHERE STUDIO — EXPLORE PAGE v5
+   Real Liquid Glass (Apple Figma recipe).
+   Air.inc-inspired: pure CSS animations, zero libraries.
+   Instrument Sans + DM Mono. Earned scroll.
    ═══════════════════════════════════════════════════════════ */
 
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 const EASE_SMOOTH = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 function easeOut(t: number) { return 1 - Math.pow(1 - t, 3); }
-function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)); }
-function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 
 // ══════════════════════════════════
 // HOOKS
@@ -37,25 +36,6 @@ function useScrollReveal(threshold = 0.1) {
   return { ref, isVisible };
 }
 
-function useScrollPosition() {
-  const [scrollY, setScrollY] = useState(0);
-  useEffect(() => {
-    let ticking = false;
-    const onScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          setScrollY(window.scrollY);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  return scrollY;
-}
-
 function useCountUp(target: number, duration: number, trigger: boolean) {
   const [val, setVal] = useState(0);
   const ran = useRef(false);
@@ -71,18 +51,6 @@ function useCountUp(target: number, duration: number, trigger: boolean) {
     requestAnimationFrame(go);
   }, [trigger, target, duration]);
   return val;
-}
-
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduced;
 }
 
 // ══════════════════════════════════
@@ -111,7 +79,7 @@ function Reveal({
 }
 
 // ══════════════════════════════════
-// CSS
+// CSS — Design system + Liquid Glass + Animations
 // ══════════════════════════════════
 
 const CSS = `
@@ -122,7 +90,6 @@ const CSS = `
   --xp-navy: #0C1A29;
   --xp-navy-deep: #060D14;
   --xp-gold: #C8A96E;
-  --xp-gold-dim: rgba(200,169,110,0.12);
   --xp-blue: #6B7FF2;
   --xp-white: #FFFFFF;
   --xp-off: #F8F9FA;
@@ -132,22 +99,12 @@ const CSS = `
   --xp-on-dark: #F0EDE4;
   --xp-dim-dark: rgba(255,255,255,0.38);
   --xp-border: #E4E4E7;
-  --xp-border-dark: rgba(255,255,255,0.06);
   --xp-font: 'Instrument Sans', -apple-system, system-ui, sans-serif;
   --xp-mono: 'DM Mono', monospace;
   --xp-ease: ${EASE};
-
-  /* Glass tokens */
-  --glass-blur: 24px;
-  --glass-sat: saturate(180%);
-  --glass-bg-dark: rgba(10,8,6,0.62);
-  --glass-bg-light: rgba(255,255,255,0.72);
-  --glass-border-dark: rgba(255,255,255,0.1);
-  --glass-border-light: rgba(0,0,0,0.06);
-  --glass-shadow-dark: 0 1px 32px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.06);
-  --glass-shadow-light: 0 1px 32px rgba(0,0,0,0.06), inset 0 0.5px 0 rgba(255,255,255,0.8);
 }
 
+/* ═══ BASE ═══ */
 .xp {
   font-family: var(--xp-font);
   font-size: 17px;
@@ -157,160 +114,250 @@ const CSS = `
   background: var(--xp-white);
   color: var(--xp-text);
   overflow-x: hidden;
-  scroll-behavior: smooth;
 }
 .xp a { color: inherit; text-decoration: none; }
 .xp ::selection { background: var(--xp-gold); color: var(--xp-navy); }
 .xp button:active { transform: scale(0.97) !important; transition-duration: 0.1s !important; }
 .xp-mono { font-family: var(--xp-mono); }
 
-/* Keyframes */
+/* ═══ KEYFRAMES ═══ */
 @keyframes xpSpin { from{transform:translate(-50%,-50%) rotate(0deg);} to{transform:translate(-50%,-50%) rotate(360deg);} }
 @keyframes xpSpinR { from{transform:translate(-50%,-50%) rotate(0deg);} to{transform:translate(-50%,-50%) rotate(-360deg);} }
 @keyframes xpDot { 0%,100%{opacity:.25;} 50%{opacity:1;} }
 @keyframes xpGlow { 0%,100%{opacity:.03;} 50%{opacity:.07;} }
 @keyframes xpSlideIn { from{opacity:0;transform:translateX(40px);} to{opacity:1;transform:translateX(0);} }
-@keyframes xpBreath { 0%,100%{transform:scale(1);} 50%{transform:scale(1.012);} }
+@keyframes xpFadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
 @keyframes xpGatePulse { 0%{box-shadow:0 0 0 0 rgba(200,169,110,0.3);} 70%{box-shadow:0 0 0 8px rgba(200,169,110,0);} 100%{box-shadow:0 0 0 0 rgba(200,169,110,0);} }
-@keyframes xpFadeUp { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
 
-/* Pulse dots for composing */
-.xp-dots span {
-  display:inline-block;width:5px;height:5px;border-radius:50%;
-  background:var(--xp-gold);animation:xpDot 1.2s infinite;
+/* Hero staggered entries */
+@keyframes xpHeroLabel { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+@keyframes xpHeroHead { from{opacity:0;transform:translateY(20px) scale(0.97);} to{opacity:1;transform:translateY(0) scale(1);} }
+@keyframes xpHeroLine { from{width:0;opacity:0;} to{width:64px;opacity:1;} }
+@keyframes xpHeroSub { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+@keyframes xpHeroCta { from{opacity:0;transform:translateY(14px) scale(0.96);} to{opacity:1;transform:translateY(0) scale(1);} }
+@keyframes xpRingFloat { 0%,100%{transform:translate(-50%,-50%) scale(1);} 50%{transform:translate(-50%,-50%) scale(1.015);} }
+@keyframes xpScrollHint { 0%,100%{transform:translateY(0);opacity:.4;} 50%{transform:translateY(8px);opacity:.9;} }
+
+/* ═══ LIQUID GLASS — Apple Figma Recipe ═══
+   Three-layer fill stack + 6 inner shadows + backdrop blur.
+   Adapted from Apple iOS 26 Control Center UI Kit. */
+
+.xp-liquid-glass {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate;
 }
-.xp-dots span:nth-child(2){animation-delay:.2s;}
-.xp-dots span:nth-child(3){animation-delay:.4s;}
 
-/* ═══ Liquid Glass Nav ═══ */
+/* Layer 1: The glass shell (blended fills + inner shadows) */
+.xp-liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* Three blended fills via gradient stacking */
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  /* 6 inner shadows from Apple's Figma: edge highlights + depth */
+  box-shadow:
+    inset 0 0 40px rgba(255,255,255,0.06),
+    inset 0 0 8px rgba(255,255,255,0.04),
+    inset -1.5px -1.5px 1px rgba(255,255,255,0.12),
+    inset 1.5px 1.5px 1px rgba(255,255,255,0.08),
+    inset -1.5px -1.5px 0 rgba(50,50,50,0.06),
+    inset 1.5px 1.5px 0 rgba(40,40,40,0.08);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Layer 2: The blur surface */
+.xp-liquid-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  z-index: 1;
+}
+
+/* Glass content sits above the layers */
+.xp-liquid-glass > * {
+  position: relative;
+  z-index: 3;
+}
+
+/* Glass border — angular gradient stroke from Figma */
+.xp-liquid-glass-border {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255,255,255,0.1);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* ═══ LIQUID GLASS VARIANTS ═══ */
+
+/* Dark variant (on dark backgrounds) */
+.xp-lg-dark {
+  background: rgba(10,12,18,0.45);
+}
+.xp-lg-dark::before {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+  box-shadow:
+    inset 0 0 40px rgba(255,255,255,0.04),
+    inset 0 0 8px rgba(255,255,255,0.03),
+    inset -1.5px -1.5px 1px rgba(255,255,255,0.08),
+    inset 1.5px 1.5px 1px rgba(255,255,255,0.05),
+    inset -1.5px -1.5px 0 rgba(0,0,0,0.15),
+    inset 1.5px 1.5px 0 rgba(0,0,0,0.12);
+}
+
+/* Light variant (on white backgrounds) */
+.xp-lg-light {
+  background: rgba(255,255,255,0.55);
+}
+.xp-lg-light::before {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+  box-shadow:
+    inset 0 0 40px rgba(255,255,255,0.3),
+    inset 0 0 8px rgba(255,255,255,0.15),
+    inset -1.5px -1.5px 1px rgba(255,255,255,0.5),
+    inset 1.5px 1.5px 1px rgba(255,255,255,0.35),
+    inset -1.5px -1.5px 0 rgba(0,0,0,0.02),
+    inset 1.5px 1.5px 0 rgba(0,0,0,0.03);
+}
+.xp-lg-light .xp-liquid-glass-border {
+  border-color: rgba(255,255,255,0.6);
+}
+
+/* Drop shadow for glass elements */
+.xp-lg-shadow {
+  box-shadow: 0 8px 48px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+}
+.xp-lg-dark.xp-lg-shadow {
+  box-shadow: 0 8px 48px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* ═══ GLASS NAV ═══ */
 .xp-glass-nav {
-  position:fixed;top:12px;left:16px;right:16px;z-index:100;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 28px;height:52px;
-  border-radius:16px;
-  backdrop-filter:blur(var(--glass-blur)) var(--glass-sat);
-  -webkit-backdrop-filter:blur(var(--glass-blur)) var(--glass-sat);
-  transition:background .5s ${EASE_SMOOTH}, border-color .5s ${EASE_SMOOTH}, box-shadow .5s ${EASE_SMOOTH}, opacity .4s ${EASE};
+  position: fixed;
+  top: 12px; left: 16px; right: 16px;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; height: 52px;
+  border-radius: 16px;
+  transition: opacity .4s ${EASE_SMOOTH};
 }
-.xp-glass-nav-dark {
-  background:var(--glass-bg-dark);
-  border:1px solid var(--glass-border-dark);
-  box-shadow:var(--glass-shadow-dark);
-}
-.xp-glass-nav-light {
-  background:var(--glass-bg-light);
-  border:1px solid var(--glass-border-light);
-  box-shadow:var(--glass-shadow-light);
-}
-.xp-glass-nav-hidden {
-  opacity:0;
-  pointer-events:none;
+.xp-glass-nav.xp-nav-hidden {
+  opacity: 0; pointer-events: none;
 }
 
 .xp-nav-link {
-  font-size:13px;font-weight:500;cursor:pointer;
-  background:none;border:none;font-family:var(--xp-font);transition:opacity .2s;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  background: none; border: none; font-family: var(--xp-font); transition: opacity .2s;
 }
 .xp-nav-cta {
-  font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
-  padding:9px 22px;border-radius:999px;cursor:pointer;font-family:var(--xp-font);transition:all .3s;
+  font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  padding: 9px 22px; border-radius: 999px; cursor: pointer;
+  font-family: var(--xp-font); transition: all .3s;
 }
 
-/* ═══ Glass Containers ═══ */
-.xp-glass {
-  backdrop-filter:blur(20px) saturate(160%);
-  -webkit-backdrop-filter:blur(20px) saturate(160%);
-  background:rgba(255,255,255,0.65);
-  border:1px solid rgba(255,255,255,0.5);
-  border-radius:20px;
-  box-shadow:
-    0 8px 48px rgba(0,0,0,0.06),
-    0 1px 3px rgba(0,0,0,0.04),
-    inset 0 1px 0 rgba(255,255,255,0.7);
-}
-.xp-glass-dark {
-  background:rgba(12,26,41,0.55);
-  border:1px solid rgba(255,255,255,0.08);
-  box-shadow:
-    0 8px 48px rgba(0,0,0,0.2),
-    0 1px 3px rgba(0,0,0,0.1),
-    inset 0 1px 0 rgba(255,255,255,0.04);
-}
-
-/* ═══ Glass Cards ═══ */
+/* ═══ GLASS CARD ═══ */
 .xp-glass-card {
-  backdrop-filter:blur(16px) saturate(140%);
-  -webkit-backdrop-filter:blur(16px) saturate(140%);
-  background:rgba(255,255,255,0.55);
-  border:1px solid rgba(255,255,255,0.6);
-  border-radius:16px;
-  box-shadow:
-    0 4px 32px rgba(0,0,0,0.04),
-    0 1px 2px rgba(0,0,0,0.03),
-    inset 0 1px 0 rgba(255,255,255,0.8);
-  transition: transform .45s ${EASE}, box-shadow .45s ${EASE}, border-color .3s ease;
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  isolation: isolate;
+  background: rgba(255,255,255,0.45);
+  transition: transform .45s ${EASE}, box-shadow .45s ${EASE};
+  box-shadow: 0 4px 32px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
 }
-.xp-glass-card:hover {
-  transform:translateY(-6px);
+.xp-glass-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05));
   box-shadow:
-    0 12px 48px rgba(0,0,0,0.08),
-    0 2px 4px rgba(0,0,0,0.04),
-    inset 0 1px 0 rgba(255,255,255,0.9);
-  border-color:rgba(200,169,110,0.2);
+    inset 0 0 30px rgba(255,255,255,0.2),
+    inset 0 0 6px rgba(255,255,255,0.1),
+    inset -1px -1px 0.5px rgba(255,255,255,0.35),
+    inset 1px 1px 0.5px rgba(255,255,255,0.25);
+  pointer-events: none; z-index: 1;
+}
+.xp-glass-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  z-index: 0;
+}
+.xp-glass-card > * { position: relative; z-index: 2; }
+
+.xp-glass-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
 }
 
-/* ═══ Buttons ═══ */
-.xp-btn {
-  display:inline-flex;align-items:center;gap:8px;
-  padding:15px 34px;font-family:var(--xp-font);
-  font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
-  border:none;border-radius:999px;cursor:pointer;
-  transition:all .35s var(--xp-ease);
+/* Composing dots */
+.xp-dots span {
+  display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--xp-gold); animation: xpDot 1.2s infinite;
 }
-.xp-btn-w { background:var(--xp-white);color:var(--xp-navy); }
-.xp-btn-w:hover { background:var(--xp-gold);color:var(--xp-navy); }
-.xp-btn-n { background:var(--xp-navy);color:var(--xp-white); }
-.xp-btn-n:hover { background:#15283d; }
+.xp-dots span:nth-child(2) { animation-delay: .2s; }
+.xp-dots span:nth-child(3) { animation-delay: .4s; }
+
+/* ═══ BUTTONS ═══ */
+.xp-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 15px 34px; font-family: var(--xp-font);
+  font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  border: none; border-radius: 999px; cursor: pointer;
+  transition: all .35s var(--xp-ease);
+}
+.xp-btn-w { background: var(--xp-white); color: var(--xp-navy); }
+.xp-btn-w:hover { background: var(--xp-gold); color: var(--xp-navy); }
+.xp-btn-n { background: var(--xp-navy); color: var(--xp-white); }
+.xp-btn-n:hover { background: #15283d; }
 .xp-btn-glass {
-  background:rgba(255,255,255,0.12);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,0.15);
-  color:var(--xp-on-dark);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--xp-on-dark);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 .xp-btn-glass:hover {
-  background:rgba(255,255,255,0.2);
-  border-color:rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.22);
 }
 
-/* ═══ Responsive ═══ */
-@media(max-width:900px){
-  .xp-glass-nav{left:8px;right:8px;top:8px;padding:0 20px;height:48px;border-radius:14px;}
-  .xp-nav-links-desktop{display:none !important;}
-  .xp-3col{grid-template-columns:1fr !important;}
-  .xp-3col>div{border-left:none !important;padding:0 !important;}
-  .xp-3col>div+div{padding-top:24px !important;}
-  .xp-reed-side{display:none !important;}
-  .xp-reed-met{display:none !important;}
-  .xp-stats-row{flex-direction:column !important;gap:48px !important;}
-  .xp-gates-track{flex-wrap:wrap !important;gap:12px !important;}
-  .xp-gate-line{display:none !important;}
-  .xp-footer-inner{flex-direction:column !important;text-align:center !important;gap:16px !important;}
-  .xp-logo-cinema{font-size:13vw !important;}
-  .xp-statement-text{font-size:7vw !important;}
-  .xp-split-grid{grid-template-columns:1fr !important;}
-  .xp-parallax-nums{flex-direction:column !important;align-items:center !important;gap:40px !important;}
-  .xp-glass-cards-row{flex-direction:column !important;}
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:900px) {
+  .xp-glass-nav { left: 8px; right: 8px; top: 8px; padding: 0 20px; height: 48px; border-radius: 14px; }
+  .xp-nav-links-desktop { display: none !important; }
+  .xp-reed-side { display: none !important; }
+  .xp-reed-met { display: none !important; }
+  .xp-stats-row { flex-direction: column !important; gap: 48px !important; }
+  .xp-gates-track { flex-wrap: wrap !important; gap: 12px !important; }
+  .xp-gate-line { display: none !important; }
+  .xp-footer-inner { flex-direction: column !important; text-align: center !important; gap: 16px !important; }
+  .xp-statement-text { font-size: 8vw !important; }
+  .xp-split-grid { grid-template-columns: 1fr !important; }
+  .xp-parallax-nums { flex-direction: column !important; align-items: center !important; gap: 40px !important; }
+  .xp-glass-cards-row { flex-direction: column !important; }
 }
-@media(max-width:600px){
-  .xp-sect{padding-left:20px !important;padding-right:20px !important;}
-  .xp-glass-nav{left:6px;right:6px;top:6px;padding:0 16px;}
-  .xp-logo-cinema{font-size:16vw !important;}
-  .xp-statement-text{font-size:9vw !important;}
+@media(max-width:600px) {
+  .xp-sect { padding-left: 20px !important; padding-right: 20px !important; }
+  .xp-glass-nav { left: 6px; right: 6px; top: 6px; padding: 0 16px; }
+  .xp-statement-text { font-size: 10vw !important; }
 }
 
 /* Reduced motion */
-@media(prefers-reduced-motion: reduce){
+@media(prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -325,22 +372,21 @@ const CSS = `
 
 const PROBLEMS = [
   { without: "200 pieces a month. No idea which 10 moved the needle.", with: "Every piece tracked, measured, and ranked by real impact." },
-  { without: "Strategy, brand voice, SEO, distribution: four specialists who have never shared a room.", with: "40 specialists collaborating in real time on every single piece." },
+  { without: "Strategy, brand voice, SEO, distribution: specialists who have never shared a room.", with: "40 specialists collaborating in real time on every single piece." },
   { without: "AI tools that generate fast. Audiences that can tell.", with: "Intelligence that thinks before it writes. Quality your audience trusts." },
   { without: "Quality review after publishing. If it happens at all.", with: "Seven gates. Every piece. Before it ships." },
 ];
 
 const ROOMS = [
-  { name: "Watch", desc: "The intelligence layer. Reed monitors your industry, tracks competitors, and builds strategic foundation before creation begins.", icon: "◉" },
-  { name: "Work", desc: "The creation engine. 40 specialists collaborate across copywriting, voice, SEO, design direction, and distribution.", icon: "◈" },
-  { name: "Wrap", desc: "The quality standard. Seven gates verify every output against voice DNA, accuracy, and audience relevance.", icon: "◇" },
+  { name: "Watch", desc: "The intelligence layer. Reed monitors your industry, tracks competitors, and builds strategic foundation before creation begins.", icon: "\u25C9" },
+  { name: "Work", desc: "The creation engine. 40 specialists collaborate across copywriting, voice, SEO, design direction, and distribution.", icon: "\u25C8" },
+  { name: "Wrap", desc: "The quality standard. Seven gates verify every output against voice DNA, accuracy, and audience relevance.", icon: "\u25C7" },
 ];
 
 const GATES = ["Voice", "Strategy", "Accuracy", "Audience", "Format", "Brand", "Final"];
-
 const SPECIALIST_TAGS = ["Brand Voice", "Enterprise Copy", "SEO", "Distribution", "Analytics"];
-
 const STATEMENT_WORDS = ["Your", "content", "deserves", "composed", "intelligence."];
+
 
 // ═══════════════════════════════════════════
 // MAIN COMPONENT
@@ -349,12 +395,10 @@ const STATEMENT_WORDS = ["Your", "content", "deserves", "composed", "intelligenc
 export default function ExplorePage() {
   const navigate = useNavigate();
   const isMobile = useMobile();
-  const scrollY = useScrollPosition();
-  const reducedMotion = useReducedMotion();
   const [navTheme, setNavTheme] = useState<"dark" | "light">("dark");
+  const [navVisible, setNavVisible] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
-  const [heroComplete, setHeroComplete] = useState(false);
 
   // Page load
   useEffect(() => {
@@ -362,30 +406,14 @@ export default function ExplorePage() {
     return () => clearTimeout(t);
   }, []);
 
-  // ── Logo Cinema calculations ──
-  // The logo starts large and centered, then shrinks and moves to nav position
-  const CINEMA_DURATION = typeof window !== "undefined" ? window.innerHeight : 900;
-  const cinemaProgress = reducedMotion ? 1 : clamp(scrollY / CINEMA_DURATION, 0, 1);
-  const cinemaEased = easeOut(cinemaProgress);
-
-  // Logo scale: starts at ~5x, ends at 1x (nav size)
-  const logoScale = lerp(5, 1, cinemaEased);
-  // Logo Y position: starts at ~40vh, ends at nav position (top)
-  const logoY = lerp(40, 0, cinemaEased);
-  // Logo X position: starts centered, ends at left
-  const logoX = lerp(0, 0, cinemaEased); // stays centered-ish, nav handles final position
-  // Hero content opacity: fades in as logo shrinks
-  const heroContentOpacity = clamp((cinemaProgress - 0.4) / 0.4, 0, 1);
-  // Background fade: starts solid dark, transitions as logo shrinks
-  const heroBgOpacity = 1;
-  // Nav visibility: appears after cinema completes ~70%
-  const navVisible = cinemaProgress > 0.65;
-  // Logo in cinema vs in nav
-  const logoInCinema = cinemaProgress < 0.95;
-
+  // Show nav after user scrolls past hero threshold
   useEffect(() => {
-    if (cinemaProgress >= 0.95 && !heroComplete) setHeroComplete(true);
-  }, [cinemaProgress, heroComplete]);
+    const onScroll = () => {
+      setNavVisible(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Nav theme from data attributes
   useEffect(() => {
@@ -406,7 +434,7 @@ export default function ExplorePage() {
     return () => obs.disconnect();
   }, []);
 
-  // Scroll progress for the thin gold bar
+  // Scroll progress bar
   const [scrollProgress, setScrollProgress] = useState(0);
   useEffect(() => {
     const onScroll = () => {
@@ -426,22 +454,17 @@ export default function ExplorePage() {
     <div className="xp" style={{ opacity: pageLoaded ? 1 : 0, transition: `opacity 0.5s ${EASE}` }}>
       <style>{CSS}</style>
 
-      {/* ── Scroll progress bar ── */}
+      {/* Scroll progress */}
       <div style={{ position: "fixed", top: 0, left: 0, height: 2, width: `${scrollProgress * 100}%`, background: "var(--xp-gold)", zIndex: 200, transition: "width .06s linear", pointerEvents: "none" }} />
 
       {/* ═══ LIQUID GLASS NAV ═══ */}
-      <nav className={`xp-glass-nav ${isDarkNav ? "xp-glass-nav-dark" : "xp-glass-nav-light"} ${!navVisible ? "xp-glass-nav-hidden" : ""}`}>
-        <div style={{
-          opacity: navVisible && !logoInCinema ? 1 : 0,
-          transition: `opacity 0.4s ${EASE}`,
-          display: "flex", alignItems: "center",
-        }}>
-          <Logo
-            size="sm"
-            variant={isDarkNav ? "dark" : "light"}
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          />
-        </div>
+      <nav className={`xp-glass-nav xp-liquid-glass ${isDarkNav ? "xp-lg-dark" : "xp-lg-light"} ${!navVisible ? "xp-nav-hidden" : ""}`}>
+        <div className="xp-liquid-glass-border" />
+        <Logo
+          size="sm"
+          variant={isDarkNav ? "dark" : "light"}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        />
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {!isMobile && (
             <div className="xp-nav-links-desktop" style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -486,151 +509,109 @@ export default function ExplorePage() {
       )}
 
       {/* ═══════════════════════════════════════════
-          ACT 1: LOGO CINEMA + HERO
-          The logo starts massive and centered, then physically
-          shrinks into the nav as the user scrolls.
+          HERO — Dark. Staggered CSS entries.
+          Geometric rings with float animation.
+          Logo prominent. No cinema, just precision.
           ═══════════════════════════════════════════ */}
       <section data-nav-theme="dark" style={{
-        height: "200vh", // Double viewport for scroll-driven animation space
-        position: "relative",
-        background: "var(--xp-navy-deep)",
+        minHeight: "100vh", background: "var(--xp-navy-deep)", position: "relative",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "80px 48px", overflow: "hidden",
       }}>
-        {/* Sticky container holds the visual content in place during scroll */}
+        {/* Ambient glow */}
         <div style={{
-          position: "sticky",
-          top: 0,
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-        }}>
-          {/* Background radial glow */}
+          position: "absolute", top: "50%", left: "50%",
+          width: "120%", height: "120%", transform: "translate(-50%,-50%)",
+          background: "radial-gradient(ellipse at 50% 45%, rgba(200,169,110,0.04) 0%, transparent 60%)",
+          animation: "xpGlow 8s ease-in-out infinite", pointerEvents: "none",
+        }} />
+
+        {/* Geometric rings with subtle float */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 320, height: 320, borderRadius: "50%", border: "0.5px solid rgba(200,169,110,0.06)", animation: "xpSpin 80s linear infinite, xpRingFloat 12s ease-in-out infinite" }} />
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 520, height: 520, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.035)", animation: "xpSpinR 140s linear infinite" }} />
+          <div style={{ position: "absolute", top: "50%", left: "50%", width: 740, height: 740, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.025)", animation: "xpSpin 200s linear infinite, xpRingFloat 18s ease-in-out infinite 3s" }} />
+        </div>
+
+        {/* Hero content — staggered CSS entries */}
+        <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          {/* Logo at the top of hero */}
           <div style={{
-            position: "absolute", inset: 0,
-            background: `radial-gradient(ellipse at 50% 45%, rgba(200,169,110,${0.03 + cinemaEased * 0.02}) 0%, transparent 60%)`,
-            animation: "xpGlow 8s ease-in-out infinite",
-            pointerEvents: "none",
+            marginBottom: 48,
+            animation: `xpFadeUp 1s ${EASE} 0.2s both`,
+          }}>
+            <Logo size={isMobile ? "md" : "lg"} variant="dark" />
+          </div>
+
+          <div className="xp-mono" style={{
+            fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--xp-dim-dark)", marginBottom: 28,
+            animation: `xpHeroLabel 0.8s ${EASE} 0.5s both`,
+          }}>
+            {MARKETING_NUMBERS.specialistCount} Specialists. {MARKETING_NUMBERS.qualityCheckpoints} Gates. One Intelligence.
+          </div>
+
+          <h1 style={{
+            fontSize: "clamp(52px, 8.5vw, 100px)", fontWeight: 600,
+            letterSpacing: "-0.04em", lineHeight: 1.02,
+            color: "var(--xp-on-dark)", marginBottom: 24,
+            animation: `xpHeroHead 1s ${EASE} 0.8s both`,
+          }}>
+            Composed<br />Intelligence
+          </h1>
+
+          <div style={{
+            height: 1, background: "var(--xp-gold)", marginBottom: 28,
+            animation: `xpHeroLine 1.2s ${EASE} 1.3s both`,
           }} />
 
-          {/* Geometric rings - fade in as cinema progresses */}
-          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: heroContentOpacity }}>
-            <div style={{ position: "absolute", top: "50%", left: "50%", width: 320, height: 320, borderRadius: "50%", border: "0.5px solid rgba(200,169,110,0.055)", animation: "xpSpin 80s linear infinite" }} />
-            <div style={{ position: "absolute", top: "50%", left: "50%", width: 520, height: 520, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.035)", animation: "xpSpinR 140s linear infinite" }} />
-            <div style={{ position: "absolute", top: "50%", left: "50%", width: 740, height: 740, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.025)", animation: "xpSpin 200s linear infinite" }} />
-          </div>
-
-          {/* THE LOGO CINEMA */}
-          <div style={{
-            position: "absolute",
-            top: `${lerp(50, 4, cinemaEased)}%`,
-            left: "50%",
-            transform: `translate(-50%, -50%) scale(${logoScale})`,
-            transformOrigin: "center center",
-            zIndex: 10,
-            opacity: logoInCinema ? 1 : 0,
-            transition: logoInCinema ? "none" : `opacity 0.3s ${EASE}`,
-            animation: cinemaProgress < 0.05 && pageLoaded ? "xpBreath 4s ease-in-out infinite" : "none",
+          <p style={{
+            fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)",
+            maxWidth: 400, marginBottom: 44,
+            animation: `xpHeroSub 0.8s ${EASE} 1.5s both`,
           }}>
-            <Logo
-              size="sm"
-              variant="dark"
-            />
-          </div>
+            Content that performs. Quality that scales.<br />Intelligence that compounds.
+          </p>
 
-          {/* Hero content - fades in as logo cinema completes */}
-          <div style={{
-            position: "relative", zIndex: 2,
-            textAlign: "center", maxWidth: 800,
-            display: "flex", flexDirection: "column", alignItems: "center",
-            padding: "0 48px",
-            opacity: heroContentOpacity,
-            transform: `translateY(${lerp(40, 0, clamp((cinemaProgress - 0.3) / 0.5, 0, 1))}px)`,
-          }}>
-            <div className="xp-mono" style={{
-              fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
-              color: "var(--xp-dim-dark)", marginBottom: 28,
-            }}>
-              {MARKETING_NUMBERS.specialistCount} Specialists. {MARKETING_NUMBERS.qualityCheckpoints} Gates. One Intelligence.
-            </div>
-            <h1 style={{
-              fontSize: "clamp(52px, 8.5vw, 100px)", fontWeight: 600,
-              letterSpacing: "-0.04em", lineHeight: 1.02,
-              color: "var(--xp-on-dark)", marginBottom: 24,
-            }}>
-              Composed<br />Intelligence
-            </h1>
-            <div style={{ height: 1, width: 64, background: "var(--xp-gold)", marginBottom: 28 }} />
-            <p style={{
-              fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)",
-              maxWidth: 400, marginBottom: 44,
-            }}>
-              Content that performs. Quality that scales.<br />Intelligence that compounds.
-            </p>
-            <div>
-              <button className="xp-btn xp-btn-w" onClick={goSignup}>Get Early Access</button>
-            </div>
+          <div style={{ animation: `xpHeroCta 0.7s ${EASE} 1.8s both` }}>
+            <button className="xp-btn xp-btn-w" onClick={goSignup}>Get Early Access</button>
           </div>
+        </div>
 
-          {/* Scroll hint - only when cinema hasn't started */}
-          <div style={{
-            position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)",
-            opacity: cinemaProgress < 0.05 ? 1 : 0,
-            transition: "opacity 0.5s ease",
-          }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <span className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.1em", color: "var(--xp-dim-dark)", textTransform: "uppercase" }}>Scroll</span>
-              <div style={{ width: 1, height: 24, background: "var(--xp-gold)", borderRadius: 1, animation: "xpGlow 2s ease-in-out infinite" }} />
-            </div>
-          </div>
+        {/* Scroll hint */}
+        <div style={{
+          position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+          animation: `xpFadeUp 0.6s ${EASE} 2.2s both`,
+        }}>
+          <span className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.1em", color: "var(--xp-dim-dark)", textTransform: "uppercase" }}>Scroll</span>
+          <div style={{ width: 1, height: 24, background: "var(--xp-gold)", borderRadius: 1, animation: "xpScrollHint 2s ease-in-out infinite 2.5s" }} />
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          ACT 2: THE STATEMENT
-          Single massive typographic moment. Words reveal
-          sequentially on scroll.
-          ═══════════════════════════════════════════ */}
+      {/* ═══ ACT 2: THE STATEMENT ═══ */}
       <StatementSection />
 
-      {/* ═══════════════════════════════════════════
-          ACT 3: THE SPLIT
-          Without us / With us. Left fades, right expands.
-          ═══════════════════════════════════════════ */}
+      {/* ═══ ACT 3: THE SPLIT ═══ */}
       <SplitSection />
 
-      {/* ═══════════════════════════════════════════
-          ACT 4: REED IN GLASS
-          Light-mode product demo in liquid glass container.
-          ═══════════════════════════════════════════ */}
+      {/* ═══ ACT 4: REED IN LIQUID GLASS ═══ */}
       <ReedSection isMobile={isMobile} />
 
-      {/* ═══════════════════════════════════════════
-          ACT 5: ARCHITECTURAL NUMBERS
-          Massive parallax typography.
-          ═══════════════════════════════════════════ */}
+      {/* ═══ ACT 5: ARCHITECTURAL NUMBERS ═══ */}
       <NumbersSection />
 
-      {/* ═══════════════════════════════════════════
-          ACT 6: WATCH. WORK. WRAP. (Glass Cards)
-          Three liquid glass cards that fan out on enter.
-          ═══════════════════════════════════════════ */}
+      {/* ═══ ACT 6: GLASS CARDS ═══ */}
       <GlassCardsSection />
 
-      {/* ═══════════════════════════════════════════
-          ACT 7: QUALITY GATES
-          Sequential light-up with glass spheres.
-          ═══════════════════════════════════════════ */}
+      {/* ═══ ACT 7: QUALITY GATES ═══ */}
       <QualitySection />
 
-      {/* ═══════════════════════════════════════════
-          ACT 8: CTA + FOOTER (Dark bookend)
-          ═══════════════════════════════════════════ */}
+      {/* ═══ ACT 8: CTA (Dark bookend) ═══ */}
       <section data-nav-theme="dark" className="xp-sect" style={{
         padding: "160px 48px", background: "var(--xp-navy-deep)",
         textAlign: "center", position: "relative", overflow: "hidden",
       }}>
-        {/* Bookend rings echo the hero */}
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
           <div style={{ position: "absolute", top: "50%", left: "50%", width: 400, height: 400, borderRadius: "50%", border: "0.5px solid rgba(200,169,110,0.04)", animation: "xpSpin 120s linear infinite" }} />
           <div style={{ position: "absolute", top: "50%", left: "50%", width: 600, height: 600, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.02)", animation: "xpSpinR 180s linear infinite" }} />
@@ -701,9 +682,8 @@ function StatementSection() {
     const obs = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
-          // Stagger word reveals
           STATEMENT_WORDS.forEach((_, i) => {
-            setTimeout(() => setWordIndex(i), 120 * (i + 1));
+            setTimeout(() => setWordIndex(i), 150 * (i + 1));
           });
           obs.disconnect();
         }
@@ -716,7 +696,7 @@ function StatementSection() {
 
   return (
     <section data-nav-theme="light" ref={ref} style={{
-      minHeight: "100vh",
+      minHeight: "80vh",
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: "120px 48px",
       background: "var(--xp-white)",
@@ -799,7 +779,6 @@ function SplitSection() {
           </h2>
         </Reveal>
 
-        {/* The split grid */}
         <div className="xp-split-grid" style={{
           display: "grid",
           gridTemplateColumns: expanded ? "0fr 1fr" : "1fr 1fr",
@@ -811,8 +790,7 @@ function SplitSection() {
           <div style={{
             opacity: expanded ? 0 : 0.5,
             transition: `opacity 0.8s ${EASE}`,
-            overflow: "hidden",
-            minWidth: 0,
+            overflow: "hidden", minWidth: 0,
           }}>
             <div style={{ minWidth: 400 }}>
               <div className="xp-mono" style={{
@@ -866,7 +844,7 @@ function SplitSection() {
 
 
 // ═══════════════════════════════════════════
-// ACT 4: REED IN GLASS
+// ACT 4: REED IN LIQUID GLASS
 // ═══════════════════════════════════════════
 
 function ReedSection({ isMobile }: { isMobile: boolean }) {
@@ -919,10 +897,10 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
       background: "var(--xp-white)",
       position: "relative",
     }}>
-      {/* Subtle gradient mesh behind the glass container */}
+      {/* Subtle gradient mesh behind the glass */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
-        background: "radial-gradient(ellipse at 30% 40%, rgba(107,127,242,0.03) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(200,169,110,0.03) 0%, transparent 50%)",
+        background: "radial-gradient(ellipse at 30% 40%, rgba(107,127,242,0.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(200,169,110,0.04) 0%, transparent 50%)",
       }} />
 
       <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative" }}>
@@ -936,27 +914,17 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
           </p>
         </Reveal>
 
-        {/* LIQUID GLASS CONTAINER for Reed demo */}
+        {/* LIQUID GLASS CONTAINER */}
         <Reveal delay={200}>
-          <div className="xp-glass" style={{
-            overflow: "hidden",
-            position: "relative",
-          }}>
-            {/* Inner glow */}
-            <div style={{
-              position: "absolute", inset: 0, pointerEvents: "none",
-              background: "radial-gradient(ellipse at 50% 0%, rgba(200,169,110,0.04) 0%, transparent 60%)",
-              borderRadius: 20,
-            }} />
+          <div className="xp-liquid-glass xp-lg-light xp-lg-shadow" style={{ borderRadius: 20 }}>
+            <div className="xp-liquid-glass-border" style={{ borderRadius: 20 }} />
 
-            {/* The actual interface */}
-            <div style={{ position: "relative", borderRadius: 20, overflow: "hidden" }}>
+            {/* The interface inside the glass */}
+            <div style={{ borderRadius: 20, overflow: "hidden" }}>
               {/* Title bar */}
               <div style={{
                 display: "flex", alignItems: "center", padding: "11px 18px",
-                background: "rgba(248,249,250,0.8)",
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
+                background: "rgba(248,249,250,0.6)",
                 borderBottom: "1px solid rgba(0,0,0,0.04)",
               }}>
                 <div style={{ display: "flex", gap: 7 }}>
@@ -968,10 +936,10 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
                 <div style={{ width: 48 }} />
               </div>
 
-              <div style={{ display: "flex", minHeight: isMobile ? 360 : 420, background: "rgba(255,255,255,0.9)" }}>
+              <div style={{ display: "flex", minHeight: isMobile ? 360 : 420, background: "rgba(255,255,255,0.85)" }}>
                 {/* Sidebar */}
                 <div className="xp-reed-side" style={{
-                  width: 172, background: "rgba(248,249,250,0.7)",
+                  width: 172, background: "rgba(248,249,250,0.6)",
                   borderRight: "1px solid rgba(0,0,0,0.04)",
                   padding: "18px 10px", flexShrink: 0, display: "flex", flexDirection: "column", gap: 1,
                 }}>
@@ -1011,7 +979,7 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
                     </div>
                   </div>
 
-                  {/* Composing indicator */}
+                  {/* Composing */}
                   <div style={{
                     opacity: step === 2 ? 1 : 0, transition: "opacity .25s ease",
                     marginBottom: 14, display: "flex", alignItems: "center", gap: 10, minHeight: 32,
@@ -1037,8 +1005,7 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
                         <div style={{ fontSize: 12, fontWeight: 600, color: "var(--xp-gold)", marginBottom: 7 }}>Reed</div>
                         <div style={{
                           padding: "14px 18px", borderRadius: "3px 13px 13px 13px",
-                          background: "var(--xp-off)",
-                          border: "1px solid var(--xp-border)",
+                          background: "var(--xp-off)", border: "1px solid var(--xp-border)",
                           fontSize: 14, color: "var(--xp-text)", lineHeight: 1.7,
                         }}>
                           I analyzed your brand voice profile, reviewed the Q2 feature documentation, and cross-referenced engagement patterns from your last three launches. The draft targets the strategic pain points your enterprise segment flagged in March. Copy maintains a 96% voice DNA match with your established tone.
@@ -1073,7 +1040,7 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
 
                 {/* Metrics panel */}
                 <div className="xp-reed-met" style={{
-                  width: 192, background: "rgba(248,249,250,0.7)",
+                  width: 192, background: "rgba(248,249,250,0.6)",
                   borderLeft: "1px solid rgba(0,0,0,0.04)",
                   padding: "18px 14px", flexShrink: 0,
                 }}>
@@ -1117,15 +1084,14 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
 // ═══════════════════════════════════════════
 
 function NumbersSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { ref: revealRef, isVisible } = useScrollReveal(0.15);
+  const { ref, isVisible } = useScrollReveal(0.15);
   const a = useCountUp(MARKETING_NUMBERS.specialistCount, 1600, isVisible);
   const b = useCountUp(MARKETING_NUMBERS.outputFormatCount, 1200, isVisible);
   const c = useCountUp(MARKETING_NUMBERS.qualityCheckpoints, 900, isVisible);
 
   return (
-    <section data-nav-theme="light" ref={revealRef} style={{
-      minHeight: "80vh",
+    <section data-nav-theme="light" ref={ref} style={{
+      minHeight: "70vh",
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: "120px 48px",
       background: "var(--xp-off)",
@@ -1148,12 +1114,9 @@ function NumbersSection() {
             transition: `opacity 0.8s ${EASE} ${i * 150}ms, transform 0.8s ${EASE} ${i * 150}ms`,
           }}>
             <div style={{
-              fontSize: s.size,
-              fontWeight: 700,
-              letterSpacing: "-0.05em",
-              lineHeight: 0.85,
-              color: "var(--xp-text)",
-              opacity: 0.9,
+              fontSize: s.size, fontWeight: 700,
+              letterSpacing: "-0.05em", lineHeight: 0.85,
+              color: "var(--xp-text)", opacity: 0.9,
             }}>{s.v}</div>
             <div className="xp-mono" style={{
               fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase",
@@ -1168,7 +1131,7 @@ function NumbersSection() {
 
 
 // ═══════════════════════════════════════════
-// ACT 6: GLASS CARDS
+// ACT 6: GLASS CARDS (Watch. Work. Wrap.)
 // ═══════════════════════════════════════════
 
 function GlassCardsSection() {
@@ -1180,10 +1143,10 @@ function GlassCardsSection() {
       background: "var(--xp-white)",
       position: "relative",
     }}>
-      {/* Subtle gradient mesh */}
+      {/* Gradient mesh for glass refraction */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
-        background: "radial-gradient(ellipse at 20% 30%, rgba(107,127,242,0.03) 0%, transparent 40%), radial-gradient(ellipse at 80% 70%, rgba(200,169,110,0.03) 0%, transparent 40%)",
+        background: "radial-gradient(ellipse at 20% 30%, rgba(107,127,242,0.04) 0%, transparent 40%), radial-gradient(ellipse at 80% 70%, rgba(200,169,110,0.04) 0%, transparent 40%)",
       }} />
 
       <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative" }}>
@@ -1208,6 +1171,13 @@ function GlassCardsSection() {
                 : `translateY(${60 + i * 20}px) rotate(${(i - 1) * 2}deg)`,
               transition: `opacity 0.7s ${EASE} ${200 + i * 120}ms, transform 0.7s ${EASE} ${200 + i * 120}ms`,
             }}>
+              {/* Glass card border */}
+              <div style={{
+                position: "absolute", inset: 0, borderRadius: "inherit",
+                border: "1px solid rgba(255,255,255,0.5)",
+                pointerEvents: "none", zIndex: 3,
+              }} />
+
               {/* Icon */}
               <div style={{
                 width: 48, height: 48, borderRadius: 12,
@@ -1220,19 +1190,16 @@ function GlassCardsSection() {
                 {rm.icon}
               </div>
 
-              {/* Phase name */}
               <h3 style={{
                 fontSize: 24, fontWeight: 600,
                 letterSpacing: "-0.02em", marginBottom: 16,
               }}>{rm.name}</h3>
 
-              {/* Description */}
               <p style={{
                 fontSize: 15, lineHeight: 1.75,
                 color: "var(--xp-sec)", margin: 0,
               }}>{rm.desc}</p>
 
-              {/* Subtle bottom accent */}
               <div style={{
                 width: 32, height: 2, background: "var(--xp-gold)",
                 borderRadius: 1, marginTop: 28, opacity: 0.5,
@@ -1290,7 +1257,7 @@ function QualitySection() {
                       width: 32, height: 1, flexShrink: 0,
                       background: on ? "var(--xp-gold)" : "var(--xp-border)",
                       transition: "background .3s ease",
-                      boxShadow: on ? "0 0 8px rgba(200,169,110,0.2)" : "none",
+                      boxShadow: on ? "0 0 8px rgba(200,169,110,0.15)" : "none",
                     }} />
                   )}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7 }}>
@@ -1305,7 +1272,7 @@ function QualitySection() {
                       color: on ? "var(--xp-gold)" : "var(--xp-ter)",
                       transition: `all .35s ${EASE}`,
                       boxShadow: on
-                        ? "0 2px 12px rgba(200,169,110,0.15), inset 0 1px 0 rgba(255,255,255,0.2)"
+                        ? "0 2px 12px rgba(200,169,110,0.12), inset 0 0 8px rgba(200,169,110,0.06), inset 0 1px 0 rgba(255,255,255,0.15)"
                         : "0 1px 4px rgba(0,0,0,0.03)",
                       animation: justLit ? "xpGatePulse 0.6s ease" : "none",
                     }}>{i + 1}</div>
