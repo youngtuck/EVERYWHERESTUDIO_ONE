@@ -251,7 +251,7 @@ const CSS = `
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 28px; height: 52px;
   border-radius: 16px;
-  background: rgba(12, 26, 41, 0.85);
+  background: rgba(12, 26, 41, 0.55);
   transition: background 0.4s ${EASE_SMOOTH};
 }
 /* Override liquid-glass overflow/isolation that breaks fixed positioning */
@@ -264,12 +264,16 @@ const CSS = `
   border-radius: 16px;
   overflow: hidden;
 }
-/* Nav-specific opaque glass backgrounds for legibility */
+.xp-glass-nav.xp-liquid-glass::after {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+/* Nav-specific translucent glass backgrounds */
 .xp-glass-nav.xp-lg-dark {
-  background: rgba(10, 12, 18, 0.82);
+  background: rgba(10, 12, 18, 0.55);
 }
 .xp-glass-nav.xp-lg-light {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.45);
 }
 .xp-nav-link {
   font-size: 13px; font-weight: 500; cursor: pointer;
@@ -348,6 +352,60 @@ const CSS = `
 .xp-btn-glass:hover {
   background: rgba(255,255,255,0.18);
   border-color: rgba(255,255,255,0.22);
+}
+.xp-btn-liquid {
+  position: relative;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: var(--xp-on-dark);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  overflow: hidden;
+}
+.xp-btn-liquid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  box-shadow:
+    inset 0 0 20px rgba(255,255,255,0.06),
+    inset -1px -1px 0.5px rgba(255,255,255,0.12),
+    inset 1px 1px 0.5px rgba(255,255,255,0.08);
+  pointer-events: none;
+}
+.xp-btn-liquid:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.28);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.xp-btn-liquid-light {
+  position: relative;
+  background: rgba(12, 26, 41, 0.08);
+  border: 1px solid rgba(12, 26, 41, 0.12);
+  color: var(--xp-navy);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  overflow: hidden;
+}
+.xp-btn-liquid-light::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+  box-shadow:
+    inset 0 0 20px rgba(255,255,255,0.2),
+    inset -1px -1px 0.5px rgba(255,255,255,0.3),
+    inset 1px 1px 0.5px rgba(255,255,255,0.2);
+  pointer-events: none;
+}
+.xp-btn-liquid-light:hover {
+  background: rgba(12, 26, 41, 0.14);
+  border-color: rgba(12, 26, 41, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.06);
 }
 
 /* ═══ RESPONSIVE ═══ */
@@ -501,8 +559,8 @@ export default function ExplorePage() {
               }}>Sign In</button>
               <button className="xp-nav-cta" onClick={goSignup} style={
                 isDarkNav
-                  ? { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--xp-on-dark)" }
-                  : { background: "var(--xp-navy)", border: "1px solid var(--xp-navy)", color: "var(--xp-white)" }
+                  ? { background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "var(--xp-on-dark)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }
+                  : { background: "rgba(12,26,41,0.08)", border: "1px solid rgba(12,26,41,0.15)", color: "var(--xp-navy)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }
               }>Get Early Access</button>
             </div>
           )}
@@ -598,7 +656,7 @@ export default function ExplorePage() {
           </p>
 
           <div style={{ animation: `xpHeroCta 0.7s ${EASE} 1.8s both` }}>
-            <button className="xp-btn xp-btn-w" onClick={goSignup}>Get Early Access</button>
+            <button className="xp-btn xp-btn-liquid" onClick={goSignup}>Get Early Access</button>
           </div>
         </div>
 
@@ -660,7 +718,7 @@ export default function ExplorePage() {
               <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
                 Join the teams replacing content chaos with a system that compounds.
               </p>
-              <button className="xp-btn xp-btn-w" onClick={goSignup} style={{ marginBottom: 16 }}>Get Early Access</button>
+              <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Get Early Access</button>
               <div style={{ marginTop: 20 }}>
                 <button className="xp-btn xp-btn-glass" onClick={goSignin}>Sign In</button>
               </div>
