@@ -395,8 +395,6 @@ export default function ExplorePage() {
   const [navTheme, setNavTheme] = useState<"dark" | "light">("dark");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
-  const [logoProgress, setLogoProgress] = useState(0);
-  const heroRef = useRef<HTMLDivElement>(null);
 
   // Page load
   useEffect(() => {
@@ -421,18 +419,6 @@ export default function ExplorePage() {
     );
     sections.forEach(s => obs.observe(s));
     return () => obs.disconnect();
-  }, []);
-
-  // Logo scroll animation
-  useEffect(() => {
-    const onScroll = () => {
-      const scrollY = window.scrollY;
-      const threshold = 300;
-      setLogoProgress(Math.min(1, scrollY / threshold));
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Scroll progress bar
@@ -481,48 +467,14 @@ export default function ExplorePage() {
         ) : null;
       })()}
 
-      {/* Animated Logo: hero -> nav */}
-      {(() => {
-        const heroSize = isMobile ? 28 : 42;
-        const navSize = 20;
-        const scale = heroSize - (heroSize - navSize) * easeOut(Math.min(1, logoProgress));
-        const currentSize = Math.round(scale);
-        const heroX = typeof window !== 'undefined' ? window.innerWidth / 2 : 500;
-        const navX = isMobile ? 22 : 44;
-        const heroY = typeof window !== 'undefined' ? window.innerHeight * 0.42 : 400;
-        const navY = isMobile ? 20 : 24;
-        const p = easeOut(Math.min(1, logoProgress));
-        const x = heroX - (heroX - navX) * p;
-        const y = heroY - (heroY - navY) * p;
-        return (
-          <div style={{
-            position: "fixed",
-            left: x,
-            top: y,
-            transform: `translate(${-50 * (1 - p)}%, -50%)`,
-            zIndex: 101,
-            pointerEvents: logoProgress >= 0.95 ? "auto" : "none",
-            cursor: "pointer",
-            transition: "none",
-          }} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <Logo
-              size={currentSize as any}
-              variant={logoProgress < 0.5 ? "dark" : isDarkNav ? "dark" : "light"}
-            />
-          </div>
-        );
-      })()}
-
       {/* ═══ LIQUID GLASS NAV ═══ */}
       <nav className={`xp-glass-nav xp-liquid-glass ${isDarkNav ? "xp-lg-dark" : "xp-lg-light"}`}>
         <div className="xp-liquid-glass-border" />
-        <div style={{ opacity: logoProgress >= 0.9 ? 0 : 0, pointerEvents: "none", width: 0, overflow: "hidden" }}>
-          <Logo
-            size="sm"
-            variant={isDarkNav ? "dark" : "light"}
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          />
-        </div>
+        <Logo
+          size="sm"
+          variant={isDarkNav ? "dark" : "light"}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        />
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {!isMobile && (
             <div className="xp-nav-links-desktop" style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -571,7 +523,7 @@ export default function ExplorePage() {
           Geometric rings with float animation.
           Logo prominent. No cinema, just precision.
           ═══════════════════════════════════════════ */}
-      <section ref={heroRef} data-nav-theme="dark" style={{
+      <section data-nav-theme="dark" style={{
         minHeight: "100vh", background: "var(--xp-navy-deep)", position: "relative",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "80px 48px", overflow: "hidden",
@@ -597,19 +549,9 @@ export default function ExplorePage() {
 
         {/* Hero content — staggered CSS entries */}
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          {/* Logo placeholder to maintain layout spacing */}
-          <div style={{
-            marginBottom: 48,
-            animation: `xpFadeUp 1s ${EASE} 0.2s both`,
-            opacity: 0,
-            pointerEvents: "none",
-          }}>
-            <Logo size={isMobile ? "md" : "lg"} variant="dark" />
-          </div>
-
           <div className="xp-mono" style={{
             fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
-            color: "var(--xp-dim-dark)", marginBottom: 28,
+            color: "var(--xp-dim-dark)", marginBottom: 28, marginTop: 48,
             animation: `xpHeroLabel 0.8s ${EASE} 0.5s both`,
           }}>
             {MARKETING_NUMBERS.specialistCount} Specialists. {MARKETING_NUMBERS.qualityCheckpoints} Gates. One Intelligence.

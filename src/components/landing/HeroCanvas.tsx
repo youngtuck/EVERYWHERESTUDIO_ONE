@@ -18,16 +18,16 @@ interface Blob {
 }
 
 const BLOBS: Blob[] = [
-  { baseX: 0.3, baseY: 0.3, radius: 0.45, color: "rgba(107,127,242,0.08)", phaseX: 0, phaseY: 0.5, freqX: 0.15, freqY: 0.12, driftX: 0.08, driftY: 0.06 },
-  { baseX: 0.7, baseY: 0.6, radius: 0.38, color: "rgba(200,169,110,0.06)", phaseX: 1.2, phaseY: 0.8, freqX: 0.1, freqY: 0.14, driftX: 0.07, driftY: 0.09 },
-  { baseX: 0.5, baseY: 0.4, radius: 0.5, color: "rgba(180,150,90,0.05)", phaseX: 2.5, phaseY: 1.7, freqX: 0.08, freqY: 0.11, driftX: 0.1, driftY: 0.07 },
-  { baseX: 0.2, baseY: 0.7, radius: 0.35, color: "rgba(140,160,255,0.04)", phaseX: 3.1, phaseY: 2.3, freqX: 0.13, freqY: 0.09, driftX: 0.06, driftY: 0.08 },
-  { baseX: 0.8, baseY: 0.3, radius: 0.4, color: "rgba(80,100,200,0.05)", phaseX: 0.7, phaseY: 3.5, freqX: 0.11, freqY: 0.07, driftX: 0.09, driftY: 0.05 },
+  { baseX: 0.3, baseY: 0.3, radius: 0.45, color: "rgba(107,127,242,0.18)", phaseX: 0, phaseY: 0.5, freqX: 0.15, freqY: 0.12, driftX: 0.12, driftY: 0.09 },
+  { baseX: 0.7, baseY: 0.6, radius: 0.38, color: "rgba(200,169,110,0.14)", phaseX: 1.2, phaseY: 0.8, freqX: 0.1, freqY: 0.14, driftX: 0.10, driftY: 0.13 },
+  { baseX: 0.5, baseY: 0.4, radius: 0.5, color: "rgba(180,150,90,0.12)", phaseX: 2.5, phaseY: 1.7, freqX: 0.08, freqY: 0.11, driftX: 0.15, driftY: 0.10 },
+  { baseX: 0.2, baseY: 0.7, radius: 0.35, color: "rgba(140,160,255,0.10)", phaseX: 3.1, phaseY: 2.3, freqX: 0.13, freqY: 0.09, driftX: 0.09, driftY: 0.12 },
+  { baseX: 0.8, baseY: 0.3, radius: 0.4, color: "rgba(80,100,200,0.12)", phaseX: 0.7, phaseY: 3.5, freqX: 0.11, freqY: 0.07, driftX: 0.13, driftY: 0.08 },
 ];
 
 const SPRING_STIFFNESS = 0.028;
 const SPRING_DAMPING = 0.88;
-const CURSOR_INFLUENCE = 0.04;
+const CURSOR_INFLUENCE = 0.08;
 
 export default function HeroCanvas({ isMobile }: HeroCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,7 +118,7 @@ export default function HeroCanvas({ isMobile }: HeroCanvasProps) {
       const vr = Math.max(w, h) * 0.7;
       const vignette = ctx.createRadialGradient(vcx, vcy, vr * 0.3, vcx, vcy, vr);
       vignette.addColorStop(0, "rgba(6,13,20,0)");
-      vignette.addColorStop(1, "rgba(6,13,20,0.6)");
+      vignette.addColorStop(1, "rgba(6,13,20,0.35)");
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, w, h);
 
