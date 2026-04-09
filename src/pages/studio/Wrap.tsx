@@ -128,6 +128,7 @@ export default function WrapPage() {
   const [outputs, setOutputs] = useState<OutputItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sessionDraft, setSessionDraft] = useState<OutputItem | null>(null);
+  const [selectedOutputId, setSelectedOutputId] = useState<string | null>(null);
   const [formats, setFormats] = useState<string[]>(DEFAULT_FORMATS);
   const [activeFormat, setActiveFormat] = useState(DEFAULT_FORMATS[0]);
   const [copied, setCopied] = useState(false);
@@ -176,7 +177,7 @@ export default function WrapPage() {
     }
   }, []);
 
-  // Fetch outputs from Supabase (fallback)
+  // Fetch outputs from Supabase: all completed work ready for wrapping
   const fetchOutputs = useCallback(() => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
@@ -184,21 +185,27 @@ export default function WrapPage() {
       .from("outputs")
       .select("id, title, content, output_type, created_at, score")
       .eq("user_id", user.id)
+      .not("content", "is", null)
       .order("created_at", { ascending: false })
       .limit(50)
       .then(({ data, error }) => {
         if (error) console.error("[Wrap] Fetch error:", error);
-        setOutputs((data as OutputItem[]) || []);
+        const all = (data as OutputItem[]) || [];
+        // Filter out empty content
+        const withContent = all.filter(o => o.content && o.content.trim().length > 0);
+        setOutputs(withContent);
         setLoading(false);
       });
   }, [user]);
 
+  // Always fetch outputs so the picker is available
   useEffect(() => {
-    if (!sessionDraft) fetchOutputs();
-  }, [fetchOutputs, location.key, sessionDraft]);
+    fetchOutputs();
+  }, [fetchOutputs, location.key]);
 
-  // Active content
-  const activeOutput = sessionDraft || (outputs.length > 0 ? outputs[0] : null);
+  // Active content: session draft takes priority, then selected output, then nothing (show picker)
+  const selectedOutput = selectedOutputId ? outputs.find(o => o.id === selectedOutputId) || null : null;
+  const activeOutput = sessionDraft || selectedOutput;
   const hasContent = !!activeOutput;
 
   // Adapt format via API
@@ -336,32 +343,108 @@ export default function WrapPage() {
   }
 
   if (!hasContent) {
+    // No active output: show a picker of completed sessions
+    if (outputs.length === 0) {
+      return (
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", flex: 1, padding: 40, textAlign: "center",
+          fontFamily: FONT,
+        }}>
+          <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.3 }}>&#10022;</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
+            Nothing to wrap yet.
+          </div>
+          <div style={{ fontSize: 13, color: "var(--fg-3)", maxWidth: 320, lineHeight: 1.5, marginBottom: 24 }}>
+            Complete a Work session first. Once you finish and review your draft, it will appear here.
+          </div>
+          <button onClick={() => nav("/studio/work")} style={{
+            padding: "10px 24px", borderRadius: 8,
+            background: "var(--gold-bright, #F5C642)", border: "none",
+            color: "var(--fg)", fontSize: 13, fontWeight: 600,
+            cursor: "pointer", fontFamily: FONT,
+          }}>Start a session</button>
+        </div>
+      );
+    }
+
+    // Show the list of completed outputs to wrap
     return (
       <div style={{
-        display: "flex", flexDirection: "column", alignItems: "center",
-        justifyContent: "center", flex: 1, padding: 40, textAlign: "center",
-        fontFamily: FONT,
+        display: "flex", flexDirection: "column", flex: 1,
+        overflow: "hidden", fontFamily: FONT,
       }}>
-        <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.3 }}>&#10022;</div>
-        <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
-          Ready to wrap.
+        <div style={{
+          padding: "20px 24px 12px",
+          borderBottom: "1px solid var(--line)",
+          flexShrink: 0,
+        }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
+            Wrap
+          </div>
+          <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5 }}>
+            Select a completed piece to adapt for different channels.
+          </div>
         </div>
-        <div style={{ fontSize: 13, color: "var(--fg-3)", maxWidth: 320, lineHeight: 1.5, marginBottom: 24 }}>
-          Complete a Work session and export your content.
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px 24px" }}>
+          {outputs.map(output => {
+            const preview = (output.content || "").replace(/\n+/g, " ").slice(0, 140);
+            const date = new Date(output.created_at);
+            const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            return (
+              <button
+                key={output.id}
+                onClick={() => {
+                  setSelectedOutputId(output.id);
+                  setFormatContents({});
+                  adaptingRef.current.clear();
+                  setExported(false);
+                  setCopied(false);
+                }}
+                style={{
+                  display: "block", width: "100%", textAlign: "left",
+                  padding: "14px 16px", marginBottom: 8, borderRadius: 10,
+                  background: "var(--surface)", border: "1px solid var(--line)",
+                  cursor: "pointer", fontFamily: FONT, transition: "border-color 0.12s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>
+                    {output.title || "Untitled"}
+                  </span>
+                  <span style={{ fontSize: 10, color: "var(--fg-3)", flexShrink: 0, marginLeft: 12 }}>
+                    {dateStr}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{
+                    fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4,
+                    background: "rgba(245,198,66,0.12)", color: "#9A7030",
+                    textTransform: "uppercase" as const, letterSpacing: "0.05em",
+                  }}>
+                    {output.output_type || "freestyle"}
+                  </span>
+                  {typeof output.score === "number" && output.score > 0 && (
+                    <span style={{
+                      fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4,
+                      background: output.score >= 75 ? "rgba(34,197,94,0.12)" : "rgba(245,198,66,0.12)",
+                      color: output.score >= 75 ? "#16A34A" : "#9A7030",
+                    }}>
+                      {output.score}
+                    </span>
+                  )}
+                </div>
+                {preview && (
+                  <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 6, lineHeight: 1.5 }}>
+                    {preview}{preview.length >= 140 ? "..." : ""}
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
-        <button onClick={() => nav("/studio/work")} style={{
-          padding: "10px 24px", borderRadius: 8,
-          background: "var(--gold-bright, #F5C642)", border: "none",
-          color: "var(--fg)", fontSize: 13, fontWeight: 600,
-          cursor: "pointer", fontFamily: FONT,
-        }}>Go to Work</button>
-        {outputs.length > 0 && (
-          <button onClick={() => nav("/studio/outputs")} style={{
-            marginTop: 12, background: "none", border: "none",
-            fontSize: 12, color: "var(--fg-3)", cursor: "pointer",
-            fontFamily: FONT, textDecoration: "underline",
-          }}>Or select from your library</button>
-        )}
       </div>
     );
   }
@@ -381,6 +464,28 @@ export default function WrapPage() {
         display: "flex", alignItems: "center", borderBottom: "1px solid var(--line)",
         padding: "0 20px", flexShrink: 0, background: "var(--bg)", overflowX: "auto",
       }}>
+        {/* Back to list button when viewing from picker (not session draft) */}
+        {!sessionDraft && selectedOutputId && (
+          <button
+            onClick={() => {
+              setSelectedOutputId(null);
+              setFormatContents({});
+              adaptingRef.current.clear();
+              setExported(false);
+            }}
+            style={{
+              fontSize: 11, fontWeight: 500, color: "var(--fg-3)",
+              padding: "11px 14px", cursor: "pointer",
+              background: "none", border: "none", fontFamily: FONT,
+              borderRight: "1px solid var(--line)", marginRight: 4,
+              transition: "color 0.1s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
+          >
+            ← All pieces
+          </button>
+        )}
         {formats.map(fmt => (
           <button key={fmt} onClick={() => handleFormatChange(fmt)} style={{
             fontSize: 11, fontWeight: activeFormat === fmt ? 600 : 500,
