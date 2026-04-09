@@ -114,7 +114,7 @@ const CSS = `
   -moz-osx-font-smoothing: grayscale;
   background: var(--xp-white);
   color: var(--xp-text);
-  overflow-x: hidden;
+  overflow: clip;
 }
 .xp a { color: inherit; text-decoration: none; }
 .xp ::selection { background: var(--xp-gold); color: var(--xp-navy); }
