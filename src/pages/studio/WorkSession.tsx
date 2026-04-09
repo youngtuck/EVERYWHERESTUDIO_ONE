@@ -911,7 +911,7 @@ function StageIntake({
 
   // Active chat state: messages + input bar at bottom
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)", minHeight: 0 }}>
       {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
@@ -3355,6 +3355,7 @@ export default function WorkSession() {
         color: "var(--fg-3)",
         letterSpacing: "0.05em",
         display: "flex", alignItems: "center", gap: 8,
+        flexShrink: 0,
       }}>
         <span style={{ textTransform: "uppercase" as const }}>Working on:</span>
         <span style={{
