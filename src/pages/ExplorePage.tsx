@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
+import HeroCanvas from "../components/landing/HeroCanvas";
 import { MARKETING_NUMBERS } from "../lib/constants";
 
 /* ═══════════════════════════════════════════════════════════
@@ -457,6 +458,29 @@ export default function ExplorePage() {
       {/* Scroll progress */}
       <div style={{ position: "fixed", top: 0, left: 0, height: 2, width: `${scrollProgress * 100}%`, background: "var(--xp-gold)", zIndex: 200, transition: "width .06s linear", pointerEvents: "none" }} />
 
+      {/* Scroll-driven color temperature shift: cool blue -> warm gold -> balanced */}
+      {(() => {
+        const sp = scrollProgress;
+        // 0-0.3: blue tint | 0.3-0.7: gold tint | 0.7-1.0: balanced/neutral
+        const blueAlpha = sp < 0.3 ? 0.04 * (1 - sp / 0.3) : 0;
+        const goldAlpha = sp > 0.3 && sp < 0.7
+          ? 0.035 * Math.sin((sp - 0.3) / 0.4 * Math.PI)
+          : 0;
+        const tintColor = blueAlpha > 0
+          ? `rgba(107,127,242,${blueAlpha})`
+          : goldAlpha > 0
+            ? `rgba(200,169,110,${goldAlpha})`
+            : "transparent";
+        return tintColor !== "transparent" ? (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 1, pointerEvents: "none",
+            background: tintColor,
+            transition: "background 0.3s linear",
+            mixBlendMode: "color",
+          }} />
+        ) : null;
+      })()}
+
       {/* Animated Logo: hero -> nav */}
       {(() => {
         const heroSize = isMobile ? 28 : 42;
@@ -552,20 +576,24 @@ export default function ExplorePage() {
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "80px 48px", overflow: "hidden",
       }}>
-        {/* Ambient glow */}
+        {/* Generative fluid canvas background (desktop only) */}
+        <HeroCanvas isMobile={isMobile} />
+
+        {/* Mobile fallback: static gradient mesh */}
+        {isMobile && (
+          <div style={{
+            position: "absolute", inset: 0, pointerEvents: "none",
+            background: "radial-gradient(ellipse at 30% 30%, rgba(107,127,242,0.1) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(200,169,110,0.08) 0%, transparent 45%), radial-gradient(ellipse at 50% 50%, rgba(80,100,200,0.06) 0%, transparent 60%)",
+          }} />
+        )}
+
+        {/* Ambient glow (supplements canvas on desktop, primary on mobile) */}
         <div style={{
           position: "absolute", top: "50%", left: "50%",
           width: "120%", height: "120%", transform: "translate(-50%,-50%)",
           background: "radial-gradient(ellipse at 50% 45%, rgba(200,169,110,0.04) 0%, transparent 60%)",
           animation: "xpGlow 8s ease-in-out infinite", pointerEvents: "none",
         }} />
-
-        {/* Geometric rings with subtle float */}
-        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 320, height: 320, borderRadius: "50%", border: "0.5px solid rgba(200,169,110,0.06)", animation: "xpSpin 80s linear infinite, xpRingFloat 12s ease-in-out infinite" }} />
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 520, height: 520, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.035)", animation: "xpSpinR 140s linear infinite" }} />
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 740, height: 740, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.025)", animation: "xpSpin 200s linear infinite, xpRingFloat 18s ease-in-out infinite 3s" }} />
-        </div>
 
         {/* Hero content — staggered CSS entries */}
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800, display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -649,6 +677,12 @@ export default function ExplorePage() {
         textAlign: "center", position: "relative", overflow: "hidden",
       }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          {/* Centered gold glow behind rings */}
+          <div style={{
+            position: "absolute", top: "50%", left: "50%", width: "80%", height: "80%",
+            transform: "translate(-50%,-50%)",
+            background: "radial-gradient(ellipse at 50% 50%, rgba(200,169,110,0.06) 0%, transparent 50%)",
+          }} />
           <div style={{ position: "absolute", top: "50%", left: "50%", width: 400, height: 400, borderRadius: "50%", border: "0.5px solid rgba(200,169,110,0.04)", animation: "xpSpin 120s linear infinite" }} />
           <div style={{ position: "absolute", top: "50%", left: "50%", width: 600, height: 600, borderRadius: "50%", border: "0.5px solid rgba(255,255,255,0.02)", animation: "xpSpinR 180s linear infinite" }} />
         </div>
@@ -933,10 +967,10 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
       background: "var(--xp-white)",
       position: "relative",
     }}>
-      {/* Subtle gradient mesh behind the glass */}
+      {/* Gradient mesh behind the glass: increased visibility for refraction */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
-        background: "radial-gradient(ellipse at 30% 40%, rgba(107,127,242,0.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(200,169,110,0.04) 0%, transparent 50%)",
+        background: "radial-gradient(ellipse at 30% 40%, rgba(107,127,242,0.07) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(200,169,110,0.07) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(80,100,200,0.04) 0%, transparent 45%)",
       }} />
 
       <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative" }}>
@@ -1170,6 +1204,83 @@ function NumbersSection() {
 // ACT 6: GLASS CARDS (Watch. Work. Wrap.)
 // ═══════════════════════════════════════════
 
+function GlassCard({
+  rm, index, isVisible,
+}: {
+  rm: { name: string; desc: string };
+  index: number;
+  isVisible: boolean;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [shimmer, setShimmer] = useState({ x: 50, y: 50, active: false });
+
+  const onMove = useCallback((e: React.MouseEvent) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setShimmer({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+      active: true,
+    });
+  }, []);
+
+  const onLeave = useCallback(() => {
+    setShimmer(s => ({ ...s, active: false }));
+  }, []);
+
+  return (
+    <div
+      ref={cardRef}
+      className="xp-glass-card"
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      style={{
+        flex: 1,
+        padding: "40px 32px",
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible
+          ? "translateY(0) rotate(0deg)"
+          : `translateY(${60 + index * 20}px) rotate(${(index - 1) * 2}deg)`,
+        transition: `opacity 0.7s ${EASE} ${200 + index * 200}ms, transform 0.7s ${EASE} ${200 + index * 200}ms`,
+      }}
+    >
+      {/* Glass card border */}
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: "inherit",
+        border: "1px solid rgba(255,255,255,0.5)",
+        pointerEvents: "none", zIndex: 3,
+      }} />
+
+      {/* Hover shimmer: specular highlight that follows cursor */}
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: "inherit",
+        pointerEvents: "none", zIndex: 4,
+        background: shimmer.active
+          ? `radial-gradient(circle at ${shimmer.x}% ${shimmer.y}%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 40%, transparent 70%)`
+          : "transparent",
+        opacity: shimmer.active ? 1 : 0,
+        transition: "opacity 0.35s ease",
+      }} />
+
+      <h3 style={{
+        fontSize: 24, fontWeight: 600,
+        letterSpacing: "-0.02em", marginBottom: 16,
+      }}>{rm.name}</h3>
+
+      <p style={{
+        fontSize: 15, lineHeight: 1.75,
+        color: "var(--xp-sec)", margin: 0,
+      }}>{rm.desc}</p>
+
+      <div style={{
+        width: 32, height: 2, background: "var(--xp-gold)",
+        borderRadius: 1, marginTop: 28, opacity: 0.5,
+      }} />
+    </div>
+  );
+}
+
 function GlassCardsSection() {
   const { ref, isVisible } = useScrollReveal(0.12);
 
@@ -1179,10 +1290,10 @@ function GlassCardsSection() {
       background: "var(--xp-white)",
       position: "relative",
     }}>
-      {/* Gradient mesh for glass refraction */}
+      {/* Multi-point gradient mesh for glass refraction depth */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
-        background: "radial-gradient(ellipse at 20% 30%, rgba(107,127,242,0.04) 0%, transparent 40%), radial-gradient(ellipse at 80% 70%, rgba(200,169,110,0.04) 0%, transparent 40%)",
+        background: "radial-gradient(ellipse at 15% 25%, rgba(107,127,242,0.08) 0%, transparent 40%), radial-gradient(ellipse at 85% 75%, rgba(200,169,110,0.07) 0%, transparent 40%), radial-gradient(ellipse at 50% 50%, rgba(140,160,255,0.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 20%, rgba(180,150,90,0.04) 0%, transparent 35%)",
       }} />
 
       <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative" }}>
@@ -1198,37 +1309,7 @@ function GlassCardsSection() {
           display: "flex", gap: 24, alignItems: "stretch",
         }}>
           {ROOMS.map((rm, i) => (
-            <div key={rm.name} className="xp-glass-card" style={{
-              flex: 1,
-              padding: "40px 32px",
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible
-                ? "translateY(0) rotate(0deg)"
-                : `translateY(${60 + i * 20}px) rotate(${(i - 1) * 2}deg)`,
-              transition: `opacity 0.7s ${EASE} ${200 + i * 200}ms, transform 0.7s ${EASE} ${200 + i * 200}ms`,
-            }}>
-              {/* Glass card border */}
-              <div style={{
-                position: "absolute", inset: 0, borderRadius: "inherit",
-                border: "1px solid rgba(255,255,255,0.5)",
-                pointerEvents: "none", zIndex: 3,
-              }} />
-
-              <h3 style={{
-                fontSize: 24, fontWeight: 600,
-                letterSpacing: "-0.02em", marginBottom: 16,
-              }}>{rm.name}</h3>
-
-              <p style={{
-                fontSize: 15, lineHeight: 1.75,
-                color: "var(--xp-sec)", margin: 0,
-              }}>{rm.desc}</p>
-
-              <div style={{
-                width: 32, height: 2, background: "var(--xp-gold)",
-                borderRadius: 1, marginTop: 28, opacity: 0.5,
-              }} />
-            </div>
+            <GlassCard key={rm.name} rm={rm} index={i} isVisible={isVisible} />
           ))}
         </div>
       </div>
@@ -1255,8 +1336,15 @@ function QualitySection() {
   return (
     <section data-nav-theme="light" className="xp-sect" ref={ref} style={{
       padding: "140px 48px", background: "var(--xp-off)", textAlign: "center",
+      position: "relative", overflow: "hidden",
     }}>
-      <div style={{ maxWidth: 800, margin: "0 auto" }}>
+      {/* Gradient mesh for glass gate refraction */}
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        background: "radial-gradient(ellipse at 40% 60%, rgba(200,169,110,0.06) 0%, transparent 45%), radial-gradient(ellipse at 60% 40%, rgba(107,127,242,0.05) 0%, transparent 40%), radial-gradient(ellipse at 50% 50%, rgba(140,160,255,0.03) 0%, transparent 55%)",
+      }} />
+
+      <div style={{ maxWidth: 800, margin: "0 auto", position: "relative" }}>
         <Reveal>
           <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>04 / Quality Standard</div>
           <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
