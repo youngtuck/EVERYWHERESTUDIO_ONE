@@ -59,7 +59,8 @@ CLEAN_6_5/             # Agent personality files (Reed, Sentinel, etc.)
 
 ## Terminology (Enforced)
 
-- "Composed Intelligence" (never "Orchestrated Intelligence", never "Orchestrated")
+- "Structured Intelligence" is the product category (used in external positioning and marketing)
+- "Composed Intelligence" remains the internal architectural term (never "Orchestrated Intelligence", never "Orchestrated")
 - "Reed" for the primary content capture agent (never "Watson")
 - "Voice DNA" for the voice matching system
 - "Impact Score" for the quality score (was previously "Betterish Score")
@@ -90,9 +91,9 @@ The ExplorePage uses its own design system defined in the CSS block at the top o
 - No Inter on marketing pages (Inter is only for the studio dashboard / VSCO work)
 
 ### Logo
-- "EVERYWHERE" in #6B7FF2, weight 700, uppercase
-- "STUDIO" in gold (#D4A832 on dark, #1A1A1A on light), weight 300, uppercase
-- TM symbol after STUDIO
+- "EVERYWHERE" in #4A90D9 (Cornflower Blue), weight 700, uppercase
+- "Studio" (proper case, not uppercase) in #F5C642 (Signal Gold on dark), #1A1A1A (on light), weight 300
+- TM symbol after Studio: 0.32 ratio fontSize, verticalAlign 10px, opacity 0.75
 - Component: src/components/Logo.tsx
 - Accepts size prop: "sm" (20px), "md" (28px), "lg" (42px), or a number
 - Accepts variant prop: "dark" or "light"

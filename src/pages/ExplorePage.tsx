@@ -91,7 +91,7 @@ const CSS = `
   --xp-navy: #0C1A29;
   --xp-navy-deep: #060D14;
   --xp-gold: #C8A96E;
-  --xp-blue: #6B7FF2;
+  --xp-blue: #4A90D9;
   --xp-white: #FFFFFF;
   --xp-off: #F8F9FA;
   --xp-text: #0A0A0A;
@@ -448,21 +448,21 @@ const CSS = `
 // ══════════════════════════════════
 
 const PROBLEMS = [
-  { without: "200 pieces a month. No idea which 10 moved the needle.", with: "Every piece tracked, measured, and ranked by real impact." },
-  { without: "Strategy, brand voice, SEO, distribution: specialists who have never shared a room.", with: "40 specialists collaborating in real time on every single piece." },
-  { without: "AI tools that generate fast. Audiences that can tell.", with: "Intelligence that thinks before it writes. Quality your audience trusts." },
-  { without: "Quality review after publishing. If it happens at all.", with: "Seven gates. Every piece. Before it ships." },
+  { without: "The strategy is clear. The insight is sharp. But somewhere between the thought and the published piece, everything slows down.", with: "A system that watches the landscape, works the idea all the way through, and wraps the output for the world." },
+  { without: "Drafts sit unfinished. Opportunities pass. The mountain grows.", with: "One idea, worked all the way through. Seven quality checkpoints. Nothing ships until it is ready." },
+  { without: "Tools exist. But tools do not think. Tools do not ask questions. Tools do not push back when the premise is weak.", with: "Specialized intelligence working as an ensemble. Every session has a first listener who asks the right questions." },
+  { without: "That is not a creativity problem. It is a systems problem.", with: "A quality system that will not let mediocre content through. An intelligence layer monitoring your category while you sleep." },
 ];
 
 const ROOMS = [
-  { name: "Watch", desc: "The intelligence layer. Reed monitors your industry, tracks competitors, and builds strategic foundation before creation begins.", icon: "\u25C9" },
-  { name: "Work", desc: "The creation engine. 40 specialists collaborate across copywriting, voice, SEO, design direction, and distribution.", icon: "\u25C8" },
-  { name: "Wrap", desc: "The quality standard. Seven gates verify every output against voice DNA, accuracy, and audience relevance.", icon: "\u25C7" },
+  { name: "Watch", desc: "Know what is moving before your competitors do. EVERYWHERE monitors your category overnight and delivers a structured briefing every morning. Signals scored. Opportunities ranked. Content angles ready." },
+  { name: "Work", desc: "One idea, worked all the way through. Your first listener asks the right questions. Structure emerges. The draft gets written, refined, and run through seven quality checkpoints. Nothing ships until it is ready." },
+  { name: "Wrap", desc: "From approved to published. Choose a format. Choose a channel. Your thinking reaches the people who need to hear it. The format changes. The thinking survives it." },
 ];
 
-const GATES = ["Voice", "Strategy", "Accuracy", "Audience", "Format", "Brand", "Final"];
+const GATES = ["Dedup", "Research", "Voice", "Engage", "SLOP", "Editorial", "Risk"];
 const SPECIALIST_TAGS = ["Brand Voice", "Enterprise Copy", "SEO", "Distribution", "Analytics"];
-const STATEMENT_WORDS = ["Your", "content", "deserves", "composed", "intelligence."];
+const STATEMENT_WORDS = ["The", "idea", "is", "never", "the", "problem."];
 
 
 // ═══════════════════════════════════════════
@@ -634,7 +634,7 @@ export default function ExplorePage() {
             color: "var(--xp-dim-dark)", marginBottom: 28, marginTop: 48,
             animation: `xpHeroLabel 0.8s ${EASE} 0.5s both`,
           }}>
-            {MARKETING_NUMBERS.specialistCount} Specialists. {MARKETING_NUMBERS.qualityCheckpoints} Gates. One Intelligence.
+            Structured Intelligence
           </div>
 
           <h1 style={{
@@ -643,7 +643,7 @@ export default function ExplorePage() {
             color: "var(--xp-on-dark)", marginBottom: 24,
             animation: `xpHeroHead 1s ${EASE} 0.8s both`,
           }}>
-            Composed<br />Intelligence
+            Getting it out of<br />your head is.
           </h1>
 
           <div style={{
@@ -656,11 +656,11 @@ export default function ExplorePage() {
             maxWidth: 400, marginBottom: 44,
             animation: `xpHeroSub 0.8s ${EASE} 1.5s both`,
           }}>
-            Content that performs. Quality that scales.<br />Intelligence that compounds.
+            EVERYWHERE Studio moves your thinking from private<br />to published, at the level your ideas deserve.
           </p>
 
           <div style={{ animation: `xpHeroCta 0.7s ${EASE} 1.8s both` }}>
-            <button className="xp-btn xp-btn-liquid" onClick={goSignup}>Get Early Access</button>
+            <button className="xp-btn xp-btn-liquid" onClick={goSignup}>See It Work</button>
           </div>
         </div>
 
@@ -717,18 +717,18 @@ export default function ExplorePage() {
                 letterSpacing: "-0.04em", lineHeight: 1.08,
                 color: "var(--xp-on-dark)", maxWidth: 600, marginBottom: 24,
               }}>
-                Start building.
+                Built for one kind of person.
               </h2>
               <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
-                Join the teams replacing content chaos with a system that compounds.
+                You are not a marketer. You are a practitioner with something important to say. EVERYWHERE Studio was built for you.
               </p>
-              <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Get Early Access</button>
+              <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
               <div style={{ marginTop: 20 }}>
                 <button className="xp-btn xp-btn-glass" onClick={goSignin}>Sign In</button>
               </div>
               <div style={{ marginTop: 40 }}>
-                <a href="mailto:mark@coastalintelligence.ai" className="xp-mono" style={{ fontSize: 12, color: "var(--xp-dim-dark)", textDecoration: "none" }}>
-                  mark@coastalintelligence.ai
+                <a href="mailto:beta@everywherestudio.ai" className="xp-mono" style={{ fontSize: 12, color: "var(--xp-dim-dark)", textDecoration: "none" }}>
+                  beta@everywherestudio.ai
                 </a>
               </div>
             </div>
@@ -752,7 +752,7 @@ export default function ExplorePage() {
               >{label}</button>
             ))}
           </div>
-          <span style={{ fontSize: 12, color: "var(--xp-ter)" }}>&copy; {new Date().getFullYear()} Mixed Grill LLC / Coastal Intelligence. All rights reserved.</span>
+          <span style={{ fontSize: 12, color: "var(--xp-ter)" }}>&copy; {new Date().getFullYear()} Mixed Grill, LLC. All rights reserved.</span>
         </div>
       </footer>
     </div>
@@ -802,7 +802,7 @@ function StatementSection() {
           color: "var(--xp-text)",
         }}>
           {STATEMENT_WORDS.map((word, i) => {
-            const isGold = word === "intelligence.";
+            const isGold = word === "problem.";
             const visible = i <= wordIndex;
             return (
               <span key={i} style={{
@@ -826,7 +826,7 @@ function StatementSection() {
             fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase",
             color: "var(--xp-ter)",
           }}>
-            Everywhere Studio
+            EVERYWHERE Studio
           </span>
         </div>
       </div>
@@ -866,8 +866,8 @@ function SplitSection() {
             letterSpacing: "-0.03em", lineHeight: 1.12,
             maxWidth: 640, marginBottom: 64,
           }}>
-            Content teams are drowning in tools.{" "}
-            <span style={{ color: "var(--xp-ter)" }}>Starving for strategy.</span>
+            You are not short on ideas.{" "}
+            <span style={{ color: "var(--xp-ter)" }}>You are short on execution.</span>
           </h2>
         </Reveal>
 
@@ -888,7 +888,7 @@ function SplitSection() {
               <div className="xp-mono" style={{
                 fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase",
                 color: "var(--xp-ter)", marginBottom: 24, paddingRight: 40,
-              }}>Without Us</div>
+              }}>Without a system</div>
               {PROBLEMS.map((p, i) => (
                 <Reveal key={i} delay={200 + i * 80}>
                   <div style={{
@@ -912,7 +912,7 @@ function SplitSection() {
             <div className="xp-mono" style={{
               fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase",
               color: "var(--xp-gold)", marginBottom: 24,
-            }}>With Everywhere Studio</div>
+            }}>With EVERYWHERE Studio</div>
             {PROBLEMS.map((p, i) => (
               <Reveal key={i} delay={300 + i * 100}>
                 <div style={{
@@ -997,12 +997,12 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative" }}>
         <Reveal>
-          <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>02 / Meet Reed</div>
+          <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>02 / A New Category</div>
           <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, maxWidth: 600, marginBottom: 16 }}>
-            Intelligence that thinks<br />before it writes.
+            Not an AI writing tool.<br />Structured Intelligence.
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", maxWidth: 520, marginBottom: 56 }}>
-            Reed coordinates {MARKETING_NUMBERS.specialistCount} specialists across research, strategy, voice calibration, and quality review before a single word reaches your audience.
+            The system thinks with you. Not for you. Every session has a first listener who asks the right questions, a quality system that will not let mediocre content through, and an intelligence layer monitoring your category while you sleep.
           </p>
         </Reveal>
 
@@ -1320,7 +1320,7 @@ function GlassCardsSection() {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative" }}>
         <Reveal>
-          <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>03 / The System</div>
+          <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>03 / The Framework</div>
           <h2 style={{
             fontSize: "clamp(34px, 5vw, 56px)", fontWeight: 600,
             letterSpacing: "-0.035em", lineHeight: 1.08, marginBottom: 64,
@@ -1373,7 +1373,7 @@ function QualitySection() {
             Seven gates. Zero compromises.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--xp-sec)", maxWidth: 520, margin: "0 auto 56px" }}>
-            Every piece of content passes through seven independent quality checkpoints before reaching your audience.
+            Nothing ships until every one clears. Voice authenticity. Research validation. SLOP detection. Editorial excellence. Perspective and risk.
           </p>
         </Reveal>
 
