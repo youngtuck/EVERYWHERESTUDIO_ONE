@@ -873,7 +873,7 @@ function StageIntake({
   if (!hasUserMessage && !sending) {
     return (
       <div style={{
-        display: "flex", flexDirection: "column", flex: 1, overflow: "hidden",
+        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden",
         background: "transparent", alignItems: "center", justifyContent: "center",
       }}>
         <div style={{
@@ -996,7 +996,7 @@ function StageIntake({
       </div>
 
       {/* Input bar */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--glass-topbar)", flexShrink: 0, borderTop: "1px solid var(--glass-border)", zIndex: 10, backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "transparent", flexShrink: 0, zIndex: 10 }}>
         <div style={{ width: "100%", maxWidth: 680 }}>
           <ChatInputBar
             placeholder="What's on your mind?"
@@ -1179,22 +1179,19 @@ function ChatInputBar({
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      <div style={{
+      <div className="liquid-glass" style={{
         display: "flex", alignItems: "center", gap: 8,
-        background: "rgba(245,198,66,0.10)",
-        border: "1px solid rgba(245,198,66,0.35)",
-        borderRadius: 12,
-        padding: "8px 10px 8px 14px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        transition: "border-color 0.15s, box-shadow 0.15s",
+        borderRadius: 16,
+        padding: "10px 12px 10px 16px",
+        transition: "border-color 0.2s, box-shadow 0.2s",
       }}
         onFocus={e => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(245,198,66,0.6)";
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(245,198,66,0.12)";
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.3)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 0 20px rgba(255,255,255,0.06)";
         }}
         onBlur={e => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(245,198,66,0.35)";
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+          (e.currentTarget as HTMLElement).style.borderColor = "";
+          (e.currentTarget as HTMLElement).style.boxShadow = "";
         }}
       >
         <textarea
@@ -1225,10 +1222,12 @@ function ChatInputBar({
           disabled={disabled || !value.trim()}
           style={{
             width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-            background: value.trim() && !disabled ? "var(--fg)" : "var(--line)",
-            border: "none", cursor: value.trim() && !disabled ? "pointer" : "not-allowed",
+            background: value.trim() && !disabled ? "rgba(13,27,42,0.85)" : "rgba(0,0,0,0.08)",
+            border: value.trim() && !disabled ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
+            cursor: value.trim() && !disabled ? "pointer" : "not-allowed",
             display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "background 0.15s",
+            transition: "background 0.15s, border-color 0.15s",
+            backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
           }}
         >
           <svg style={{ width: 13, height: 13, stroke: "#fff", strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
@@ -3348,14 +3347,23 @@ export default function WorkSession() {
     if (main) {
       main.style.overflow = "hidden";
       main.style.padding = "0";
-      return () => { main.style.overflow = ""; main.style.padding = ""; };
+      // Force the main to be a proper height-constrained container
+      // so the absolute-positioned WorkSession fills it exactly
+      main.style.display = "flex";
+      main.style.flexDirection = "column";
+      return () => {
+        main.style.overflow = "";
+        main.style.padding = "";
+        main.style.display = "";
+        main.style.flexDirection = "";
+      };
     }
   }, []);
 
   return (
     <div style={{
-      position: "absolute", inset: 0,
       display: "flex", flexDirection: "column",
+      flex: 1, minHeight: 0,
       overflow: "hidden", fontFamily: FONT,
     }}>
       <div style={{

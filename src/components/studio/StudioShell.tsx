@@ -318,6 +318,7 @@ export default function StudioShell() {
               flex: 1, overflowY: "auto", minWidth: 0,
               paddingBottom: isMobile ? 80 : 0, position: "relative",
               borderRadius: "12px 0 0 0",
+              minHeight: 0,
             }}>
               <Outlet />
             </main>
