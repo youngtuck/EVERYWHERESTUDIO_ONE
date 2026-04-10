@@ -4,6 +4,7 @@ import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import HeroCanvas from "../components/landing/HeroCanvas";
 import { MARKETING_NUMBERS } from "../lib/constants";
+import { MARKETING_CSS } from "../styles/marketing";
 
 /* ═══════════════════════════════════════════════════════════
    EVERYWHERE STUDIO — EXPLORE PAGE v5
@@ -80,342 +81,18 @@ function Reveal({
 }
 
 // ══════════════════════════════════
-// CSS — Design system + Liquid Glass + Animations
+// CSS — Shared marketing design system
 // ══════════════════════════════════
 
-const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
-
-:root {
-  --xp-navy: #0C1A29;
-  --xp-navy-deep: #060D14;
-  --xp-gold: #C8A96E;
-  --xp-blue: #4A90D9;
-  --xp-white: #FFFFFF;
-  --xp-off: #F8F9FA;
-  --xp-text: #0A0A0A;
-  --xp-sec: #6B7280;
-  --xp-ter: #A1A1AA;
-  --xp-on-dark: #F0EDE4;
-  --xp-dim-dark: rgba(255,255,255,0.38);
-  --xp-border: #E4E4E7;
-  --xp-font: 'Instrument Sans', -apple-system, system-ui, sans-serif;
-  --xp-mono: 'DM Mono', monospace;
-  --xp-ease: ${EASE};
-}
-
-/* ═══ BASE ═══ */
-.xp {
-  font-family: var(--xp-font);
-  font-size: 17px;
-  line-height: 1.7;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: var(--xp-white);
-  color: var(--xp-text);
-  overflow: clip;
-}
-.xp a { color: inherit; text-decoration: none; }
-.xp ::selection { background: var(--xp-gold); color: var(--xp-navy); }
-.xp button:active { transform: scale(0.97) !important; transition-duration: 0.1s !important; }
-.xp-mono { font-family: var(--xp-mono); }
-
-/* ═══ KEYFRAMES ═══ */
-@keyframes xpSpin { from{transform:translate(-50%,-50%) rotate(0deg);} to{transform:translate(-50%,-50%) rotate(360deg);} }
-@keyframes xpSpinR { from{transform:translate(-50%,-50%) rotate(0deg);} to{transform:translate(-50%,-50%) rotate(-360deg);} }
-@keyframes xpDot { 0%,100%{opacity:.25;} 50%{opacity:1;} }
-@keyframes xpGlow { 0%,100%{opacity:.03;} 50%{opacity:.07;} }
-@keyframes xpSlideIn { from{opacity:0;transform:translateX(40px);} to{opacity:1;transform:translateX(0);} }
-@keyframes xpFadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
-@keyframes xpGatePulse { 0%{box-shadow:0 0 0 0 rgba(200,169,110,0.3);} 70%{box-shadow:0 0 0 8px rgba(200,169,110,0);} 100%{box-shadow:0 0 0 0 rgba(200,169,110,0);} }
-
-/* Hero staggered entries */
-@keyframes xpHeroLabel { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
-@keyframes xpHeroHead { from{opacity:0;transform:translateY(20px) scale(0.97);} to{opacity:1;transform:translateY(0) scale(1);} }
-@keyframes xpHeroLine { from{width:0;opacity:0;} to{width:64px;opacity:1;} }
-@keyframes xpHeroSub { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
-@keyframes xpHeroCta { from{opacity:0;transform:translateY(14px) scale(0.96);} to{opacity:1;transform:translateY(0) scale(1);} }
-@keyframes xpRingFloat { 0%,100%{transform:translate(-50%,-50%) scale(1);} 50%{transform:translate(-50%,-50%) scale(1.015);} }
-@keyframes xpScrollHint { 0%,100%{transform:translateY(0);opacity:.4;} 50%{transform:translateY(8px);opacity:.9;} }
-
-/* ═══ LIQUID GLASS — Apple Figma Recipe ═══
-   Three-layer fill stack + 6 inner shadows + backdrop blur.
-   Adapted from Apple iOS 26 Control Center UI Kit. */
-
-.xp-liquid-glass {
-  position: relative;
-  border-radius: 24px;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-/* Layer 1: The glass shell (blended fills + inner shadows) */
-.xp-liquid-glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  /* Three blended fills via gradient stacking */
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  /* 6 inner shadows from Apple's Figma: edge highlights + depth */
-  box-shadow:
-    inset 0 0 40px rgba(255,255,255,0.06),
-    inset 0 0 8px rgba(255,255,255,0.04),
-    inset -1.5px -1.5px 1px rgba(255,255,255,0.12),
-    inset 1.5px 1.5px 1px rgba(255,255,255,0.08),
-    inset -1.5px -1.5px 0 rgba(50,50,50,0.06),
-    inset 1.5px 1.5px 0 rgba(40,40,40,0.08);
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Layer 2: The blur surface */
-.xp-liquid-glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  z-index: 1;
-}
-
-/* Glass content sits above the layers */
-.xp-liquid-glass > * {
-  position: relative;
-  z-index: 3;
-}
-
-/* Glass border — angular gradient stroke from Figma */
-.xp-liquid-glass-border {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid rgba(255,255,255,0.1);
-  pointer-events: none;
-  z-index: 4;
-}
-
-/* ═══ LIQUID GLASS VARIANTS ═══ */
-
-/* Dark variant (on dark backgrounds) */
-.xp-lg-dark {
-  background: rgba(10,12,18,0.45);
-}
-.xp-lg-dark::before {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
-  box-shadow:
-    inset 0 0 40px rgba(255,255,255,0.04),
-    inset 0 0 8px rgba(255,255,255,0.03),
-    inset -1.5px -1.5px 1px rgba(255,255,255,0.08),
-    inset 1.5px 1.5px 1px rgba(255,255,255,0.05),
-    inset -1.5px -1.5px 0 rgba(0,0,0,0.15),
-    inset 1.5px 1.5px 0 rgba(0,0,0,0.12);
-}
-
-/* Light variant (on white backgrounds) */
-.xp-lg-light {
-  background: rgba(255,255,255,0.55);
-}
-.xp-lg-light::before {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
-  box-shadow:
-    inset 0 0 40px rgba(255,255,255,0.3),
-    inset 0 0 8px rgba(255,255,255,0.15),
-    inset -1.5px -1.5px 1px rgba(255,255,255,0.5),
-    inset 1.5px 1.5px 1px rgba(255,255,255,0.35),
-    inset -1.5px -1.5px 0 rgba(0,0,0,0.02),
-    inset 1.5px 1.5px 0 rgba(0,0,0,0.03);
-}
-.xp-lg-light .xp-liquid-glass-border {
-  border-color: rgba(255,255,255,0.6);
-}
-
-/* Drop shadow for glass elements */
-.xp-lg-shadow {
-  box-shadow: 0 8px 48px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-}
-.xp-lg-dark.xp-lg-shadow {
-  box-shadow: 0 8px 48px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.15);
-}
-
-/* ═══ GLASS NAV ═══ */
-.xp-glass-nav {
-  position: fixed;
-  top: 12px; left: 16px; right: 16px;
-  z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 28px; height: 52px;
-  border-radius: 16px;
-  background: rgba(12, 26, 41, 0.55);
-  transition: background 0.4s ${EASE_SMOOTH};
-}
-/* Override liquid-glass overflow/isolation that breaks fixed positioning */
-.xp-glass-nav.xp-liquid-glass {
-  overflow: visible;
-  isolation: auto;
-}
-.xp-glass-nav.xp-liquid-glass::before,
-.xp-glass-nav.xp-liquid-glass::after {
-  border-radius: 16px;
-  overflow: hidden;
-}
-.xp-glass-nav.xp-liquid-glass::after {
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-}
-/* Nav-specific translucent glass backgrounds */
-.xp-glass-nav.xp-lg-dark {
-  background: rgba(10, 12, 18, 0.55);
-}
-.xp-glass-nav.xp-lg-light {
-  background: rgba(255, 255, 255, 0.55);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 24px rgba(0,0,0,0.06);
-}
-.xp-glass-nav.xp-lg-light .xp-liquid-glass-border {
-  border-color: rgba(0,0,0,0.06);
-}
-.xp-nav-link {
-  font-size: 13px; font-weight: 500; cursor: pointer;
-  background: none; border: none; font-family: var(--xp-font); transition: opacity .2s;
-}
-.xp-nav-cta {
-  font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
-  padding: 9px 22px; border-radius: 999px; cursor: pointer;
-  font-family: var(--xp-font); transition: all .3s;
-}
-
-/* ═══ GLASS CARD ═══ */
-.xp-glass-card {
-  position: relative;
-  border-radius: 20px;
-  overflow: hidden;
-  isolation: isolate;
-  background: rgba(255,255,255,0.45);
-  transition: transform .45s ${EASE}, box-shadow .45s ${EASE};
-  box-shadow: 0 4px 32px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
-}
-.xp-glass-card::before {
-  content: '';
-  position: absolute; inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.05));
-  box-shadow:
-    inset 0 0 30px rgba(255,255,255,0.2),
-    inset 0 0 6px rgba(255,255,255,0.1),
-    inset -1px -1px 0.5px rgba(255,255,255,0.35),
-    inset 1px 1px 0.5px rgba(255,255,255,0.25);
-  pointer-events: none; z-index: 1;
-}
-.xp-glass-card::after {
-  content: '';
-  position: absolute; inset: 0;
-  border-radius: inherit;
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  z-index: 0;
-}
-.xp-glass-card > * { position: relative; z-index: 2; }
-
-.xp-glass-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 48px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-}
-
-/* Composing dots */
-.xp-dots span {
-  display: inline-block; width: 5px; height: 5px; border-radius: 50%;
-  background: var(--xp-gold); animation: xpDot 1.2s infinite;
-}
-.xp-dots span:nth-child(2) { animation-delay: .2s; }
-.xp-dots span:nth-child(3) { animation-delay: .4s; }
-
-/* ═══ BUTTONS ═══ */
-.xp-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 15px 34px; font-family: var(--xp-font);
-  font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
-  border: none; border-radius: 999px; cursor: pointer;
-  transition: all .35s var(--xp-ease);
-}
-.xp-btn-w { background: var(--xp-white); color: var(--xp-navy); }
-.xp-btn-w:hover { background: var(--xp-gold); color: var(--xp-navy); }
-.xp-btn-n { background: var(--xp-navy); color: var(--xp-white); }
-.xp-btn-n:hover { background: #15283d; }
-.xp-btn-glass {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: var(--xp-on-dark);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-.xp-btn-glass:hover {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.22);
-}
-.xp-btn-liquid {
-  position: relative;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.18);
-  color: var(--xp-on-dark);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  overflow: hidden;
-}
-.xp-btn-liquid::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
-  box-shadow:
-    inset 0 0 20px rgba(255,255,255,0.06),
-    inset -1px -1px 0.5px rgba(255,255,255,0.12),
-    inset 1px 1px 0.5px rgba(255,255,255,0.08);
-  pointer-events: none;
-}
-.xp-btn-liquid:hover {
-  background: rgba(255,255,255,0.2);
-  border-color: rgba(255,255,255,0.28);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-}
-.xp-btn-liquid-light {
-  position: relative;
-  background: rgba(12, 26, 41, 0.08);
-  border: 1px solid rgba(12, 26, 41, 0.12);
-  color: var(--xp-navy);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  overflow: hidden;
-}
-.xp-btn-liquid-light::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
-  box-shadow:
-    inset 0 0 20px rgba(255,255,255,0.2),
-    inset -1px -1px 0.5px rgba(255,255,255,0.3),
-    inset 1px 1px 0.5px rgba(255,255,255,0.2);
-  pointer-events: none;
-}
-.xp-btn-liquid-light:hover {
-  background: rgba(12, 26, 41, 0.14);
-  border-color: rgba(12, 26, 41, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.06);
-}
-
-/* ═══ RESPONSIVE ═══ */
+const CSS = MARKETING_CSS + `
+/* ExplorePage-specific overrides */
+.xp-reed-side { display: block; }
+.xp-reed-met { display: block; }
+.xp-stats-row { flex-direction: row; }
+.xp-parallax-nums { flex-direction: row; }
+.xp-statement-text { font-size: clamp(36px, 7vw, 88px); }
+.xp-split-grid { grid-template-columns: 1fr 1fr; }
 @media(max-width:900px) {
-  .xp-glass-nav { left: 8px; right: 8px; top: 8px; padding: 0 20px; height: 48px; border-radius: 14px; }
-  .xp-nav-links-desktop { display: none !important; }
   .xp-reed-side { display: none !important; }
   .xp-reed-met { display: none !important; }
   .xp-stats-row { flex-direction: column !important; gap: 48px !important; }
@@ -425,23 +102,12 @@ const CSS = `
   .xp-statement-text { font-size: 8vw !important; }
   .xp-split-grid { grid-template-columns: 1fr !important; }
   .xp-parallax-nums { flex-direction: column !important; align-items: center !important; gap: 40px !important; }
-  .xp-glass-cards-row { flex-direction: column !important; }
 }
 @media(max-width:600px) {
-  .xp-sect { padding-left: 20px !important; padding-right: 20px !important; }
-  .xp-glass-nav { left: 6px; right: 6px; top: 6px; padding: 0 16px; }
   .xp-statement-text { font-size: 10vw !important; }
 }
-
-/* Reduced motion */
-@media(prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
 `;
+// (shared CSS imported from ../styles/marketing)
 
 // ══════════════════════════════════
 // DATA
@@ -557,7 +223,22 @@ export default function ExplorePage() {
         />
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {!isMobile && (
-            <div className="xp-nav-links-desktop" style={{ display: "flex", alignItems: "center", gap: 24 }}>
+            <div className="xp-nav-links-desktop" style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              {[
+                { label: "How It Works", path: "/how-it-works" },
+                { label: "Who It's For", path: "/who-its-for" },
+                { label: "The System", path: "/the-system" },
+                { label: "About", path: "/about" },
+              ].map(link => (
+                <button
+                  key={link.label}
+                  className="xp-nav-link"
+                  onClick={() => navigate(link.path)}
+                  style={{ color: isDarkNav ? "rgba(255,255,255,0.55)" : "var(--xp-sec)" }}
+                >
+                  {link.label}
+                </button>
+              ))}
               <button className="xp-nav-link" onClick={goSignin} style={{
                 color: isDarkNav ? "rgba(255,255,255,0.55)" : "var(--xp-sec)",
               }}>Sign In</button>
@@ -565,7 +246,7 @@ export default function ExplorePage() {
                 isDarkNav
                   ? { background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "var(--xp-on-dark)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }
                   : { background: "rgba(12,26,41,0.08)", border: "1px solid rgba(12,26,41,0.15)", color: "var(--xp-navy)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }
-              }>Get Early Access</button>
+              }>Request Access</button>
             </div>
           )}
           {isMobile && (
@@ -583,8 +264,12 @@ export default function ExplorePage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--xp-navy)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 32 }}>
           <button onClick={() => setMobileMenuOpen(false)} style={{ position: "absolute", top: 16, right: 20, background: "none", border: "none", cursor: "pointer", fontSize: 28, color: "var(--xp-gold)", fontFamily: "var(--xp-font)", fontWeight: 300 }}>&times;</button>
           {[
+            { label: "How It Works", action: () => { setMobileMenuOpen(false); navigate("/how-it-works"); } },
+            { label: "Who It's For", action: () => { setMobileMenuOpen(false); navigate("/who-its-for"); } },
+            { label: "The System", action: () => { setMobileMenuOpen(false); navigate("/the-system"); } },
+            { label: "About", action: () => { setMobileMenuOpen(false); navigate("/about"); } },
             { label: "Sign In", action: () => { setMobileMenuOpen(false); goSignin(); } },
-            { label: "Get Early Access", action: () => { setMobileMenuOpen(false); goSignup(); } },
+            { label: "Request Access", action: () => { setMobileMenuOpen(false); goSignup(); } },
           ].map((link, i) => (
             <button key={link.label} onClick={link.action} style={{
               background: "none", border: "none", cursor: "pointer",

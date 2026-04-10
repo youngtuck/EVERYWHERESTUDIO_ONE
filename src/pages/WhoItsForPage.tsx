@@ -1,0 +1,166 @@
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { MARKETING_CSS, EASE } from "../styles/marketing";
+import MarketingNav from "../components/marketing/MarketingNav";
+import MarketingFooter from "../components/marketing/MarketingFooter";
+import Reveal from "../components/marketing/Reveal";
+
+const BUILT_FOR = [
+  "You identify as a practitioner, not a marketer.",
+  "You have real things to say and a real audience that needs to hear them.",
+  "You have tried the tools. The prompts, the templates, the AI writing apps. None of them thought with you. They filled in blanks.",
+  "You do not need another tool. You need a system.",
+];
+
+export default function WhoItsForPage() {
+  const navigate = useNavigate();
+  const [pageLoaded, setPageLoaded] = useState(false);
+
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setPageLoaded(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+
+  const goSignup = useCallback(() => navigate("/auth?mode=signup"), [navigate]);
+  const goSignin = useCallback(() => navigate("/auth"), [navigate]);
+
+  return (
+    <div className="xp" style={{ opacity: pageLoaded ? 1 : 0, transition: `opacity 0.5s ${EASE}` }}>
+      <style>{MARKETING_CSS}</style>
+      <MarketingNav onSignin={goSignin} onSignup={goSignup} />
+
+      {/* Hero */}
+      <section data-nav-theme="dark" style={{
+        minHeight: "80vh", background: "var(--xp-navy-deep)", position: "relative",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "120px 48px", overflow: "hidden",
+      }}>
+        <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800 }}>
+          <div className="xp-mono" style={{
+            fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--xp-dim-dark)", marginBottom: 28,
+            animation: `xpHeroLabel 0.8s ${EASE} 0.3s both`,
+          }}>Who It's For</div>
+          <h1 style={{
+            fontSize: "clamp(40px, 7vw, 80px)", fontWeight: 600,
+            letterSpacing: "-0.04em", lineHeight: 1.08,
+            color: "var(--xp-on-dark)", marginBottom: 24,
+            animation: `xpHeroHead 1s ${EASE} 0.6s both`,
+          }}>The Overloaded Visionary</h1>
+          <p style={{
+            fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)",
+            maxWidth: 500, margin: "0 auto",
+            animation: `xpHeroSub 0.8s ${EASE} 0.9s both`,
+          }}>You know the type because you are the type.</p>
+        </div>
+      </section>
+
+      {/* The Problem */}
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-white)" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <Reveal>
+            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
+              The thinking is clear. The ideas are sharp. The strategy makes sense. But between the clarity in your head and the audience that needs to hear it, there is a mountain.
+            </p>
+          </Reveal>
+          <Reveal delay={100}>
+            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+              Drafts pile up. Content sits half-finished. The newsletter is six weeks behind. The LinkedIn post never got written. The keynote transcript from March is still in your Downloads folder.
+            </p>
+          </Reveal>
+          <Reveal delay={200}>
+            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+              You are not stuck because you lack ideas. You are stuck because the system does not match the pace of your thinking.
+            </p>
+          </Reveal>
+          <Reveal delay={300}>
+            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+              You have two jobs: strategy and communication. You are doing one. The other one is waiting.
+            </p>
+          </Reveal>
+          <Reveal delay={400}>
+            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
+              EVERYWHERE Studio is the system that ends the wait.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Who We Built This For */}
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-off)" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <Reveal>
+            <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 48 }}>
+              Who we built this for
+            </h2>
+          </Reveal>
+          {BUILT_FOR.map((item, i) => (
+            <Reveal key={i} delay={(i + 1) * 100}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 28 }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: "var(--xp-gold)", marginTop: 8, flexShrink: 0,
+                }} />
+                <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", margin: 0 }}>
+                  {item}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* Who This Is Not For */}
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-white)" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <Reveal>
+            <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 24 }}>
+              Who this is not for
+            </h2>
+          </Reveal>
+          <Reveal delay={100}>
+            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
+              If you need volume, there are cheaper tools. If you want to automate content without thinking about it, this is not your platform. EVERYWHERE Studio requires your ideas, your perspective, your involvement. It does not replace your thinking. It multiplies it.
+            </p>
+          </Reveal>
+          <Reveal delay={200}>
+            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
+              Signal only. No noise.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section data-nav-theme="dark" className="xp-sect" style={{
+        padding: "160px 48px", background: "var(--xp-navy-deep)",
+        textAlign: "center", position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <Reveal>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <h2 style={{ fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.08, color: "var(--xp-on-dark)", maxWidth: 600, marginBottom: 24 }}>
+                Built for one kind of person.
+              </h2>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
+                You are not a marketer. You are a practitioner with something important to say. EVERYWHERE Studio was built for you.
+              </p>
+              <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
+              <div style={{ marginTop: 20 }}>
+                <button className="xp-btn xp-btn-glass" onClick={goSignin}>Sign In</button>
+              </div>
+              <div style={{ marginTop: 40 }}>
+                <a href="mailto:beta@everywherestudio.ai" className="xp-mono" style={{ fontSize: 12, color: "var(--xp-dim-dark)", textDecoration: "none" }}>
+                  beta@everywherestudio.ai
+                </a>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <MarketingFooter />
+    </div>
+  );
+}

@@ -9,6 +9,10 @@ import Index from "./pages/Index";
 
 // Lazy: pages outside the studio (infrequent, large)
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
+const HowItWorksPage = lazy(() => import("./pages/HowItWorksPage"));
+const WhoItsForPage = lazy(() => import("./pages/WhoItsForPage"));
+const TheSystemPage = lazy(() => import("./pages/TheSystemPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 
@@ -67,6 +71,26 @@ const App = () => (
           <Route path="/explore" element={
             <PageTransition>
               <Suspense fallback={suspenseFallback}><ExplorePage /></Suspense>
+            </PageTransition>
+          } />
+          <Route path="/how-it-works" element={
+            <PageTransition>
+              <Suspense fallback={suspenseFallback}><HowItWorksPage /></Suspense>
+            </PageTransition>
+          } />
+          <Route path="/who-its-for" element={
+            <PageTransition>
+              <Suspense fallback={suspenseFallback}><WhoItsForPage /></Suspense>
+            </PageTransition>
+          } />
+          <Route path="/the-system" element={
+            <PageTransition>
+              <Suspense fallback={suspenseFallback}><TheSystemPage /></Suspense>
+            </PageTransition>
+          } />
+          <Route path="/about" element={
+            <PageTransition>
+              <Suspense fallback={suspenseFallback}><AboutPage /></Suspense>
             </PageTransition>
           } />
           <Route path="/auth" element={
