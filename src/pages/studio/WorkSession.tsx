@@ -873,7 +873,7 @@ function StageIntake({
   if (!hasUserMessage && !sending) {
     return (
       <div style={{
-        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, maxHeight: "100%", overflow: "hidden",
+        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden",
         background: "transparent", alignItems: "center", justifyContent: "center",
       }}>
         <div style={{
@@ -917,7 +917,7 @@ function StageIntake({
 
   // Active chat state: messages + input bar at bottom
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0, maxHeight: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0 }}>
       {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
@@ -3344,21 +3344,22 @@ export default function WorkSession() {
   // Lock parent main scroll when WorkSession is active
   useEffect(() => {
     const main = document.querySelector(".studio-main-inner") as HTMLElement;
-    if (main) {
-      const prev = {
-        overflow: main.style.overflow,
-        padding: main.style.padding,
-        overflowY: main.style.overflowY,
-      };
-      main.style.overflow = "hidden";
-      main.style.overflowY = "hidden";
-      main.style.padding = "0";
-      return () => {
-        main.style.overflow = prev.overflow;
-        main.style.overflowY = prev.overflowY;
-        main.style.padding = prev.padding;
-      };
-    }
+    if (!main) return;
+    // Save original values
+    const origOverflow = main.style.overflow;
+    const origOverflowY = main.style.overflowY;
+    const origPadding = main.style.padding;
+    // Force hidden using setProperty with important to override React inline styles
+    main.style.setProperty("overflow", "hidden", "important");
+    main.style.setProperty("overflow-y", "hidden", "important");
+    main.style.padding = "0";
+    return () => {
+      main.style.removeProperty("overflow");
+      main.style.removeProperty("overflow-y");
+      main.style.overflow = origOverflow;
+      main.style.overflowY = origOverflowY;
+      main.style.padding = origPadding;
+    };
   }, []);
 
   return (

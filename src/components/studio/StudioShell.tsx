@@ -315,11 +315,10 @@ export default function StudioShell() {
           {/* Content + Dashboard panel row */}
           <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
             <main className="studio-main-inner studio-content-substrate" style={{
-              flex: "1 1 0%", overflowY: "auto", minWidth: 0,
+              flex: 1, overflowY: "auto", minWidth: 0,
               paddingBottom: isMobile ? 80 : 0, position: "relative",
               borderRadius: "12px 0 0 0",
               minHeight: 0,
-              height: 0,
             }}>
               <Outlet />
             </main>
