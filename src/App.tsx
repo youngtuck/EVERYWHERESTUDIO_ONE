@@ -47,13 +47,13 @@ import ExtendedOutputs from "./pages/studio/ExtendedOutputs";
 // Page transition: only for marketing/auth pages, not studio
 function PageTransition({ children }: { children: ReactNode }) {
   return (
-    <div style={{ animation: "pageEnter 0.25s ease forwards" }}>
+    <div style={{ animation: "pageEnter 0.4s ease forwards", background: "#060D14", minHeight: "100vh" }}>
       {children}
     </div>
   );
 }
 
-const suspenseFallback = <div style={{ background: "var(--bg)", height: "100vh" }} />;
+const suspenseFallback = <div style={{ background: "#060D14", height: "100vh" }} />;
 
 const App = () => (
   <AuthProvider>

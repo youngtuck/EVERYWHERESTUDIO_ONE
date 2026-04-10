@@ -57,24 +57,20 @@ export default function AboutPage() {
             </div>
           </Reveal>
           <Reveal delay={100}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-              It started with a Substack and a problem I could not solve.
-            </p>
-          </Reveal>
-          <Reveal delay={200}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-              I had the ideas. I had the strategy. I had the audience. What I did not have was a system that could keep up with the pace of my thinking.
-            </p>
-          </Reveal>
-          <Reveal delay={300}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-              I tried the tools. All of them. They were fast but shallow. They generated words, not thinking. I needed something that would think with me, not for me.
-            </p>
-          </Reveal>
-          <Reveal delay={400}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-              So I built it.
-            </p>
+            <div className="xp-glass-card" style={{ padding: "36px 40px", marginTop: 32 }}>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+                It started with a Substack and a problem I couldn't solve.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+                I had the ideas. I had the strategy. I had the audience. What I didn't have was a system that could keep up with the pace of my thinking.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+                I tried the tools. All of them. They were fast but shallow. They generated words, not thinking. I needed something that would think with me, not for me.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500, margin: 0 }}>
+                So I built it.
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -89,7 +85,7 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={100}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-              The gap between thinking and publishing is not a creativity problem. It is a systems problem. Strategy without execution is just theory. Execution without quality is just noise. EVERYWHERE Studio closes both gaps.
+              The gap between thinking and publishing isn't a creativity problem. It's a systems problem. Strategy without execution is just theory. Execution without quality is just noise. EVERYWHERE Studio closes both gaps.
             </p>
           </Reveal>
         </div>
@@ -108,12 +104,12 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={100}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-dim-dark)", marginBottom: 24 }}>
-              EVERYWHERE Studio is not an AI writing tool. It is not a content management system. It is not a prompt library. It is a new category: Structured Intelligence. A system that combines strategic analysis, voice capture, quality enforcement, and multi-format publishing into a single workflow.
+              EVERYWHERE Studio isn't an AI writing tool. It isn't a content management system. It isn't a prompt library. It's a new category: Structured Intelligence. A system that combines strategic analysis, voice capture, quality enforcement, and multi-format publishing into a single workflow.
             </p>
           </Reveal>
           <Reveal delay={200}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-dim-dark)" }}>
-              Forty specialists work in concert. Seven quality checkpoints block anything that is not ready. Your VoiceDNA profile ensures that every piece sounds like you. The result is not generated content. It is your thinking, structured and scaled.
+              Forty specialists work in concert. Seven quality checkpoints block anything that isn't ready. Your VoiceDNA profile ensures that every piece sounds like you. The result isn't generated content. It's your thinking, structured and scaled.
             </p>
           </Reveal>
         </div>
@@ -128,9 +124,14 @@ export default function AboutPage() {
             </h2>
           </Reveal>
           <Reveal delay={100}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-              Your content, your voice profile, your strategic data. None of it is used to train models. None of it is shared. None of it leaves your account. EVERYWHERE Studio is built on the principle that your intellectual property belongs to you. Period.
-            </p>
+            <div className="xp-glass-card" style={{ padding: "32px 36px", borderLeft: "3px solid var(--xp-gold)" }}>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
+                Your content, your voice profile, your strategic data. None of it is used to train models. None of it is shared. None of it leaves your account. EVERYWHERE Studio is built on the principle that your intellectual property belongs to you. Period.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500, margin: 0 }}>
+                EVERYWHERE Studio never trains on your content. Never shares it. Never uses it to improve outputs for anyone else.
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>

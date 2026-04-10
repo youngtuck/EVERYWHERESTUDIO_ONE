@@ -9,7 +9,7 @@ const DNA_MODULES = [
   {
     name: "VoiceDNA",
     subhead: "Your voice. Captured. Consistent.",
-    body: "EVERYWHERE Studio captures how you actually think and communicate. Not a style guide. Not a tone matrix. Your real patterns, rhythms, and instincts. Every piece of content passes through your VoiceDNA profile. The result sounds like you wrote it, because the system learned from you.",
+    body: "EVERYWHERE Studio captures how you actually think and communicate. Not a style guide. Not a tone matrix. Your real patterns, rhythms, and instincts. Every piece of content passes through your VoiceDNA profile. The result: content that sounds like you wrote it. Because, in the way that matters, you did.",
     bg: "var(--xp-white)",
   },
   {
@@ -21,7 +21,7 @@ const DNA_MODULES = [
   {
     name: "MethodDNA",
     subhead: "Built for coaching ecosystems.",
-    body: "If you teach a method, a framework, or a system, MethodDNA captures the proprietary language and logic. Coaches, consultants, and educators can produce derivative content that stays faithful to their intellectual property.",
+    body: "If you teach a method, a framework, or a system, MethodDNA captures the proprietary language and logic. Coaches, consultants, and educators can produce derivative content that stays faithful to their intellectual property. The methodology delivers the framework. EVERYWHERE Studio delivers the content infrastructure that makes it land.",
     bg: "var(--xp-white)",
   },
   {
@@ -86,7 +86,7 @@ export default function TheSystemPage() {
         >
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <Reveal>
-              <div className="xp-glass-card" style={{ padding: "48px 40px" }}>
+              <div className="xp-glass-card" style={{ padding: "40px 36px", maxWidth: 800, margin: "0 auto" }}>
                 <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 20 }}>
                   Module {String(i + 1).padStart(2, "0")}
                 </div>

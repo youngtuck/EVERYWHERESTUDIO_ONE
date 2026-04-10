@@ -204,7 +204,8 @@ export const MARKETING_CSS = `
   overflow: hidden;
   isolation: isolate;
   background: rgba(10,12,18,0.45);
-  transition: transform .45s ${EASE}, box-shadow .45s ${EASE};
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: transform .35s ${EASE}, box-shadow .35s ease, background .35s ease, border-color .35s ease;
   box-shadow: 0 4px 32px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.08);
 }
 .xp-glass-card-dark::before {
@@ -229,8 +230,13 @@ export const MARKETING_CSS = `
 }
 .xp-glass-card-dark > * { position: relative; z-index: 2; }
 .xp-glass-card-dark:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 48px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+  transform: translateY(-4px);
+  background: rgba(200, 169, 110, 0.12);
+  border-color: rgba(200, 169, 110, 0.25);
+  box-shadow: 0 12px 48px rgba(200, 169, 110, 0.1), 0 2px 4px rgba(0,0,0,0.15), inset 0 0 30px rgba(200, 169, 110, 0.06);
+}
+.xp-glass-card-dark:hover .xp-mono {
+  color: var(--xp-gold) !important;
 }
 
 /* BUTTONS */
@@ -294,6 +300,29 @@ export const MARKETING_CSS = `
 @media(max-width:600px) {
   .xp-sect { padding-left: 20px !important; padding-right: 20px !important; }
   .xp-glass-nav { left: 6px; right: 6px; top: 6px; padding: 0 16px; }
+}
+
+/* Typography */
+.xp p, .xp h1, .xp h2, .xp h3 {
+  text-wrap: pretty;
+}
+
+/* Checkpoint grid */
+.checkpoint-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.checkpoint-grid > *:last-child:nth-child(3n+1) {
+  grid-column: 2;
+}
+@media(max-width: 900px) {
+  .checkpoint-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .checkpoint-grid > *:last-child:nth-child(3n+1) {
+    grid-column: auto;
+  }
 }
 
 /* Reduced motion */

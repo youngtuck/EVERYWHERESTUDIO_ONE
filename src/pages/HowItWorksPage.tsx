@@ -69,19 +69,17 @@ export default function HowItWorksPage() {
             </h2>
           </Reveal>
           <Reveal delay={100}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-              Before a single word is drafted, EVERYWHERE Studio watches. It scans your existing content, your audience patterns, your competitive landscape. It builds a strategic picture of what exists, what is missing, and what matters right now.
-            </p>
-          </Reveal>
-          <Reveal delay={200}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-              This is not a content calendar. It is a real-time intelligence layer that understands what you have already said, what your audience is responding to, and where the gaps are. Every session begins with situational awareness.
-            </p>
-          </Reveal>
-          <Reveal delay={300}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-              You never start from zero. You start from context.
-            </p>
+            <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
+                Before a single word gets written, you know what's moving in your category. What the market is saying. Where the opportunity sits.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+                EVERYWHERE monitors your competitive landscape overnight. By the time you arrive, the briefing is ready. Signals are ranked by impact. Opportunities are scored. Content angles are mapped to the Work pipeline.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
+                You do not start the day catching up. You start ahead.
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -96,19 +94,17 @@ export default function HowItWorksPage() {
             </h2>
           </Reveal>
           <Reveal delay={100}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-              You bring one idea. Reed, your primary content capture agent, works with you to develop it. Not a brainstorming session. Not a template. A structured conversation that extracts the full depth of your thinking.
-            </p>
-          </Reveal>
-          <Reveal delay={200}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-              From that single conversation, the system generates publication-ready content across 12 formats. LinkedIn posts, newsletters, Twitter threads, blog articles, video scripts, podcast outlines, and more. Each one tailored to the platform, each one sounding like you.
-            </p>
-          </Reveal>
-          <Reveal delay={300}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-              One idea in. Twelve pieces out. All of them yours.
-            </p>
+            <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
+                Work has four stages: Intake, Outline, Edit, Review.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+                Your first listener opens every session with one question: What are we working on? The interview draws out what you actually mean to say. Not the surface version. The real one. The brief gets built. The structure follows. The draft gets written.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
+                Then the quality system runs.
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -123,19 +119,17 @@ export default function HowItWorksPage() {
             </h2>
           </Reveal>
           <Reveal delay={100}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-              Every piece of content runs through 7 quality checkpoints before it reaches you. Deduplication. Research validation. Voice authenticity. Engagement. SLOP detection. Editorial excellence. Perspective and risk.
-            </p>
-          </Reveal>
-          <Reveal delay={200}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-              Content that clears all seven gates receives an Impact Score. The threshold is 75. Anything below gets rewritten. Anything above gets the Human Voice Test: a final pass that ensures the work sounds like a person, not a system.
-            </p>
-          </Reveal>
-          <Reveal delay={300}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-              What leaves the system is ready to publish. Not ready to edit. Ready to publish.
-            </p>
+            <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
+                Approved work moves to Wrap. Choose a format. Choose a channel. EVERYWHERE structures your thinking for the platform it is going to.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+                LinkedIn post. Newsletter. Presentation. Podcast script. Report. One-pager.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
+                The format changes. The thinking survives it.
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -155,14 +149,11 @@ export default function HowItWorksPage() {
             </p>
           </Reveal>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 20,
-          }}>
+          <div className="checkpoint-grid">
             {CHECKPOINTS.map((cp, i) => (
               <Reveal key={cp.num} delay={i * 80}>
-                <div className="xp-glass-card-dark" style={{ padding: 32 }}>
+                <div className="xp-glass-card-dark" style={{ padding: 32, minHeight: 200, display: "flex", flexDirection: "column" as const }}>
+                  <div style={{ position: "absolute", inset: 0, borderRadius: "inherit", border: "1px solid rgba(255,255,255,0.08)", pointerEvents: "none" as const, zIndex: 3 }} />
                   <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", color: "var(--xp-gold)", marginBottom: 12 }}>{String(cp.num).padStart(2, "0")}</div>
                   <div style={{ fontSize: 18, fontWeight: 600, color: "var(--xp-on-dark)", marginBottom: 10 }}>{cp.name}</div>
                   <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--xp-dim-dark)", margin: 0 }}>{cp.desc}</p>
@@ -170,14 +161,6 @@ export default function HowItWorksPage() {
               </Reveal>
             ))}
           </div>
-
-          <style>{`
-            @media(max-width: 900px) {
-              .xp-sect [style*="grid-template-columns: repeat(3"] {
-                grid-template-columns: 1fr !important;
-              }
-            }
-          `}</style>
 
           <Reveal delay={600}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-dim-dark)", textAlign: "center", maxWidth: 600, margin: "64px auto 0" }}>

@@ -8,8 +8,8 @@ import Reveal from "../components/marketing/Reveal";
 const BUILT_FOR = [
   "You identify as a practitioner, not a marketer.",
   "You have real things to say and a real audience that needs to hear them.",
-  "You have tried the tools. The prompts, the templates, the AI writing apps. None of them thought with you. They filled in blanks.",
-  "You do not need another tool. You need a system.",
+  "You've tried the tools. The prompts, the templates, the AI writing apps. None of them thought with you. They filled in blanks.",
+  "You don't need another tool. You need a system.",
 ];
 
 export default function WhoItsForPage() {
@@ -71,12 +71,12 @@ export default function WhoItsForPage() {
           </Reveal>
           <Reveal delay={200}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-              You are not stuck because you lack ideas. You are stuck because the system does not match the pace of your thinking.
+              You're not stuck because you lack ideas. You're stuck because the system doesn't match the pace of your thinking.
             </p>
           </Reveal>
           <Reveal delay={300}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-              You have two jobs: strategy and communication. You are doing one. The other one is waiting.
+              You have two jobs: strategy and communication. You're doing one. The other one is waiting.
             </p>
           </Reveal>
           <Reveal delay={400}>
@@ -97,14 +97,16 @@ export default function WhoItsForPage() {
           </Reveal>
           {BUILT_FOR.map((item, i) => (
             <Reveal key={i} delay={(i + 1) * 100}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 28 }}>
-                <div style={{
-                  width: 8, height: 8, borderRadius: "50%",
-                  background: "var(--xp-gold)", marginTop: 8, flexShrink: 0,
-                }} />
-                <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", margin: 0 }}>
-                  {item}
-                </p>
+              <div className="xp-glass-card" style={{ padding: "24px 32px", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{
+                    width: 8, height: 8, borderRadius: "50%",
+                    background: "var(--xp-gold)", marginTop: 8, flexShrink: 0,
+                  }} />
+                  <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", margin: 0 }}>
+                    {item}
+                  </p>
+                </div>
               </div>
             </Reveal>
           ))}
@@ -120,14 +122,14 @@ export default function WhoItsForPage() {
             </h2>
           </Reveal>
           <Reveal delay={100}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-              If you need volume, there are cheaper tools. If you want to automate content without thinking about it, this is not your platform. EVERYWHERE Studio requires your ideas, your perspective, your involvement. It does not replace your thinking. It multiplies it.
-            </p>
-          </Reveal>
-          <Reveal delay={200}>
-            <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-              Signal only. No noise.
-            </p>
+            <div className="xp-glass-card" style={{ padding: "32px 36px", borderLeft: "3px solid rgba(200,120,100,0.3)" }}>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
+                If you need volume, there are cheaper tools. If you want to automate content without thinking about it, this isn't your platform. EVERYWHERE Studio requires your ideas, your perspective, your involvement. It doesn't replace your thinking. It multiplies it.
+              </p>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500, margin: 0 }}>
+                Signal only. No noise.
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>

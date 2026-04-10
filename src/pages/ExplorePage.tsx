@@ -325,11 +325,20 @@ export default function ExplorePage() {
           <h1 style={{
             fontSize: "clamp(52px, 8.5vw, 100px)", fontWeight: 600,
             letterSpacing: "-0.04em", lineHeight: 1.02,
-            color: "var(--xp-on-dark)", marginBottom: 24,
+            color: "var(--xp-on-dark)", marginBottom: 16,
             animation: `xpHeroHead 1s ${EASE} 0.8s both`,
           }}>
-            Getting it out of<br />your head is.
+            The idea is never<br />the problem.
           </h1>
+
+          <p style={{
+            fontSize: "clamp(28px, 4vw, 52px)", fontWeight: 300,
+            letterSpacing: "-0.02em", lineHeight: 1.1,
+            color: "var(--xp-gold)", marginBottom: 24,
+            animation: `xpHeroSub 0.8s ${EASE} 1.1s both`,
+          }}>
+            Getting it out of your head is.
+          </p>
 
           <div style={{
             height: 1, background: "var(--xp-gold)", marginBottom: 28,
