@@ -274,7 +274,7 @@ export default function StudioShell() {
     }}>
       <div style={{
         display: "flex", height: "100vh",
-        background: "#0D1B2A", fontFamily: "var(--font)", overflow: "hidden",
+        background: "var(--bg)", fontFamily: "var(--font)", overflow: "hidden",
       }}>
         <CommandPalette />
 
@@ -301,8 +301,8 @@ export default function StudioShell() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, minHeight: 0 }}>
           {/* Top bar */}
           {isMobile ? (
-            <div style={{ height: 48, background: "var(--glass-topbar)", borderBottom: "1px solid rgba(255,255,255,0.06)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", color: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 }}>
-              <button type="button" onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", borderRadius: 6, padding: 6, cursor: "pointer", color: "rgba(255,255,255,0.65)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Open navigation">
+            <div className="liquid-glass" style={{ height: 48, borderRadius: 0, borderBottom: "1px solid rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 }}>
+              <button type="button" onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", borderRadius: 6, padding: 6, cursor: "pointer", color: "var(--fg-3)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Open navigation">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
               <Logo size="sm" />
@@ -356,37 +356,36 @@ function RightPanel({ open }: { open: boolean }) {
 
   return (
     <div style={{
-      width: open ? 240 : 0, flexShrink: 0,
-      background: "var(--glass-sidebar)",
-      borderLeft: "1px solid rgba(255,255,255,0.06)",
-      backdropFilter: "var(--glass-blur)",
-      WebkitBackdropFilter: "var(--glass-blur)",
+      width: open ? 260 : 0, flexShrink: 0,
       overflow: "hidden", transition: "width 0.18s ease",
       display: "flex", flexDirection: "column",
+      padding: open ? "8px 8px 8px 0" : 0,
     }}>
-      <div style={{
-        width: 240, height: "100%",
+      <div className="liquid-glass-card" style={{
+        width: 244, height: "100%",
         display: "flex", flexDirection: "column",
         opacity: open ? 1 : 0, transition: "opacity 0.12s ease",
         pointerEvents: open ? "auto" : "none",
+        borderRadius: 16,
+        overflow: "hidden",
       }}>
         {/* Header */}
         <div style={{
           display: "flex", alignItems: "center",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(255,255,255,0.03)", flexShrink: 0,
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          background: "rgba(255,255,255,0.3)", flexShrink: 0,
           padding: "10px 14px",
         }}>
           <div style={{
             width: 20, height: 20, borderRadius: "50%",
-            background: "rgba(74,144,217,0.12)",
-            border: "1px solid rgba(74,144,217,0.25)",
-            color: "#6BA8E8",
+            background: "rgba(74,144,217,0.08)",
+            border: "1px solid rgba(74,144,217,0.15)",
+            color: "var(--blue)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 8, fontWeight: 700, flexShrink: 0,
             marginRight: 8,
           }}>R</div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>Reed</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
         </div>
 
         {/* Stage feedback and context */}
@@ -397,7 +396,8 @@ function RightPanel({ open }: { open: boolean }) {
         {/* Copyright footer */}
         <div style={{
           padding: "8px 14px",
-          fontSize: 9, color: "rgba(255,255,255,0.4)",
+          fontSize: 9, color: "var(--fg-3)",
+          opacity: 0.5,
           textAlign: "center" as const,
           flexShrink: 0,
         }}>
@@ -410,7 +410,7 @@ function RightPanel({ open }: { open: boolean }) {
 
 function DefaultDashContent() {
   return (
-    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
+    <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
       Select a section to see your dashboard.
     </div>
   );
@@ -418,31 +418,31 @@ function DefaultDashContent() {
 
 function ReedStageContext({ stage }: { stage: string }) {
   const calloutStyle: React.CSSProperties = {
-    border: "1px solid rgba(74,144,217,0.2)",
+    border: "1px solid rgba(74,144,217,0.15)",
     borderRadius: 8,
     padding: "10px 12px",
-    background: "rgba(74,144,217,0.06)",
-    fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginTop: 8,
+    background: "rgba(74,144,217,0.04)",
+    fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 8,
   };
   const pillGold: React.CSSProperties = {
     display: "inline-flex", padding: "2px 8px", borderRadius: 99,
-    background: "rgba(245,198,66,0.1)",
-    border: "1px solid rgba(245,198,66,0.2)",
-    color: "#F5C642",
+    background: "rgba(200,169,110,0.08)",
+    border: "1px solid rgba(200,169,110,0.15)",
+    color: "var(--gold-dark)",
     fontSize: 10, fontWeight: 600,
   };
   const pillBlue: React.CSSProperties = {
     display: "inline-flex", padding: "2px 8px", borderRadius: 99,
-    background: "rgba(74,144,217,0.1)",
-    border: "1px solid rgba(74,144,217,0.2)",
-    color: "#6BA8E8",
+    background: "rgba(74,144,217,0.08)",
+    border: "1px solid rgba(74,144,217,0.15)",
+    color: "var(--blue)",
     fontSize: 10, fontWeight: 600,
   };
 
   if (stage === "Watch") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
           Reed has read your sources. Signals are surfaced by relevance. Competitors going quiet is treated as a signal, not silence.
         </div>
       </div>
@@ -454,13 +454,13 @@ function ReedStageContext({ stage }: { stage: string }) {
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
         <span style={{
           display: "inline-flex", padding: "4px 10px", borderRadius: 99,
-          background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.2)",
-          fontSize: 10, fontWeight: 600, color: "#F5C642", marginBottom: 6,
+          background: "rgba(200,169,110,0.08)", border: "1px solid rgba(200,169,110,0.15)",
+          fontSize: 10, fontWeight: 600, color: "var(--gold-dark)", marginBottom: 6,
         }}>Freestyle</span>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginTop: 6 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 6 }}>
           No output format selected. Freestyle mode. Answer Reed's questions and the system shapes your thinking. You can pick a format at the end of Outline.
         </div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginTop: 6 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6, marginTop: 6 }}>
           What helps: Name the specific reader. State the structural problem, not the symptom. Say what you want the reader to do or feel.
         </div>
       </div>
@@ -470,14 +470,14 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Outline") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
           Structure is sound. Confirm the close mirrors the title before moving to Edit.
         </div>
         <div style={calloutStyle}>
           You've been freestyling. Want to pick a format before Edit, or keep freestyle?
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "rgba(255,255,255,0.92)", border: "none", color: "#0D1B2A", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Move to Edit</button>
-            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Keep Freestyle</button>
+            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "var(--fg)", border: "none", color: "var(--bg)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Move to Edit</button>
+            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "transparent", border: "1px solid rgba(0,0,0,0.08)", color: "var(--fg-2)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Keep Freestyle</button>
           </div>
         </div>
       </div>
@@ -487,10 +487,10 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Edit") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 8 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
           Read through the draft. Edit anything that does not sound like you. When you are done, click Finish and Review.
         </div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
           Click into any paragraph to edit directly.
         </div>
       </div>
@@ -500,7 +500,7 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Review") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
           Reed is reviewing your draft against 7 quality checkpoints.
         </div>
       </div>
@@ -510,7 +510,7 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Wrap") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 8 }}>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
           Freestyle mode. No format review required. Reed has packaged your content for every channel. Export All gives you clean, formatted outputs ready to publish.
         </div>
         <div style={calloutStyle}>
@@ -518,7 +518,7 @@ function ReedStageContext({ stage }: { stage: string }) {
         </div>
         <button style={{
           width: "100%", padding: 8, borderRadius: 6,
-          background: "#0D1B2A", color: "#F5C642",
+          background: "var(--fg)", color: "var(--gold-bright)",
           fontSize: 11, fontWeight: 700, border: "none",
           cursor: "pointer", fontFamily: "inherit", marginTop: 8,
         }}>

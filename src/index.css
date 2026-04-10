@@ -400,7 +400,7 @@ button { font-family: var(--font); }
 .studio-topbar {
   height: 50px;
   background: var(--glass-topbar);
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   display: flex; align-items: center;
   padding: 0 18px; gap: 10px;
   flex-shrink: 0;
@@ -469,7 +469,8 @@ button { font-family: var(--font); }
   --glass-card: rgba(255, 255, 255, 0.5);
   --glass-card-hover: rgba(255, 255, 255, 0.65);
   --glass-sidebar: rgba(13, 27, 42, 0.92);
-  --glass-topbar: rgba(13, 27, 42, 0.88);
+  --glass-topbar: rgba(255, 255, 255, 0.55);
+  --glass-right-panel: rgba(255, 255, 255, 0.45);
   --glass-border-shell: rgba(255, 255, 255, 0.08);
   --glass-input: rgba(255, 255, 255, 0.6);
   --glass-input-focus: rgba(255, 255, 255, 0.8);
@@ -563,10 +564,10 @@ button { font-family: var(--font); }
 
 .glass-topbar {
   background: var(--glass-topbar);
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03), var(--glass-inner);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .glass-input {
