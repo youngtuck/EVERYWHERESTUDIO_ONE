@@ -995,7 +995,7 @@ function StageIntake({
       </div>
 
       {/* Input bar */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "transparent", flexShrink: 0, zIndex: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px 24px 12px", background: "transparent", flexShrink: 0, zIndex: 10 }}>
         <div style={{ width: "100%", maxWidth: 680 }}>
           <ChatInputBar
             placeholder="What's on your mind?"
@@ -3340,6 +3340,41 @@ export default function WorkSession() {
   // RENDER
   // ─────────────────────────────────────────────────────────────
 
+  // Measure the actual visible height of the content area, accounting for zoom
+  const [chatHeight, setChatHeight] = useState<string>("100%");
+  const chatHeightRef = useRef<string>("100%");
+
+  useEffect(() => {
+    const measure = () => {
+      const main = document.querySelector(".studio-main-inner") as HTMLElement;
+      if (!main) return;
+      const rect = main.getBoundingClientRect();
+      const root = document.getElementById("root");
+      const zoom = root ? (parseFloat(getComputedStyle(root).zoom as string) || 1) : 1;
+      // rect.height is in viewport pixels. Divide by zoom to get CSS pixels.
+      const cssHeight = Math.floor(rect.height / zoom);
+      const val = cssHeight + "px";
+      if (chatHeightRef.current !== val) {
+        chatHeightRef.current = val;
+        setChatHeight(val);
+      }
+    };
+    measure();
+    // Re-measure on resize
+    window.addEventListener("resize", measure);
+    // Also observe the main element for size changes
+    const main = document.querySelector(".studio-main-inner") as HTMLElement;
+    let ro: ResizeObserver | null = null;
+    if (main) {
+      ro = new ResizeObserver(measure);
+      ro.observe(main);
+    }
+    return () => {
+      window.removeEventListener("resize", measure);
+      ro?.disconnect();
+    };
+  }, []);
+
   // Lock parent main + body + html scroll when WorkSession is active
   useEffect(() => {
     const main = document.querySelector(".studio-main-inner") as HTMLElement;
@@ -3373,10 +3408,10 @@ export default function WorkSession() {
   return (
     <div style={{
       position: "absolute",
-      top: 0, left: 0, right: 0, bottom: 0,
+      top: 0, left: 0, right: 0,
+      height: chatHeight,
       display: "flex", flexDirection: "column",
       overflow: "hidden", fontFamily: FONT,
-      maxHeight: "100%",
     }}>
       <div style={{
         padding: "6px 20px",
