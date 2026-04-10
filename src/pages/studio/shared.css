@@ -138,12 +138,14 @@
 /* ── LENS CARDS (Outline angles) ── */
 .lens-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 .lens-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
   padding: 14px;
   cursor: pointer;
   transition: all 0.15s;
+  backdrop-filter: var(--glass-blur-light);
+  -webkit-backdrop-filter: var(--glass-blur-light);
 }
 .lens-card:hover { border-color: rgba(245,198,66,0.4); }
 .lens-card.selected { border-color: var(--gold-bright); background: rgba(245,198,66,0.03); }
@@ -153,14 +155,14 @@
 .lens-selected-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
 
 /* ── OUTLINE BRAINSTORM ── */
-.os-row { display: flex; align-items: baseline; gap: 0; padding: 7px 0; border-bottom: 1px solid var(--line); position: relative; }
+.os-row { display: flex; align-items: baseline; gap: 0; padding: 7px 0; border-bottom: 1px solid var(--glass-border); position: relative; }
 .os-row:last-child { border-bottom: none; }
 .os-label { width: 52px; font-size: 10px; font-weight: 600; color: var(--line-2); text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; padding-top: 1px; display: flex; align-items: flex-start; gap: 4px; }
 .os-brainstorm { font-size: 11px; color: var(--gold); cursor: pointer; opacity: 0; transition: all 0.15s; line-height: 1; flex-shrink: 0; }
 .os-row:hover .os-brainstorm { opacity: 1; }
 .os-content { flex: 1; font-size: 13px; color: var(--fg); line-height: 1.5; font-weight: 500; outline: none; cursor: text; border-radius: 3px; padding: 1px 4px; }
-.os-content:hover { background: var(--bg-2); }
-.os-content:focus { background: var(--bg-2); }
+.os-content:hover { background: var(--glass-sidebar); }
+.os-content:focus { background: var(--glass-sidebar); }
 .os-indent { padding-left: 24px; font-size: 12px; color: var(--fg-3); font-weight: 400; }
 
 /* ── EDIT FLAGS ── */
@@ -172,13 +174,15 @@
   bottom: calc(100% + 8px);
   left: 0;
   z-index: 100;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
   padding: 12px 14px;
   width: 320px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   animation: fadeUp 0.15s ease;
+  backdrop-filter: var(--glass-blur-light);
+  -webkit-backdrop-filter: var(--glass-blur-light);
 }
 .fp-type { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 4px; }
 .fp-type.gold { color: var(--gold); }
@@ -187,16 +191,18 @@
 .fp-suggestion { font-size: 11px; color: var(--fg); font-style: normal; display: block; margin-bottom: 8px; }
 .fp-actions { display: flex; gap: 6px; }
 .fp-fix { font-size: 10px; padding: 4px 10px; border-radius: 4px; background: var(--fg); border: none; color: #fff; cursor: pointer; font-family: var(--font); font-weight: 600; }
-.fp-dismiss { font-size: 10px; padding: 4px 10px; border-radius: 4px; background: transparent; border: 1px solid var(--line); color: var(--fg-3); cursor: pointer; font-family: var(--font); }
+.fp-dismiss { font-size: 10px; padding: 4px 10px; border-radius: 4px; background: transparent; border: 1px solid var(--glass-border); color: var(--fg-3); cursor: pointer; font-family: var(--font); }
 
 /* ── REVIEW IMPROVE CARDS ── */
 .rev-improve-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
   padding: 12px 14px;
   margin-bottom: 8px;
   box-shadow: var(--shadow-xs);
+  backdrop-filter: var(--glass-blur-light);
+  -webkit-backdrop-filter: var(--glass-blur-light);
 }
 .rev-improve-card.done { opacity: 0.35; pointer-events: none; }
 .ric-pts {
@@ -218,7 +224,7 @@
 .ric-fix:hover { background: var(--fg-2); }
 .ric-skip {
   font-size: 11px; padding: 6px 14px; border-radius: 5px;
-  background: transparent; border: 1px solid var(--line);
+  background: transparent; border: 1px solid var(--glass-border);
   color: var(--fg-3); cursor: pointer; font-family: var(--font);
 }
 .ric-skip:hover { color: var(--fg-2); border-color: var(--fg-3); }
@@ -237,7 +243,7 @@
 .rev-tab.on { color: var(--fg); font-weight: 600; border-bottom: 2px solid var(--fg); }
 .tab-dot {
   display: inline-block; width: 6px; height: 6px;
-  border-radius: 50%; background: var(--line);
+  border-radius: 50%; background: var(--glass-border);
   margin-left: 5px; vertical-align: middle;
   position: relative; top: -1px; transition: background 0.2s;
 }
@@ -275,8 +281,8 @@
 
 /* ── DARK MODE OVERRIDES ── */
 [data-theme="dark"] .lens-card {
-  background: var(--surface);
-  border-color: var(--line);
+  background: var(--glass-card);
+  border-color: var(--glass-border);
 }
 [data-theme="dark"] .lens-card:hover { border-color: rgba(245,198,66,0.5); }
 [data-theme="dark"] .lens-card.selected {
@@ -284,12 +290,12 @@
   background: rgba(245,198,66,0.06);
 }
 [data-theme="dark"] .rev-improve-card {
-  background: var(--surface);
-  border-color: var(--line);
+  background: var(--glass-card);
+  border-color: var(--glass-border);
 }
 [data-theme="dark"] .flag-pop {
-  background: var(--surface);
-  border-color: var(--line);
+  background: var(--glass-card);
+  border-color: var(--glass-border);
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 [data-theme="dark"] .os-content:hover,

@@ -420,11 +420,11 @@ export default function SpecialistPanel({
                   alignItems: "center",
                   gap: 12,
                   padding: "12px 16px",
-                  background: isSelected ? "var(--surface)" : "transparent",
+                  background: isSelected ? "var(--glass-card)" : "transparent",
                   border: "1px solid",
-                  borderColor: isSelected ? info.color : "var(--line)",
-                  borderLeft: isSelected ? `3px solid ${info.color}` : "1px solid var(--line)",
-                  borderRadius: 8,
+                  borderColor: isSelected ? info.color : "var(--glass-border)",
+                  borderLeft: isSelected ? `3px solid ${info.color}` : "1px solid var(--glass-border)",
+                  borderRadius: 12,
                   cursor: "pointer",
                   fontFamily: "'Afacad Flux', sans-serif",
                   textAlign: "left",
@@ -432,7 +432,7 @@ export default function SpecialistPanel({
                   boxShadow: "none",
                   animation: isAnimating && g.status === "processing" ? "pulse 2s ease-in-out infinite" : "none",
                 }}
-                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--surface)"; }}
+                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--glass-surface)"; }}
                 onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
               >
                 <span style={{ width: 28, height: 28, borderRadius: 6, background: info.color + "18", color: info.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
@@ -460,7 +460,7 @@ export default function SpecialistPanel({
               return (
                 <div key={i}>
                   {card}
-                  <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderTop: "none", borderRadius: "0 0 8px 8px", marginTop: -1 }}>
+                  <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderTop: "none", borderRadius: "0 0 8px 8px", marginTop: -1 }}>
                     {renderDetailPanel()}
                   </div>
                 </div>
@@ -473,7 +473,7 @@ export default function SpecialistPanel({
 
         {/* Right: Detail panel (desktop only) */}
         {!isMobile && (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, minHeight: 200, position: "sticky", top: 80, alignSelf: "start" }}>
+          <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, minHeight: 200, position: "sticky", top: 80, alignSelf: "start", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
             {renderDetailPanel()}
           </div>
         )}
@@ -481,7 +481,7 @@ export default function SpecialistPanel({
 
       {/* Total score */}
       {showTotal && totalScore !== undefined && (
-        <div style={{ textAlign: "center", padding: "24px 0", borderTop: "1px solid var(--line)" }}>
+        <div style={{ textAlign: "center", padding: "24px 0", borderTop: "1px solid var(--glass-border)" }}>
           <div style={{ fontSize: 48, fontWeight: 700, color: totalScore >= threshold ? "#50c8a0" : totalScore >= 700 ? "var(--gold)" : "#E53935", fontVariantNumeric: "tabular-nums", lineHeight: 1.1 }}>
             {totalScore}
           </div>

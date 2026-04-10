@@ -75,7 +75,7 @@ export default function AdminPanel() {
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "32px 24px", fontFamily: "'Afacad Flux', sans-serif" }}>
       <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--fg)", margin: "0 0 24px", letterSpacing: "-0.02em" }}>Admin</h1>
-      <div style={{ display: "flex", gap: 4, marginBottom: 32, borderBottom: "1px solid var(--border-subtle)", paddingBottom: 0 }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 32, borderBottom: "1px solid var(--glass-border)", paddingBottom: 0 }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             padding: "10px 20px", border: "none", borderBottom: tab === t.key ? "2px solid var(--gold-dark)" : "2px solid transparent",
@@ -132,7 +132,7 @@ function InviteTab() {
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: result ? "1fr 1fr" : "1fr", gap: 24 }}>
-        <div style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 24 }}>
+        <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 24, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", margin: "0 0 16px" }}>Generate Invite Code</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Who are you inviting?" style={inputStyle} />
@@ -145,7 +145,7 @@ function InviteTab() {
         </div>
 
         {result && (
-          <div style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 24 }}>
+          <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 24, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", margin: "0 0 16px" }}>Invite Created</h3>
             <div style={{ fontSize: 28, fontWeight: 700, color: "var(--gold-dark)", letterSpacing: "2px", marginBottom: 12, fontFamily: "'Afacad Flux', sans-serif" }}>
               {result.code}
@@ -172,7 +172,7 @@ function InviteTab() {
           <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--fg-3)", margin: "0 0 12px", letterSpacing: "1px", textTransform: "uppercase" }}>Recent Invites</h3>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {recentInvites.map(c => (
-              <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border-subtle)", fontSize: 13 }}>
+              <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--glass-border)", fontSize: 13 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <span style={{ fontWeight: 600, color: "var(--fg)", fontFamily: "'Afacad Flux', sans-serif", letterSpacing: "1px" }}>{c.code}</span>
                   <span style={{ color: "var(--fg-2)" }}>{c.assigned_name || "Anyone"}</span>
@@ -274,7 +274,7 @@ function PeopleTab() {
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
       </div>
 
-      <div style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, overflow: "hidden" }}>
+      <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
         {filtered.map(u => {
           const status = getStatus(u);
           const sc = statusColors[status];
@@ -283,7 +283,7 @@ function PeopleTab() {
             <div key={u.id}>
               <button type="button" onClick={() => loadDetail(u.id)} style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
-                background: expanded ? "rgba(74,144,217,0.03)" : "transparent", border: "none", borderBottom: "1px solid var(--border-subtle)",
+                background: expanded ? "rgba(74,144,217,0.03)" : "transparent", border: "none", borderBottom: "1px solid var(--glass-border)",
                 cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif", textAlign: "left",
               }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: u.voice_dna_completed ? "#50c8a0" : "var(--fg-3)", flexShrink: 0 }} />
@@ -297,7 +297,7 @@ function PeopleTab() {
                 <span style={{ fontSize: 12, color: "var(--fg-3)", width: 70, textAlign: "right" }}>{u.lastActive ? timeAgo(u.lastActive) : "Never"}</span>
               </button>
               {expanded && detail && (
-                <div style={{ padding: "12px 16px 16px 36px", borderBottom: "1px solid var(--border-subtle)", background: "rgba(74,144,217,0.02)" }}>
+                <div style={{ padding: "12px 16px 16px 36px", borderBottom: "1px solid var(--glass-border)", background: "rgba(74,144,217,0.02)" }}>
                   {detail.outputs?.length > 0 && (
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 6 }}>Recent Outputs</div>
@@ -373,14 +373,14 @@ function CodesTab() {
           { label: "Redeemed", value: redeemed, color: "#4A90D9" },
           { label: "Deactivated", value: deactivated, color: "#E53935" },
         ].map(s => (
-          <div key={s.label} style={{ padding: "12px 20px", background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8 }}>
+          <div key={s.label} style={{ padding: "12px 20px", background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
             <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 16, marginBottom: 24, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 16, marginBottom: 24, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <input value={bulkNote} onChange={e => setBulkNote(e.target.value)} placeholder="Batch note (e.g. AI Summit)" style={{ ...inputStyle, flex: 1, minWidth: 200 }} />
         <select value={bulkCount} onChange={e => setBulkCount(Number(e.target.value))} style={{ ...inputStyle, width: 60 }}>
           <option value={5}>5</option><option value={10}>10</option><option value={20}>20</option>
@@ -388,9 +388,9 @@ function CodesTab() {
         <button onClick={handleBulk} disabled={bulkCreating} style={btnGold}>{bulkCreating ? "Creating..." : "Create Bulk Codes"}</button>
       </div>
 
-      <div style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, overflow: "hidden" }}>
+      <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
         {codes.map(c => (
-          <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--border-subtle)", fontSize: 13 }}>
+          <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", fontSize: 13 }}>
             <span style={{ fontWeight: 600, color: "var(--fg)", letterSpacing: "1px", width: 100, fontFamily: "'Afacad Flux', sans-serif" }}>{c.code}</span>
             <span style={{ color: "var(--fg-2)", width: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.assigned_name || "-"}</span>
             <span style={{
@@ -434,7 +434,7 @@ function DashboardTab() {
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
         {metrics.map(m => (
-          <div key={m.label} style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: 20 }}>
+          <div key={m.label} style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 20, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: "var(--fg)" }}>{m.value}</div>
             {m.sub && <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{m.sub}</div>}
@@ -443,9 +443,9 @@ function DashboardTab() {
       </div>
 
       <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--fg-3)", margin: "0 0 12px", letterSpacing: "1px", textTransform: "uppercase" }}>Activity Feed</h3>
-      <div style={{ background: "var(--surface-white)", border: "1px solid var(--border-subtle)", borderRadius: 8, overflow: "hidden" }}>
+      <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
         {activity.map((e, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--border-subtle)", fontSize: 13 }}>
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", fontSize: 13 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: e.type === "signup" ? "#4A90D9" : "#F5C642", flexShrink: 0 }} />
             <span style={{ fontWeight: 600, color: "var(--fg)" }}>{e.name}</span>
             <span style={{ color: "var(--fg-3)", flex: 1 }}>{e.detail}</span>
@@ -460,23 +460,24 @@ function DashboardTab() {
 
 // ── SHARED STYLES ─────────────────────────────────
 const inputStyle: React.CSSProperties = {
-  padding: "10px 12px", borderRadius: 6, border: "1px solid var(--border-subtle)",
-  background: "var(--surface-white)", fontSize: 14, fontFamily: "'Afacad Flux', sans-serif",
+  padding: "10px 12px", borderRadius: 8, border: "1px solid var(--glass-border)",
+  background: "var(--glass-input)", fontSize: 14, fontFamily: "'Afacad Flux', sans-serif",
   color: "var(--fg)", outline: "none",
+  backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
 };
 const btnGold: React.CSSProperties = {
-  padding: "10px 20px", borderRadius: 6, border: "none",
+  padding: "10px 20px", borderRadius: 8, border: "none",
   background: "#F5C642", color: "#0D1B2A", fontSize: 14, fontWeight: 700,
   cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif",
 };
 const btnOutline: React.CSSProperties = {
-  padding: "8px 14px", borderRadius: 6, border: "1px solid var(--border-subtle)",
+  padding: "8px 14px", borderRadius: 8, border: "1px solid var(--glass-border)",
   background: "transparent", color: "var(--fg-2)", fontSize: 13, fontWeight: 500,
   cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif",
   display: "flex", alignItems: "center", gap: 6, justifyContent: "center",
 };
 const btnSmall: React.CSSProperties = {
-  padding: "4px 10px", borderRadius: 4, border: "1px solid var(--border-subtle)",
+  padding: "4px 10px", borderRadius: 4, border: "1px solid var(--glass-border)",
   background: "transparent", color: "var(--fg-3)", fontSize: 12,
   cursor: "pointer", fontFamily: "'Afacad Flux', sans-serif",
 };

@@ -90,7 +90,7 @@ export default function Templates() {
   return (
     <div style={{ display: "flex", flex: 1, height: "100%", overflow: "hidden" }}>
       {/* Left list (44%) */}
-      <div style={{ width: "44%", borderRight: "1px solid var(--line)", overflowY: "auto", padding: "8px 0" }}>
+      <div style={{ width: "44%", borderRight: "1px solid var(--glass-border)", overflowY: "auto", padding: "8px 0" }}>
         {/* SYSTEM */}
         <div style={{
           fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
@@ -102,7 +102,7 @@ export default function Templates() {
           <span style={{
             fontSize: 8, fontWeight: 500, letterSpacing: 0,
             textTransform: "none" as const, color: "var(--fg-3)",
-            background: "var(--bg-2)", borderRadius: 3, padding: "1px 6px",
+            background: "var(--glass-surface)", borderRadius: 3, padding: "1px 6px",
           }}>Read only</span>
         </div>
         {SYSTEM_TEMPLATES.map((t, i) => (
@@ -121,7 +121,7 @@ export default function Templates() {
           </div>
         ))}
 
-        <div style={{ height: 1, background: "var(--line)", margin: "8px 0" }} />
+        <div style={{ height: 1, background: "var(--glass-border)", margin: "8px 0" }} />
 
         {/* YOURS */}
         <div style={{
@@ -166,7 +166,7 @@ export default function Templates() {
               <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", marginBottom: 4 }}>{selectedSystem.name}</div>
               <span style={{
                 fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const,
-                color: "var(--fg-3)", background: "var(--bg-2)", padding: "2px 8px", borderRadius: 3,
+                color: "var(--fg-3)", background: "var(--glass-surface)", padding: "2px 8px", borderRadius: 3,
                 display: "inline-block", marginBottom: 16,
               }}>Supplied Template</span>
               <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 20 }}>
@@ -178,7 +178,7 @@ export default function Templates() {
               <div style={{ marginBottom: 20 }}>
                 {selectedSystem.sections.map((sec, i) => (
                   <div key={i} style={{
-                    padding: "6px 0", borderBottom: "1px solid var(--line)",
+                    padding: "6px 0", borderBottom: "1px solid var(--glass-border)",
                     display: "flex", alignItems: "center", gap: 8,
                   }}>
                     <span style={{ fontSize: 9, fontWeight: 700, color: "var(--gold, #F5C642)", minWidth: 16 }}>{i + 1}</span>
@@ -235,14 +235,15 @@ export default function Templates() {
         {!selectedSystem && (
           <div style={{
             padding: "8px 14px 10px",
-            borderTop: "1px solid var(--line)", flexShrink: 0,
+            borderTop: "1px solid var(--glass-border)", flexShrink: 0,
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <input
                 placeholder="Reply to Reed..."
                 style={{
-                  flex: 1, background: "var(--surface)", border: "1px solid var(--line)",
+                  flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)",
                   borderRadius: 8, padding: "0 12px", fontSize: 13,
+                  backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
                   color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36,
                 }}
               />

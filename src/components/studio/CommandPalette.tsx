@@ -96,15 +96,17 @@ export function CommandPalette() {
         style={{
           width: "100%",
           maxWidth: 420,
-          background: "var(--surface)",
-          borderRadius: 12,
-          boxShadow: "0 24px 48px rgba(0,0,0,0.18)",
-          border: "1px solid var(--line)",
+          background: "var(--glass-card)",
+          borderRadius: 16,
+          boxShadow: "var(--glass-shadow-elevated)",
+          border: "1px solid var(--glass-border)",
+          backdropFilter: "var(--glass-blur)",
+          WebkitBackdropFilter: "var(--glass-blur)",
           overflow: "hidden",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--line)" }}>
+        <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--glass-border)" }}>
           <input
             type="text"
             placeholder="Go to..."
@@ -114,7 +116,7 @@ export function CommandPalette() {
             style={{
               width: "100%",
               padding: "10px 12px",
-              border: "1px solid var(--line)",
+              border: "1px solid var(--glass-border)",
               borderRadius: 8,
               fontSize: 14,
               fontFamily: "var(--font)",
@@ -143,7 +145,7 @@ export function CommandPalette() {
                   width: "100%",
                   padding: "12px 16px",
                   border: "none",
-                  background: i === selectedIndex ? "var(--bg-2)" : "transparent",
+                  background: i === selectedIndex ? "var(--glass-surface)" : "transparent",
                   cursor: "pointer",
                   fontFamily: "var(--font)",
                   fontSize: 14,

@@ -61,15 +61,16 @@ function ContentModal({ resource, onClose }: { resource: Resource; onClose: () =
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "var(--surface)", border: "1px solid var(--line)",
+          background: "var(--glass-card)", border: "1px solid var(--glass-border)",
           borderRadius: 12, width: "100%", maxWidth: 700, maxHeight: "80vh",
           display: "flex", flexDirection: "column",
           boxShadow: "0 16px 48px rgba(0,0,0,0.18)",
+          backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
         }}
       >
         {/* Header */}
         <div style={{
-          padding: "16px 20px", borderBottom: "1px solid var(--line)",
+          padding: "16px 20px", borderBottom: "1px solid var(--glass-border)",
           display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0,
         }}>
           <div>
@@ -81,7 +82,7 @@ function ContentModal({ resource, onClose }: { resource: Resource; onClose: () =
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <button
               onClick={() => { navigator.clipboard.writeText(resource.content); }}
-              style={{ fontSize: 11, padding: "5px 12px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
+              style={{ fontSize: 11, padding: "5px 12px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
             >
               Copy
             </button>
@@ -141,13 +142,13 @@ function FileDetailPanel({
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <button
             onClick={onView}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
+            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
           >
             View file
           </button>
           <button
             onClick={onReplace}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
+            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
           >
             Replace file
           </button>
@@ -313,18 +314,18 @@ export default function Resources() {
         onDoubleClick={() => { setSelectedId(resource.id); setViewingResource(resource); }}
         style={{
           display: "flex", alignItems: "center", gap: 10,
-          padding: "9px 8px", borderBottom: "1px solid var(--line)",
+          padding: "9px 8px", borderBottom: "1px solid var(--glass-border)",
           cursor: "pointer",
           background: active ? "rgba(245,198,66,0.06)" : "transparent",
           transition: "background 0.1s",
         }}
-        onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg)"; }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--glass-surface)"; }}
         onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(245,198,66,0.06)" : "transparent"; }}
       >
         {/* File icon */}
         <div style={{
-          width: 30, height: 30, borderRadius: 6, flexShrink: 0,
-          background: "var(--bg-2)", border: "1px solid var(--line)",
+          width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+          background: "var(--glass-surface)", border: "1px solid var(--glass-border)",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <svg style={{ width: 14, height: 14, stroke: "var(--blue)", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
@@ -356,20 +357,20 @@ export default function Resources() {
         {(voiceDnaExists || brandDnaExists) ? (
           <>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Foundation</div>
-            <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)", marginBottom: 20 }}>
+            <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", boxShadow: "var(--glass-shadow)", marginBottom: 20, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
               {voiceDnaExists && (
                 <div
                   onClick={() => nav("/studio/settings/voice")}
                   style={{
                     display: "flex", alignItems: "center", gap: 10,
-                    padding: "9px 8px", borderBottom: brandDnaExists ? "1px solid var(--line)" : "none",
+                    padding: "9px 8px", borderBottom: brandDnaExists ? "1px solid var(--glass-border)" : "none",
                     borderLeft: "3px solid var(--gold)",
                     cursor: "pointer", transition: "background 0.1s",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.background = "var(--bg)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                 >
-                  <div style={{ width: 30, height: 30, borderRadius: 6, flexShrink: 0, background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>V</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -391,7 +392,7 @@ export default function Resources() {
                   onMouseEnter={e => { e.currentTarget.style.background = "var(--bg)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                 >
-                  <div style={{ width: 30, height: 30, borderRadius: 6, flexShrink: 0, background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>B</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -406,7 +407,7 @@ export default function Resources() {
         ) : (
           <div style={{
             background: "rgba(245,198,66,0.04)", border: "1px solid rgba(245,198,66,0.12)",
-            borderRadius: 8, padding: "14px 16px", marginBottom: 20,
+            borderRadius: 12, padding: "14px 16px", marginBottom: 20,
             fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6,
           }}>
             Set up your <span onClick={() => nav("/onboarding")} style={{ color: "var(--gold)", fontWeight: 600, cursor: "pointer" }}>Voice DNA and Brand DNA</span> to give Reed your full context.
@@ -424,9 +425,10 @@ export default function Resources() {
           </div>
         ) : resources.length === 0 ? (
           <div style={{
-            background: "var(--surface)", border: "1px solid var(--line)",
-            borderRadius: 8, padding: "32px 20px", textAlign: "center" as const,
-            boxShadow: "var(--shadow-sm)", marginBottom: 10,
+            background: "var(--glass-card)", border: "1px solid var(--glass-border)",
+            borderRadius: 12, padding: "32px 20px", textAlign: "center" as const,
+            boxShadow: "var(--glass-shadow)", marginBottom: 10,
+            backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
           }}>
             <div style={{ fontSize: 22, color: "var(--line)", marginBottom: 12 }}>&#9764;</div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>No project files yet</div>
@@ -435,7 +437,7 @@ export default function Resources() {
             </div>
           </div>
         ) : (
-          <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)", marginBottom: 10 }}>
+          <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", boxShadow: "var(--glass-shadow)", marginBottom: 10, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
             {resources.map(r => <FileRow key={r.id} resource={r} />)}
           </div>
         )}

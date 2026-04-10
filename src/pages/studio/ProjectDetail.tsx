@@ -197,9 +197,10 @@ export default function ProjectDetail() {
                 onKeyDown={handleKeyDown}
                 style={{
                   fontSize: 24, fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em",
-                  fontFamily: "'Afacad Flux', sans-serif", border: "1px solid var(--line)",
+                  fontFamily: "'Afacad Flux', sans-serif", border: "1px solid var(--glass-border)",
                   borderRadius: "var(--studio-radius)", padding: "4px 10px",
-                  background: "var(--bg-2)", outline: "none", width: "100%",
+                  background: "var(--glass-input)", outline: "none", width: "100%",
+                  backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
                 }}
               />
             </div>
@@ -212,7 +213,7 @@ export default function ProjectDetail() {
                 borderRadius: "var(--studio-radius)", padding: "2px 4px", margin: "-2px -4px 6px -4px",
                 transition: "background .12s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-2)")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--glass-surface)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               title="Click to rename"
             >
@@ -234,7 +235,7 @@ export default function ProjectDetail() {
           style={{
             display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             padding: "8px 14px", borderRadius: "var(--studio-radius)",
-            border: "1px solid var(--line)", background: "var(--bg-2)",
+            border: "1px solid var(--glass-border)", background: "var(--glass-surface)",
             cursor: archiving ? "wait" : "pointer", color: "var(--fg-2)",
             fontSize: 13, fontFamily: "'Afacad Flux', sans-serif", fontWeight: 500,
             opacity: archiving ? 0.5 : 1,
@@ -277,7 +278,7 @@ export default function ProjectDetail() {
             New Idea
           </button>
         </div>
-        <div className="card" style={{ overflow: "hidden", border: "1px solid var(--line)" }}>
+        <div className="card" style={{ overflow: "hidden", border: "1px solid var(--glass-border)" }}>
           {outputs.length === 0 ? (
             <div style={{ padding: "40px 24px", textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>
               No outputs in this project yet. Click &quot;New Idea&quot; to create one.
@@ -291,11 +292,11 @@ export default function ProjectDetail() {
                   onClick={() => navigate(`/studio/outputs/${o.id}`)}
                   style={{
                     display: "flex", alignItems: "center", gap: 14,
-                    background: "none", border: "none", borderBottom: "1px solid var(--line)",
+                    background: "none", border: "none", borderBottom: "1px solid var(--glass-border)",
                     padding: "12px 16px", cursor: "pointer", textAlign: "left", fontFamily: "var(--font)", width: "100%",
                     transition: "background .12s",
                   }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-2)"}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--glass-surface)"}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "none"}
                 >
                   <div style={{ width: 6, height: 6, borderRadius: "50%", background: TYPE_COLORS[o.output_type] || "#4A90D9", flexShrink: 0 }} />

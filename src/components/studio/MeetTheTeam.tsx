@@ -126,7 +126,7 @@ function ReedDetailContent() {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         {REED_CAPABILITIES.map((cap, i) => (
-          <div key={i} style={{ padding: "10px 12px", border: "1px solid var(--line, #E2E8F0)", borderRadius: 6 }}>
+          <div key={i} style={{ padding: "10px 12px", border: "1px solid var(--glass-border)", borderRadius: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", marginBottom: 3 }}>{cap.name}</div>
             <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.5 }}>{cap.desc}</div>
           </div>
@@ -249,9 +249,11 @@ export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamP
           position: "fixed", left: "50%", top: "50%",
           transform: "translate(-50%, -50%)",
           width: "100%", maxWidth: 640, maxHeight: "85vh",
-          overflow: "auto", background: "var(--surface)",
-          borderRadius: 16, border: "1px solid var(--line)",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.25)",
+          overflow: "auto", background: "var(--glass-card)",
+          borderRadius: 16, border: "1px solid var(--glass-border)",
+          boxShadow: "var(--glass-shadow)",
+          backdropFilter: "var(--glass-blur-light)",
+          WebkitBackdropFilter: "var(--glass-blur-light)",
           zIndex: 9999, fontFamily: "'Afacad Flux', sans-serif",
           padding: "28px 32px",
         }}
@@ -312,13 +314,13 @@ export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamP
                   onClick={() => setActiveDetail(item.detailId)}
                   style={{
                     padding: "8px 14px", borderRadius: 8,
-                    border: "1px solid var(--line, #E2E8F0)", background: "var(--surface)",
+                    border: "1px solid var(--glass-border)", background: "var(--glass-card)",
                     cursor: "pointer", fontSize: 12, fontWeight: 600,
                     color: "var(--text-primary)", fontFamily: "inherit",
                     transition: "all 0.12s",
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#4A90D9"; e.currentTarget.style.color = "#4A90D9"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line, #E2E8F0)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--text-primary)"; }}
                 >
                   {item.label}
                 </button>

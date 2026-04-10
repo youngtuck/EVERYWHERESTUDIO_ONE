@@ -62,8 +62,8 @@ function RadioGroup({
             style={{
               display: "flex", alignItems: "center", gap: 5,
               fontSize: 11, padding: "4px 10px", borderRadius: 5,
-              border: active ? "1px solid var(--fg)" : "1px solid var(--line)",
-              background: active ? "var(--bg)" : "var(--surface)",
+              border: active ? "1px solid var(--fg)" : "1px solid var(--glass-border)",
+              background: active ? "var(--bg)" : "var(--glass-input)",
               color: active ? "var(--fg)" : "var(--fg-3)",
               fontWeight: active ? 600 : 400,
               cursor: "pointer", transition: "all 0.1s",
@@ -79,14 +79,14 @@ function RadioGroup({
 }
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
+  <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 14, marginBottom: 10, boxShadow: "var(--glass-shadow)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
     <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>{title}</div>
     {children}
   </div>
 );
 
 const PrefRow = ({ label, sublabel, children }: { label: string; sublabel?: string; children: React.ReactNode }) => (
-  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--glass-border)" }}>
     <div>
       <span style={{ fontSize: 12, color: "var(--fg-2)", fontWeight: 500 }}>{label}</span>
       {sublabel && <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 2 }}>{sublabel}</div>}
@@ -202,32 +202,32 @@ export default function Settings() {
       </Card>
 
       {/* Voice & Brand DNA links */}
-      <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+      <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--glass-border)" }}>
         <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>Voice and Brand DNA are configured separately.</div>
         <div style={{ display: "flex", gap: 8 }}>
           <button
             onClick={() => nav("/studio/settings/voice")}
             style={{
-              fontSize: 12, padding: "8px 16px", borderRadius: 6,
-              border: "1px solid var(--line)", background: "var(--surface)",
+              fontSize: 12, padding: "8px 16px", borderRadius: 8,
+              border: "1px solid var(--glass-border)", background: "var(--glass-card)",
               color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
               transition: "all 0.1s",
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg-2)"; }}
           >
             Voice DNA →
           </button>
           <button
             onClick={() => nav("/studio/settings/brand")}
             style={{
-              fontSize: 12, padding: "8px 16px", borderRadius: 6,
-              border: "1px solid var(--line)", background: "var(--surface)",
+              fontSize: 12, padding: "8px 16px", borderRadius: 8,
+              border: "1px solid var(--glass-border)", background: "var(--glass-card)",
               color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
               transition: "all 0.1s",
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.color = "var(--fg)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-2)"; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg-2)"; }}
           >
             Brand Profile →
           </button>

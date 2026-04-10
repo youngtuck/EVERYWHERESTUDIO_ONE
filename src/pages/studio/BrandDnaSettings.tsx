@@ -96,7 +96,7 @@ export default function BrandDnaSettings() {
             Brand DNA
           </h1>
         </header>
-        <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: 32 }}>
+        <section style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 32, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
           <p style={{ fontSize: 15, color: "var(--fg-2)", margin: "0 0 20px", lineHeight: 1.6 }}>
             Your Brand DNA has not been captured yet. Brand DNA teaches Reed your brand voice, values, and positioning so content stays on-brand.
           </p>
@@ -137,7 +137,7 @@ export default function BrandDnaSettings() {
       </header>
 
       {/* SECTION A: Summary */}
-      <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: 32, marginBottom: 24 }}>
+      <section style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 32, marginBottom: 24, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
         <div style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--fg-3)", marginBottom: 12 }}>
           Your Brand DNA
         </div>
@@ -160,7 +160,7 @@ export default function BrandDnaSettings() {
 
       {/* SECTION B: Brand DNA Fields */}
       {brandFields.length > 0 && (
-        <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: 32, marginBottom: 24 }}>
+        <section style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 32, marginBottom: 24, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
           <div style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--fg-3)", marginBottom: 18 }}>
             Brand Details
           </div>
@@ -180,7 +180,7 @@ export default function BrandDnaSettings() {
       )}
 
       {/* SECTION C: Retrain */}
-      <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: 32 }}>
+      <section style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 32, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
         <div style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--fg-3)", marginBottom: 12 }}>
           Retrain
         </div>

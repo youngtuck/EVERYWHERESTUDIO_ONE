@@ -78,7 +78,7 @@ function PipelineDetailPanel({
               Send to Wrap
             </button>
           )}
-          <button style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}>Edit note</button>
+          <button style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}>Edit note</button>
           <button
             onClick={onRemove}
             style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.04)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
@@ -197,7 +197,7 @@ export default function TheLot() {
   }, [selectedItem, handleActivate, handleRemove, setDashContent, setDashOpen]);
 
   const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
+    <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 14, marginBottom: 10, boxShadow: "var(--glass-shadow)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
       <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>{title}</div>
       {children}
     </div>
@@ -210,12 +210,12 @@ export default function TheLot() {
         onClick={() => setSelectedId(item.id)}
         style={{
           display: "flex", alignItems: "center", gap: 10,
-          padding: "9px 4px", borderBottom: "1px solid var(--line)",
+          padding: "9px 4px", borderBottom: "1px solid var(--glass-border)",
           cursor: "pointer", borderRadius: 5,
           background: active ? "rgba(245,198,66,0.06)" : "transparent",
           transition: "background 0.1s",
         }}
-        onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg)"; }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--glass-surface)"; }}
         onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(245,198,66,0.06)" : "transparent"; }}
       >
         <div style={{ flex: 1 }}>

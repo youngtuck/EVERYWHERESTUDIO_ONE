@@ -49,9 +49,12 @@ export default function OnboardingOverlay({ onClose }: { onClose: () => void }) 
           transform: "translate(-50%, -50%)",
           width: "100%", maxWidth: 600, maxHeight: "85vh",
           overflow: "auto",
-          background: "var(--surface)",
+          background: "var(--glass-card)",
           borderRadius: 16,
-          boxShadow: "0 24px 48px rgba(0,0,0,0.25)",
+          border: "1px solid var(--glass-border)",
+          boxShadow: "var(--glass-shadow)",
+          backdropFilter: "var(--glass-blur-light)",
+          WebkitBackdropFilter: "var(--glass-blur-light)",
           zIndex: 9999,
           fontFamily: "'Afacad Flux', sans-serif",
           padding: 40,
@@ -87,7 +90,7 @@ export default function OnboardingOverlay({ onClose }: { onClose: () => void }) 
               {PHASE_LABELS.map((label, i) => (
                 <span key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 12, fontWeight: 600, color: "var(--gold)" }}>{label}</span>
-                  {i < PHASE_LABELS.length - 1 && <span style={{ width: 16, height: 1, background: "var(--line)" }} />}
+                  {i < PHASE_LABELS.length - 1 && <span style={{ width: 16, height: 1, background: "var(--glass-border)" }} />}
                 </span>
               ))}
             </div>
@@ -103,7 +106,7 @@ export default function OnboardingOverlay({ onClose }: { onClose: () => void }) 
                 key={i}
                 style={{
                   width: 8, height: 8, borderRadius: "50%",
-                  background: i === step ? "var(--gold)" : "var(--line)",
+                  background: i === step ? "var(--gold)" : "var(--glass-border)",
                   transition: "background 0.2s",
                 }}
               />

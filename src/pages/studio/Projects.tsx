@@ -362,11 +362,13 @@ export default function Projects() {
           <div
             key={p.id}
             style={{
-              background: "var(--surface)",
-              border: "1px solid var(--line)",
+              background: "var(--glass-card)",
+              border: "1px solid var(--glass-border)",
               borderLeft: `3px solid ${accentColor}`,
               borderRadius: 12,
               padding: "20px 24px",
+              backdropFilter: "var(--glass-blur-light)",
+              WebkitBackdropFilter: "var(--glass-blur-light)",
               cursor: "pointer",
               textAlign: "left",
               fontFamily: "inherit",
@@ -374,10 +376,10 @@ export default function Projects() {
               position: "relative",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--bg-2)";
+              e.currentTarget.style.background = "var(--glass-surface)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--surface)";
+              e.currentTarget.style.background = "var(--glass-card)";
             }}
             onClick={() => {
               if (!isRenaming && menuOpenId !== p.id) {
@@ -419,9 +421,9 @@ export default function Projects() {
                   position: "absolute",
                   top: 48,
                   right: 20,
-                  background: "var(--surface)",
-                  border: "1px solid var(--line)",
-                  borderRadius: 8,
+                  background: "var(--glass-card)",
+                  border: "1px solid var(--glass-border)",
+                  borderRadius: 12,
                   boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                   zIndex: 10,
                   padding: "4px 0",
@@ -491,8 +493,8 @@ export default function Projects() {
                   style={{
                     flex: 1,
                     padding: "6px 8px",
-                    borderRadius: 6,
-                    border: "1px solid var(--line)",
+                    borderRadius: 8,
+                    border: "1px solid var(--glass-border)",
                     fontSize: 15,
                     fontWeight: 600,
                     fontFamily: "'Afacad Flux', sans-serif",
@@ -528,8 +530,8 @@ export default function Projects() {
                   onClick={() => { setRenameId(null); setRenameName(""); }}
                   style={{
                     padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid var(--line)",
+                    borderRadius: 8,
+                    border: "1px solid var(--glass-border)",
                     background: "none",
                     fontSize: 12,
                     cursor: "pointer",
@@ -568,7 +570,7 @@ export default function Projects() {
               {displayDesc}
             </p>
             {outputsCount === 0 ? (
-              <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--bg-2)", borderRadius: 6, textAlign: "center" }}>
+              <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--glass-surface)", borderRadius: 8, textAlign: "center" }}>
                 <span style={{ fontSize: 13, color: "var(--text-tertiary)" }}>
                   Start a session to create your first output
                 </span>
@@ -611,7 +613,7 @@ export default function Projects() {
               const pub = pubReadyByProject.get(p.id);
               if (!titles?.length && !pub) return null;
               return (
-                <div style={{ marginTop: 12, borderTop: "1px solid var(--line)", paddingTop: 10 }}>
+                <div style={{ marginTop: 12, borderTop: "1px solid var(--glass-border)", paddingTop: 10 }}>
                   {pub && pub.total > 0 && (
                     <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: titles?.length ? 6 : 0 }}>
                       {pub.ready}/{pub.total} publication-ready
@@ -730,10 +732,13 @@ export default function Projects() {
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: 8,
-                    border: "1px solid var(--line)",
+                    border: "1px solid var(--glass-border)",
                     fontSize: 13,
                     fontFamily: "'Afacad Flux', sans-serif",
                     outline: "none",
+                    background: "var(--glass-input)",
+                    backdropFilter: "var(--glass-blur-light)",
+                    WebkitBackdropFilter: "var(--glass-blur-light)",
                   }}
                 />
               </div>
@@ -750,10 +755,13 @@ export default function Projects() {
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: 8,
-                    border: "1px solid var(--line)",
+                    border: "1px solid var(--glass-border)",
                     fontSize: 13,
                     fontFamily: "'Afacad Flux', sans-serif",
                     outline: "none",
+                    background: "var(--glass-input)",
+                    backdropFilter: "var(--glass-blur-light)",
+                    WebkitBackdropFilter: "var(--glass-blur-light)",
                   }}
                 />
               </div>

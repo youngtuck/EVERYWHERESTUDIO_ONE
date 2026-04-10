@@ -503,11 +503,13 @@ export default function VisualWrap() {
       {/* Section 1: Output preview */}
       <div
         style={{
-          background: "var(--surface-white)",
-          border: "1px solid var(--border-subtle)",
+          background: "var(--glass-card)",
+          border: "1px solid var(--glass-border)",
           borderRadius: 12,
           padding: 16,
           marginBottom: 28,
+          backdropFilter: "var(--glass-blur-light)",
+          WebkitBackdropFilter: "var(--glass-blur-light)",
         }}
       >
         <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>{output.title}</div>
@@ -566,9 +568,9 @@ export default function VisualWrap() {
                 style={{
                   width: "100%",
                   padding: 20,
-                  border: selected ? "2px solid #C8961A" : "1px solid var(--border-subtle)",
+                  border: selected ? "2px solid #C8961A" : "1px solid var(--glass-border)",
                   borderRadius: 12,
-                  background: selected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
+                  background: selected ? "rgba(200,150,26,0.04)" : "var(--glass-card)",
                   cursor: "pointer",
                   textAlign: "center",
                   transition: "all 0.2s ease",
@@ -582,7 +584,7 @@ export default function VisualWrap() {
                 }}
                 onMouseLeave={(e) => {
                   if (!selected) {
-                    e.currentTarget.style.borderColor = "var(--border-subtle)";
+                    e.currentTarget.style.borderColor = "var(--glass-border)";
                     e.currentTarget.style.boxShadow = "none";
                   }
                 }}
@@ -624,16 +626,16 @@ export default function VisualWrap() {
                 onClick={() => setAspectRatio(opt.value)}
                 style={{
                   padding: "12px 24px",
-                  border: selected ? "2px solid #C8961A" : "1px solid var(--border-subtle)",
+                  border: selected ? "2px solid #C8961A" : "1px solid var(--glass-border)",
                   borderRadius: 10,
-                  background: selected ? "rgba(200,150,26,0.04)" : "var(--surface-white)",
+                  background: selected ? "rgba(200,150,26,0.04)" : "var(--glass-card)",
                   cursor: "pointer",
                   fontFamily: "'Afacad Flux', sans-serif",
                   textAlign: "center",
                   transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--border-default)"; }}
-                onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+                onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--glass-border)"; }}
               >
                 <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>{opt.label}</div>
                 <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 2 }}>{opt.subtitle}</div>
@@ -670,12 +672,14 @@ export default function VisualWrap() {
             style={{
               marginTop: 12,
               padding: 20,
-              background: "var(--surface-white)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--glass-card)",
+              border: "1px solid var(--glass-border)",
               borderRadius: 12,
               display: "flex",
               flexDirection: "column",
               gap: 14,
+              backdropFilter: "var(--glass-blur-light)",
+              WebkitBackdropFilter: "var(--glass-blur-light)",
             }}
           >
             <div>
@@ -794,14 +798,16 @@ export default function VisualWrap() {
         >
           <div
             style={{
-              background: "var(--surface-white)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--glass-card)",
+              border: "1px solid var(--glass-border)",
               borderRadius: 16,
               padding: 48,
               minHeight: 320,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
+              backdropFilter: "var(--glass-blur-light)",
+              WebkitBackdropFilter: "var(--glass-blur-light)",
               textAlign: "center",
             }}
           >
@@ -828,7 +834,7 @@ export default function VisualWrap() {
                 width: "100%",
                 maxWidth: aspectRatio === "9:16" ? 280 : 500,
                 aspectRatio: aspectRatio.replace(":", "/"),
-                border: "1px solid var(--border-subtle)",
+                border: "1px solid var(--glass-border)",
                 borderRadius: 12,
                 background: "#FAFAF8",
                 overflow: "hidden",
@@ -1064,13 +1070,15 @@ export default function VisualWrap() {
                   <div
                     key={vibe}
                     style={{
-                      background: "var(--surface-white)",
-                      border: "1px solid var(--border-subtle)",
+                      background: "var(--glass-card)",
+                      border: "1px solid var(--glass-border)",
                       borderRadius: 16,
                       overflow: "hidden",
                       minHeight: 200,
                       padding: 16,
                       display: "flex",
+                      backdropFilter: "var(--glass-blur-light)",
+                      WebkitBackdropFilter: "var(--glass-blur-light)",
                       flexDirection: "column",
                       alignItems: "center",
                     }}
@@ -1083,7 +1091,7 @@ export default function VisualWrap() {
                         position: "relative",
                         width: "100%",
                         aspectRatio: aspectRatio.replace(":", "/"),
-                        border: "1px solid var(--border-subtle)",
+                        border: "1px solid var(--glass-border)",
                         borderRadius: 12,
                         background: "#FAFAF8",
                         overflow: "hidden",
@@ -1222,11 +1230,13 @@ export default function VisualWrap() {
                 <div
                   key={sv.id}
                   style={{
-                    background: "var(--surface-white)",
-                    border: "1px solid var(--border-subtle)",
+                    background: "var(--glass-card)",
+                    border: "1px solid var(--glass-border)",
                     borderRadius: 16,
                     overflow: "hidden",
                     padding: 16,
+                    backdropFilter: "var(--glass-blur-light)",
+                    WebkitBackdropFilter: "var(--glass-blur-light)",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -1246,7 +1256,7 @@ export default function VisualWrap() {
                     style={{
                       width: "100%",
                       aspectRatio: sv.aspect_ratio.replace(":", "/"),
-                      border: "1px solid var(--border-subtle)",
+                      border: "1px solid var(--glass-border)",
                       borderRadius: 12,
                       background: "#FAFAF8",
                       overflow: "hidden",

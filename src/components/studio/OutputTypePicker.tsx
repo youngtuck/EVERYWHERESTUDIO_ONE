@@ -76,7 +76,7 @@ export default function OutputTypePicker({ selected, onSelect, compact }: Output
       {/* Category tabs */}
       <div style={{
         display: "flex", gap: 0,
-        borderBottom: "1px solid var(--line)",
+        borderBottom: "1px solid var(--glass-border)",
         marginBottom: compact ? 8 : 12,
       }}>
         {CATEGORIES.map(cat => (
@@ -116,9 +116,9 @@ export default function OutputTypePicker({ selected, onSelect, compact }: Output
               onClick={() => onSelect(type.id)}
               style={{
                 padding: compact ? "6px 8px" : "10px 12px",
-                borderRadius: 6,
-                border: isSelected ? "2px solid var(--gold-bright)" : "1px solid var(--line)",
-                background: isSelected ? "rgba(245,198,66,0.08)" : "var(--surface)",
+                borderRadius: 8,
+                border: isSelected ? "2px solid var(--gold-bright)" : "1px solid var(--glass-border)",
+                background: isSelected ? "rgba(245,198,66,0.08)" : "var(--glass-card)",
                 cursor: "pointer",
                 fontFamily: FONT,
                 fontSize: compact ? 10 : 11,

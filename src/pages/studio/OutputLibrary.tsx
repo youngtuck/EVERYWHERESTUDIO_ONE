@@ -91,7 +91,7 @@ function SessionDetailPanel({
         )}
 
         {formats.map(f => (
-          <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 5, marginBottom: 4 }}>
+          <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 5, marginBottom: 4 }}>
             <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 1.75, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
             </svg>
@@ -109,7 +109,7 @@ function SessionDetailPanel({
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <button
             onClick={onReopen}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
+            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-card)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
           >
             Reopen in Work
           </button>
@@ -233,19 +233,20 @@ export default function OutputLibrary() {
           onChange={e => setSearch(e.target.value)}
           placeholder="Search sessions..."
           style={{
-            width: "100%", marginBottom: 12, background: "var(--surface)",
-            border: "1px solid var(--line)", borderRadius: 7, padding: "8px 12px",
+            width: "100%", marginBottom: 12, background: "var(--glass-input)",
+            border: "1px solid var(--glass-border)", borderRadius: 8, padding: "8px 12px",
             fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none",
+            backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
           }}
           onFocus={e => { e.target.style.borderColor = "rgba(74,144,217,0.4)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
         />
       )}
 
       {loading ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {[1, 2, 3, 4].map(i => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: "1px solid var(--line)" }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: "1px solid var(--glass-border)" }}>
               <div style={{ width: 48, height: 10, background: "var(--bg-2)", borderRadius: 3 }} />
               <div style={{ flex: 1, height: 12, background: "var(--bg-2)", borderRadius: 3 }} />
             </div>
@@ -256,7 +257,7 @@ export default function OutputLibrary() {
           {search ? "No sessions match your search." : "No sessions yet. Complete a Work session to see it here."}
         </div>
       ) : (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+        <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", boxShadow: "var(--glass-shadow)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
           {filtered.map((output, i) => {
             const active = selectedId === output.id;
             return (
@@ -266,7 +267,7 @@ export default function OutputLibrary() {
                 style={{
                   display: "flex", alignItems: "center", gap: 10,
                   padding: "8px 8px",
-                  borderBottom: i < filtered.length - 1 ? "1px solid var(--line)" : "none",
+                  borderBottom: i < filtered.length - 1 ? "1px solid var(--glass-border)" : "none",
                   cursor: "pointer",
                   background: active ? "rgba(245,198,66,0.06)" : "transparent",
                   transition: "background 0.1s",

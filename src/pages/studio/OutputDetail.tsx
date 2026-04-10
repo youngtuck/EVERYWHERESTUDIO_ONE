@@ -102,9 +102,9 @@ const toolbarBtn = (active = false): React.CSSProperties => ({
   alignItems: "center",
   gap: 6,
   padding: "8px 16px",
-  border: "1px solid var(--line)",
+  border: "1px solid var(--glass-border)",
   borderRadius: 8,
-  background: active ? "var(--gold)" : "var(--surface)",
+  background: active ? "var(--gold)" : "var(--glass-card)",
   fontSize: 13,
   fontWeight: active ? 700 : 500,
   color: active ? "var(--fg)" : "var(--fg-2)",
@@ -439,8 +439,8 @@ export default function OutputDetail() {
         This output may not have been saved yet.
       </div>
       <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-        <button className="btn-ghost" onClick={() => navigate("/studio/outputs")} style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", fontSize: 14, cursor: "pointer", color: "var(--fg-2)", fontFamily: "'Afacad Flux', sans-serif" }}>Back to The Vault</button>
-        <button className="btn-ghost" onClick={() => navigate("/studio/work")} style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", fontSize: 14, cursor: "pointer", color: "var(--fg-2)", fontFamily: "'Afacad Flux', sans-serif" }}>Back to Work</button>
+        <button className="btn-ghost" onClick={() => navigate("/studio/outputs")} style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid var(--glass-border)", background: "transparent", fontSize: 14, cursor: "pointer", color: "var(--fg-2)", fontFamily: "'Afacad Flux', sans-serif" }}>Back to The Vault</button>
+        <button className="btn-ghost" onClick={() => navigate("/studio/work")} style={{ padding: "10px 20px", borderRadius: 8, border: "1px solid var(--glass-border)", background: "transparent", fontSize: 14, cursor: "pointer", color: "var(--fg-2)", fontFamily: "'Afacad Flux', sans-serif" }}>Back to Work</button>
       </div>
     </div>
   );
@@ -468,7 +468,8 @@ export default function OutputDetail() {
       {/* ── TOP BAR (sticky) ──────────────────────────────────────── */}
       <div style={{
         position: "sticky", top: 0, zIndex: 50,
-        background: "var(--surface)", borderBottom: "1px solid var(--line)",
+        background: "var(--glass-card)", borderBottom: "1px solid var(--glass-border)",
+        backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
         padding: isMobile ? "0 16px" : "0 32px", height: 60,
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
       }}>
@@ -504,7 +505,7 @@ export default function OutputDetail() {
         {!isMobile && (
           <span style={{
             fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const,
-            color: "var(--fg-3)", background: "var(--bg-2)", padding: "4px 12px", borderRadius: 4, flexShrink: 0,
+            color: "var(--fg-3)", background: "var(--glass-surface)", padding: "4px 12px", borderRadius: 4, flexShrink: 0,
           }}>
             {output!.output_type.replace(/_/g, " ")}
           </span>
@@ -544,7 +545,7 @@ export default function OutputDetail() {
               <button
                 onClick={saveEdits}
                 disabled={saving || !hasUnsavedChanges}
-                style={{ ...toolbarBtn(hasUnsavedChanges), border: hasUnsavedChanges ? "none" : "1px solid var(--line)", opacity: hasUnsavedChanges ? 1 : 0.5 }}
+                style={{ ...toolbarBtn(hasUnsavedChanges), border: hasUnsavedChanges ? "none" : "1px solid var(--glass-border)", opacity: hasUnsavedChanges ? 1 : 0.5 }}
               >
                 {saving ? "Saving..." : "Save edits"}
               </button>
@@ -556,7 +557,8 @@ export default function OutputDetail() {
       {/* ── TOOLBAR (sticky below top bar) ────────────────────────── */}
       <div style={{
         position: "sticky", top: 60, zIndex: 40,
-        background: "var(--surface)", borderBottom: "1px solid var(--line)",
+        background: "var(--glass-card)", borderBottom: "1px solid var(--glass-border)",
+        backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
         padding: isMobile ? "10px 16px" : "10px 32px",
       }}>
         <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -572,7 +574,7 @@ export default function OutputDetail() {
             disabled={pipelineRunning}
             style={{
               ...toolbarBtn(!pipelineRun),
-              border: pipelineRun ? "1px solid var(--line)" : "none",
+              border: pipelineRun ? "1px solid var(--glass-border)" : "none",
               marginLeft: "auto",
             }}
           >
@@ -591,7 +593,7 @@ export default function OutputDetail() {
             <select
               value={output!.project_id || ""}
               onChange={(e) => moveToProject(e.target.value)}
-              style={{ fontSize: 12, fontFamily: font, color: "var(--fg-2)", background: "transparent", border: "1px solid var(--line)", borderRadius: 6, padding: "4px 8px", cursor: "pointer", outline: "none" }}
+              style={{ fontSize: 12, fontFamily: font, color: "var(--fg-2)", background: "transparent", border: "1px solid var(--glass-border)", borderRadius: 8, padding: "4px 8px", cursor: "pointer", outline: "none" }}
             >
               <option value="">Unassigned</option>
               {userProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -618,7 +620,7 @@ export default function OutputDetail() {
                 width: "100%", minHeight: 500,
                 padding: isMobile ? "20px 16px" : "32px 36px",
                 fontFamily: font, fontSize: 16, lineHeight: 1.75,
-                color: "var(--fg)", background: "var(--surface)",
+                color: "var(--fg)", background: "var(--glass-input)",
                 border: "1px solid var(--cornflower)", borderRadius: 8,
                 resize: "vertical", outline: "none", whiteSpace: "pre-wrap", wordBreak: "break-word" as const,
               }}
@@ -631,9 +633,11 @@ export default function OutputDetail() {
         ) : (
           <div style={{
             padding: isMobile ? "24px 16px" : "36px 40px",
-            background: "var(--surface)",
-            border: "1px solid var(--line)",
-            borderRadius: 10,
+            background: "var(--glass-card)",
+            border: "1px solid var(--glass-border)",
+            borderRadius: 12,
+            backdropFilter: "var(--glass-blur-light)",
+            WebkitBackdropFilter: "var(--glass-blur-light)",
           }}>
             <div
               style={{ fontFamily: font, fontSize: isMobile ? 15 : 16, lineHeight: 1.75, color: "var(--text-primary)" }}
@@ -646,13 +650,13 @@ export default function OutputDetail() {
         {showRescore && !editing && (
           <div style={{
             marginTop: 16, padding: "12px 16px",
-            background: "rgba(74,144,217,0.06)", borderLeft: "3px solid var(--cornflower)", borderRadius: 6,
+            background: "rgba(74,144,217,0.06)", borderLeft: "3px solid var(--cornflower)", borderRadius: 8,
             display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10,
           }}>
             <span style={{ fontSize: 13, color: "var(--fg-2)" }}>Content edited. Re-score to update your Impact Score.</span>
             <button
               onClick={handleRescore} disabled={rescoring}
-              style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: "var(--cornflower)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: rescoring ? "default" : "pointer", fontFamily: font }}
+              style={{ padding: "6px 16px", borderRadius: 8, border: "none", background: "var(--cornflower)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: rescoring ? "default" : "pointer", fontFamily: font }}
             >
               {rescoring ? "Scoring..." : "Re-score"}
             </button>
@@ -666,7 +670,7 @@ export default function OutputDetail() {
           onClick={() => setQualityOpen(!qualityOpen)}
           style={{
             display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
-            background: "none", border: "none", borderTop: "1px solid var(--line)",
+            background: "none", border: "none", borderTop: "1px solid var(--glass-border)",
             padding: "16px 0", cursor: "pointer", fontFamily: font,
           }}
         >
@@ -752,7 +756,7 @@ export default function OutputDetail() {
                   URL.revokeObjectURL(url);
                   toast("HTML file downloaded");
                 }}
-                style={{ background: "none", border: "1px solid var(--line)", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: font }}
+                style={{ background: "none", border: "1px solid var(--glass-border)", borderRadius: 8, padding: "4px 12px", cursor: "pointer", fontSize: 12, color: "var(--fg-3)", fontFamily: font }}
               >
                 Download HTML
               </button>
@@ -762,7 +766,7 @@ export default function OutputDetail() {
           <iframe
             srcDoc={previewHtml}
             title="Output preview"
-            style={{ width: "100%", height: 600, border: "1px solid var(--line)", borderRadius: 12, background: "var(--surface)" }}
+            style={{ width: "100%", height: 600, border: "1px solid var(--glass-border)", borderRadius: 12, background: "var(--glass-card)" }}
             sandbox="allow-same-origin"
           />
         </div>
@@ -783,11 +787,11 @@ export default function OutputDetail() {
       {/* ── Delete confirmation modal ─────────────────────────────── */}
       {showDeleteConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }} onClick={() => setShowDeleteConfirm(false)}>
-          <div style={{ background: "var(--surface)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: "var(--glass-card)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }} onClick={e => e.stopPropagation()}>
             <p style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Delete this output?</p>
             <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20 }}>This cannot be undone.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setShowDeleteConfirm(false)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--surface)", cursor: "pointer", fontSize: 14, fontFamily: font }}>Cancel</button>
+              <button onClick={() => setShowDeleteConfirm(false)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--glass-border)", background: "var(--glass-card)", cursor: "pointer", fontSize: 14, fontFamily: font }}>Cancel</button>
               <button onClick={handleDeleteOutput} style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: "var(--danger)", color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: font }}>Delete</button>
             </div>
           </div>

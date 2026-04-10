@@ -90,7 +90,7 @@ export default function TemplateEditor({ selected, onSelect, compact }: { select
   return (
     <div style={{ display: "flex", height: "100%", fontFamily: FONT }}>
       {/* Left column: Template list */}
-      <div style={{ width: "44%", borderRight: "1px solid var(--line)", overflowY: "auto", padding: "16px 14px" }}>
+      <div style={{ width: "44%", borderRight: "1px solid var(--glass-border)", overflowY: "auto", padding: "16px 14px" }}>
         {/* SYSTEM section */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>System</span>
@@ -155,7 +155,7 @@ export default function TemplateEditor({ selected, onSelect, compact }: { select
         </div>
         <div style={{
           display: "flex", alignItems: "center", gap: 6,
-          background: "var(--surface)", border: "1px solid var(--line)",
+          background: "var(--glass-card)", border: "1px solid var(--glass-border)",
           borderRadius: 8, padding: "8px 10px", flexShrink: 0,
         }}>
           <input

@@ -134,13 +134,15 @@ export default function Workbench() {
       ) : outputs.length === 0 ? (
         <div
           style={{
-            background: "var(--surface-white)",
-            border: "1px solid var(--border-subtle)",
+            background: "var(--glass-card)",
+            border: "1px solid var(--glass-border)",
             borderRadius: 12,
             padding: 24,
             textAlign: "center",
             fontSize: 14,
             color: "var(--text-secondary)",
+            backdropFilter: "var(--glass-blur-light)",
+            WebkitBackdropFilter: "var(--glass-blur-light)",
           }}
         >
           Nothing on the workbench. Start a Reed session to create something.
@@ -158,10 +160,12 @@ export default function Workbench() {
                   alignItems: "center",
                   gap: 12,
                   padding: "12px 16px",
-                  background: "var(--surface-white)",
-                  border: "1px solid var(--border-subtle)",
+                  background: "var(--glass-card)",
+                  border: "1px solid var(--glass-border)",
                   borderRadius: 12,
                   marginBottom: 8,
+                  backdropFilter: "var(--glass-blur-light)",
+                  WebkitBackdropFilter: "var(--glass-blur-light)",
                 }}
               >
                 <span
@@ -246,10 +250,12 @@ export default function Workbench() {
                             right: 0,
                             top: "100%",
                             marginTop: 4,
-                            background: "var(--surface-white)",
-                            border: "1px solid var(--border-subtle)",
+                            background: "var(--glass-card)",
+                            border: "1px solid var(--glass-border)",
                             borderRadius: 8,
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                            boxShadow: "var(--glass-shadow)",
+                            backdropFilter: "var(--glass-blur-light)",
+                            WebkitBackdropFilter: "var(--glass-blur-light)",
                             zIndex: 11,
                             minWidth: 160,
                           }}
@@ -317,10 +323,12 @@ export default function Workbench() {
         >
           <div
             style={{
-              background: "var(--surface-white)",
+              background: "var(--glass-card)",
               borderRadius: 12,
               padding: 24,
               maxWidth: 360,
+              backdropFilter: "var(--glass-blur-light)",
+              WebkitBackdropFilter: "var(--glass-blur-light)",
               width: "100%",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -336,7 +344,7 @@ export default function Workbench() {
                   padding: "8px 16px",
                   fontSize: 13,
                   background: "transparent",
-                  border: "1px solid var(--border-subtle)",
+                  border: "1px solid var(--glass-border)",
                   borderRadius: 8,
                   cursor: "pointer",
                   fontFamily: "'Afacad Flux', sans-serif",

@@ -155,8 +155,10 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <section style={{
-      background: "var(--surface)", border: "1px solid var(--line)",
-      borderRadius: 12, padding: 32, marginBottom: 24, ...style,
+      background: "var(--glass-card)", border: "1px solid var(--glass-border)",
+      borderRadius: 12, padding: 32, marginBottom: 24,
+      backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+      ...style,
     }}>
       {children}
     </section>
