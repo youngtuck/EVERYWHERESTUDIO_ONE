@@ -966,10 +966,9 @@ function StageIntake({
       {/* Intake progress bar */}
       <div style={{
         padding: "8px 14px 0",
-        background: "var(--glass-topbar)",
-        borderTop: "1px solid var(--glass-border)",
+        background: "transparent",
+        borderTop: "1px solid rgba(0,0,0,0.06)",
         flexShrink: 0,
-        backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
       }}>
         <div style={{ width: "100%", height: 4, background: "var(--glass-border)", borderRadius: 2, overflow: "hidden" }}>
           <div style={{
@@ -3341,24 +3340,33 @@ export default function WorkSession() {
   // RENDER
   // ─────────────────────────────────────────────────────────────
 
-  // Lock parent main scroll when WorkSession is active
+  // Lock parent main + body + html scroll when WorkSession is active
   useEffect(() => {
     const main = document.querySelector(".studio-main-inner") as HTMLElement;
     if (!main) return;
-    // Save original values
-    const origOverflow = main.style.overflow;
-    const origOverflowY = main.style.overflowY;
-    const origPadding = main.style.padding;
-    // Force hidden using setProperty with important to override React inline styles
+
+    // Save originals
+    const origMainOverflow = main.style.overflow;
+    const origMainOverflowY = main.style.overflowY;
+    const origMainPadding = main.style.padding;
+    const origBodyOverflow = document.body.style.overflow;
+    const origHtmlOverflow = document.documentElement.style.overflow;
+
+    // Lock ALL scrolling: main, body, html
     main.style.setProperty("overflow", "hidden", "important");
     main.style.setProperty("overflow-y", "hidden", "important");
     main.style.padding = "0";
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
     return () => {
       main.style.removeProperty("overflow");
       main.style.removeProperty("overflow-y");
-      main.style.overflow = origOverflow;
-      main.style.overflowY = origOverflowY;
-      main.style.padding = origPadding;
+      main.style.overflow = origMainOverflow;
+      main.style.overflowY = origMainOverflowY;
+      main.style.padding = origMainPadding;
+      document.body.style.overflow = origBodyOverflow;
+      document.documentElement.style.overflow = origHtmlOverflow;
     };
   }, []);
 
@@ -3368,6 +3376,7 @@ export default function WorkSession() {
       top: 0, left: 0, right: 0, bottom: 0,
       display: "flex", flexDirection: "column",
       overflow: "hidden", fontFamily: FONT,
+      maxHeight: "100%",
     }}>
       <div style={{
         padding: "6px 20px",

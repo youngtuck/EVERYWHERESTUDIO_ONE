@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useShell } from "./StudioShell";
-import ThemeToggle from "../ThemeToggle";
 import { useState } from "react";
 
 // ── Route to breadcrumb config ──────────────────────────────────
@@ -342,8 +341,6 @@ export default function StudioTopBar() {
         >
           ?
         </button>
-
-        <ThemeToggle onDark />
 
         <UserAvatar />
       </div>
