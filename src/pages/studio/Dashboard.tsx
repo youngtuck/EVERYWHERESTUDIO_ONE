@@ -242,23 +242,16 @@ export default function Dashboard() {
 
       {/* Start something new */}
       <div
+        className="liquid-glass-card"
         onClick={() => nav("/studio/work")}
         style={{
-          background: "var(--glass-card)",
-          border: "1px solid var(--glass-border)",
-          borderRadius: 12,
-          backdropFilter: "var(--glass-blur-light)",
-          WebkitBackdropFilter: "var(--glass-blur-light)",
           padding: "14px 18px",
           marginBottom: 20,
           cursor: "pointer",
-          transition: "border-color 0.15s, box-shadow 0.15s, transform 0.15s",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.boxShadow = "var(--glass-shadow-elevated)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "var(--glass-shadow)"; e.currentTarget.style.transform = "translateY(0)"; }}
       >
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)", marginBottom: 2 }}>Start something new</div>
@@ -288,7 +281,7 @@ export default function Dashboard() {
       {loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[1, 2, 3].map(i => (
-            <div key={i} style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)", padding: "12px 14px", borderLeft: "4px solid var(--glass-border)" }}>
+            <div key={i} className="liquid-glass-card" style={{ padding: "12px 14px", borderLeft: "4px solid var(--glass-border)" }}>
               <div style={{ height: 13, width: "60%", background: "var(--bg-2)", borderRadius: 3, marginBottom: 6 }} />
               <div style={{ height: 11, width: "80%", background: "var(--bg-2)", borderRadius: 3 }} />
             </div>
@@ -380,19 +373,12 @@ function HomeCard({
 }) {
   return (
     <div
+      className="liquid-glass-card"
       style={{
-        background: "var(--glass-card)",
-        border: "1px solid var(--glass-border)",
         borderLeft: `4px solid ${accentColor}`,
-        borderRadius: 12,
-        backdropFilter: "var(--glass-blur-light)",
-        WebkitBackdropFilter: "var(--glass-blur-light)",
         padding: "12px 14px",
         cursor: "pointer",
-        transition: "box-shadow 0.15s, transform 0.15s",
       }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = "var(--glass-shadow-elevated)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = "var(--glass-shadow)"; e.currentTarget.style.transform = "translateY(0)"; }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
         <div style={{ minWidth: 0 }}>

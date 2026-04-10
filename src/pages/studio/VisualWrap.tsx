@@ -502,14 +502,10 @@ export default function VisualWrap() {
 
       {/* Section 1: Output preview */}
       <div
+        className="liquid-glass-card"
         style={{
-          background: "var(--glass-card)",
-          border: "1px solid var(--glass-border)",
-          borderRadius: 12,
           padding: 16,
           marginBottom: 28,
-          backdropFilter: "var(--glass-blur-light)",
-          WebkitBackdropFilter: "var(--glass-blur-light)",
         }}
       >
         <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>{output.title}</div>

@@ -401,15 +401,12 @@ export default function WrapPage() {
                   setExported(false);
                   setCopied(false);
                 }}
+                className="liquid-glass-card"
                 style={{
                   display: "block", width: "100%", textAlign: "left",
-                  padding: "14px 16px", marginBottom: 8, borderRadius: 12,
-                  background: "var(--glass-card)", border: "1px solid var(--glass-border)",
-                  backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
-                  cursor: "pointer", fontFamily: FONT, transition: "border-color 0.12s",
+                  padding: "14px 16px", marginBottom: 8,
+                  cursor: "pointer", fontFamily: FONT,
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>
@@ -461,10 +458,10 @@ export default function WrapPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
       {/* ── Format Tabs ── */}
-      <div style={{
-        display: "flex", alignItems: "center", borderBottom: "1px solid var(--glass-border)",
-        padding: "0 20px", flexShrink: 0, background: "var(--glass-topbar)",
-        backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+      <div className="liquid-glass" style={{
+        display: "flex", alignItems: "center", borderRadius: 0,
+        borderBottom: "1px solid rgba(0,0,0,0.06)",
+        padding: "0 20px", flexShrink: 0,
         overflowX: "auto",
       }}>
         {/* Back to list button when viewing from picker (not session draft) */}
@@ -538,12 +535,10 @@ export default function WrapPage() {
                 <p key={i} style={{ fontSize: 13, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 12 : 0 }}>{p}</p>
               ))}
 
-              <div style={{ display: "flex", gap: 8, marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--glass-border)" }}>
-                <button onClick={handleCopy} style={{
-                  fontSize: 11, padding: "6px 16px", borderRadius: 8,
-                  border: "1px solid var(--glass-border)", background: "var(--glass-card)",
-                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-                  color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT, fontWeight: 500,
+              <div style={{ display: "flex", gap: 8, marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                <button className="liquid-glass-btn" onClick={handleCopy} style={{
+                  fontSize: 11, padding: "6px 16px",
+                  color: "var(--fg-2)", fontFamily: FONT, fontWeight: 500,
                 }}>{copied ? "Copied" : "Copy"}</button>
                 <button onClick={() => {
                   sessionStorage.setItem("ew-reopen-output-id", activeOutput.id);

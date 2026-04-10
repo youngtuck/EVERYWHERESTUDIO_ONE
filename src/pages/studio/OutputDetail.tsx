@@ -631,13 +631,8 @@ export default function OutputDetail() {
             </div>
           </>
         ) : (
-          <div style={{
+          <div className="liquid-glass-card" style={{
             padding: isMobile ? "24px 16px" : "36px 40px",
-            background: "var(--glass-card)",
-            border: "1px solid var(--glass-border)",
-            borderRadius: 12,
-            backdropFilter: "var(--glass-blur-light)",
-            WebkitBackdropFilter: "var(--glass-blur-light)",
           }}>
             <div
               style={{ fontFamily: font, fontSize: isMobile ? 15 : 16, lineHeight: 1.75, color: "var(--text-primary)" }}
@@ -787,11 +782,11 @@ export default function OutputDetail() {
       {/* ── Delete confirmation modal ─────────────────────────────── */}
       {showDeleteConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 24 }} onClick={() => setShowDeleteConfirm(false)}>
-          <div style={{ background: "var(--glass-card)", borderRadius: 12, padding: 24, maxWidth: 400, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.15)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }} onClick={e => e.stopPropagation()}>
+          <div className="liquid-glass-card" style={{ padding: 24, maxWidth: 400, width: "100%" }} onClick={e => e.stopPropagation()}>
             <p style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Delete this output?</p>
             <p style={{ fontSize: 14, color: "var(--fg-2)", marginBottom: 20 }}>This cannot be undone.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setShowDeleteConfirm(false)} style={{ padding: "10px 18px", borderRadius: 8, border: "1px solid var(--glass-border)", background: "var(--glass-card)", cursor: "pointer", fontSize: 14, fontFamily: font }}>Cancel</button>
+              <button className="liquid-glass-btn" onClick={() => setShowDeleteConfirm(false)} style={{ padding: "10px 18px", fontSize: 14, fontFamily: font }}>Cancel</button>
               <button onClick={handleDeleteOutput} style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: "var(--danger)", color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: font }}>Delete</button>
             </div>
           </div>

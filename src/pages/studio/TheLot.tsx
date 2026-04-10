@@ -197,7 +197,7 @@ export default function TheLot() {
   }, [selectedItem, handleActivate, handleRemove, setDashContent, setDashOpen]);
 
   const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 14, marginBottom: 10, boxShadow: "var(--glass-shadow)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+    <div className="liquid-glass-card" style={{ padding: 14, marginBottom: 10 }}>
       <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>{title}</div>
       {children}
     </div>

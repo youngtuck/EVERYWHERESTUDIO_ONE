@@ -361,25 +361,14 @@ export default function Projects() {
         return (
           <div
             key={p.id}
+            className="liquid-glass-card"
             style={{
-              background: "var(--glass-card)",
-              border: "1px solid var(--glass-border)",
               borderLeft: `3px solid ${accentColor}`,
-              borderRadius: 12,
               padding: "20px 24px",
-              backdropFilter: "var(--glass-blur-light)",
-              WebkitBackdropFilter: "var(--glass-blur-light)",
               cursor: "pointer",
               textAlign: "left",
               fontFamily: "inherit",
-              transition,
               position: "relative",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--glass-surface)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "var(--glass-card)";
             }}
             onClick={() => {
               if (!isRenaming && menuOpenId !== p.id) {
@@ -417,14 +406,11 @@ export default function Projects() {
             {/* Dropdown menu */}
             {menuOpenId === p.id && (
               <div
+                className="liquid-glass-menu"
                 style={{
                   position: "absolute",
                   top: 48,
                   right: 20,
-                  background: "var(--glass-card)",
-                  border: "1px solid var(--glass-border)",
-                  borderRadius: 12,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
                   zIndex: 10,
                   padding: "4px 0",
                   minWidth: 140,

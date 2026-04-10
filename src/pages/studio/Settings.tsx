@@ -79,7 +79,7 @@ function RadioGroup({
 }
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 14, marginBottom: 10, boxShadow: "var(--glass-shadow)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+  <div className="liquid-glass-card" style={{ padding: 14, marginBottom: 10 }}>
     <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>{title}</div>
     {children}
   </div>
@@ -206,28 +206,22 @@ export default function Settings() {
         <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>Voice and Brand DNA are configured separately.</div>
         <div style={{ display: "flex", gap: 8 }}>
           <button
+            className="liquid-glass-btn"
             onClick={() => nav("/studio/settings/voice")}
             style={{
-              fontSize: 12, padding: "8px 16px", borderRadius: 8,
-              border: "1px solid var(--glass-border)", background: "var(--glass-card)",
-              color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
-              transition: "all 0.1s",
+              fontSize: 12, padding: "8px 16px",
+              color: "var(--fg-2)", fontFamily: FONT,
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg-2)"; }}
           >
             Voice DNA →
           </button>
           <button
+            className="liquid-glass-btn"
             onClick={() => nav("/studio/settings/brand")}
             style={{
-              fontSize: 12, padding: "8px 16px", borderRadius: 8,
-              border: "1px solid var(--glass-border)", background: "var(--glass-card)",
-              color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
-              transition: "all 0.1s",
+              fontSize: 12, padding: "8px 16px",
+              color: "var(--fg-2)", fontFamily: FONT,
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg-2)"; }}
           >
             Brand Profile →
           </button>

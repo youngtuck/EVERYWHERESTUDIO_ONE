@@ -323,7 +323,7 @@ export default function StudioShell() {
               <Outlet />
             </main>
             {!isMobile && (
-              <RightPanel open={dashOpen} />
+              <RightPanel open={dashOpen} onToggle={() => setDashOpen(!dashOpen)} />
             )}
           </div>
         </div>
@@ -351,41 +351,67 @@ export default function StudioShell() {
 // DASHBOARD PANEL
 // ─────────────────────────────────────────────────────────────────────────────
 
-function RightPanel({ open }: { open: boolean }) {
+function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const { feedbackContent, dashContent } = useShell();
 
   return (
     <div style={{
-      width: open ? 260 : 0, flexShrink: 0,
-      overflow: "hidden", transition: "width 0.18s ease",
+      width: open ? 260 : 40, flexShrink: 0,
+      overflow: "visible", transition: "width 0.25s cubic-bezier(0.16,1,0.3,1)",
       display: "flex", flexDirection: "column",
-      padding: open ? "8px 8px 8px 0" : 0,
+      padding: open ? "8px 8px 8px 0" : "8px 4px 8px 0",
+      position: "relative",
     }}>
+      {/* Collapse/expand toggle */}
+      <button
+        onClick={onToggle}
+        className="liquid-glass-pill"
+        style={{
+          position: "absolute", top: 12, left: open ? 8 : 4,
+          width: 28, height: 28, borderRadius: "50%",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer", zIndex: 10, padding: 0,
+          fontSize: 12, color: "var(--fg-3)",
+          fontFamily: "var(--font)",
+          border: "1px solid rgba(0,0,0,0.06)",
+        }}
+        title={open ? "Collapse Reed panel" : "Expand Reed panel"}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ transform: open ? "rotate(0)" : "rotate(180deg)", transition: "transform 0.2s" }}>
+          <path d="M9 3L5 7L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* The glass panel content */}
       <div className="liquid-glass-card" style={{
-        width: 244, height: "100%",
+        width: open ? 244 : 0,
+        height: "100%",
         display: "flex", flexDirection: "column",
-        opacity: open ? 1 : 0, transition: "opacity 0.12s ease",
+        opacity: open ? 1 : 0,
+        transition: "opacity 0.15s ease, width 0.25s cubic-bezier(0.16,1,0.3,1)",
         pointerEvents: open ? "auto" : "none",
         borderRadius: 16,
         overflow: "hidden",
       }}>
         {/* Header */}
         <div style={{
-          display: "flex", alignItems: "center",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-          background: "rgba(255,255,255,0.3)", flexShrink: 0,
-          padding: "10px 14px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          borderBottom: "1px solid rgba(0,0,0,0.04)",
+          background: "rgba(255,255,255,0.2)", flexShrink: 0,
+          padding: "10px 14px", paddingLeft: 44,
         }}>
-          <div style={{
-            width: 20, height: 20, borderRadius: "50%",
-            background: "rgba(74,144,217,0.08)",
-            border: "1px solid rgba(74,144,217,0.15)",
-            color: "var(--blue)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 8, fontWeight: 700, flexShrink: 0,
-            marginRight: 8,
-          }}>R</div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{
+              width: 20, height: 20, borderRadius: "50%",
+              background: "rgba(74,144,217,0.08)",
+              border: "1px solid rgba(74,144,217,0.15)",
+              color: "var(--blue)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 8, fontWeight: 700, flexShrink: 0,
+              marginRight: 8,
+            }}>R</div>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
+          </div>
         </div>
 
         {/* Stage feedback and context */}

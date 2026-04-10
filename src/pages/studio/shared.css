@@ -42,15 +42,12 @@
   animation: fadeUp 0.5s ease forwards;
 }
 
-/* ── REED CHAT BUBBLES (matching wireframe v7.23) ── */
+/* ── REED CHAT BUBBLES (liquid glass, layout only; glass effects come from liquid-glass-* classes) ── */
 .reed-bubble-wrap {
-  background: rgba(74,144,217,0.07);
-  border: 1px solid rgba(74,144,217,0.15);
-  border-radius: 0 10px 10px 10px;
+  border-radius: 4px 14px 14px 14px !important;
   padding: 10px 14px;
   max-width: 560px;
   font-size: 13px;
-  color: var(--fg-2);
   line-height: 1.35;
 }
 .reed-bubble-wrap p,
@@ -58,23 +55,11 @@
 .reed-bubble-wrap p strong,
 .reed-bubble-wrap div strong { color: var(--fg); }
 .user-bubble-wrap {
-  background: rgba(245,198,66,0.08);
-  border: 1px solid rgba(245,198,66,0.2);
-  border-radius: 10px 0 10px 10px;
+  border-radius: 14px 4px 14px 14px !important;
   padding: 10px 14px;
   max-width: 420px;
 }
-.user-bubble-wrap p { font-size: 13px; color: var(--fg); line-height: 1.35; }
-
-/* Dark mode bubble adjustments */
-[data-theme="dark"] .reed-bubble-wrap {
-  background: rgba(74,144,217,0.12);
-  border-color: rgba(74,144,217,0.25);
-}
-[data-theme="dark"] .user-bubble-wrap {
-  background: rgba(245,198,66,0.12);
-  border-color: rgba(245,198,66,0.3);
-}
+.user-bubble-wrap p { font-size: 13px; color: rgba(255,255,255,0.92); line-height: 1.35; }
 
 @media (max-width: 768px) {
   .reed-bubble-wrap { max-width: 85% !important; }

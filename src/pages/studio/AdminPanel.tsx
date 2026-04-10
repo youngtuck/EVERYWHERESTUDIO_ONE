@@ -132,7 +132,7 @@ function InviteTab() {
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: result ? "1fr 1fr" : "1fr", gap: 24 }}>
-        <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 24, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+        <div className="liquid-glass-card" style={{ padding: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", margin: "0 0 16px" }}>Generate Invite Code</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Who are you inviting?" style={inputStyle} />
@@ -145,7 +145,7 @@ function InviteTab() {
         </div>
 
         {result && (
-          <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 24, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+          <div className="liquid-glass-card" style={{ padding: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", margin: "0 0 16px" }}>Invite Created</h3>
             <div style={{ fontSize: 28, fontWeight: 700, color: "var(--gold-dark)", letterSpacing: "2px", marginBottom: 12, fontFamily: "'Afacad Flux', sans-serif" }}>
               {result.code}
@@ -274,7 +274,7 @@ function PeopleTab() {
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
       </div>
 
-      <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+      <div className="liquid-glass-card" style={{ overflow: "hidden" }}>
         {filtered.map(u => {
           const status = getStatus(u);
           const sc = statusColors[status];
@@ -373,14 +373,14 @@ function CodesTab() {
           { label: "Redeemed", value: redeemed, color: "#4A90D9" },
           { label: "Deactivated", value: deactivated, color: "#E53935" },
         ].map(s => (
-          <div key={s.label} style={{ padding: "12px 20px", background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+          <div key={s.label} className="liquid-glass-card" style={{ padding: "12px 20px" }}>
             <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 16, marginBottom: 24, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="liquid-glass-card" style={{ padding: 16, marginBottom: 24, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <input value={bulkNote} onChange={e => setBulkNote(e.target.value)} placeholder="Batch note (e.g. AI Summit)" style={{ ...inputStyle, flex: 1, minWidth: 200 }} />
         <select value={bulkCount} onChange={e => setBulkCount(Number(e.target.value))} style={{ ...inputStyle, width: 60 }}>
           <option value={5}>5</option><option value={10}>10</option><option value={20}>20</option>
@@ -388,7 +388,7 @@ function CodesTab() {
         <button onClick={handleBulk} disabled={bulkCreating} style={btnGold}>{bulkCreating ? "Creating..." : "Create Bulk Codes"}</button>
       </div>
 
-      <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+      <div className="liquid-glass-card" style={{ overflow: "hidden" }}>
         {codes.map(c => (
           <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", fontSize: 13 }}>
             <span style={{ fontWeight: 600, color: "var(--fg)", letterSpacing: "1px", width: 100, fontFamily: "'Afacad Flux', sans-serif" }}>{c.code}</span>
@@ -434,7 +434,7 @@ function DashboardTab() {
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
         {metrics.map(m => (
-          <div key={m.label} style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 20, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+          <div key={m.label} className="liquid-glass-card" style={{ padding: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--fg-3)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>{m.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: "var(--fg)" }}>{m.value}</div>
             {m.sub && <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{m.sub}</div>}
@@ -443,7 +443,7 @@ function DashboardTab() {
       </div>
 
       <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--fg-3)", margin: "0 0 12px", letterSpacing: "1px", textTransform: "uppercase" }}>Activity Feed</h3>
-      <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+      <div className="liquid-glass-card" style={{ overflow: "hidden" }}>
         {activity.map((e, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--glass-border)", fontSize: 13 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: e.type === "signup" ? "#4A90D9" : "#F5C642", flexShrink: 0 }} />

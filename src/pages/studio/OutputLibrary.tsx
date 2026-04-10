@@ -257,7 +257,7 @@ export default function OutputLibrary() {
           {search ? "No sessions match your search." : "No sessions yet. Complete a Work session to see it here."}
         </div>
       ) : (
-        <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", boxShadow: "var(--glass-shadow)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+        <div className="liquid-glass-card" style={{ overflow: "hidden" }}>
           {filtered.map((output, i) => {
             const active = selectedId === output.id;
             return (

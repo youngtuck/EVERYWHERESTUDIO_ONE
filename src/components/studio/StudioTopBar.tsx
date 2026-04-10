@@ -92,16 +92,14 @@ function WorkBreadcrumb() {
                   (window as any).__ewSetWorkStage?.(s);
                 }
               }}
+              className={isActive ? "liquid-glass-pill" : ""}
               style={{
                 fontSize: 11,
-                padding: "3px 8px",
-                borderRadius: 4,
+                padding: "4px 10px",
                 cursor: canClick ? "pointer" : "default",
                 fontWeight: isActive ? 700 : 500,
                 color: isActive ? "var(--fg)" : isDone ? "var(--fg-3)" : "rgba(0,0,0,0.2)",
-                background: isActive ? "rgba(200,169,110,0.12)" : "transparent",
-                border: isActive ? "1px solid rgba(200,169,110,0.2)" : "1px solid transparent",
-                transition: "all 0.1s",
+                transition: "all 0.15s",
               }}
               onMouseEnter={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
               onMouseLeave={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
@@ -278,20 +276,12 @@ export default function StudioTopBar() {
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         {/* +New Session button */}
         <button
+          className="liquid-glass-btn-gold"
           onClick={() => {
             sessionStorage.setItem("ew-new-session", "1");
             nav("/studio/work");
           }}
-          style={{
-            fontSize: 11, fontWeight: 600, color: "var(--gold-dark)",
-            cursor: "pointer",
-            background: "rgba(200,169,110,0.08)",
-            border: "1px solid rgba(200,169,110,0.18)",
-            borderRadius: 8, padding: "5px 12px",
-            fontFamily: "var(--font)", transition: "all 0.15s",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(200,169,110,0.15)"; e.currentTarget.style.borderColor = "rgba(200,169,110,0.3)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(200,169,110,0.1)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "rgba(200,169,110,0.08)"; e.currentTarget.style.borderColor = "rgba(200,169,110,0.18)"; e.currentTarget.style.boxShadow = "none"; }}
+          style={{ fontSize: 11, padding: "5px 12px" }}
         >
           + New Session
         </button>

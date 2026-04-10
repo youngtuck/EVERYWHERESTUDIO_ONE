@@ -357,7 +357,7 @@ export default function Resources() {
         {(voiceDnaExists || brandDnaExists) ? (
           <>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Foundation</div>
-            <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", boxShadow: "var(--glass-shadow)", marginBottom: 20, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+            <div className="liquid-glass-card" style={{ overflow: "hidden", marginBottom: 20 }}>
               {voiceDnaExists && (
                 <div
                   onClick={() => nav("/studio/settings/voice")}
@@ -437,7 +437,7 @@ export default function Resources() {
             </div>
           </div>
         ) : (
-          <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, overflow: "hidden", boxShadow: "var(--glass-shadow)", marginBottom: 10, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+          <div className="liquid-glass-card" style={{ overflow: "hidden", marginBottom: 10 }}>
             {resources.map(r => <FileRow key={r.id} resource={r} />)}
           </div>
         )}

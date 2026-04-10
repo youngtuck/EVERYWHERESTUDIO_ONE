@@ -133,16 +133,12 @@ export default function Workbench() {
         <p style={{ fontSize: 13, color: "var(--text-tertiary)" }}>Loading...</p>
       ) : outputs.length === 0 ? (
         <div
+          className="liquid-glass-card"
           style={{
-            background: "var(--glass-card)",
-            border: "1px solid var(--glass-border)",
-            borderRadius: 12,
             padding: 24,
             textAlign: "center",
             fontSize: 14,
             color: "var(--text-secondary)",
-            backdropFilter: "var(--glass-blur-light)",
-            WebkitBackdropFilter: "var(--glass-blur-light)",
           }}
         >
           Nothing on the workbench. Start a Reed session to create something.
@@ -155,17 +151,13 @@ export default function Workbench() {
             return (
               <li
                 key={o.id}
+                className="liquid-glass-card"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
                   padding: "12px 16px",
-                  background: "var(--glass-card)",
-                  border: "1px solid var(--glass-border)",
-                  borderRadius: 12,
                   marginBottom: 8,
-                  backdropFilter: "var(--glass-blur-light)",
-                  WebkitBackdropFilter: "var(--glass-blur-light)",
                 }}
               >
                 <span
@@ -245,17 +237,12 @@ export default function Workbench() {
                           onClick={() => setMenuOpenId(null)}
                         />
                         <div
+                          className="liquid-glass-menu"
                           style={{
                             position: "absolute",
                             right: 0,
                             top: "100%",
                             marginTop: 4,
-                            background: "var(--glass-card)",
-                            border: "1px solid var(--glass-border)",
-                            borderRadius: 8,
-                            boxShadow: "var(--glass-shadow)",
-                            backdropFilter: "var(--glass-blur-light)",
-                            WebkitBackdropFilter: "var(--glass-blur-light)",
                             zIndex: 11,
                             minWidth: 160,
                           }}
@@ -322,13 +309,10 @@ export default function Workbench() {
           onClick={() => setDeleteConfirmId(null)}
         >
           <div
+            className="liquid-glass-card"
             style={{
-              background: "var(--glass-card)",
-              borderRadius: 12,
               padding: 24,
               maxWidth: 360,
-              backdropFilter: "var(--glass-blur-light)",
-              WebkitBackdropFilter: "var(--glass-blur-light)",
               width: "100%",
             }}
             onClick={(e) => e.stopPropagation()}

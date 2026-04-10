@@ -452,9 +452,10 @@ button { font-family: var(--font); }
 /* Content area warm gradient substrate */
 .studio-content-substrate {
   background:
-    linear-gradient(135deg, rgba(200, 169, 110, 0.03) 0%, transparent 40%),
-    linear-gradient(225deg, rgba(74, 144, 217, 0.02) 0%, transparent 35%),
-    linear-gradient(180deg, #F5F3EF 0%, #F0EDE6 50%, #F5F3EF 100%);
+    radial-gradient(ellipse at 25% 30%, rgba(200, 169, 110, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 60%, rgba(74, 144, 217, 0.03) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 80%, rgba(200, 169, 110, 0.02) 0%, transparent 40%),
+    linear-gradient(180deg, #F5F3EF 0%, #F0EDE6 40%, #EDE9E1 70%, #F5F3EF 100%);
 }
 
 /* ─── LIQUID GLASS TOKENS ───────────────────────────────────────

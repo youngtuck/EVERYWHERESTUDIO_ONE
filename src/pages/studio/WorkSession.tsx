@@ -1093,7 +1093,7 @@ function ChatBubble({ role, text, userInitials, isChallenge }: { role: "reed" | 
       {isReed ? (
         <>
           <ReedAvatar />
-          <div className="reed-bubble-wrap">
+          <div className="liquid-glass-card reed-bubble-wrap">
             {isChallenge && (
               <div style={{
                 display: "inline-block",
@@ -1110,7 +1110,7 @@ function ChatBubble({ role, text, userInitials, isChallenge }: { role: "reed" | 
         </>
       ) : (
         <>
-          <div className="user-bubble-wrap">
+          <div className="liquid-glass-dark user-bubble-wrap">
             <p>{text}</p>
           </div>
           <div style={{

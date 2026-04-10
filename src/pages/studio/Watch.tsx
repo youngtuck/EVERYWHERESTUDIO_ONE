@@ -105,7 +105,7 @@ function OpportunityRow({ signal, active }: { signal: Signal; active: boolean })
 // ── Briefing Card ──────────────────────────────────────────────
 function Card({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 14, marginBottom: 10, boxShadow: "var(--glass-shadow)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+    <div className="liquid-glass-card" style={{ padding: 14, marginBottom: 10 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>{title}</div>
         {action}
@@ -552,7 +552,7 @@ export default function Watch() {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
       {/* ── Tab Bar ── */}
-      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--glass-border)", padding: "0 20px", background: "var(--glass-topbar)", flexShrink: 0, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+      <div className="liquid-glass" style={{ display: "flex", alignItems: "center", borderRadius: 0, borderBottom: "1px solid rgba(0,0,0,0.06)", padding: "0 20px", flexShrink: 0 }}>
         {(["briefing", "research", "settings"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             fontSize: 11, fontWeight: activeTab === tab ? 600 : 500,
