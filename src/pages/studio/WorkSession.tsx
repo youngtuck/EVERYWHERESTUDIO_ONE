@@ -3351,8 +3351,13 @@ export default function WorkSession() {
       const rect = main.getBoundingClientRect();
       const root = document.getElementById("root");
       const zoom = root ? (parseFloat(getComputedStyle(root).zoom as string) || 1) : 1;
-      // rect.height is in viewport pixels. Divide by zoom to get CSS pixels.
-      const cssHeight = Math.floor(rect.height / zoom);
+      // The visible height = from the top of main to the bottom of the viewport,
+      // converted from viewport pixels to CSS pixels by dividing by zoom.
+      // rect.top is the distance from viewport top to main top (in viewport px).
+      // window.innerHeight is the viewport height (in viewport px).
+      // The visible portion of main = min(rect.height, innerHeight - rect.top)
+      const visibleViewportPx = Math.min(rect.height, window.innerHeight - rect.top);
+      const cssHeight = Math.floor(visibleViewportPx / zoom);
       const val = cssHeight + "px";
       if (chatHeightRef.current !== val) {
         chatHeightRef.current = val;
