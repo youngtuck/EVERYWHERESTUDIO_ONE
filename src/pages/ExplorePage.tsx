@@ -22,19 +22,43 @@ function easeOut(t: number) { return 1 - Math.pow(1 - t, 3); }
 // HOOKS
 // ══════════════════════════════════
 
-function useScrollReveal(threshold = 0.1) {
+// Shared IntersectionObserver: one instance for all Reveals on this page.
+const sharedRevealCallbacks = new Map<Element, (visible: boolean) => void>();
+let sharedRevealObserver: IntersectionObserver | null = null;
+
+function getSharedRevealObserver() {
+  if (!sharedRevealObserver) {
+    sharedRevealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          const cb = sharedRevealCallbacks.get(entry.target);
+          if (cb && entry.isIntersecting) {
+            cb(true);
+            sharedRevealObserver?.unobserve(entry.target);
+            sharedRevealCallbacks.delete(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    );
+  }
+  return sharedRevealObserver;
+}
+
+function useScrollReveal(_threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setIsVisible(true); obs.disconnect(); } },
-      { threshold, rootMargin: "0px 0px -40px 0px" },
-    );
+    const obs = getSharedRevealObserver();
+    sharedRevealCallbacks.set(el, setIsVisible);
     obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
+    return () => {
+      obs.unobserve(el);
+      sharedRevealCallbacks.delete(el);
+    };
+  }, []);
   return { ref, isVisible };
 }
 
@@ -68,11 +92,20 @@ function Reveal({
   style?: React.CSSProperties;
 }) {
   const { ref, isVisible } = useScrollReveal(threshold);
+  const [settled, setSettled] = useState(false);
+
+  useEffect(() => {
+    if (isVisible && !settled) {
+      const t = setTimeout(() => setSettled(true), 1000 + delay);
+      return () => clearTimeout(t);
+    }
+  }, [isVisible, settled, delay]);
+
   return (
     <div ref={ref} style={{
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? "translateY(0)" : "translateY(28px)",
-      transition: `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
+      transition: settled ? "none" : `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
       ...style,
     }}>
       {children}
@@ -167,12 +200,21 @@ export default function ExplorePage() {
     return () => obs.disconnect();
   }, []);
 
-  // Scroll progress bar
-  const [scrollProgress, setScrollProgress] = useState(0);
+  // Scroll progress bar (RAF-throttled, direct DOM update)
+  const progressBarRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    let ticking = false;
     const onScroll = () => {
-      const total = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(total > 0 ? window.scrollY / total : 0);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const total = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = total > 0 ? window.scrollY / total : 0;
+        if (progressBarRef.current) {
+          progressBarRef.current.style.width = `${progress * 100}%`;
+        }
+        ticking = false;
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -188,30 +230,7 @@ export default function ExplorePage() {
       <style>{CSS}</style>
 
       {/* Scroll progress */}
-      <div style={{ position: "fixed", top: 0, left: 0, height: 2, width: `${scrollProgress * 100}%`, background: "var(--xp-gold)", zIndex: 200, transition: "width .06s linear", pointerEvents: "none" }} />
-
-      {/* Scroll-driven color temperature shift: cool blue -> warm gold -> balanced */}
-      {(() => {
-        const sp = scrollProgress;
-        // 0-0.3: blue tint | 0.3-0.7: gold tint | 0.7-1.0: balanced/neutral
-        const blueAlpha = sp < 0.3 ? 0.04 * (1 - sp / 0.3) : 0;
-        const goldAlpha = sp > 0.3 && sp < 0.7
-          ? 0.035 * Math.sin((sp - 0.3) / 0.4 * Math.PI)
-          : 0;
-        const tintColor = blueAlpha > 0
-          ? `rgba(107,127,242,${blueAlpha})`
-          : goldAlpha > 0
-            ? `rgba(200,169,110,${goldAlpha})`
-            : "transparent";
-        return tintColor !== "transparent" ? (
-          <div style={{
-            position: "fixed", inset: 0, zIndex: 1, pointerEvents: "none",
-            background: tintColor,
-            transition: "background 0.3s linear",
-            mixBlendMode: "color",
-          }} />
-        ) : null;
-      })()}
+      <div ref={progressBarRef} style={{ position: "fixed", top: 0, left: 0, height: 2, width: "0%", background: "var(--xp-gold)", zIndex: 200, transition: "none", pointerEvents: "none" }} />
 
       {/* ═══ LIQUID GLASS NAV ═══ */}
       <nav className={`xp-glass-nav xp-liquid-glass ${isDarkNav ? "xp-lg-dark" : "xp-lg-light"}`}>

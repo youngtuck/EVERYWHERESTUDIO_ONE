@@ -158,7 +158,7 @@ export const MARKETING_CSS = `
 .xp-nav-cta {
   font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
   padding: 9px 22px; border-radius: 999px; cursor: pointer;
-  font-family: var(--xp-font); transition: all .3s;
+  font-family: var(--xp-font); transition: background .3s, border-color .3s, color .3s;
 }
 
 /* GLASS CARD */
@@ -245,7 +245,7 @@ export const MARKETING_CSS = `
   padding: 15px 34px; font-family: var(--xp-font);
   font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
   border: none; border-radius: 999px; cursor: pointer;
-  transition: all .35s var(--xp-ease);
+  transition: background .35s var(--xp-ease), color .35s var(--xp-ease), transform .35s var(--xp-ease), box-shadow .35s var(--xp-ease), border-color .35s var(--xp-ease);
 }
 .xp-btn-w { background: var(--xp-white); color: var(--xp-navy); }
 .xp-btn-w:hover { background: var(--xp-gold); color: var(--xp-navy); }

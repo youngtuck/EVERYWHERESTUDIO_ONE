@@ -34,10 +34,22 @@ export default function HeroCanvas({ isMobile }: HeroCanvasProps) {
   const mouseRef = useRef({ x: 0.5, y: 0.5 });
   const springRef = useRef({ x: 0.5, y: 0.5, vx: 0, vy: 0 });
   const rafRef = useRef<number>(0);
+  const visibleRef = useRef(true);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     mouseRef.current.x = e.clientX / window.innerWidth;
     mouseRef.current.y = e.clientY / window.innerHeight;
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { visibleRef.current = entry.isIntersecting; },
+      { threshold: 0 }
+    );
+    obs.observe(canvas);
+    return () => obs.disconnect();
   }, []);
 
   useEffect(() => {
@@ -48,7 +60,7 @@ export default function HeroCanvas({ isMobile }: HeroCanvasProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
     const resize = () => {
       const w = window.innerWidth;
@@ -65,6 +77,10 @@ export default function HeroCanvas({ isMobile }: HeroCanvasProps) {
     window.addEventListener("mousemove", handleMouseMove);
 
     const render = (time: number) => {
+      if (!visibleRef.current) {
+        rafRef.current = requestAnimationFrame(render);
+        return;
+      }
       const w = window.innerWidth;
       const h = window.innerHeight;
       const t = time * 0.001;

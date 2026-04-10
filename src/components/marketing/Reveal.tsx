@@ -1,19 +1,43 @@
 import React, { useEffect, useRef, useState } from "react";
 import { EASE } from "../../styles/marketing";
 
-export function useScrollReveal(threshold = 0.1) {
+// Shared IntersectionObserver: one instance for all Reveals on a page.
+const sharedCallbacks = new Map<Element, (visible: boolean) => void>();
+let sharedObserver: IntersectionObserver | null = null;
+
+function getSharedObserver() {
+  if (!sharedObserver) {
+    sharedObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          const cb = sharedCallbacks.get(entry.target);
+          if (cb && entry.isIntersecting) {
+            cb(true);
+            sharedObserver?.unobserve(entry.target);
+            sharedCallbacks.delete(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    );
+  }
+  return sharedObserver;
+}
+
+export function useScrollReveal(_threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setIsVisible(true); obs.disconnect(); } },
-      { threshold, rootMargin: "0px 0px -40px 0px" },
-    );
+    const obs = getSharedObserver();
+    sharedCallbacks.set(el, setIsVisible);
     obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
+    return () => {
+      obs.unobserve(el);
+      sharedCallbacks.delete(el);
+    };
+  }, []);
   return { ref, isVisible };
 }
 
@@ -26,11 +50,20 @@ export default function Reveal({
   style?: React.CSSProperties;
 }) {
   const { ref, isVisible } = useScrollReveal(threshold);
+  const [settled, setSettled] = useState(false);
+
+  useEffect(() => {
+    if (isVisible && !settled) {
+      const t = setTimeout(() => setSettled(true), 1000 + delay);
+      return () => clearTimeout(t);
+    }
+  }, [isVisible, settled, delay]);
+
   return (
     <div ref={ref} style={{
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? "translateY(0)" : "translateY(28px)",
-      transition: `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
+      transition: settled ? "none" : `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
       ...style,
     }}>
       {children}
