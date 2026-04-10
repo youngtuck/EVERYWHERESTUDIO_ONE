@@ -873,7 +873,7 @@ function StageIntake({
   if (!hasUserMessage && !sending) {
     return (
       <div style={{
-        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden",
+        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, maxHeight: "100%", overflow: "hidden",
         background: "transparent", alignItems: "center", justifyContent: "center",
       }}>
         <div style={{
@@ -917,7 +917,7 @@ function StageIntake({
 
   // Active chat state: messages + input bar at bottom
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0, maxHeight: "100%" }}>
       {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
@@ -3345,25 +3345,27 @@ export default function WorkSession() {
   useEffect(() => {
     const main = document.querySelector(".studio-main-inner") as HTMLElement;
     if (main) {
+      const prev = {
+        overflow: main.style.overflow,
+        padding: main.style.padding,
+        overflowY: main.style.overflowY,
+      };
       main.style.overflow = "hidden";
+      main.style.overflowY = "hidden";
       main.style.padding = "0";
-      // Force the main to be a proper height-constrained container
-      // so the absolute-positioned WorkSession fills it exactly
-      main.style.display = "flex";
-      main.style.flexDirection = "column";
       return () => {
-        main.style.overflow = "";
-        main.style.padding = "";
-        main.style.display = "";
-        main.style.flexDirection = "";
+        main.style.overflow = prev.overflow;
+        main.style.overflowY = prev.overflowY;
+        main.style.padding = prev.padding;
       };
     }
   }, []);
 
   return (
     <div style={{
+      position: "absolute",
+      top: 0, left: 0, right: 0, bottom: 0,
       display: "flex", flexDirection: "column",
-      flex: 1, minHeight: 0,
       overflow: "hidden", fontFamily: FONT,
     }}>
       <div style={{
