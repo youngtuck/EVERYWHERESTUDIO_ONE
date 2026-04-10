@@ -373,6 +373,7 @@ export default function OnboardingPage() {
         flexDirection: "column",
         alignItems: "center",
         padding: "32px 20px 40px",
+        backgroundImage: "radial-gradient(ellipse at 30% 40%, rgba(74,144,217,0.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(200,169,110,0.03) 0%, transparent 45%)",
       }}
     >
       <style>{`
@@ -403,7 +404,10 @@ export default function OnboardingPage() {
             position: "fixed",
             inset: 0,
             zIndex: 1000,
-            background: "rgba(7,9,15,0.6)",
+            background: "rgba(7,9,15,0.45)",
+            backdropFilter: "blur(20px) saturate(160%)",
+            WebkitBackdropFilter: "blur(20px) saturate(160%)",
+            boxShadow: "0 8px 48px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.03), inset -1px -1px 0.5px rgba(255,255,255,0.06), inset 1px 1px 0.5px rgba(255,255,255,0.04)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -534,6 +538,8 @@ export default function OnboardingPage() {
                     borderRadius: 6,
                     border: "1px solid rgba(255,255,255,0.4)",
                     background: "rgba(255,255,255,0.1)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
                     color: "#fff",
                     fontSize: 12,
                     fontWeight: 600,
@@ -566,7 +572,7 @@ export default function OnboardingPage() {
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
                   placeholder="Your name"
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(8px) saturate(140%)", WebkitBackdropFilter: "blur(8px) saturate(140%)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
                 />
               </div>
               <div>
@@ -578,7 +584,7 @@ export default function OnboardingPage() {
                   value={profileRole}
                   onChange={(e) => setProfileRole(e.target.value)}
                   placeholder="Executive coach, consultant, keynote speaker..."
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(8px) saturate(140%)", WebkitBackdropFilter: "blur(8px) saturate(140%)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
                 />
               </div>
               <div>
@@ -590,7 +596,7 @@ export default function OnboardingPage() {
                   value={profileAudience}
                   onChange={(e) => setProfileAudience(e.target.value)}
                   placeholder="Senior leaders, entrepreneurs, HR executives..."
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(8px) saturate(140%)", WebkitBackdropFilter: "blur(8px) saturate(140%)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 15, outline: "none" }}
                 />
               </div>
             </div>
@@ -602,9 +608,11 @@ export default function OnboardingPage() {
                 marginTop: 32,
                 padding: "14px 32px",
                 borderRadius: 8,
-                border: "none",
-                background: profileName.trim() ? "#F5C642" : "rgba(255,255,255,0.1)",
-                color: profileName.trim() ? "#0D1B2A" : "rgba(255,255,255,0.3)",
+                border: profileName.trim() ? "1px solid rgba(245, 198, 66, 0.3)" : "none",
+                background: profileName.trim() ? "rgba(245, 198, 66, 0.2)" : "rgba(255,255,255,0.1)",
+                color: profileName.trim() ? "#F5C642" : "rgba(255,255,255,0.3)",
+                backdropFilter: profileName.trim() ? "blur(12px)" : undefined,
+                WebkitBackdropFilter: profileName.trim() ? "blur(12px)" : undefined,
                 fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 15,
                 fontWeight: 700,
@@ -680,6 +688,8 @@ export default function OnboardingPage() {
                   padding: "32px 24px",
                   textAlign: "center",
                   cursor: "pointer",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
                 }}
               >
                 <MessageSquare size={28} color="#C8961A" />
@@ -726,6 +736,8 @@ export default function OnboardingPage() {
                   padding: "32px 24px",
                   textAlign: "center",
                   cursor: "pointer",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
                 }}
               >
                 <FileUp size={28} color="#C8961A" />
@@ -817,7 +829,10 @@ export default function OnboardingPage() {
                 padding: 16,
                 borderRadius: 12,
                 border: "1px solid rgba(255,255,255,0.08)",
-                background: "rgba(7,9,15,0.85)",
+                background: "rgba(7,9,15,0.45)",
+                backdropFilter: "blur(20px) saturate(160%)",
+                WebkitBackdropFilter: "blur(20px) saturate(160%)",
+                boxShadow: "0 8px 48px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.03), inset -1px -1px 0.5px rgba(255,255,255,0.06), inset 1px 1px 0.5px rgba(255,255,255,0.04)",
               }}
             >
               <div
@@ -844,6 +859,8 @@ export default function OnboardingPage() {
                     borderRadius: 8,
                     border: "1px solid rgba(255,255,255,0.18)",
                     background: "rgba(7,9,15,0.9)",
+                    backdropFilter: "blur(8px) saturate(140%)",
+                    WebkitBackdropFilter: "blur(8px) saturate(140%)",
                     color: "#ffffff",
                     fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
@@ -858,6 +875,8 @@ export default function OnboardingPage() {
                     borderRadius: 8,
                     border: "1px solid rgba(255,255,255,0.2)",
                     background: brandUrlLoading ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.12)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
                     color: "#ffffff",
                     fontFamily: "'Afacad Flux', sans-serif",
                     fontSize: 13,
@@ -937,9 +956,9 @@ export default function OnboardingPage() {
                 onChange={(e) => setWatchInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && watchInput.trim()) { e.preventDefault(); setWatchTopics(prev => [...prev, watchInput.trim()]); setWatchInput(""); } }}
                 placeholder="Type a topic and press Enter"
-                style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, outline: "none" }}
+                style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(8px) saturate(140%)", WebkitBackdropFilter: "blur(8px) saturate(140%)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 14, outline: "none" }}
               />
-              <button type="button" onClick={() => { if (watchInput.trim()) { setWatchTopics(prev => [...prev, watchInput.trim()]); setWatchInput(""); } }} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.08)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              <button type="button" onClick={() => { if (watchInput.trim()) { setWatchTopics(prev => [...prev, watchInput.trim()]); setWatchInput(""); } }} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", color: "#fff", fontFamily: "'Afacad Flux', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                 Add
               </button>
             </div>
@@ -961,9 +980,11 @@ export default function OnboardingPage() {
                 style={{
                   padding: "14px 32px",
                   borderRadius: 8,
-                  border: "none",
-                  background: watchTopics.length >= 3 ? "#F5C642" : "rgba(255,255,255,0.1)",
-                  color: watchTopics.length >= 3 ? "#0D1B2A" : "rgba(255,255,255,0.3)",
+                  border: watchTopics.length >= 3 ? "1px solid rgba(245, 198, 66, 0.3)" : "none",
+                  background: watchTopics.length >= 3 ? "rgba(245, 198, 66, 0.2)" : "rgba(255,255,255,0.1)",
+                  color: watchTopics.length >= 3 ? "#F5C642" : "rgba(255,255,255,0.3)",
+                  backdropFilter: watchTopics.length >= 3 ? "blur(12px)" : undefined,
+                  WebkitBackdropFilter: watchTopics.length >= 3 ? "blur(12px)" : undefined,
                   fontFamily: "'Afacad Flux', sans-serif",
                   fontSize: 15,
                   fontWeight: 700,
@@ -1001,9 +1022,11 @@ export default function OnboardingPage() {
               style={{
                 padding: "14px 40px",
                 borderRadius: 8,
-                border: "none",
-                background: "#F5C642",
-                color: "#0D1B2A",
+                border: "1px solid rgba(245, 198, 66, 0.3)",
+                background: "rgba(245, 198, 66, 0.2)",
+                color: "#F5C642",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
                 fontFamily: "'Afacad Flux', sans-serif",
                 fontSize: 16,
                 fontWeight: 700,
