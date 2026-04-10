@@ -72,13 +72,13 @@ function HomeDashContent({
     fontWeight: 700,
     letterSpacing: "0.08em",
     textTransform: "uppercase" as const,
-    color: "var(--fg-3)",
+    color: "rgba(255,255,255,0.4)",
     marginBottom: 6,
   } };
   const row = (label: string, value: string | number) => (
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0", borderBottom: "1px solid var(--glass-border)" }}>
-      <span style={{ color: "var(--fg-2)" }}>{label}</span>
-      <span style={{ fontWeight: 600, color: "var(--fg)" }}>{value}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <span style={{ color: "rgba(255,255,255,0.65)" }}>{label}</span>
+      <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>{value}</span>
     </div>
   );
 
@@ -91,8 +91,8 @@ function HomeDashContent({
           {row("Sessions", sessions)}
           {row("Formats exported", formatsExported)}
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0" }}>
-            <span style={{ color: "var(--fg-2)" }}>Signals tracked</span>
-            <span style={{ fontWeight: 600, color: "var(--fg)" }}>{signalsTracked}</span>
+            <span style={{ color: "rgba(255,255,255,0.65)" }}>Signals tracked</span>
+            <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>{signalsTracked}</span>
           </div>
         </div>
       </div>
@@ -101,10 +101,10 @@ function HomeDashContent({
       {inProgressTitle && (
         <div style={{ marginBottom: 14 }}>
           <div style={S.label}>In progress</div>
-          <div style={{ fontSize: 11, color: "var(--fg-2)", padding: "5px 0", borderBottom: "1px solid var(--glass-border)", lineHeight: 1.4 }}>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", lineHeight: 1.4 }}>
             {inProgressTitle}
             <br />
-            <span style={{ fontSize: 10, color: "var(--gold)", fontWeight: 600 }}>
+            <span style={{ fontSize: 10, color: "#F5C642", fontWeight: 600 }}>
               {inProgressStage}{inProgressFlags > 0 ? ` · ${inProgressFlags} flag${inProgressFlags > 1 ? "s" : ""}` : ""}
             </span>
           </div>
@@ -114,13 +114,13 @@ function HomeDashContent({
       {/* Today's briefing */}
       <div style={{ marginBottom: 14 }}>
         <div style={S.label}>Today's briefing</div>
-        <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.7, fontStyle: "normal" }}>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, fontStyle: "normal" }}>
           Run a briefing in Watch to see today's signals here.
         </div>
         <button
           onClick={onGoToWatch}
           style={{
-            marginTop: 6, fontSize: 10, color: "var(--blue)",
+            marginTop: 6, fontSize: 10, color: "#6BA8E8",
             fontWeight: 600, cursor: "pointer", background: "none",
             border: "none", padding: 0, fontFamily: "var(--font)",
           }}
@@ -211,74 +211,6 @@ export default function Dashboard() {
   }, [outputs, setDashContent, nav]);
 
   const firstName = displayName ? displayName.split(" ")[0] : "there";
-  const isFirstTime = outputs.length === 0 && !loading;
-
-  if (isFirstTime) {
-    return (
-      <div style={{
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        flex: 1, padding: "40px 24px", textAlign: "center",
-        fontFamily: "var(--font)",
-      }}>
-        <div style={{
-          fontFamily: "var(--studio-mono-font)",
-          fontSize: "var(--studio-label-size)",
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase" as const,
-          color: "var(--gold-bright)",
-          marginBottom: 16,
-        }}>
-          EVERYWHERE Studio
-        </div>
-
-        <h1 style={{
-          fontFamily: "var(--studio-display-font)",
-          fontSize: "var(--studio-display-size)",
-          fontWeight: 600,
-          letterSpacing: "-0.02em",
-          color: "var(--fg)",
-          lineHeight: 1.2,
-          marginBottom: 12,
-        }}>
-          {firstName !== "there" ? `Welcome, ${firstName}.` : "Welcome to your studio."}
-        </h1>
-
-        <p style={{
-          fontSize: 14, color: "var(--fg-3)", lineHeight: 1.6,
-          maxWidth: 440, marginBottom: 40,
-        }}>
-          Reed is your writing partner. Tell him what you are thinking about,
-          and he will help you turn it into something worth publishing.
-        </p>
-
-        <button
-          onClick={() => nav("/studio/work")}
-          style={{
-            padding: "14px 32px", borderRadius: 8,
-            background: "var(--fg)", border: "none",
-            fontSize: 14, fontWeight: 700, color: "var(--gold)",
-            cursor: "pointer", fontFamily: "var(--font)",
-            transition: "transform 0.1s",
-          }}
-          onMouseDown={e => (e.currentTarget.style.transform = "scale(0.98)")}
-          onMouseUp={e => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          Start your first session
-        </button>
-
-        <div style={{
-          marginTop: 48, display: "flex", flexDirection: "column", gap: 12,
-          maxWidth: 400, width: "100%",
-        }}>
-          <StepHint number={1} text="Talk to Reed about an idea, a topic, or a problem you are working through." active />
-          <StepHint number={2} text="Reed builds an outline. You pick the structure that fits." />
-          <StepHint number={3} text="Reed writes the draft in your voice. You edit and refine." />
-          <StepHint number={4} text="Export to LinkedIn, newsletter, podcast, and more." />
-        </div>
-      </div>
-    );
-  }
 
   const inProgress = outputs.find(o => !o.score || o.score < 75);
   const pipelineIdea = outputs[1] ?? null;

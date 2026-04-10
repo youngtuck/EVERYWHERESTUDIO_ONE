@@ -922,7 +922,7 @@ function StageIntake({
       <div
         ref={scrollAreaRef}
         style={{
-          flex: 1, overflowY: "auto",
+          flex: 1, minHeight: 0, overflowY: "auto",
           padding: "20px 24px",
           display: "flex", flexDirection: "column",
           alignItems: "center",
@@ -3347,7 +3347,8 @@ export default function WorkSession() {
     const main = document.querySelector(".studio-main-inner") as HTMLElement;
     if (main) {
       main.style.overflow = "hidden";
-      return () => { main.style.overflow = ""; };
+      main.style.padding = "0";
+      return () => { main.style.overflow = ""; main.style.padding = ""; };
     }
   }, []);
 
