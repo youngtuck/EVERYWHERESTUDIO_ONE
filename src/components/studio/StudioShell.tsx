@@ -274,7 +274,7 @@ export default function StudioShell() {
     }}>
       <div style={{
         display: "flex", height: "100vh",
-        background: "var(--bg)", fontFamily: "var(--font)", overflow: "hidden",
+        background: "var(--bg)", backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(74,144,217,0.03) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(200,169,110,0.02) 0%, transparent 50%)", fontFamily: "var(--font)", overflow: "hidden",
       }}>
         <CommandPalette />
 
@@ -301,7 +301,7 @@ export default function StudioShell() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
           {/* Top bar */}
           {isMobile ? (
-            <div style={{ height: 48, background: "var(--bg)", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 }}>
+            <div style={{ height: 48, background: "var(--glass-topbar)", borderBottom: "1px solid var(--glass-border)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 }}>
               <button type="button" onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", borderRadius: 6, padding: 6, cursor: "pointer", color: "var(--fg-3)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Open navigation">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
@@ -352,7 +352,7 @@ function RightPanel({ open }: { open: boolean }) {
   return (
     <div style={{
       width: open ? 240 : 0, flexShrink: 0,
-      background: "var(--bg-2)", borderLeft: "1px solid var(--line)",
+      background: "var(--glass-sidebar)", borderLeft: "1px solid var(--glass-border)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
       overflow: "hidden", transition: "width 0.18s ease",
       display: "flex", flexDirection: "column",
     }}>
@@ -365,13 +365,13 @@ function RightPanel({ open }: { open: boolean }) {
         {/* Header */}
         <div style={{
           display: "flex", alignItems: "center",
-          borderBottom: "1px solid var(--line)",
-          background: "var(--bg)", flexShrink: 0,
+          borderBottom: "1px solid var(--glass-border)",
+          background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)", flexShrink: 0,
           padding: "10px 14px",
         }}>
           <div style={{
             width: 20, height: 20, borderRadius: "50%",
-            background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
+            background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.18)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 8, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
             marginRight: 8,
@@ -408,17 +408,17 @@ function DefaultDashContent() {
 
 function ReedStageContext({ stage }: { stage: string }) {
   const calloutStyle: React.CSSProperties = {
-    border: "1px solid rgba(74,144,217,0.25)", borderRadius: 8,
-    padding: "10px 12px", background: "rgba(74,144,217,0.04)",
+    border: "1px solid rgba(74,144,217,0.15)", borderRadius: 8,
+    padding: "10px 12px", background: "rgba(74,144,217,0.04)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
     fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 8,
   };
   const pillGold: React.CSSProperties = {
     display: "inline-flex", padding: "2px 8px", borderRadius: 99,
-    background: "rgba(245,198,66,0.15)", fontSize: 10, fontWeight: 600, color: "#9A7030",
+    background: "rgba(245,198,66,0.1)", fontSize: 10, fontWeight: 600, color: "#9A7030", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid rgba(245,198,66,0.2)",
   };
   const pillBlue: React.CSSProperties = {
     display: "inline-flex", padding: "2px 8px", borderRadius: 99,
-    background: "rgba(74,144,217,0.1)", fontSize: 10, fontWeight: 600, color: "#4A90D9",
+    background: "rgba(74,144,217,0.08)", fontSize: 10, fontWeight: 600, color: "#4A90D9", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid rgba(74,144,217,0.15)",
   };
 
   if (stage === "Watch") {
@@ -683,9 +683,9 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "var(--surface)", border: "1px solid var(--line)",
-          borderRadius: 12, width: "100%", maxWidth: 560, maxHeight: 580,
-          overflowY: "auto", boxShadow: "0 16px 48px rgba(0,0,0,0.14)",
+          background: "var(--glass-card)", border: "1px solid var(--glass-border)",
+          borderRadius: "var(--glass-radius-lg)", width: "100%", maxWidth: 560, maxHeight: 580,
+          overflowY: "auto", boxShadow: "var(--glass-shadow-elevated)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
           display: "flex", flexDirection: "column",
         }}
       >
@@ -804,7 +804,7 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ background: "var(--surface)", borderRadius: 12, width: 680, maxHeight: 560, overflowY: "auto", padding: "22px 24px", boxShadow: "0 16px 48px rgba(0,0,0,0.18)" }}
+        style={{ background: "var(--glass-card)", borderRadius: "var(--glass-radius-lg)", width: 680, maxHeight: 560, overflowY: "auto", padding: "22px 24px", boxShadow: "var(--glass-shadow-elevated)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", border: "1px solid var(--glass-border)" }}
       >
         {/* ── Detail view ── */}
         {detailItem ? (

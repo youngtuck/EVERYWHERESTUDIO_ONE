@@ -164,8 +164,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
     <aside style={{
       width: collapsed ? 52 : 220,
       height: "100vh",
-      background: "var(--bg-2)",
-      borderRight: "1px solid var(--line)",
+      background: "var(--glass-sidebar)",
+      borderRight: "1px solid var(--glass-border)",
+      backdropFilter: "var(--glass-blur)",
+      WebkitBackdropFilter: "var(--glass-blur)",
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
@@ -180,7 +182,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         alignItems: "center",
         gap: 6,
         padding: "8px 8px",
-        borderBottom: "1px solid var(--line)",
+        borderBottom: "1px solid var(--glass-border)",
         flexShrink: 0,
         height: 50,
       }}>
@@ -192,7 +194,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                 onClick={() => projects.length > 1 && setShowProjectMenu(m => !m)}
                 style={{
                   display: "flex", alignItems: "flex-start", flexDirection: "column",
-                  gap: 1, background: "rgba(0,0,0,0.05)", borderRadius: 5,
+                  gap: 1, background: "var(--glass-surface)", borderRadius: 6, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid var(--glass-border)",
                   padding: "5px 8px", cursor: projects.length > 1 ? "pointer" : "default",
                 }}
               >
@@ -287,7 +289,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
             <div style={{
               display: "flex", alignItems: "flex-start", flexDirection: "column",
-              gap: 1, background: "rgba(0,0,0,0.05)", borderRadius: 5, padding: "5px 8px",
+              gap: 1, background: "var(--glass-surface)", borderRadius: 6, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid var(--glass-border)", padding: "5px 8px",
             }}>
               <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Project</span>
               <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -328,7 +330,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                 </div>
               )}
               {collapsed && gi > 0 && (
-                <div style={{ height: 1, background: "var(--line)", margin: "8px 6px", opacity: 0.5 }} />
+                <div style={{ height: 1, background: "var(--glass-border)", margin: "8px 6px", opacity: 0.5 }} />
               )}
 
               {items.map(({ path, label, icon, desc }) => {
@@ -357,7 +359,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                 Admin
               </div>
             )}
-            {collapsed && <div style={{ height: 1, background: "var(--line)", margin: "8px 6px", opacity: 0.5 }} />}
+            {collapsed && <div style={{ height: 1, background: "var(--glass-border)", margin: "8px 6px", opacity: 0.5 }} />}
             <NavItem
               label="Admin Panel"
               active={loc.pathname === "/studio/admin"}
@@ -375,7 +377,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
 
       {/* Version */}
       {!collapsed && (
-        <div style={{ padding: "4px 14px 10px", fontSize: 10, color: "var(--fg-3)", opacity: 0.4, borderTop: "1px solid var(--line)" }}>
+        <div style={{ padding: "4px 14px 10px", fontSize: 10, color: "var(--fg-3)", opacity: 0.4, borderTop: "1px solid var(--glass-border)" }}>
           v{APP_VERSION}
         </div>
       )}
@@ -405,11 +407,19 @@ function NavItem({
     <div
       onClick={onClick}
       onMouseEnter={e => {
-        if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+        if (!active) {
+          e.currentTarget.style.background = "var(--glass-surface)";
+          e.currentTarget.style.backdropFilter = "blur(8px)";
+          (e.currentTarget.style as any).webkitBackdropFilter = "blur(8px)";
+        }
         setShowTooltip(true);
       }}
       onMouseLeave={e => {
-        if (!active) e.currentTarget.style.background = "transparent";
+        if (!active) {
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.backdropFilter = "none";
+          (e.currentTarget.style as any).webkitBackdropFilter = "none";
+        }
         setShowTooltip(false);
       }}
       style={{
@@ -422,7 +432,10 @@ function NavItem({
         transition: "background 0.1s",
         position: "relative",
         marginBottom: 1,
-        background: active ? "rgba(245,198,66,0.12)" : "transparent",
+        background: active ? "rgba(245,198,66,0.1)" : "transparent",
+        backdropFilter: active ? "blur(8px)" : "none",
+        WebkitBackdropFilter: active ? "blur(8px)" : "none",
+        border: active ? "1px solid rgba(245,198,66,0.15)" : "1px solid transparent",
         justifyContent: collapsed ? "center" : "flex-start",
       }}
     >
@@ -461,8 +474,8 @@ function NavItem({
             left: collapsed ? 52 : 220,
             top: "50%",
             transform: "translateY(-50%)",
-            background: "var(--fg)",
-            borderRadius: 6,
+            background: "rgba(13, 27, 42, 0.9)",
+            borderRadius: 8,
             padding: "6px 10px",
             fontSize: 11,
             color: "rgba(255,255,255,0.92)",
@@ -471,7 +484,10 @@ function NavItem({
             lineHeight: 1.4,
             zIndex: 200,
             pointerEvents: "none",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
           }}
         >
           <div style={{ fontWeight: 600, marginBottom: 2 }}>{label}</div>
