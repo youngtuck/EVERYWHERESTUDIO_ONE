@@ -38,9 +38,9 @@ function useBreadcrumbs(): {
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <span
           onClick={() => nav("/studio/dashboard")}
-          style={{ fontSize: 11, color: "var(--fg-3)", cursor: "pointer", transition: "color 0.1s" }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
+          style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", cursor: "pointer", transition: "color 0.1s" }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.65)"; }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.45)"; }}
         >
           Home
         </span>
@@ -49,7 +49,7 @@ function useBreadcrumbs(): {
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.3 }}>
               <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)", padding: "3px 8px", borderRadius: 6, background: "rgba(245,198,66,0.15)", border: "1px solid rgba(245,198,66,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.92)", padding: "3px 8px", borderRadius: 6, background: "rgba(245,198,66,0.15)", border: "1px solid rgba(245,198,66,0.3)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
               {label}
             </span>
           </>
@@ -99,15 +99,15 @@ function WorkBreadcrumb() {
                 borderRadius: 4,
                 cursor: canClick ? "pointer" : "default",
                 fontWeight: isActive ? 700 : 500,
-                color: isActive ? "var(--fg)" : isDone ? "var(--fg-3)" : "var(--line-2, rgba(0,0,0,0.15))",
-                background: isActive ? "rgba(245,198,66,0.2)" : "transparent",
+                color: isActive ? "rgba(255,255,255,0.92)" : isDone ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.25)",
+                background: isActive ? "rgba(245,198,66,0.15)" : "transparent",
                 backdropFilter: isActive ? "blur(8px)" : "none",
                 WebkitBackdropFilter: isActive ? "blur(8px)" : "none",
                 border: isActive ? "1px solid rgba(245,198,66,0.3)" : "1px solid transparent",
                 transition: "all 0.1s",
               }}
-              onMouseEnter={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
-              onMouseLeave={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
+              onMouseEnter={e => { if (!isActive) (e.target as HTMLElement).style.color = "rgba(255,255,255,0.65)"; }}
+              onMouseLeave={e => { if (!isActive) (e.target as HTMLElement).style.color = "rgba(255,255,255,0.4)"; }}
             >
               {s}
             </span>
@@ -141,11 +141,10 @@ function UserAvatar() {
         onClick={() => setOpen(o => !o)}
         style={{
           width: 28, height: 28, borderRadius: "50%",
-          background: "rgba(245,198,66,0.12)",
+          background: "rgba(245,198,66,0.1)",
           border: "1px solid rgba(245,198,66,0.2)",
-          backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 9, fontWeight: 700, color: "var(--gold)",
+          fontSize: 9, fontWeight: 700, color: "#F5C642",
           cursor: "pointer", flexShrink: 0,
         }}
       >
@@ -157,10 +156,10 @@ function UserAvatar() {
           <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 290 }} />
           <div style={{
             position: "absolute", top: 36, right: 0,
-            background: "var(--glass-card)",
-            border: "1px solid var(--glass-border)",
+            background: "rgba(20, 30, 48, 0.92)",
+            border: "1px solid rgba(255,255,255,0.08)",
             borderRadius: 12,
-            boxShadow: "var(--glass-shadow-elevated)",
+            boxShadow: "0 8px 48px rgba(0,0,0,0.3)",
             backdropFilter: "var(--glass-blur)",
             WebkitBackdropFilter: "var(--glass-blur)",
             zIndex: 300,
@@ -168,21 +167,21 @@ function UserAvatar() {
             overflow: "hidden",
           }}>
             {/* Header */}
-            <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid var(--glass-border)", background: "var(--glass-surface)" }}>
+            <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.04)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{
                   width: 34, height: 34, borderRadius: "50%",
                   background: "rgba(245,198,66,0.2)",
                   border: "1px solid rgba(245,198,66,0.3)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 700, color: "var(--gold)", flexShrink: 0,
+                  fontSize: 11, fontWeight: 700, color: "#F5C642", flexShrink: 0,
                 }}>
                   {initials}
                 </div>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)" }}>{displayName || "User"}</div>
-                  <div style={{ fontSize: 10, color: "var(--fg-3)" }}>EVERYWHERE Studio</div>
-                  <div style={{ fontSize: 10, color: "var(--fg-3)" }}>Alpha 3.021</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.92)" }}>{displayName || "User"}</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>EVERYWHERE Studio</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Alpha 3.021</div>
                 </div>
               </div>
             </div>
@@ -197,18 +196,18 @@ function UserAvatar() {
                 <div
                   key={item.label}
                   onClick={item.action}
-                  style={{ padding: "7px 10px", fontSize: 12, color: "var(--fg-2)", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--glass-surface)"; }}
+                  style={{ padding: "7px 10px", fontSize: 12, color: "rgba(255,255,255,0.75)", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                 >
                   {item.label}
                 </div>
               ))}
-              <div style={{ borderTop: "1px solid var(--line)", margin: "4px 0" }} />
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "4px 0" }} />
               <div
                 onClick={handleSignOut}
-                style={{ padding: "7px 10px", fontSize: 12, color: "#e74c3c", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--glass-surface)"; }}
+                style={{ padding: "7px 10px", fontSize: 12, color: "#e85d75", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               >
                 Logout
@@ -272,9 +271,10 @@ export default function StudioTopBar() {
     <div style={{
       height: 50,
       background: "var(--glass-topbar)",
-      borderBottom: "1px solid var(--glass-border)",
+      borderBottom: "1px solid rgba(255,255,255,0.06)",
       backdropFilter: "var(--glass-blur)",
       WebkitBackdropFilter: "var(--glass-blur)",
+      boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
       display: "flex",
       alignItems: "center",
       padding: "0 16px",
@@ -295,15 +295,15 @@ export default function StudioTopBar() {
             nav("/studio/work");
           }}
           style={{
-            fontSize: 11, fontWeight: 600, color: "var(--gold)",
-            cursor: "pointer", background: "rgba(245,198,66,0.06)",
+            fontSize: 11, fontWeight: 600, color: "#F5C642",
+            cursor: "pointer", background: "rgba(245,198,66,0.08)",
             border: "1px solid rgba(245,198,66,0.2)",
-            borderRadius: 8, padding: "4px 10px",
+            borderRadius: 8, padding: "5px 12px",
             backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
             fontFamily: "var(--font)", transition: "all 0.12s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.35)"; e.currentTarget.style.background = "rgba(245,198,66,0.12)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(245,198,66,0.1)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.2)"; e.currentTarget.style.background = "rgba(245,198,66,0.06)"; e.currentTarget.style.boxShadow = "none"; }}
+          onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,198,66,0.15)"; e.currentTarget.style.borderColor = "rgba(245,198,66,0.35)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(245,198,66,0.12)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "rgba(245,198,66,0.08)"; e.currentTarget.style.borderColor = "rgba(245,198,66,0.2)"; e.currentTarget.style.boxShadow = "none"; }}
         >
           + New Session
         </button>
@@ -315,12 +315,12 @@ export default function StudioTopBar() {
             <button
               onClick={() => setAdvisorsOpen(true)}
               style={{
-                fontSize: 11, color: "var(--fg-3)", cursor: "pointer",
+                fontSize: 11, color: "rgba(255,255,255,0.4)", cursor: "pointer",
                 fontWeight: 500, background: "none", border: "none",
                 fontFamily: "var(--font)", padding: 0, transition: "color 0.12s",
               }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.color = "var(--fg)"; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.8)"; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.4)"; }}
             >
               Advisors
             </button>
@@ -332,18 +332,18 @@ export default function StudioTopBar() {
           onClick={() => setDiscoverOpen(true)}
           style={{
             background: "transparent", border: "none",
-            color: "var(--fg-3)", fontSize: 13, fontWeight: 600,
+            color: "rgba(255,255,255,0.4)", fontSize: 13, fontWeight: 600,
             cursor: "pointer", padding: "4px", lineHeight: 1,
             fontFamily: "var(--font)", transition: "color 0.12s",
           }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.color = "var(--blue)"; }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.8)"; }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.color = "rgba(255,255,255,0.4)"; }}
           title="Discover"
         >
           ?
         </button>
 
-        <ThemeToggle />
+        <ThemeToggle onDark />
 
         <UserAvatar />
       </div>
@@ -352,5 +352,5 @@ export default function StudioTopBar() {
 }
 
 function Divider() {
-  return <div style={{ width: 1, height: 14, background: "var(--glass-border)", flexShrink: 0 }} />;
+  return <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />;
 }

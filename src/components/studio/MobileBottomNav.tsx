@@ -31,8 +31,8 @@ export default function MobileBottomNav() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-around",
-        background: "var(--glass-topbar)",
-        borderTop: "1px solid var(--glass-border)",
+        background: "rgba(13, 27, 42, 0.92)",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
         backdropFilter: "var(--glass-blur)",
         WebkitBackdropFilter: "var(--glass-blur)",
         zIndex: 50,
@@ -59,7 +59,7 @@ export default function MobileBottomNav() {
               padding: "8px 12px",
               minWidth: 56,
               minHeight: 44,
-              color: active ? "var(--gold)" : "var(--fg-3)",
+              color: active ? "#F5C642" : "rgba(255,255,255,0.4)",
               transition: "color 0.15s ease",
             }}
           >

@@ -165,9 +165,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       width: collapsed ? 52 : 220,
       height: "100vh",
       background: "var(--glass-sidebar)",
-      borderRight: "1px solid var(--glass-border)",
+      borderRight: "1px solid rgba(255,255,255,0.06)",
       backdropFilter: "var(--glass-blur)",
       WebkitBackdropFilter: "var(--glass-blur)",
+      boxShadow: "var(--glass-inner-dark), 2px 0 12px rgba(0,0,0,0.15)",
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
@@ -182,7 +183,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         alignItems: "center",
         gap: 6,
         padding: "8px 8px",
-        borderBottom: "1px solid var(--glass-border)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
         flexShrink: 0,
         height: 50,
       }}>
@@ -194,17 +195,17 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                 onClick={() => projects.length > 1 && setShowProjectMenu(m => !m)}
                 style={{
                   display: "flex", alignItems: "flex-start", flexDirection: "column",
-                  gap: 1, background: "var(--glass-surface)", borderRadius: 6, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid var(--glass-border)",
+                  gap: 1, background: "rgba(255,255,255,0.06)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
                   padding: "5px 8px", cursor: projects.length > 1 ? "pointer" : "default",
                 }}
               >
-                <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Project</span>
+                <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.4)" }}>Project</span>
                 <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 4 }}>
-                  <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.92)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {activeProject?.name ?? "Loading..."}
                   </span>
                   {projects.length > 1 && (
-                    <svg style={{ width: 11, height: 11, stroke: "var(--fg-3)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+                    <svg style={{ width: 11, height: 11, stroke: "rgba(255,255,255,0.4)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
                   )}
@@ -220,7 +221,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                         onClick={() => { setActiveProjectId(p.id); setShowProjectMenu(false); }}
                         style={{
                           padding: "8px 10px", fontSize: 12, cursor: "pointer",
-                          color: p.id === activeProjectId ? "var(--fg)" : "var(--fg-2)",
+                          color: p.id === activeProjectId ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.65)",
                           fontWeight: p.id === activeProjectId ? 600 : 400,
                           background: p.id === activeProjectId ? "rgba(245,198,66,0.08)" : "transparent",
                           transition: "background 0.1s",
@@ -229,7 +230,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                         onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
                       >
                         {p.name}
-                        {p.is_default && <span style={{ fontSize: 9, color: "var(--fg-3)", marginLeft: 6 }}>default</span>}
+                        {p.is_default && <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginLeft: 6 }}>default</span>}
                       </div>
                     ))}
                   </div>
@@ -237,22 +238,22 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               )}
             </div>
 
-            {/* Collapse button — expanded state */}
+            {/* Collapse button, expanded state */}
             <button
               onClick={onToggleCollapsed}
               title="Collapse sidebar"
               style={{
                 width: 28, height: 28, borderRadius: 5,
-                border: "1px solid var(--line)",
+                border: "1px solid rgba(255,255,255,0.06)",
                 background: "transparent",
-                color: "var(--fg-3)",
+                color: "rgba(255,255,255,0.4)",
                 cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0,
                 transition: "all 0.12s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.05)"; e.currentTarget.style.color = "var(--fg-2)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--fg-3)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
             >
               <svg style={{ width: 13, height: 13, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24">
                 <polyline points="15 18 9 12 15 6" />
@@ -272,11 +273,11 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               borderRadius: 0,
-              color: "var(--fg-3)",
+              color: "rgba(255,255,255,0.4)",
               transition: "background 0.12s, color 0.12s",
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; e.currentTarget.style.color = "var(--fg-2)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--fg-3)"; }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
           >
             <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24">
               <polyline points="9 18 15 12 9 6" />
@@ -289,10 +290,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
             <div style={{
               display: "flex", alignItems: "flex-start", flexDirection: "column",
-              gap: 1, background: "var(--glass-surface)", borderRadius: 6, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid var(--glass-border)", padding: "5px 8px",
+              gap: 1, background: "rgba(255,255,255,0.06)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", padding: "5px 8px",
             }}>
-              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Project</span>
-              <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.4)" }}>Project</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.92)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {activeProject?.name ?? "Loading..."}
               </span>
             </div>
@@ -301,7 +302,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         {onMobileClose && (
           <button
             onClick={onMobileClose}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fg-3)", fontSize: 16, padding: 4, flexShrink: 0 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 16, padding: 4, flexShrink: 0 }}
             aria-label="Close menu"
           >✕</button>
         )}
@@ -321,7 +322,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               {/* Group label */}
               {!collapsed && (
                 <div style={{
-                  fontSize: 9, color: "var(--fg-2)",
+                  fontSize: 8, color: "rgba(255,255,255,0.3)",
                   letterSpacing: "0.1em", textTransform: "uppercase" as const,
                   padding: "10px 6px 3px", whiteSpace: "nowrap",
                   fontWeight: 600,
@@ -330,7 +331,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                 </div>
               )}
               {collapsed && gi > 0 && (
-                <div style={{ height: 1, background: "var(--glass-border)", margin: "8px 6px", opacity: 0.5 }} />
+                <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 6px", opacity: 0.5 }} />
               )}
 
               {items.map(({ path, label, icon, desc }) => {
@@ -355,11 +356,11 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         {isAdmin && (
           <>
             {!collapsed && (
-              <div style={{ fontSize: 9, color: "var(--fg-2)", letterSpacing: "0.1em", textTransform: "uppercase" as const, padding: "10px 6px 3px", fontWeight: 600 }}>
+              <div style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase" as const, padding: "10px 6px 3px", fontWeight: 600 }}>
                 Admin
               </div>
             )}
-            {collapsed && <div style={{ height: 1, background: "var(--glass-border)", margin: "8px 6px", opacity: 0.5 }} />}
+            {collapsed && <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 6px", opacity: 0.5 }} />}
             <NavItem
               label="Admin Panel"
               active={loc.pathname === "/studio/admin"}
@@ -377,7 +378,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
 
       {/* Version */}
       {!collapsed && (
-        <div style={{ padding: "4px 14px 10px", fontSize: 10, color: "var(--fg-3)", opacity: 0.4, borderTop: "1px solid var(--glass-border)" }}>
+        <div style={{ padding: "4px 14px 10px", fontSize: 10, color: "rgba(255,255,255,0.2)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           v{APP_VERSION}
         </div>
       )}
@@ -408,17 +409,13 @@ function NavItem({
       onClick={onClick}
       onMouseEnter={e => {
         if (!active) {
-          e.currentTarget.style.background = "var(--glass-surface)";
-          e.currentTarget.style.backdropFilter = "blur(8px)";
-          (e.currentTarget.style as any).webkitBackdropFilter = "blur(8px)";
+          e.currentTarget.style.background = "rgba(255,255,255,0.06)";
         }
         setShowTooltip(true);
       }}
       onMouseLeave={e => {
         if (!active) {
           e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.backdropFilter = "none";
-          (e.currentTarget.style as any).webkitBackdropFilter = "none";
         }
         setShowTooltip(false);
       }}
@@ -433,8 +430,6 @@ function NavItem({
         position: "relative",
         marginBottom: 1,
         background: active ? "rgba(245,198,66,0.1)" : "transparent",
-        backdropFilter: active ? "blur(8px)" : "none",
-        WebkitBackdropFilter: active ? "blur(8px)" : "none",
         border: active ? "1px solid rgba(245,198,66,0.15)" : "1px solid transparent",
         justifyContent: collapsed ? "center" : "flex-start",
       }}
@@ -444,8 +439,8 @@ function NavItem({
         width: 20, height: 20,
         display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0,
-        opacity: active ? 1 : 0.55,
-        color: "var(--fg)",
+        opacity: active ? 1 : 0.45,
+        color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.65)",
         transition: "opacity 0.1s",
       }}>
         {icon}
@@ -455,7 +450,7 @@ function NavItem({
       {!collapsed && (
         <span style={{
           fontSize: 12,
-          color: active ? "var(--fg)" : "var(--fg-2)",
+          color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.55)",
           fontWeight: active ? 600 : 500,
           whiteSpace: "nowrap",
           overflow: "hidden",

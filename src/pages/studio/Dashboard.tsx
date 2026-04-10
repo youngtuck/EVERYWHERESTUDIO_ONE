@@ -66,7 +66,15 @@ function HomeDashContent({
   inProgressFlags: number;
   onGoToWatch: () => void;
 }) {
-  const S = { label: { fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 } };
+  const S = { label: {
+    fontFamily: "var(--studio-mono-font)",
+    fontSize: "var(--studio-label-size)",
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
+    color: "var(--fg-3)",
+    marginBottom: 6,
+  } };
   const row = (label: string, value: string | number) => (
     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0", borderBottom: "1px solid var(--glass-border)" }}>
       <span style={{ color: "var(--fg-2)" }}>{label}</span>
@@ -213,15 +221,25 @@ export default function Dashboard() {
         fontFamily: "var(--font)",
       }}>
         <div style={{
-          fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" as const,
-          color: "var(--gold-bright)", marginBottom: 16,
+          fontFamily: "var(--studio-mono-font)",
+          fontSize: "var(--studio-label-size)",
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase" as const,
+          color: "var(--gold-bright)",
+          marginBottom: 16,
         }}>
           EVERYWHERE Studio
         </div>
 
         <h1 style={{
-          fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 700, color: "var(--fg)",
-          lineHeight: 1.2, marginBottom: 12, letterSpacing: "-0.02em",
+          fontFamily: "var(--studio-display-font)",
+          fontSize: "var(--studio-display-size)",
+          fontWeight: 600,
+          letterSpacing: "-0.02em",
+          color: "var(--fg)",
+          lineHeight: 1.2,
+          marginBottom: 12,
         }}>
           {firstName !== "there" ? `Welcome, ${firstName}.` : "Welcome to your studio."}
         </h1>
@@ -276,7 +294,14 @@ export default function Dashboard() {
       maxWidth: 520,
     }}>
       {/* Greeting */}
-      <div style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", marginBottom: 2 }}>
+      <div style={{
+        fontFamily: "var(--studio-display-font)",
+        fontSize: "var(--studio-display-size)",
+        fontWeight: 600,
+        letterSpacing: "-0.02em",
+        color: "var(--fg)",
+        marginBottom: 2,
+      }}>
         {getGreeting()}, {firstName}.
       </div>
       <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 20 }}>
@@ -314,7 +339,15 @@ export default function Dashboard() {
 
       {/* Section divider */}
       {(outputs.length > 0 || loading) && (
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 12 }}>
+        <div style={{
+          fontFamily: "var(--studio-mono-font)",
+          fontSize: "var(--studio-label-size)",
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase" as const,
+          color: "var(--fg-3)",
+          marginBottom: 12,
+        }}>
           Or pick up where you left off
         </div>
       )}

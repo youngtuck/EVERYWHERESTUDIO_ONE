@@ -1,14 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
 /* ─── MIXED GRILL BRAND GUIDE 2026 ──────────────────────────── */
 
 /* ─── TOKENS ─────────────────────────────────────────────────── */
 :root {
-  /* Backgrounds - Mark's wireframe system */
-  --bg: #F7F9FC;
-  --bg-2: #EDF1F5;
-  --bg-3: #E2E8F0;
-  --surface: #FFFFFF;
+  /* Backgrounds: warm cream canvas with dark navy shell */
+  --bg: #F5F3EF;
+  --bg-2: #EDEAE4;
+  --bg-3: #E2DFD8;
+  --surface: #FAFAF8;
   --surface-elevated: #FFFFFF;
-  --sidebar: #EDF1F5;
+  --sidebar: #0D1B2A;
 
   /* Text */
   --fg: #0D1B2A;
@@ -432,6 +434,27 @@ button { font-family: var(--font); }
   --studio-interactive-size: 13px;
   --studio-interactive-color: #64748B;
   --studio-interactive-hover: #4A90D9;
+  /* Typography scale (Option C) */
+  --studio-display-font: 'Instrument Sans', 'Afacad Flux', sans-serif;
+  --studio-display-size: clamp(24px, 3vw, 32px);
+  --studio-display-weight: 600;
+  --studio-display-spacing: -0.02em;
+  --studio-heading-size: 18px;
+  --studio-heading-weight: 600;
+  --studio-subhead-size: 14px;
+  --studio-subhead-weight: 500;
+  --studio-label-size: 11px;
+  --studio-label-weight: 700;
+  --studio-label-spacing: 0.08em;
+  --studio-mono-font: 'DM Mono', monospace;
+}
+
+/* Content area warm gradient substrate */
+.studio-content-substrate {
+  background:
+    linear-gradient(135deg, rgba(200, 169, 110, 0.03) 0%, transparent 40%),
+    linear-gradient(225deg, rgba(74, 144, 217, 0.02) 0%, transparent 35%),
+    linear-gradient(180deg, #F5F3EF 0%, #F0EDE6 50%, #F5F3EF 100%);
 }
 
 /* ─── LIQUID GLASS TOKENS ───────────────────────────────────────
@@ -445,8 +468,9 @@ button { font-family: var(--font); }
   --glass-surface-hover: rgba(255, 255, 255, 0.6);
   --glass-card: rgba(255, 255, 255, 0.5);
   --glass-card-hover: rgba(255, 255, 255, 0.65);
-  --glass-sidebar: rgba(237, 241, 245, 0.6);
-  --glass-topbar: rgba(247, 249, 252, 0.55);
+  --glass-sidebar: rgba(13, 27, 42, 0.92);
+  --glass-topbar: rgba(13, 27, 42, 0.88);
+  --glass-border-shell: rgba(255, 255, 255, 0.08);
   --glass-input: rgba(255, 255, 255, 0.6);
   --glass-input-focus: rgba(255, 255, 255, 0.8);
   --glass-dark: rgba(10, 12, 18, 0.55);

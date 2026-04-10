@@ -274,7 +274,7 @@ export default function StudioShell() {
     }}>
       <div style={{
         display: "flex", height: "100vh",
-        background: "var(--bg)", backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(74,144,217,0.03) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(200,169,110,0.02) 0%, transparent 50%)", fontFamily: "var(--font)", overflow: "hidden",
+        background: "#0D1B2A", fontFamily: "var(--font)", overflow: "hidden",
       }}>
         <CommandPalette />
 
@@ -301,8 +301,8 @@ export default function StudioShell() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
           {/* Top bar */}
           {isMobile ? (
-            <div style={{ height: 48, background: "var(--glass-topbar)", borderBottom: "1px solid var(--glass-border)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 }}>
-              <button type="button" onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", borderRadius: 6, padding: 6, cursor: "pointer", color: "var(--fg-3)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Open navigation">
+            <div style={{ height: 48, background: "var(--glass-topbar)", borderBottom: "1px solid rgba(255,255,255,0.06)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", color: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 }}>
+              <button type="button" onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", borderRadius: 6, padding: 6, cursor: "pointer", color: "rgba(255,255,255,0.65)", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Open navigation">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
               <Logo size="sm" />
@@ -314,7 +314,11 @@ export default function StudioShell() {
 
           {/* Content + Dashboard panel row */}
           <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-            <main className="studio-main-inner" style={{ flex: 1, overflowY: "auto", minWidth: 0, paddingBottom: isMobile ? 80 : 0, position: "relative" }}>
+            <main className="studio-main-inner studio-content-substrate" style={{
+              flex: 1, overflowY: "auto", minWidth: 0,
+              paddingBottom: isMobile ? 80 : 0, position: "relative",
+              borderRadius: "12px 0 0 0",
+            }}>
               <Outlet />
             </main>
             {!isMobile && (
@@ -352,7 +356,10 @@ function RightPanel({ open }: { open: boolean }) {
   return (
     <div style={{
       width: open ? 240 : 0, flexShrink: 0,
-      background: "var(--glass-sidebar)", borderLeft: "1px solid var(--glass-border)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
+      background: "var(--glass-sidebar)",
+      borderLeft: "1px solid rgba(255,255,255,0.06)",
+      backdropFilter: "var(--glass-blur)",
+      WebkitBackdropFilter: "var(--glass-blur)",
       overflow: "hidden", transition: "width 0.18s ease",
       display: "flex", flexDirection: "column",
     }}>
@@ -365,18 +372,20 @@ function RightPanel({ open }: { open: boolean }) {
         {/* Header */}
         <div style={{
           display: "flex", alignItems: "center",
-          borderBottom: "1px solid var(--glass-border)",
-          background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)", flexShrink: 0,
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.03)", flexShrink: 0,
           padding: "10px 14px",
         }}>
           <div style={{
             width: 20, height: 20, borderRadius: "50%",
-            background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.18)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            background: "rgba(74,144,217,0.12)",
+            border: "1px solid rgba(74,144,217,0.25)",
+            color: "#6BA8E8",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 8, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
+            fontSize: 8, fontWeight: 700, flexShrink: 0,
             marginRight: 8,
           }}>R</div>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>Reed</span>
         </div>
 
         {/* Stage feedback and context */}
@@ -387,7 +396,7 @@ function RightPanel({ open }: { open: boolean }) {
         {/* Copyright footer */}
         <div style={{
           padding: "8px 14px",
-          fontSize: 9, color: "var(--line-2)",
+          fontSize: 9, color: "rgba(255,255,255,0.4)",
           textAlign: "center" as const,
           flexShrink: 0,
         }}>
@@ -400,7 +409,7 @@ function RightPanel({ open }: { open: boolean }) {
 
 function DefaultDashContent() {
   return (
-    <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
       Select a section to see your dashboard.
     </div>
   );
@@ -408,23 +417,31 @@ function DefaultDashContent() {
 
 function ReedStageContext({ stage }: { stage: string }) {
   const calloutStyle: React.CSSProperties = {
-    border: "1px solid rgba(74,144,217,0.15)", borderRadius: 8,
-    padding: "10px 12px", background: "rgba(74,144,217,0.04)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-    fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 8,
+    border: "1px solid rgba(74,144,217,0.2)",
+    borderRadius: 8,
+    padding: "10px 12px",
+    background: "rgba(74,144,217,0.06)",
+    fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginTop: 8,
   };
   const pillGold: React.CSSProperties = {
     display: "inline-flex", padding: "2px 8px", borderRadius: 99,
-    background: "rgba(245,198,66,0.1)", fontSize: 10, fontWeight: 600, color: "#9A7030", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid rgba(245,198,66,0.2)",
+    background: "rgba(245,198,66,0.1)",
+    border: "1px solid rgba(245,198,66,0.2)",
+    color: "#F5C642",
+    fontSize: 10, fontWeight: 600,
   };
   const pillBlue: React.CSSProperties = {
     display: "inline-flex", padding: "2px 8px", borderRadius: 99,
-    background: "rgba(74,144,217,0.08)", fontSize: 10, fontWeight: 600, color: "#4A90D9", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid rgba(74,144,217,0.15)",
+    background: "rgba(74,144,217,0.1)",
+    border: "1px solid rgba(74,144,217,0.2)",
+    color: "#6BA8E8",
+    fontSize: 10, fontWeight: 600,
   };
 
   if (stage === "Watch") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>
           Reed has read your sources. Signals are surfaced by relevance. Competitors going quiet is treated as a signal, not silence.
         </div>
       </div>
@@ -436,13 +453,13 @@ function ReedStageContext({ stage }: { stage: string }) {
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
         <span style={{
           display: "inline-flex", padding: "4px 10px", borderRadius: 99,
-          background: "rgba(245,198,66,0.12)", border: "1px solid rgba(245,198,66,0.3)",
-          fontSize: 10, fontWeight: 600, color: "#9A7030", marginBottom: 6,
+          background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.2)",
+          fontSize: 10, fontWeight: 600, color: "#F5C642", marginBottom: 6,
         }}>Freestyle</span>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 6 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginTop: 6 }}>
           No output format selected. Freestyle mode. Answer Reed's questions and the system shapes your thinking. You can pick a format at the end of Outline.
         </div>
-        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6, marginTop: 6 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginTop: 6 }}>
           What helps: Name the specific reader. State the structural problem, not the symptom. Say what you want the reader to do or feel.
         </div>
       </div>
@@ -452,14 +469,14 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Outline") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>
           Structure is sound. Confirm the close mirrors the title before moving to Edit.
         </div>
         <div style={calloutStyle}>
           You've been freestyling. Want to pick a format before Edit, or keep freestyle?
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Move to Edit</button>
-            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "transparent", border: "1px solid var(--line)", color: "var(--fg-2)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Keep Freestyle</button>
+            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "rgba(255,255,255,0.92)", border: "none", color: "#0D1B2A", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Move to Edit</button>
+            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Keep Freestyle</button>
           </div>
         </div>
       </div>
@@ -469,10 +486,10 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Edit") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 8 }}>
           Read through the draft. Edit anything that does not sound like you. When you are done, click Finish and Review.
         </div>
-        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
           Click into any paragraph to edit directly.
         </div>
       </div>
@@ -482,7 +499,7 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Review") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>
           Reed is reviewing your draft against 7 quality checkpoints.
         </div>
       </div>
@@ -492,7 +509,7 @@ function ReedStageContext({ stage }: { stage: string }) {
   if (stage === "Wrap") {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 8 }}>
           Freestyle mode. No format review required. Reed has packaged your content for every channel. Export All gives you clean, formatted outputs ready to publish.
         </div>
         <div style={calloutStyle}>
@@ -555,7 +572,7 @@ function ReedPanel() {
       <ReedStageContext stage={stage} />
       <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
         {reedThread.length === 0 && (
-          <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5, marginBottom: 12 }}>
             Ask Reed anything about your current session.
           </div>
         )}
@@ -569,17 +586,17 @@ function ReedPanel() {
                 borderRadius: "0 6px 6px 0",
               }}>
                 <div style={{
-                  fontSize: 9, fontWeight: 700, color: "#9A7030",
+                  fontSize: 9, fontWeight: 700, color: "#F5C642",
                   letterSpacing: "0.06em", marginBottom: 3,
                   textTransform: "uppercase" as const,
                 }}>
                   CARRIED FROM {m.from?.toUpperCase()}
                 </div>
-                <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.6, marginBottom: 6 }}>{m.text}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 6 }}>{m.text}</div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  <button onClick={() => prefillAndFocus(`Let's work on this now: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "#0D1B2A", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Work on this now</button>
-                  <button onClick={() => prefillAndFocus(`Apply this to the current ${stage} context: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "#0D1B2A", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Apply to {stage}</button>
-                  <button onClick={() => prefillAndFocus("Set this aside for now. Flag it for Review.")} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "#0D1B2A", color: "#fff", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Set aside</button>
+                  <button onClick={() => prefillAndFocus(`Let's work on this now: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Work on this now</button>
+                  <button onClick={() => prefillAndFocus(`Apply this to the current ${stage} context: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Apply to {stage}</button>
+                  <button onClick={() => prefillAndFocus("Set this aside for now. Flag it for Review.")} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Set aside</button>
                 </div>
               </div>
             );
@@ -590,13 +607,14 @@ function ReedPanel() {
                 <div style={{
                   width: 20, height: 20, borderRadius: "50%",
                   background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
+                  color: "#6BA8E8",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 8, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
+                  fontSize: 8, fontWeight: 700, flexShrink: 0,
                 }}>R</div>
                 <div style={{
-                  background: "rgba(74,144,217,0.07)", border: "1px solid rgba(74,144,217,0.15)",
+                  background: "rgba(74,144,217,0.06)", border: "1px solid rgba(74,144,217,0.2)",
                   borderRadius: "0 8px 8px 8px", padding: "8px 10px",
-                  fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, maxWidth: "85%",
+                  fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, maxWidth: "85%",
                 }}>{m.text}</div>
               </div>
             );
@@ -605,9 +623,9 @@ function ReedPanel() {
           return (
             <div key={i} style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
               <div style={{
-                background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.2)",
+                background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.2)",
                 borderRadius: "8px 0 8px 8px", padding: "8px 10px",
-                fontSize: 11, color: "var(--fg)", lineHeight: 1.6, maxWidth: "85%",
+                fontSize: 11, color: "rgba(255,255,255,0.92)", lineHeight: 1.6, maxWidth: "85%",
               }}>{m.text}</div>
             </div>
           );
@@ -622,8 +640,8 @@ function ReedPanel() {
               onClick={() => prefillAndFocus(chip.prefill)}
               style={{
                 fontSize: 10, padding: "4px 10px", borderRadius: 99,
-                background: "#EDF1F5", border: "1px solid #CBD5E1",
-                color: "#334155", cursor: "pointer", fontFamily: "inherit",
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.06)",
+                color: "rgba(255,255,255,0.65)", cursor: "pointer", fontFamily: "inherit",
               }}
             >
               {chip.label}
@@ -633,7 +651,7 @@ function ReedPanel() {
       )}
       <div style={{
         display: "flex", alignItems: "center", gap: 6,
-        background: "var(--surface)", border: "1px solid var(--line)",
+        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: 8, padding: "8px 10px", flexShrink: 0,
       }}>
         <input
@@ -644,18 +662,18 @@ function ReedPanel() {
           placeholder="Reply to Reed..."
           style={{
             flex: 1, background: "transparent", border: "none", outline: "none",
-            fontSize: 12, color: "var(--fg)", fontFamily: "var(--font)",
+            fontSize: 12, color: "rgba(255,255,255,0.92)", fontFamily: "var(--font)",
           }}
         />
         <button
           onClick={handleSend}
           style={{
-            width: 28, height: 28, borderRadius: 6, background: input.trim() ? "var(--fg)" : "var(--line)",
+            width: 28, height: 28, borderRadius: 6, background: input.trim() ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.06)",
             border: "none", cursor: input.trim() ? "pointer" : "not-allowed", display: "flex",
             alignItems: "center", justifyContent: "center", transition: "background 0.15s",
           }}
         >
-          <svg style={{ width: 11, height: 11, stroke: "#fff", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
+          <svg style={{ width: 11, height: 11, stroke: input.trim() ? "#0D1B2A" : "rgba(255,255,255,0.4)", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
             <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
         </button>
@@ -683,32 +701,36 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "var(--glass-card)", border: "1px solid var(--glass-border)",
-          borderRadius: "var(--glass-radius-lg)", width: "100%", maxWidth: 560, maxHeight: 580,
-          overflowY: "auto", boxShadow: "var(--glass-shadow-elevated)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
+          background: "rgba(20, 30, 48, 0.92)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 16,
+          width: "100%", maxWidth: 560, maxHeight: 580,
+          overflowY: "auto",
+          boxShadow: "0 16px 64px rgba(0,0,0,0.35)",
+          backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
           display: "flex", flexDirection: "column",
         }}
       >
         {/* Header */}
-        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>Advisors</span>
-            <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "var(--bg-2)", color: "var(--fg-3)", fontWeight: 600 }}>{stageLabel}</span>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>Advisors</span>
+            <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>{stageLabel}</span>
           </div>
-          <button onClick={onClose} aria-label="Close panel" style={{ background: "transparent", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
+          <button onClick={onClose} aria-label="Close panel" style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
         </div>
 
         {/* Body */}
         <div style={{ padding: "16px 20px", flex: 1, overflowY: "auto" }}>
           {/* Consensus recommendation */}
-          <div style={{ background: "rgba(74,144,217,0.04)", border: "1px solid rgba(74,144,217,0.12)", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--blue)", marginBottom: 6 }}>
+          <div style={{ background: "rgba(74,144,217,0.06)", border: "1px solid rgba(74,144,217,0.2)", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#6BA8E8", marginBottom: 6 }}>
               Advisors' Recommendation
             </div>
-            <div style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.65 }}>{ctx.rec}</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>{ctx.rec}</div>
           </div>
 
-          <div style={{ height: 1, background: "var(--line)", margin: "4px 0 16px" }} />
+          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 0 16px" }} />
 
           {/* Advisor cards */}
           {ctx.cards.map((card, i) => {
@@ -716,20 +738,20 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
             const skipped = skippedIdx.includes(i);
             return (
               <div key={i} style={{
-                background: "var(--surface)", border: "1px solid var(--line)",
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 8, padding: "12px 14px", marginBottom: 8,
                 opacity: skipped ? 0.4 : 1, transition: "opacity 0.2s",
               }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>{card.role}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>{card.role}</span>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button
                       onClick={() => setAgreedIdx(p => p.includes(i) ? p.filter(x => x !== i) : [...p, i])}
                       style={{
                         fontSize: 10, padding: "3px 10px", borderRadius: 4,
-                        border: agreed ? "1px solid var(--blue)" : "1px solid var(--line)",
-                        background: agreed ? "rgba(74,144,217,0.08)" : "var(--surface)",
-                        color: agreed ? "var(--blue)" : "var(--fg-2)",
+                        border: agreed ? "1px solid #6BA8E8" : "1px solid rgba(255,255,255,0.06)",
+                        background: agreed ? "rgba(74,144,217,0.1)" : "rgba(255,255,255,0.03)",
+                        color: agreed ? "#6BA8E8" : "rgba(255,255,255,0.65)",
                         cursor: "pointer", fontFamily: "var(--font)",
                         transition: "all 0.1s",
                       }}
@@ -738,24 +760,24 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
                     </button>
                     <button
                       onClick={() => setSkippedIdx(p => p.includes(i) ? p.filter(x => x !== i) : [...p, i])}
-                      style={{ fontSize: 10, padding: "3px 10px", borderRadius: 4, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg-3)", cursor: "pointer", fontFamily: "var(--font)" }}
+                      style={{ fontSize: 10, padding: "3px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontFamily: "var(--font)" }}
                     >
                       Skip
                     </button>
                   </div>
                 </div>
-                <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55 }}>{card.text}</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.55 }}>{card.text}</div>
               </div>
             );
           })}
         </div>
 
         {/* Footer */}
-        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--line)", display: "flex", justifyContent: "flex-end", gap: 8, flexShrink: 0 }}>
-          <button onClick={onClose} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--fg-3)", cursor: "pointer", fontFamily: "var(--font)" }}>Dismiss</button>
+        <div style={{ padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "flex-end", gap: 8, flexShrink: 0 }}>
+          <button onClick={onClose} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontFamily: "var(--font)" }}>Dismiss</button>
           <button
             onClick={onClose}
-            style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, background: "var(--fg)", border: "none", color: "var(--surface)", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}
+            style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, background: "rgba(255,255,255,0.92)", border: "none", color: "#0D1B2A", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}
           >
             Apply recommendations
           </button>
@@ -787,7 +809,7 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
 
   const formatDetail = (text: string) =>
     text.split("\n\n").map((para, i) => (
-      <p key={i} style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.75, marginBottom: 12 }}>
+      <p key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.75, marginBottom: 12 }}>
         {para.split("\n").map((line, j) => (
           <span key={j}>
             {line}
@@ -804,7 +826,14 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ background: "var(--glass-card)", borderRadius: "var(--glass-radius-lg)", width: 680, maxHeight: 560, overflowY: "auto", padding: "22px 24px", boxShadow: "var(--glass-shadow-elevated)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", border: "1px solid var(--glass-border)" }}
+        style={{
+          background: "rgba(20, 30, 48, 0.92)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 16,
+          width: 680, maxHeight: 560, overflowY: "auto", padding: "22px 24px",
+          boxShadow: "0 16px 64px rgba(0,0,0,0.35)",
+          backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
+        }}
       >
         {/* ── Detail view ── */}
         {detailItem ? (
@@ -812,21 +841,21 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
               <button
                 onClick={() => setDetailItem(null)}
-                style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", color: "var(--fg-3)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", padding: 0 }}
+                style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", padding: 0 }}
               >
                 <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
                 All tools
               </button>
-              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "var(--fg-3)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
             </div>
 
             {/* Detail header */}
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18, paddingBottom: 18, borderBottom: "1px solid var(--line)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18, paddingBottom: 18, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <div style={{ width: 48, height: 48, borderRadius: 10, background: `${detailItem.color}18`, color: detailItem.color, fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {detailItem.icon}
               </div>
               <div>
-                <div style={{ fontSize: 17, fontWeight: 700, color: "var(--fg)", marginBottom: 2 }}>{detailItem.name}</div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: "rgba(255,255,255,0.92)", marginBottom: 2 }}>{detailItem.name}</div>
                 <div style={{ width: 32, height: 3, background: detailItem.color, borderRadius: 2 }} />
               </div>
             </div>
@@ -853,8 +882,8 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
           /* ── List view ── */
           <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.01em" }}>Discover</div>
-              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "var(--fg-3)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.01em" }}>Discover</div>
+              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
             </div>
 
             <input
@@ -863,13 +892,13 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
               placeholder="Search tools..."
               autoFocus
               style={{
-                width: "100%", border: "1px solid var(--line)", borderRadius: 8,
+                width: "100%", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
                 padding: "10px 14px", fontSize: 13, fontFamily: "var(--font)",
-                outline: "none", marginBottom: 16, color: "var(--fg)", background: "var(--bg)",
+                outline: "none", marginBottom: 16, color: "rgba(255,255,255,0.92)", background: "rgba(255,255,255,0.03)",
                 transition: "border-color 0.12s",
               }}
               onFocus={e => { e.target.style.borderColor = "rgba(74,144,217,0.5)"; }}
-              onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+              onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.06)"; }}
             />
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
@@ -878,20 +907,20 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
                   key={item.id}
                   onClick={() => setDetailItem(item)}
                   style={{
-                    padding: 14, border: "1px solid var(--line)",
+                    padding: 14, border: "1px solid rgba(255,255,255,0.06)",
                     borderTop: `3px solid ${item.color}`,
                     borderRadius: 8, cursor: "pointer",
-                    background: "var(--surface)", transition: "all 0.15s",
+                    background: "rgba(255,255,255,0.03)", transition: "all 0.15s",
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.08)"; }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.35)"; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
                 >
                   <div style={{ width: 32, height: 32, borderRadius: 7, background: `${item.color}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, marginBottom: 10, color: item.color }}>
                     {item.icon}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)", marginBottom: 3 }}>{item.name}</div>
-                  <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.4, marginBottom: 5 }}>{item.desc}</div>
-                  <div style={{ fontSize: 10, color: "var(--fg-3)", fontStyle: "normal", lineHeight: 1.4 }}>{item.rationale}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.92)", marginBottom: 3 }}>{item.name}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.4, marginBottom: 5 }}>{item.desc}</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontStyle: "normal", lineHeight: 1.4 }}>{item.rationale}</div>
                 </div>
               ))}
             </div>
