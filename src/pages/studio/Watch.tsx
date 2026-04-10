@@ -54,7 +54,7 @@ function SignalCard({ signal, ctaLabel, ctaColor, onCta }: {
     : undefined;
 
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--glass-border)" }}>
       {signal.score != null && (
         <div style={{
           width: 26, height: 26, borderRadius: 6, flexShrink: 0,
@@ -105,7 +105,7 @@ function OpportunityRow({ signal, active }: { signal: Signal; active: boolean })
 // ── Briefing Card ──────────────────────────────────────────────
 function Card({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, marginBottom: 10, boxShadow: "var(--shadow-sm)" }}>
+    <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 14, marginBottom: 10, boxShadow: "var(--glass-shadow)", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>{title}</div>
         {action}
@@ -120,7 +120,7 @@ function AddRow({ placeholder, onAdd }: { placeholder: string; onAdd: (v: string
   const [v, setV] = useState("");
   return (
     <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-      <input value={v} onChange={e => setV(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && v.trim()) { onAdd(v.trim()); setV(""); } }} placeholder={placeholder} style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 6, padding: "4px 8px", fontSize: 10, color: "var(--fg)", fontFamily: FONT, outline: "none" }} />
+      <input value={v} onChange={e => setV(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && v.trim()) { onAdd(v.trim()); setV(""); } }} placeholder={placeholder} style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: "4px 8px", fontSize: 10, color: "var(--fg)", fontFamily: FONT, outline: "none", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }} />
       <button onClick={() => { if (v.trim()) { onAdd(v.trim()); setV(""); } }} style={{ padding: "4px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", fontSize: 16, lineHeight: 1, cursor: "pointer" }}>+</button>
     </div>
   );
@@ -131,7 +131,7 @@ function TagChips({ items, onRemove, chipStyle }: { items: string[]; onRemove: (
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
       {items.map(item => (
-        <span key={item} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--fg-2)", background: "var(--bg)", border: "1px solid var(--line)", padding: "3px 8px", borderRadius: 4, ...chipStyle }}>
+        <span key={item} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--fg-2)", background: "var(--glass-surface)", border: "1px solid var(--glass-border)", padding: "3px 8px", borderRadius: 4, ...chipStyle }}>
           {item}
           <span onClick={() => onRemove(item)} style={{ cursor: "pointer", color: "var(--fg-3)", fontSize: 12, lineHeight: 1 }}>&times;</span>
         </span>
@@ -145,7 +145,7 @@ function SourceRows({ items, onRemove, borderColor }: { items: string[]; onRemov
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 10 }}>
       {items.map(item => (
-        <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderLeft: `3px solid ${borderColor}`, borderBottom: "1px solid var(--line)" }}>
+        <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderLeft: `3px solid ${borderColor}`, borderBottom: "1px solid var(--glass-border)" }}>
           <span style={{ flex: 1, fontSize: 11, color: "var(--fg-2)" }}>{item}</span>
           <span onClick={() => onRemove(item)} style={{ cursor: "pointer", color: "var(--fg-3)", fontSize: 12, lineHeight: 1 }}>&times;</span>
         </div>
@@ -204,7 +204,7 @@ function WatchRightPanel({ briefing, contentTriggers, opportunities, prefillReed
       </DpSection>
 
       <div style={{
-        border: "1px solid rgba(74,144,217,0.25)", borderRadius: 8,
+        border: "1px solid rgba(74,144,217,0.25)", borderRadius: 12,
         padding: "10px 12px", background: "rgba(74,144,217,0.04)", marginBottom: 12,
       }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: "#4A90D9", marginBottom: 6 }}>Reed</div>
@@ -552,7 +552,7 @@ export default function Watch() {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
       {/* ── Tab Bar ── */}
-      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--line)", padding: "0 20px", background: "var(--bg)", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--glass-border)", padding: "0 20px", background: "var(--glass-topbar)", flexShrink: 0, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
         {(["briefing", "research", "settings"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             fontSize: 11, fontWeight: activeTab === tab ? 600 : 500,
@@ -615,7 +615,7 @@ export default function Watch() {
                   Add your keywords and sources in the Settings tab, then hit Run Brief to generate your first briefing.
                 </div>
                 <button onClick={handleGenerateBriefing} disabled={generatingBriefing} style={{
-                  fontSize: 12, fontWeight: 600, padding: "9px 20px", borderRadius: 6,
+                  fontSize: 12, fontWeight: 600, padding: "9px 20px", borderRadius: 8,
                   background: "var(--fg)", border: "none", color: "var(--surface)",
                   cursor: "pointer", fontFamily: FONT,
                 }}>Generate briefing</button>
@@ -668,9 +668,9 @@ export default function Watch() {
                 <input value={researchQuery} onChange={e => setResearchQuery(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") handleResearch(); }}
                   placeholder="e.g. Scott Galloway, Stratechery, fractional CAIO..."
-                  style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none" }} />
+                  style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }} />
                 <button onClick={handleResearch} disabled={searching}
-                  style={{ padding: "8px 16px", borderRadius: 6, background: "var(--fg)", color: "var(--surface)", border: "none", fontSize: 12, fontWeight: 600, cursor: searching ? "not-allowed" : "pointer", fontFamily: FONT, opacity: searching ? 0.5 : 1 }}>
+                  style={{ padding: "8px 16px", borderRadius: 8, background: "var(--fg)", color: "var(--surface)", border: "none", fontSize: 12, fontWeight: 600, cursor: searching ? "not-allowed" : "pointer", fontFamily: FONT, opacity: searching ? 0.5 : 1 }}>
                   {searching ? "Searching..." : "Search"}
                 </button>
               </div>
@@ -692,7 +692,7 @@ export default function Watch() {
               )}
 
               {!searching && searchResults.length > 0 && searchResults.map((result, i) => (
-                <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid var(--glass-border)" }}>
                   {result.url ? (
                     <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", textDecoration: "none" }}>
                       {result.title || result.url}
@@ -766,12 +766,12 @@ export default function Watch() {
                     {DEFAULT_KEYWORDS.filter(k => !keywords.includes(k)).map(k => (
                       <button key={k} onClick={() => addKeyword(k)} style={{
                         fontSize: 10, padding: "3px 10px", borderRadius: 4,
-                        background: "var(--surface)", border: "1px solid var(--line)",
+                        background: "var(--glass-surface)", border: "1px solid var(--glass-border)",
                         color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
                         transition: "border-color 0.1s",
                       }}
                         onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; }}
                       >+ {k}</button>
                     ))}
                   </div>
@@ -790,13 +790,13 @@ export default function Watch() {
                           }
                         }} disabled={isAdded} style={{
                           fontSize: 10, padding: "3px 10px", borderRadius: 4,
-                          background: isAdded ? "rgba(34,197,94,0.08)" : "var(--surface)",
-                          border: isAdded ? "1px solid rgba(34,197,94,0.3)" : "1px solid var(--line)",
+                          background: isAdded ? "rgba(34,197,94,0.08)" : "var(--glass-surface)",
+                          border: isAdded ? "1px solid rgba(34,197,94,0.3)" : "1px solid var(--glass-border)",
                           color: isAdded ? "#16A34A" : "var(--fg-2)", cursor: isAdded ? "default" : "pointer",
                           fontFamily: FONT, transition: "border-color 0.1s",
                         }}
                           onMouseEnter={e => { if (!isAdded) e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
-                          onMouseLeave={e => { if (!isAdded) e.currentTarget.style.borderColor = "var(--line)"; }}
+                          onMouseLeave={e => { if (!isAdded) e.currentTarget.style.borderColor = "var(--glass-border)"; }}
                         >{isAdded ? "Added" : "+"} {s.name}</button>
                       );
                     })}

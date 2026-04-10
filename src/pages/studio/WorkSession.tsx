@@ -336,12 +336,12 @@ function IaBtn({ title, active, children, onMouseDown, onMouseUp, onMouseLeave, 
       onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}
       style={{
         width: 36, height: 36, borderRadius: 7,
-        border: "1px solid var(--line)",
-        background: active ? "rgba(245,198,66,0.1)" : "var(--surface)",
-        borderColor: active ? "var(--gold-bright)" : "var(--line)",
+        border: active ? "1px solid rgba(245,198,66,0.25)" : "1px solid var(--glass-border)",
+        background: active ? "rgba(245,198,66,0.1)" : "var(--glass-card)",
         color: active ? "var(--gold)" : "var(--fg-3)",
         cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0, transition: "all 0.12s", fontFamily: FONT,
+        backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
       }}
     >
       {children}
@@ -395,9 +395,10 @@ function InputBar({
 
   return (
     <div style={{
-      borderTop: "1px solid var(--line)", padding: "10px 14px",
+      borderTop: "1px solid var(--glass-border)", padding: "10px 14px",
       display: "flex", flexDirection: "column", gap: 4,
-      flexShrink: 0, background: "var(--bg)",
+      flexShrink: 0, background: "var(--glass-topbar)",
+      backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <input
@@ -407,13 +408,14 @@ function InputBar({
           placeholder={placeholder}
           readOnly={disabled}
           style={{
-            flex: 1, background: "var(--surface)", border: "1px solid var(--line)",
-            borderRadius: 8, padding: "0 12px", fontSize: 13, color: "var(--fg)",
+            flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)",
+            borderRadius: 10, padding: "0 12px", fontSize: 13, color: "var(--fg)",
             fontFamily: FONT, outline: "none", height: 36, transition: "border-color 0.12s",
             opacity: disabled ? 0.5 : 1,
+            backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
           }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.5)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
         />
         <IaBtn title="Attach file"><AttachIcon /></IaBtn>
         <IaBtn
@@ -509,10 +511,11 @@ function IntakeDash({
                   key={f} onClick={() => onToggleFormat(f)}
                   style={{
                     fontSize: 10, padding: "4px 6px", borderRadius: 4, cursor: "pointer",
-                    border: on ? "1px solid var(--gold-bright)" : "1px solid var(--line)",
-                    background: on ? "rgba(245,198,66,0.1)" : "var(--surface)",
+                    border: on ? "1px solid rgba(245,198,66,0.25)" : "1px solid var(--glass-border)",
+                    background: on ? "rgba(245,198,66,0.1)" : "var(--glass-card)",
                     color: on ? "#9A7030" : "var(--fg-3)", fontWeight: on ? 600 : 400,
                     textAlign: "center" as const, transition: "all 0.1s",
+                    backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
                   }}
                 >
                   {f}
@@ -535,10 +538,11 @@ function IntakeDash({
                 key={t} onClick={() => onSelectTemplate(t)}
                 style={{
                   padding: "5px 9px", borderRadius: 5, cursor: "pointer", fontSize: 11,
-                  border: selectedTemplate === t ? "1px solid var(--blue)" : "1px solid var(--line)",
-                  background: selectedTemplate === t ? "rgba(74,144,217,0.05)" : "var(--surface)",
+                  border: selectedTemplate === t ? "1px solid rgba(74,144,217,0.2)" : "1px solid var(--glass-border)",
+                  background: selectedTemplate === t ? "rgba(74,144,217,0.06)" : "var(--glass-card)",
                   color: selectedTemplate === t ? "var(--fg)" : "var(--fg-2)",
                   fontWeight: selectedTemplate === t ? 600 : 400, transition: "all 0.1s",
+                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
                 }}
               >
                 {t}
@@ -555,7 +559,7 @@ function IntakeDash({
             {sessionFiles.length === 0 ? (
               <div style={{ fontSize: 9, color: "var(--fg-3)" }}>No files attached yet.</div>
             ) : sessionFiles.map(f => (
-              <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 5, marginBottom: 4 }}>
+              <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 6, marginBottom: 4, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
                 <FileIcon />
                 <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{f}</span>
               </div>
@@ -713,7 +717,7 @@ function ReviewDash({
       {running && (
         <DpSection>
           <DpLabel>Reed is reviewing your draft...</DpLabel>
-          <div style={{ marginTop: 8, height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
+          <div style={{ marginTop: 8, height: 3, borderRadius: 2, background: "var(--glass-border)", overflow: "hidden" }}>
             <div style={{ height: "100%", borderRadius: 2, background: "var(--gold-bright)", width: "60%", animation: "pulse-width 2s ease-in-out infinite" }} />
           </div>
         </DpSection>
@@ -751,6 +755,7 @@ function ReviewDash({
               border: "1px solid rgba(74,144,217,0.25)", borderRadius: 8,
               padding: "10px 12px", background: "rgba(74,144,217,0.04)",
               marginBottom: 12,
+              backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
             }}>
               <div style={{ fontSize: 9, fontWeight: 700, color: "#4A90D9", marginBottom: 6 }}>Reed</div>
               <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>{reedMessage}</div>
@@ -781,9 +786,10 @@ function ReviewDash({
               }}
               style={{
                 width: "100%", padding: 10, borderRadius: 6, marginBottom: 8,
-                background: "transparent", border: "1px solid var(--line)",
+                background: "var(--glass-card)", border: "1px solid var(--glass-border)",
                 fontSize: 11, fontWeight: 600, color: "var(--fg-2)",
                 cursor: "pointer", fontFamily: FONT,
+                backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
               }}
             >
               Go back to Edit
@@ -796,7 +802,7 @@ function ReviewDash({
             style={{
               width: "100%", padding: 10, borderRadius: 6,
               background: allExported ? "rgba(74,144,217,0.12)" : (scoreOk ? "var(--gold)" : "var(--surface)"),
-              border: scoreOk ? "none" : "1px solid var(--line)",
+              border: scoreOk ? "none" : "1px solid var(--glass-border)",
               fontSize: 12, fontWeight: 700,
               color: allExported ? "var(--blue)" : (scoreOk ? "var(--fg)" : "var(--fg)"),
               cursor: allExported ? "default" : "pointer",
@@ -868,7 +874,7 @@ function StageIntake({
     return (
       <div style={{
         display: "flex", flexDirection: "column", flex: 1, overflow: "hidden",
-        background: "var(--bg)", alignItems: "center", justifyContent: "center",
+        background: "transparent", alignItems: "center", justifyContent: "center",
       }}>
         <div style={{
           display: "flex", flexDirection: "column", alignItems: "center",
@@ -911,7 +917,7 @@ function StageIntake({
 
   // Active chat state: messages + input bar at bottom
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "var(--bg)", minHeight: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0 }}>
       {/* Scrollable message area */}
       <div
         ref={scrollAreaRef}
@@ -960,11 +966,12 @@ function StageIntake({
       {/* Intake progress bar */}
       <div style={{
         padding: "8px 14px 0",
-        background: "var(--bg)",
-        borderTop: "1px solid var(--line)",
+        background: "var(--glass-topbar)",
+        borderTop: "1px solid var(--glass-border)",
         flexShrink: 0,
+        backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
       }}>
-        <div style={{ width: "100%", height: 4, background: "var(--line)", borderRadius: 2, overflow: "hidden" }}>
+        <div style={{ width: "100%", height: 4, background: "var(--glass-border)", borderRadius: 2, overflow: "hidden" }}>
           <div style={{
             height: "100%", width: `${Math.round(progress * 100)}%`,
             background: "var(--gold-bright, #F5C642)", borderRadius: 2,
@@ -989,7 +996,7 @@ function StageIntake({
       </div>
 
       {/* Input bar */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--bg)", flexShrink: 0, borderTop: "1px solid var(--line)", zIndex: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 24px 24px", background: "var(--glass-topbar)", flexShrink: 0, borderTop: "1px solid var(--glass-border)", zIndex: 10, backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
         <div style={{ width: "100%", maxWidth: 680 }}>
           <ChatInputBar
             placeholder="What's on your mind?"
@@ -1306,7 +1313,7 @@ function StageOutline({
             </div>
 
             {/* Outline structure with brainstorm icons */}
-            <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: 14, minHeight: 200 }}>
+            <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: 14, minHeight: 200, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
               {outlineRows.map((row, i) => (
                 <OutlineRowComponent
                   key={i}
@@ -1323,13 +1330,13 @@ function StageOutline({
 
       {!building && <AdvanceButton label="Write draft &#8594;" onClick={onAdvance} />}
 
-      <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
+      <div style={{ borderTop: "1px solid var(--glass-border)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
         <input
           value={input} onChange={e => setInput(e.target.value)}
           placeholder="Ask Reed to restructure, or click any line to edit..."
-          style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36 }}
+          style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
         />
         <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
         <button onClick={onAdvance} disabled={building} style={{ width: 36, height: 36, borderRadius: 7, background: building ? "var(--line)" : "var(--fg)", border: "none", cursor: building ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1409,7 +1416,7 @@ function StageEdit({
           <div style={{
             display: "flex", alignItems: "center", gap: 8,
             marginBottom: 16, paddingBottom: 12,
-            borderBottom: "1px solid var(--line)",
+            borderBottom: "1px solid var(--glass-border)",
           }}>
             {versions.map((v, i) => (
               <button
@@ -1420,7 +1427,7 @@ function StageEdit({
                   fontSize: 11, fontWeight: activeVersionIdx === i ? 600 : 400,
                   color: activeVersionIdx === i ? "var(--fg)" : "var(--fg-3)",
                   background: activeVersionIdx === i ? "var(--surface)" : "transparent",
-                  border: activeVersionIdx === i ? "1px solid var(--line)" : "1px solid transparent",
+                  border: activeVersionIdx === i ? "1px solid var(--glass-border)" : "1px solid transparent",
                   cursor: "pointer", fontFamily: FONT,
                   transition: "all 0.15s ease",
                 }}
@@ -1437,14 +1444,14 @@ function StageEdit({
                   fontSize: 11, fontWeight: 500,
                   color: "var(--fg-3)",
                   background: "transparent",
-                  border: "1px dashed var(--line)",
+                  border: "1px dashed var(--glass-border)",
                   cursor: generating ? "not-allowed" : "pointer",
                   fontFamily: FONT,
                   opacity: generating ? 0.5 : 1,
                   transition: "all 0.15s ease",
                 }}
                 onMouseEnter={e => { if (!generating) { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.color = "var(--fg)"; } }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.color = "var(--fg-3)"; }}
               >
                 + New version
               </button>
@@ -1508,7 +1515,8 @@ function StageEdit({
       {!generating && draft && (
         <div style={{
           padding: "6px 28px", display: "flex", alignItems: "center", justifyContent: "space-between",
-          borderTop: "1px solid var(--line)", background: "var(--bg)", flexShrink: 0,
+          borderTop: "1px solid var(--glass-border)", background: "var(--glass-topbar)", flexShrink: 0,
+          backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
           fontSize: 11, color: "var(--fg-3)",
         }}>
           <span>{draft.split(/\s+/).filter(Boolean).length} words</span>
@@ -1517,15 +1525,15 @@ function StageEdit({
 
       {!generating && draft && <AdvanceButton label="Finish and Review &#8594;" onClick={onAdvance} />}
 
-      <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
+      <div style={{ borderTop: "1px solid var(--glass-border)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
         <input
           value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRevise(); } }}
           placeholder="Tell Reed what to change, or edit above..."
           readOnly={generating}
-          style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, opacity: generating ? 0.5 : 1 }}
+          style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, opacity: generating ? 0.5 : 1, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
         />
         <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
         <button
@@ -1569,7 +1577,7 @@ function GenerationProgress() {
     <div style={{ padding: "40px 28px", maxWidth: 480 }}>
       <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{currentPhase.label}</div>
       <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 20 }}>{currentPhase.sub}</div>
-      <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden", marginBottom: 20 }}>
+      <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--glass-border)", overflow: "hidden", marginBottom: 20 }}>
         <div style={{ height: "100%", borderRadius: 2, background: "var(--gold-bright)", width: `${Math.round(eased * 100)}%`, transition: "width 0.4s ease-out" }} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -1581,7 +1589,7 @@ function GenerationProgress() {
               <div style={{
                 width: 14, height: 14, borderRadius: "50%",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                border: isDone ? "none" : isActive ? "2px solid var(--gold-bright)" : "1px solid var(--line)",
+                border: isDone ? "none" : isActive ? "2px solid var(--gold-bright)" : "1px solid var(--glass-border)",
                 background: isDone ? "var(--gold-bright)" : "transparent",
                 transition: "all 0.3s ease",
               }}>
@@ -1625,8 +1633,8 @@ function ReviewProgress({
               className="progress-card"
               style={{
                 padding: "10px 14px", borderRadius: 8,
-                border: "1px solid var(--line)",
-                background: f.status === "done" ? "rgba(74,144,217,0.06)" : "var(--surface)",
+                border: "1px solid var(--glass-border)",
+                background: f.status === "done" ? "rgba(74,144,217,0.06)" : "var(--glass-card)",
                 transition: "all 0.4s ease",
                 animationDelay: `${i * 100}ms`,
               }}
@@ -1662,7 +1670,7 @@ function ReviewProgress({
       <div style={{ padding: "0", textAlign: "center" }}>
         <div style={{
           width: 40, height: 40, borderRadius: "50%",
-          border: "3px solid var(--line)",
+          border: "3px solid var(--glass-border)",
           borderTopColor: "var(--gold-bright)",
           animation: "spin 1s linear infinite",
           margin: "0 auto 20px",
@@ -1822,7 +1830,7 @@ function StageReview({
         </div>
       )}
       {/* Format tabs with status dots */}
-      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--line)", padding: "0 20px", flexShrink: 0, background: "var(--bg)", overflowX: "auto" }}>
+      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--glass-border)", padding: "0 20px", flexShrink: 0, background: "var(--glass-topbar)", overflowX: "auto", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
         {tabs.map(tab => (
           <button
             key={tab}
@@ -1850,7 +1858,7 @@ function StageReview({
                 return (
                   <div style={{ padding: "20px 0" }}>
                     <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 8 }}>Adapting for {activeTab}...</div>
-                    <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--line)", overflow: "hidden" }}>
+                    <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--glass-border)", overflow: "hidden" }}>
                       <div style={{ height: "100%", borderRadius: 2, background: "var(--gold-bright)", width: "60%", animation: "pulse-width 2s ease-in-out infinite" }} />
                     </div>
                   </div>
@@ -1860,7 +1868,7 @@ function StageReview({
               return (
                 <>
                   {metadata.subject && (
-                    <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                    <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--glass-card)", borderRadius: 8, border: "1px solid var(--glass-border)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
                       <div style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 4 }}>Subject line</div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{metadata.subject}</div>
                       {metadata.preview && (
@@ -1872,7 +1880,7 @@ function StageReview({
                     </div>
                   )}
                   {metadata.episodeTitle && (
-                    <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                    <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--glass-card)", borderRadius: 8, border: "1px solid var(--glass-border)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
                       <div style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 4 }}>Episode title</div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{metadata.episodeTitle}</div>
                     </div>
@@ -1906,13 +1914,13 @@ function StageReview({
         </div>
       )}
 
-      <div style={{ borderTop: "1px solid var(--line)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--bg)" }}>
+      <div style={{ borderTop: "1px solid var(--glass-border)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
         <input
           value={input} onChange={e => setInput(e.target.value)}
           placeholder="Send back to Edit, tell Reed what to change..."
-          style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36 }}
+          style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
           onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--line)"; }}
+          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
         />
         <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
         <button
@@ -3242,7 +3250,7 @@ export default function WorkSession() {
                       </span>
                     </div>
                     <div style={{ fontSize: 9, color: "var(--fg-3)", marginBottom: 4 }}>optimum {targetWords}</div>
-                    <div style={{ height: 5, background: "var(--line)", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ height: 5, background: "var(--glass-border)", borderRadius: 3, overflow: "hidden" }}>
                       <div style={{
                         height: "100%", borderRadius: 3,
                         width: `${Math.min(100, (wordCount / targetWords) * 100)}%`,

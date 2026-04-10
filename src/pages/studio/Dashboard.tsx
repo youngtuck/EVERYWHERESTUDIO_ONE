@@ -68,7 +68,7 @@ function HomeDashContent({
 }) {
   const S = { label: { fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 } };
   const row = (label: string, value: string | number) => (
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0", borderBottom: "1px solid var(--line)" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0", borderBottom: "1px solid var(--glass-border)" }}>
       <span style={{ color: "var(--fg-2)" }}>{label}</span>
       <span style={{ fontWeight: 600, color: "var(--fg)" }}>{value}</span>
     </div>
@@ -93,7 +93,7 @@ function HomeDashContent({
       {inProgressTitle && (
         <div style={{ marginBottom: 14 }}>
           <div style={S.label}>In progress</div>
-          <div style={{ fontSize: 11, color: "var(--fg-2)", padding: "5px 0", borderBottom: "1px solid var(--line)", lineHeight: 1.4 }}>
+          <div style={{ fontSize: 11, color: "var(--fg-2)", padding: "5px 0", borderBottom: "1px solid var(--glass-border)", lineHeight: 1.4 }}>
             {inProgressTitle}
             <br />
             <span style={{ fontSize: 10, color: "var(--gold)", fontWeight: 600 }}>
@@ -136,9 +136,11 @@ function StepHint({ number, text, active }: { number: number; text: string; acti
         width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 11, fontWeight: 700,
-        background: active ? "var(--fg)" : "var(--surface)",
+        background: active ? "var(--fg)" : "var(--glass-card)",
         color: active ? "var(--bg)" : "var(--fg-3)",
-        border: active ? "none" : "1px solid var(--line)",
+        border: active ? "none" : "1px solid var(--glass-border)",
+        backdropFilter: active ? "none" : "var(--glass-blur-light)",
+        WebkitBackdropFilter: active ? "none" : "var(--glass-blur-light)",
       }}>
         {number}
       </div>
@@ -285,19 +287,21 @@ export default function Dashboard() {
       <div
         onClick={() => nav("/studio/work")}
         style={{
-          background: "var(--surface)",
-          border: "1px solid var(--line)",
-          borderRadius: 8,
+          background: "var(--glass-card)",
+          border: "1px solid var(--glass-border)",
+          borderRadius: 12,
+          backdropFilter: "var(--glass-blur-light)",
+          WebkitBackdropFilter: "var(--glass-blur-light)",
           padding: "14px 18px",
           marginBottom: 20,
           cursor: "pointer",
-          transition: "border-color 0.15s, box-shadow 0.15s",
+          transition: "border-color 0.15s, box-shadow 0.15s, transform 0.15s",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.06)"; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.boxShadow = "none"; }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold-bright)"; e.currentTarget.style.boxShadow = "var(--glass-shadow-elevated)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; e.currentTarget.style.boxShadow = "var(--glass-shadow)"; e.currentTarget.style.transform = "translateY(0)"; }}
       >
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)", marginBottom: 2 }}>Start something new</div>
@@ -319,7 +323,7 @@ export default function Dashboard() {
       {loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[1, 2, 3].map(i => (
-            <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px", borderLeft: "4px solid var(--line)" }}>
+            <div key={i} style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)", padding: "12px 14px", borderLeft: "4px solid var(--glass-border)" }}>
               <div style={{ height: 13, width: "60%", background: "var(--bg-2)", borderRadius: 3, marginBottom: 6 }} />
               <div style={{ height: 11, width: "80%", background: "var(--bg-2)", borderRadius: 3 }} />
             </div>
@@ -412,16 +416,18 @@ function HomeCard({
   return (
     <div
       style={{
-        background: "var(--surface)",
-        border: "1px solid var(--line)",
+        background: "var(--glass-card)",
+        border: "1px solid var(--glass-border)",
         borderLeft: `4px solid ${accentColor}`,
-        borderRadius: 8,
+        borderRadius: 12,
+        backdropFilter: "var(--glass-blur-light)",
+        WebkitBackdropFilter: "var(--glass-blur-light)",
         padding: "12px 14px",
         cursor: "pointer",
-        transition: "box-shadow 0.15s",
+        transition: "box-shadow 0.15s, transform 0.15s",
       }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.06)"; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = "var(--glass-shadow-elevated)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = "var(--glass-shadow)"; e.currentTarget.style.transform = "translateY(0)"; }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
         <div style={{ minWidth: 0 }}>

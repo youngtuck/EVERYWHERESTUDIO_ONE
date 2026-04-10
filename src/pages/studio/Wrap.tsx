@@ -80,7 +80,7 @@ function WrapDashPanel({
         onClick={onExportAll}
         disabled={exported || exporting}
         style={{
-          width: "100%", padding: 8, borderRadius: 6, marginBottom: 12,
+          width: "100%", padding: 8, borderRadius: 8, marginBottom: 12,
           background: exported ? "rgba(74,144,217,0.12)" : "var(--fg)",
           color: exported ? "var(--blue, #4A90D9)" : "var(--gold, #F5C642)",
           border: exported ? "1px solid rgba(74,144,217,0.3)" : "none",
@@ -376,7 +376,7 @@ export default function WrapPage() {
       }}>
         <div style={{
           padding: "20px 24px 12px",
-          borderBottom: "1px solid var(--line)",
+          borderBottom: "1px solid var(--glass-border)",
           flexShrink: 0,
         }}>
           <div style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
@@ -403,12 +403,13 @@ export default function WrapPage() {
                 }}
                 style={{
                   display: "block", width: "100%", textAlign: "left",
-                  padding: "14px 16px", marginBottom: 8, borderRadius: 10,
-                  background: "var(--surface)", border: "1px solid var(--line)",
+                  padding: "14px 16px", marginBottom: 8, borderRadius: 12,
+                  background: "var(--glass-card)", border: "1px solid var(--glass-border)",
+                  backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
                   cursor: "pointer", fontFamily: FONT, transition: "border-color 0.12s",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>
@@ -461,8 +462,10 @@ export default function WrapPage() {
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
       {/* ── Format Tabs ── */}
       <div style={{
-        display: "flex", alignItems: "center", borderBottom: "1px solid var(--line)",
-        padding: "0 20px", flexShrink: 0, background: "var(--bg)", overflowX: "auto",
+        display: "flex", alignItems: "center", borderBottom: "1px solid var(--glass-border)",
+        padding: "0 20px", flexShrink: 0, background: "var(--glass-topbar)",
+        backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+        overflowX: "auto",
       }}>
         {/* Back to list button when viewing from picker (not session draft) */}
         {!sessionDraft && selectedOutputId && (
@@ -477,7 +480,7 @@ export default function WrapPage() {
               fontSize: 11, fontWeight: 500, color: "var(--fg-3)",
               padding: "11px 14px", cursor: "pointer",
               background: "none", border: "none", fontFamily: FONT,
-              borderRight: "1px solid var(--line)", marginRight: 4,
+              borderRight: "1px solid var(--glass-border)", marginRight: 4,
               transition: "color 0.1s",
             }}
             onMouseEnter={e => { e.currentTarget.style.color = "var(--fg)"; }}
@@ -535,10 +538,11 @@ export default function WrapPage() {
                 <p key={i} style={{ fontSize: 13, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 12 : 0 }}>{p}</p>
               ))}
 
-              <div style={{ display: "flex", gap: 8, marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+              <div style={{ display: "flex", gap: 8, marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--glass-border)" }}>
                 <button onClick={handleCopy} style={{
-                  fontSize: 11, padding: "6px 16px", borderRadius: 5,
-                  border: "1px solid var(--line)", background: "var(--surface)",
+                  fontSize: 11, padding: "6px 16px", borderRadius: 8,
+                  border: "1px solid var(--glass-border)", background: "var(--glass-card)",
+                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
                   color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT, fontWeight: 500,
                 }}>{copied ? "Copied" : "Copy"}</button>
                 <button onClick={() => {
@@ -546,7 +550,7 @@ export default function WrapPage() {
                   sessionStorage.setItem("ew-reopen-title", activeOutput.title);
                   nav("/studio/work");
                 }} style={{
-                  fontSize: 11, padding: "6px 16px", borderRadius: 5,
+                  fontSize: 11, padding: "6px 16px", borderRadius: 8,
                   border: "none", background: "var(--fg)", color: "var(--surface)",
                   cursor: "pointer", fontFamily: FONT, fontWeight: 600,
                 }}>Reopen in Work</button>
@@ -558,7 +562,7 @@ export default function WrapPage() {
               <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>Ready to wrap {activeFormat}</div>
               <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16 }}>Choose a template in the dashboard, then hit Wrap it.</div>
               <button onClick={() => adaptFormat(activeFormat)} style={{
-                fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 6,
+                fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8,
                 background: "var(--fg)", border: "none", color: "var(--surface)",
                 cursor: "pointer", fontFamily: FONT,
               }}>Adapt for {activeFormat}</button>
