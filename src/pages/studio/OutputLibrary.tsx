@@ -120,10 +120,9 @@ function SessionDetailPanel({
               type="button"
               className="liquid-glass-btn-gold"
               onClick={onOpenInWrap}
-              disabled={!output.content?.trim()}
-              style={{ width: "100%", justifyContent: "flex-start", padding: "8px 12px", opacity: output.content?.trim() ? 1 : 0.45, cursor: output.content?.trim() ? "pointer" : "not-allowed" }}
+              style={{ width: "100%", justifyContent: "flex-start", padding: "8px 12px" }}
             >
-              <span className="liquid-glass-btn-gold-label">Open in Wrap</span>
+              <span className="liquid-glass-btn-gold-label">Send to Wrap</span>
             </button>
             <button type="button" onClick={onDelete} style={{ width: "100%", textAlign: "left" as const, padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.35)", background: "rgba(239,68,68,0.06)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}>
               Delete session
@@ -141,12 +140,16 @@ export default function OutputLibrary() {
   const isMobile = useMobile();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { setDashContent } = useShell();
+  const { setDashContent, setDashOpen, setFeedbackContent } = useShell();
 
   const [outputs, setOutputs] = useState<OutputRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setFeedbackContent(null);
+  }, [setFeedbackContent]);
 
   // Load outputs from Supabase
   useEffect(() => {
@@ -187,10 +190,10 @@ export default function OutputLibrary() {
   }, [selectedOutput, nav]);
 
   const handleOpenInWrap = useCallback(() => {
-    if (!selectedOutput || !selectedContent.trim()) return;
+    if (!selectedOutput) return;
     sessionStorage.setItem("ew-wrap-from-catalog-id", selectedOutput.id);
     nav("/studio/wrap");
-  }, [selectedOutput, selectedContent, nav]);
+  }, [selectedOutput, nav]);
 
   const handleDelete = useCallback(async () => {
     if (!selectedOutput || !user) return;
@@ -230,6 +233,10 @@ export default function OutputLibrary() {
     return () => setDashContent(null);
   }, [selectedOutput, selectedContent, handleReopen, handleOpenInWrap, handleDelete, setDashContent]);
 
+  useEffect(() => {
+    if (selectedOutput) setDashOpen(true);
+  }, [selectedOutput, setDashOpen]);
+
   const filtered = outputs.filter(o =>
     !search || o.title.toLowerCase().includes(search.toLowerCase())
   );
@@ -246,8 +253,8 @@ export default function OutputLibrary() {
               Library
             </div>
             <div style={{ fontSize: "clamp(18px, 2.2vw, 22px)", fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em" }}>The Catalog</div>
-            <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, marginTop: 6, maxWidth: 420 }}>
-              Saved drafts and exports from Work and Wrap. Open a row for actions, or send a piece to Wrap for channel versions.
+            <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, marginTop: 6, maxWidth: 460 }}>
+              Saved drafts and exports from Work and Wrap. Select a row for actions below and in the Inspector, or use Send to Wrap for channel versions.
             </div>
           </div>
           <div className="liquid-glass-card" style={{ flexShrink: 0, padding: "10px 14px", borderRadius: 14, textAlign: "center" as const, minWidth: 72 }}>
@@ -334,6 +341,56 @@ export default function OutputLibrary() {
               );
             })}
           </div>
+
+          {selectedOutput && (
+            <div
+              className="liquid-glass-card"
+              style={{
+                marginTop: 12,
+                padding: "14px 16px",
+                borderRadius: 14,
+                border: "1px solid rgba(245,198,66,0.22)",
+              }}
+            >
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>
+                Actions · {selectedOutput.title || "Untitled"}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <button type="button" className="liquid-glass-btn-gold" onClick={handleOpenInWrap} style={{ padding: "8px 14px" }}>
+                  <span className="liquid-glass-btn-gold-label">Send to Wrap</span>
+                </button>
+                <button type="button" className="liquid-glass-btn" onClick={handleReopen} style={{ padding: "8px 14px" }}>
+                  <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>Reopen in Work</span>
+                </button>
+                <button
+                  type="button"
+                  className="liquid-glass-btn"
+                  onClick={() => nav(`/studio/outputs/${selectedOutput.id}`)}
+                  style={{ padding: "8px 14px" }}
+                >
+                  <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>Open detail</span>
+                </button>
+                <button
+                  type="button"
+                  className="liquid-glass-btn"
+                  onClick={() => {
+                    const t = selectedContent.trim();
+                    if (!t) {
+                      toast("Still loading text. Try again in a moment, or use Copy in the Inspector.");
+                      return;
+                    }
+                    void navigator.clipboard.writeText(t).then(() => toast("Master draft copied."));
+                  }}
+                  style={{ padding: "8px 14px" }}
+                >
+                  <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>Copy master</span>
+                </button>
+                <button type="button" onClick={handleDelete} style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.35)", background: "rgba(239,68,68,0.06)", fontSize: 11, fontWeight: 600, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
       </div>
