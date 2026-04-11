@@ -1332,8 +1332,11 @@ export default function WrapPage() {
   const catalogBanner = catalogLinkId ? (
     <div className="liquid-glass-card" style={{
       display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10,
-      margin: isMobile ? "0 0 10px" : "0 0 12px", padding: "12px 16px",
+      margin: 0,
+      padding: "12px 16px",
       flexShrink: 0,
+      width: "100%",
+      boxSizing: "border-box" as const,
     }}>
       <span style={{ fontSize: 12, color: "var(--fg-2)", flex: "1 1 200px" }}>
         This piece is in your Catalog (saved master draft).
@@ -1347,8 +1350,13 @@ export default function WrapPage() {
     </div>
   ) : (
     <div className="liquid-glass" style={{
-      margin: isMobile ? "0 0 10px" : "0 0 12px", padding: "10px 16px", flexShrink: 0,
-      borderRadius: 12, border: "1px solid var(--glass-border)",
+      margin: 0,
+      padding: "10px 16px",
+      flexShrink: 0,
+      width: "100%",
+      boxSizing: "border-box" as const,
+      borderRadius: 12,
+      border: "1px solid var(--glass-border)",
     }}>
       <span style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>
         <strong style={{ color: "var(--fg-2)", fontWeight: 600 }}>Catalog</strong>
@@ -1359,7 +1367,10 @@ export default function WrapPage() {
 
   const readerCard = (
     <div className="liquid-glass-card" style={{
-      width: "100%", maxWidth: 640,
+      width: "100%",
+      maxWidth: 640,
+      margin: "0 auto",
+      boxSizing: "border-box" as const,
       padding: isMobile ? "22px 20px" : "32px 36px",
       minHeight: 200,
     }}>
@@ -1560,17 +1571,32 @@ export default function WrapPage() {
           minWidth: 0,
           minHeight: 0,
           overflow: "hidden",
-          padding: isMobile ? "12px 14px 16px" : "16px 20px 20px",
+          padding: isMobile ? "12px 14px 16px" : "16px clamp(12px, 2.5vw, 28px) 24px",
         }}>
-          {catalogBanner}
+          {/* Centered reading column: banner + draft share one width so the stage does not hug the versions rail */}
           <div style={{
+            width: "100%",
+            maxWidth: 720,
+            margin: "0 auto",
             flex: 1,
-            overflowY: "auto",
+            minHeight: 0,
             display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "center",
+            flexDirection: "column" as const,
+            gap: 12,
           }}>
-            {readerCard}
+            {catalogBanner}
+            <div style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column" as const,
+              alignItems: "center",
+              width: "100%",
+              padding: "0 2px 8px",
+            }}>
+              {readerCard}
+            </div>
           </div>
         </div>
       </div>

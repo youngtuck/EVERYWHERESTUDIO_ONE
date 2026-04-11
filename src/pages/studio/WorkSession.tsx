@@ -1942,37 +1942,51 @@ function ReviewProgress({
     && formatStatuses.every(f => f.status === "done" || f.status === "error");
 
   return (
-    <div style={{ padding: "16px clamp(16px, 3vw, 28px) 24px", width: "100%", boxSizing: "border-box" as const }}>
-      {/* Format adaptation (compact; per-channel grid removed so Review does not crowd the stage) */}
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.03em", marginBottom: 8 }}>
-          {allFormatsComplete ? "Previews ready" : "Preparing previews"}
-        </div>
-        <div style={{
-          fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, padding: "10px 12px",
-          borderRadius: 8, border: "1px solid var(--glass-border)", background: "var(--glass-card)",
-        }}>
-          Reed is shaping channel-specific versions in the background. You will confirm which formats save to Catalog when you start Wrap.
-        </div>
+    <div
+      className="liquid-glass-card"
+      style={{
+        width: "100%",
+        maxWidth: 440,
+        margin: "0 auto",
+        boxSizing: "border-box" as const,
+        padding: "clamp(28px, 5vw, 40px) clamp(22px, 4vw, 36px)",
+        textAlign: "center" as const,
+        borderRadius: 16,
+      }}
+    >
+      <div style={{
+        fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: "var(--fg-3)",
+        textTransform: "uppercase" as const, marginBottom: 22, fontFamily: FONT,
+      }}>
+        Review in progress
       </div>
-
-      {/* Quality Pipeline - simplified */}
-      <div style={{ padding: "0", textAlign: "center" }}>
-        <div style={{
-          width: 40, height: 40, borderRadius: "50%",
-          border: "3px solid var(--glass-border)",
-          borderTopColor: "var(--gold-bright)",
-          animation: "spin 1s linear infinite",
-          margin: "0 auto 20px",
-        }} />
-        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
-          Reed is reviewing your draft
-        </div>
-        <div style={{ fontSize: 12, color: "var(--fg-3)" }}>
-          Checking voice, clarity, and originality
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{
+        width: 48, height: 48, borderRadius: "50%", margin: "0 auto",
+        border: "3px solid var(--glass-border)",
+        borderTopColor: "var(--gold-bright)",
+        animation: "work-review-spin 0.9s linear infinite",
+        flexShrink: 0,
+      }} />
+      <div style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginTop: 24, lineHeight: 1.3, fontFamily: FONT }}>
+        Reed is reviewing your draft
       </div>
+      <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 10, lineHeight: 1.5, fontFamily: FONT }}>
+        Checking voice, clarity, and originality
+      </div>
+      <div style={{
+        marginTop: 26,
+        paddingTop: 22,
+        borderTop: "1px solid var(--glass-border)",
+        fontSize: 11,
+        color: "var(--fg-3)",
+        lineHeight: 1.55,
+        fontFamily: FONT,
+      }}>
+        {allFormatsComplete
+          ? "Channel previews are ready. When quality checks finish, you can move on to export."
+          : "Channel previews for Wrap are building in parallel. You will choose Catalog formats after this step."}
+      </div>
+      <style>{`@keyframes work-review-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -2355,10 +2369,20 @@ function StageReview({
         </div>
       )}
       <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
-        {/* Draft preview */}
+        {/* Draft preview: when pipeline + adaptation are running, center the status card in the stage */}
         <div
           className="work-stage-content-column"
-          style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "24px clamp(16px, 3vw, 28px)", width: "100%" }}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            padding: running ? "clamp(20px, 5vh, 48px) clamp(16px, 3vw, 28px)" : "24px clamp(16px, 3vw, 28px)",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column" as const,
+            alignItems: "stretch",
+            ...(running ? { justifyContent: "center" as const } : {}),
+          }}
         >
           {showChannelPicker && tabs.length > 1 && (
             <div style={{
