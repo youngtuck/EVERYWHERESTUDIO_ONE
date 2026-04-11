@@ -143,16 +143,14 @@ const CSS = MARKETING_CSS + `
 // ══════════════════════════════════
 
 const PROBLEMS = [
-  { without: "The strategy is clear. The insight is sharp. But somewhere between the thought and the published piece, everything slows down.", with: "A system that watches the landscape, works the idea all the way through, and wraps the output for the world." },
-  { without: "Drafts sit unfinished. Opportunities pass. The mountain grows.", with: "One idea, worked all the way through. Seven quality checkpoints. Nothing ships until it is ready." },
-  { without: "Tools exist. But tools do not think. Tools do not ask questions. Tools do not push back when the premise is weak.", with: "Specialized intelligence working as an ensemble. Every session has a first listener who asks the right questions." },
-  { without: "That is not a creativity problem. It is a systems problem.", with: "A quality system that will not let mediocre content through. An intelligence layer monitoring your category while you sleep." },
+  { without: "The strategy is clear. The insight is sharp. But somewhere between the thought and the published piece, everything slows down. Drafts sit unfinished. Opportunities pass. The mountain grows.", with: "A system that watches the landscape, works the idea all the way through, and wraps the output for the world. One idea, worked all the way through. Seven quality checkpoints. Nothing ships until it is ready." },
+  { without: "That's not a creativity problem. It's a systems problem.", with: "Specialized intelligence working as an orchestrated ensemble. Every session has a first listener who asks the right questions. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep." },
 ];
 
 const ROOMS = [
-  { name: "Watch", desc: "Know what is moving before your competitors do. EVERYWHERE monitors your category overnight and delivers a structured briefing every morning. Signals scored. Opportunities ranked. Content angles ready." },
-  { name: "Work", desc: "One idea, worked all the way through. Your first listener asks the right questions. Structure emerges. The draft gets written, refined, and run through seven quality checkpoints. Nothing ships until it is ready." },
-  { name: "Wrap", desc: "From approved to published. Choose a format. Choose a channel. Your thinking reaches the people who need to hear it. The format changes. The thinking survives it." },
+  { name: "Watch", desc: "Know what's moving before your competitors do. EVERYWHERE monitors your category overnight and delivers a structured briefing every morning. Signals scored. Opportunities ranked. Content angles ready to go." },
+  { name: "Work", desc: "One idea, worked all the way through. Your first listener asks the right questions. Structure emerges. The draft gets written, refined, and run through seven quality checkpoints. Nothing ships until it's ready." },
+  { name: "Wrap", desc: "From approved to published. Choose a format. Choose a channel. Your thinking reaches the people who need to hear it." },
 ];
 
 const GATES = ["Dedup", "Research", "Voice", "Engage", "SLOP", "Editorial", "Risk"];
@@ -429,7 +427,7 @@ export default function ExplorePage() {
                 Built for one kind of person.
               </h2>
               <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
-                You are not a marketer. You are a practitioner with something important to say. EVERYWHERE Studio was built for you.
+                You're not a marketer. You're not a content creator. You're a practitioner with something important to say. You've been waiting too long for the system to catch up to the thinking. EVERYWHERE Studio was built for you.
               </p>
               <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
               <div style={{ marginTop: 20 }}>
@@ -575,8 +573,8 @@ function SplitSection() {
             letterSpacing: "-0.03em", lineHeight: 1.12,
             maxWidth: 640, marginBottom: 64,
           }}>
-            You are not short on ideas.{" "}
-            <span style={{ color: "var(--xp-ter)" }}>You are short on execution.</span>
+            You're not short on ideas.{" "}
+            <span style={{ color: "var(--xp-ter)" }}>You're short on execution.</span>
           </h2>
         </Reveal>
 
@@ -708,10 +706,10 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
         <Reveal>
           <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>02 / A New Category</div>
           <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, maxWidth: 600, marginBottom: 16 }}>
-            Not an AI writing tool.<br />Structured Intelligence.
+            Not an AI writing tool.<br />Not a content calendar.<br />Structured Intelligence.
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", maxWidth: 520, marginBottom: 56 }}>
-            The system thinks with you. Not for you. Every session has a first listener who asks the right questions, a quality system that will not let mediocre content through, and an intelligence layer monitoring your category while you sleep.
+            Specialized intelligence working as an orchestrated ensemble. Every session has a first listener who asks the right questions. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep. The system thinks with you. Not for you.
           </p>
         </Reveal>
 
@@ -733,7 +731,7 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
                   <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#FEBC2E" }} />
                   <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#28C840" }} />
                 </div>
-                <div style={{ flex: 1, textAlign: "center", fontSize: 12, color: "var(--xp-ter)", fontWeight: 500 }}>Everywhere Studio</div>
+                <div style={{ flex: 1, textAlign: "center", fontSize: 12, color: "var(--xp-ter)", fontWeight: 500 }}>EVERYWHERE Studio</div>
                 <div style={{ width: 48 }} />
               </div>
 

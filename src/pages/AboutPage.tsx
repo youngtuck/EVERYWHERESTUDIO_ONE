@@ -52,7 +52,7 @@ export default function AboutPage() {
               <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 4 }}>Mark Sylvester</div>
               <div className="xp-mono" style={{ fontSize: 12, letterSpacing: "0.08em", color: "var(--xp-ter)", marginBottom: 20 }}>Founder, Mixed Grill</div>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", margin: 0 }}>
-                Mark Sylvester has spent 30 years building at the intersection of strategy and communication. Author, speaker, advisor. He built EVERYWHERE Studio because he needed it.
+                Santa Barbara-based entrepreneur, TEDx producer, co-founder of Coastal Intelligence, an AI think tank and consultancy. Mark helped build Wavefront and was part of the team behind the Academy Award-winning visual effects technology that changed how movies are made. He has spent 35 years building things that didn't exist yet and helping others find the courage to do the same.
               </p>
             </div>
           </Reveal>
@@ -62,13 +62,13 @@ export default function AboutPage() {
                 It started with a Substack and a problem I couldn't solve.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-                I had the ideas. I had the strategy. I had the audience. What I didn't have was a system that could keep up with the pace of my thinking.
+                I had things to say. I was writing every week, building the audience, learning what landed and what didn't. But the gap between what I was thinking and what I was actually publishing was driving me crazy. The ideas were there. The system to get them out wasn't.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-                I tried the tools. All of them. They were fast but shallow. They generated words, not thinking. I needed something that would think with me, not for me.
+                So I started building one. One week at a time. A function here, a checkpoint there. Each piece solving the specific problem in front of me. After enough weeks, I looked up and realized I hadn't just fixed my own workflow. I'd built infrastructure that any practitioner with something important to say could use.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500, margin: 0 }}>
-                So I built it.
+                That's EVERYWHERE Studio. Built from the inside out, by someone who needed it first.
               </p>
             </div>
           </Reveal>
@@ -80,12 +80,12 @@ export default function AboutPage() {
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 24 }}>
-              The problem was not a lack of ideas. It was a lack of infrastructure.
+              The problem wasn't a lack of ideas. It was a lack of infrastructure.
             </h2>
           </Reveal>
           <Reveal delay={100}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-              The gap between thinking and publishing isn't a creativity problem. It's a systems problem. Strategy without execution is just theory. Execution without quality is just noise. EVERYWHERE Studio closes both gaps.
+              EVERYWHERE Studio was built inside Mixed Grill, LLC after watching the same pattern repeat: leaders with real thinking to share, no system capable of keeping pace with it. The tools existed. But tools don't think. Tools don't ask questions. Tools don't push back when the premise is weak or tell you the hook isn't working. What was missing was a system. Something that watches the landscape, works the idea all the way through, and wraps the output for the world, without losing what made the thinking valuable in the first place. That system is EVERYWHERE Studio.
             </p>
           </Reveal>
         </div>
@@ -104,12 +104,12 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={100}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-dim-dark)", marginBottom: 24 }}>
-              EVERYWHERE Studio isn't an AI writing tool. It isn't a content management system. It isn't a prompt library. It's a new category: Structured Intelligence. A system that combines strategic analysis, voice capture, quality enforcement, and multi-format publishing into a single workflow.
+              EVERYWHERE Studio is not an AI writing tool. Not a content scheduler. Not a prompt library dressed up as a platform. It's a new category: Structured Intelligence.
             </p>
           </Reveal>
           <Reveal delay={200}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-dim-dark)" }}>
-              Forty specialists work in concert. Seven quality checkpoints block anything that isn't ready. Your Voice DNA profile ensures that every piece sounds like you. The result isn't generated content. It's your thinking, structured and scaled.
+              Specialized intelligence working as an orchestrated ensemble. Every session has a first listener who asks the right questions. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep. The system thinks with you. Not for you.
             </p>
           </Reveal>
         </div>
@@ -126,10 +126,10 @@ export default function AboutPage() {
           <Reveal delay={100}>
             <div className="xp-glass-card" style={{ padding: "32px 36px", borderLeft: "3px solid var(--xp-gold)" }}>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-                Your content, your voice profile, your strategic data. None of it is used to train models. None of it is shared. None of it leaves your account. EVERYWHERE Studio is built on the principle that your intellectual property belongs to you. Period.
+                EVERYWHERE Studio never trains on your content. Never shares it. Never uses it to improve outputs for anyone else.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500, margin: 0 }}>
-                EVERYWHERE Studio never trains on your content. Never shares it. Never uses it to improve outputs for anyone else.
+                Your ideas, your voice profile, your content catalog. They belong to you. Full stop.
               </p>
             </div>
           </Reveal>
@@ -146,7 +146,7 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={100}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-              EVERYWHERE Studio is a product of Mixed Grill, LLC, based in Santa Barbara, California. Mixed Grill builds tools for practitioners who think deeply and communicate strategically. EVERYWHERE Studio is the flagship product.
+              EVERYWHERE Studio is a product of Mixed Grill, LLC. Mixed Grill builds systems at the intersection of strategy and communication.
             </p>
           </Reveal>
         </div>
@@ -164,7 +164,7 @@ export default function AboutPage() {
                 Built for one kind of person.
               </h2>
               <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
-                You are not a marketer. You are a practitioner with something important to say. EVERYWHERE Studio was built for you.
+                You're not a marketer. You're not a content creator. You're a practitioner with something important to say. You've been waiting too long for the system to catch up to the thinking. EVERYWHERE Studio was built for you.
               </p>
               <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
               <div style={{ marginTop: 20 }}>

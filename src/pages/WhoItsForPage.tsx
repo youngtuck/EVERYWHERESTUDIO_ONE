@@ -124,7 +124,7 @@ export default function WhoItsForPage() {
           <Reveal delay={100}>
             <div className="xp-glass-card" style={{ padding: "32px 36px", borderLeft: "3px solid rgba(200,120,100,0.3)" }}>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-                If you need volume, there are cheaper tools. If you want to automate content without thinking about it, this isn't your platform. EVERYWHERE Studio requires your ideas, your perspective, your involvement. It doesn't replace your thinking. It multiplies it.
+                EVERYWHERE Studio will not make average thinking sound better than it is. The system runs quality checkpoints with blocking authority. If the thinking isn't there, the system will tell you. If you're looking for a faster way to produce generic content, this is the wrong place.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500, margin: 0 }}>
                 Signal only. No noise.
@@ -146,7 +146,7 @@ export default function WhoItsForPage() {
                 Built for one kind of person.
               </h2>
               <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
-                You are not a marketer. You are a practitioner with something important to say. EVERYWHERE Studio was built for you.
+                You're not a marketer. You're not a content creator. You're a practitioner with something important to say. You've been waiting too long for the system to catch up to the thinking. EVERYWHERE Studio was built for you.
               </p>
               <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
               <div style={{ marginTop: 20 }}>

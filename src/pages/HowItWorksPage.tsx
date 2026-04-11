@@ -6,13 +6,13 @@ import MarketingFooter from "../components/marketing/MarketingFooter";
 import Reveal from "../components/marketing/Reveal";
 
 const CHECKPOINTS = [
-  { num: 1, name: "Deduplication", desc: "No repeated content. Every piece is checked against your full content catalog." },
-  { num: 2, name: "Research Validation", desc: "Every claim verified. Statistics get sourced. Claims get checked." },
-  { num: 3, name: "Voice Authenticity", desc: "Sounds like you wrote it. Your Voice DNA profile sets the standard." },
-  { num: 4, name: "Engagement", desc: "Passes the 7-second test. The opening has to earn the next sentence." },
-  { num: 5, name: "SLOP Detection", desc: "No AI padding. No filler. No fluff. Identifies the telltale signs of machine-generated content." },
-  { num: 6, name: "Editorial Excellence", desc: "Publication grade. No exceptions. Clarity of argument, precision of language, economy of expression." },
-  { num: 7, name: "Perspective and Risk", desc: "No blind spots. Stress-tested for what you might have missed." },
+  { num: 1, name: "Deduplication", desc: "No repeated content." },
+  { num: 2, name: "Research Validation", desc: "Every claim verified." },
+  { num: 3, name: "Voice Authenticity", desc: "Sounds like you wrote it." },
+  { num: 4, name: "Engagement", desc: "Passes the 7-second test." },
+  { num: 5, name: "SLOP Detection", desc: "No AI padding. No filler. No fluff." },
+  { num: 6, name: "Editorial Excellence", desc: "Publication grade. No exceptions." },
+  { num: 7, name: "Perspective and Risk", desc: "No blind spots." },
 ];
 
 export default function HowItWorksPage() {
@@ -44,18 +44,18 @@ export default function HowItWorksPage() {
             fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--xp-dim-dark)", marginBottom: 28,
             animation: `xpHeroLabel 0.8s ${EASE} 0.3s both`,
-          }}>How It Works</div>
+          }}>The System</div>
           <h1 style={{
             fontSize: "clamp(40px, 7vw, 80px)", fontWeight: 600,
             letterSpacing: "-0.04em", lineHeight: 1.08,
             color: "var(--xp-on-dark)", marginBottom: 24,
             animation: `xpHeroHead 1s ${EASE} 0.6s both`,
-          }}>EVERYWHERE Studio runs on one sequence.</h1>
+          }}>EVERYWHERE Studio runs on one sequence. Every session follows the same path.</h1>
           <p style={{
             fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)",
             maxWidth: 500, margin: "0 auto",
             animation: `xpHeroSub 0.8s ${EASE} 0.9s both`,
-          }}>Every session follows the same path. Watch. Work. Wrap.</p>
+          }}>WATCH. WORK. WRAP.</p>
         </div>
       </section>
 
@@ -77,7 +77,7 @@ export default function HowItWorksPage() {
                 EVERYWHERE monitors your competitive landscape overnight. By the time you arrive, the briefing is ready. Signals are ranked by impact. Opportunities are scored. Content angles are mapped to the Work pipeline.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-                You do not start the day catching up. You start ahead.
+                You don't start the day catching up. You start ahead.
               </p>
             </div>
           </Reveal>
@@ -102,7 +102,7 @@ export default function HowItWorksPage() {
                 Your first listener opens every session with one question: What are we working on? The interview draws out what you actually mean to say. Not the surface version. The real one. The brief gets built. The structure follows. The draft gets written.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-                Then the quality system runs.
+                Then the quality system runs. Seven checkpoints. Every one blocking. Voice authenticity. Research validation. SLOP detection. Editorial excellence. Perspective and risk. Nothing exits Work until it passes. Then the Impact Score. Threshold: 75. No exceptions. Then the Human Voice Test. It either passes or it doesn't. Approve only activates when everything is ready.
               </p>
             </div>
           </Reveal>
@@ -121,7 +121,7 @@ export default function HowItWorksPage() {
           <Reveal delay={100}>
             <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-                Approved work moves to Wrap. Choose a format. Choose a channel. EVERYWHERE structures your thinking for the platform it is going to.
+                Approved work moves to Wrap. Choose a format. Choose a channel. EVERYWHERE structures your thinking for the platform it's going to.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
                 LinkedIn post. Newsletter. Presentation. Podcast script. Report. One-pager.
@@ -181,7 +181,7 @@ export default function HowItWorksPage() {
                 Built for one kind of person.
               </h2>
               <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
-                You are not a marketer. You are a practitioner with something important to say. EVERYWHERE Studio was built for you.
+                You're not a marketer. You're not a content creator. You're a practitioner with something important to say. You've been waiting too long for the system to catch up to the thinking. EVERYWHERE Studio was built for you.
               </p>
               <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
               <div style={{ marginTop: 20 }}>

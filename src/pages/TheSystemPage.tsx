@@ -7,27 +7,27 @@ import Reveal from "../components/marketing/Reveal";
 
 const DNA_MODULES = [
   {
-    name: "Voice DNA",
+    name: "VoiceDNA",
     subhead: "Your voice. Captured. Consistent.",
-    body: "EVERYWHERE Studio captures how you actually think and communicate. Not a style guide. Not a tone matrix. Your real patterns, rhythms, and instincts. Every piece of content passes through your Voice DNA profile. The result: content that sounds like you wrote it. Because, in the way that matters, you did.",
+    body: "Most AI sounds like AI. It hedges. It pads. It uses the same phrases everyone uses. VoiceDNA captures how you actually think and speak, then applies that pattern to everything you produce. The rhythm. The vocabulary. The way you start sentences. The way you land a point. The result: content that sounds like you wrote it. Because, in the way that matters, you did.",
     bg: "var(--xp-white)",
   },
   {
-    name: "Brand DNA",
+    name: "BrandDNA",
     subhead: "Organizations have a voice too.",
-    body: "Brand DNA extends voice capture to the institutional level. Company-wide style, messaging frameworks, approved terminology, strategic positioning. Teams create content that sounds like the organization, not like the individual who happened to draft it.",
+    body: "BrandDNA applies the same intelligence to how your company communicates. Consistent across channels. Consistent across team members. Consistent with what you actually stand for. Stop managing inconsistency. Start publishing coherence.",
     bg: "var(--xp-off)",
   },
   {
-    name: "Method DNA",
+    name: "MethodDNA",
     subhead: "Built for coaching ecosystems.",
-    body: "If you teach a method, a framework, or a system, Method DNA captures the proprietary language and logic. Coaches, consultants, and educators can produce derivative content that stays faithful to their intellectual property. The methodology delivers the framework. EVERYWHERE Studio delivers the content infrastructure that makes it land.",
+    body: "If you operate inside a professional methodology, your clients deserve a studio that already knows their world. MethodDNA provisions EVERYWHERE Studio with your framework, your vocabulary, and your philosophy. Clients start inside the system, not configuring from scratch. The methodology delivers the framework. EVERYWHERE Studio delivers the content infrastructure that makes it land.",
     bg: "var(--xp-white)",
   },
   {
-    name: "Legacy DNA",
-    subhead: "Your knowledge should not leave with you.",
-    body: "Legacy DNA is long-term knowledge capture. For founders, executives, and domain experts who want their thinking preserved and structured for the next generation. Books, courses, institutional memory. Your ideas, organized and accessible.",
+    name: "LegacyDNA",
+    subhead: "Your knowledge shouldn't leave with you.",
+    body: "LegacyDNA captures the thinking of a leader, a founder, or an organization at a transition point. Memoir. Biography. Institutional knowledge transfer. Executive departure. The ideas that took a lifetime to build, preserved in the form they were meant to take.",
     bg: "var(--xp-off)",
   },
 ];
@@ -117,7 +117,7 @@ export default function TheSystemPage() {
                 Built for one kind of person.
               </h2>
               <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
-                You are not a marketer. You are a practitioner with something important to say. EVERYWHERE Studio was built for you.
+                You're not a marketer. You're not a content creator. You're a practitioner with something important to say. You've been waiting too long for the system to catch up to the thinking. EVERYWHERE Studio was built for you.
               </p>
               <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
               <div style={{ marginTop: 20 }}>
