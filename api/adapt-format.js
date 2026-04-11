@@ -121,6 +121,68 @@ SUBTITLE: [one sentence that sets the mood without spoiling the insight]
 ---
 [story body in markdown, no section headers unless absolutely necessary]`,
   },
+
+  Email: {
+    platformSpec: "Email Newsletter",
+    system: `You are adapting content into a single send-ready email (not a long Substack issue). You are Dmitri Wells, platform optimization specialist.
+
+EMAIL RULES:
+- One clear subject line (under 50 characters, mobile-safe).
+- Preview text: 80-140 characters that completes the subject, no repetition.
+- Body: mobile-first. Short paragraphs. One primary CTA. Plain, paste-ready text; minimal markdown if any (no heavy headers unless needed).
+- Personal opening line, then the core argument from the draft, then one action for the reader.
+- No em-dashes. No fake enthusiasm.
+
+OUTPUT FORMAT:
+SUBJECT: [subject]
+PREVIEW: [preview text]
+---
+[email body]`,
+  },
+
+  "X Thread": {
+    platformSpec: "X (formerly Twitter)",
+    system: `You are adapting content into an X (Twitter) thread. You are Dmitri Wells, platform optimization specialist.
+
+THREAD RULES:
+- First post must stand alone as the hook; algorithm weight is on post 1.
+- Number posts as 1/, 2/, 3/ at the start of each tweet (or use clear breaks with --- between tweets).
+- Each post under 280 characters (assume standard limit). If a point needs more, split across posts.
+- 1-2 hashtags only if they add discovery; otherwise none.
+- Conversational, specific, no thread-bait clichés.
+- No em-dashes.
+
+OUTPUT FORMAT: Return ONLY the thread, one tweet per block separated by a line with only --- between tweets. No commentary.`,
+  },
+
+  "Executive Brief": {
+    platformSpec: "ExecutiveBriefPlaceholder",
+    system: `You are adapting content into an Executive Brief: a standalone decision document for a busy principal.
+
+RULES:
+- Maximum length: roughly two pages of prose when printed (tight, not padded).
+- Sections (use clear ## headings in markdown): Decision Required, Context, Recommendation, Risks / Unknowns, Next Step.
+- The recommendation must be one clear choice or a forced tradeoff, not a list of options with no position.
+- No em-dashes. No generic consulting filler.
+
+OUTPUT FORMAT: Return ONLY the brief in markdown with the sections above.`,
+  },
+
+  "YouTube Description": {
+    platformSpec: "YouTube",
+    system: `You are adapting content into YouTube packaging: title, description, and optional chapters. You are Dmitri Wells, platform optimization specialist.
+
+RULES:
+- Video title: under 70 characters, front-loads the topic, no clickbait emptiness.
+- Description: first 2-3 lines are the hook (what viewers get); then fuller summary; then keywords naturally woven in; optional TIMESTAMPS block if the draft implies sections.
+- Include a single clear CTA (subscribe, next video, link in comments policy as you judge).
+- No em-dashes.
+
+OUTPUT FORMAT:
+TITLE: [video title]
+---
+[full description + optional timestamps]`,
+  },
 };
 
 function sanitizeContent(text) {
@@ -195,7 +257,8 @@ export default async function handler(req, res) {
   try {
     const client = new Anthropic({ apiKey });
     // Podcast scripts need more tokens for full-length episodes (target 8-12 min read)
-    const tokenLimit = (format === "Podcast" || format === "Podcast Script") ? 6144 : 4096;
+    const tokenLimit =
+      format === "Podcast" || format === "Podcast Script" || format === "Executive Brief" ? 6144 : 4096;
     const response = await callWithRetry(() =>
       client.messages.create({
         model: CLAUDE_MODEL,
@@ -215,7 +278,7 @@ export default async function handler(req, res) {
     let metadata = {};
     let body = sanitized;
 
-    if (format === "Newsletter") {
+    if (format === "Newsletter" || format === "Email") {
       const subjectMatch = sanitized.match(/^SUBJECT:\s*(.+)$/m);
       const previewMatch = sanitized.match(/^PREVIEW:\s*(.+)$/m);
       const seoMatch = sanitized.match(/^SEO_TITLE:\s*(.+)$/m);
@@ -241,6 +304,13 @@ export default async function handler(req, res) {
       const bodyStart = sanitized.indexOf("---");
       if (titleMatch) metadata.title = titleMatch[1].trim();
       if (subtitleMatch) metadata.subtitle = subtitleMatch[1].trim();
+      if (bodyStart > 0) body = sanitized.slice(bodyStart + 3).trim();
+    }
+
+    if (format === "YouTube Description") {
+      const titleMatch = sanitized.match(/^TITLE:\s*(.+)$/m);
+      const bodyStart = sanitized.indexOf("---");
+      if (titleMatch) metadata.videoTitle = titleMatch[1].trim();
       if (bodyStart > 0) body = sanitized.slice(bodyStart + 3).trim();
     }
 

@@ -59,10 +59,11 @@ function scoreColor(score: number): string {
 
 // ── Session detail dashboard panel ────────────────────────────
 function SessionDetailPanel({
-  output, onReopen, onDelete, onBack,
+  output, onReopen, onOpenInWrap, onDelete, onBack,
 }: {
   output: OutputRow;
   onReopen: () => void;
+  onOpenInWrap: () => void;
   onDelete: () => void;
   onBack: () => void;
 }) {
@@ -97,8 +98,11 @@ function SessionDetailPanel({
             </svg>
             <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1 }}>{f}</span>
             <span
+              role="button"
+              tabIndex={0}
               onClick={() => { if (output.content) navigator.clipboard.writeText(output.content).catch(() => {}); }}
-              style={{ fontSize: 9, color: "var(--blue)", cursor: "pointer", fontWeight: 600 }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (output.content) navigator.clipboard.writeText(output.content).catch(() => {}); } }}
+              style={{ fontSize: 9, color: "var(--blue)", cursor: "pointer", fontWeight: 600, position: "relative", zIndex: 1 }}
             >Copy</span>
           </div>
         ))}
@@ -112,6 +116,19 @@ function SessionDetailPanel({
             style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-card)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
           >
             Reopen in Work
+          </button>
+          <button
+            type="button"
+            onClick={onOpenInWrap}
+            disabled={!output.content?.trim()}
+            style={{
+              width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5,
+              border: "1px solid rgba(245,198,66,0.35)", background: "rgba(245,198,66,0.08)",
+              fontSize: 11, color: "var(--fg-2)", cursor: output.content?.trim() ? "pointer" : "default",
+              fontFamily: FONT, opacity: output.content?.trim() ? 1 : 0.45,
+            }}
+          >
+            Open in Wrap
           </button>
           <button
             onClick={onDelete}
@@ -176,6 +193,12 @@ export default function OutputLibrary() {
     nav("/studio/work");
   }, [selectedOutput, nav]);
 
+  const handleOpenInWrap = useCallback(() => {
+    if (!selectedOutput || !selectedContent.trim()) return;
+    sessionStorage.setItem("ew-wrap-from-catalog-id", selectedOutput.id);
+    nav("/studio/wrap");
+  }, [selectedOutput, selectedContent, nav]);
+
   const handleDelete = useCallback(async () => {
     if (!selectedOutput || !user) return;
     const confirmed = window.confirm(`Delete "${selectedOutput.title}"? This cannot be undone.`);
@@ -199,6 +222,7 @@ export default function OutputLibrary() {
         <SessionDetailPanel
           output={{ ...selectedOutput, content: selectedContent }}
           onReopen={handleReopen}
+          onOpenInWrap={handleOpenInWrap}
           onDelete={handleDelete}
           onBack={() => setSelectedId(null)}
         />
@@ -211,7 +235,7 @@ export default function OutputLibrary() {
       );
     }
     return () => setDashContent(null);
-  }, [selectedOutput, selectedContent, handleReopen, handleDelete, setDashContent]);
+  }, [selectedOutput, selectedContent, handleReopen, handleOpenInWrap, handleDelete, setDashContent]);
 
   const filtered = outputs.filter(o =>
     !search || o.title.toLowerCase().includes(search.toLowerCase())

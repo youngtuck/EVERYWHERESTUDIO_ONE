@@ -12,7 +12,18 @@ import { useMobile } from "../../hooks/useMobile";
 import "./shared.css";
 
 const FONT = "var(--font)";
-const DEFAULT_FORMATS = ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
+/** Tab labels must match `FORMAT_INSTRUCTIONS` keys in api/adapt-format.js */
+const WRAP_CHANNEL_FORMATS = [
+  "LinkedIn",
+  "Newsletter",
+  "Podcast",
+  "Sunday Story",
+  "Email",
+  "X Thread",
+  "Executive Brief",
+  "YouTube Description",
+] as const;
+const DEFAULT_FORMATS = [...WRAP_CHANNEL_FORMATS];
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
 interface OutputItem {
@@ -131,7 +142,7 @@ export default function WrapPage() {
   const [sessionDraft, setSessionDraft] = useState<OutputItem | null>(null);
   const [selectedOutputId, setSelectedOutputId] = useState<string | null>(null);
   const [formats, setFormats] = useState<string[]>(DEFAULT_FORMATS);
-  const [activeFormat, setActiveFormat] = useState(DEFAULT_FORMATS[0]);
+  const [activeFormat, setActiveFormat] = useState<string>(DEFAULT_FORMATS[0]);
   const [copied, setCopied] = useState(false);
   const [exported, setExported] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -194,9 +205,12 @@ export default function WrapPage() {
   }, []);
 
   // Fetch outputs from Supabase: all completed work ready for wrapping
-  const fetchOutputs = useCallback(() => {
-    if (!user) { setLoading(false); return; }
-    setLoading(true);
+  const fetchOutputs = useCallback((options?: { silent?: boolean }) => {
+    if (!user) {
+      if (!options?.silent) setLoading(false);
+      return;
+    }
+    if (!options?.silent) setLoading(true);
     supabase
       .from("outputs")
       .select("id, title, content, output_type, created_at, score")
@@ -207,17 +221,62 @@ export default function WrapPage() {
       .then(({ data, error }) => {
         if (error) console.error("[Wrap] Fetch error:", error);
         const all = (data as OutputItem[]) || [];
-        // Filter out empty content
         const withContent = all.filter(o => o.content && o.content.trim().length > 0);
         setOutputs(withContent);
-        setLoading(false);
+        if (!options?.silent) setLoading(false);
       });
   }, [user]);
 
-  // Always fetch outputs so the picker is available
+  // List load, or Catalog / detail handoff via ew-wrap-from-catalog-id (avoid racing two loaders)
   useEffect(() => {
-    fetchOutputs();
-  }, [fetchOutputs, location.key]);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const fromCatalogId = sessionStorage.getItem("ew-wrap-from-catalog-id");
+    if (!fromCatalogId) {
+      fetchOutputs();
+      return;
+    }
+
+    sessionStorage.removeItem("ew-wrap-from-catalog-id");
+    let cancelled = false;
+
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("outputs")
+        .select("id, title, content, output_type, created_at, score")
+        .eq("id", fromCatalogId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (error || !data?.content || !String(data.content).trim()) {
+        setLoading(false);
+        toast("Could not load that piece for Wrap.", "error");
+        fetchOutputs();
+        return;
+      }
+
+      const row = data as OutputItem;
+      setSessionDraft(null);
+      setSelectedOutputId(row.id);
+      setFormats([...WRAP_CHANNEL_FORMATS]);
+      setActiveFormat(WRAP_CHANNEL_FORMATS[0]);
+      setFormatContents({});
+      adaptingRef.current.clear();
+      setExported(false);
+      setCopied(false);
+      setCatalogLinkId(null);
+      setOutputs(prev => (prev.some(o => o.id === row.id) ? prev : [row, ...prev]));
+      fetchOutputs({ silent: true });
+      setLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, location.key, toast, fetchOutputs]);
 
   // Active content: session draft takes priority, then selected output, then nothing (show picker)
   const selectedOutput = selectedOutputId ? outputs.find(o => o.id === selectedOutputId) || null : null;
@@ -428,6 +487,8 @@ export default function WrapPage() {
                 type="button"
                 onClick={() => {
                   setSelectedOutputId(output.id);
+                  setFormats([...WRAP_CHANNEL_FORMATS]);
+                  setActiveFormat(WRAP_CHANNEL_FORMATS[0]);
                   setFormatContents({});
                   adaptingRef.current.clear();
                   setExported(false);
@@ -503,6 +564,8 @@ export default function WrapPage() {
             type="button"
             onClick={() => {
               setSelectedOutputId(null);
+              setFormats([...WRAP_CHANNEL_FORMATS]);
+              setActiveFormat(WRAP_CHANNEL_FORMATS[0]);
               setFormatContents({});
               adaptingRef.current.clear();
               setExported(false);
@@ -602,6 +665,12 @@ export default function WrapPage() {
                   <span style={{ fontSize: 11, color: "var(--fg-2)" }}>{displayMetadata.preview}</span>
                 </div>
               )}
+              {displayMetadata.videoTitle && (
+                <div style={{ marginBottom: 16 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>VIDEO TITLE: </span>
+                  <span style={{ fontSize: 11, color: "var(--fg)" }}>{displayMetadata.videoTitle}</span>
+                </div>
+              )}
 
               <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", margin: "0 0 20px", lineHeight: 1.3 }}>
                 {contentTitle}
@@ -613,8 +682,12 @@ export default function WrapPage() {
               <div style={{ display: "flex", gap: 8, marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
                 <button type="button" className="liquid-glass-btn" onClick={handleCopy} style={{
                   fontSize: 11, padding: "6px 16px",
-                  color: "var(--fg-2)", fontFamily: FONT, fontWeight: 500,
-                }}>{copied ? "Copied" : "Copy"}</button>
+                  fontFamily: FONT, fontWeight: 500,
+                }}>
+                  <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)" }}>
+                    {copied ? "Copied" : "Copy"}
+                  </span>
+                </button>
                 <button type="button" onClick={() => {
                   sessionStorage.setItem("ew-reopen-output-id", activeOutput.id);
                   sessionStorage.setItem("ew-reopen-title", activeOutput.title);

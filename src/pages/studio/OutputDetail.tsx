@@ -570,6 +570,16 @@ export default function OutputDetail() {
           <button onClick={wrapAsWordDoc} style={toolbarBtn()}><FileText style={iconSz} /> Word Doc</button>
           <button onClick={() => navigate(`/studio/wrap/visual/${output!.id}`)} style={toolbarBtn()}><Pencil style={iconSz} /> Visual</button>
           <button
+            type="button"
+            onClick={() => {
+              sessionStorage.setItem("ew-wrap-from-catalog-id", output!.id);
+              navigate("/studio/wrap");
+            }}
+            style={toolbarBtn()}
+          >
+            Channel Wrap
+          </button>
+          <button
             onClick={handleRunPipeline}
             disabled={pipelineRunning}
             style={{
