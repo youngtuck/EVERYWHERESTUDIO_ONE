@@ -107,7 +107,7 @@ interface FormatEntry {
 function WrapStepRail({ phase }: { phase: WrapPhase }) {
   const steps: { id: WrapPhase; label: string; n: number }[] = [
     { id: "choose", label: "Choose channels", n: 1 },
-    { id: "build", label: "Generate", n: 2 },
+    { id: "build", label: "Adapt", n: 2 },
     { id: "deliver", label: "Your pieces", n: 3 },
   ];
   const idx = phase === "choose" ? 0 : phase === "build" ? 1 : 2;
@@ -182,8 +182,8 @@ function WrapDashPanel({
         <DpLabel>Wrap</DpLabel>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
           {phase === "choose"
-            ? "Pick the channels you need, then generate. Reed adapts your draft for each surface."
-            : "Reed is generating your channel versions. This usually takes under a minute per channel."}
+            ? "Confirm channels and Library filing, then run the Wrap pass. Reed adapts your draft for each surface you keep on."
+            : "Reed is adapting your draft for each channel. This usually takes under a minute per surface."}
         </div>
       </div>
     );
@@ -272,7 +272,7 @@ function WrapDashPanel({
 export default function WrapPage() {
   const nav = useNavigate();
   const location = useLocation();
-  const { setFeedbackContent, setReedPrefill, setActiveDashTab } = useShell();
+  const { setFeedbackContent, setReedPrefill } = useShell();
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useMobile();
@@ -625,8 +625,7 @@ export default function WrapPage() {
 
   const prefillReed = useCallback((text: string) => {
     setReedPrefill(text);
-    setActiveDashTab("reed");
-  }, [setReedPrefill, setActiveDashTab]);
+  }, [setReedPrefill]);
 
   const handleExportAll = useCallback(async () => {
     if (!activeOutput || !user) return;
@@ -914,7 +913,7 @@ export default function WrapPage() {
               Where should this land?
             </h1>
             <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "0 0 24px", lineHeight: 1.55 }}>
-              Set Library filing below, then select every channel you want Reed to adapt. Your draft stays the source of truth; each channel gets its own surface and structure.
+              Pick or adjust surfaces (Work pre-fills them when you land here from Start Wrap). Set Library filing below, then run the Wrap pass for paste-ready versions. Your master draft stays the source of truth.
             </p>
 
             <div className="liquid-glass-card" style={{ padding: "16px 18px", marginBottom: 20 }}>
@@ -1094,7 +1093,7 @@ export default function WrapPage() {
               >
                 <span className="liquid-glass-btn-gold-label">
                   {selectedChannels.length
-                    ? `Generate ${selectedChannels.length} version${selectedChannels.length !== 1 ? "s" : ""}`
+                    ? `Run Wrap (${selectedChannels.length} channel${selectedChannels.length !== 1 ? "s" : ""})`
                     : "Select channels"}
                 </span>
               </button>

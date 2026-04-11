@@ -9,8 +9,6 @@ export interface ShellCtx {
   setDiscoverOpen: (v: boolean) => void;
   dashContent: React.ReactNode | null;
   setDashContent: (node: React.ReactNode | null) => void;
-  activeDashTab: "feedback" | "reed" | "help";
-  setActiveDashTab: (tab: "feedback" | "reed" | "help") => void;
   feedbackContent: React.ReactNode | null;
   setFeedbackContent: (node: React.ReactNode | null) => void;
   reedPrefill: string;
@@ -28,8 +26,6 @@ export const ShellContext = createContext<ShellCtx>({
   setDiscoverOpen: () => {},
   dashContent: null,
   setDashContent: () => {},
-  activeDashTab: "feedback" as const,
-  setActiveDashTab: () => {},
   feedbackContent: null,
   setFeedbackContent: () => {},
   reedPrefill: "",

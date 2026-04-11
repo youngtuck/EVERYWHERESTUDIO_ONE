@@ -55,39 +55,6 @@ function getAdvisorCtx(pathname: string): { ctx: AdvisorContext; stageLabel: str
   return { ctx: ADVISOR_CONTENT.work, stageLabel: window.__ewWorkStage || "Work" };
 }
 
-const INSPECTOR_HELP_LINES: Record<string, string[]> = {
-  default: [
-    "Use the left sidebar to switch areas. Use the top bar for project, new session, and session name on the left; search (⌘K), help, and account on the right. This panel stays available from the edge control.",
-    "Feedback shows session readouts from the page you are on. Ask Reed is for quick notes and prompts tied to the current stage.",
-  ],
-  watch: [
-    "Configure keywords and sources in Settings, then run a brief. Signals rank by relevance for your next move.",
-    "Add competitors and publications you care about so Watch can surface gaps and timing.",
-  ],
-  work: [
-    "Intake is a conversation with Reed. Outline locks structure. Edit is the draft. Review runs blocking quality checkpoints before export.",
-    "Session context and files travel with the stage. Export saves the master draft to Catalog.",
-  ],
-  wrap: [
-    "Pick a saved piece, then switch format tabs to adapt copy per channel. Export All writes back to Catalog when you are done.",
-  ],
-  outputs: [
-    "Catalog lists saved sessions. Open a row for actions, or send a piece to Wrap for channel versions.",
-  ],
-  dashboard: [
-    "Home shows recent work and quick paths. Start a new session from the top bar next to the project name when you are ready.",
-  ],
-};
-
-function getInspectorHelpLines(pathname: string): string[] {
-  if (pathname.includes("/studio/watch")) return INSPECTOR_HELP_LINES.watch;
-  if (pathname.includes("/studio/work")) return INSPECTOR_HELP_LINES.work;
-  if (pathname.includes("/studio/wrap")) return INSPECTOR_HELP_LINES.wrap;
-  if (pathname.includes("/studio/outputs")) return INSPECTOR_HELP_LINES.outputs;
-  if (pathname.includes("/studio/dashboard")) return INSPECTOR_HELP_LINES.dashboard;
-  return INSPECTOR_HELP_LINES.default;
-}
-
 function InspectorEyebrow({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
@@ -137,17 +104,6 @@ function AdvisorFeedbackFallback({ pathname }: { pathname: string }) {
           <div style={{ fontSize: 10, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{card.role}</div>
           <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5 }}>{card.text}</div>
         </div>
-      ))}
-    </div>
-  );
-}
-
-function InspectorHelpContent({ pathname }: { pathname: string }) {
-  const lines = getInspectorHelpLines(pathname);
-  return (
-    <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
-      {lines.map((line, i) => (
-        <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", padding: 0 }}>{line}</p>
       ))}
     </div>
   );
@@ -304,7 +260,6 @@ export default function StudioShell() {
   const [dashOpen, setDashOpen] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [dashContent, setDashContent] = useState<React.ReactNode | null>(null);
-  const [activeDashTab, setActiveDashTab] = useState<"feedback" | "reed" | "help">("feedback");
   const [feedbackContent, setFeedbackContent] = useState<React.ReactNode | null>(null);
   const [reedPrefill, setReedPrefill] = useState("");
   const [reedThread, setReedThread] = useState<Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>>([]);
@@ -323,7 +278,6 @@ export default function StudioShell() {
       dashOpen, setDashOpen,
       discoverOpen, setDiscoverOpen,
       dashContent, setDashContent,
-      activeDashTab, setActiveDashTab,
       feedbackContent, setFeedbackContent,
       reedPrefill, setReedPrefill,
       reedThread, setReedThread,
@@ -498,11 +452,6 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
           <div style={{ marginBottom: 2 }}>
             <ReedPanel />
           </div>
-
-          <InspectorDivider />
-
-          <InspectorEyebrow>Help</InspectorEyebrow>
-          <InspectorHelpContent pathname={pathname} />
         </div>
 
         <div style={{
@@ -519,120 +468,19 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
   );
 }
 
-function ReedStageContext({ stage }: { stage: string }) {
-  const calloutStyle: React.CSSProperties = {
-    border: "1px solid rgba(74,144,217,0.15)",
-    borderRadius: 8,
-    padding: "10px 12px",
-    background: "rgba(74,144,217,0.04)",
-    fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 8,
-  };
-  const pillGold: React.CSSProperties = {
-    display: "inline-flex", padding: "2px 8px", borderRadius: 99,
-    background: "rgba(200,169,110,0.08)",
-    border: "1px solid rgba(200,169,110,0.15)",
-    color: "var(--gold-dark)",
-    fontSize: 10, fontWeight: 600,
-  };
-  const pillBlue: React.CSSProperties = {
-    display: "inline-flex", padding: "2px 8px", borderRadius: 99,
-    background: "rgba(74,144,217,0.08)",
-    border: "1px solid rgba(74,144,217,0.15)",
-    color: "var(--blue)",
-    fontSize: 10, fontWeight: 600,
-  };
-
-  if (stage === "Watch") {
-    return (
-      <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
-          Reed has read your sources. Signals are surfaced by relevance. Competitors going quiet is treated as a signal, not silence.
-        </div>
-      </div>
-    );
-  }
-
-  if (stage === "Intake") {
-    return (
-      <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <span style={{
-          display: "inline-flex", padding: "4px 10px", borderRadius: 99,
-          background: "rgba(200,169,110,0.08)", border: "1px solid rgba(200,169,110,0.15)",
-          fontSize: 10, fontWeight: 600, color: "var(--gold-dark)", marginBottom: 6,
-        }}>Freestyle</span>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginTop: 6 }}>
-          No output format selected. Freestyle mode. Answer Reed's questions and the system shapes your thinking. You can pick a format at the end of Outline.
-        </div>
-        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6, marginTop: 6 }}>
-          What helps: Name the specific reader. State the structural problem, not the symptom. Say what you want the reader to do or feel.
-        </div>
-      </div>
-    );
-  }
-
-  if (stage === "Outline") {
-    return (
-      <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
-          Structure is sound. Confirm the close mirrors the title before moving to Edit.
-        </div>
-        <div style={calloutStyle}>
-          You've been freestyling. Want to pick a format before Edit, or keep freestyle?
-          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "var(--fg)", border: "none", color: "var(--bg)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Move to Edit</button>
-            <button style={{ fontSize: 10, padding: "5px 12px", borderRadius: 5, background: "transparent", border: "1px solid rgba(0,0,0,0.08)", color: "var(--fg-2)", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Keep Freestyle</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (stage === "Edit") {
-    return (
-      <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
-          Read through the draft. Edit anything that does not sound like you. When you are done, click Finish and Review.
-        </div>
-        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
-          Click into any paragraph to edit directly.
-        </div>
-      </div>
-    );
-  }
-
-  if (stage === "Review") {
-    return (
-      <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
-          Reed is reviewing your draft against the full quality checkpoint sequence.
-        </div>
-      </div>
-    );
-  }
-
-  if (stage === "Wrap") {
-    return (
-      <div style={{ marginBottom: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
-          Switch format tabs in the main view to read each channel version and copy. Open the Dashboard to run Export All and save the piece to Catalog (Library in the sidebar).
-        </div>
-        <div style={calloutStyle}>
-          This piece has good legs. The LinkedIn version is strong. The essay close would make a solid standalone Sunday post if you want to file it separately.
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
 function ReedPanel() {
   const { reedThread, setReedThread, reedPrefill, setReedPrefill } = useShell();
+  const location = useLocation();
   const [input, setInput] = useState(reedPrefill || "");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const stage = useWorkStageFromShell();
-  const stageChips = REED_STAGE_CHIPS[stage] || REED_STAGE_CHIPS.Review;
+  const workStage = useWorkStageFromShell();
+  const stageKey = location.pathname.includes("/studio/watch")
+    ? "Watch"
+    : location.pathname.includes("/studio/wrap")
+      ? "Wrap"
+      : workStage;
+  const stageChips = REED_STAGE_CHIPS[stageKey] || REED_STAGE_CHIPS.Review;
 
   // Pick up prefill
   useEffect(() => {
@@ -664,14 +512,25 @@ function ReedPanel() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-      {/* Stage-aware context message */}
-      <ReedStageContext stage={stage} />
-      <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
-        {reedThread.length === 0 && (
-          <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 12 }}>
-            Ask Reed anything about your current session.
-          </div>
-        )}
+      {stageChips.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8, flexShrink: 0 }}>
+          {stageChips.map((chip, ci) => (
+            <button
+              key={ci}
+              type="button"
+              onClick={() => prefillAndFocus(chip.prefill)}
+              style={{
+                fontSize: 10, padding: "4px 10px", borderRadius: 99,
+                background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.1)",
+                color: "var(--fg-2)", cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div style={{ flex: 1, overflowY: "auto", marginBottom: 8, minHeight: 0 }}>
         {reedThread.map((m, i) => {
           if (m.type === "note") {
             return (
@@ -691,7 +550,7 @@ function ReedPanel() {
                 <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 6 }}>{m.text}</div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                   <button onClick={() => prefillAndFocus(`Let's work on this now: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Work on this now</button>
-                  <button onClick={() => prefillAndFocus(`Apply this to the current ${stage} context: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Apply to {stage}</button>
+                  <button onClick={() => prefillAndFocus(`Apply this to the current ${stageKey} context: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Apply to {stageKey}</button>
                   <button onClick={() => prefillAndFocus("Set this aside for now. Flag it for Review.")} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Set aside</button>
                 </div>
               </div>
@@ -729,23 +588,6 @@ function ReedPanel() {
         })}
         <div ref={bottomRef} />
       </div>
-      {stageChips.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6, flexShrink: 0 }}>
-          {stageChips.map((chip, ci) => (
-            <button
-              key={ci}
-              onClick={() => prefillAndFocus(chip.prefill)}
-              style={{
-                fontSize: 10, padding: "4px 10px", borderRadius: 99,
-                background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.1)",
-                color: "var(--fg-2)", cursor: "pointer", fontFamily: "inherit",
-              }}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-      )}
       <div style={{
         display: "flex", alignItems: "center", gap: 6,
         background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.1)",

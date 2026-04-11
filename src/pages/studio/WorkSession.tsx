@@ -481,13 +481,20 @@ function IaBtn({ title, active, children, onMouseDown, onMouseUp, onMouseLeave, 
 
 function AdvanceButton({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) {
   return (
-    <div style={{ padding: "0 14px 8px", display: "flex", justifyContent: "flex-end" }}>
+    <div style={{
+      width: "100%",
+      boxSizing: "border-box" as const,
+      padding: "0 clamp(12px, 3vw, 20px) 10px",
+      display: "flex",
+      justifyContent: "center",
+    }}
+    >
       <button
         type="button"
         className="liquid-glass-btn-gold"
         onClick={onClick}
         disabled={disabled}
-        style={{ fontSize: 11, padding: "8px 18px", fontFamily: FONT }}
+        style={{ fontSize: 11, padding: "8px 20px", fontFamily: FONT }}
       >
         <span className="liquid-glass-btn-gold-label">{label}</span>
       </button>
@@ -1583,14 +1590,11 @@ function StageOutline({
           <div style={{ display: "flex", justifyContent: "center", padding: "8px clamp(12px, 4vw, 24px) 0" }}>
             <button
               type="button"
+              className="liquid-glass-btn-gold"
               onClick={onAdvance}
-              style={{
-                fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 6,
-                background: "var(--gold-bright)", border: "none", color: "var(--fg)",
-                cursor: "pointer", fontFamily: FONT, letterSpacing: "0.01em",
-              }}
+              style={{ fontSize: 12, padding: "8px 22px", fontFamily: FONT }}
             >
-              Write draft →
+              <span className="liquid-glass-btn-gold-label">Write draft →</span>
             </button>
           </div>
         )}
@@ -2680,11 +2684,10 @@ function readResumeQuery(): string | null {
 }
 
 export default function WorkSession() {
-  const { setFeedbackContent, setActiveDashTab, setReedPrefill, setReedThread } = useShell();
+  const { setFeedbackContent, setReedPrefill, setReedThread } = useShell();
   const prefillReed = useCallback((text: string) => {
-    setActiveDashTab("reed");
     setReedPrefill(text);
-  }, [setActiveDashTab, setReedPrefill]);
+  }, [setReedPrefill]);
   const { user, displayName } = useAuth();
   const { activeProjectId: shellProjectId } = useStudioProject();
   const { toast } = useToast();
@@ -4265,6 +4268,7 @@ export default function WorkSession() {
           const wordCount = (draft || "").split(/\s+/).filter(Boolean).length;
           const targetWords = WORD_TARGETS[outputType || "freestyle"] || 700;
           const flagCounts = countDraftFlags(draft, dismissedFlags, fixedFlags);
+          const hasDraftText = (draft || "").trim().length > 0;
 
           return (
             <>
@@ -4275,9 +4279,29 @@ export default function WorkSession() {
                 </DpSection>
               )}
 
-              {!generating && wordCount > 0 && (
+              {!generating && hasDraftText && (
                 <>
-                  {/* FLAGS */}
+                  {/* Word length lives in Feedback (right), not beside the main-stage CTA */}
+                  <DpSection>
+                    <DpLabel>Draft length</DpLabel>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
+                      {wordCount} words
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
+                      <span style={{ color: "var(--fg-3)" }}>Target {targetWords}</span>
+                      <span style={{ color: "var(--gold)" }}>
+                        {wordCount > targetWords ? `+${wordCount - targetWords}` : wordCount < targetWords ? `-${targetWords - wordCount}` : "on target"}
+                      </span>
+                    </div>
+                    <div style={{ height: 5, background: "var(--glass-border)", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%", borderRadius: 3,
+                        width: `${Math.min(100, (wordCount / targetWords) * 100)}%`,
+                        background: wordCount > targetWords * 1.2 ? "rgba(245,198,66,0.5)" : "var(--blue, #4A90D9)",
+                      }} />
+                    </div>
+                  </DpSection>
+
                   <DpSection>
                     <DpLabel>Flags</DpLabel>
                     {(flagCounts.must > 0 || flagCounts.style > 0) ? (
@@ -4302,26 +4326,6 @@ export default function WorkSession() {
                     )}
                   </DpSection>
 
-                  {/* WORD COUNT */}
-                  <DpSection>
-                    <DpLabel>Word Count</DpLabel>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
-                      <span style={{ fontWeight: 600, color: "var(--fg)" }}>{wordCount}</span>
-                      <span style={{ color: "var(--gold)" }}>
-                        {wordCount > targetWords ? `+${wordCount - targetWords}` : wordCount < targetWords ? `-${targetWords - wordCount}` : "on target"}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 9, color: "var(--fg-3)", marginBottom: 4 }}>optimum {targetWords}</div>
-                    <div style={{ height: 5, background: "var(--glass-border)", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{
-                        height: "100%", borderRadius: 3,
-                        width: `${Math.min(100, (wordCount / targetWords) * 100)}%`,
-                        background: wordCount > targetWords * 1.2 ? "rgba(245,198,66,0.5)" : "var(--blue, #4A90D9)",
-                      }} />
-                    </div>
-                  </DpSection>
-
-                  {/* BACKGROUND PIPELINE STATUS */}
                   {backgroundPipelineRun && (
                     <DpSection>
                       <div style={{ fontSize: 10, color: "#22C55E", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>

@@ -330,7 +330,7 @@ export default function Watch() {
   const nav = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { setFeedbackContent, setReedPrefill, setActiveDashTab } = useShell();
+  const { setFeedbackContent, setReedPrefill } = useShell();
   const isMobile = useMobile();
 
   const [activeTab, setActiveTab] = useState<"briefing" | "research" | "settings">("briefing");
@@ -616,11 +616,9 @@ export default function Watch() {
     return s;
   }, [newsletters, podcasts, publications, substacks]);
 
-  // Prefill Reed and switch to Ask Reed tab
   const prefillReed = useCallback((text: string) => {
     setReedPrefill(text);
-    setActiveDashTab("reed");
-  }, [setReedPrefill, setActiveDashTab]);
+  }, [setReedPrefill]);
 
   // Extract briefing sections (memoized to prevent re-render loops)
   const sections = briefing?.sections;
