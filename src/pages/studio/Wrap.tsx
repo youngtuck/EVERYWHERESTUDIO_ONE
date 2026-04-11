@@ -242,6 +242,7 @@ export default function WrapPage() {
       sessionStorage.removeItem("ew-wrap-draft");
       sessionStorage.removeItem("ew-wrap-title");
       sessionStorage.removeItem("ew-wrap-output-type");
+      sessionStorage.removeItem("ew-wrap-output-type-ids");
       sessionStorage.removeItem("ew-wrap-output-id");
       sessionStorage.removeItem("ew-wrap-formats");
     }

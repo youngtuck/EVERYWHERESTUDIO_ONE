@@ -2028,16 +2028,16 @@ function ReviewFormatPreview({
 function PreWrapOutputGate({
   pipelineRun,
   recommendedId,
-  selectedId,
-  onSelect,
+  selectedIds,
+  onToggle,
   onStartWrap,
   presentationMinutes,
   onPresentationMinutesChange,
 }: {
   pipelineRun: PipelineRun | null;
   recommendedId: string;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  selectedIds: string[];
+  onToggle: (id: string) => void;
   onStartWrap: () => void;
   presentationMinutes: number;
   onPresentationMinutesChange: (n: number) => void;
@@ -2089,6 +2089,9 @@ function PreWrapOutputGate({
             </>
           ) : null}
         </p>
+        <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 20px", lineHeight: 1.5, fontFamily: FONT }}>
+          Select every format you want saved to Catalog. Each format becomes its own catalog row with this draft.
+        </p>
 
         <div style={{
           marginBottom: 28,
@@ -2122,12 +2125,13 @@ function PreWrapOutputGate({
             }}>
               {items.map(item => {
                 const isRec = item.id === recommendedId;
-                const isSel = selectedId === item.id;
+                const isSel = selectedIds.includes(item.id);
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => onSelect(item.id)}
+                    aria-pressed={isSel}
+                    onClick={() => onToggle(item.id)}
                     style={{
                       textAlign: "left" as const,
                       padding: "12px 14px",
@@ -2161,7 +2165,7 @@ function PreWrapOutputGate({
           </div>
         ))}
 
-        {selectedId === "presentation" && (
+        {selectedIds.includes("presentation") && (
           <div style={{
             marginBottom: 24,
             padding: "14px 16px",
@@ -2207,7 +2211,7 @@ function PreWrapOutputGate({
         <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
           <button
             type="button"
-            disabled={!selectedId}
+            disabled={selectedIds.length === 0}
             onClick={onStartWrap}
             style={{
               minWidth: 220,
@@ -2218,13 +2222,13 @@ function PreWrapOutputGate({
               fontWeight: 700,
               letterSpacing: "0.04em",
               border: "none",
-              cursor: selectedId ? "pointer" : "not-allowed",
-              background: selectedId ? "var(--fg)" : "var(--line)",
-              color: selectedId ? "var(--gold, #F5C642)" : "var(--fg-3)",
-              opacity: selectedId ? 1 : 0.85,
+              cursor: selectedIds.length > 0 ? "pointer" : "not-allowed",
+              background: selectedIds.length > 0 ? "var(--fg)" : "var(--line)",
+              color: selectedIds.length > 0 ? "var(--gold, #F5C642)" : "var(--fg-3)",
+              opacity: selectedIds.length > 0 ? 1 : 0.85,
             }}
           >
-            Start Wrap
+            {selectedIds.length > 1 ? `Start Wrap (${selectedIds.length} formats)` : "Start Wrap"}
           </button>
         </div>
       </div>
@@ -2498,8 +2502,8 @@ export default function WorkSession() {
   const [activeReviewTab, setActiveReviewTab] = useState<Format>(selectedFormats[0] ?? "LinkedIn");
   const [hvtAttempts, setHvtAttempts] = useState(0);
   const [hvtRunning, setHvtRunning] = useState(false);
-  /** Chosen OUTPUT_TYPES id on the Pre-Wrap full screen; cleared when that gate appears. */
-  const [preWrapPickId, setPreWrapPickId] = useState<string | null>(null);
+  /** Chosen OUTPUT_TYPES ids on the Pre-Wrap full screen; cleared when that gate appears. */
+  const [preWrapPickIds, setPreWrapPickIds] = useState<string[]>([]);
   /** Talk length for presentation output type (Wrap target words = minutes × 300). */
   const [preWrapPresentationMins, setPreWrapPresentationMins] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
 
@@ -2580,7 +2584,7 @@ export default function WorkSession() {
     setFormatDrafts({});
     setAllExported(false);
     setExportedTabs({});
-    setPreWrapPickId(null);
+    setPreWrapPickIds([]);
     setGenerating(false);
     setFixingGate(null);
     setRerunningPipeline(false);
@@ -3198,7 +3202,7 @@ export default function WorkSession() {
 
   // ── EDIT -> REVIEW: Run pipeline ──────────────────────────────
   const handleRunPipeline = useCallback(async () => {
-    setPreWrapPickId(null);
+    setPreWrapPickIds([]);
     goToStage("Review");
     if (!draft || !user) return;
 
@@ -3331,10 +3335,19 @@ export default function WorkSession() {
   }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId, backgroundPipelineRun, draftChangedSinceBackground]);
 
   // ── REVIEW: Export all (save to Catalog first, then hand off to Wrap) ──
-  const handleExportAll = useCallback(async (forcedOutputType?: string) => {
-    const resolvedTypeId = forcedOutputType ?? outputType ?? "freestyle";
-    if (forcedOutputType) {
-      setOutputType(forcedOutputType);
+  const handleExportAll = useCallback(async (forcedOutputType?: string | string[]) => {
+    const resolvedTypeIds = (() => {
+      if (forcedOutputType === undefined) {
+        return [outputType ?? "freestyle"];
+      }
+      const raw = Array.isArray(forcedOutputType) ? forcedOutputType : [forcedOutputType];
+      const uniq = [...new Set(raw.filter((x): x is string => typeof x === "string" && x.length > 0))];
+      return uniq.length > 0 ? uniq : [outputType ?? "freestyle"];
+    })();
+    const primaryTypeId = resolvedTypeIds[0];
+
+    if (forcedOutputType !== undefined) {
+      setOutputType(primaryTypeId);
     }
 
     const formats: Format[] = selectedFormats.length > 0
@@ -3342,59 +3355,104 @@ export default function WorkSession() {
       : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
     const exported: Record<string, boolean> = {};
     formats.forEach(f => { exported[f] = true; });
-    setExportedTabs(exported);
-    setAllExported(true);
-
-    const outCategory = OUTPUT_TYPES.find(t => t.id === resolvedTypeId)?.category?.toLowerCase() || null;
 
     let resolvedOutputId = outputId;
-    if (user && draft) {
+    let catalogOk = true;
+
+    if (user && draft.trim()) {
+      catalogOk = false;
       try {
+        const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
+        const rawScore = Number(pipelineRun?.impactScore?.total ?? 0);
+        const scoreVal = Number.isFinite(rawScore) ? Math.round(rawScore) : 0;
+        const gatesVal = pipelineRun?.checkpointResults ?? null;
+
         if (outputId) {
-          const { error } = await supabase.from("outputs").update({
+          const first = primaryTypeId;
+          const firstCat = OUTPUT_TYPES.find(t => t.id === first)?.category?.toLowerCase() || null;
+          const { error: upErr } = await supabase.from("outputs").update({
             content: draft,
             content_state: "vault",
-            output_type: resolvedTypeId,
-            output_type_id: resolvedTypeId,
-            output_category: outCategory,
-          }).eq("id", outputId);
-          if (error) throw error;
+            output_type: first,
+            output_type_id: first,
+            output_category: firstCat,
+            score: scoreVal,
+            gates: gatesVal,
+            project_id: projectId || undefined,
+          }).eq("id", outputId).eq("user_id", user.id);
+          if (upErr) throw upErr;
+          resolvedOutputId = outputId;
+
+          for (let i = 1; i < resolvedTypeIds.length; i++) {
+            const tid = resolvedTypeIds[i];
+            const cat = OUTPUT_TYPES.find(t => t.id === tid)?.category?.toLowerCase() || null;
+            const { error: insErr } = await supabase.from("outputs").insert({
+              user_id: user.id,
+              title: title.slice(0, 200),
+              content: draft,
+              output_type: tid,
+              output_type_id: tid,
+              output_category: cat,
+              content_state: "vault",
+              score: scoreVal,
+              gates: gatesVal,
+              project_id: projectId || undefined,
+            }).select("id");
+            if (insErr) throw insErr;
+          }
         } else {
-          const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
-          const { data, error } = await supabase.from("outputs").insert({
-            user_id: user.id,
-            title: title.slice(0, 200),
-            content: draft,
-            output_type: resolvedTypeId,
-            output_type_id: resolvedTypeId,
-            output_category: outCategory,
-            content_state: "vault",
-            score: pipelineRun?.impactScore?.total ?? 0,
-          }).select("id").single();
-          if (error) throw error;
-          if (data?.id) {
-            resolvedOutputId = data.id;
-            setOutputId(data.id);
+          for (let i = 0; i < resolvedTypeIds.length; i++) {
+            const tid = resolvedTypeIds[i];
+            const cat = OUTPUT_TYPES.find(t => t.id === tid)?.category?.toLowerCase() || null;
+            const { data: rows, error: insErr } = await supabase.from("outputs").insert({
+              user_id: user.id,
+              title: title.slice(0, 200),
+              content: draft,
+              output_type: tid,
+              output_type_id: tid,
+              output_category: cat,
+              content_state: "vault",
+              score: scoreVal,
+              gates: gatesVal,
+              project_id: projectId || undefined,
+            }).select("id");
+            if (insErr) throw insErr;
+            const newId = rows?.[0]?.id as string | undefined;
+            if (newId && i === 0) {
+              resolvedOutputId = newId;
+              setOutputId(newId);
+            }
           }
         }
         void deleteRemoteWorkSession(user.id);
         clearSession();
+        catalogOk = true;
       } catch (e) {
         console.error("[Export] Supabase save failed:", e);
         toast("Could not save to Catalog yet. Wrap still has your draft.", "error");
       }
     }
 
+    if (!catalogOk) return;
+
+    setExportedTabs(exported);
+    setAllExported(true);
+
     try {
       sessionStorage.setItem("ew-wrap-draft", draft || "");
       sessionStorage.setItem("ew-wrap-title", outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled");
-      sessionStorage.setItem("ew-wrap-output-type", resolvedTypeId);
+      sessionStorage.setItem("ew-wrap-output-type", primaryTypeId);
+      if (resolvedTypeIds.length > 1) {
+        sessionStorage.setItem("ew-wrap-output-type-ids", JSON.stringify(resolvedTypeIds));
+      } else {
+        sessionStorage.removeItem("ew-wrap-output-type-ids");
+      }
       if (resolvedOutputId) {
         sessionStorage.setItem("ew-wrap-output-id", resolvedOutputId);
       } else {
         sessionStorage.removeItem("ew-wrap-output-id");
       }
-      if (resolvedTypeId === "presentation") {
+      if (resolvedTypeIds.includes("presentation")) {
         sessionStorage.setItem("ew-wrap-presentation-minutes", String(preWrapPresentationMins));
       } else {
         sessionStorage.removeItem("ew-wrap-presentation-minutes");
@@ -3405,7 +3463,7 @@ export default function WorkSession() {
           adaptedContent[f] = formatDrafts[f].content;
         }
       });
-      if (resolvedTypeId === "freestyle" && Object.keys(adaptedContent).length > 0) {
+      if (primaryTypeId === "freestyle" && Object.keys(adaptedContent).length > 0) {
         sessionStorage.setItem("ew-wrap-formats", JSON.stringify(adaptedContent));
       } else {
         sessionStorage.removeItem("ew-wrap-formats");
@@ -3415,12 +3473,12 @@ export default function WorkSession() {
     }
 
     nav("/studio/wrap");
-  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins]);
+  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins, projectId]);
 
   const handleStartWrapFromGate = useCallback(() => {
-    if (!preWrapPickId) return;
-    void handleExportAll(preWrapPickId);
-  }, [preWrapPickId, handleExportAll]);
+    if (preWrapPickIds.length === 0) return;
+    void handleExportAll(preWrapPickIds);
+  }, [preWrapPickIds, handleExportAll]);
 
   const reviewChannelTabs = useMemo((): Format[] => (
     selectedFormats.length > 0
@@ -3449,14 +3507,14 @@ export default function WorkSession() {
   );
 
   useEffect(() => {
-    if (showPreWrapOutputGate) setPreWrapPickId(null);
+    if (showPreWrapOutputGate) setPreWrapPickIds([]);
   }, [showPreWrapOutputGate]);
 
   useEffect(() => {
-    if (preWrapPickId !== "presentation") {
+    if (!preWrapPickIds.includes("presentation")) {
       setPreWrapPresentationMins(DEFAULT_PRESENTATION_MINUTES);
     }
-  }, [preWrapPickId]);
+  }, [preWrapPickIds]);
 
   // ── REVIEW: Rerun Human Voice Test only ───────────────────────
   const handleRerunHVT = useCallback(async () => {
@@ -3530,7 +3588,7 @@ export default function WorkSession() {
     setFormatDrafts({});
     setOutlineAngles(null);
     setSelectedAngle("a");
-    setPreWrapPickId(null);
+    setPreWrapPickIds([]);
     setPreWrapPresentationMins(DEFAULT_PRESENTATION_MINUTES);
   }, [user?.id]);
 
@@ -3552,7 +3610,7 @@ export default function WorkSession() {
     setRerunningPipeline(false);
     setDismissedFlags(new Set());
     setFixedFlags(new Map());
-    setPreWrapPickId(null);
+    setPreWrapPickIds([]);
 
     goToStage("Edit");
     handleRevise(instructions);
@@ -4164,8 +4222,12 @@ export default function WorkSession() {
           <PreWrapOutputGate
             pipelineRun={pipelineRun}
             recommendedId={recommendedWrapOutputId}
-            selectedId={preWrapPickId}
-            onSelect={setPreWrapPickId}
+            selectedIds={preWrapPickIds}
+            onToggle={(id) => {
+              setPreWrapPickIds(prev =>
+                prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id],
+              );
+            }}
             onStartWrap={handleStartWrapFromGate}
             presentationMinutes={preWrapPresentationMins}
             onPresentationMinutesChange={setPreWrapPresentationMins}
