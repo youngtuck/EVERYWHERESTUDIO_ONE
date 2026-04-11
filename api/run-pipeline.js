@@ -5,6 +5,7 @@ import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
 import { requireAuth } from "./_auth.js";
 import { getUserResources } from "./_resources.js";
+import { dnaDebug } from "./_dnaDebugLog.js";
 import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
 
 const CHECKPOINT_GATES = [
@@ -204,7 +205,7 @@ export default async function handler(req, res) {
     let methodForGates = (methodDnaMd || "").trim();
     if (userId) {
       try {
-        const res = await getUserResources(userId);
+        const res = await getUserResources(userId, { caller: "run-pipeline" });
         if (!voiceForGates) voiceForGates = (res.voiceDna || "").trim();
         if (!brandForGates) brandForGates = (res.brandDna || "").trim();
         if (!methodForGates) methodForGates = (res.methodDna || "").trim();
@@ -215,6 +216,18 @@ export default async function handler(req, res) {
     voiceForGates = clipDna(voiceForGates, L.voice);
     brandForGates = clipDna(brandForGates, L.brand);
     methodForGates = clipDna(methodForGates, L.method);
+
+    dnaDebug("run-pipeline.handler", {
+      hasUserId: !!userId,
+      hvtOnly: !!hvtOnly,
+      gateSubsetSize: Array.isArray(gateSubset) ? gateSubset.length : 0,
+      voiceForGatesLen: voiceForGates.length,
+      brandForGatesLen: brandForGates.length,
+      methodForGatesLen: methodForGates.length,
+      voiceFromBody: !!(voiceDnaMd || "").trim(),
+      brandFromBody: !!(brandDnaMd || "").trim(),
+      methodFromBody: !!(methodDnaMd || "").trim(),
+    });
 
     console.log(`[run-pipeline] Starting for output ${outputId}`);
 

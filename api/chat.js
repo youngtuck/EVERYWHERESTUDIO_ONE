@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { getUserResources } from "./_resources.js";
+import { dnaDebug } from "./_dnaDebugLog.js";
 import { clipDna, DNA_LIMITS, METHOD_DNA_LEXICON_LINE } from "./_dnaContext.js";
 import { loadReedDoctrine } from "./_reedDoctrine.js";
 import { callWithRetry } from "./_retry.js";
@@ -492,14 +493,24 @@ export default async function handler(req, res) {
     userName,
   } = req.body;
 
-  let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
+  let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "", composerMemory: "" };
   if (userId) {
     try {
-      resources = await getUserResources(userId);
+      resources = await getUserResources(userId, { caller: "api.chat" });
     } catch (e) {
       console.error("[api/chat] Failed to load resources", e);
     }
   }
+
+  const mergedVoiceSourceLen = `${resources?.voiceDna || ""}\n${voiceDnaMd || ""}`.trim().length;
+  dnaDebug("api.chat.handler", {
+    systemMode: String(systemMode),
+    hasUserId: !!userId,
+    voiceDnaMdLen: (voiceDnaMd || "").length,
+    mergedVoiceSourceLen,
+    usesDedicatedMode: !!MODE_SYSTEM_PROMPTS[systemMode],
+    hasSystemPromptOverride: typeof systemPromptOverride === "string" && !!systemPromptOverride.trim(),
+  });
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array required." });

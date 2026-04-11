@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { clipDna } from "./_dnaContext.js";
+import { dnaDebugResourcesLoaded } from "./_dnaDebugLog.js";
 
 /**
  * DNA PRECEDENCE (Voice, Brand, Method, references)
@@ -23,6 +24,8 @@ import { clipDna } from "./_dnaContext.js";
  * 3) Method DNA today is resources-only (profiles have no method field). Same resource row order.
  *
  * composer_memory is separate; see the composer_memory query below.
+ *
+ * Observability: set EW_DEBUG_DNA=1 for JSON logs (lengths and booleans only) from getUserResources.
  */
 
 /**
@@ -42,13 +45,17 @@ function sortResourceRowsByPrecedence(rows) {
   });
 }
 
-export async function getUserResources(userId) {
+export async function getUserResources(userId, meta = {}) {
+  const caller = typeof meta.caller === "string" && meta.caller.trim() ? meta.caller.trim() : "getUserResources";
+  const empty = { voiceDna: "", brandDna: "", methodDna: "", references: "", composerMemory: "" };
+
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey || !userId) {
     if (!serviceRoleKey) console.warn("[_resources] SUPABASE_SERVICE_ROLE_KEY not set. Voice/Brand/Method DNA will be empty.");
     if (!supabaseUrl) console.warn("[_resources] SUPABASE_URL not set.");
-    return { voiceDna: "", brandDna: "", methodDna: "", references: "", composerMemory: "" };
+    dnaDebugResourcesLoaded(caller, empty, { skipped: true, reason: "missing_config_or_userId" });
+    return empty;
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -56,6 +63,7 @@ export async function getUserResources(userId) {
   // 1. profiles: global Voice + Brand baseline (see DNA PRECEDENCE header)
   let voiceDna = "";
   let brandDna = "";
+  let profileFound = false;
 
   try {
     const { data: profile } = await supabase
@@ -65,6 +73,7 @@ export async function getUserResources(userId) {
       .single();
 
     if (profile) {
+      profileFound = true;
       // Use voice_dna_md (markdown summary) as the primary voice context.
       // Fall back to a readable summary built from the JSONB object.
       if (profile.voice_dna_md) {
@@ -110,6 +119,7 @@ export async function getUserResources(userId) {
   // 2. resources: supplements + method + references (sorted; appended after profile for voice/brand)
   let methodDna = "";
   let references = "";
+  let resourceRowCount = 0;
 
   try {
     const { data, error } = await supabase
@@ -119,6 +129,7 @@ export async function getUserResources(userId) {
       .eq("is_active", true);
 
     const rows = !error && data && data.length > 0 ? sortResourceRowsByPrecedence(data) : [];
+    resourceRowCount = rows.length;
     for (const r of rows) {
       const block = "## " + r.title + "\n" + (r.content || "") + "\n\n";
       switch (r.resource_type) {
@@ -142,6 +153,7 @@ export async function getUserResources(userId) {
   }
 
   let composerMemory = "";
+  let composerMemoryRowCount = 0;
   try {
     const { data, error } = await supabase
       .from("composer_memory")
@@ -150,6 +162,9 @@ export async function getUserResources(userId) {
       .order("sort_priority", { ascending: false })
       .order("updated_at", { ascending: false })
       .limit(20);
+    if (!error && Array.isArray(data)) {
+      composerMemoryRowCount = data.length;
+    }
     if (!error && data?.length) {
       const joined = data
         .map((r) => {
@@ -168,11 +183,17 @@ export async function getUserResources(userId) {
     /* table may not exist until migration 022 is applied */
   }
 
-  return {
+  const out = {
     voiceDna: voiceDna.trim(),
     brandDna: brandDna.trim(),
     methodDna: methodDna.trim(),
     references: references.trim(),
     composerMemory,
   };
+  dnaDebugResourcesLoaded(caller, out, {
+    profileFound,
+    resourceRowCount,
+    composerMemoryRowCount,
+  });
+  return out;
 }

@@ -55,7 +55,7 @@ export default async function handler(req, res) {
 
   let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
   if (userId) {
-    try { resources = await getUserResources(userId); } catch (e) {
+    try { resources = await getUserResources(userId, { caller: "writers-room.structure" }); } catch (e) {
       console.error("[structure] Failed to load resources:", e);
     }
   }

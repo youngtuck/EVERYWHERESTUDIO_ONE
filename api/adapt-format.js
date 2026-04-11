@@ -5,7 +5,8 @@ import { CLAUDE_MODEL } from "./_config.js";
 import fs from "fs";
 import path from "path";
 import { requireAuth } from "./_auth.js";
-import { clipDna, DNA_LIMITS, METHOD_DNA_LEXICON_LINE } from "./_dnaContext.js";
+import { dnaDebug } from "./_dnaDebugLog.js";
+import { clipDna, DNA_LIMITS, methodDnaSystemAppendix } from "./_dnaContext.js";
 import { formatStructuredIntakeForPrompt } from "./_structuredIntakePrompt.js";
 
 function loadPrompt(filename) {
@@ -256,10 +257,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `Unknown format: ${format}` });
   }
 
-  let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
+  let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "", composerMemory: "" };
   if (userId) {
     try {
-      resources = await getUserResources(userId);
+      resources = await getUserResources(userId, { caller: "adapt-format" });
     } catch (e) {
       console.error("[adapt-format] Failed to load resources", e);
     }
@@ -272,7 +273,7 @@ export default async function handler(req, res) {
   const L = DNA_LIMITS.adapt;
   const methodDna = methodDnaMd || resources.methodDna;
   if (methodDna?.trim()) {
-    system += `\n\nMETHOD DNA (ACTIVE CONSTRAINT):\n${METHOD_DNA_LEXICON_LINE}\n\nMETHOD DNA:\n${clipDna(methodDna.trim(), L.method)}`;
+    system += methodDnaSystemAppendix(methodDna, L.method);
   }
 
   const voiceDna = voiceDnaMd || resources.voiceDna;
@@ -284,6 +285,19 @@ export default async function handler(req, res) {
   if (brandDna) {
     system += `\n\nBRAND DNA:\n${clipDna(brandDna, L.brand)}`;
   }
+
+  dnaDebug("adapt-format.handler", {
+    hasUserId: !!userId,
+    voiceDnaMdLen: (voiceDnaMd || "").length,
+    brandDnaMdLen: (brandDnaMd || "").length,
+    methodDnaMdLen: (methodDnaMd || "").length,
+    effectiveVoiceLen: (voiceDna || "").length,
+    effectiveBrandLen: (brandDna || "").length,
+    effectiveMethodLen: (methodDna || "").length,
+    voiceFromBody: !!(voiceDnaMd || "").trim(),
+    brandFromBody: !!(brandDnaMd || "").trim(),
+    methodFromBody: !!(methodDnaMd || "").trim(),
+  });
 
   system += formatStructuredIntakeForPrompt(structuredIntake);
 

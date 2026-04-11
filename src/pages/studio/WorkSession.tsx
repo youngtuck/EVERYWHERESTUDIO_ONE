@@ -647,6 +647,22 @@ function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
 }
 
 // ── Per-format improve cards (Review sidebar) ────────────────
+/** Stable key so Method DNA lint runs once per draft body (auto Review + pre-export). */
+function draftFingerprintForLint(text: string): string {
+  const d = text || "";
+  let h = 0;
+  for (let i = 0; i < d.length; i++) {
+    h = (Math.imul(31, h) + d.charCodeAt(i)) | 0;
+  }
+  return `${d.length}:${h}`;
+}
+
+type MethodTermHit = {
+  draftSnippet: string;
+  genericPhrase: string;
+  methodTerm: string;
+};
+
 // ── Draft flag counting ──────────────────────────────────────
 const PASSIVE_REGEX = /(was\s+\w+ed\b|were\s+\w+ed\b|has been\s+\w+ed\b|have been\s+\w+ed\b|had been\s+\w+ed\b|is being\s+\w+ed\b|are being\s+\w+ed\b|was being\s+\w+ed\b|never made it anywhere)/i;
 const CLICHE_REGEX = /(lost opportunity|game.?changer|at the end of the day|touch base|move the needle|deep dive|circle back|low.?hanging fruit|synergy|leverage|paradigm shift|think outside|best practices|value.?add)/i;
@@ -708,6 +724,13 @@ function deriveReviewDisplayGates(
 function ReviewDash({
   pipelineRun, running, onExportAll, allExported, onRepairPipeline, fixingGate, rerunning,
   exportLockedReason,
+  hasMethodDna,
+  methodTermHits,
+  methodLintLoading,
+  methodLintSkipped,
+  methodLintLastCompletedFp,
+  draftLintFp,
+  onCheckMethodTerms,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
@@ -717,6 +740,13 @@ function ReviewDash({
   prefillReed: (text: string) => void;
   /** When set, Export / Wrap is blocked until the user completes the main Pre-Wrap picker. */
   exportLockedReason?: string | null;
+  hasMethodDna: boolean;
+  methodTermHits: MethodTermHit[];
+  methodLintLoading: boolean;
+  methodLintSkipped: boolean;
+  methodLintLastCompletedFp: string | null;
+  draftLintFp: string;
+  onCheckMethodTerms: () => void;
 }) {
   /** Internal publish readiness from pipeline; never rendered as a number. */
   const publishAggregateOk = pipelineRun?.impactScore != null && pipelineRun.impactScore.total >= 75;
@@ -825,6 +855,54 @@ function ReviewDash({
               {exportLockedReason}
             </div>
           )}
+
+          {hasMethodDna && (
+            <DpSection>
+              <DpLabel>Method terms</DpLabel>
+              <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 8, lineHeight: 1.45 }}>
+                Compare the draft to your Method DNA for generic wording that might replace a framework name.
+              </div>
+              <button
+                type="button"
+                onClick={onCheckMethodTerms}
+                disabled={methodLintLoading}
+                style={{
+                  width: "100%", padding: "8px 10px", borderRadius: 6, marginBottom: 8,
+                  background: "var(--glass-card)", border: "1px solid var(--glass-border)",
+                  fontSize: 11, fontWeight: 600, color: "var(--fg-2)",
+                  cursor: methodLintLoading ? "wait" : "pointer", fontFamily: FONT,
+                  opacity: methodLintLoading ? 0.75 : 1,
+                }}
+              >
+                {methodLintLoading ? "Checking…" : "Check method terms"}
+              </button>
+              {methodLintSkipped && (
+                <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 6 }}>
+                  No Method DNA on file for this account. Add Method DNA under Resources if you expect hits here.
+                </div>
+              )}
+              {!methodLintSkipped && methodTermHits.length > 0 && (
+                <ul style={{ margin: 0, paddingLeft: 14, fontSize: 10, color: "var(--fg-2)", lineHeight: 1.5 }}>
+                  {methodTermHits.map((h, i) => (
+                    <li key={i} style={{ marginBottom: 6 }}>
+                      <span style={{ color: "var(--fg-3)" }}>Draft: </span>
+                      {h.draftSnippet || h.genericPhrase}
+                      {h.methodTerm ? (
+                        <>
+                          <span style={{ color: "var(--fg-3)" }}> · Prefer: </span>
+                          {h.methodTerm}
+                        </>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!methodLintSkipped && !methodLintLoading && methodLintLastCompletedFp === draftLintFp && methodTermHits.length === 0 && (
+                <div style={{ fontSize: 10, color: "var(--fg-3)" }}>No suspected generic replacements in this pass.</div>
+              )}
+            </DpSection>
+          )}
+
           <button
             onClick={onExportAll}
             disabled={allExported || !!exportLockedReason}
@@ -2807,6 +2885,14 @@ export default function WorkSession() {
   const [exportedTabs, setExportedTabs] = useState<Record<string, boolean>>({});
   const [outputId, setOutputId] = useState<string | null>(persisted?.generatedOutputId || null);
   const [allExported, setAllExported] = useState(false);
+  const [methodTermHits, setMethodTermHits] = useState<MethodTermHit[]>([]);
+  const [methodLintLoading, setMethodLintLoading] = useState(false);
+  const [methodLintSkipped, setMethodLintSkipped] = useState(false);
+  const [methodLintLastCompletedFp, setMethodLintLastCompletedFp] = useState<string | null>(null);
+  const methodLintSuccessDraftKeyRef = useRef<string | null>(null);
+  const methodLintCoalesceRef = useRef<{ key: string; promise: Promise<boolean> } | null>(null);
+
+  const draftLintFp = useMemo(() => draftFingerprintForLint(draft || ""), [draft]);
 
   // Mark restored so we don't re-read persisted on re-renders
   useEffect(() => { restored.current = true; }, []);
@@ -3552,6 +3638,118 @@ export default function WorkSession() {
     await Promise.allSettled(promises);
   }, [draft, user, selectedFormats, voiceDnaMd, brandDnaMd, outputType, preWrapPresentationMins, structuredIntakePayload]);
 
+  const ensureMethodDnaLint = useCallback(async (draftText: string): Promise<boolean> => {
+    const trimmed = draftText.trim();
+    if (!trimmed || !user?.id || !methodDnaMd.trim()) return true;
+
+    const fp = draftFingerprintForLint(trimmed);
+    if (methodLintSuccessDraftKeyRef.current === fp) return true;
+
+    const coalesced = methodLintCoalesceRef.current;
+    if (coalesced?.key === fp) return coalesced.promise;
+
+    const promise = (async (): Promise<boolean> => {
+      setMethodLintLoading(true);
+      setMethodLintSkipped(false);
+      try {
+        const res = await fetchWithRetry(
+          `${API_BASE}/api/method-dna-lint`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ draft: trimmed }),
+          },
+          { timeout: 28000, maxRetries: 1 },
+        );
+        if (!res.ok) {
+          toast("Method term check failed. You can still export.", "error");
+          return false;
+        }
+        const data = await res.json() as { skipped?: boolean; items?: unknown[] };
+        if (data?.skipped) {
+          setMethodTermHits([]);
+          setMethodLintSkipped(true);
+          methodLintSuccessDraftKeyRef.current = fp;
+          setMethodLintLastCompletedFp(fp);
+          return true;
+        }
+        const raw = Array.isArray(data?.items) ? data.items : [];
+        const hits: MethodTermHit[] = [];
+        for (const row of raw) {
+          if (!row || typeof row !== "object") continue;
+          const r = row as Record<string, unknown>;
+          const draftSnippet = String(r.draftSnippet || r.snippet || "").trim().slice(0, 200);
+          const genericPhrase = String(r.genericPhrase || r.draftPhrase || r.generic || "").trim().slice(0, 200);
+          const methodTerm = String(r.methodTerm || r.likelyIntended || r.expectedTerm || "").trim().slice(0, 200);
+          if (!draftSnippet && !genericPhrase) continue;
+          hits.push({
+            draftSnippet: draftSnippet || genericPhrase,
+            genericPhrase: genericPhrase || draftSnippet,
+            methodTerm,
+          });
+        }
+        setMethodTermHits(hits);
+        setMethodLintSkipped(false);
+        methodLintSuccessDraftKeyRef.current = fp;
+        setMethodLintLastCompletedFp(fp);
+        return true;
+      } catch (e) {
+        console.error("[WorkSession][method-dna-lint]", e);
+        toast("Method term check failed. You can still export.", "error");
+        return false;
+      } finally {
+        setMethodLintLoading(false);
+        if (methodLintCoalesceRef.current?.key === fp) {
+          methodLintCoalesceRef.current = null;
+        }
+      }
+    })();
+
+    methodLintCoalesceRef.current = { key: fp, promise };
+    return promise;
+  }, [user?.id, methodDnaMd, toast]);
+
+  const handleCheckMethodTerms = useCallback(() => {
+    methodLintSuccessDraftKeyRef.current = null;
+    setMethodLintLastCompletedFp(null);
+    void ensureMethodDnaLint(draft);
+  }, [draft, ensureMethodDnaLint]);
+
+  const prevDraftLintFpRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!methodDnaMd.trim()) {
+      setMethodTermHits([]);
+      setMethodLintSkipped(false);
+      setMethodLintLastCompletedFp(null);
+      methodLintSuccessDraftKeyRef.current = null;
+      prevDraftLintFpRef.current = null;
+      return;
+    }
+    if (prevDraftLintFpRef.current === null) {
+      prevDraftLintFpRef.current = draftLintFp;
+      return;
+    }
+    if (prevDraftLintFpRef.current !== draftLintFp) {
+      prevDraftLintFpRef.current = draftLintFp;
+      setMethodTermHits([]);
+      setMethodLintSkipped(false);
+      setMethodLintLastCompletedFp(null);
+      methodLintSuccessDraftKeyRef.current = null;
+    }
+  }, [draftLintFp, methodDnaMd]);
+
+  useEffect(() => {
+    if (stage !== "Review" || !pipelineRun || !methodDnaMd.trim() || !(draft || "").trim() || pipelineRunning) return;
+    const fp = draftFingerprintForLint(draft);
+    if (methodLintSuccessDraftKeyRef.current === fp) return;
+    let cancelled = false;
+    void (async () => {
+      await ensureMethodDnaLint(draft);
+      if (cancelled) return;
+    })();
+    return () => { cancelled = true; };
+  }, [stage, draft, methodDnaMd, pipelineRunning, pipelineRun, ensureMethodDnaLint]);
+
   // ── EDIT -> REVIEW: Run pipeline ──────────────────────────────
   const handleRunPipeline = useCallback(async () => {
     setPreWrapPickIds([]);
@@ -3703,6 +3901,10 @@ export default function WorkSession() {
     let resolvedOutputId = outputId;
     let catalogOk = true;
 
+    if (user?.id && methodDnaMd.trim() && draft.trim()) {
+      await ensureMethodDnaLint(draft);
+    }
+
     if (user && draft.trim()) {
       catalogOk = false;
       try {
@@ -3823,7 +4025,7 @@ export default function WorkSession() {
     }
 
     nav("/studio/wrap");
-  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins, projectId]);
+  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins, projectId, methodDnaMd, ensureMethodDnaLint]);
 
   const handleStartWrapFromGate = useCallback(() => {
     if (preWrapPickIds.length === 0) return;
@@ -3939,6 +4141,12 @@ export default function WorkSession() {
     setHvtRunning(false);
     setAllExported(false);
     setExportedTabs({});
+    setMethodTermHits([]);
+    setMethodLintSkipped(false);
+    setMethodLintLastCompletedFp(null);
+    methodLintSuccessDraftKeyRef.current = null;
+    methodLintCoalesceRef.current = null;
+    prevDraftLintFpRef.current = null;
     setOutputId(null);
     setProjectId(null);
     setDraftVersions([]);
@@ -4425,6 +4633,13 @@ export default function WorkSession() {
               rerunning={rerunningPipeline}
               prefillReed={prefillReed}
               exportLockedReason={exportLockedReason}
+              hasMethodDna={methodDnaMd.trim().length > 0}
+              methodTermHits={methodTermHits}
+              methodLintLoading={methodLintLoading}
+              methodLintSkipped={methodLintSkipped}
+              methodLintLastCompletedFp={methodLintLastCompletedFp}
+              draftLintFp={draftLintFp}
+              onCheckMethodTerms={handleCheckMethodTerms}
             />
           );
         }
@@ -4443,6 +4658,8 @@ export default function WorkSession() {
     prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
     dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
     formatDrafts,
+    methodDnaMd, methodTermHits, methodLintLoading, methodLintSkipped,
+    methodLintLastCompletedFp, draftLintFp, handleCheckMethodTerms,
   ]);
 
   // ─────────────────────────────────────────────────────────────

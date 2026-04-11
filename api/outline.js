@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getUserResources } from "./_resources.js";
+import { dnaDebug } from "./_dnaDebugLog.js";
 import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
 import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
@@ -105,7 +106,11 @@ export default async function handler(req, res) {
 
   try {
     // Load user resources for voice/brand/method context
-    const resources = await getUserResources(userId);
+    const resources = await getUserResources(userId, { caller: "outline" });
+    dnaDebug("outline.handler", {
+      hasUserId: !!userId,
+      messageCount: messages.length,
+    });
     const A = DNA_LIMITS.auxiliary;
 
     // Build system prompt with voice/brand context

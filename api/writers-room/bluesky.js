@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 
   let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
   if (userId) {
-    try { resources = await getUserResources(userId); } catch (e) {
+    try { resources = await getUserResources(userId, { caller: "writers-room.bluesky" }); } catch (e) {
       console.error("[bluesky] Failed to load resources:", e);
     }
   }

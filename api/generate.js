@@ -1,10 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { scoreContent } from "./_score.js";
 import { getUserResources } from "./_resources.js";
-import { clipDna, DNA_LIMITS, METHOD_DNA_LEXICON_LINE } from "./_dnaContext.js";
+import { clipDna, DNA_LIMITS, methodDnaSystemAppendix } from "./_dnaContext.js";
 import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
 import { requireAuth } from "./_auth.js";
+import { dnaDebug } from "./_dnaDebugLog.js";
 import { formatStructuredIntakeForPrompt } from "./_structuredIntakePrompt.js";
 
 function sanitizeContent(text) {
@@ -42,15 +43,20 @@ export default async function handler(req, res) {
   /** WorkSession sends Reed-locked checklist; read in system prompt below. */
   const structuredIntake = req.body?.structuredIntake;
 
-  let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
+  let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "", composerMemory: "" };
   const userId = req.body?.userId;
   if (userId) {
     try {
-      resources = await getUserResources(userId);
+      resources = await getUserResources(userId, { caller: "generate" });
     } catch (e) {
       console.error("[api/generate] Failed to load resources", e);
     }
   }
+
+  dnaDebug("generate.handler", {
+    hasUserId: !!userId,
+    hasComposerMemory: !!(resources.composerMemory && String(resources.composerMemory).trim()),
+  });
 
   console.log("[generate] Voice DNA length:", resources.voiceDna?.length || 0);
   console.log("[generate] Brand DNA length:", resources.brandDna?.length || 0);
@@ -86,11 +92,7 @@ GENERATION QUALITY RULES (non-negotiable):
       system += `\n\nUSER VOICE PROFILE:\n- Role: ${voiceProfile.role}\n- Audience: ${voiceProfile.audience}\n- Tone: ${voiceProfile.tone}\n- Writing sample: "${voiceProfile.writing_sample?.slice(0, 600)}"\n\nMatch this person's voice exactly.`;
     }
     if (resources.methodDna?.trim()) {
-      system += `\n\nMETHOD DNA (ACTIVE CONSTRAINT):
-${METHOD_DNA_LEXICON_LINE}
-
-METHOD DNA:
-${clipDna(resources.methodDna.trim(), G.method)}`;
+      system += methodDnaSystemAppendix(resources.methodDna, G.method);
     }
     if (resources.voiceDna) {
       system += `\n\nVOICE DNA (ACTIVE CONSTRAINT):
@@ -195,7 +197,7 @@ Output ONLY the complete revised draft. No commentary, no explanation.`;
       system += formatStructuredIntakeForPrompt(structuredIntake);
 
       if (resources.methodDna?.trim()) {
-        system += `\n\nMETHOD DNA (ACTIVE CONSTRAINT):\n${METHOD_DNA_LEXICON_LINE}\n\nMETHOD DNA:\n${clipDna(resources.methodDna.trim(), G.method)}`;
+        system += methodDnaSystemAppendix(resources.methodDna, G.method);
       }
       if (resources.voiceDna) {
         system += "\n\nVOICE DNA - The revision MUST match this voice:\n" + clipDna(resources.voiceDna, G.voice);
@@ -294,7 +296,7 @@ WORD BAN: Never use the word "vibes" or "vibe." Use atmosphere, energy, tone, ch
 Output ONLY the complete revised draft. No commentary, no explanation.`
             + formatStructuredIntakeForPrompt(structuredIntake)
             + (resources.methodDna?.trim()
-              ? `\n\nMETHOD DNA (ACTIVE CONSTRAINT):\n${METHOD_DNA_LEXICON_LINE}\n\nMETHOD DNA:\n${clipDna(resources.methodDna.trim(), G.method)}`
+              ? methodDnaSystemAppendix(resources.methodDna, G.method)
               : "")
             + (resources.voiceDna ? `\n\nVOICE DNA - The revision MUST match this voice:\n${clipDna(resources.voiceDna, G.voice)}` : "")
             + (resources.brandDna ? `\n\nBRAND DNA:\n${clipDna(resources.brandDna, G.brand)}` : "");

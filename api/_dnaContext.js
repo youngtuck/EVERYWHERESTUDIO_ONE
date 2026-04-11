@@ -14,6 +14,8 @@ export const DNA_LIMITS = {
   generate: { voice: 14000, brand: 10000, method: 14000 },
   /** Reed chat system prompt DNA blocks */
   reed: { voice: 10000, brand: 6000, method: 8000, references: 5000 },
+  /** Method term lint: draft excerpt plus Method DNA (Haiku, JSON-only output) */
+  methodLint: { draft: 14000, method: 3200 },
 };
 
 /**
@@ -32,4 +34,16 @@ export function clipDna(text, maxLen) {
   const t = String(text).trim();
   if (t.length <= maxLen) return t;
   return `${t.slice(0, maxLen)}\n\n[DNA context truncated for model budget]`;
+}
+
+/**
+ * Canonical Method DNA block appended to system prompts (generate, adapt-format, revision passes).
+ * @param {string} [methodDnaRaw]
+ * @param {number} maxChars clipDna budget (use DNA_LIMITS.generate.method or DNA_LIMITS.adapt.method)
+ * @returns {string} empty when Method DNA is absent
+ */
+export function methodDnaSystemAppendix(methodDnaRaw, maxChars) {
+  const m = String(methodDnaRaw || "").trim();
+  if (!m) return "";
+  return `\n\nMETHOD DNA (ACTIVE CONSTRAINT):\n${METHOD_DNA_LEXICON_LINE}\n\nMETHOD DNA:\n${clipDna(m, maxChars)}`;
 }
