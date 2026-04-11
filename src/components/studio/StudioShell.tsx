@@ -309,6 +309,14 @@ export default function StudioShell() {
   const [reedPrefill, setReedPrefill] = useState("");
   const [reedThread, setReedThread] = useState<Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>>([]);
 
+  const studioGlassDense =
+    location.pathname.startsWith("/studio/outputs") ||
+    location.pathname.startsWith("/studio/resources") ||
+    location.pathname.startsWith("/studio/wrap") ||
+    location.pathname.startsWith("/studio/watch") ||
+    location.pathname.startsWith("/studio/admin") ||
+    location.pathname.startsWith("/studio/lot");
+
   return (
     <ShellContext.Provider value={{
       searchOpen, setSearchOpen,
@@ -379,12 +387,15 @@ export default function StudioShell() {
 
           {/* Main canvas (Reed / dashboard is a floating glass flyout) */}
           <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
-            <main className="studio-main-inner studio-content-substrate" style={{
-              flex: 1, overflowY: "auto", minWidth: 0,
-              paddingBottom: isMobile ? 80 : 0, position: "relative",
-              borderRadius: "12px 0 0 0",
-              minHeight: 0,
-            }}>
+            <main
+              className={`studio-main-inner studio-content-substrate${studioGlassDense ? " studio-glass-dense" : ""}`}
+              style={{
+                flex: 1, overflowY: "auto", minWidth: 0,
+                paddingBottom: isMobile ? 80 : 0, position: "relative",
+                borderRadius: "12px 0 0 0",
+                minHeight: 0,
+              }}
+            >
               <Outlet />
             </main>
           </div>

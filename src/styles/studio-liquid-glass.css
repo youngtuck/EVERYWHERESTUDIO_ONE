@@ -1004,6 +1004,57 @@
   right: 10px;
 }
 
+/**
+ * Dense studio canvases (Catalog, Templates, Wrap, Files, etc.): many nested
+ * .liquid-glass / .liquid-glass-card panels each run infinite edge + specular
+ * animations and full backdrop-filter. That overloads the compositor and reads
+ * as jitter or shaking. This scope turns animations off, lightens blur, and
+ * removes hover lift on cards so the page stays stable.
+ */
+.studio-glass-dense .liquid-glass,
+.studio-glass-dense .liquid-glass-dark,
+.studio-glass-dense .liquid-glass-card,
+.studio-glass-dense .liquid-glass-pill,
+.studio-glass-dense .liquid-glass-menu,
+.studio-glass-dense .liquid-glass-btn,
+.studio-glass-dense .liquid-glass-btn-gold {
+  animation: none !important;
+}
+.studio-glass-dense .liquid-glass::before,
+.studio-glass-dense .liquid-glass-dark::before,
+.studio-glass-dense .liquid-glass-card::before,
+.studio-glass-dense .liquid-glass-pill::before,
+.studio-glass-dense .liquid-glass-menu::before,
+.studio-glass-dense .liquid-glass-btn::before,
+.studio-glass-dense .liquid-glass-btn-gold::before {
+  animation: none !important;
+}
+.studio-glass-dense .liquid-glass::after,
+.studio-glass-dense .liquid-glass-dark::after {
+  backdrop-filter: blur(12px) saturate(1.45);
+  -webkit-backdrop-filter: blur(12px) saturate(1.45);
+}
+.studio-glass-dense .liquid-glass-card::after {
+  backdrop-filter: blur(10px) saturate(1.4);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+}
+.studio-glass-dense .liquid-glass-pill::after {
+  backdrop-filter: blur(10px) saturate(1.4);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+}
+.studio-glass-dense .liquid-glass-menu::after {
+  backdrop-filter: blur(20px) saturate(1.55);
+  -webkit-backdrop-filter: blur(20px) saturate(1.55);
+}
+.studio-glass-dense .liquid-glass-btn::after,
+.studio-glass-dense .liquid-glass-btn-gold::after {
+  backdrop-filter: blur(8px) saturate(1.4);
+  -webkit-backdrop-filter: blur(8px) saturate(1.4);
+}
+.studio-glass-dense .liquid-glass-card:hover {
+  transform: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .liquid-glass,
   .liquid-glass-dark,
