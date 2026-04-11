@@ -17,9 +17,54 @@ import {
   presentationTargetWords,
   DEFAULT_PRESENTATION_MINUTES,
 } from "../../lib/wrapFormatRules";
+import { OUTPUT_TYPES } from "../../lib/constants";
 import "./shared.css";
 
 const FONT = "var(--font)";
+
+/** Library shelves (match sidebar Outputs: Content, Business, Social, Extended, Templates). */
+type LandingShelfKey = "content" | "business" | "social" | "extended" | "templates";
+
+const LANDING_SHELF_ORDER: LandingShelfKey[] = ["content", "business", "social", "extended", "templates"];
+
+/** Types users often file from the Templates area (ids still map to real `outputs.output_type`). */
+const TEMPLATES_SHELF_TYPES: { id: string; name: string }[] = [
+  { id: "essay", name: "Essay" },
+  { id: "email", name: "Email" },
+  { id: "newsletter", name: "Newsletter" },
+  { id: "podcast", name: "Podcast" },
+  { id: "presentation", name: "Presentation" },
+  { id: "freestyle", name: "Freestyle / custom" },
+];
+
+function typesForLandingShelf(shelf: LandingShelfKey): { id: string; name: string }[] {
+  if (shelf === "templates") return TEMPLATES_SHELF_TYPES;
+  const block = OUTPUT_TYPES[shelf as keyof typeof OUTPUT_TYPES];
+  if (!block || !("types" in block)) return [];
+  const list = (block as { types: { id: string; name: string }[] }).types.map(t => ({ id: t.id, name: t.name }));
+  if (shelf === "social" && !list.some(t => t.id === "social_media")) {
+    return [{ id: "social_media", name: "Social media" }, ...list];
+  }
+  return list;
+}
+
+function landingShelfLabel(shelf: LandingShelfKey): string {
+  if (shelf === "templates") return "Templates";
+  const block = OUTPUT_TYPES[shelf as keyof typeof OUTPUT_TYPES];
+  if (block && "label" in block) return (block as { label: string }).label;
+  return shelf;
+}
+
+/** Best default tab for a type id (used when the active piece changes). */
+function inferLandingShelfForTypeId(typeId: string): LandingShelfKey {
+  const id = (typeId || "freestyle").toLowerCase();
+  if (id === "social_media") return "social";
+  for (const shelf of ["content", "business", "social", "extended"] as const) {
+    if (OUTPUT_TYPES[shelf]?.types?.some(t => t.id === id)) return shelf;
+  }
+  if (TEMPLATES_SHELF_TYPES.some(t => t.id === id)) return "templates";
+  return "templates";
+}
 
 /** Tab labels must match `FORMAT_INSTRUCTIONS` keys in api/adapt-format.js */
 const WRAP_CHANNEL_FORMATS = [
@@ -419,12 +464,27 @@ export default function WrapPage() {
   const activeOutput = sessionDraft || selectedOutput;
   const hasContent = !!activeOutput;
 
+  const [wrapCatalogTypeId, setWrapCatalogTypeId] = useState("freestyle");
+  const [originCatalogTypeId, setOriginCatalogTypeId] = useState<string | null>(null);
+  const [landingShelf, setLandingShelf] = useState<LandingShelfKey>("content");
+
+  useLayoutEffect(() => {
+    if (!activeOutput?.id) {
+      setOriginCatalogTypeId(null);
+      return;
+    }
+    const ot = activeOutput.output_type?.trim() || "freestyle";
+    setOriginCatalogTypeId(ot);
+    setWrapCatalogTypeId(ot);
+    setLandingShelf(inferLandingShelfForTypeId(ot));
+  }, [activeOutput?.id, activeOutput?.output_type]);
+
   const adaptFormat = useCallback(async (format: string): Promise<"done" | "error"> => {
     if (!activeOutput?.content || !user) return "error";
     if (adaptingRef.current.has(format)) return "error";
     adaptingRef.current.add(format);
 
-    const ot = activeOutput.output_type || "freestyle";
+    const ot = wrapCatalogTypeId || "freestyle";
     const presMins = ot === "presentation" ? wrapPresentationMinutes : null;
     const wrapConstraintSupplement = buildWrapConstraintSupplement(ot, format, presMins);
 
@@ -481,7 +541,7 @@ export default function WrapPage() {
     } finally {
       adaptingRef.current.delete(format);
     }
-  }, [activeOutput, user, wrapPresentationMinutes]);
+  }, [activeOutput, user, wrapPresentationMinutes, wrapCatalogTypeId]);
 
   const runBuildForChannels = useCallback(async (channels: string[]) => {
     if (!activeOutput?.content || !user || channels.length === 0) {
@@ -577,19 +637,20 @@ export default function WrapPage() {
           user_id: user.id,
           title: (activeOutput.title || "Untitled").slice(0, 200),
           content: activeOutput.content,
-          output_type: activeOutput.output_type || "freestyle",
+          output_type: wrapCatalogTypeId || "freestyle",
           content_state: "vault",
           published_at: new Date().toISOString(),
         }).select("id").single();
         if (error) throw error;
         if (data?.id) {
           savedId = data.id;
-          setSessionDraft({ ...activeOutput, id: data.id });
+          setSessionDraft({ ...activeOutput, id: data.id, output_type: wrapCatalogTypeId || "freestyle" });
         }
       } else {
         const { error } = await supabase.from("outputs").update({
           content_state: "vault",
           published_at: new Date().toISOString(),
+          output_type: wrapCatalogTypeId || "freestyle",
         }).eq("id", activeOutput.id);
         if (error) throw error;
       }
@@ -603,7 +664,7 @@ export default function WrapPage() {
     } finally {
       setExporting(false);
     }
-  }, [activeOutput, user, formats, formatContents, adaptFormat, toast]);
+  }, [activeOutput, user, formats, formatContents, adaptFormat, toast, wrapCatalogTypeId]);
 
   const handleCopy = useCallback(() => {
     const entry = formatContents[activeFormat];
@@ -627,11 +688,11 @@ export default function WrapPage() {
   const wrapRuleLines = useMemo(
     () => (hasContent
       ? getWrapRuleSummaryLines(
-        activeOutput?.output_type || "freestyle",
-        activeOutput?.output_type === "presentation" ? wrapPresentationMinutes : null,
+        wrapCatalogTypeId || "freestyle",
+        wrapCatalogTypeId === "presentation" ? wrapPresentationMinutes : null,
       )
       : []),
-    [hasContent, activeOutput?.output_type, wrapPresentationMinutes],
+    [hasContent, wrapCatalogTypeId, wrapPresentationMinutes],
   );
 
   const applyPresentationLength = useCallback(() => {
@@ -644,14 +705,14 @@ export default function WrapPage() {
     if (hasContent) {
       setFeedbackContent(
         <WrapDashPanel
-          outputType={activeOutput?.output_type || "freestyle"}
+          outputType={wrapCatalogTypeId || "freestyle"}
           formatCount={formats.length}
           onExportAll={handleExportAll}
           exported={exported}
           exporting={exporting}
           prefillReed={prefillReed}
           ruleSummaryLines={wrapRuleLines}
-          presentationMinutes={activeOutput?.output_type === "presentation" ? wrapPresentationMinutes : null}
+          presentationMinutes={wrapCatalogTypeId === "presentation" ? wrapPresentationMinutes : null}
           phase={wrapPhase}
         />,
       );
@@ -659,7 +720,7 @@ export default function WrapPage() {
       setFeedbackContent(null);
     }
     return () => setFeedbackContent(null);
-  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent, wrapRuleLines, wrapPresentationMinutes, wrapPhase]);
+  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent, wrapRuleLines, wrapPresentationMinutes, wrapPhase, wrapCatalogTypeId]);
 
   if (loading) {
     return (
@@ -786,16 +847,117 @@ export default function WrapPage() {
               Where should this land?
             </h1>
             <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "0 0 24px", lineHeight: 1.55 }}>
-              Select every channel you want Reed to adapt. Your draft stays the source of truth; each channel gets its own surface and structure.
+              Set Library filing below, then select every channel you want Reed to adapt. Your draft stays the source of truth; each channel gets its own surface and structure.
             </p>
 
             <div className="liquid-glass-card" style={{ padding: "16px 18px", marginBottom: 20 }}>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "var(--fg-3)", marginBottom: 6, textTransform: "uppercase" as const }}>Piece</div>
               <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", lineHeight: 1.35 }}>{activeOutput.title || "Untitled"}</div>
-              <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 6 }}>
-                {Math.round((activeOutput.content || "").length / 5)} words approx. · {outputTypeDisplayLabel(activeOutput.output_type || "freestyle")}
+              <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 6, lineHeight: 1.45 }}>
+                {Math.round((activeOutput.content || "").length / 5)} words approx.
+                {originCatalogTypeId && wrapCatalogTypeId !== originCatalogTypeId ? (
+                  <>
+                    {" "}· Work: <span style={{ color: "var(--fg-2)", fontWeight: 600 }}>{outputTypeDisplayLabel(originCatalogTypeId)}</span>
+                    {" "}· Catalog: <span style={{ color: "var(--fg-2)", fontWeight: 600 }}>{outputTypeDisplayLabel(wrapCatalogTypeId)}</span>
+                  </>
+                ) : (
+                  <> · {outputTypeDisplayLabel(wrapCatalogTypeId)}</>
+                )}
               </div>
             </div>
+
+            <div className="liquid-glass-card" style={{ padding: "16px 18px", marginBottom: 18 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "var(--fg-3)", marginBottom: 8, textTransform: "uppercase" as const }}>
+                Library filing
+              </div>
+              <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 14px", lineHeight: 1.55 }}>
+                Defaults to your Work output type. Pick any shelf that matches where this should live in Catalog (Content, Business, Social Media, Extended, or Templates). Changing this does not rerun Work; it only affects how the row is filed and filtered.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                {LANDING_SHELF_ORDER.map(shelf => {
+                  const on = landingShelf === shelf;
+                  return (
+                    <button
+                      key={shelf}
+                      type="button"
+                      onClick={() => {
+                        setLandingShelf(shelf);
+                        const types = typesForLandingShelf(shelf);
+                        if (types.length && !types.some(t => t.id === wrapCatalogTypeId)) {
+                          setWrapCatalogTypeId(types[0].id);
+                        }
+                      }}
+                      className={on ? "liquid-glass-card" : "liquid-glass"}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        fontFamily: FONT,
+                        fontSize: 11,
+                        fontWeight: on ? 700 : 600,
+                        color: on ? "var(--fg)" : "var(--fg-3)",
+                        border: on ? "1px solid rgba(245,198,66,0.45)" : "1px solid var(--glass-border)",
+                        background: on ? "rgba(245,198,66,0.08)" : undefined,
+                      }}
+                    >
+                      {landingShelfLabel(shelf)}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(118px, 1fr))",
+                gap: 8,
+              }}>
+                {typesForLandingShelf(landingShelf).map(t => {
+                  const sel = wrapCatalogTypeId === t.id;
+                  return (
+                    <button
+                      key={`${landingShelf}-${t.id}`}
+                      type="button"
+                      aria-pressed={sel}
+                      onClick={() => setWrapCatalogTypeId(t.id)}
+                      className={sel ? "liquid-glass-card" : "liquid-glass"}
+                      style={{
+                        textAlign: "left" as const,
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        fontFamily: FONT,
+                        border: sel ? "2px solid rgba(245,198,66,0.55)" : "1px solid var(--glass-border)",
+                        background: sel ? "rgba(245,198,66,0.08)" : undefined,
+                      }}
+                    >
+                      <span style={{ fontSize: 11, fontWeight: sel ? 700 : 600, color: "var(--fg)", display: "block" }}>{t.name}</span>
+                      <span style={{ fontSize: 8, color: "var(--fg-3)", marginTop: 4, display: "block", fontFamily: "var(--font-mono, ui-monospace, monospace)" }}>{t.id}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {originCatalogTypeId && wrapCatalogTypeId !== originCatalogTypeId && (
+              <div
+                className="liquid-glass-card"
+                style={{
+                  marginBottom: 18,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(245,198,66,0.4)",
+                  background: "rgba(245,198,66,0.07)",
+                }}
+              >
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#9A7030", marginBottom: 6, textTransform: "uppercase" as const }}>
+                  Different from Work
+                </div>
+                <p style={{ fontSize: 12, color: "var(--fg-2)", margin: 0, lineHeight: 1.55 }}>
+                  Work ran as <strong style={{ fontWeight: 600 }}>{outputTypeDisplayLabel(originCatalogTypeId)}</strong>
+                  . You are filing the saved piece as <strong style={{ fontWeight: 600 }}>{outputTypeDisplayLabel(wrapCatalogTypeId)}</strong>
+                  . That only updates Catalog grouping and filters. Intake, checkpoints, and your draft text are unchanged.
+                </p>
+              </div>
+            )}
 
             <div style={{
               display: "grid",
@@ -1199,7 +1361,7 @@ export default function WrapPage() {
         </div>
       </div>
 
-      {activeOutput.output_type === "presentation" && (
+      {wrapCatalogTypeId === "presentation" && (
         <div className="liquid-glass-card" style={{ margin: "0 20px 16px", padding: "12px 16px", flexShrink: 0 }}>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
             <label style={{ fontSize: 11, color: "var(--fg-2)", display: "flex", alignItems: "center", gap: 8 }}>
