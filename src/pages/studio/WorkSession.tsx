@@ -885,11 +885,14 @@ function StageIntake({
         display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden",
         background: "transparent", alignItems: "center", justifyContent: "center",
       }}>
-        <div style={{
-          display: "flex", flexDirection: "column", alignItems: "center",
-          width: "100%", maxWidth: 680, minWidth: 0, padding: "0 clamp(12px, 4vw, 24px)",
-          marginBottom: 40,
-        }}>
+        <div
+          className="work-stage-content-column"
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            minWidth: 0, padding: "0 clamp(12px, 4vw, 24px)",
+            marginBottom: 40,
+          }}
+        >
           {/* Greeting */}
           <div style={{
             fontSize: 26, fontWeight: 600, color: "var(--fg)",
@@ -922,86 +925,90 @@ function StageIntake({
 
   // Active chat state: messages + input bar at bottom
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0 }}>
-      {/* Scrollable message area */}
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0, alignItems: "center" }}>
       <div
-        ref={scrollAreaRef}
+        className="work-stage-content-column"
         style={{
-          flex: 1, minHeight: 0, overflowY: "auto",
-          padding: "20px clamp(12px, 4vw, 24px)",
-          display: "flex", flexDirection: "column",
-          alignItems: "center",
-          justifyContent: messages.length <= 3 ? "flex-end" : "flex-start",
+          flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden",
+          width: "100%",
         }}
       >
-        <div style={{
-          width: "100%",
-          maxWidth: isMobile ? "100%" : 700,
-          display: "flex",
-          flexDirection: "column",
-          gap: isMobile ? 10 : 14,
-        }}>
-          {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} isChallenge={m.isChallenge} />)}
-          {sending && (
-            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
-              <ReedAvatar />
-              <LoadingDots label="" />
-            </div>
-          )}
-          <div ref={bottomRef} style={{ height: 1 }} />
-        </div>
-      </div>
-
-      {/* "Build outline" appears above the input when ready */}
-      {isReady && (
-        <div style={{ display: "flex", justifyContent: "center", padding: "8px 24px 0" }}>
-          <button
-            onClick={onAdvance}
-            style={{
-              fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 6,
-              background: "var(--gold-bright)", border: "none", color: "var(--fg)",
-              cursor: "pointer", fontFamily: FONT, letterSpacing: "0.01em",
-            }}
-          >
-            Build outline →
-          </button>
-        </div>
-      )}
-
-      {/* Intake progress bar */}
-      <div style={{
-        padding: "8px 14px 0",
-        background: "transparent",
-        borderTop: "1px solid rgba(0,0,0,0.06)",
-        flexShrink: 0,
-      }}>
-        <div style={{ width: "100%", height: 4, background: "var(--glass-border)", borderRadius: 2, overflow: "hidden" }}>
+        {/* Scrollable message area */}
+        <div
+          ref={scrollAreaRef}
+          style={{
+            flex: 1, minHeight: 0, overflowY: "auto",
+            padding: "20px clamp(12px, 4vw, 24px)",
+            display: "flex", flexDirection: "column",
+            justifyContent: messages.length <= 3 ? "flex-end" : "flex-start",
+          }}
+        >
           <div style={{
-            height: "100%", width: `${Math.round(progress * 100)}%`,
-            background: "var(--gold-bright, #F5C642)", borderRadius: 2,
-            transition: "width 0.3s ease",
-          }} />
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: isMobile ? 10 : 14,
+          }}>
+            {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} isChallenge={m.isChallenge} />)}
+            {sending && (
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingTop: 4 }}>
+                <ReedAvatar />
+                <LoadingDots label="" />
+              </div>
+            )}
+            <div ref={bottomRef} style={{ height: 1 }} />
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 5 }}>
-          <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
-            Question {Math.min(reedQuestionCount, totalQuestions)} of {totalQuestions}
-          </span>
-          <button
-            onClick={onAdvance}
-            style={{
-              fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
-              border: "none", cursor: "pointer", padding: 0, fontFamily: FONT,
-              letterSpacing: "0.01em",
-            }}
-          >
-            Just write it →
-          </button>
-        </div>
-      </div>
 
-      {/* Input bar */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px clamp(12px, 4vw, 24px) max(12px, env(safe-area-inset-bottom))", background: "transparent", flexShrink: 0, zIndex: 10, width: "100%", minWidth: 0, boxSizing: "border-box" as const }}>
-        <div style={{ width: "100%", maxWidth: 680, minWidth: 0 }}>
+        {/* "Build outline" appears above the input when ready */}
+        {isReady && (
+          <div style={{ display: "flex", justifyContent: "center", padding: "8px clamp(12px, 4vw, 24px) 0" }}>
+            <button
+              onClick={onAdvance}
+              style={{
+                fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 6,
+                background: "var(--gold-bright)", border: "none", color: "var(--fg)",
+                cursor: "pointer", fontFamily: FONT, letterSpacing: "0.01em",
+              }}
+            >
+              Build outline →
+            </button>
+          </div>
+        )}
+
+        {/* Intake progress bar */}
+        <div style={{
+          padding: "8px clamp(12px, 4vw, 24px) 0",
+          background: "transparent",
+          borderTop: "1px solid rgba(0,0,0,0.06)",
+          flexShrink: 0,
+        }}>
+          <div style={{ width: "100%", height: 4, background: "var(--glass-border)", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{
+              height: "100%", width: `${Math.round(progress * 100)}%`,
+              background: "var(--gold-bright, #F5C642)", borderRadius: 2,
+              transition: "width 0.3s ease",
+            }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 5 }}>
+            <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
+              Question {Math.min(reedQuestionCount, totalQuestions)} of {totalQuestions}
+            </span>
+            <button
+              onClick={onAdvance}
+              style={{
+                fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
+                border: "none", cursor: "pointer", padding: 0, fontFamily: FONT,
+                letterSpacing: "0.01em",
+              }}
+            >
+              Just write it →
+            </button>
+          </div>
+        </div>
+
+        {/* Input bar */}
+        <div style={{ display: "flex", flexDirection: "column", padding: "8px clamp(12px, 4vw, 24px) max(12px, env(safe-area-inset-bottom))", background: "transparent", flexShrink: 0, zIndex: 10, width: "100%", minWidth: 0, boxSizing: "border-box" as const }}>
           <ChatInputBar
             placeholder="What's on your mind?"
             value={input}
@@ -1429,14 +1436,18 @@ function StageOutline({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-      <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
-        {building ? (
-          <LoadingDots label="Building outline from your conversation..." />
-        ) : (
-          <>
-            {/* Lens cards: two angles side by side */}
-            <div className="lens-row">
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", alignItems: "center" }}>
+      <div
+        className="work-stage-content-column"
+        style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", width: "100%" }}
+      >
+        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+          {building ? (
+            <LoadingDots label="Building outline from your conversation..." />
+          ) : (
+            <>
+              {/* Lens cards: two angles side by side */}
+              <div className="lens-row">
               <div
                 className={`lens-card${activeAngle === "a" ? " selected" : ""}`}
                 onClick={() => onSelectAngle?.("a")}
@@ -1487,62 +1498,69 @@ function StageOutline({
                 />
               ))}
             </div>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
 
-      {!building && <AdvanceButton label="Write draft &#8594;" onClick={onAdvance} />}
+        {!building && <AdvanceButton label="Write draft &#8594;" onClick={onAdvance} />}
+      </div>
 
       <div style={{
         borderTop: "1px solid var(--glass-border)",
-        padding: "8px clamp(10px, 3vw, 14px) max(10px, env(safe-area-inset-bottom))",
-        display: "flex", flexDirection: "column", gap: 4,
         flexShrink: 0, background: "var(--glass-topbar)",
         backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
         width: "100%", minWidth: 0, boxSizing: "border-box" as const,
       }}>
-        {(outlineRecording || outlineTranscribing) && (
-          <div
-            role="status"
-            style={{
-              fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" as const,
-              color: outlineTranscribing ? "var(--fg-3)" : "#C24141",
-              paddingLeft: 2,
-            }}
-          >
-            {outlineTranscribing ? "Transcribing" : "Recording"}
+        <div
+          className="work-stage-content-column"
+          style={{
+            padding: "8px clamp(10px, 3vw, 14px) max(10px, env(safe-area-inset-bottom))",
+            display: "flex", flexDirection: "column", gap: 4,
+          }}
+        >
+          {(outlineRecording || outlineTranscribing) && (
+            <div
+              role="status"
+              style={{
+                fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" as const,
+                color: outlineTranscribing ? "var(--fg-3)" : "#C24141",
+                paddingLeft: 2,
+              }}
+            >
+              {outlineTranscribing ? "Transcribing" : "Recording"}
+            </div>
+          )}
+          <div className="work-chat-input-row">
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="Ask Reed to restructure, or click any line to edit..."
+              style={{
+                flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" as const,
+                background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10,
+                padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36,
+                backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+              }}
+              onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
+              onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
+            />
+            <IaBtn
+              title="Hold to speak, release to insert text"
+              active={outlineRecording || outlineTranscribing}
+              onClick={e => e.preventDefault()}
+              {...outlineMicHandlers}
+            >
+              <MicIcon />
+            </IaBtn>
+            <button
+              type="button"
+              onClick={onAdvance}
+              disabled={building}
+              style={{ width: 36, height: 36, borderRadius: 7, background: building ? "var(--line)" : "var(--fg)", border: "none", cursor: building ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+            >
+              <SendIcon />
+            </button>
           </div>
-        )}
-        <div className="work-chat-input-row">
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="Ask Reed to restructure, or click any line to edit..."
-            style={{
-              flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" as const,
-              background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10,
-              padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36,
-              backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
-            }}
-            onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
-            onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
-          />
-          <IaBtn
-            title="Hold to speak, release to insert text"
-            active={outlineRecording || outlineTranscribing}
-            onClick={e => e.preventDefault()}
-            {...outlineMicHandlers}
-          >
-            <MicIcon />
-          </IaBtn>
-          <button
-            type="button"
-            onClick={onAdvance}
-            disabled={building}
-            style={{ width: 36, height: 36, borderRadius: 7, background: building ? "var(--line)" : "var(--fg)", border: "none", cursor: building ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-          >
-            <SendIcon />
-          </button>
         </div>
       </div>
     </div>
@@ -1611,10 +1629,14 @@ function StageEdit({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-      <div className="edit-area" style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
-        {/* Version tabs */}
-        {versions.length > 0 && !generating && (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", alignItems: "center" }}>
+      <div
+        className="work-stage-content-column"
+        style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", width: "100%" }}
+      >
+        <div className="edit-area" style={{ flex: 1, overflowY: "auto", padding: "24px clamp(16px, 3vw, 28px)" }}>
+          {/* Version tabs */}
+          {versions.length > 0 && !generating && (
           <div style={{
             display: "flex", alignItems: "center", gap: 8,
             marginBottom: 16, paddingBottom: 12,
@@ -1711,40 +1733,43 @@ function StageEdit({
             })()}
           </div>
         )}
+        </div>
+
+        {/* Word count bar visible in edit area */}
+        {!generating && draft && (
+          <div style={{
+            padding: "6px clamp(16px, 3vw, 28px)", display: "flex", alignItems: "center", justifyContent: "space-between",
+            borderTop: "1px solid var(--glass-border)", background: "var(--glass-topbar)", flexShrink: 0,
+            backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
+            fontSize: 11, color: "var(--fg-3)",
+          }}>
+            <span>{draft.split(/\s+/).filter(Boolean).length} words</span>
+          </div>
+        )}
+
+        {!generating && draft && <AdvanceButton label="Finish and Review &#8594;" onClick={onAdvance} />}
       </div>
 
-      {/* Word count bar visible in edit area */}
-      {!generating && draft && (
-        <div style={{
-          padding: "6px 28px", display: "flex", alignItems: "center", justifyContent: "space-between",
-          borderTop: "1px solid var(--glass-border)", background: "var(--glass-topbar)", flexShrink: 0,
-          backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
-          fontSize: 11, color: "var(--fg-3)",
-        }}>
-          <span>{draft.split(/\s+/).filter(Boolean).length} words</span>
+      <div style={{ borderTop: "1px solid var(--glass-border)", flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", width: "100%", minWidth: 0, boxSizing: "border-box" as const }}>
+        <div className="work-stage-content-column" style={{ padding: "10px clamp(10px, 3vw, 14px)", display: "flex", alignItems: "center", gap: 6 }}>
+          <input
+            value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRevise(); } }}
+            placeholder="Tell Reed what to change, or edit above..."
+            readOnly={generating}
+            style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, opacity: generating ? 0.5 : 1, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
+            onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
+            onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
+          />
+          <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
+          <button
+            onClick={handleRevise}
+            disabled={generating}
+            style={{ width: 36, height: 36, borderRadius: 7, background: generating ? "var(--line)" : "var(--fg)", border: "none", cursor: generating ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <SendIcon />
+          </button>
         </div>
-      )}
-
-      {!generating && draft && <AdvanceButton label="Finish and Review &#8594;" onClick={onAdvance} />}
-
-      <div style={{ borderTop: "1px solid var(--glass-border)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
-        <input
-          value={input} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRevise(); } }}
-          placeholder="Tell Reed what to change, or edit above..."
-          readOnly={generating}
-          style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, opacity: generating ? 0.5 : 1, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
-          onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
-        />
-        <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
-        <button
-          onClick={handleRevise}
-          disabled={generating}
-          style={{ width: 36, height: 36, borderRadius: 7, background: generating ? "var(--line)" : "var(--fg)", border: "none", cursor: generating ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
-          <SendIcon />
-        </button>
       </div>
     </div>
   );
@@ -1776,7 +1801,7 @@ function GenerationProgress() {
   const eased = 1 - Math.pow(1 - progress, 2.5);
 
   return (
-    <div style={{ padding: "40px 28px", maxWidth: 480 }}>
+    <div style={{ padding: "40px clamp(16px, 3vw, 28px)", width: "100%", boxSizing: "border-box" as const }}>
       <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{currentPhase.label}</div>
       <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 20 }}>{currentPhase.sub}</div>
       <div style={{ width: "100%", height: 3, borderRadius: 2, background: "var(--glass-border)", overflow: "hidden", marginBottom: 20 }}>
@@ -1822,7 +1847,7 @@ function ReviewProgress({
   const allFormatsComplete = formatStatuses.every(f => f.status === "done" || f.status === "error");
 
   return (
-    <div style={{ padding: "32px 28px", maxWidth: 600 }}>
+    <div style={{ padding: "32px clamp(16px, 3vw, 28px)", width: "100%", boxSizing: "border-box" as const }}>
       {/* Format Adaptation */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.03em", marginBottom: 12 }}>
@@ -2036,11 +2061,13 @@ function PreWrapOutputGate({
       background: "linear-gradient(180deg, var(--surface) 0%, rgba(248,250,252,0.98) 100%)",
       WebkitOverflowScrolling: "touch" as const,
     }}>
-      <div style={{
-        maxWidth: 960, margin: "0 auto",
-        padding: "28px clamp(16px, 4vw, 32px) 40px",
-        boxSizing: "border-box" as const,
-      }}>
+      <div
+        className="work-stage-content-column"
+        style={{
+          padding: "28px clamp(16px, 4vw, 32px) 40px",
+          boxSizing: "border-box" as const,
+        }}
+      >
         <h1 style={{
           fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: "var(--fg)",
           margin: "0 0 8px", fontFamily: FONT, letterSpacing: "-0.02em",
@@ -2240,13 +2267,17 @@ function StageReview({
         ))}
       </div>
 
-      {/* Draft preview */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
-        {running ? (
-          <ReviewProgress pipelineRunning={running} formatDrafts={formatDrafts} selectedFormats={tabs} />
-        ) : (
-          <>
-            {(() => {
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
+        {/* Draft preview */}
+        <div
+          className="work-stage-content-column"
+          style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "24px clamp(16px, 3vw, 28px)", width: "100%" }}
+        >
+          {running ? (
+            <ReviewProgress pipelineRunning={running} formatDrafts={formatDrafts} selectedFormats={tabs} />
+          ) : (
+            <>
+              {(() => {
               const fd = formatDrafts[activeTab];
               const isAdapting = fd?.status === "generating" || fd?.status === "pending";
               const adaptedContent = fd?.status === "done" ? fd.content : draft;
@@ -2301,32 +2332,35 @@ function StageReview({
                   )}
                 </>
               );
-            })()}
-          </>
+              })()}
+            </>
+          )}
+        </div>
+
+        {!running && pipelineRun && (
+          <div className="work-stage-content-column" style={{ padding: "12px clamp(16px, 3vw, 28px) 0", fontSize: 11, color: "var(--fg-3)", width: "100%", flexShrink: 0 }}>
+            {canApprove ? "Ready to export." : "Reed will tell you what needs attention."}
+          </div>
         )}
       </div>
 
-      {!running && pipelineRun && (
-        <div style={{ padding: "12px 28px 0", fontSize: 11, color: "var(--fg-3)" }}>
-          {canApprove ? "Ready to export." : "Reed will tell you what needs attention."}
+      <div style={{ borderTop: "1px solid var(--glass-border)", flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", width: "100%", minWidth: 0, boxSizing: "border-box" as const }}>
+        <div className="work-stage-content-column" style={{ padding: "10px clamp(10px, 3vw, 14px)", display: "flex", alignItems: "center", gap: 6 }}>
+          <input
+            value={input} onChange={e => setInput(e.target.value)}
+            placeholder="Send back to Edit, tell Reed what to change..."
+            style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
+            onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
+            onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
+          />
+          <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
+          <button
+            onClick={() => { if (input.trim()) { onGoBack(input.trim()); setInput(""); } }}
+            style={{ width: 36, height: 36, borderRadius: 7, background: "var(--fg)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <SendIcon />
+          </button>
         </div>
-      )}
-
-      <div style={{ borderTop: "1px solid var(--glass-border)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
-        <input
-          value={input} onChange={e => setInput(e.target.value)}
-          placeholder="Send back to Edit, tell Reed what to change..."
-          style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
-          onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
-        />
-        <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
-        <button
-          onClick={() => { if (input.trim()) { onGoBack(input.trim()); setInput(""); } }}
-          style={{ width: 36, height: 36, borderRadius: 7, background: "var(--fg)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
-          <SendIcon />
-        </button>
       </div>
     </div>
   );

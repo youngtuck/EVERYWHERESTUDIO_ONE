@@ -67,6 +67,15 @@
   max-width: 100%;
   box-sizing: border-box;
 }
+/* Work session Stage: centered content column (intentional side gutters on wide viewports) */
+.work-stage-content-column {
+  width: 100%;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
 .work-chat-input-row {
   display: flex;
   align-items: flex-end;
