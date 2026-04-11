@@ -109,7 +109,7 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={200}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-dim-dark)" }}>
-              Forty specialists work in concert. Seven quality checkpoints block anything that isn't ready. Your VoiceDNA profile ensures that every piece sounds like you. The result isn't generated content. It's your thinking, structured and scaled.
+              Forty specialists work in concert. Seven quality checkpoints block anything that isn't ready. Your Voice DNA profile ensures that every piece sounds like you. The result isn't generated content. It's your thinking, structured and scaled.
             </p>
           </Reveal>
         </div>

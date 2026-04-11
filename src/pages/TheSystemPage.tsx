@@ -7,27 +7,27 @@ import Reveal from "../components/marketing/Reveal";
 
 const DNA_MODULES = [
   {
-    name: "VoiceDNA",
+    name: "Voice DNA",
     subhead: "Your voice. Captured. Consistent.",
-    body: "EVERYWHERE Studio captures how you actually think and communicate. Not a style guide. Not a tone matrix. Your real patterns, rhythms, and instincts. Every piece of content passes through your VoiceDNA profile. The result: content that sounds like you wrote it. Because, in the way that matters, you did.",
+    body: "EVERYWHERE Studio captures how you actually think and communicate. Not a style guide. Not a tone matrix. Your real patterns, rhythms, and instincts. Every piece of content passes through your Voice DNA profile. The result: content that sounds like you wrote it. Because, in the way that matters, you did.",
     bg: "var(--xp-white)",
   },
   {
-    name: "BrandDNA",
+    name: "Brand DNA",
     subhead: "Organizations have a voice too.",
-    body: "BrandDNA extends voice capture to the institutional level. Company-wide style, messaging frameworks, approved terminology, strategic positioning. Teams create content that sounds like the organization, not like the individual who happened to draft it.",
+    body: "Brand DNA extends voice capture to the institutional level. Company-wide style, messaging frameworks, approved terminology, strategic positioning. Teams create content that sounds like the organization, not like the individual who happened to draft it.",
     bg: "var(--xp-off)",
   },
   {
-    name: "MethodDNA",
+    name: "Method DNA",
     subhead: "Built for coaching ecosystems.",
-    body: "If you teach a method, a framework, or a system, MethodDNA captures the proprietary language and logic. Coaches, consultants, and educators can produce derivative content that stays faithful to their intellectual property. The methodology delivers the framework. EVERYWHERE Studio delivers the content infrastructure that makes it land.",
+    body: "If you teach a method, a framework, or a system, Method DNA captures the proprietary language and logic. Coaches, consultants, and educators can produce derivative content that stays faithful to their intellectual property. The methodology delivers the framework. EVERYWHERE Studio delivers the content infrastructure that makes it land.",
     bg: "var(--xp-white)",
   },
   {
-    name: "LegacyDNA",
+    name: "Legacy DNA",
     subhead: "Your knowledge should not leave with you.",
-    body: "LegacyDNA is long-term knowledge capture. For founders, executives, and domain experts who want their thinking preserved and structured for the next generation. Books, courses, institutional memory. Your ideas, organized and accessible.",
+    body: "Legacy DNA is long-term knowledge capture. For founders, executives, and domain experts who want their thinking preserved and structured for the next generation. Books, courses, institutional memory. Your ideas, organized and accessible.",
     bg: "var(--xp-off)",
   },
 ];

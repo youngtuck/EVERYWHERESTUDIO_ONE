@@ -8,7 +8,7 @@ import Reveal from "../components/marketing/Reveal";
 const CHECKPOINTS = [
   { num: 1, name: "Deduplication", desc: "No repeated content. Every piece is checked against your full content catalog." },
   { num: 2, name: "Research Validation", desc: "Every claim verified. Statistics get sourced. Claims get checked." },
-  { num: 3, name: "Voice Authenticity", desc: "Sounds like you wrote it. Your VoiceDNA profile sets the standard." },
+  { num: 3, name: "Voice Authenticity", desc: "Sounds like you wrote it. Your Voice DNA profile sets the standard." },
   { num: 4, name: "Engagement", desc: "Passes the 7-second test. The opening has to earn the next sentence." },
   { num: 5, name: "SLOP Detection", desc: "No AI padding. No filler. No fluff. Identifies the telltale signs of machine-generated content." },
   { num: 6, name: "Editorial Excellence", desc: "Publication grade. No exceptions. Clarity of argument, precision of language, economy of expression." },
@@ -44,7 +44,7 @@ export default function HowItWorksPage() {
             fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
             color: "var(--xp-dim-dark)", marginBottom: 28,
             animation: `xpHeroLabel 0.8s ${EASE} 0.3s both`,
-          }}>The System</div>
+          }}>How It Works</div>
           <h1 style={{
             fontSize: "clamp(40px, 7vw, 80px)", fontWeight: 600,
             letterSpacing: "-0.04em", lineHeight: 1.08,
@@ -153,7 +153,6 @@ export default function HowItWorksPage() {
             {CHECKPOINTS.map((cp, i) => (
               <Reveal key={cp.num} delay={i * 80}>
                 <div className="xp-glass-card-dark" style={{ padding: 32, minHeight: 200, display: "flex", flexDirection: "column" as const }}>
-                  <div style={{ position: "absolute", inset: 0, borderRadius: "inherit", border: "1px solid rgba(255,255,255,0.08)", pointerEvents: "none" as const, zIndex: 3 }} />
                   <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", color: "var(--xp-gold)", marginBottom: 12 }}>{String(cp.num).padStart(2, "0")}</div>
                   <div style={{ fontSize: 18, fontWeight: 600, color: "var(--xp-on-dark)", marginBottom: 10 }}>{cp.name}</div>
                   <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--xp-dim-dark)", margin: 0 }}>{cp.desc}</p>

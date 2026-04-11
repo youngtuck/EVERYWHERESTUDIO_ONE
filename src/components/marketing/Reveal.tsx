@@ -62,7 +62,7 @@ export default function Reveal({
   return (
     <div ref={ref} style={{
       opacity: isVisible ? 1 : 0,
-      transform: isVisible ? "translateY(0)" : "translateY(28px)",
+      transform: isVisible ? "translate3d(0,0,0)" : "translate3d(0,28px,0)",
       transition: settled ? "none" : `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
       ...style,
     }}>

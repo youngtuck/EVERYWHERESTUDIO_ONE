@@ -4,7 +4,7 @@ import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import HeroCanvas from "../components/landing/HeroCanvas";
 import { MARKETING_NUMBERS } from "../lib/constants";
-import { MARKETING_CSS } from "../styles/marketing";
+import { MARKETING_CSS, EASE } from "../styles/marketing";
 
 /* ═══════════════════════════════════════════════════════════
    EVERYWHERE STUDIO — EXPLORE PAGE v5
@@ -12,9 +12,6 @@ import { MARKETING_CSS } from "../styles/marketing";
    Air.inc-inspired: pure CSS animations, zero libraries.
    Instrument Sans + DM Mono. Earned scroll.
    ═══════════════════════════════════════════════════════════ */
-
-const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
-const EASE_SMOOTH = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 function easeOut(t: number) { return 1 - Math.pow(1 - t, 3); }
 
