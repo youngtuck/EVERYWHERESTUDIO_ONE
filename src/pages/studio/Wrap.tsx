@@ -8,6 +8,7 @@ import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { supabase } from "../../lib/supabase";
+import { fetchWithRetry } from "../../lib/retry";
 import { useMobile } from "../../hooks/useMobile";
 import {
   buildWrapConstraintSupplement,
@@ -430,20 +431,31 @@ export default function WrapPage() {
     setFormatContents(prev => ({ ...prev, [format]: { content: "", metadata: {}, status: "loading" } }));
 
     try {
-      const res = await fetch(`${API_BASE}/api/adapt-format`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          draft: activeOutput.content,
-          format,
-          voiceDnaMd: "",
-          brandDnaMd: "",
-          userId: user.id,
-          wrapConstraintSupplement,
-        }),
-      });
+      const res = await fetchWithRetry(
+        `${API_BASE}/api/adapt-format`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            draft: activeOutput.content,
+            format,
+            voiceDnaMd: "",
+            brandDnaMd: "",
+            userId: user.id,
+            wrapConstraintSupplement,
+          }),
+        },
+        { timeout: 60000 },
+      );
 
-      if (!res.ok) throw new Error(`Adapt error ${res.status}`);
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (j?.error) detail = `${detail}: ${j.error}`;
+        } catch { /* ignore */ }
+        throw new Error(detail);
+      }
       const data = await res.json();
 
       const adapted =
@@ -499,7 +511,7 @@ export default function WrapPage() {
     setWrapPhase("build");
     const { succeeded, failed } = await runBuildForChannels(list);
     if (succeeded.length === 0) {
-      toast("None of the channels could be generated. Check your connection and try again.", "error");
+      toast("None of the channels could be generated. Check your connection, confirm you are signed in, then try again.", "error");
       setFormatContents({});
       adaptingRef.current.clear();
       setWrapPhase("choose");
