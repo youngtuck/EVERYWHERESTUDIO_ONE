@@ -37,7 +37,7 @@ export default function HowItWorksPage() {
       <section data-nav-theme="dark" style={{
         minHeight: "80vh", background: "var(--xp-navy-deep)", position: "relative",
         display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "120px 48px", overflow: "hidden",
+        padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", overflow: "hidden",
       }}>
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800 }}>
           <div className="xp-mono" style={{
@@ -60,7 +60,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* Phase One: Watch */}
-      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-white)" }}>
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-white)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase One</div>
@@ -85,7 +85,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* Phase Two: Work */}
-      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-off)" }}>
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-off)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase Two</div>
@@ -110,7 +110,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* Phase Three: Wrap */}
-      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-white)" }}>
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-white)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase Three</div>
@@ -136,7 +136,7 @@ export default function HowItWorksPage() {
 
       {/* Quality System */}
       <section data-nav-theme="dark" className="xp-sect" style={{
-        padding: "120px 48px", background: "var(--xp-navy-deep)",
+        padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-navy-deep)",
         position: "relative", overflow: "hidden",
       }}>
         <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto" }}>

@@ -54,7 +54,7 @@ export default function TheSystemPage() {
       <section data-nav-theme="dark" style={{
         minHeight: "80vh", background: "var(--xp-navy-deep)", position: "relative",
         display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "120px 48px", overflow: "hidden",
+        padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", overflow: "hidden",
       }}>
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800 }}>
           <div className="xp-mono" style={{
@@ -82,7 +82,7 @@ export default function TheSystemPage() {
           key={mod.name}
           data-nav-theme="light"
           className="xp-sect"
-          style={{ padding: "120px 48px", background: mod.bg }}
+          style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: mod.bg }}
         >
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <Reveal>

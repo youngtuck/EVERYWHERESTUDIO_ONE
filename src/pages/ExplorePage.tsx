@@ -8,8 +8,7 @@ import { MARKETING_CSS, EASE } from "../styles/marketing";
 
 /* ═══════════════════════════════════════════════════════════
    EVERYWHERE STUDIO — EXPLORE PAGE v5
-   Real Liquid Glass (Apple Figma recipe).
-   Air.inc-inspired: pure CSS animations, zero libraries.
+   Liquid glass: blur + static corner luminance (no sweeping specular loop).
    Instrument Sans + DM Mono. Earned scroll.
    ═══════════════════════════════════════════════════════════ */
 
@@ -93,7 +92,7 @@ function Reveal({
 
   useEffect(() => {
     if (isVisible && !settled) {
-      const t = setTimeout(() => setSettled(true), 1000 + delay);
+      const t = setTimeout(() => setSettled(true), 650 + delay);
       return () => clearTimeout(t);
     }
   }, [isVisible, settled, delay]);
@@ -102,7 +101,7 @@ function Reveal({
     <div ref={ref} style={{
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? "translateY(0)" : "translateY(28px)",
-      transition: settled ? "none" : `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
+      transition: settled ? "none" : `opacity 0.5s ${EASE} ${delay}ms, transform 0.5s ${EASE} ${delay}ms`,
       ...style,
     }}>
       {children}
@@ -405,7 +404,7 @@ export default function ExplorePage() {
 
       {/* ═══ ACT 8: CTA (Dark bookend) ═══ */}
       <section data-nav-theme="dark" className="xp-sect" style={{
-        padding: "160px 48px", background: "var(--xp-navy-deep)",
+        padding: "148px 48px", background: "var(--xp-navy-deep)",
         textAlign: "center", position: "relative", overflow: "hidden",
       }}>
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
@@ -447,7 +446,7 @@ export default function ExplorePage() {
       </section>
 
       {/* ═══ FOOTER ═══ */}
-      <footer style={{ padding: "36px 48px", background: "var(--xp-white)", borderTop: "1px solid var(--xp-border)" }}>
+      <footer style={{ padding: "40px 48px", background: "var(--xp-white)", borderTop: "1px solid var(--xp-border)" }}>
         <div className="xp-footer-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
           <Logo size="sm" variant="light" />
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
@@ -500,7 +499,7 @@ function StatementSection() {
     <section data-nav-theme="light" ref={ref} style={{
       minHeight: "80vh",
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "120px 48px",
+      padding: "112px 48px",
       background: "var(--xp-white)",
     }}>
       <div style={{ maxWidth: 1100, width: "100%", textAlign: "center" }}>
@@ -561,7 +560,7 @@ function SplitSection() {
 
   return (
     <section data-nav-theme="light" className="xp-sect" ref={ref} style={{
-      padding: "140px 48px", background: "var(--xp-off)",
+      padding: "132px 48px", background: "var(--xp-off)",
     }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <Reveal>
@@ -695,7 +694,7 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
 
   return (
     <section data-nav-theme="light" className="xp-sect" ref={ref} style={{
-      padding: "140px 48px",
+      padding: "132px 48px",
       background: "var(--xp-white)",
       position: "relative",
     }}>
@@ -895,7 +894,7 @@ function NumbersSection() {
     <section data-nav-theme="light" ref={ref} style={{
       minHeight: "70vh",
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "120px 48px",
+      padding: "112px 48px",
       background: "var(--xp-off)",
       overflow: "hidden",
     }}>
@@ -1018,7 +1017,7 @@ function GlassCardsSection() {
 
   return (
     <section data-nav-theme="light" className="xp-sect" ref={ref} style={{
-      padding: "140px 48px",
+      padding: "132px 48px",
       background: "var(--xp-white)",
       position: "relative",
     }}>
@@ -1067,7 +1066,7 @@ function QualitySection() {
 
   return (
     <section data-nav-theme="light" className="xp-sect" ref={ref} style={{
-      padding: "140px 48px", background: "var(--xp-off)", textAlign: "center",
+      padding: "132px 48px", background: "var(--xp-off)", textAlign: "center",
       position: "relative", overflow: "hidden",
     }}>
       {/* Gradient mesh for glass gate refraction */}

@@ -34,7 +34,7 @@ export default function WhoItsForPage() {
       <section data-nav-theme="dark" style={{
         minHeight: "80vh", background: "var(--xp-navy-deep)", position: "relative",
         display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "120px 48px", overflow: "hidden",
+        padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", overflow: "hidden",
       }}>
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 800 }}>
           <div className="xp-mono" style={{
@@ -57,7 +57,7 @@ export default function WhoItsForPage() {
       </section>
 
       {/* The Problem */}
-      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-white)" }}>
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-white)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
@@ -88,7 +88,7 @@ export default function WhoItsForPage() {
       </section>
 
       {/* Who We Built This For */}
-      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-off)" }}>
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-off)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 48 }}>
@@ -114,7 +114,7 @@ export default function WhoItsForPage() {
       </section>
 
       {/* Who This Is Not For */}
-      <section data-nav-theme="light" className="xp-sect" style={{ padding: "120px 48px", background: "var(--xp-white)" }}>
+      <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-white)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 24 }}>

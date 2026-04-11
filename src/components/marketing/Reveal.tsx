@@ -54,7 +54,7 @@ export default function Reveal({
 
   useEffect(() => {
     if (isVisible && !settled) {
-      const t = setTimeout(() => setSettled(true), 1000 + delay);
+      const t = setTimeout(() => setSettled(true), 650 + delay);
       return () => clearTimeout(t);
     }
   }, [isVisible, settled, delay]);
@@ -63,7 +63,7 @@ export default function Reveal({
     <div ref={ref} style={{
       opacity: isVisible ? 1 : 0,
       transform: isVisible ? "translate3d(0,0,0)" : "translate3d(0,28px,0)",
-      transition: settled ? "none" : `opacity 0.9s ${EASE} ${delay}ms, transform 0.9s ${EASE} ${delay}ms`,
+      transition: settled ? "none" : `opacity 0.5s ${EASE} ${delay}ms, transform 0.5s ${EASE} ${delay}ms`,
       ...style,
     }}>
       {children}

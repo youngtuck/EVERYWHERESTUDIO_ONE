@@ -181,15 +181,6 @@ const AuthPage = () => {
 
       <style>{`
         body { background: ${NAVY_DEEP}; }
-        @keyframes authGlassDrift {
-          0%, 100% { background-position: 14% 24%, 0 0; opacity: 1; }
-          45% { background-position: 86% 52%, 0 0; opacity: 0.92; }
-          75% { background-position: 42% 80%, 0 0; opacity: 1; }
-        }
-        @keyframes authGlassEdge {
-          0%, 100% { border-color: rgba(255,255,255,0.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 0 0 0 rgba(200,169,110,0); }
-          50% { border-color: rgba(255,255,255,0.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07), 0 0 36px rgba(200,169,110,0.06); }
-        }
         .auth-modal-glass {
           position: relative;
           isolation: isolate;
@@ -201,8 +192,9 @@ const AuthPage = () => {
           box-shadow:
             0 32px 96px rgba(0, 0, 0, 0.55),
             0 12px 40px rgba(0, 0, 0, 0.35),
-            inset 0 1px 0 rgba(255, 255, 255, 0.06);
-          animation: authGlassEdge 18s ease-in-out infinite;
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            inset 1px 1px 0 rgba(255,255,255,0.05),
+            inset -1px -1px 0 rgba(0,0,0,0.2);
         }
         .auth-modal-glass::after {
           content: '';
@@ -222,26 +214,23 @@ const AuthPage = () => {
           z-index: 1;
           pointer-events: none;
           background-image:
-            linear-gradient(
-              118deg,
-              transparent 0%,
-              transparent 36%,
-              rgba(255,255,255,0.07) 47%,
-              rgba(255,255,255,0.16) 50%,
-              rgba(255,255,255,0.06) 53%,
-              transparent 64%,
-              transparent 100%
-            ),
-            linear-gradient(142deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015));
-          background-size: 220% 220%, 100% 100%;
-          background-position: 18% 28%, 0 0;
+            radial-gradient(ellipse 82% 58% at 0% 0%, rgba(255,255,255,0.11), transparent 56%),
+            radial-gradient(ellipse 76% 52% at 100% 0%, rgba(255,255,255,0.07), transparent 52%),
+            radial-gradient(ellipse 68% 48% at 100% 100%, rgba(255,255,255,0.055), transparent 48%),
+            radial-gradient(ellipse 62% 44% at 0% 100%, rgba(255,255,255,0.04), transparent 44%);
+          background-size: 100% 100%;
+          background-position: 0 0;
           background-repeat: no-repeat;
-          animation: authGlassDrift 26s ease-in-out infinite;
+          transition: opacity 0.22s ${EASE};
+          opacity: 0.97;
           box-shadow:
-            inset 0 0 48px rgba(255,255,255,0.04),
-            inset 0 0 10px rgba(255,255,255,0.03),
-            inset -1px -1px 0.5px rgba(255,255,255,0.1),
-            inset 1px 1px 0.5px rgba(255,255,255,0.06);
+            inset 0 0 48px rgba(255,255,255,0.035),
+            inset 0 0 10px rgba(255,255,255,0.025),
+            inset -1px -1px 0.5px rgba(255,255,255,0.09),
+            inset 1px 1px 0.5px rgba(255,255,255,0.055);
+        }
+        .auth-modal-glass:hover::before {
+          opacity: 1;
         }
         .auth-modal-body {
           position: relative;
@@ -269,7 +258,7 @@ const AuthPage = () => {
           cursor: pointer;
           color: rgba(240, 237, 228, 0.45);
           background: transparent;
-          transition: background 0.35s ${EASE}, color 0.35s ${EASE}, box-shadow 0.35s ${EASE};
+          transition: background 0.22s ${EASE}, color 0.22s ${EASE}, box-shadow 0.22s ${EASE};
         }
         .auth-segment-active {
           color: #F0EDE4;
@@ -291,7 +280,7 @@ const AuthPage = () => {
           backdrop-filter: blur(16px) saturate(1.55);
           -webkit-backdrop-filter: blur(16px) saturate(1.55);
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
-          transition: background 0.25s ${EASE}, border-color 0.25s ${EASE}, box-shadow 0.25s ${EASE};
+          transition: background 0.2s ${EASE}, border-color 0.2s ${EASE}, box-shadow 0.2s ${EASE};
         }
         .auth-input::placeholder {
           color: rgba(240, 237, 228, 0.32);
@@ -325,12 +314,12 @@ const AuthPage = () => {
           backdrop-filter: blur(18px) saturate(1.5);
           -webkit-backdrop-filter: blur(18px) saturate(1.5);
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-          transition: background 0.25s ${EASE}, border-color 0.25s ${EASE}, transform 0.2s ${EASE};
+          transition: background 0.2s ${EASE}, border-color 0.2s ${EASE}, box-shadow 0.2s ${EASE};
         }
         .auth-google-btn:hover {
           background: rgba(255, 255, 255, 0.1);
           border-color: rgba(255, 255, 255, 0.18);
-          transform: translateY(-1px);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 18px rgba(0,0,0,0.15);
         }
         .auth-submit-btn {
           margin-top: 8px;
@@ -351,18 +340,26 @@ const AuthPage = () => {
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,0.12),
             0 4px 24px rgba(0,0,0,0.2);
-          transition: background 0.25s ${EASE}, border-color 0.25s ${EASE}, box-shadow 0.25s ${EASE}, transform 0.2s ${EASE};
+          transition: background 0.2s ${EASE}, border-color 0.2s ${EASE}, box-shadow 0.2s ${EASE};
         }
         .auth-submit-btn:hover {
           background: rgba(245, 198, 66, 0.24);
           border-color: rgba(245, 198, 66, 0.5);
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,0.18),
-            0 8px 32px rgba(245, 198, 66, 0.12);
-          transform: translateY(-1px);
+            0 8px 28px rgba(245, 198, 66, 0.14);
         }
-        .auth-submit-btn:active {
-          transform: translateY(0);
+        .auth-submit-btn:focus-visible {
+          outline: 2px solid rgba(245, 198, 66, 0.55);
+          outline-offset: 3px;
+        }
+        .auth-google-btn:focus-visible {
+          outline: 2px solid rgba(245, 198, 66, 0.45);
+          outline-offset: 2px;
+        }
+        .auth-segment:focus-visible {
+          outline: 2px solid rgba(245, 198, 66, 0.45);
+          outline-offset: 2px;
         }
         .auth-link-btn {
           background: none;
@@ -376,7 +373,7 @@ const AuthPage = () => {
           text-underline-offset: 3px;
         }
         @media (prefers-reduced-motion: reduce) {
-          .auth-modal-glass, .auth-modal-glass::before { animation: none !important; }
+          .auth-modal-glass::before { transition: none !important; }
         }
       `}</style>
 
