@@ -60,12 +60,12 @@ function ContentModal({ resource, onClose }: { resource: Resource; onClose: () =
     >
       <div
         onClick={e => e.stopPropagation()}
+        className="liquid-glass-card"
         style={{
-          background: "var(--glass-card)", border: "1px solid var(--glass-border)",
-          borderRadius: 12, width: "100%", maxWidth: 700, maxHeight: "80vh",
+          width: "100%", maxWidth: 700, maxHeight: "80vh",
           display: "flex", flexDirection: "column",
-          boxShadow: "0 16px 48px rgba(0,0,0,0.18)",
-          backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.12)",
+          overflow: "hidden",
         }}
       >
         {/* Header */}
@@ -81,10 +81,12 @@ function ContentModal({ resource, onClose }: { resource: Resource; onClose: () =
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <button
+              type="button"
+              className="liquid-glass-btn"
               onClick={() => { navigator.clipboard.writeText(resource.content); }}
-              style={{ fontSize: 11, padding: "5px 12px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
+              style={{ fontSize: 11, padding: "6px 14px" }}
             >
-              Copy
+              <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>Copy</span>
             </button>
             <button
               onClick={onClose}
@@ -127,7 +129,7 @@ function FileDetailPanel({
   onRemove: () => void;
 }) {
   return (
-    <>
+    <div className="liquid-glass-card" style={{ padding: 16 }}>
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 3 }}>{resource.title}</div>
         <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 10 }}>
@@ -137,30 +139,25 @@ function FileDetailPanel({
           <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.65 }}>{resource.description}</div>
         )}
       </div>
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Actions</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <button
-            onClick={onView}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
-          >
-            View file
+      <div>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Actions</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <button type="button" className="liquid-glass-btn" onClick={onView} style={{ width: "100%", justifyContent: "flex-start", padding: "8px 12px" }}>
+            <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>View file</span>
+          </button>
+          <button type="button" className="liquid-glass-btn" onClick={onReplace} style={{ width: "100%", justifyContent: "flex-start", padding: "8px 12px" }}>
+            <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>Replace file</span>
           </button>
           <button
-            onClick={onReplace}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
-          >
-            Replace file
-          </button>
-          <button
+            type="button"
             onClick={onRemove}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.04)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
+            style={{ width: "100%", textAlign: "left" as const, padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.35)", background: "rgba(239,68,68,0.06)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
           >
             Remove from project
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -296,7 +293,7 @@ export default function Resources() {
       );
     } else {
       setDashContent(
-        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+        <div className="liquid-glass-card" style={{ padding: 16, fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
           Select a file to see details.
         </div>
       );
@@ -348,8 +345,14 @@ export default function Resources() {
 
   return (
     <>
-      <div style={{ padding: isMobile ? "20px 16px" : 20, fontFamily: FONT, maxWidth: isMobile ? "100%" : 680 }}>
-        <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>Project Files</div>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, fontFamily: FONT }}>
+        <header className="liquid-glass" style={{ flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)" }}>
+          <div style={{ padding: "12px 20px 10px", maxWidth: isMobile ? "100%" : 680, margin: "0 auto", width: "100%" }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)" }}>Project Files</div>
+          </div>
+        </header>
+
+        <div style={{ padding: isMobile ? "20px 16px" : 20, maxWidth: isMobile ? "100%" : 680, margin: "0 auto", width: "100%", overflowY: "auto", flex: 1, minHeight: 0 }}>
 
         {/* Foundation section */}
         {(voiceDnaExists || brandDnaExists) ? (
@@ -403,11 +406,7 @@ export default function Resources() {
             </div>
           </>
         ) : (
-          <div style={{
-            background: "rgba(245,198,66,0.04)", border: "1px solid rgba(245,198,66,0.12)",
-            borderRadius: 12, padding: "14px 16px", marginBottom: 20,
-            fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6,
-          }}>
+          <div className="liquid-glass-card" style={{ padding: "14px 16px", marginBottom: 20, fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6 }}>
             Set up your <span onClick={() => nav("/onboarding")} style={{ color: "var(--gold)", fontWeight: 600, cursor: "pointer" }}>Voice DNA and Brand DNA</span> to give Reed your full context.
           </div>
         )}
@@ -416,19 +415,15 @@ export default function Resources() {
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Project Files</div>
 
         {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div className="liquid-glass-card" style={{ padding: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[1, 2, 3].map(i => (
-              <div key={i} style={{ height: 52, background: "var(--bg-2)", borderRadius: 6, marginBottom: 4 }} />
+              <div key={i} style={{ height: 52, background: "var(--bg-2)", borderRadius: 6 }} />
             ))}
+            </div>
           </div>
         ) : resources.length === 0 ? (
-          <div style={{
-            background: "var(--glass-card)", border: "1px solid var(--glass-border)",
-            borderRadius: 12, padding: "32px 20px", textAlign: "center" as const,
-            boxShadow: "var(--glass-shadow)", marginBottom: 10,
-            backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
-          }}>
-            <div style={{ fontSize: 22, color: "var(--line)", marginBottom: 12 }}>&#9764;</div>
+          <div className="liquid-glass-card" style={{ padding: "32px 20px", textAlign: "center" as const, marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>No project files yet</div>
             <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
               Upload reference files, brand guides, or any documents Reed should know about.
@@ -442,10 +437,11 @@ export default function Resources() {
 
         {/* Upload area */}
         <div
+          className="liquid-glass-card"
           onClick={() => !uploading && fileInputRef.current?.click()}
           style={{
-            marginTop: 10, border: "1px dashed var(--line-2)",
-            borderRadius: 7, padding: 16, textAlign: "center" as const,
+            marginTop: 10, borderStyle: "dashed", borderWidth: 1, borderColor: "var(--line-2)",
+            padding: 16, textAlign: "center" as const,
             cursor: uploading ? "not-allowed" : "pointer",
             transition: "border-color 0.12s", opacity: uploading ? 0.6 : 1,
           }}
@@ -473,6 +469,7 @@ export default function Resources() {
           onChange={handleUpload}
           style={{ display: "none" }}
         />
+        </div>
       </div>
 
       {/* Content viewer modal */}

@@ -54,7 +54,7 @@ function PipelineDetailPanel({
   const isProgress = item.type === "progress";
   const kindLabel = isSignal ? "Signal" : isProgress ? "In progress" : "Parked idea";
   return (
-    <>
+    <div className="liquid-glass-card" style={{ padding: 16 }}>
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>
           {kindLabel}
@@ -63,35 +63,39 @@ function PipelineDetailPanel({
         <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 12 }}>{item.subtitle}</div>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>{item.detail}</div>
       </div>
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Actions</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Actions</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <button
+            type="button"
             onClick={onActivate}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "none", background: isSignal ? "var(--blue)" : "var(--fg)", fontSize: 11, color: "#fff", cursor: "pointer", fontFamily: FONT, fontWeight: 600 }}
+            style={{
+              width: "100%", textAlign: "left" as const, padding: "8px 12px", borderRadius: 8, border: "none",
+              background: isSignal ? "var(--blue)" : "var(--fg)", fontSize: 11, color: "#fff", cursor: "pointer", fontFamily: FONT, fontWeight: 600,
+            }}
           >
             {item.action}
           </button>
           {!isProgress && item.outputId && onSendToWrap && (
-            <button
-              onClick={onSendToWrap}
-              style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--gold-bright)", background: "rgba(245,198,66,0.06)", fontSize: 11, color: "var(--gold)", cursor: "pointer", fontFamily: FONT, fontWeight: 600 }}
-            >
-              Send to Wrap
+            <button type="button" className="liquid-glass-btn-gold" onClick={onSendToWrap} style={{ width: "100%", justifyContent: "flex-start", padding: "8px 12px" }}>
+              <span className="liquid-glass-btn-gold-label">Send to Wrap</span>
             </button>
           )}
           {!isProgress && (
-            <button style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}>Edit note</button>
+            <button type="button" className="liquid-glass-btn" style={{ width: "100%", justifyContent: "flex-start", padding: "8px 12px" }}>
+              <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 500 }}>Edit note</span>
+            </button>
           )}
           <button
+            type="button"
             onClick={onRemove}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.04)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
+            style={{ width: "100%", textAlign: "left" as const, padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.35)", background: "rgba(239,68,68,0.06)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
           >
             {isProgress ? (item.progressKind === "output" ? "Delete draft" : "Clear session") : "Remove"}
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -336,7 +340,7 @@ export default function TheLot() {
       );
     } else {
       setDashContent(
-        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+        <div className="liquid-glass-card" style={{ padding: 16, fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
           Select a signal or idea to see details.
         </div>,
       );
@@ -378,8 +382,14 @@ export default function TheLot() {
   };
 
   return (
-    <div style={{ padding: isMobile ? "20px 16px" : 20, fontFamily: FONT, maxWidth: isMobile ? "100%" : 680 }}>
-      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>The Pipeline</div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, fontFamily: FONT }}>
+      <header className="liquid-glass" style={{ flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)" }}>
+        <div style={{ padding: "12px 20px 10px", maxWidth: isMobile ? "100%" : 680, margin: "0 auto", width: "100%" }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)" }}>The Pipeline</div>
+        </div>
+      </header>
+
+      <div style={{ padding: isMobile ? "20px 16px" : 20, maxWidth: isMobile ? "100%" : 680, margin: "0 auto", width: "100%", overflowY: "auto", flex: 1, minHeight: 0 }}>
 
       <Card title="Watched signals">
         {signals.length === 0 ? (
@@ -414,6 +424,7 @@ export default function TheLot() {
           parkedIdeas.map(item => <PipelineRow key={item.id} item={item} />)
         )}
       </Card>
+      </div>
     </div>
   );
 }

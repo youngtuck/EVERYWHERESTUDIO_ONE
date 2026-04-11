@@ -139,8 +139,14 @@ export default function Settings() {
   }, [setDashContent, setDashOpen]);
 
   return (
-    <div style={{ padding: isMobile ? "20px 16px" : "32px 24px", fontFamily: FONT, maxWidth: isMobile ? "100%" : 560 }}>
-      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 16 }}>Preferences</div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, fontFamily: FONT }}>
+      <header className="liquid-glass" style={{ flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)" }}>
+        <div style={{ padding: "12px 20px 10px", maxWidth: isMobile ? "100%" : 560, margin: "0 auto", width: "100%" }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)" }}>Preferences</div>
+        </div>
+      </header>
+
+      <div style={{ padding: isMobile ? "20px 16px" : "24px 24px 32px", maxWidth: isMobile ? "100%" : 560, margin: "0 auto", width: "100%", overflowY: "auto", flex: 1, minHeight: 0 }}>
 
       {/* Display */}
       <Card title="Display">
@@ -185,8 +191,8 @@ export default function Settings() {
       </Card>
 
       {/* Voice & Brand DNA links */}
-      <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--glass-border)" }}>
-        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>Voice and Brand DNA are configured separately.</div>
+      <div className="liquid-glass-card" style={{ marginTop: 8, padding: 16 }}>
+        <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 10 }}>Voice and Brand DNA are configured separately.</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
             type="button"
@@ -217,6 +223,7 @@ export default function Settings() {
             </span>
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

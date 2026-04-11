@@ -72,70 +72,63 @@ function SessionDetailPanel({
   return (
     <>
       <button
+        type="button"
         onClick={onBack}
         style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", color: "var(--fg-3)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", padding: 0, marginBottom: 12 }}
       >
         <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
         Back
       </button>
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>
-          {formatFullDate(output.created_at)}
+      <div className="liquid-glass-card" style={{ padding: 16 }}>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>
+            {formatFullDate(output.created_at)}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 10, lineHeight: 1.4 }}>{output.title}</div>
+
+          {output.score > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <span style={{ fontSize: 10, color: "var(--fg-3)" }}>Impact Score</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor(output.score) }}>{output.score}%</span>
+            </div>
+          )}
+
+          {formats.map(f => (
+            <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 10px", background: "rgba(0,0,0,0.02)", border: "1px solid var(--glass-border)", borderRadius: 8, marginBottom: 4 }}>
+              <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 1.75, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+              </svg>
+              <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1 }}>{f}</span>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => { if (output.content) navigator.clipboard.writeText(output.content).catch(() => {}); }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (output.content) navigator.clipboard.writeText(output.content).catch(() => {}); } }}
+                style={{ fontSize: 9, color: "var(--blue)", cursor: "pointer", fontWeight: 600, position: "relative", zIndex: 1 }}
+              >Copy</span>
+            </div>
+          ))}
         </div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 10, lineHeight: 1.4 }}>{output.title}</div>
 
-        {output.score > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <span style={{ fontSize: 10, color: "var(--fg-3)" }}>Impact Score</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor(output.score) }}>{output.score}%</span>
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Actions</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <button type="button" className="liquid-glass-btn" onClick={onReopen} style={{ width: "100%", justifyContent: "flex-start", padding: "8px 12px" }}>
+              <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>Reopen in Work</span>
+            </button>
+            <button
+              type="button"
+              className="liquid-glass-btn-gold"
+              onClick={onOpenInWrap}
+              disabled={!output.content?.trim()}
+              style={{ width: "100%", justifyContent: "flex-start", padding: "8px 12px", opacity: output.content?.trim() ? 1 : 0.45, cursor: output.content?.trim() ? "pointer" : "not-allowed" }}
+            >
+              <span className="liquid-glass-btn-gold-label">Open in Wrap</span>
+            </button>
+            <button type="button" onClick={onDelete} style={{ width: "100%", textAlign: "left" as const, padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.35)", background: "rgba(239,68,68,0.06)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}>
+              Delete session
+            </button>
           </div>
-        )}
-
-        {formats.map(f => (
-          <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 5, marginBottom: 4 }}>
-            <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 1.75, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
-            </svg>
-            <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1 }}>{f}</span>
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={() => { if (output.content) navigator.clipboard.writeText(output.content).catch(() => {}); }}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (output.content) navigator.clipboard.writeText(output.content).catch(() => {}); } }}
-              style={{ fontSize: 9, color: "var(--blue)", cursor: "pointer", fontWeight: 600, position: "relative", zIndex: 1 }}
-            >Copy</span>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Actions</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <button
-            onClick={onReopen}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-card)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}
-          >
-            Reopen in Work
-          </button>
-          <button
-            type="button"
-            onClick={onOpenInWrap}
-            disabled={!output.content?.trim()}
-            style={{
-              width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5,
-              border: "1px solid rgba(245,198,66,0.35)", background: "rgba(245,198,66,0.08)",
-              fontSize: 11, color: "var(--fg-2)", cursor: output.content?.trim() ? "pointer" : "default",
-              fontFamily: FONT, opacity: output.content?.trim() ? 1 : 0.45,
-            }}
-          >
-            Open in Wrap
-          </button>
-          <button
-            onClick={onDelete}
-            style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.04)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
-          >
-            Delete session
-          </button>
         </div>
       </div>
     </>
@@ -229,7 +222,7 @@ export default function OutputLibrary() {
       );
     } else {
       setDashContent(
-        <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+        <div className="liquid-glass-card" style={{ padding: 16, fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
           Select a session to see its files.
         </div>
       );
@@ -242,40 +235,42 @@ export default function OutputLibrary() {
   );
 
   return (
-    <div style={{ padding: isMobile ? "20px 16px" : 20, fontFamily: FONT, maxWidth: isMobile ? "100%" : 680 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)" }}>The Catalog</div>
-        <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{outputs.length} session{outputs.length !== 1 ? "s" : ""}</div>
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, fontFamily: FONT }}>
+      <header className="liquid-glass" style={{ flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)" }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "12px 20px 10px", maxWidth: isMobile ? "100%" : 680, margin: "0 auto", width: "100%",
+        }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)" }}>The Catalog</div>
+          <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{outputs.length} session{outputs.length !== 1 ? "s" : ""}</div>
+        </div>
+      </header>
 
+      <div style={{ padding: isMobile ? "20px 16px" : 20, maxWidth: isMobile ? "100%" : 680, margin: "0 auto", width: "100%", overflowY: "auto", flex: 1, minHeight: 0 }}>
       {/* Search */}
       {outputs.length > 6 && (
         <input
+          className="liquid-glass-input"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search sessions..."
-          style={{
-            width: "100%", marginBottom: 12, background: "var(--glass-input)",
-            border: "1px solid var(--glass-border)", borderRadius: 8, padding: "8px 12px",
-            fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none",
-            backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
-          }}
-          onFocus={e => { e.target.style.borderColor = "rgba(74,144,217,0.4)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
+          style={{ width: "100%", marginBottom: 12, fontSize: 12, boxSizing: "border-box" as const }}
         />
       )}
 
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div className="liquid-glass-card" style={{ padding: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[1, 2, 3, 4].map(i => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: "1px solid var(--glass-border)" }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: i < 4 ? "1px solid var(--glass-border)" : "none" }}>
               <div style={{ width: 48, height: 10, background: "var(--bg-2)", borderRadius: 3 }} />
               <div style={{ flex: 1, height: 12, background: "var(--bg-2)", borderRadius: 3 }} />
             </div>
           ))}
+          </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: "center" as const, padding: "48px 0", color: "var(--fg-3)", fontSize: 13 }}>
+        <div className="liquid-glass-card" style={{ textAlign: "center" as const, padding: "40px 24px", color: "var(--fg-3)", fontSize: 13 }}>
           {search ? "No sessions match your search." : "No sessions yet. Complete a Work session to see it here."}
         </div>
       ) : (
@@ -313,6 +308,7 @@ export default function OutputLibrary() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }
