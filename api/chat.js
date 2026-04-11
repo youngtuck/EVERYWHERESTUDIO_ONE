@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { getUserResources } from "./_resources.js";
+import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
+import { loadReedDoctrine } from "./_reedDoctrine.js";
 import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
 import { requireAuth } from "./_auth.js";
@@ -283,18 +285,26 @@ function buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources, userNa
   if (userName) {
     system = `The person you are talking to is named ${userName}. Use their first name naturally in conversation. Do not use labels like "user," "composer," "writer," or "the client." Use their name.\n\n`;
   }
-  const voiceContext = ((resources?.voiceDna || "") + "\n" + (voiceDnaMd || "")).trim();
+  const doctrine = loadReedDoctrine(2800);
+  if (doctrine) {
+    system += "REED DOCTRINE (canonical thought-partner framing for EVERYWHERE Studio):\n\n" + doctrine + "\n\n---\n\n";
+  }
+  if (resources?.composerMemory?.trim()) {
+    system += "COMPOSER MEMORY (stable facts; treat as true unless the user contradicts them in this session):\n\n" + resources.composerMemory.trim() + "\n\n---\n\n";
+  }
+  const RL = DNA_LIMITS.reed;
+  const voiceContext = clipDna(((resources?.voiceDna || "") + "\n" + (voiceDnaMd || "")).trim(), RL.voice);
   if (voiceContext) {
     system += "VOICE DNA - Write exactly like this person:\n\n" + voiceContext + "\n\n---\n\n";
   }
   if (resources?.brandDna) {
-    system += "BRAND DNA - Stay consistent with this brand:\n\n" + resources.brandDna.trim() + "\n\n---\n\n";
+    system += "BRAND DNA - Stay consistent with this brand:\n\n" + clipDna(resources.brandDna.trim(), RL.brand) + "\n\n---\n\n";
   }
   if (resources?.methodDna) {
-    system += "METHOD DNA - Use these frameworks and proprietary concepts. Use the exact terminology. Do not paraphrase proprietary tool names into generic language:\n\n" + resources.methodDna.trim() + "\n\n---\n\n";
+    system += "METHOD DNA - Use these frameworks and proprietary concepts. Use the exact terminology. Do not paraphrase proprietary tool names into generic language:\n\n" + clipDna(resources.methodDna.trim(), RL.method) + "\n\n---\n\n";
   }
   if (resources?.references) {
-    system += "REFERENCE MATERIALS:\n\n" + resources.references.trim() + "\n\n---\n\n";
+    system += "REFERENCE MATERIALS:\n\n" + clipDna(resources.references.trim(), RL.references) + "\n\n---\n\n";
   }
   system += REED_SYSTEM;
 

@@ -4,6 +4,8 @@ import path from "path";
 import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
 import { requireAuth } from "./_auth.js";
+import { getUserResources } from "./_resources.js";
+import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
 
 const CHECKPOINT_GATES = [
   { name: "Echo", file: "gate-0-echo.md", label: "Deduplication", displayName: "Deduplication" },
@@ -196,10 +198,28 @@ export default async function handler(req, res) {
   try {
     const client = new Anthropic({ apiKey });
 
+    const L = DNA_LIMITS.pipeline;
+    let voiceForGates = (voiceDnaMd || "").trim();
+    let brandForGates = (brandDnaMd || "").trim();
+    let methodForGates = (methodDnaMd || "").trim();
+    if (userId) {
+      try {
+        const res = await getUserResources(userId);
+        if (!voiceForGates) voiceForGates = (res.voiceDna || "").trim();
+        if (!brandForGates) brandForGates = (res.brandDna || "").trim();
+        if (!methodForGates) methodForGates = (res.methodDna || "").trim();
+      } catch (e) {
+        console.error("[run-pipeline] getUserResources:", e);
+      }
+    }
+    voiceForGates = clipDna(voiceForGates, L.voice);
+    brandForGates = clipDna(brandForGates, L.brand);
+    methodForGates = clipDna(methodForGates, L.method);
+
     console.log(`[run-pipeline] Starting for output ${outputId}`);
 
     // runGate is defined HERE inside the handler so it has closure access
-    // to client, model, currentDraft, outputType, voiceDnaMd, brandDnaMd
+    // to client, model, currentDraft, outputType, voice/brand/method for gates
     async function runGate(gate, index) {
       const prompt = getPrompt(gate.file);
       if (!prompt) {
@@ -219,8 +239,9 @@ export default async function handler(req, res) {
         "Do not include any text outside the JSON object.",
         "",
         `OUTPUT TYPE: ${outputType || "essay"}`,
-        voiceDnaMd ? `VOICE DNA:\n${voiceDnaMd.slice(0, 2000)}` : "No Voice DNA available. Evaluate voice based on the content's internal consistency alone. Do not penalize for lack of Voice DNA match.",
-        brandDnaMd ? `BRAND DNA:\n${brandDnaMd.slice(0, 1000)}` : "",
+        voiceForGates ? `VOICE DNA:\n${voiceForGates}` : "No Voice DNA available. Evaluate voice based on the content's internal consistency alone. Do not penalize for lack of Voice DNA match.",
+        brandForGates ? `BRAND DNA:\n${brandForGates}` : "",
+        methodForGates ? `METHOD DNA (score methodology fidelity; proprietary terms must not be genericized):\n${methodForGates}` : "",
         `\nCONTENT TO EVALUATE:\n\n${currentDraft}`,
       ].filter(Boolean).join("\n\n");
 

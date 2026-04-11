@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getUserResources } from "./_resources.js";
+import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
 import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
 import { requireAuth } from "./_auth.js";
@@ -103,16 +104,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Load user resources for voice/brand context
+    // Load user resources for voice/brand/method context
     const resources = await getUserResources(userId);
+    const A = DNA_LIMITS.auxiliary;
 
     // Build system prompt with voice/brand context
     let systemPrompt = OUTLINE_SYSTEM;
     if (resources.voiceDna) {
-      systemPrompt = `## Voice DNA (write in this voice)\n${resources.voiceDna}\n\n` + systemPrompt;
+      systemPrompt = `## Voice DNA (write in this voice)\n${clipDna(resources.voiceDna, A.voice)}\n\n` + systemPrompt;
     }
     if (resources.brandDna) {
-      systemPrompt = `## Brand DNA\n${resources.brandDna}\n\n` + systemPrompt;
+      systemPrompt = `## Brand DNA\n${clipDna(resources.brandDna, A.brand)}\n\n` + systemPrompt;
+    }
+    if (resources.methodDna) {
+      systemPrompt = `## Method DNA (use proprietary terms exactly)\n${clipDna(resources.methodDna, A.method)}\n\n` + systemPrompt;
     }
     systemPrompt += `\n\nOutput type for this session: ${outputType}. Tailor the outline structure to this format.`;
 

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getUserResources } from "../_resources.js";
+import { clipDna, DNA_LIMITS } from "../_dnaContext.js";
 import { callWithRetry } from "../_retry.js";
 import { CLAUDE_MODEL } from "../_config.js";
 
@@ -40,7 +41,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-  const { conversationSummary, outputType = "essay", voiceDnaMd, userId } = req.body || {};
+  const { conversationSummary, outputType = "essay", voiceDnaMd, brandDnaMd, methodDnaMd, userId } = req.body || {};
   if (!conversationSummary) return res.status(400).json({ error: "conversationSummary is required" });
 
   let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "" };
@@ -50,12 +51,20 @@ export default async function handler(req, res) {
     }
   }
 
+  const A = DNA_LIMITS.auxiliary;
+  const voiceBlock = clipDna(((resources.voiceDna || "") + "\n" + (voiceDnaMd || "")).trim(), A.voice);
+  const brandBlock = clipDna(((resources.brandDna || "") + "\n" + (brandDnaMd || "")).trim(), A.brand);
+  const methodBlock = clipDna(((resources.methodDna || "") + "\n" + (methodDnaMd || "")).trim(), A.method);
+
   let systemPrompt = SYSTEM_PROMPT;
-  if (resources.voiceDna || voiceDnaMd) {
-    systemPrompt += `\n\nVOICE DNA (write hooks that sound like this person):\n${(resources.voiceDna + "\n" + (voiceDnaMd || "")).trim().slice(0, 2000)}`;
+  if (voiceBlock) {
+    systemPrompt += `\n\nVOICE DNA (write hooks that sound like this person):\n${voiceBlock}`;
   }
-  if (resources.brandDna) {
-    systemPrompt += `\n\nBRAND DNA:\n${resources.brandDna.slice(0, 1000)}`;
+  if (brandBlock) {
+    systemPrompt += `\n\nBRAND DNA:\n${brandBlock}`;
+  }
+  if (methodBlock) {
+    systemPrompt += `\n\nMETHOD DNA (use proprietary terms exactly):\n${methodBlock}`;
   }
 
   try {

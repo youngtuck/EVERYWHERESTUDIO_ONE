@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { clipDna } from "./_dnaContext.js";
 
 export async function getUserResources(userId) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -6,7 +7,7 @@ export async function getUserResources(userId) {
   if (!supabaseUrl || !serviceRoleKey || !userId) {
     if (!serviceRoleKey) console.warn("[_resources] SUPABASE_SERVICE_ROLE_KEY not set. Voice/Brand/Method DNA will be empty.");
     if (!supabaseUrl) console.warn("[_resources] SUPABASE_URL not set.");
-    return { voiceDna: "", brandDna: "", methodDna: "", references: "" };
+    return { voiceDna: "", brandDna: "", methodDna: "", references: "", composerMemory: "" };
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -100,10 +101,30 @@ export async function getUserResources(userId) {
     console.error("[_resources] Failed to load resources:", err);
   }
 
+  let composerMemory = "";
+  try {
+    const { data, error } = await supabase
+      .from("composer_memory")
+      .select("body")
+      .eq("user_id", userId)
+      .order("sort_priority", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(20);
+    if (!error && data?.length) {
+      const joined = data.map(r => (r.body || "").trim()).filter(Boolean).join("\n\n");
+      composerMemory = clipDna(joined, 2500);
+    } else if (error && !String(error.message || "").includes("does not exist")) {
+      console.warn("[_resources] composer_memory:", error.message);
+    }
+  } catch (err) {
+    /* table may not exist until migration 022 is applied */
+  }
+
   return {
     voiceDna: voiceDna.trim(),
     brandDna: brandDna.trim(),
     methodDna: methodDna.trim(),
     references: references.trim(),
+    composerMemory,
   };
 }

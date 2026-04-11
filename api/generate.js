@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { scoreContent } from "./_score.js";
 import { getUserResources } from "./_resources.js";
+import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
 import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
 import { requireAuth } from "./_auth.js";
@@ -52,6 +53,8 @@ export default async function handler(req, res) {
   console.log("[generate] Method DNA length:", resources.methodDna?.length || 0);
   console.log("[generate] Request received:", req.method, Object.keys(req.body || {}));
 
+  const G = DNA_LIMITS.generate;
+
   try {
     const client = new Anthropic({ apiKey });
 
@@ -89,7 +92,7 @@ Before writing each paragraph, internalize:
 - What words would this person NEVER use?
 
 VOICE DNA:
-${resources.voiceDna}
+${clipDna(resources.voiceDna, G.voice)}
 
 If you catch yourself writing a sentence this person would never say, delete it and rewrite it in their voice. Voice match is not cosmetic. It is structural.`;
     }
@@ -98,17 +101,17 @@ If you catch yourself writing a sentence this person would never say, delete it 
 The following Brand DNA defines this person's brand identity. Write content that embodies this brand from the first word. Do not treat this as a checklist to verify after writing. Let it shape your word choice, tone, and framing throughout.
 
 BRAND DNA:
-${resources.brandDna}`;
+${clipDna(resources.brandDna, G.brand)}`;
     }
     if (resources.methodDna) {
       system += `\n\nMETHOD DNA (ACTIVE CONSTRAINT):
 Use these proprietary terms exactly as written. Do not paraphrase tool names, framework names, or methodology labels. If the method DNA says "Strategic Meeting Preparation System", use exactly that phrase, not "meeting prep framework" or "strategic preparation process".
 
 METHOD DNA:
-${resources.methodDna}`;
+${clipDna(resources.methodDna, G.method)}`;
     }
     if (resources.references) {
-      system += "\n\nREFERENCE MATERIALS:\n" + resources.references;
+      system += "\n\nREFERENCE MATERIALS:\n" + clipDna(resources.references, 12000);
     }
 
     system += `
@@ -186,7 +189,7 @@ WORD BAN: Never use the word "vibes" or "vibe." Use atmosphere, energy, tone, ch
 Output ONLY the complete revised draft. No commentary, no explanation.`;
 
       if (resources.voiceDna) {
-        system += "\n\nVOICE DNA - The revision MUST match this voice:\n" + resources.voiceDna;
+        system += "\n\nVOICE DNA - The revision MUST match this voice:\n" + clipDna(resources.voiceDna, G.voice);
       }
 
       let revisionParts = [`ORIGINAL DRAFT:\n${originalDraft.slice(0, 8000)}`];
@@ -277,9 +280,9 @@ CRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere
 WORD BAN: Never use the word "vibes" or "vibe." Use atmosphere, energy, tone, character, or feel instead.
 
 Output ONLY the complete revised draft. No commentary, no explanation.`
-            + (resources.voiceDna ? `\n\nVOICE DNA - The revision MUST match this voice:\n${resources.voiceDna}` : "")
-            + (resources.brandDna ? `\n\nBRAND DNA:\n${resources.brandDna}` : "")
-            + (resources.methodDna ? `\n\nMETHOD DNA:\n${resources.methodDna}` : "");
+            + (resources.voiceDna ? `\n\nVOICE DNA - The revision MUST match this voice:\n${clipDna(resources.voiceDna, G.voice)}` : "")
+            + (resources.brandDna ? `\n\nBRAND DNA:\n${clipDna(resources.brandDna, G.brand)}` : "")
+            + (resources.methodDna ? `\n\nMETHOD DNA:\n${clipDna(resources.methodDna, G.method)}` : "");
 
           const revisionResponse = await callWithRetry(() =>
             client.messages.create({

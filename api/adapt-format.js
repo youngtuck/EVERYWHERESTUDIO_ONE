@@ -5,6 +5,7 @@ import { CLAUDE_MODEL } from "./_config.js";
 import fs from "fs";
 import path from "path";
 import { requireAuth } from "./_auth.js";
+import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
 
 function loadPrompt(filename) {
   const paths = [
@@ -234,7 +235,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-  const { draft, format, voiceDnaMd, brandDnaMd, userId, wrapConstraintSupplement } = req.body || {};
+  const { draft, format, voiceDnaMd, brandDnaMd, methodDnaMd, userId, wrapConstraintSupplement } = req.body || {};
   if (!draft) return res.status(400).json({ error: "draft is required" });
   if (!format) return res.status(400).json({ error: "format is required" });
 
@@ -257,14 +258,20 @@ export default async function handler(req, res) {
 
   let system = `${formatConfig.system}\n\n${channelDifferentiationBlock(effectiveFormat)}`;
 
+  const L = DNA_LIMITS.adapt;
   const voiceDna = voiceDnaMd || resources.voiceDna;
   if (voiceDna) {
-    system += `\n\nVOICE DNA (ACTIVE CONSTRAINT, write in this voice from the first word):\n${voiceDna.slice(0, 3000)}`;
+    system += `\n\nVOICE DNA (ACTIVE CONSTRAINT, write in this voice from the first word):\n${clipDna(voiceDna, L.voice)}`;
   }
 
   const brandDna = brandDnaMd || resources.brandDna;
   if (brandDna) {
-    system += `\n\nBRAND DNA:\n${brandDna.slice(0, 1500)}`;
+    system += `\n\nBRAND DNA:\n${clipDna(brandDna, L.brand)}`;
+  }
+
+  const methodDna = methodDnaMd || resources.methodDna;
+  if (methodDna) {
+    system += `\n\nMETHOD DNA (ACTIVE CONSTRAINT; use proprietary terms exactly, never generic replacements):\n${clipDna(methodDna, L.method)}`;
   }
 
   const platformSection = dmitriSpec.split(`### ${formatConfig.platformSpec}`)[1];
