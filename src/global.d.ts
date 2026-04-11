@@ -7,4 +7,5 @@ interface BeforeInstallPromptEvent extends Event {
 interface Window {
   __ewWorkStage?: string;
   __ewSetWorkStage?: (stage: string) => void;
+  __ewCodeId?: string;
 }
