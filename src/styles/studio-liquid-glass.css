@@ -491,26 +491,36 @@
     linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 70%);
 }
 
+/* Primary gold: lacquer-style solid gradient + top sheen. No backdrop-filter (blur reads muddy on yellow). */
 .liquid-glass-btn-gold {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   transform: translateZ(0);
-  border: 1px solid rgba(200, 160, 50, 0.45);
+  border: 1px solid rgba(138, 106, 28, 0.42);
   border-radius: var(--glass-radius-sm);
-  background: linear-gradient(165deg, rgba(245, 198, 66, 0.38) 0%, rgba(212, 168, 50, 0.52) 100%);
+  background: linear-gradient(
+    168deg,
+    #fce49a 0%,
+    #f5c642 42%,
+    #e8b535 58%,
+    #d4a028 100%
+  );
   color: #0a1628;
   cursor: pointer;
   font-family: var(--font);
   font-size: 13px;
   font-weight: 700;
   padding: 10px 22px;
-  backdrop-filter: blur(12px) saturate(1.5);
-  -webkit-backdrop-filter: blur(12px) saturate(1.5);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -1px 0 rgba(180, 140, 40, 0.15);
-  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -1px 0 rgba(120, 88, 20, 0.18),
+    0 1px 2px rgba(12, 26, 41, 0.08);
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -518,7 +528,7 @@
 .liquid-glass-btn-gold .liquid-glass-btn-gold-label {
   position: relative;
   z-index: 3;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 .liquid-glass-btn-gold::before {
   content: "";
@@ -527,34 +537,77 @@
   border-radius: inherit;
   z-index: 1;
   pointer-events: none;
-  background-image:
-    linear-gradient(125deg, rgba(255, 255, 255, 0.25) 0%, transparent 50%),
-    linear-gradient(135deg, rgba(245, 198, 66, 0.15), transparent 65%);
-  background-size: 100% 100%, 100% 100%;
-  box-shadow:
-    inset 0 1px 0 rgba(245, 198, 66, 0.28),
-    inset 0 -1px 0 rgba(245, 198, 66, 0.06);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.38) 0%,
+    rgba(255, 255, 255, 0.08) 22%,
+    transparent 48%
+  );
+  opacity: 0.95;
 }
 .liquid-glass-btn-gold > * {
   position: relative;
   z-index: 2;
 }
 .liquid-glass-btn-gold:hover {
-  background: linear-gradient(165deg, rgba(245, 198, 66, 0.48) 0%, rgba(220, 175, 55, 0.58) 100%);
+  border-color: rgba(138, 106, 28, 0.55);
+  background: linear-gradient(
+    168deg,
+    #fff0b0 0%,
+    #f8cf52 40%,
+    #ecc038 60%,
+    #daa82c 100%
+  );
   transform: translate3d(0, -1px, 0);
-  box-shadow: 0 4px 20px rgba(245, 198, 66, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -1px 0 rgba(120, 88, 20, 0.14),
+    0 6px 22px rgba(200, 150, 40, 0.28);
 }
 .liquid-glass-btn-gold:active {
   transform: translate3d(0, 0, 0) scale(0.98);
+  box-shadow:
+    inset 0 2px 4px rgba(120, 88, 20, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 [data-theme="dark"] .liquid-glass-btn-gold {
-  color: #f8e6b0;
-  background: linear-gradient(165deg, rgba(245, 198, 66, 0.22) 0%, rgba(180, 140, 40, 0.35) 100%);
-  border-color: rgba(245, 198, 66, 0.35);
+  color: #0d1b2a;
+  border-color: rgba(245, 198, 66, 0.55);
+  background: linear-gradient(
+    168deg,
+    #ffe08a 0%,
+    #f5c642 45%,
+    #e0ae2e 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(80, 60, 12, 0.35),
+    0 2px 12px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] .liquid-glass-btn-gold::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.06) 26%,
+    transparent 50%
+  );
+}
+[data-theme="dark"] .liquid-glass-btn-gold:hover {
+  border-color: rgba(255, 220, 140, 0.65);
+  background: linear-gradient(
+    168deg,
+    #fff0a8 0%,
+    #f8cf52 42%,
+    #e8b82e 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(60, 45, 10, 0.4),
+    0 8px 28px rgba(245, 198, 66, 0.22);
 }
 [data-theme="dark"] .liquid-glass-btn-gold .liquid-glass-btn-gold-label {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 /* Top bar vertical rule (theme aware) */
@@ -945,8 +998,7 @@
   backdrop-filter: blur(18px) saturate(1.55);
   -webkit-backdrop-filter: blur(18px) saturate(1.55);
 }
-.studio-glass-dense .liquid-glass-btn,
-.studio-glass-dense .liquid-glass-btn-gold {
+.studio-glass-dense .liquid-glass-btn {
   backdrop-filter: blur(8px) saturate(1.4);
   -webkit-backdrop-filter: blur(8px) saturate(1.4);
 }
