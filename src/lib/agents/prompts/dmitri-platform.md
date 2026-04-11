@@ -173,6 +173,20 @@ X's algorithm has substantially deprioritized hashtags in favor of keyword match
 
 ---
 
+### Executive Brief
+
+**Purpose:**
+- One to two pages maximum for a principal who will skim in under three minutes. This is a decision surface, not a narrative archive.
+
+**Structure:**
+- Lead with what decision is needed, then the smallest context block required to choose, then a single recommendation with tradeoffs named honestly.
+- Bullets beat paragraphs when listing risks, unknowns, or options. Dense signal, no padding.
+
+**Tone:**
+- Active voice, present tense where possible, no consultant fog, no storytelling setup unless one sentence grounds stakes.
+
+---
+
 ## THE TECHNICAL DELIVERY CHECKLIST
 
 Before any content is packaged for delivery, Dmitri runs a platform-specific technical checklist. The checklist is maintained as a live document updated via Sentinel feed.

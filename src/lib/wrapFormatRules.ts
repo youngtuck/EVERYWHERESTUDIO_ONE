@@ -108,9 +108,13 @@ export function getWrapRuleSummaryLines(outputTypeId: string, presentationMinute
   }
 }
 
-/**
- * Model-facing supplement for one channel tab (FORMAT_INSTRUCTIONS key).
- */
+/** Legacy Work session ids map to catalog / constraint ids. */
+function normalizeWorkSourceTypeId(id: string): string {
+  if (id === "socials") return "social_media";
+  return id;
+}
+
+/** Model-facing supplement for one channel tab (FORMAT_INSTRUCTIONS key). */
 export function buildWrapConstraintSupplement(
   outputTypeId: string,
   channelFormat: string,
@@ -121,10 +125,12 @@ export function buildWrapConstraintSupplement(
     : DEFAULT_PRESENTATION_MINUTES;
   const presWords = pm * WORDS_PER_PRESENTATION_MINUTE;
   const lines: string[] = [];
+  const ot = normalizeWorkSourceTypeId(outputTypeId);
 
-  lines.push(`SOURCE OUTPUT TYPE (from Work): ${outputTypeId}. Apply the following ONLY as they fit this channel (${channelFormat}); do not contradict hard platform rules above.`);
+  lines.push(`DESTINATION CHANNEL: ${channelFormat}. SOURCE OUTPUT TYPE (from Work): ${outputTypeId}.`);
+  lines.push("This channel must read as native to its medium. Same topic and intellectual substance as the draft, but not the same sentences, paragraph order, or rhetorical shape as the source or as any other channel would use.");
 
-  if (outputTypeId === "social_media") {
+  if (ot === "social_media") {
     if (channelFormat === "LinkedIn") {
       lines.push("LinkedIn post profile: keep the adapted post at or under about 400 words. No markdown subheads (no ## lines). Short paragraphs. Single strong hook line up front.");
     } else if (channelFormat === "X Thread") {
@@ -134,7 +140,7 @@ export function buildWrapConstraintSupplement(
     }
   }
 
-  if (outputTypeId === "essay") {
+  if (ot === "essay") {
     if (channelFormat === "LinkedIn") {
       lines.push("LinkedIn essay profile: target roughly 900 to 1300 words of adapted content. No ## subheads. Preserve argument flow without listicle structure.");
     } else if (channelFormat === "Newsletter" || channelFormat === "Sunday Story" || channelFormat === "Email" || channelFormat === "Executive Brief") {
@@ -146,7 +152,7 @@ export function buildWrapConstraintSupplement(
     }
   }
 
-  if (outputTypeId === "newsletter") {
+  if (ot === "newsletter") {
     if (channelFormat === "Newsletter") {
       lines.push("Newsletter source profile: include a short TABLE OF CONTENTS listing ## sections after the opening. Use ## subheads throughout the body. Fill SUBJECT, PREVIEW, and SEO_TITLE fields as specified in the newsletter template.");
       lines.push("Place a literal line starting with TABLE OF CONTENTS: followed by numbered section titles matching each ## heading.");
@@ -155,44 +161,65 @@ export function buildWrapConstraintSupplement(
     }
   }
 
-  if (outputTypeId === "podcast" && channelFormat === "Podcast") {
+  if (ot === "podcast" && channelFormat === "Podcast") {
     lines.push("Podcast source profile: add bracketed cue and direction lines throughout (for example [CUE: softer tone], [DIRECTOR: pause for beat], [B-ROLL: city skyline]) in addition to any [PAUSE] or [SEGMENT BREAK] markers.");
   }
 
-  if (outputTypeId === "presentation") {
+  if (ot === "presentation") {
     lines.push(`Talk / presentation profile: treat spoken or slide-support length as about ${presWords} words total for this session (${pm} minutes at ${WORDS_PER_PRESENTATION_MINUTE} words per minute), unless the channel template forces a shorter cap. State timing assumptions in SHOW_NOTES or intro where relevant.`);
     if (channelFormat === "Executive Brief") {
       lines.push("Map slide beats to brief sections where helpful.");
     }
   }
 
-  if (outputTypeId === "email" && (channelFormat === "Email" || channelFormat === "Newsletter")) {
+  if (ot === "email" && (channelFormat === "Email" || channelFormat === "Newsletter")) {
     lines.push("Email source profile: cap the main body near 300 words when possible. Exactly one primary call to action. No secondary competing CTAs.");
   }
 
-  if (outputTypeId === "video_script" && (channelFormat === "YouTube Description" || channelFormat === "Podcast")) {
+  if (ot === "video_script" && (channelFormat === "YouTube Description" || channelFormat === "Podcast")) {
     lines.push("Video script profile: include production-friendly markers (scene, shot, beat, VO) alongside spoken lines where appropriate.");
   }
 
-  if (outputTypeId === "case_study") {
+  if (ot === "case_study") {
     lines.push("Case study profile: use labeled sections (Context, Challenge, Approach, Outcome, Metrics, Learnings) when structure fits the channel.");
   }
 
-  if (outputTypeId === "one_pager") {
+  if (ot === "one_pager") {
     lines.push("One-pager profile: strict modular sections, total adapted core under about 400 words when the channel is brief-style (Executive Brief, Email). No fluff.");
   }
 
-  if (outputTypeId === "book" && (channelFormat === "Sunday Story" || channelFormat === "Newsletter" || channelFormat === "Executive Brief")) {
+  if (ot === "book" && (channelFormat === "Sunday Story" || channelFormat === "Newsletter" || channelFormat === "Executive Brief")) {
     lines.push("Book chapter profile: aim for long-form depth (3000+ words) only when the channel format allows; otherwise compress but keep chapter arc (setup, turn, landing). Use ## subchapters for long markdown outputs.");
   }
 
-  if (["proposal", "report", "white_paper", "executive_summary", "sow", "meeting", "session_brief", "bio", "website"].includes(outputTypeId)) {
-    lines.push(`Business source profile (${outputTypeId}): use labeled sections, decision-first ordering, and minimal prose padding.`);
+  if (["proposal", "report", "white_paper", "executive_summary", "sow", "meeting", "session_brief", "bio", "website"].includes(ot)) {
+    lines.push(`Business source profile (${ot}): use labeled sections, decision-first ordering, and minimal prose padding.`);
   }
 
-  if (outputTypeId === "freestyle") {
+  if (ot === "freestyle") {
     lines.push("Freestyle: no extra source-type constraints beyond channel defaults.");
   }
+
+  const channelVoice: Partial<Record<string, string>> = {
+    LinkedIn:
+      "LinkedIn-only: write for the feed. Strong first line before the fold, airy paragraphs, no markdown headings, no long essay throat clearing.",
+    Newsletter:
+      "Newsletter-only: structured editorial with SUBJECT/PREVIEW/SEO blocks when the template requires them, then ## sections. Not a Sunday memoir and not a LinkedIn post pasted long-form.",
+    Podcast:
+      "Podcast-only: spoken script with markers. Short clauses, contractions, host cadence. Never keep written-article pacing or paragraph shapes from the source.",
+    "Sunday Story":
+      "Sunday Story-only: narrative personal essay. Scene-led opening, no email metadata blocks, no numbered tweet mechanics, no decision-memo headings.",
+    Email:
+      "Email-only: one send, one CTA, mobile-first brevity. Not a Substack-length issue and not a thread.",
+    "X Thread":
+      "Thread-only: numbered micro-posts under 280 characters each. No long paragraphs; split beats across tweets.",
+    "Executive Brief":
+      "Executive Brief-only: decision document with labeled sections (Decision Required, Context, Recommendation, Risks, Next Step). No storytelling cold open unless one tight sentence sets stakes.",
+    "YouTube Description":
+      "YouTube packaging-only: title plus discovery-first description and optional timestamps. Not a blog article in prose blocks.",
+  };
+  const tail = channelVoice[channelFormat];
+  if (tail) lines.push(tail);
 
   return lines.join("\n");
 }

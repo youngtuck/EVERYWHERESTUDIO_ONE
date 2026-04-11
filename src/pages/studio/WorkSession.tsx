@@ -27,7 +27,7 @@ import {
 } from "../../lib/sessionPersistence";
 
 import { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
-import { DEFAULT_PRESENTATION_MINUTES } from "../../lib/wrapFormatRules";
+import { DEFAULT_PRESENTATION_MINUTES, buildWrapConstraintSupplement } from "../../lib/wrapFormatRules";
 import { ReedProfileIcon } from "../../components/studio/ReedProfileIcon";
 import "./shared.css";
 
@@ -81,6 +81,12 @@ type Format =
   | "Case Study" | "One-Pager" | "Presentation" | "Book Chapter";
 
 const DEFAULT_FORMATS: Format[] = [];
+
+/** Map Review tab id to adapt-format API format key. */
+function reviewFormatToApiFormat(f: Format): string {
+  if (f === "Thread") return "X Thread";
+  return f;
+}
 
 const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
   LinkedIn: "socials", Newsletter: "newsletter", Podcast: "podcast",
@@ -3184,21 +3190,34 @@ export default function WorkSession() {
     const promises = formatsToAdapt.map(async (format) => {
       setFormatDrafts(prev => ({ ...prev, [format]: { ...prev[format], status: "generating" } }));
       try {
+        const apiFormat = reviewFormatToApiFormat(format);
+        const sourceOt =
+          outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "freestyle";
+        const presMins = outputType === "presentation" ? preWrapPresentationMins : null;
+        const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins);
         const res = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ draft, format, voiceDnaMd, brandDnaMd, userId: user.id }),
+          body: JSON.stringify({
+            draft,
+            format: apiFormat,
+            voiceDnaMd,
+            brandDnaMd,
+            userId: user.id,
+            wrapConstraintSupplement,
+          }),
         }, { timeout: 60000 });
         if (!res.ok) throw new Error(`Adapt error ${res.status}`);
         const data = await res.json();
-        setFormatDrafts(prev => ({ ...prev, [format]: { content: data.content || draft, metadata: data.metadata || {}, status: "done" } }));
+        const adapted = typeof data.content === "string" && data.content.trim().length > 0 ? data.content : draft;
+        setFormatDrafts(prev => ({ ...prev, [format]: { content: adapted, metadata: data.metadata || {}, status: "done" } }));
       } catch (err) {
         console.error(`[adapt-format] ${format} failed:`, err);
         setFormatDrafts(prev => ({ ...prev, [format]: { content: draft, metadata: {}, status: "error" } }));
       }
     });
     await Promise.allSettled(promises);
-  }, [draft, user, selectedFormats, voiceDnaMd, brandDnaMd]);
+  }, [draft, user, selectedFormats, voiceDnaMd, brandDnaMd, outputType, preWrapPresentationMins]);
 
   // ── EDIT -> REVIEW: Run pipeline ──────────────────────────────
   const handleRunPipeline = useCallback(async () => {
@@ -3656,16 +3675,32 @@ export default function WorkSession() {
 
         // Re-adapt the current format with the new draft (improves formatting)
         try {
+          const apiFormat = reviewFormatToApiFormat(activeReviewTab);
+          const sourceOt =
+            outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "freestyle";
+          const presMins = outputType === "presentation" ? preWrapPresentationMins : null;
+          const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins);
           const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ draft: data.content, format: activeReviewTab, voiceDnaMd, brandDnaMd, userId: user?.id }),
+            body: JSON.stringify({
+              draft: data.content,
+              format: apiFormat,
+              voiceDnaMd,
+              brandDnaMd,
+              userId: user?.id,
+              wrapConstraintSupplement,
+            }),
           }, { timeout: 60000 });
           if (adaptRes.ok) {
             const adaptData = await adaptRes.json();
+            const adapted =
+              typeof adaptData.content === "string" && adaptData.content.trim().length > 0
+                ? adaptData.content
+                : data.content;
             setFormatDrafts(prev => ({
               ...prev,
-              [activeReviewTab]: { content: adaptData.content || data.content, metadata: adaptData.metadata || {}, status: "done" as const },
+              [activeReviewTab]: { content: adapted, metadata: adaptData.metadata || {}, status: "done" as const },
             }));
           }
         } catch { /* Non-critical: format re-adaptation failed, raw draft already shown */ }
@@ -3677,7 +3712,7 @@ export default function WorkSession() {
       toast("Fix failed. Try again.", "error");
       throw err;
     }
-  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast]);
+  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast, preWrapPresentationMins]);
 
   // ── REVIEW: Instant text replacement (Grammarly-style accept) ──
   const handleDirectReplace = useCallback((original: string, replacement: string) => {

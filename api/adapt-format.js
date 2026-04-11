@@ -40,6 +40,8 @@ LINKEDIN RULES (non-negotiable):
 - The voice must match the Voice DNA exactly. LinkedIn is personal-professional, not corporate.
 - Do NOT add "What do you think?" or other generic engagement bait. Write a specific, interesting question that comes from the content.
 
+LENGTH TARGET: Roughly 280 to 520 words of body copy unless the idea truly needs more, but stay under the 3,000 character hard cap.
+
 OUTPUT FORMAT: Return ONLY the adapted LinkedIn post. No commentary. No "Here's your LinkedIn post:" header. Just the post, ready to paste into LinkedIn.`,
   },
 
@@ -48,6 +50,7 @@ OUTPUT FORMAT: Return ONLY the adapted LinkedIn post. No commentary. No "Here's 
     system: `You are adapting content for a Substack newsletter. You are Dmitri Wells, platform optimization specialist.
 
 NEWSLETTER RULES (non-negotiable):
+- This is NOT a Sunday Story and NOT a LinkedIn post. It is a structured newsletter: metadata first, then scannable sections with ## headings and a quotable pull.
 - Open with a direct address to the reader. Newsletter subscribers expect personal connection. One sentence that makes them feel like this was written for them specifically.
 - SEO title: keyword-rich, clear about the specific topic, structured for discovery. This goes in the subject line field.
 - Email subject line: optimized for open rate. Curiosity gap, specificity, or personal relevance. Keep under 50 characters for mobile display.
@@ -67,7 +70,7 @@ SEO_TITLE: [SEO-optimized title]
   },
 
   Podcast: {
-    platformSpec: "Podcast",
+    platformSpec: "Podcast Platforms",
     system: `You are adapting content into a podcast script. You are Dmitri Wells, platform optimization specialist, working with Felix Rossi on audio production.
 
 PODCAST SCRIPT RULES (non-negotiable):
@@ -105,6 +108,7 @@ SHOW_NOTES: [200-300 words for podcast platform description]
     system: `You are adapting content into a Sunday Story. You are Dmitri Wells, working with the full editorial team.
 
 SUNDAY STORY RULES (non-negotiable):
+- This is NOT a marketing newsletter: never output SUBJECT:, PREVIEW:, SEO_TITLE:, or a table of contents. Title and subtitle only, then narrative body.
 - This is the flagship format. It is a personal essay that reads like the best thing in someone's inbox that week.
 - The Sunday Story is narrative, not instructional. It tells a story that contains an insight, rather than teaching a lesson that uses a story.
 - Open with a scene, an image, or a moment. Not a thesis statement. Not "I have been thinking about..." Start in the middle of something happening.
@@ -127,6 +131,7 @@ SUBTITLE: [one sentence that sets the mood without spoiling the insight]
     system: `You are adapting content into a single send-ready email (not a long Substack issue). You are Dmitri Wells, platform optimization specialist.
 
 EMAIL RULES:
+- This is a single short email, not a newsletter issue and not a LinkedIn essay. Tight, skimmable, one primary CTA.
 - One clear subject line (under 50 characters, mobile-safe).
 - Preview text: 80-140 characters that completes the subject, no repetition.
 - Body: mobile-first. Short paragraphs. One primary CTA. Plain, paste-ready text; minimal markdown if any (no heavy headers unless needed).
@@ -145,6 +150,7 @@ PREVIEW: [preview text]
     system: `You are adapting content into an X (Twitter) thread. You are Dmitri Wells, platform optimization specialist.
 
 THREAD RULES:
+- This is NOT paragraph prose. Each unit is its own tweet under 280 characters. Thread energy, not a chopped article.
 - First post must stand alone as the hook; algorithm weight is on post 1.
 - Number posts as 1/, 2/, 3/ at the start of each tweet (or use clear breaks with --- between tweets).
 - Each post under 280 characters (assume standard limit). If a point needs more, split across posts.
@@ -156,10 +162,11 @@ OUTPUT FORMAT: Return ONLY the thread, one tweet per block separated by a line w
   },
 
   "Executive Brief": {
-    platformSpec: "ExecutiveBriefPlaceholder",
+    platformSpec: "Executive Brief",
     system: `You are adapting content into an Executive Brief: a standalone decision document for a busy principal.
 
 RULES:
+- This is NOT narrative journalism. No scene-setting cold open unless one sentence grounds a decision. Principal skim mode.
 - Maximum length: roughly two pages of prose when printed (tight, not padded).
 - Sections (use clear ## headings in markdown): Decision Required, Context, Recommendation, Risks / Unknowns, Next Step.
 - The recommendation must be one clear choice or a forced tradeoff, not a list of options with no position.
@@ -173,6 +180,7 @@ OUTPUT FORMAT: Return ONLY the brief in markdown with the sections above.`,
     system: `You are adapting content into YouTube packaging: title, description, and optional chapters. You are Dmitri Wells, platform optimization specialist.
 
 RULES:
+- This is packaging for a video surface, not a blog article. Front-load discovery language; avoid long expository paragraphs in the first screen.
 - Video title: under 70 characters, front-loads the topic, no clickbait emptiness.
 - Description: first 2-3 lines are the hook (what viewers get); then fuller summary; then keywords naturally woven in; optional TIMESTAMPS block if the draft implies sections.
 - Include a single clear CTA (subscribe, next video, link in comments policy as you judge).
@@ -184,6 +192,24 @@ TITLE: [video title]
 [full description + optional timestamps]`,
   },
 };
+
+/** Client may send legacy tab names; normalize to FORMAT_INSTRUCTIONS keys. */
+const FORMAT_INPUT_ALIASES = {
+  Thread: "X Thread",
+  "Podcast Script": "Podcast",
+};
+
+function channelDifferentiationBlock(effectiveFormat) {
+  return `## CHANNEL-UNIQUE REWRITE (MANDATORY)
+You are producing ONLY the **${effectiveFormat}** version. The same draft may become seven other channel outputs elsewhere. Your output must not be interchangeable with any of them.
+
+Rules:
+- **Recompose** the ideas: keep claims, stakes, proper nouns, and numbers faithful to the source, but write new sentences, new paragraph order, and a hook that this channel would actually open with.
+- **Do not** paste or lightly tweak consecutive paragraphs from the source. If a paragraph still resembles the source aside from a few word swaps, rewrite it from scratch.
+- **Do not** reuse the source’s opening one or two sentences verbatim unless you are deliberately quoting a short fragment (almost never needed here).
+- Match this channel’s length, rhythm, and scaffolding (headings, markers, metadata blocks) even if that means aggressive compression or expansion versus the draft.
+`;
+}
 
 function sanitizeContent(text) {
   if (!text) return text;
@@ -212,7 +238,8 @@ export default async function handler(req, res) {
   if (!draft) return res.status(400).json({ error: "draft is required" });
   if (!format) return res.status(400).json({ error: "format is required" });
 
-  const formatConfig = FORMAT_INSTRUCTIONS[format];
+  const effectiveFormat = FORMAT_INPUT_ALIASES[format] || format;
+  const formatConfig = FORMAT_INSTRUCTIONS[effectiveFormat];
   if (!formatConfig) {
     return res.status(400).json({ error: `Unknown format: ${format}` });
   }
@@ -228,7 +255,7 @@ export default async function handler(req, res) {
 
   const dmitriSpec = loadPrompt("dmitri-platform.md") || "";
 
-  let system = formatConfig.system;
+  let system = `${formatConfig.system}\n\n${channelDifferentiationBlock(effectiveFormat)}`;
 
   const voiceDna = voiceDnaMd || resources.voiceDna;
   if (voiceDna) {
@@ -254,16 +281,27 @@ export default async function handler(req, res) {
     system += `\n\nSOURCE TYPE CONSTRAINTS (apply together with channel rules; if a conflict appears, obey the stricter platform safety limits):\n${clip}`;
   }
 
-  const userContent = `ORIGINAL DRAFT TO ADAPT:\n\n${draft.slice(0, 8000)}\n\nAdapt this draft for ${format}. Follow all platform rules. Preserve the author's voice. Output only the adapted content in the specified format.`;
+  const userContent = `DESTINATION CHANNEL: ${effectiveFormat}
+The text below is SOURCE MATERIAL, not a layout to paste. Transform it into a native ${effectiveFormat} artifact. Same topic and substance; different surface, structure, and sentence fabric than the source or than any other channel would use.
 
-  console.log(`[adapt-format] Adapting for ${format} (draft: ${draft.length} chars)`);
+SOURCE DRAFT:
+${draft.slice(0, 12000)}
+
+Output only the final ${effectiveFormat} deliverable, following every rule above. No preamble or meta commentary.`;
+
+  console.log(`[adapt-format] Adapting for ${effectiveFormat} (requested as "${format}", draft: ${draft.length} chars)`);
   const startTime = Date.now();
 
   try {
     const client = new Anthropic({ apiKey });
     // Podcast scripts need more tokens for full-length episodes (target 8-12 min read)
     const tokenLimit =
-      format === "Podcast" || format === "Podcast Script" || format === "Executive Brief" ? 6144 : 4096;
+      effectiveFormat === "Podcast"
+      || effectiveFormat === "Executive Brief"
+      || effectiveFormat === "Sunday Story"
+      || effectiveFormat === "Newsletter"
+        ? 6144
+        : 4096;
     const response = await callWithRetry(() =>
       client.messages.create({
         model: CLAUDE_MODEL,
@@ -278,12 +316,12 @@ export default async function handler(req, res) {
     const sanitized = sanitizeContent(text);
     const duration = Date.now() - startTime;
 
-    console.log(`[adapt-format] ${format} complete (${duration}ms, ${sanitized.length} chars)`);
+    console.log(`[adapt-format] ${effectiveFormat} complete (${duration}ms, ${sanitized.length} chars)`);
 
     let metadata = {};
     let body = sanitized;
 
-    if (format === "Newsletter" || format === "Email") {
+    if (effectiveFormat === "Newsletter" || effectiveFormat === "Email") {
       const subjectMatch = sanitized.match(/^SUBJECT:\s*(.+)$/m);
       const previewMatch = sanitized.match(/^PREVIEW:\s*(.+)$/m);
       const seoMatch = sanitized.match(/^SEO_TITLE:\s*(.+)$/m);
@@ -294,7 +332,7 @@ export default async function handler(req, res) {
       if (bodyStart > 0) body = sanitized.slice(bodyStart + 3).trim();
     }
 
-    if (format === "Podcast") {
+    if (effectiveFormat === "Podcast") {
       const titleMatch = sanitized.match(/^EPISODE_TITLE:\s*(.+)$/m);
       const notesMatch = sanitized.match(/^SHOW_NOTES:\s*([\s\S]*?)(?=^---)/m);
       const bodyStart = sanitized.lastIndexOf("---");
@@ -303,7 +341,7 @@ export default async function handler(req, res) {
       if (bodyStart > 0) body = sanitized.slice(bodyStart + 3).trim();
     }
 
-    if (format === "Sunday Story") {
+    if (effectiveFormat === "Sunday Story") {
       const titleMatch = sanitized.match(/^TITLE:\s*(.+)$/m);
       const subtitleMatch = sanitized.match(/^SUBTITLE:\s*(.+)$/m);
       const bodyStart = sanitized.indexOf("---");
@@ -312,7 +350,7 @@ export default async function handler(req, res) {
       if (bodyStart > 0) body = sanitized.slice(bodyStart + 3).trim();
     }
 
-    if (format === "YouTube Description") {
+    if (effectiveFormat === "YouTube Description") {
       const titleMatch = sanitized.match(/^TITLE:\s*(.+)$/m);
       const bodyStart = sanitized.indexOf("---");
       if (titleMatch) metadata.videoTitle = titleMatch[1].trim();
@@ -326,9 +364,9 @@ export default async function handler(req, res) {
       durationMs: duration,
     });
   } catch (err) {
-    console.error(`[adapt-format] ${format} FAILED:`, err.message);
+    console.error(`[adapt-format] ${effectiveFormat} FAILED:`, err.message);
     return res.status(500).json({
-      error: `Adaptation failed for ${format}`,
+      error: `Adaptation failed for ${effectiveFormat}`,
       fallback: true,
     });
   }

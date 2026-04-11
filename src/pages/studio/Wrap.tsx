@@ -359,10 +359,14 @@ export default function WrapPage() {
       if (!res.ok) throw new Error(`Adapt error ${res.status}`);
       const data = await res.json();
 
+      const adapted =
+        typeof data.content === "string" && data.content.trim().length > 0
+          ? data.content
+          : activeOutput.content;
       setFormatContents(prev => ({
         ...prev,
         [format]: {
-          content: data.content || activeOutput.content,
+          content: adapted,
           metadata: data.metadata || {},
           status: "done",
         },
