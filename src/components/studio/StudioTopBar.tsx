@@ -10,18 +10,14 @@ const USER_MENU_OVERLAY_Z = 10050;
 const STUDIO_CENTER_MODAL_Z = 10100;
 
 // ── Route to breadcrumb config ──────────────────────────────────
-function useBreadcrumbs(): {
-  left: React.ReactNode;
-  showAdvisors: boolean;
-} {
+function useBreadcrumbs(): { left: React.ReactNode } {
   const loc = useLocation();
   const nav = useNavigate();
 
   const path = loc.pathname;
 
-  // Work pipeline gets special breadcrumb treatment
   if (path.startsWith("/studio/work")) {
-    return { left: <WorkBreadcrumb />, showAdvisors: true };
+    return { left: <WorkBreadcrumb /> };
   }
 
   const labelMap: Record<string, string> = {
@@ -61,7 +57,6 @@ function useBreadcrumbs(): {
         )}
       </div>
     ),
-    showAdvisors: false,
   };
 }
 
@@ -397,8 +392,8 @@ function UserAvatar() {
 // ── Main TopBar ─────────────────────────────────────────────────
 export default function StudioTopBar() {
   const nav = useNavigate();
-  const { setAdvisorsOpen, setDiscoverOpen } = useShell();
-  const { left, showAdvisors } = useBreadcrumbs();
+  const { setDiscoverOpen } = useShell();
+  const { left } = useBreadcrumbs();
 
   return (
     <div className="liquid-glass" style={{
@@ -432,24 +427,6 @@ export default function StudioTopBar() {
         </button>
 
         <Divider />
-
-        {showAdvisors && (
-          <>
-            <button
-              onClick={() => setAdvisorsOpen(true)}
-              style={{
-                fontSize: 11, color: "var(--fg-3)", cursor: "pointer",
-                fontWeight: 500, background: "none", border: "none",
-                fontFamily: "var(--font)", padding: 0, transition: "color 0.12s",
-              }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.color = "var(--fg)"; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
-            >
-              Advisors
-            </button>
-            <Divider />
-          </>
-        )}
 
         <button
           onClick={() => setDiscoverOpen(true)}

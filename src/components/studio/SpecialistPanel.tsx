@@ -1,3 +1,7 @@
+/**
+ * Checkpoint and advisor cards for in-page quality UI.
+ * Route-level advisor readout and Reed chat live in StudioShell inspector (edge panel), not here.
+ */
 import { useState, useEffect } from "react";
 import { Check, AlertTriangle, X as XIcon, Loader2 } from "lucide-react";
 import { useMobile } from "../../hooks/useMobile";

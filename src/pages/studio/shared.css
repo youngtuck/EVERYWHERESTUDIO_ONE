@@ -61,6 +61,27 @@
 }
 .user-bubble-wrap p { font-size: 13px; color: rgba(255,255,255,0.92); line-height: 1.35; }
 
+/* Intake composer: avoid clipping multi-line textarea; flex children may shrink */
+.liquid-glass.liquid-glass-chat-composer {
+  overflow: visible;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.work-chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.work-chat-input-row .reed-input {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
 @media (max-width: 768px) {
   .reed-bubble-wrap { max-width: 85% !important; }
   .user-bubble-wrap { max-width: 80% !important; }

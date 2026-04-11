@@ -10,7 +10,7 @@
  */
 
 import {
-  useState, useRef, useEffect, useLayoutEffect, useCallback,
+  useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
@@ -19,9 +19,10 @@ import { useToast } from "../../context/ToastContext";
 import { supabase } from "../../lib/supabase";
 import { fetchWithRetry } from "../../lib/retry";
 import { useMobile } from "../../hooks/useMobile";
+import { useHoldToTranscribe } from "../../hooks/useHoldToTranscribe";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 
-import OutputTypePicker, { OUTPUT_TYPES, PROJECT_TYPE_IDS } from "../../components/studio/OutputTypePicker";
+import { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
 import { ReedProfileIcon } from "../../components/studio/ReedProfileIcon";
 import "./shared.css";
 
@@ -75,11 +76,6 @@ type Format =
   | "Case Study" | "One-Pager" | "Presentation" | "Book Chapter";
 
 const DEFAULT_FORMATS: Format[] = [];
-const ALL_FORMATS: Format[] = [
-  "LinkedIn", "Newsletter", "Article", "Podcast",
-  "Email", "Thread", "Video Script", "Case Study",
-  "One-Pager", "Presentation", "Book Chapter", "Sunday Story",
-];
 
 const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
   LinkedIn: "socials", Newsletter: "newsletter", Podcast: "podcast",
@@ -96,6 +92,38 @@ const WORD_TARGETS: Record<string, number> = {
   meeting: 600, bio: 400, white_paper: 3000, session_brief: 600,
   freestyle: 700,
 };
+
+/** Pre-Wrap full-screen picker: Content, Business, Social (maps to OUTPUT_TYPES ids for Catalog / Wrap). */
+type PreWrapPickCategory = "Content" | "Business" | "Social";
+
+const PRE_WRAP_PICK_GROUPS: Record<PreWrapPickCategory, { id: string; label: string }[]> = {
+  Content: [
+    { id: "essay", label: "Essay" },
+    { id: "podcast", label: "Podcast" },
+    { id: "video_script", label: "Video Script" },
+    { id: "email", label: "Email" },
+  ],
+  Business: OUTPUT_TYPES.filter(t => t.category === "Business").map(t => ({ id: t.id, label: t.label })),
+  Social: [
+    { id: "social_media", label: "Social Media" },
+    { id: "newsletter", label: "Newsletter" },
+  ],
+};
+
+/** Heuristic primary output type for Pre-Wrap highlight (not a model call). */
+function inferRecommendedWrapOutputId(draft: string): string {
+  const t = draft.slice(0, 14000).toLowerCase();
+  if (/\b(slide|deck|presentation|q[1-4])\b/.test(t) || /##\s*slide/i.test(t)) return "presentation";
+  if (/\b(podcast|episode|\[open\]|\[hook\])\b/.test(t)) return "podcast";
+  if (/\b(newsletter|subject line|preview text|unsubscribe)\b/.test(t)) return "newsletter";
+  if (/\b(case study|client success)\b/.test(t)) return "case_study";
+  if (/\b(linkedin|twitter thread|x thread)\b/.test(t)) return "social_media";
+  if (/\b(proposal|rfp|statement of work|\bsow\b)\b/.test(t)) return "proposal";
+  if (/\b(executive summary|exec summary)\b/.test(t)) return "executive_summary";
+  if (/\b(video script|b-roll|scene)\b/.test(t)) return "video_script";
+  if (/\b(email|e-mail|dear )\b/.test(t) && t.length < 4000) return "email";
+  return "essay";
+}
 
 const TEMPLATES = ["Essay", "LinkedIn Post", "Newsletter Issue", "Podcast Script", "Case Study", "One-Pager", "Email"];
 
@@ -359,16 +387,27 @@ function FileIcon() {
   );
 }
 
-function IaBtn({ title, active, children, onMouseDown, onMouseUp, onMouseLeave, onClick }: {
+function IaBtn({ title, active, children, onMouseDown, onMouseUp, onMouseLeave, onClick,
+  onPointerDown, onPointerUp, onPointerLeave, onPointerCancel,
+}: {
   title?: string; active?: boolean; children: React.ReactNode;
   onMouseDown?: () => void; onMouseUp?: () => void;
   onMouseLeave?: () => void; onClick?: () => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerUp?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerLeave?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerCancel?: (e: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
+      type="button"
       title={title}
       onClick={onClick}
       onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerLeave}
+      onPointerCancel={onPointerCancel}
       style={{
         width: 36, height: 36, borderRadius: 7,
         border: active ? "1px solid rgba(245,198,66,0.25)" : "1px solid var(--glass-border)",
@@ -511,111 +550,6 @@ function DpSection({ children }: { children: React.ReactNode }) {
   return <div style={{ marginBottom: 14 }}>{children}</div>;
 }
 
-// ── Intake dashboard ──────────────────────────────────────────
-function IntakeDash({
-  selectedFormats, onToggleFormat, selectedTemplate, onSelectTemplate,
-  sessionFiles, outputType, onSelectOutputType,
-}: {
-  selectedFormats: Format[]; onToggleFormat: (f: Format) => void;
-  selectedTemplate: string; onSelectTemplate: (t: string) => void;
-  sessionFiles: string[];
-  outputType: string | null; onSelectOutputType: (id: string) => void;
-}) {
-  const [openSection, setOpenSection] = useState<string>("outputType");
-  const toggle = (section: string) => setOpenSection(prev => prev === section ? "" : section);
-
-  return (
-    <>
-      <DpSection>
-        <DpLabel collapsible open={openSection === "outputType"} onToggle={() => toggle("outputType")}>Output Type</DpLabel>
-        {openSection === "outputType" && (
-          <div style={{ marginTop: 6 }}>
-            <OutputTypePicker selected={outputType} onSelect={onSelectOutputType} compact />
-          </div>
-        )}
-      </DpSection>
-
-      <DpSection>
-        <DpLabel collapsible open={openSection === "outputs"} onToggle={() => toggle("outputs")}>Formats</DpLabel>
-        {openSection === "outputs" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginTop: 6 }}>
-            {ALL_FORMATS.map(f => {
-              const on = selectedFormats.includes(f);
-              return (
-                <div
-                  key={f} onClick={() => onToggleFormat(f)}
-                  style={{
-                    fontSize: 10, padding: "4px 6px", borderRadius: 4, cursor: "pointer",
-                    border: on ? "1px solid rgba(245,198,66,0.25)" : "1px solid var(--glass-border)",
-                    background: on ? "rgba(245,198,66,0.1)" : "var(--glass-card)",
-                    color: on ? "#9A7030" : "var(--fg-3)", fontWeight: on ? 600 : 400,
-                    textAlign: "center" as const, transition: "all 0.1s",
-                    backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-                  }}
-                >
-                  {f}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </DpSection>
-
-      <DpSection>
-        <DpLabel
-          collapsible open={openSection === "templates"} onToggle={() => toggle("templates")}
-          action={<span style={{ fontSize: 9, fontWeight: 400, color: "var(--blue)", cursor: "pointer", marginLeft: 6, textTransform: "none" as const, letterSpacing: 0 }}>Edit</span>}
-        >Templates</DpLabel>
-        {openSection === "templates" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 6 }}>
-            {TEMPLATES.map(t => (
-              <div
-                key={t} onClick={() => onSelectTemplate(t)}
-                style={{
-                  padding: "5px 9px", borderRadius: 5, cursor: "pointer", fontSize: 11,
-                  border: selectedTemplate === t ? "1px solid rgba(74,144,217,0.2)" : "1px solid var(--glass-border)",
-                  background: selectedTemplate === t ? "rgba(74,144,217,0.06)" : "var(--glass-card)",
-                  color: selectedTemplate === t ? "var(--fg)" : "var(--fg-2)",
-                  fontWeight: selectedTemplate === t ? 600 : 400, transition: "all 0.1s",
-                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-                }}
-              >
-                {t}
-              </div>
-            ))}
-          </div>
-        )}
-      </DpSection>
-
-      <DpSection>
-        <DpLabel collapsible open={openSection === "sessionFiles"} onToggle={() => toggle("sessionFiles")}>Session Files</DpLabel>
-        {openSection === "sessionFiles" && (
-          <div style={{ marginTop: 6 }}>
-            {sessionFiles.length === 0 ? (
-              <div style={{ fontSize: 9, color: "var(--fg-3)" }}>No files attached yet.</div>
-            ) : sessionFiles.map(f => (
-              <div key={f} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 6, marginBottom: 4, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
-                <FileIcon />
-                <span style={{ fontSize: 10, color: "var(--fg-2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{f}</span>
-              </div>
-            ))}
-            <div style={{ fontSize: 9, color: "var(--fg-3)", marginTop: 4 }}>Session only, not saved to Project Files</div>
-          </div>
-        )}
-      </DpSection>
-
-      <DpSection>
-        <DpLabel collapsible open={openSection === "projectFiles"} onToggle={() => toggle("projectFiles")}>Project Files</DpLabel>
-        {openSection === "projectFiles" && (
-          <div style={{ marginTop: 6, fontSize: 10, color: "var(--blue)", lineHeight: 1.9 }}>
-            ✓ Voice DNA<br />✓ Brand Guide
-          </div>
-        )}
-      </DpSection>
-    </>
-  );
-}
-
 // ── Outline dashboard ─────────────────────────────────────────
 function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
   const wordMap: Partial<Record<Format, string>> = {
@@ -625,6 +559,11 @@ function OutlineDash({ selectedFormats }: { selectedFormats: Format[] }) {
   return (
     <DpSection>
       <DpLabel>Selected outputs</DpLabel>
+      {selectedFormats.length === 0 ? (
+        <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.5 }}>
+          You pick channel formats after Review when you start Wrap.
+        </div>
+      ) : null}
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {selectedFormats.map(f => (
           <div key={f} style={{
@@ -702,6 +641,7 @@ function deriveReviewDisplayGates(
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
   pipelineRun, running, onExportAll, allExported, onRaiseScore, fixingGate, rerunning,
+  exportLockedReason,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
@@ -709,6 +649,8 @@ function ReviewDash({
   fixingGate: string | null;
   rerunning: boolean;
   prefillReed: (text: string) => void;
+  /** When set, Export / Wrap is blocked until the user completes the main Pre-Wrap picker. */
+  exportLockedReason?: string | null;
 }) {
   const score = pipelineRun?.impactScore?.total ?? null;
   const scoreOk = score !== null && score >= 75;
@@ -831,20 +773,25 @@ function ReviewDash({
             </button>
           )}
 
+          {exportLockedReason && (
+            <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 8, lineHeight: 1.45 }}>
+              {exportLockedReason}
+            </div>
+          )}
           <button
             onClick={onExportAll}
-            disabled={allExported}
+            disabled={allExported || !!exportLockedReason}
             style={{
               width: "100%", padding: 10, borderRadius: 6,
-              background: allExported ? "rgba(74,144,217,0.12)" : (scoreOk ? "var(--gold)" : "var(--surface)"),
-              border: scoreOk ? "none" : "1px solid var(--glass-border)",
+              background: allExported ? "rgba(74,144,217,0.12)" : (exportLockedReason ? "var(--line)" : (scoreOk ? "var(--gold)" : "var(--surface)")),
+              border: scoreOk && !exportLockedReason ? "none" : "1px solid var(--glass-border)",
               fontSize: 12, fontWeight: 700,
-              color: allExported ? "var(--blue)" : (scoreOk ? "var(--fg)" : "var(--fg)"),
-              cursor: allExported ? "default" : "pointer",
+              color: allExported ? "var(--blue)" : (exportLockedReason ? "var(--fg-3)" : (scoreOk ? "var(--fg)" : "var(--fg)")),
+              cursor: allExported || exportLockedReason ? "default" : "pointer",
               fontFamily: FONT, transition: "all 0.2s",
             }}
           >
-            {allExported ? "Exported" : (scoreOk ? "Export all" : "Export anyway")}
+            {allExported ? "Exported" : (exportLockedReason ? "Wrap locked" : (scoreOk ? "Export all" : "Export anyway"))}
           </button>
         </>
       )}
@@ -938,27 +885,21 @@ function StageIntake({
       }}>
         <div style={{
           display: "flex", flexDirection: "column", alignItems: "center",
-          width: "100%", maxWidth: 680, padding: "0 24px",
+          width: "100%", maxWidth: 680, minWidth: 0, padding: "0 clamp(12px, 4vw, 24px)",
           marginBottom: 40,
         }}>
           {/* Greeting */}
           <div style={{
             fontSize: 26, fontWeight: 600, color: "var(--fg)",
-            marginBottom: 8, fontFamily: FONT,
+            marginBottom: 16, fontFamily: FONT,
             textAlign: "center" as const,
+            lineHeight: 1.25,
           }}>
-            {firstName ? `Hey ${firstName}, what are we writing?` : "What are we writing?"}
-          </div>
-
-          <div style={{
-            fontSize: 13, color: "var(--fg-3)", marginBottom: 24,
-            textAlign: "center" as const, lineHeight: 1.5,
-          }}>
-            Tell me what you are thinking about. I will ask a few questions, then build you an outline.
+            {firstName ? `Hey ${firstName}, what are we working on?` : "What are we working on?"}
           </div>
 
           {/* Centered input bar */}
-          <div style={{ width: "100%" }}>
+          <div style={{ width: "100%", minWidth: 0, maxWidth: "100%" }}>
             <ChatInputBar
               placeholder="What's on your mind?"
               value={input}
@@ -985,7 +926,7 @@ function StageIntake({
         ref={scrollAreaRef}
         style={{
           flex: 1, minHeight: 0, overflowY: "auto",
-          padding: "20px 24px",
+          padding: "20px clamp(12px, 4vw, 24px)",
           display: "flex", flexDirection: "column",
           alignItems: "center",
           justifyContent: messages.length <= 3 ? "flex-end" : "flex-start",
@@ -1057,8 +998,8 @@ function StageIntake({
       </div>
 
       {/* Input bar */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px 24px 12px", background: "transparent", flexShrink: 0, zIndex: 10 }}>
-        <div style={{ width: "100%", maxWidth: 680 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px clamp(12px, 4vw, 24px) max(12px, env(safe-area-inset-bottom))", background: "transparent", flexShrink: 0, zIndex: 10, width: "100%", minWidth: 0, boxSizing: "border-box" as const }}>
+        <div style={{ width: "100%", maxWidth: 680, minWidth: 0 }}>
           <ChatInputBar
             placeholder="What's on your mind?"
             value={input}
@@ -1285,6 +1226,22 @@ function ChatInputBar({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const { toast } = useToast();
+
+  const appendTranscript = useCallback((t: string) => {
+    const cleaned = t.replace(/\s+/g, " ").trim();
+    if (!cleaned) {
+      toast("No speech detected. Try again or check the microphone.", "info");
+      return;
+    }
+    const v = valueRef.current;
+    const spacer = v.length > 0 && !/\s$/.test(v) ? " " : "";
+    onChange(v + spacer + cleaned);
+  }, [onChange, toast]);
+
+  const { recording, transcribing, micHandlers } = useHoldToTranscribe(appendTranscript);
 
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
@@ -1316,7 +1273,20 @@ function ChatInputBar({
   return (
     <div style={{
       display: "flex", flexDirection: "column", gap: 6,
+      width: "100%", minWidth: 0, maxWidth: "100%", boxSizing: "border-box" as const,
     }}>
+      {(recording || transcribing) && (
+        <div
+          role="status"
+          style={{
+            fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" as const,
+            color: transcribing ? "var(--fg-3)" : "#C24141",
+            padding: "4px 2px 0",
+          }}
+        >
+          {transcribing ? "Transcribing" : "Recording"}
+        </div>
+      )}
       <input
         ref={fileInputRef}
         type="file"
@@ -1325,12 +1295,14 @@ function ChatInputBar({
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      <div className="liquid-glass" style={{
-        display: "flex", flexDirection: "column",
-        borderRadius: 16,
-        padding: pendingFiles.length > 0 ? "8px 10px 10px 12px" : "10px 12px 10px 16px",
-        transition: "border-color 0.2s, box-shadow 0.2s",
-      }}
+      <div
+        className="liquid-glass liquid-glass-chat-composer"
+        style={{
+          display: "flex", flexDirection: "column",
+          borderRadius: 16,
+          padding: pendingFiles.length > 0 ? "8px min(12px, 3vw) 10px min(14px, 3.5vw)" : "10px min(12px, 3vw) 10px min(16px, 4vw)",
+          transition: "border-color 0.2s, box-shadow 0.2s",
+        }}
         onFocus={e => {
           (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.3)";
           (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 0 20px rgba(255,255,255,0.06)";
@@ -1341,7 +1313,7 @@ function ChatInputBar({
         }}
       >
         <ChatPendingAttachments files={pendingFiles} onRemove={onRemovePendingFile} />
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 8, width: "100%" }}>
+        <div className="work-chat-input-row">
           <textarea
             ref={textareaRef}
             value={value}
@@ -1352,20 +1324,33 @@ function ChatInputBar({
             rows={1}
             className="reed-input"
             style={{
-              flex: 1, resize: "none",
+              flex: "1 1 0%",
+              resize: "none",
               background: "transparent", border: "none", outline: "none",
               fontSize: 14, color: "var(--fg)", fontFamily: FONT,
-              lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
+              lineHeight: 1.5,
+              maxHeight: "min(120px, 35vh)",
+              overflowY: "auto",
               opacity: disabled ? 0.5 : 1,
-              minHeight: 22,
+              minHeight: 24,
+              padding: "8px 4px 8px 0",
             }}
             onInput={e => {
               const t = e.target as HTMLTextAreaElement;
               t.style.height = "auto";
-              t.style.height = Math.min(t.scrollHeight, 120) + "px";
+              const maxH = parseFloat(getComputedStyle(t).maxHeight) || 120;
+              t.style.height = `${Math.min(t.scrollHeight, maxH)}px`;
             }}
           />
           <IaBtn title="Attach file" onClick={handleFileClick}><AttachIcon /></IaBtn>
+          <IaBtn
+            title="Hold to speak, release to insert text"
+            active={recording || transcribing}
+            onClick={e => e.preventDefault()}
+            {...micHandlers}
+          >
+            <MicIcon />
+          </IaBtn>
           <button
             type="button"
             onClick={onSend}
@@ -1409,6 +1394,27 @@ function StageOutline({
   onSelectAngle?: (angle: "a" | "b") => void;
 }) {
   const [input, setInput] = useState("");
+  const inputRef = useRef(input);
+  inputRef.current = input;
+  const { toast } = useToast();
+
+  const appendOutlineTranscript = useCallback((t: string) => {
+    const cleaned = t.replace(/\s+/g, " ").trim();
+    if (!cleaned) {
+      toast("No speech detected. Try again or check the microphone.", "info");
+      return;
+    }
+    const v = inputRef.current;
+    const spacer = v.length > 0 && !/\s$/.test(v) ? " " : "";
+    setInput(v + spacer + cleaned);
+  }, [toast]);
+
+  const {
+    recording: outlineRecording,
+    transcribing: outlineTranscribing,
+    micHandlers: outlineMicHandlers,
+  } = useHoldToTranscribe(appendOutlineTranscript);
+
   const activeAngle = currentAngle || "a";
 
   const lensA = {
@@ -1485,18 +1491,57 @@ function StageOutline({
 
       {!building && <AdvanceButton label="Write draft &#8594;" onClick={onAdvance} />}
 
-      <div style={{ borderTop: "1px solid var(--glass-border)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
-        <input
-          value={input} onChange={e => setInput(e.target.value)}
-          placeholder="Ask Reed to restructure, or click any line to edit..."
-          style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
-          onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
-        />
-        <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
-        <button onClick={onAdvance} disabled={building} style={{ width: 36, height: 36, borderRadius: 7, background: building ? "var(--line)" : "var(--fg)", border: "none", cursor: building ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <SendIcon />
-        </button>
+      <div style={{
+        borderTop: "1px solid var(--glass-border)",
+        padding: "8px clamp(10px, 3vw, 14px) max(10px, env(safe-area-inset-bottom))",
+        display: "flex", flexDirection: "column", gap: 4,
+        flexShrink: 0, background: "var(--glass-topbar)",
+        backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
+        width: "100%", minWidth: 0, boxSizing: "border-box" as const,
+      }}>
+        {(outlineRecording || outlineTranscribing) && (
+          <div
+            role="status"
+            style={{
+              fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" as const,
+              color: outlineTranscribing ? "var(--fg-3)" : "#C24141",
+              paddingLeft: 2,
+            }}
+          >
+            {outlineTranscribing ? "Transcribing" : "Recording"}
+          </div>
+        )}
+        <div className="work-chat-input-row">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Ask Reed to restructure, or click any line to edit..."
+            style={{
+              flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" as const,
+              background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10,
+              padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36,
+              backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+            }}
+            onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
+            onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
+          />
+          <IaBtn
+            title="Hold to speak, release to insert text"
+            active={outlineRecording || outlineTranscribing}
+            onClick={e => e.preventDefault()}
+            {...outlineMicHandlers}
+          >
+            <MicIcon />
+          </IaBtn>
+          <button
+            type="button"
+            onClick={onAdvance}
+            disabled={building}
+            style={{ width: 36, height: 36, borderRadius: 7, background: building ? "var(--line)" : "var(--fg)", border: "none", cursor: building ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+          >
+            <SendIcon />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1952,6 +1997,155 @@ function ReviewFormatPreview({
 // STAGE: REVIEW
 // ─────────────────────────────────────────────────────────────────────────────
 
+function PreWrapOutputGate({
+  pipelineRun,
+  recommendedId,
+  selectedId,
+  onSelect,
+  onStartWrap,
+}: {
+  pipelineRun: PipelineRun | null;
+  recommendedId: string;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onStartWrap: () => void;
+}) {
+  const score = pipelineRun?.impactScore?.total;
+  const scoreLine = score != null ? `Impact Score ${Math.round(score)} / 100` : "Validation complete";
+  const hvtLine = pipelineRun?.humanVoiceTest?.verdict === "PASSES"
+    ? "Human Voice Test passed"
+    : "Human Voice Test: review flagged lines if needed";
+
+  const recLabel = OUTPUT_TYPES.find(t => t.id === recommendedId)?.label || recommendedId;
+
+  const categories: { key: PreWrapPickCategory; title: string; items: { id: string; label: string }[] }[] = [
+    { key: "Content", title: "Content", items: PRE_WRAP_PICK_GROUPS.Content },
+    { key: "Business", title: "Business", items: PRE_WRAP_PICK_GROUPS.Business },
+    { key: "Social", title: "Social", items: PRE_WRAP_PICK_GROUPS.Social },
+  ];
+
+  return (
+    <div style={{
+      flex: 1, minHeight: 0, overflowY: "auto",
+      background: "linear-gradient(180deg, var(--surface) 0%, rgba(248,250,252,0.98) 100%)",
+      WebkitOverflowScrolling: "touch" as const,
+    }}>
+      <div style={{
+        maxWidth: 960, margin: "0 auto",
+        padding: "28px clamp(16px, 4vw, 32px) 40px",
+        boxSizing: "border-box" as const,
+      }}>
+        <h1 style={{
+          fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: "var(--fg)",
+          margin: "0 0 8px", fontFamily: FONT, letterSpacing: "-0.02em",
+        }}>
+          Where is this going?
+        </h1>
+        <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "0 0 20px", lineHeight: 1.5, fontFamily: FONT }}>
+          {scoreLine}
+          <span style={{ opacity: 0.5 }}> · </span>
+          {hvtLine}
+        </p>
+
+        <div style={{
+          marginBottom: 28,
+          padding: "14px 16px",
+          borderRadius: 12,
+          border: "2px solid rgba(245,198,66,0.55)",
+          background: "linear-gradient(135deg, rgba(245,198,66,0.12) 0%, rgba(245,198,66,0.04) 100%)",
+          fontFamily: FONT,
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "#9A7030", marginBottom: 6, textTransform: "uppercase" as const }}>
+            Reed recommends
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{recLabel}</div>
+          <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 6, lineHeight: 1.45 }}>
+            Based on how your draft reads. You can still pick any format below.
+          </div>
+        </div>
+
+        {categories.map(({ key, title, items }) => (
+          <div key={key} style={{ marginBottom: 28 }}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "var(--fg-3)",
+              marginBottom: 10, textTransform: "uppercase" as const, fontFamily: FONT,
+            }}>
+              {title}
+            </div>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+              gap: 10,
+            }}>
+              {items.map(item => {
+                const isRec = item.id === recommendedId;
+                const isSel = selectedId === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onSelect(item.id)}
+                    style={{
+                      textAlign: "left" as const,
+                      padding: "12px 14px",
+                      borderRadius: 10,
+                      fontFamily: FONT,
+                      fontSize: 12,
+                      fontWeight: isSel ? 700 : 500,
+                      color: "var(--fg)",
+                      cursor: "pointer",
+                      border: isSel
+                        ? "2px solid var(--gold-bright, #F5C642)"
+                        : isRec
+                          ? "2px solid rgba(245,198,66,0.45)"
+                          : "1px solid var(--glass-border)",
+                      background: isSel ? "rgba(245,198,66,0.14)" : "var(--glass-card)",
+                      boxShadow: isSel ? "0 4px 20px rgba(0,0,0,0.06)" : "none",
+                      transition: "border-color 0.15s, background 0.15s",
+                      minHeight: 52,
+                      display: "flex", flexDirection: "column" as const, justifyContent: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    {isRec && (
+                      <span style={{ fontSize: 9, fontWeight: 600, color: "#9A7030" }}>Recommended</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
+          <button
+            type="button"
+            disabled={!selectedId}
+            onClick={onStartWrap}
+            style={{
+              minWidth: 220,
+              padding: "14px 28px",
+              borderRadius: 10,
+              fontFamily: FONT,
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              border: "none",
+              cursor: selectedId ? "pointer" : "not-allowed",
+              background: selectedId ? "var(--fg)" : "var(--line)",
+              color: selectedId ? "var(--gold, #F5C642)" : "var(--fg-3)",
+              opacity: selectedId ? 1 : 0.85,
+            }}
+          >
+            Start Wrap
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StageReview({
   draft, pipelineRun, running, activeTab, tabs,
   onTabClick, onAdvance, onGoBack, onFix, onDirectReplace, formatDrafts,
@@ -2163,10 +2357,6 @@ export default function WorkSession() {
   const [selectedTemplate, setSelectedTemplate] = useState("Weekly Insight");
   const [sessionFiles, setSessionFiles] = useState<string[]>([]);
 
-  const toggleFormat = (f: Format) => {
-    setSelectedFormats(fs => fs.includes(f) ? fs.filter(x => x !== f) : [...fs, f]);
-  };
-
   // ── Outline ──────────────────────────────────────────────────
   const [outlineRows, setOutlineRows] = useState<OutlineRow[]>([]);
   const [outlineAngles, setOutlineAngles] = useState<{ a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null>(null);
@@ -2191,6 +2381,8 @@ export default function WorkSession() {
   const [activeReviewTab, setActiveReviewTab] = useState<Format>(selectedFormats[0] ?? "LinkedIn");
   const [hvtAttempts, setHvtAttempts] = useState(0);
   const [hvtRunning, setHvtRunning] = useState(false);
+  /** Chosen OUTPUT_TYPES id on the Pre-Wrap full screen; cleared when that gate appears. */
+  const [preWrapPickId, setPreWrapPickId] = useState<string | null>(null);
 
   // ── Background pipeline (Redesign 2: run quality check during generation) ──
   const [backgroundPipelineRun, setBackgroundPipelineRun] = useState<PipelineRun | null>(null);
@@ -2761,6 +2953,7 @@ export default function WorkSession() {
 
   // ── EDIT -> REVIEW: Run pipeline ──────────────────────────────
   const handleRunPipeline = useCallback(async () => {
+    setPreWrapPickId(null);
     goToStage("Review");
     if (!draft || !user) return;
 
@@ -2893,7 +3086,12 @@ export default function WorkSession() {
   }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId, backgroundPipelineRun, draftChangedSinceBackground]);
 
   // ── REVIEW: Export all (save to Catalog first, then hand off to Wrap) ──
-  const handleExportAll = useCallback(async () => {
+  const handleExportAll = useCallback(async (forcedOutputType?: string) => {
+    const resolvedTypeId = forcedOutputType ?? outputType ?? "freestyle";
+    if (forcedOutputType) {
+      setOutputType(forcedOutputType);
+    }
+
     const formats: Format[] = selectedFormats.length > 0
       ? selectedFormats
       : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
@@ -2902,6 +3100,8 @@ export default function WorkSession() {
     setExportedTabs(exported);
     setAllExported(true);
 
+    const outCategory = OUTPUT_TYPES.find(t => t.id === resolvedTypeId)?.category?.toLowerCase() || null;
+
     let resolvedOutputId = outputId;
     if (user && draft) {
       try {
@@ -2909,17 +3109,20 @@ export default function WorkSession() {
           const { error } = await supabase.from("outputs").update({
             content: draft,
             content_state: "vault",
+            output_type: resolvedTypeId,
+            output_type_id: resolvedTypeId,
+            output_category: outCategory,
           }).eq("id", outputId);
           if (error) throw error;
         } else {
           const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
-          const outputTypeId = outputType || "freestyle";
           const { data, error } = await supabase.from("outputs").insert({
             user_id: user.id,
             title: title.slice(0, 200),
             content: draft,
-            output_type: outputTypeId,
-            output_type_id: outputTypeId,
+            output_type: resolvedTypeId,
+            output_type_id: resolvedTypeId,
+            output_category: outCategory,
             content_state: "vault",
             score: pipelineRun?.impactScore?.total ?? 0,
           }).select("id").single();
@@ -2938,7 +3141,7 @@ export default function WorkSession() {
     try {
       sessionStorage.setItem("ew-wrap-draft", draft || "");
       sessionStorage.setItem("ew-wrap-title", outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled");
-      sessionStorage.setItem("ew-wrap-output-type", outputType || "freestyle");
+      sessionStorage.setItem("ew-wrap-output-type", resolvedTypeId);
       if (resolvedOutputId) {
         sessionStorage.setItem("ew-wrap-output-id", resolvedOutputId);
       } else {
@@ -2962,6 +3165,41 @@ export default function WorkSession() {
     nav("/studio/wrap");
   }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast]);
 
+  const handleStartWrapFromGate = useCallback(() => {
+    if (!preWrapPickId) return;
+    void handleExportAll(preWrapPickId);
+  }, [preWrapPickId, handleExportAll]);
+
+  const reviewChannelTabs = useMemo((): Format[] => (
+    selectedFormats.length > 0
+      ? selectedFormats
+      : (["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[])
+  ), [selectedFormats]);
+
+  const reviewFormatAdaptationComplete = useMemo(
+    () => reviewChannelTabs.length > 0 && reviewChannelTabs.every(t => {
+      const fd = formatDrafts[t];
+      return fd && (fd.status === "done" || fd.status === "error");
+    }),
+    [reviewChannelTabs, formatDrafts],
+  );
+
+  const showPreWrapOutputGate =
+    stage === "Review"
+    && !!pipelineRun
+    && !pipelineRunning
+    && reviewFormatAdaptationComplete
+    && !allExported;
+
+  const recommendedWrapOutputId = useMemo(
+    () => inferRecommendedWrapOutputId(draft || ""),
+    [draft],
+  );
+
+  useEffect(() => {
+    if (showPreWrapOutputGate) setPreWrapPickId(null);
+  }, [showPreWrapOutputGate]);
+
   // ── REVIEW: Rerun Human Voice Test only ───────────────────────
   const handleRerunHVT = useCallback(async () => {
     if (!draft || !user || hvtAttempts >= 3) return;
@@ -2973,7 +3211,7 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft,
-          outputType: FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay",
           voiceDnaMd,
           userId: user.id,
           hvtOnly: true,
@@ -3033,6 +3271,7 @@ export default function WorkSession() {
     setFormatDrafts({});
     setOutlineAngles(null);
     setSelectedAngle("a");
+    setPreWrapPickId(null);
   }, []);
 
   // ── New Session from top nav ─────────────────────────────────
@@ -3053,6 +3292,7 @@ export default function WorkSession() {
     setRerunningPipeline(false);
     setDismissedFlags(new Set());
     setFixedFlags(new Map());
+    setPreWrapPickId(null);
 
     goToStage("Edit");
     handleRevise(instructions);
@@ -3461,7 +3701,22 @@ export default function WorkSession() {
             </>
           );
         }
-        case "Review":
+        case "Review": {
+          const reviewTabs = selectedFormats.length > 0
+            ? selectedFormats
+            : (["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[]);
+          const adaptationDone = reviewTabs.length > 0 && reviewTabs.every(t => {
+            const fd = formatDrafts[t];
+            return fd && (fd.status === "done" || fd.status === "error");
+          });
+          let exportLockedReason: string | null = null;
+          if (pipelineRun && !pipelineRunning && !allExported) {
+            if (!adaptationDone) {
+              exportLockedReason = "Finish format previews in the main view, then pick where this goes.";
+            } else {
+              exportLockedReason = "Choose an output in the main view, then Start Wrap.";
+            }
+          }
           return (
             <ReviewDash
               pipelineRun={pipelineRun}
@@ -3472,8 +3727,10 @@ export default function WorkSession() {
               fixingGate={fixingGate}
               rerunning={rerunningPipeline}
               prefillReed={prefillReed}
+              exportLockedReason={exportLockedReason}
             />
           );
+        }
         default:
           return null;
       }
@@ -3488,6 +3745,7 @@ export default function WorkSession() {
     handleRaiseScore, fixingGate, handleRerunPipeline, rerunningPipeline,
     prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
     dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
+    formatDrafts,
   ]);
 
   // ─────────────────────────────────────────────────────────────
@@ -3588,7 +3846,7 @@ export default function WorkSession() {
           border: "1px solid rgba(245,198,66,0.3)",
           fontSize: 10, fontWeight: 600, color: "#9A7030",
         }}>
-          ■ {outputType ? OUTPUT_TYPES.find(t => t.id === outputType)?.label || outputType : "Freestyle"}
+          ■ {outputType ? OUTPUT_TYPES.find(t => t.id === outputType)?.label || outputType : "Not set yet"}
         </span>
       </div>
       {stage === "Intake" && (
@@ -3642,19 +3900,29 @@ export default function WorkSession() {
         />
       )}
       {stage === "Review" && (
-        <StageReview
-          draft={draft}
-          pipelineRun={pipelineRun}
-          running={pipelineRunning}
-          activeTab={activeReviewTab}
-          tabs={selectedFormats.length > 0 ? selectedFormats : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[]}
-          onTabClick={(t) => setActiveReviewTab(t)}
-          onAdvance={() => handleExportAll()}
-          onGoBack={handleGoBackToEdit}
-          onFix={handleReviewFix}
-          onDirectReplace={handleDirectReplace}
-          formatDrafts={formatDrafts}
-        />
+        showPreWrapOutputGate ? (
+          <PreWrapOutputGate
+            pipelineRun={pipelineRun}
+            recommendedId={recommendedWrapOutputId}
+            selectedId={preWrapPickId}
+            onSelect={setPreWrapPickId}
+            onStartWrap={handleStartWrapFromGate}
+          />
+        ) : (
+          <StageReview
+            draft={draft}
+            pipelineRun={pipelineRun}
+            running={pipelineRunning}
+            activeTab={activeReviewTab}
+            tabs={reviewChannelTabs}
+            onTabClick={(t) => setActiveReviewTab(t)}
+            onAdvance={() => handleExportAll()}
+            onGoBack={handleGoBackToEdit}
+            onFix={handleReviewFix}
+            onDirectReplace={handleDirectReplace}
+            formatDrafts={formatDrafts}
+          />
+        )
       )}
     </div>
   );

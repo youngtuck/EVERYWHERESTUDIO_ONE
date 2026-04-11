@@ -18,8 +18,6 @@ import { ReedProfileIcon } from "./ReedProfileIcon";
 interface ShellCtx {
   dashOpen: boolean;
   setDashOpen: (v: boolean) => void;
-  advisorsOpen: boolean;
-  setAdvisorsOpen: (v: boolean) => void;
   discoverOpen: boolean;
   setDiscoverOpen: (v: boolean) => void;
   dashContent: React.ReactNode | null;
@@ -37,8 +35,6 @@ interface ShellCtx {
 const ShellContext = createContext<ShellCtx>({
   dashOpen: false,
   setDashOpen: () => {},
-  advisorsOpen: false,
-  setAdvisorsOpen: () => {},
   discoverOpen: false,
   setDiscoverOpen: () => {},
   dashContent: null,
@@ -95,6 +91,104 @@ function getAdvisorCtx(pathname: string): { ctx: AdvisorContext; stageLabel: str
   if (pathname.includes("/watch")) return { ctx: ADVISOR_CONTENT.watch, stageLabel: "Watch" };
   if (pathname.includes("/wrap")) return { ctx: ADVISOR_CONTENT.wrap, stageLabel: "Wrap" };
   return { ctx: ADVISOR_CONTENT.work, stageLabel: window.__ewWorkStage || "Work" };
+}
+
+const INSPECTOR_HELP_LINES: Record<string, string[]> = {
+  default: [
+    "Use the left sidebar to switch areas. This panel stays available from the edge control.",
+    "Feedback shows session readouts from the page you are on. Ask Reed is for quick notes and prompts tied to the current stage.",
+  ],
+  watch: [
+    "Configure keywords and sources in Settings, then run a brief. Signals rank by relevance for your next move.",
+    "Add competitors and publications you care about so Watch can surface gaps and timing.",
+  ],
+  work: [
+    "Intake is a conversation with Reed. Outline locks structure. Edit is the draft. Review runs the seven quality checkpoints before export.",
+    "Session context and files travel with the stage. Export saves the master draft to Catalog.",
+  ],
+  wrap: [
+    "Pick a saved piece, then switch format tabs to adapt copy per channel. Export All writes back to Catalog when you are done.",
+  ],
+  outputs: [
+    "Catalog lists saved sessions. Open a row for actions, or send a piece to Wrap for channel versions.",
+  ],
+  dashboard: [
+    "Home shows recent work and quick paths. Start a new session from the top bar when you are ready.",
+  ],
+};
+
+function getInspectorHelpLines(pathname: string): string[] {
+  if (pathname.includes("/studio/watch")) return INSPECTOR_HELP_LINES.watch;
+  if (pathname.includes("/studio/work")) return INSPECTOR_HELP_LINES.work;
+  if (pathname.includes("/studio/wrap")) return INSPECTOR_HELP_LINES.wrap;
+  if (pathname.includes("/studio/outputs")) return INSPECTOR_HELP_LINES.outputs;
+  if (pathname.includes("/studio/dashboard")) return INSPECTOR_HELP_LINES.dashboard;
+  return INSPECTOR_HELP_LINES.default;
+}
+
+function InspectorEyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const,
+      color: "var(--fg-3)", marginBottom: 8,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function InspectorDivider() {
+  return <div style={{ height: 1, background: "var(--glass-border)", margin: "14px 0" }} aria-hidden />;
+}
+
+function AdvisorFeedbackFallback({ pathname }: { pathname: string }) {
+  const { ctx, stageLabel } = getAdvisorCtx(pathname);
+  return (
+    <div>
+      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)", marginBottom: 8 }}>{stageLabel}</div>
+      <div style={{
+        border: "1px solid rgba(74,144,217,0.16)",
+        borderRadius: 8,
+        padding: "10px 12px",
+        background: "rgba(74,144,217,0.04)",
+        marginBottom: 10,
+      }}>
+        <div style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const,
+          color: "var(--blue, #4A90D9)", marginBottom: 6,
+        }}>
+          Consensus
+        </div>
+        <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55 }}>{ctx.rec}</div>
+      </div>
+      {ctx.cards.map((card, i) => (
+        <div
+          key={i}
+          style={{
+            marginBottom: 8,
+            padding: "10px 12px",
+            borderRadius: 8,
+            border: "1px solid var(--glass-border)",
+            background: "var(--glass-card)",
+          }}
+        >
+          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{card.role}</div>
+          <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5 }}>{card.text}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InspectorHelpContent({ pathname }: { pathname: string }) {
+  const lines = getInspectorHelpLines(pathname);
+  return (
+    <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
+      {lines.map((line, i) => (
+        <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", padding: 0 }}>{line}</p>
+      ))}
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -245,7 +339,6 @@ export default function StudioShell() {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashOpen, setDashOpen] = useState(false);
-  const [advisorsOpen, setAdvisorsOpen] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [dashContent, setDashContent] = useState<React.ReactNode | null>(null);
   const [activeDashTab, setActiveDashTab] = useState<"feedback" | "reed" | "help">("feedback");
@@ -256,7 +349,6 @@ export default function StudioShell() {
   return (
     <ShellContext.Provider value={{
       dashOpen, setDashOpen,
-      advisorsOpen, setAdvisorsOpen,
       discoverOpen, setDiscoverOpen,
       dashContent, setDashContent,
       activeDashTab, setActiveDashTab,
@@ -316,12 +408,6 @@ export default function StudioShell() {
           </div>
         </div>
 
-        {advisorsOpen && (
-          <AdvisorsModal
-            pathname={location.pathname}
-            onClose={() => setAdvisorsOpen(false)}
-          />
-        )}
         {discoverOpen && (
           <DiscoverOverlay
             onClose={() => setDiscoverOpen(false)}
@@ -343,6 +429,9 @@ export default function StudioShell() {
 
 function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; open: boolean; setOpen: (v: boolean) => void }) {
   const { feedbackContent, dashContent } = useShell();
+  const location = useLocation();
+  const pathname = location.pathname;
+  const feedbackBody = feedbackContent ?? dashContent;
 
   useEffect(() => {
     if (!open) return;
@@ -362,7 +451,7 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
           onClick={() => setOpen(true)}
           aria-expanded="false"
           aria-controls="studio-reed-flyout"
-          aria-label="Open Reed and dashboard"
+          aria-label="Open inspector panel"
           style={{ color: "var(--fg-2)" }}
         >
           <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden>
@@ -382,27 +471,17 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
           background: "rgba(255,255,255,0.42)", flexShrink: 0,
           padding: "10px 12px",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-              width: 22, height: 22, borderRadius: 7,
-              background: "rgba(74,144,217,0.1)",
-              border: "1px solid rgba(74,144,217,0.2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              <ReedProfileIcon size={14} title="Reed" />
-            </div>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
-          </div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", letterSpacing: "0.01em" }}>Inspector</span>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="Close Reed panel"
+            aria-label="Close inspector panel"
             style={{
               width: 30, height: 30, borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)",
               background: "rgba(255,255,255,0.5)", color: "var(--fg-3)", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
               fontFamily: "var(--font)", transition: "background 0.12s, color 0.12s",
+              flexShrink: 0,
             }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; e.currentTarget.style.color = "var(--fg)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.5)"; e.currentTarget.style.color = "var(--fg-3)"; }}
@@ -413,8 +492,23 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
           </button>
         </div>
 
-        <div style={{ padding: 14, flex: 1, overflowY: "auto", minHeight: 0 }}>
-          {feedbackContent ?? dashContent ?? <DefaultDashContent />}
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "12px 12px 10px" }}>
+          <InspectorEyebrow>Feedback</InspectorEyebrow>
+          <div style={{ marginBottom: 2 }}>
+            {feedbackBody ?? <AdvisorFeedbackFallback pathname={pathname} />}
+          </div>
+
+          <InspectorDivider />
+
+          <InspectorEyebrow>Ask Reed</InspectorEyebrow>
+          <div style={{ marginBottom: 2 }}>
+            <ReedPanel />
+          </div>
+
+          <InspectorDivider />
+
+          <InspectorEyebrow>Help</InspectorEyebrow>
+          <InspectorHelpContent pathname={pathname} />
         </div>
 
         <div style={{
@@ -428,14 +522,6 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
         </div>
       </aside>
     </>
-  );
-}
-
-function DefaultDashContent() {
-  return (
-    <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
-      Select a section to see your dashboard.
-    </div>
   );
 }
 
@@ -583,7 +669,7 @@ function ReedPanel() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "10px 14px" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
       {/* Stage-aware context message */}
       <ReedStageContext stage={stage} />
       <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
@@ -694,111 +780,6 @@ function ReedPanel() {
             <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
         </button>
-      </div>
-    </div>
-  );
-}
-
-// Help panel removed: Reed is the help system (Redesign 3)
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ADVISORS MODAL, context-aware per page
-// ─────────────────────────────────────────────────────────────────────────────
-
-function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () => void }) {
-  const { ctx, stageLabel } = getAdvisorCtx(pathname);
-  const [agreedIdx, setAgreedIdx] = useState<number[]>([]);
-  const [skippedIdx, setSkippedIdx] = useState<number[]>([]);
-
-  return (
-    <div
-      onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 30 }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: "rgba(20, 30, 48, 0.92)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 16,
-          width: "100%", maxWidth: 560, maxHeight: 580,
-          overflowY: "auto",
-          boxShadow: "0 16px 64px rgba(0,0,0,0.35)",
-          backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
-          display: "flex", flexDirection: "column",
-        }}
-      >
-        {/* Header */}
-        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>Advisors</span>
-            <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.82)", fontWeight: 600 }}>{stageLabel}</span>
-          </div>
-          <button onClick={onClose} aria-label="Close panel" style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.66)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: "16px 20px", flex: 1, overflowY: "auto" }}>
-          {/* Consensus recommendation */}
-          <div style={{ background: "rgba(74,144,217,0.06)", border: "1px solid rgba(74,144,217,0.2)", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#6BA8E8", marginBottom: 6 }}>
-              Advisors' Recommendation
-            </div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.82)", lineHeight: 1.65 }}>{ctx.rec}</div>
-          </div>
-
-          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 0 16px" }} />
-
-          {/* Advisor cards */}
-          {ctx.cards.map((card, i) => {
-            const agreed = agreedIdx.includes(i);
-            const skipped = skippedIdx.includes(i);
-            return (
-              <div key={i} style={{
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 8, padding: "12px 14px", marginBottom: 8,
-                opacity: skipped ? 0.4 : 1, transition: "opacity 0.2s",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>{card.role}</span>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button
-                      onClick={() => setAgreedIdx(p => p.includes(i) ? p.filter(x => x !== i) : [...p, i])}
-                      style={{
-                        fontSize: 10, padding: "3px 10px", borderRadius: 4,
-                        border: agreed ? "1px solid #6BA8E8" : "1px solid rgba(255,255,255,0.06)",
-                        background: agreed ? "rgba(74,144,217,0.1)" : "rgba(255,255,255,0.03)",
-                        color: agreed ? "#6BA8E8" : "rgba(255,255,255,0.82)",
-                        cursor: "pointer", fontFamily: "var(--font)",
-                        transition: "all 0.1s",
-                      }}
-                    >
-                      {agreed ? "Agreed" : "Agree"}
-                    </button>
-                    <button
-                      onClick={() => setSkippedIdx(p => p.includes(i) ? p.filter(x => x !== i) : [...p, i])}
-                      style={{ fontSize: 10, padding: "3px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.66)", cursor: "pointer", fontFamily: "var(--font)" }}
-                    >
-                      Skip
-                    </button>
-                  </div>
-                </div>
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.84)", lineHeight: 1.55 }}>{card.text}</div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "flex-end", gap: 8, flexShrink: 0 }}>
-          <button onClick={onClose} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.66)", cursor: "pointer", fontFamily: "var(--font)" }}>Dismiss</button>
-          <button
-            onClick={onClose}
-            style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, background: "rgba(255,255,255,0.92)", border: "none", color: "#0D1B2A", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}
-          >
-            Apply recommendations
-          </button>
-        </div>
       </div>
     </div>
   );
