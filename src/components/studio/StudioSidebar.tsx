@@ -1,11 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { APP_VERSION } from "../../lib/constants";
+import { StudioUserAccountMenu } from "./StudioUserAccountMenu";
+
+type NavItemDef = {
+  path: string;
+  label: string;
+  desc: string;
+  icon: ReactNode;
+};
+
+type NavGroupDef = {
+  group: string;
+  collapsible?: boolean;
+  items: NavItemDef[];
+};
 
 // ── Nav structure matching wireframe ───────────────────────────
-const NAV = [
+const NAV: NavGroupDef[] = [
   {
     group: "Studio",
     items: [
@@ -79,27 +93,13 @@ const NAV = [
   },
   {
     group: "Outputs",
+    collapsible: true,
     items: [
       { path: "/studio/outputs/content", label: "Content", desc: "Essays, podcasts, video scripts, emails.", icon: <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg> },
       { path: "/studio/outputs/business", label: "Business", desc: "Presentations, proposals, case studies, SOWs.", icon: <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg> },
       { path: "/studio/outputs/social", label: "Social", desc: "Social media content across platforms.", icon: <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22 6 12 13 2 6" /></svg> },
       { path: "/studio/outputs/extended", label: "Extended", desc: "Books, websites, newsletters, social media projects.", icon: <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg> },
       { path: "/studio/outputs/templates", label: "Templates", desc: "System and custom output templates.", icon: <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" /></svg> },
-    ],
-  },
-  {
-    group: "You",
-    items: [
-      {
-        path: "/studio/settings",
-        label: "Preferences",
-        desc: "Voice DNA, display settings, Watch sources, defaults.",
-        icon: (
-          <svg style={{ width: 16, height: 16, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
-            <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="18" x2="11" y2="18" />
-          </svg>
-        ),
-      },
     ],
   },
 ];
@@ -110,11 +110,37 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
+const STORAGE_OUTPUTS_OPEN = "ew-sidebar-outputs-open";
+
 export default function StudioSidebar({ collapsed = false, onToggleCollapsed, onMobileClose }: SidebarProps) {
   const nav = useNavigate();
   const loc = useLocation();
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [outputsOpen, setOutputsOpen] = useState(() => {
+    try {
+      const v = localStorage.getItem(STORAGE_OUTPUTS_OPEN);
+      if (v === "0") return false;
+      if (v === "1") return true;
+    } catch { /* ignore */ }
+    return true;
+  });
+
+  const toggleOutputsOpen = useCallback(() => {
+    setOutputsOpen(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STORAGE_OUTPUTS_OPEN, next ? "1" : "0");
+      } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (loc.pathname.startsWith("/studio/outputs")) {
+      setOutputsOpen(true);
+    }
+  }, [loc.pathname]);
 
   useEffect(() => {
     if (!user) return;
@@ -192,19 +218,34 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             : group.items;
           if (items.length === 0) return null;
 
+          const isOutputsCollapsible = Boolean(group.collapsible && group.group === "Outputs");
+          const showOutputNavItems = !isOutputsCollapsible || collapsed || outputsOpen;
+
           return (
-            <div key={gi}>
-              {/* Group label */}
-              {!collapsed && (
+            <div key={group.group}>
+              {!collapsed && !isOutputsCollapsible && (
                 <div className="studio-sidebar-group-label">
                   {group.group}
                 </div>
+              )}
+              {!collapsed && isOutputsCollapsible && (
+                <button
+                  type="button"
+                  className="studio-sidebar-outputs-toggle"
+                  onClick={toggleOutputsOpen}
+                  aria-expanded={outputsOpen}
+                >
+                  <span>Outputs</span>
+                  <svg className={`studio-sidebar-outputs-chevron ${outputsOpen ? "is-open" : ""}`} viewBox="0 0 24 24" aria-hidden>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
               )}
               {collapsed && gi > 0 && (
                 <div className="studio-sidebar-group-rule" />
               )}
 
-              {items.map(({ path, label, icon, desc }) => {
+              {showOutputNavItems && items.map(({ path, label, icon, desc }) => {
                 const active = isActive(path);
                 return (
                   <NavItem
@@ -246,6 +287,18 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         )}
       </nav>
 
+      {user && (
+        <div
+          style={{
+            flexShrink: 0,
+            padding: collapsed ? "6px 6px 4px" : "8px 8px 6px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <StudioUserAccountMenu variant="sidebar" collapsed={collapsed} />
+        </div>
+      )}
+
       {!collapsed && (
         <div className="studio-sidebar-footer">
           v{APP_VERSION}
@@ -268,7 +321,7 @@ function NavItem({
 }: {
   label: string;
   desc?: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   active: boolean;
   collapsed: boolean;
   onClick: () => void;

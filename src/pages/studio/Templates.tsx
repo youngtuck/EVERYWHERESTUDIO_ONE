@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { ReedProfileIcon } from "../../components/studio/ReedProfileIcon";
+import { useMobile } from "../../hooks/useMobile";
+import "./shared.css";
 
 const FONT = "var(--font)";
 
@@ -76,195 +78,225 @@ const SYSTEM_TEMPLATES: SystemTemplate[] = [
   },
 ];
 
-/** User-created templates (persisted per user when backend is wired). New accounts start empty. */
 const USER_TEMPLATES: Array<{ name: string; base: string; modified: boolean }> = [];
 
 export default function Templates() {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(0);
   const [section, setSection] = useState<"system" | "yours">("system");
+  const isMobile = useMobile();
 
   const selectedSystem = section === "system" && selected !== null ? SYSTEM_TEMPLATES[selected] : null;
 
   return (
-    <div style={{ display: "flex", flex: 1, height: "100%", overflow: "hidden" }}>
-      {/* Left list (44%) */}
-      <div style={{ width: "44%", borderRight: "1px solid var(--glass-border)", overflowY: "auto", padding: "8px 0" }}>
-        {/* SYSTEM */}
-        <div style={{
-          fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
-          textTransform: "uppercase" as const, color: "var(--fg-3)",
-          padding: "8px 16px 4px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          System
-          <span style={{
-            fontSize: 8, fontWeight: 500, letterSpacing: 0,
-            textTransform: "none" as const, color: "var(--fg-3)",
-            background: "var(--glass-surface)", borderRadius: 3, padding: "1px 6px",
-          }}>Read only</span>
-        </div>
-        {SYSTEM_TEMPLATES.map((t, i) => (
-          <div
-            key={`sys-${i}`}
-            onClick={() => { setSelected(i); setSection("system"); }}
-            style={{
-              padding: "8px 16px", cursor: "pointer",
-              background: section === "system" && selected === i ? "rgba(74,144,217,0.06)" : "transparent",
-              borderLeft: section === "system" && selected === i ? "2px solid var(--blue, #4A90D9)" : "2px solid transparent",
-              transition: "all 0.1s",
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 500, color: "var(--fg)" }}>{t.name}</div>
-            <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 1 }}>Based on {t.base} · {t.format}</div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%", overflow: "hidden", fontFamily: FONT, minHeight: 0 }}>
+      <header className="liquid-glass" style={{ flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)" }}>
+        <div style={{ padding: "14px 20px 16px", maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>
+            Wrap layer
           </div>
-        ))}
-
-        <div style={{ height: 1, background: "var(--glass-border)", margin: "8px 0" }} />
-
-        {/* YOURS */}
-        <div style={{
-          fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
-          textTransform: "uppercase" as const, color: "var(--fg-3)",
-          padding: "4px 16px 4px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          Yours
-          <span style={{
-            fontSize: 8, fontWeight: 500, letterSpacing: 0,
-            textTransform: "none" as const, color: "var(--blue, #4A90D9)",
-            background: "rgba(74,144,217,0.08)", borderRadius: 3,
-            padding: "1px 6px", cursor: "pointer",
-          }}>+ New</span>
+          <h1 style={{ fontSize: "clamp(20px, 2.4vw, 26px)", fontWeight: 700, color: "var(--fg)", margin: 0, letterSpacing: "-0.02em" }}>
+            Templates
+          </h1>
+          <p style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, marginTop: 8, maxWidth: 520 }}>
+            System templates ship with Studio. Custom templates start from a system base or from scratch with Reed.
+          </p>
         </div>
-        {USER_TEMPLATES.length === 0 ? (
-          <div style={{ padding: "10px 16px 12px", fontSize: 11, color: "var(--fg-3)", lineHeight: 1.45 }}>
-            No custom templates yet. Use + New when you are ready to build one from a system template or from scratch.
+      </header>
+
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          overflow: "hidden",
+          gap: isMobile ? 12 : 16,
+          padding: isMobile ? "12px 14px 16px" : "16px 20px 20px",
+          maxWidth: 1100,
+          margin: "0 auto",
+          width: "100%",
+          minHeight: 0,
+        }}
+      >
+        <div
+          className="liquid-glass"
+          style={{
+            width: isMobile ? "100%" : "min(38%, 320px)",
+            flexShrink: 0,
+            borderRadius: 16,
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: isMobile ? 180 : 0,
+          }}
+        >
+          <div style={{ padding: "10px 12px", borderBottom: "1px solid var(--glass-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>System</span>
+            <span className="liquid-glass-card" style={{ fontSize: 8, fontWeight: 600, padding: "3px 8px", borderRadius: 8, color: "var(--fg-3)" }}>Read only</span>
           </div>
-        ) : (
-          USER_TEMPLATES.map((t, i) => (
-            <div
-              key={`usr-${i}`}
-              onClick={() => { setSelected(i); setSection("yours"); }}
-              style={{
-                padding: "8px 16px", cursor: "pointer",
-                background: section === "yours" && selected === i ? "rgba(74,144,217,0.06)" : "transparent",
-                borderLeft: section === "yours" && selected === i ? "2px solid var(--blue, #4A90D9)" : "2px solid transparent",
-                transition: "all 0.1s",
-              }}
-            >
-              <div style={{ fontSize: 12, fontWeight: 500, color: "var(--fg)" }}>{t.name}</div>
-              <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 1 }}>
-                Based on {t.base} {t.modified ? "· Modified" : ""}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+          <div style={{ overflowY: "auto", flex: 1, padding: 6 }}>
+            {SYSTEM_TEMPLATES.map((t, i) => {
+              const on = section === "system" && selected === i;
+              return (
+                <button
+                  key={`sys-${t.name}`}
+                  type="button"
+                  onClick={() => { setSelected(i); setSection("system"); }}
+                  className={on ? "liquid-glass-card" : ""}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left" as const,
+                    padding: "10px 12px",
+                    marginBottom: 4,
+                    borderRadius: 12,
+                    border: on ? "1px solid rgba(245,198,66,0.35)" : "1px solid transparent",
+                    background: on ? "rgba(245,198,66,0.08)" : "rgba(255,255,255,0.02)",
+                    cursor: "pointer",
+                    fontFamily: FONT,
+                    transition: "background 0.15s ease, border-color 0.15s ease",
+                  }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: on ? 600 : 500, color: "var(--fg)" }}>{t.name}</div>
+                  <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 3, lineHeight: 1.35 }}>Based on {t.base} · {t.format}</div>
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Right pane (56%) */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
-          {/* System template detail view */}
-          {selectedSystem ? (
-            <>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)", marginBottom: 4 }}>{selectedSystem.name}</div>
-              <span style={{
-                fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const,
-                color: "var(--fg-3)", background: "var(--glass-surface)", padding: "2px 8px", borderRadius: 3,
-                display: "inline-block", marginBottom: 16,
-              }}>Supplied Template</span>
-              <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 20 }}>
-                {selectedSystem.description}
-              </div>
+          <div style={{ height: 1, background: "var(--glass-border)", margin: "4px 10px" }} />
 
-              {/* SECTIONS */}
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Sections</div>
-              <div style={{ marginBottom: 20 }}>
-                {selectedSystem.sections.map((sec, i) => (
-                  <div key={i} style={{
-                    padding: "6px 0", borderBottom: "1px solid var(--glass-border)",
-                    display: "flex", alignItems: "center", gap: 8,
-                  }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: "var(--gold, #F5C642)", minWidth: 16 }}>{i + 1}</span>
-                    <span style={{ fontSize: 11, fontWeight: 500, color: "var(--fg)" }}>{sec}</span>
+          <div style={{ padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Yours</span>
+            <button type="button" className="liquid-glass-btn" style={{ padding: "4px 10px", fontSize: 9, fontWeight: 600 }}>
+              <span className="liquid-glass-btn-label" style={{ color: "var(--blue, #4A90D9)" }}>+ New</span>
+            </button>
+          </div>
+          <div style={{ overflowY: "auto", maxHeight: isMobile ? 160 : 220, padding: "0 6px 8px" }}>
+            {USER_TEMPLATES.length === 0 ? (
+              <div className="liquid-glass-card" style={{ margin: "0 6px", padding: "12px 14px", fontSize: 11, color: "var(--fg-3)", lineHeight: 1.45, borderRadius: 12 }}>
+                No custom templates yet. Use + New when you are ready to build one from a system template or from scratch.
+              </div>
+            ) : (
+              USER_TEMPLATES.map((t, i) => (
+                <button
+                  key={`usr-${i}`}
+                  type="button"
+                  onClick={() => { setSelected(i); setSection("yours"); }}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left" as const,
+                    padding: "8px 12px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: section === "yours" && selected === i ? "rgba(74,144,217,0.08)" : "transparent",
+                    cursor: "pointer",
+                    fontFamily: FONT,
+                  }}
+                >
+                  <div style={{ fontSize: 12, fontWeight: 500, color: "var(--fg)" }}>{t.name}</div>
+                  <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 1 }}>
+                    Based on {t.base} {t.modified ? "· Modified" : ""}
                   </div>
-                ))}
-              </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
 
-              {/* REED INTERVIEW (if present) */}
-              {selectedSystem.reedInterview && (
-                <>
-                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Reed Interview</div>
-                  <div style={{ marginBottom: 20 }}>
+        <div className="liquid-glass" style={{ flex: 1, minWidth: 0, borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 14px" : "22px 24px" }}>
+            {selectedSystem ? (
+              <>
+                <div style={{ marginBottom: 18 }}>
+                  <h2 style={{ fontSize: "clamp(18px, 2vw, 22px)", fontWeight: 700, color: "var(--fg)", margin: "0 0 8px", letterSpacing: "-0.02em" }}>{selectedSystem.name}</h2>
+                  <span className="liquid-glass-card" style={{
+                    fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const,
+                    color: "var(--fg-3)", padding: "4px 10px", borderRadius: 8, display: "inline-block",
+                  }}>Supplied template</span>
+                </div>
+
+                <div className="liquid-glass-card" style={{ padding: "14px 16px", marginBottom: 14, borderRadius: 14 }}>
+                  <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.65 }}>{selectedSystem.description}</div>
+                </div>
+
+                <div className="liquid-glass-card" style={{ padding: "14px 16px", marginBottom: 14, borderRadius: 14 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>Sections</div>
+                  {selectedSystem.sections.map((sec, i) => (
+                    <div
+                      key={sec}
+                      style={{
+                        padding: "8px 0",
+                        borderBottom: i < selectedSystem.sections.length - 1 ? "1px solid var(--glass-border)" : "none",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
+                    >
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--gold, #F5C642)", minWidth: 20 }}>{i + 1}</span>
+                      <span style={{ fontSize: 12, fontWeight: 500, color: "var(--fg)" }}>{sec}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedSystem.reedInterview && (
+                  <div className="liquid-glass-card" style={{ padding: "14px 16px", marginBottom: 14, borderRadius: 14, border: "1px solid rgba(74,144,217,0.18)" }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--blue, #4A90D9)", marginBottom: 10 }}>Reed interview</div>
                     {selectedSystem.reedInterview.map((q, i) => (
-                      <div key={i} style={{
-                        fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5,
-                        padding: "6px 0 6px 10px", borderLeft: "2px solid var(--blue, #4A90D9)",
-                        marginBottom: 6,
-                      }}>{q}</div>
+                      <div key={i} style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55, padding: "6px 0 6px 12px", borderLeft: "2px solid rgba(74,144,217,0.35)", marginBottom: 6 }}>{q}</div>
                     ))}
                   </div>
-                </>
-              )}
+                )}
 
-              {/* FORMAT */}
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>Format</div>
-              <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 16 }}>{selectedSystem.format}</div>
-
-              {/* BASE OUTPUT TYPE */}
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>Base Output Type</div>
-              <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{selectedSystem.base}</div>
-            </>
-          ) : (
-            /* Reed greeting for user templates or no selection */
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 16 }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 8,
-                background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-              }}>
-                <ReedProfileIcon size={16} title="Reed" />
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
+                  <div className="liquid-glass-card" style={{ padding: "12px 14px", borderRadius: 14 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>Format</div>
+                    <div style={{ fontSize: 12, color: "var(--fg-2)" }}>{selectedSystem.format}</div>
+                  </div>
+                  <div className="liquid-glass-card" style={{ padding: "12px 14px", borderRadius: 14 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>Base output type</div>
+                    <div style={{ fontSize: 12, color: "var(--fg-2)" }}>{selectedSystem.base}</div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="liquid-glass-card" style={{ padding: "20px 18px", borderRadius: 14 }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 12,
+                    background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <ReedProfileIcon size={18} title="Reed" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Reed</div>
+                    <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6, margin: 0 }}>
+                      What are we building? I can start from an existing output type, modify one of your current templates, or work from scratch.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div style={{
-                background: "rgba(74,144,217,0.07)", border: "1px solid rgba(74,144,217,0.15)",
-                borderRadius: "0 10px 10px 10px", padding: "10px 14px",
-                fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6, maxWidth: "85%",
-              }}>
-                What are we building? I can start from an existing output type, modify one of your current templates, or work from scratch.
+            )}
+          </div>
+
+          {!selectedSystem && (
+            <div className="liquid-glass" style={{ padding: "10px 14px", borderRadius: 0, borderTop: "1px solid var(--glass-border)", flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  placeholder="Reply to Reed…"
+                  className="liquid-glass-input"
+                  style={{ flex: 1, fontSize: 13, height: 38, borderRadius: 10 }}
+                />
+                <button type="button" className="liquid-glass-btn-gold" style={{ width: 38, height: 38, borderRadius: 10, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Send">
+                  <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2.2, fill: "none" }} viewBox="0 0 24 24">
+                    <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                </button>
               </div>
             </div>
           )}
         </div>
-
-        {/* Input bar (shown for user templates or no selection) */}
-        {!selectedSystem && (
-          <div style={{
-            padding: "8px 14px 10px",
-            borderTop: "1px solid var(--glass-border)", flexShrink: 0,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <input
-                placeholder="Reply to Reed..."
-                style={{
-                  flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)",
-                  borderRadius: 8, padding: "0 12px", fontSize: 13,
-                  backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
-                  color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36,
-                }}
-              />
-              <button style={{
-                width: 32, height: 32, borderRadius: 8, background: "var(--fg)",
-                border: "none", cursor: "pointer", display: "flex",
-                alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}>
-                <svg style={{ width: 12, height: 12, stroke: "#fff", strokeWidth: 2.5, fill: "none", strokeLinecap: "round" as const, strokeLinejoin: "round" as const }} viewBox="0 0 24 24">
-                  <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

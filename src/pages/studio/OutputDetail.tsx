@@ -10,6 +10,7 @@ import type { ImpactScore, GateResult } from "../../lib/agents/types";
 import { CheckpointResultsPanel } from "../../components/pipeline/CheckpointResultsPanel";
 import { ImpactScoreCard } from "../../components/pipeline/ImpactScoreCard";
 import { PipelineBlockedAlert } from "../../components/pipeline/PipelineBlockedAlert";
+import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
@@ -466,13 +467,16 @@ export default function OutputDetail() {
     <div style={{ fontFamily: font, minHeight: "100vh" }}>
 
       {/* ── TOP BAR (sticky) ──────────────────────────────────────── */}
-      <div style={{
-        position: "sticky", top: 0, zIndex: 50,
-        background: "var(--glass-card)", borderBottom: "1px solid var(--glass-border)",
-        backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
-        padding: isMobile ? "0 16px" : "0 32px", height: 60,
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-      }}>
+      <div
+        className="liquid-glass"
+        style={{
+          position: "sticky", top: 0, zIndex: 50,
+          borderRadius: 0,
+          borderLeft: "none", borderRight: "none", borderTop: "none",
+          padding: isMobile ? "0 16px" : "0 32px", height: 60,
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+        }}
+      >
         {/* Left: Back + Title */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
           <button
@@ -555,12 +559,15 @@ export default function OutputDetail() {
       </div>
 
       {/* ── TOOLBAR (sticky below top bar) ────────────────────────── */}
-      <div style={{
-        position: "sticky", top: 60, zIndex: 40,
-        background: "var(--glass-card)", borderBottom: "1px solid var(--glass-border)",
-        backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
-        padding: isMobile ? "10px 16px" : "10px 32px",
-      }}>
+      <div
+        className="liquid-glass"
+        style={{
+          position: "sticky", top: 60, zIndex: 40,
+          borderRadius: 0,
+          borderLeft: "none", borderRight: "none", borderTop: "none",
+          padding: isMobile ? "10px 16px" : "10px 32px",
+        }}
+      >
         <div style={{ maxWidth: 800, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
           <button onClick={copyText} style={toolbarBtn()}>
             {copied ? <><Check style={iconSz} /> Copied</> : <><Clipboard style={iconSz} /> Copy Text</>}
@@ -595,7 +602,7 @@ export default function OutputDetail() {
 
       {/* ── META ROW ──────────────────────────────────────────────── */}
       <div style={{ maxWidth: 800, margin: "0 auto", padding: isMobile ? "16px 16px 0" : "20px 32px 0" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 14, color: "var(--fg-2)", flexWrap: "wrap" }}>
+        <div className="liquid-glass-card" style={{ padding: "14px 18px", borderRadius: 14, display: "flex", alignItems: "center", gap: 16, fontSize: 14, color: "var(--fg-2)", flexWrap: "wrap" }}>
           <span style={{ textTransform: "capitalize" }}>{output!.output_type.replace(/_/g, " ")}</span>
           <span>{new Date(output!.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
           <span style={{ fontWeight: 700, color: scoreColor }}>Score: {Math.round(output!.score / 10)}%</span>
@@ -684,7 +691,7 @@ export default function OutputDetail() {
         </button>
 
         {qualityOpen && (
-          <div style={{ paddingTop: 8 }}>
+          <div className="liquid-glass-card" style={{ padding: "16px 18px", borderRadius: 14, marginTop: 8 }}>
             {/* Pipeline hasn't been run */}
             {!pipelineRun && !pipelineRunning && (
               <div style={{ textAlign: "center", padding: "32px 16px" }}>
@@ -771,7 +778,8 @@ export default function OutputDetail() {
           <iframe
             srcDoc={previewHtml}
             title="Output preview"
-            style={{ width: "100%", height: 600, border: "1px solid var(--glass-border)", borderRadius: 12, background: "var(--glass-card)" }}
+            className="liquid-glass-card"
+            style={{ width: "100%", height: 600, border: "none", borderRadius: 14, background: "var(--glass-card)" }}
             sandbox="allow-same-origin"
           />
         </div>

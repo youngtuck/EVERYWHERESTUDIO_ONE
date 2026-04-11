@@ -238,15 +238,26 @@ export default function OutputLibrary() {
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, fontFamily: FONT }}>
       <header className="liquid-glass" style={{ flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)" }}>
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "12px 20px 10px", maxWidth: isMobile ? "100%" : 680, margin: "0 auto", width: "100%",
+          display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16,
+          padding: "14px 20px 16px", maxWidth: isMobile ? "100%" : 720, margin: "0 auto", width: "100%",
         }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)" }}>The Catalog</div>
-          <div style={{ fontSize: 11, color: "var(--fg-3)" }}>{outputs.length} session{outputs.length !== 1 ? "s" : ""}</div>
+          <div>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>
+              Library
+            </div>
+            <div style={{ fontSize: "clamp(18px, 2.2vw, 22px)", fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.02em" }}>The Catalog</div>
+            <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, marginTop: 6, maxWidth: 420 }}>
+              Saved drafts and exports from Work and Wrap. Open a row for actions, or send a piece to Wrap for channel versions.
+            </div>
+          </div>
+          <div className="liquid-glass-card" style={{ flexShrink: 0, padding: "10px 14px", borderRadius: 14, textAlign: "center" as const, minWidth: 72 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", fontVariantNumeric: "tabular-nums" }}>{outputs.length}</div>
+            <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Sessions</div>
+          </div>
         </div>
       </header>
 
-      <div style={{ padding: isMobile ? "20px 16px" : 20, maxWidth: isMobile ? "100%" : 680, margin: "0 auto", width: "100%", overflowY: "auto", flex: 1, minHeight: 0 }}>
+      <div style={{ padding: isMobile ? "16px 14px 20px" : "18px 20px 24px", maxWidth: isMobile ? "100%" : 720, margin: "0 auto", width: "100%", overflowY: "auto", flex: 1, minHeight: 0 }}>
       {/* Search */}
       {outputs.length > 6 && (
         <input
@@ -274,38 +285,55 @@ export default function OutputLibrary() {
           {search ? "No sessions match your search." : "No sessions yet. Complete a Work session to see it here."}
         </div>
       ) : (
-        <div className="liquid-glass-card" style={{ overflow: "hidden" }}>
-          {filtered.map((output, i) => {
-            const active = selectedId === output.id;
-            return (
-              <div
-                key={output.id}
-                onClick={() => setSelectedId(output.id)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "8px 8px",
-                  borderBottom: i < filtered.length - 1 ? "1px solid var(--glass-border)" : "none",
-                  cursor: "pointer",
-                  background: active ? "rgba(245,198,66,0.06)" : "transparent",
-                  transition: "background 0.1s",
-                }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg)"; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
-              >
-                <span style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)", flexShrink: 0, fontVariantNumeric: "tabular-nums", width: 48 }}>
-                  {formatDateShort(output.created_at)}
-                </span>
-                <span style={{ fontSize: 12, color: active ? "var(--fg)" : "var(--fg-2)", flex: 1, lineHeight: 1.4, fontWeight: active ? 500 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                  {output.title || "Untitled"}
-                </span>
-                {output.score > 0 && (
-                  <span style={{ fontSize: 10, fontWeight: 600, color: scoreColor(output.score), flexShrink: 0 }}>
-                    {output.score}%
+        <div className="liquid-glass" style={{ borderRadius: 16, overflow: "hidden" }}>
+          <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--glass-border)", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>
+            Recent
+          </div>
+          <div style={{ padding: 6 }}>
+            {filtered.map((output) => {
+              const active = selectedId === output.id;
+              return (
+                <button
+                  key={output.id}
+                  type="button"
+                  onClick={() => setSelectedId(output.id)}
+                  className={active ? "liquid-glass-card" : ""}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    width: "100%",
+                    textAlign: "left" as const,
+                    padding: "12px 14px",
+                    marginBottom: 4,
+                    borderRadius: 12,
+                    cursor: "pointer",
+                    fontFamily: FONT,
+                    border: active ? "1px solid rgba(245,198,66,0.35)" : "1px solid transparent",
+                    background: active ? "rgba(245,198,66,0.08)" : "rgba(255,255,255,0.02)",
+                    transition: "background 0.15s ease, border-color 0.15s ease",
+                  }}
+                >
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, color: "var(--fg-3)", flexShrink: 0, fontVariantNumeric: "tabular-nums", width: 52,
+                  }}>
+                    {formatDateShort(output.created_at)}
                   </span>
-                )}
-              </div>
-            );
-          })}
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontSize: 13, color: active ? "var(--fg)" : "var(--fg-2)", fontWeight: active ? 600 : 500, lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                      {output.title || "Untitled"}
+                    </span>
+                    <span style={{ display: "block", fontSize: 10, color: "var(--fg-3)", marginTop: 2, textTransform: "capitalize" }}>
+                      {outputTypeToLabel(output.output_type)}
+                    </span>
+                  </span>
+                  {output.score > 0 && (
+                    <span className="liquid-glass-card" style={{ fontSize: 10, fontWeight: 700, padding: "4px 8px", borderRadius: 8, color: scoreColor(output.score), flexShrink: 0 }}>
+                      {output.score}%
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
       </div>
