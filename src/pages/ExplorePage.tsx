@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
+import EverywhereDemo from "../components/studio/EverywhereDemo";
 import HeroCanvas from "../components/landing/HeroCanvas";
 import { MARKETING_CSS, EASE } from "../styles/marketing";
 
@@ -362,6 +363,9 @@ export default function ExplorePage() {
         </div>
       </section>
 
+      {/* ═══ ACT 1.5: THREE-PART DEMO ═══ */}
+      <DemoSection />
+
       {/* ═══ ACT 2: THE STATEMENT ═══ */}
       <StatementSection />
 
@@ -446,6 +450,28 @@ export default function ExplorePage() {
   );
 }
 
+
+// ═══════════════════════════════════════════
+// ACT 1.5: THREE-PART DEMO
+// ═══════════════════════════════════════════
+
+function DemoSection() {
+  return (
+    <section
+      data-nav-theme="dark"
+      style={{
+        background: "var(--xp-navy-deep)",
+        padding: "0 48px 120px",
+      }}
+    >
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <Reveal delay={0}>
+          <EverywhereDemo />
+        </Reveal>
+      </div>
+    </section>
+  );
+}
 
 // ═══════════════════════════════════════════
 // ACT 2: THE STATEMENT

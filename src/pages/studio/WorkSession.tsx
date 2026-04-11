@@ -1497,7 +1497,21 @@ function StageOutline({
           )}
         </div>
 
-        {!building && <AdvanceButton label="Write draft &#8594;" onClick={onAdvance} />}
+        {!building && (
+          <div style={{ display: "flex", justifyContent: "center", padding: "8px clamp(12px, 4vw, 24px) 0" }}>
+            <button
+              type="button"
+              onClick={onAdvance}
+              style={{
+                fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 6,
+                background: "var(--gold-bright)", border: "none", color: "var(--fg)",
+                cursor: "pointer", fontFamily: FONT, letterSpacing: "0.01em",
+              }}
+            >
+              Write draft →
+            </button>
+          </div>
+        )}
       </div>
 
       <div style={{
@@ -1547,14 +1561,6 @@ function StageOutline({
             >
               <MicIcon />
             </IaBtn>
-            <button
-              type="button"
-              onClick={onAdvance}
-              disabled={building}
-              style={{ width: 36, height: 36, borderRadius: 7, background: building ? "var(--line)" : "var(--fg)", border: "none", cursor: building ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-            >
-              <SendIcon />
-            </button>
           </div>
         </div>
       </div>
