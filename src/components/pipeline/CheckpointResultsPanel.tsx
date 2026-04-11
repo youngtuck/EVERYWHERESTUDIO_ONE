@@ -188,9 +188,16 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
                   alignItems: "flex-start",
                 }}
               >
-                <div style={{ flex: 1 }}>{result.feedback}</div>
+                <div style={{ flex: 1 }}>
+                  {result.feedback}
+                  {result.methodologyTermFidelity ? (
+                    <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-tertiary)" }}>
+                      Method term fidelity: {result.methodologyTermFidelity}
+                    </div>
+                  ) : null}
+                </div>
                 {result.feedback && (
-                  <CopyFeedbackButton text={`${result.gate} (${result.score}/100, ${result.status})\n\n${result.feedback}${result.issues?.length ? "\n\nIssues:\n" + result.issues.map(i => `- ${i}`).join("\n") : ""}`} />
+                  <CopyFeedbackButton text={`${result.gate} (${result.score}/100, ${result.status})\n\n${result.feedback}${result.methodologyTermFidelity ? `\n\nMethod term fidelity: ${result.methodologyTermFidelity}` : ""}${result.issues?.length ? "\n\nIssues:\n" + result.issues.map(i => `- ${i}`).join("\n") : ""}`} />
                 )}
               </div>
               {result.issues && result.issues.length > 0 && (

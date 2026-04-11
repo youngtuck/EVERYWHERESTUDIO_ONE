@@ -32,6 +32,8 @@ export interface GateResult {
   feedback: string;
   revisedDraft?: string;
   issues?: string[];
+  /** Voice Authenticity (Jordan) when Method DNA was present; safe to ignore in UI. */
+  methodologyTermFidelity?: string;
   timestamp: string;
 }
 

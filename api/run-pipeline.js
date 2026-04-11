@@ -55,6 +55,8 @@ function parseGateResponse(text) {
   let score = 75;
   let feedback = text || "";
   let issues = [];
+  /** Optional one-liner from Jordan when Method DNA is present; clients may ignore. */
+  let methodologyTermFidelity;
 
   // Try JSON first
   try {
@@ -69,8 +71,16 @@ function parseGateResponse(text) {
       if (typeof parsed.score === "number") score = Math.round(Math.min(100, Math.max(0, parsed.score)));
       if (parsed.feedback) feedback = String(parsed.feedback).slice(0, 500);
       if (Array.isArray(parsed.issues)) issues = parsed.issues.map(String).slice(0, 10);
+      if (parsed.methodologyTermFidelity != null && String(parsed.methodologyTermFidelity).trim()) {
+        methodologyTermFidelity = String(parsed.methodologyTermFidelity)
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 320);
+      }
       if (status === "FAIL") score = Math.min(score, 50);
-      return { status, score, feedback, issues };
+      const out = { status, score, feedback, issues };
+      if (methodologyTermFidelity) out.methodologyTermFidelity = methodologyTermFidelity;
+      return out;
     }
   } catch {}
 

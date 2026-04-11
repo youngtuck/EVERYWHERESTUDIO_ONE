@@ -321,6 +321,8 @@ interface CheckpointResult {
   score: number;
   feedback: string;
   issues?: string[];
+  /** Jordan only, when Method DNA was in the gate prompt; optional for older API responses. */
+  methodologyTermFidelity?: string;
 }
 
 interface ImpactScore {
