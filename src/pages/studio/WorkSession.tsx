@@ -5,7 +5,7 @@
  *   Intake  -> /api/chat (Reed conversation, READY_TO_GENERATE detection)
  *   Outline -> client-side state built from Reed's readiness summary
  *   Edit    -> /api/generate (draft generation + back-of-house auto-revision)
- *   Review  -> /api/run-pipeline (7 checkpoints + Impact Score + Human Voice Test)
+ *   Review  -> /api/run-pipeline (7 checkpoints + Human Voice Test)
  *   Review  includes export (save to Supabase outputs table + copy/download + send to Wrap)
  */
 
@@ -265,7 +265,8 @@ interface CheckpointResult {
 }
 
 interface ImpactScore {
-  total: number;  // 1-100, threshold 75
+  /** Pipeline aggregate; used for internal gates and persistence only, not shown in UI. */
+  total: number;
   verdict: "PUBLISH" | "REVISE" | "REJECT";
   topIssue?: string;
   gutCheck?: string;
@@ -642,20 +643,20 @@ function deriveReviewDisplayGates(
 
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
-  pipelineRun, running, onExportAll, allExported, onRaiseScore, fixingGate, rerunning,
+  pipelineRun, running, onExportAll, allExported, onRepairPipeline, fixingGate, rerunning,
   exportLockedReason,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
-  onRaiseScore: () => void;
+  onRepairPipeline: () => void;
   fixingGate: string | null;
   rerunning: boolean;
   prefillReed: (text: string) => void;
   /** When set, Export / Wrap is blocked until the user completes the main Pre-Wrap picker. */
   exportLockedReason?: string | null;
 }) {
-  const score = pipelineRun?.impactScore?.total ?? null;
-  const scoreOk = score !== null && score >= 75;
+  /** Internal publish readiness from pipeline; never rendered as a number. */
+  const publishAggregateOk = pipelineRun?.impactScore != null && pipelineRun.impactScore.total >= 75;
 
   const displayGates = pipelineRun
     ? deriveReviewDisplayGates(pipelineRun.checkpointResults, pipelineRun.humanVoiceTest)
@@ -666,7 +667,7 @@ function ReviewDash({
   // Reed's natural language assessment
   const reedMessage = (() => {
     if (!pipelineRun) return "";
-    if (allPass && scoreOk) return "This is ready to publish. The writing is clean and the voice matches.";
+    if (allPass && publishAggregateOk) return "This is ready to publish. The writing is clean and the voice matches.";
 
     const issueDescriptions = nonPassGates.map(g => {
       const name = (g.name || "").toLowerCase();
@@ -713,21 +714,6 @@ function ReviewDash({
       {/* Results */}
       {pipelineRun && !running && (
         <>
-          {/* Impact Score: single prominent number */}
-          {score !== null && (
-            <DpSection>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 28, fontWeight: 800, color: scoreOk ? "#22C55E" : "var(--fg)" }}>
-                  {Math.round(score)}
-                </span>
-                <span style={{ fontSize: 11, color: "var(--fg-3)" }}>/ 100</span>
-              </div>
-              <div style={{ fontSize: 11, color: scoreOk ? "#22C55E" : "var(--fg-3)", fontWeight: 500 }}>
-                {scoreOk ? "Ready to publish" : "Threshold is 75"}
-              </div>
-            </DpSection>
-          )}
-
           {/* Reed's assessment in plain language */}
           {reedMessage && (
             <div style={{
@@ -742,9 +728,9 @@ function ReviewDash({
           )}
 
           {/* Primary action buttons */}
-          {!scoreOk && (
+          {!publishAggregateOk && (
             <button
-              onClick={onRaiseScore}
+              onClick={onRepairPipeline}
               disabled={!!fixingGate || rerunning}
               style={{
                 width: "100%", padding: 10, borderRadius: 6, marginBottom: 8,
@@ -758,7 +744,7 @@ function ReviewDash({
             </button>
           )}
 
-          {!scoreOk && (
+          {!publishAggregateOk && (
             <button
               onClick={() => {
                 window.__ewSetWorkStage?.("Edit");
@@ -785,15 +771,15 @@ function ReviewDash({
             disabled={allExported || !!exportLockedReason}
             style={{
               width: "100%", padding: 10, borderRadius: 6,
-              background: allExported ? "rgba(74,144,217,0.12)" : (exportLockedReason ? "var(--line)" : (scoreOk ? "var(--gold)" : "var(--surface)")),
-              border: scoreOk && !exportLockedReason ? "none" : "1px solid var(--glass-border)",
+              background: allExported ? "rgba(74,144,217,0.12)" : (exportLockedReason ? "var(--line)" : (publishAggregateOk ? "var(--gold)" : "var(--surface)")),
+              border: publishAggregateOk && !exportLockedReason ? "none" : "1px solid var(--glass-border)",
               fontSize: 12, fontWeight: 700,
-              color: allExported ? "var(--blue)" : (exportLockedReason ? "var(--fg-3)" : (scoreOk ? "var(--fg)" : "var(--fg)")),
+              color: allExported ? "var(--blue)" : (exportLockedReason ? "var(--fg-3)" : (publishAggregateOk ? "var(--fg)" : "var(--fg)")),
               cursor: allExported || exportLockedReason ? "default" : "pointer",
               fontFamily: FONT, transition: "all 0.2s",
             }}
           >
-            {allExported ? "Exported" : (exportLockedReason ? "Wrap locked" : (scoreOk ? "Export all" : "Export anyway"))}
+            {allExported ? "Exported" : (exportLockedReason ? "Wrap locked" : (publishAggregateOk ? "Export all" : "Export anyway"))}
           </button>
         </>
       )}
@@ -2041,11 +2027,16 @@ function PreWrapOutputGate({
   presentationMinutes: number;
   onPresentationMinutesChange: (n: number) => void;
 }) {
-  const score = pipelineRun?.impactScore?.total;
-  const scoreLine = score != null ? `Impact Score ${Math.round(score)} / 100` : "Validation complete";
-  const hvtLine = pipelineRun?.humanVoiceTest?.verdict === "PASSES"
-    ? "Human Voice Test passed"
-    : "Human Voice Test: review flagged lines if needed";
+  const qualityHeadline = !pipelineRun
+    ? "When you are ready, pick where this goes."
+    : pipelineRun.status === "PASSED"
+      ? "Checks passed."
+      : "Quality review finished. Address any items Reed flagged, then pick a format.";
+  const hvtLine = !pipelineRun
+    ? ""
+    : pipelineRun.humanVoiceTest?.verdict === "PASSES"
+      ? "Human Voice Test passed"
+      : "Human Voice Test: review flagged lines if needed";
 
   const recLabel = OUTPUT_TYPES.find(t => t.id === recommendedId)?.label || recommendedId;
 
@@ -2075,9 +2066,13 @@ function PreWrapOutputGate({
           Where is this going?
         </h1>
         <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "0 0 20px", lineHeight: 1.5, fontFamily: FONT }}>
-          {scoreLine}
-          <span style={{ opacity: 0.5 }}> · </span>
-          {hvtLine}
+          {qualityHeadline}
+          {hvtLine ? (
+            <>
+              <span style={{ opacity: 0.5 }}> · </span>
+              {hvtLine}
+            </>
+          ) : null}
         </p>
 
         <div style={{
@@ -2233,10 +2228,10 @@ function StageReview({
   onDirectReplace: (original: string, replacement: string) => void;
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
 }) {
-  // Approve gate: both Impact Score >= 60 and HVT must PASS
-  const scoreOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
+  /** Internal readiness from pipeline aggregate; not shown to the user. */
+  const publishAggregateOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
   const hvtPasses = pipelineRun?.humanVoiceTest?.verdict === "PASSES";
-  const canApprove = scoreOk && hvtPasses;
+  const canApprove = publishAggregateOk && hvtPasses;
   const hvtFlaggedLines = pipelineRun?.humanVoiceTest?.flaggedLines || [];
   const [input, setInput] = useState("");
   const [reviewedTabs, setReviewedTabs] = useState<Set<string>>(new Set());
@@ -2775,11 +2770,11 @@ export default function WorkSession() {
         finalDraft: result.finalDraft,
       };
 
-      // If gates fail and score < 75, auto-revise in the background
-      const score = result.impactScore?.total ?? 0;
+      // If gates fail and the pipeline aggregate is below the internal bar, auto-revise in the background
+      const aggregateTotal = result.impactScore?.total ?? 0;
       const failingGates = (result.checkpointResults || []).filter((g: CheckpointResult) => g.status !== "PASS");
 
-      if (score < 75 && failingGates.length > 0 && backgroundDraftRef.current === generatedDraft) {
+      if (aggregateTotal < 75 && failingGates.length > 0 && backgroundDraftRef.current === generatedDraft) {
         const issues = failingGates
           .map((g: CheckpointResult) => `[${displayGateName(g.gate)}]: ${g.feedback}`)
           .join("\n");
@@ -3541,19 +3536,19 @@ export default function WorkSession() {
         } as PipelineRun;
       });
 
-      toast("Re-scored.");
+      toast("Quality pipeline refreshed.");
     } catch (err: any) {
       console.error("[handleRerunPipeline]", err);
-      toast("Re-score failed.", "error");
+      toast("Pipeline refresh failed.", "error");
     } finally {
       setRerunningPipeline(false);
     }
   }, [draft, user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, toast]);
 
-  // ── REVIEW: Raise impact score (fix all non-passing gates + re-run pipeline) ──
-  const handleRaiseScore = useCallback(async () => {
+  // ── REVIEW: Let Reed fix failing gates and refresh the pipeline ──
+  const handleRepairPipeline = useCallback(async () => {
     if (!draft || !user || !pipelineRun) return;
-    setFixingGate("raise-score");
+    setFixingGate("quality-repair");
 
     try {
       // Collect feedback from all non-passing gates
@@ -3563,7 +3558,7 @@ export default function WorkSession() {
         .join("\n");
 
       if (!issues) {
-        // All gates pass, just re-run pipeline for fresh scores
+        // All gates pass, just re-run pipeline for a fresh pass
         await handleRerunPipeline();
         return;
       }
@@ -3623,8 +3618,8 @@ export default function WorkSession() {
 
       toast(
         changes.length > 0
-          ? `Reed revised the draft: ${changes.join(", ")}. Addressed: ${failingGateNames.join(", ")}. Re-scoring...`
-          : `Reed revised the draft to address ${failingGateNames.join(", ")}. Re-scoring...`
+          ? `Reed revised the draft: ${changes.join(", ")}. Addressed: ${failingGateNames.join(", ")}. Running checks again...`
+          : `Reed revised the draft to address ${failingGateNames.join(", ")}. Running checks again...`
       );
 
       // Only re-run the gates that failed, not all 7
@@ -3648,7 +3643,7 @@ export default function WorkSession() {
           }),
         }, { timeout: 60000 });
 
-        if (!reRes.ok) throw new Error(`Re-score error ${reRes.status}`);
+        if (!reRes.ok) throw new Error(`Pipeline re-run error ${reRes.status}`);
         const reResult = await reRes.json();
 
         setPipelineRun(prev => {
@@ -3675,21 +3670,21 @@ export default function WorkSession() {
           } as PipelineRun;
         });
 
-        toast("Re-scored.");
+        toast("Quality pipeline refreshed.");
 
         // Update Supabase if we have an output
         if (outputId) {
-          const newScore = reResult.impactScore?.total ?? pipelineRun?.impactScore?.total ?? 0;
+          const newAggregate = reResult.impactScore?.total ?? pipelineRun?.impactScore?.total ?? 0;
           await supabase.from("outputs").update({
             content: newDraft,
-            score: Math.round(newScore),
+            score: Math.round(newAggregate),
           }).eq("id", outputId);
         }
       } else {
         await handleRerunPipeline();
       }
     } catch (err: any) {
-      console.error("[handleRaiseScore]", err);
+      console.error("[handleRepairPipeline]", err);
       toast("Fix failed. Try again.", "error");
     } finally {
       setFixingGate(null);
@@ -3829,7 +3824,7 @@ export default function WorkSession() {
               running={pipelineRunning}
               onExportAll={handleExportAll}
               allExported={allExported}
-              onRaiseScore={handleRaiseScore}
+              onRepairPipeline={handleRepairPipeline}
               fixingGate={fixingGate}
               rerunning={rerunningPipeline}
               prefillReed={prefillReed}
@@ -3848,7 +3843,7 @@ export default function WorkSession() {
     stage, selectedFormats, selectedTemplate, draft, generating, generatingLabel,
     pipelineRun, pipelineRunning, allExported, outputId,
     hvtAttempts, handleRerunHVT, hvtRunning, outputType,
-    handleRaiseScore, fixingGate, handleRerunPipeline, rerunningPipeline,
+    handleRepairPipeline, fixingGate, handleRerunPipeline, rerunningPipeline,
     prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
     dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
     formatDrafts,

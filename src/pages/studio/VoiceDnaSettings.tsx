@@ -277,14 +277,11 @@ export default function VoiceDnaSettings() {
         <SectionLabel>Voice Layers</SectionLabel>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 20 }}>
           {[
-            { label: "Voice Layer", score: voiceDna.voice_layer, desc: "How you sound: sentence structure, rhythm, pacing" },
-            { label: "Value Layer", score: voiceDna.value_layer, desc: "What you believe: positions, convictions, worldview" },
-            { label: "Personality Layer", score: voiceDna.personality_layer, desc: "How you show up: warmth, edge, humor, gravity" },
+            { label: "Voice Layer", desc: "How you sound: sentence structure, rhythm, pacing" },
+            { label: "Value Layer", desc: "What you believe: positions, convictions, worldview" },
+            { label: "Personality Layer", desc: "How you show up: warmth, edge, humor, gravity" },
           ].map(layer => (
             <div key={layer.label} style={{ flex: "1 1 160px", minWidth: 140 }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: "var(--fg)", fontVariantNumeric: "tabular-nums" }}>
-                {typeof layer.score === "number" ? Math.round(layer.score) : 0}
-              </div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{layer.label}</div>
               <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5 }}>{layer.desc}</div>
             </div>

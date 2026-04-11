@@ -24,12 +24,6 @@ const DNA_MODULES = [
     body: "If you operate inside a professional methodology, your clients deserve a studio that already knows their world. MethodDNA provisions EVERYWHERE Studio with your framework, your vocabulary, and your philosophy. Clients start inside the system, not configuring from scratch. The methodology delivers the framework. EVERYWHERE Studio delivers the content infrastructure that makes it land.",
     bg: "var(--xp-white)",
   },
-  {
-    name: "LegacyDNA",
-    subhead: "Your knowledge shouldn't leave with you.",
-    body: "LegacyDNA captures the thinking of a leader, a founder, or an organization at a transition point. Memoir. Biography. Institutional knowledge transfer. Executive departure. The ideas that took a lifetime to build, preserved in the form they were meant to take.",
-    bg: "var(--xp-off)",
-  },
 ];
 
 export default function TheSystemPage() {
@@ -67,12 +61,12 @@ export default function TheSystemPage() {
             letterSpacing: "-0.04em", lineHeight: 1.08,
             color: "var(--xp-on-dark)", marginBottom: 24,
             animation: `xpHeroHead 1s ${EASE} 0.6s both`,
-          }}>Four DNA modules. One intelligence infrastructure.</h1>
+          }}>Three DNA modules. One intelligence infrastructure.</h1>
           <p style={{
             fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)",
             maxWidth: 500, margin: "0 auto",
             animation: `xpHeroSub 0.8s ${EASE} 0.9s both`,
-          }}>Each module is a different entry point. Each one solves a specific problem. All four run on the same system.</p>
+          }}>Each module is a different entry point. Each one solves a specific problem. All three run on the same system.</p>
         </div>
       </section>
 

@@ -20,7 +20,7 @@ const FONT = "var(--font)";
 type WatchTabId = "briefing" | "research" | "settings";
 
 const WATCH_TABS: { id: WatchTabId; label: string; hint: string }[] = [
-  { id: "briefing", label: "Briefing", hint: "Scored signals from your watchlist" },
+  { id: "briefing", label: "Briefing", hint: "Signals from your watchlist" },
   { id: "research", label: "Research", hint: "Find outlets and people to track" },
   { id: "settings", label: "Settings", hint: "Sources, keywords, and delivery" },
 ];
@@ -57,20 +57,8 @@ interface BriefingData {
 function SignalCard({ signal, ctaLabel, ctaColor, onCta }: {
   signal: Signal; ctaLabel: string; ctaColor: string; onCta?: () => void;
 }) {
-  const scoreColor = signal.score != null
-    ? signal.score >= 4 ? "#16A34A" : signal.score >= 2.5 ? "#D97706" : "var(--fg-3)"
-    : undefined;
-
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--glass-border)" }}>
-      {signal.score != null && (
-        <div style={{
-          width: 26, height: 26, borderRadius: 6, flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: `${scoreColor}11`, border: `1px solid ${scoreColor}33`,
-          fontSize: 10, fontWeight: 700, color: scoreColor, marginTop: 1,
-        }}>{signal.score.toFixed(1)}</div>
-      )}
       <div style={{ flex: 1, fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
         <strong style={{ color: "var(--fg)" }}>{signal.title}</strong>
         {signal.summary ? `, ${signal.summary}` : ""}
@@ -103,9 +91,6 @@ function OpportunityRow({ signal, active }: { signal: Signal; active: boolean })
     <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0", opacity: active ? 1 : 0.5 }}>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: active ? "var(--blue)" : "var(--line-2)", flexShrink: 0, marginTop: 5 }} />
       <span style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5, flex: 1 }}>{signal.title}{signal.summary ? `, ${signal.summary}` : ""}</span>
-      {signal.score != null && (
-        <span style={{ fontSize: 9, fontWeight: 700, color: signal.score >= 4 ? "#16A34A" : "var(--fg-3)", flexShrink: 0 }}>{signal.score.toFixed(1)}</span>
-      )}
     </div>
   );
 }
