@@ -29,6 +29,7 @@ export const OUTPUT_TYPES: OutputTypeOption[] = [
   { id: "podcast", label: "Podcast", category: "Content" },
   { id: "video_script", label: "Video Script", category: "Content" },
   { id: "email", label: "Email", category: "Content" },
+  { id: "sunday_story", label: "Sunday Story", category: "Content" },
   // Business (11)
   { id: "presentation", label: "Presentation", category: "Business" },
   { id: "proposal", label: "Proposal", category: "Business" },

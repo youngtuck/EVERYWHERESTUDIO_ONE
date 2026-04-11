@@ -1060,13 +1060,9 @@ export default function WrapPage() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center", alignItems: "center" }}>
               <button
                 type="button"
-                className="liquid-glass-btn-gold"
+                className="liquid-glass-btn-gold liquid-glass-btn-gold--lg"
                 disabled={selectedChannels.length === 0}
                 onClick={() => void handleConfirmChannels()}
-                style={{
-                  padding: "14px 28px", opacity: selectedChannels.length ? 1 : 0.5,
-                  cursor: selectedChannels.length ? "pointer" : "not-allowed",
-                }}
               >
                 <span className="liquid-glass-btn-gold-label">
                   {selectedChannels.length

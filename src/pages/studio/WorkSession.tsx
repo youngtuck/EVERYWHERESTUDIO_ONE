@@ -126,6 +126,19 @@ function formatsFromPersisted(raw: string[] | undefined): Format[] {
   return raw.filter((x): x is Format => allowed.has(x));
 }
 
+/** Catalog row `output_type` id to display label (picker list plus common API ids). */
+function catalogOutputTypeLabel(id: string | null): string | null {
+  if (!id) return null;
+  const fromPicker = OUTPUT_TYPES.find(t => t.id === id);
+  if (fromPicker) return fromPicker.label;
+  const extra: Record<string, string> = {
+    socials: "LinkedIn Post",
+    newsletter: "Newsletter",
+    sunday_story: "Sunday Story",
+  };
+  return extra[id] || id.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
 const WORD_TARGETS: Record<string, number> = {
   essay: 2500, podcast: 1500, video_script: 800, email: 300,
   presentation: 1200, proposal: 1500, one_pager: 400, report: 2000,
@@ -469,17 +482,13 @@ function AdvanceButton({ label, onClick, disabled }: { label: string; onClick: (
   return (
     <div style={{ padding: "0 14px 8px", display: "flex", justifyContent: "flex-end" }}>
       <button
+        type="button"
+        className="liquid-glass-btn-gold"
         onClick={onClick}
         disabled={disabled}
-        style={{
-          fontSize: 11, fontWeight: 600, padding: "7px 16px",
-          borderRadius: 6, background: disabled ? "var(--line)" : "var(--gold-bright)",
-          border: "none", color: disabled ? "var(--fg-3)" : "var(--fg)",
-          cursor: disabled ? "not-allowed" : "pointer", fontFamily: FONT,
-          transition: "opacity 0.1s",
-        }}
+        style={{ fontSize: 11, padding: "8px 18px", fontFamily: FONT }}
       >
-        {label}
+        <span className="liquid-glass-btn-gold-label">{label}</span>
       </button>
     </div>
   );
@@ -543,14 +552,15 @@ function InputBar({
           <MicIcon />
         </IaBtn>
         <button
+          type="button"
+          className="liquid-glass-btn-gold liquid-glass-btn-gold--square"
           onClick={onSend}
           disabled={disabled}
+          aria-label="Send"
+          title="Send"
           style={{
-            width: 36, height: 36, borderRadius: 7,
-            background: disabled ? "var(--line)" : "var(--fg)", border: "none",
             cursor: disabled ? "not-allowed" : "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            transition: "background 0.1s",
           }}
         >
           <SendIcon />
@@ -769,17 +779,13 @@ function ReviewDash({
           {/* Primary action buttons */}
           {!publishAggregateOk && (
             <button
+              type="button"
+              className="liquid-glass-btn-gold"
               onClick={onRepairPipeline}
               disabled={!!fixingGate || rerunning}
-              style={{
-                width: "100%", padding: 10, borderRadius: 6, marginBottom: 8,
-                background: "var(--fg)", border: "none",
-                fontSize: 11, fontWeight: 700, color: "var(--gold)",
-                cursor: fixingGate || rerunning ? "not-allowed" : "pointer",
-                fontFamily: FONT, opacity: fixingGate || rerunning ? 0.5 : 1,
-              }}
+              style={{ width: "100%", marginBottom: 8, fontSize: 11, fontFamily: FONT }}
             >
-              Let Reed fix it
+              <span className="liquid-glass-btn-gold-label">Let Reed fix it</span>
             </button>
           )}
 
@@ -1848,9 +1854,13 @@ function StageEdit({
           />
           <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
           <button
+            type="button"
+            className="liquid-glass-btn-gold liquid-glass-btn-gold--square"
             onClick={handleRevise}
             disabled={generating}
-            style={{ width: 36, height: 36, borderRadius: 7, background: generating ? "var(--line)" : "var(--fg)", border: "none", cursor: generating ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            aria-label="Send to Reed"
+            title="Send to Reed"
+            style={{ cursor: generating ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <SendIcon />
           </button>
@@ -1919,25 +1929,38 @@ function GenerationProgress() {
 
 // ── Review progress (format adaptation + quality pipeline) ───────────────────
 function ReviewProgress({
-  pipelineRunning, formatDrafts, selectedFormats,
+  pipelineRunning, formatDrafts, selectedFormats, quietAdaptationList,
 }: {
   pipelineRunning: boolean;
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
   selectedFormats: string[];
+  /** When true, skip the per-channel grid (default multi-channel adaptation runs in the background). */
+  quietAdaptationList?: boolean;
 }) {
   const formatStatuses = selectedFormats.map(f => ({
     name: f,
     status: formatDrafts[f]?.status || "pending",
   }));
-  const allFormatsComplete = formatStatuses.every(f => f.status === "done" || f.status === "error");
+  const allFormatsComplete = formatStatuses.length > 0
+    && formatStatuses.every(f => f.status === "done" || f.status === "error");
 
   return (
     <div style={{ padding: "32px clamp(16px, 3vw, 28px)", width: "100%", boxSizing: "border-box" as const }}>
       {/* Format Adaptation */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.03em", marginBottom: 12 }}>
-          {allFormatsComplete ? "Formats adapted" : "Adapting formats"}
+          {quietAdaptationList
+            ? (allFormatsComplete ? "Previews ready" : "Preparing previews")
+            : (allFormatsComplete ? "Formats adapted" : "Adapting formats")}
         </div>
+        {quietAdaptationList ? (
+          <div style={{
+            fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, padding: "12px 14px",
+            borderRadius: 8, border: "1px solid var(--glass-border)", background: "var(--glass-card)",
+          }}>
+            Reed is shaping channel-specific versions in the background. You will confirm which formats save to Catalog when you start Wrap.
+          </div>
+        ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
           {formatStatuses.map((f, i) => (
             <div
@@ -1976,6 +1999,7 @@ function ReviewProgress({
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* Quality Pipeline - simplified */}
@@ -2126,16 +2150,16 @@ function PreWrapOutputGate({
   presentationMinutes: number;
   onPresentationMinutesChange: (n: number) => void;
 }) {
-  const qualityHeadline = !pipelineRun
-    ? "When you are ready, pick where this goes."
+  const reviewStatusLine = !pipelineRun
+    ? "When you are ready, continue below."
     : pipelineRun.status === "PASSED"
       ? "Checks passed."
-      : "Quality review finished. Address any items Reed flagged, then pick a format.";
+      : "Quality review finished. Address any items Reed flagged before you continue.";
   const hvtLine = !pipelineRun
     ? ""
     : pipelineRun.humanVoiceTest?.verdict === "PASSES"
-      ? "Human Voice Test passed"
-      : "Human Voice Test: review flagged lines if needed";
+      ? "Human Voice Test passed."
+      : "Human Voice Test: review flagged lines if needed.";
 
   const recLabel = OUTPUT_TYPES.find(t => t.id === recommendedId)?.label || recommendedId;
 
@@ -2164,17 +2188,16 @@ function PreWrapOutputGate({
         }}>
           Where is this going?
         </h1>
-        <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "0 0 20px", lineHeight: 1.5, fontFamily: FONT }}>
-          {qualityHeadline}
-          {hvtLine ? (
-            <>
-              <span style={{ opacity: 0.5 }}> · </span>
-              {hvtLine}
-            </>
-          ) : null}
+        <p style={{ fontSize: 13, color: "var(--fg-2)", margin: "0 0 10px", lineHeight: 1.5, fontFamily: FONT }}>
+          {reviewStatusLine}
         </p>
-        <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 20px", lineHeight: 1.5, fontFamily: FONT }}>
-          Select every format you want saved to Catalog. Each format becomes its own catalog row with this draft.
+        {hvtLine ? (
+          <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 14px", lineHeight: 1.5, fontFamily: FONT }}>
+            {hvtLine}
+          </p>
+        ) : null}
+        <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 22px", lineHeight: 1.5, fontFamily: FONT }}>
+          Choose one or more formats to save to Catalog. Each becomes its own row tied to this draft.
         </p>
 
         <div style={{
@@ -2210,6 +2233,10 @@ function PreWrapOutputGate({
               {items.map(item => {
                 const isRec = item.id === recommendedId;
                 const isSel = selectedIds.includes(item.id);
+                const receded = !isSel && !isRec;
+                const recOnly = !isSel && isRec;
+                const selRec = isSel && isRec;
+                const selOther = isSel && !isRec;
                 return (
                   <button
                     key={item.id}
@@ -2218,30 +2245,38 @@ function PreWrapOutputGate({
                     onClick={() => onToggle(item.id)}
                     style={{
                       textAlign: "left" as const,
-                      padding: "12px 14px",
+                      padding: selRec ? "13px 15px" : "12px 14px",
                       borderRadius: 10,
                       fontFamily: FONT,
-                      fontSize: 12,
-                      fontWeight: isSel ? 700 : 500,
-                      color: "var(--fg)",
+                      fontSize: receded ? 11 : selRec ? 13 : 12,
+                      fontWeight: receded ? 500 : recOnly ? 600 : 700,
+                      color: receded ? "var(--fg-3)" : "var(--fg)",
                       cursor: "pointer",
-                      border: isSel
+                      border: selRec
                         ? "2px solid var(--gold-bright, #F5C642)"
-                        : isRec
-                          ? "2px solid rgba(245,198,66,0.45)"
-                          : "1px solid var(--glass-border)",
-                      background: isSel ? "rgba(245,198,66,0.14)" : "var(--glass-card)",
-                      boxShadow: isSel ? "0 4px 20px rgba(0,0,0,0.06)" : "none",
-                      transition: "border-color 0.15s, background 0.15s",
-                      minHeight: 52,
+                        : selOther
+                          ? "2px solid var(--gold-bright, #F5C642)"
+                          : recOnly
+                            ? "2px solid rgba(245,198,66,0.5)"
+                            : "1px solid rgba(0,0,0,0.08)",
+                      background: selRec || selOther
+                        ? "rgba(245,198,66,0.16)"
+                        : recOnly
+                          ? "rgba(245,198,66,0.08)"
+                          : "rgba(248,250,252,0.85)",
+                      boxShadow: selRec
+                        ? "0 6px 22px rgba(0,0,0,0.08)"
+                        : selOther
+                          ? "0 4px 16px rgba(0,0,0,0.05)"
+                          : "none",
+                      opacity: receded ? 0.82 : 1,
+                      transition: "border-color 0.15s, background 0.15s, opacity 0.15s, box-shadow 0.15s",
+                      minHeight: selRec ? 54 : 52,
                       display: "flex", flexDirection: "column" as const, justifyContent: "center",
                       gap: 4,
                     }}
                   >
                     <span>{item.label}</span>
-                    {isRec && (
-                      <span style={{ fontSize: 9, fontWeight: 600, color: "#9A7030" }}>Recommended</span>
-                    )}
                   </button>
                 );
               })}
@@ -2292,28 +2327,39 @@ function PreWrapOutputGate({
           </div>
         )}
 
-        <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
+        <div style={{
+          marginTop: 12,
+          display: "flex",
+          flexDirection: "column" as const,
+          alignItems: "center",
+          gap: 8,
+        }}>
           <button
             type="button"
+            className="liquid-glass-btn-gold liquid-glass-btn-gold--lg"
             disabled={selectedIds.length === 0}
+            aria-describedby={selectedIds.length === 0 ? "prewrap-start-hint" : undefined}
             onClick={onStartWrap}
-            style={{
-              minWidth: 220,
-              padding: "14px 28px",
-              borderRadius: 10,
-              fontFamily: FONT,
-              fontSize: 14,
-              fontWeight: 700,
-              letterSpacing: "0.04em",
-              border: "none",
-              cursor: selectedIds.length > 0 ? "pointer" : "not-allowed",
-              background: selectedIds.length > 0 ? "var(--fg)" : "var(--line)",
-              color: selectedIds.length > 0 ? "var(--gold, #F5C642)" : "var(--fg-3)",
-              opacity: selectedIds.length > 0 ? 1 : 0.85,
-            }}
+            style={{ minWidth: 240, fontFamily: FONT }}
           >
-            {selectedIds.length > 1 ? `Start Wrap (${selectedIds.length} formats)` : "Start Wrap"}
+            <span className="liquid-glass-btn-gold-label">
+              {selectedIds.length > 1 ? `Start Wrap (${selectedIds.length} formats)` : "Start Wrap"}
+            </span>
           </button>
+          {selectedIds.length === 0 && (
+            <p
+              id="prewrap-start-hint"
+              style={{
+                margin: 0,
+                fontSize: 11,
+                color: "var(--fg-3)",
+                fontFamily: FONT,
+                textAlign: "center" as const,
+              }}
+            >
+              Select a format to continue.
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -2323,6 +2369,7 @@ function PreWrapOutputGate({
 function StageReview({
   draft, pipelineRun, running, activeTab, tabs,
   onTabClick, onAdvance, onGoBack, onFix, onDirectReplace, formatDrafts,
+  showChannelPicker,
 }: {
   draft: string; pipelineRun: PipelineRun | null; running: boolean;
   activeTab: Format; tabs: Format[]; onTabClick: (t: Format) => void;
@@ -2330,6 +2377,8 @@ function StageReview({
   onFix: (instruction: string) => Promise<void>;
   onDirectReplace: (original: string, replacement: string) => void;
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
+  /** Only when the user picked multiple channels in session; hides default 4-way preview chrome. */
+  showChannelPicker: boolean;
 }) {
   /** Internal readiness from pipeline aggregate; not shown to the user. */
   const publishAggregateOk = (pipelineRun?.impactScore?.total ?? 0) >= 75;
@@ -2337,7 +2386,6 @@ function StageReview({
   const canApprove = publishAggregateOk && hvtPasses;
   const hvtFlaggedLines = pipelineRun?.humanVoiceTest?.flaggedLines || [];
   const [input, setInput] = useState("");
-  const [reviewedTabs, setReviewedTabs] = useState<Set<string>>(new Set());
   const [hvtFixing, setHvtFixing] = useState(false);
 
   return (
@@ -2352,27 +2400,62 @@ function StageReview({
           Applying suggestion...
         </div>
       )}
-      {/* Format tabs with status dots */}
-      <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--glass-border)", padding: "0 20px", flexShrink: 0, background: "var(--glass-topbar)", overflowX: "auto", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)" }}>
-        {tabs.map(tab => (
-          <button
-            key={tab}
-            className={`rev-tab${activeTab === tab ? " on" : ""}${reviewedTabs.has(tab) ? " reviewed" : ""}`}
-            onClick={() => onTabClick(tab)}
-          >
-            {tab}<span className="tab-dot" />
-          </button>
-        ))}
-      </div>
-
       <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
         {/* Draft preview */}
         <div
           className="work-stage-content-column"
           style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "24px clamp(16px, 3vw, 28px)", width: "100%" }}
         >
+          {showChannelPicker && tabs.length > 1 && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const,
+              marginBottom: 16, paddingBottom: 12,
+              borderBottom: "1px solid var(--glass-border)",
+            }}>
+              <label htmlFor="review-channel-preview" style={{
+                fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", color: "var(--fg-3)",
+                textTransform: "uppercase" as const, flexShrink: 0, fontFamily: FONT,
+              }}>
+                Preview
+              </label>
+              <select
+                id="review-channel-preview"
+                value={activeTab}
+                onChange={e => onTabClick(e.target.value as Format)}
+                className="liquid-glass-input"
+                style={{
+                  flex: "1 1 160px",
+                  maxWidth: 280,
+                  minWidth: 0,
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontFamily: FONT,
+                  color: "var(--fg)",
+                  cursor: "pointer",
+                }}
+              >
+                {tabs.map(tab => {
+                  const fd = formatDrafts[tab];
+                  const done = fd?.status === "done" || fd?.status === "error";
+                  const label = done ? `${tab} (ready)` : tab;
+                  return (
+                    <option key={tab} value={tab}>{label}</option>
+                  );
+                })}
+              </select>
+              <span style={{ fontSize: 10, color: "var(--fg-3)", fontFamily: FONT, flex: "1 1 100%", minWidth: 0 }}>
+                Reed adapts your draft for each channel you selected. This is a preview, not a second workflow step.
+              </span>
+            </div>
+          )}
           {running ? (
-            <ReviewProgress pipelineRunning={running} formatDrafts={formatDrafts} selectedFormats={tabs} />
+            <ReviewProgress
+              pipelineRunning={running}
+              formatDrafts={formatDrafts}
+              selectedFormats={tabs}
+              quietAdaptationList={!showChannelPicker}
+            />
           ) : (
             <>
               {(() => {
@@ -2453,8 +2536,12 @@ function StageReview({
           />
           <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
           <button
+            type="button"
+            className="liquid-glass-btn-gold liquid-glass-btn-gold--square"
+            title="Send back to Edit"
+            aria-label="Send back to Edit"
             onClick={() => { if (input.trim()) { onGoBack(input.trim()); setInput(""); } }}
-            style={{ width: 36, height: 36, borderRadius: 7, background: "var(--fg)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{ cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <SendIcon />
           </button>
@@ -2593,7 +2680,7 @@ export default function WorkSession() {
   const [activeReviewTab, setActiveReviewTab] = useState<Format>(selectedFormats[0] ?? "LinkedIn");
   const [hvtAttempts, setHvtAttempts] = useState(0);
   const [hvtRunning, setHvtRunning] = useState(false);
-  /** Chosen OUTPUT_TYPES ids on the Pre-Wrap full screen; cleared when that gate appears. */
+  /** Chosen OUTPUT_TYPES ids on the Pre-Wrap full screen; defaults to Reed recommendation when the gate opens. */
   const [preWrapPickIds, setPreWrapPickIds] = useState<string[]>([]);
   /** Talk length for presentation output type (Wrap target words = minutes × 300). */
   const [preWrapPresentationMins, setPreWrapPresentationMins] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
@@ -2603,6 +2690,8 @@ export default function WorkSession() {
   const [backgroundPipelineRunning, setBackgroundPipelineRunning] = useState(false);
   const [draftChangedSinceBackground, setDraftChangedSinceBackground] = useState(false);
   const backgroundDraftRef = useRef<string>("");
+  /** Pre-Wrap gate: seed selection once per gate open so recommended format is pre-selected. */
+  const preWrapGatePrimed = useRef(false);
 
   // ── Export ────────────────────────────────────────────────────
   const [exportedTabs, setExportedTabs] = useState<Record<string, boolean>>({});
@@ -3155,7 +3244,9 @@ export default function WorkSession() {
       // Save draft to Supabase immediately (fire and forget, don't block UI)
       if (user && data.content) {
         const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
-        const outputTypeId = outputType || "freestyle";
+        const outputTypeId = outputType
+          || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null)
+          || "freestyle";
         supabase.from("outputs").insert({
           user_id: user.id,
           title: title.slice(0, 200),
@@ -3165,7 +3256,10 @@ export default function WorkSession() {
           score: 0,
         }).select("id").single().then(({ data: savedOutput, error }) => {
           if (error) console.error("[Draft save] Error:", error.message, error.details, error.hint);
-          if (savedOutput?.id) setOutputId(savedOutput.id);
+          if (savedOutput?.id) {
+            setOutputId(savedOutput.id);
+            setOutputType(outputTypeId);
+          }
         });
       }
     } catch (err: any) {
@@ -3175,7 +3269,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage, handleBackgroundQualityCheck]);
+  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage, handleBackgroundQualityCheck, outputType]);
 
   // ── EDIT: Revise draft ────────────────────────────────────────
   const handleRevise = useCallback(async (instructions: string) => {
@@ -3608,8 +3702,15 @@ export default function WorkSession() {
   );
 
   useEffect(() => {
-    if (showPreWrapOutputGate) setPreWrapPickIds([]);
-  }, [showPreWrapOutputGate]);
+    if (!showPreWrapOutputGate) {
+      preWrapGatePrimed.current = false;
+      return;
+    }
+    if (!preWrapGatePrimed.current) {
+      preWrapGatePrimed.current = true;
+      setPreWrapPickIds([recommendedWrapOutputId]);
+    }
+  }, [showPreWrapOutputGate, recommendedWrapOutputId]);
 
   useEffect(() => {
     if (!preWrapPickIds.includes("presentation")) {
@@ -4281,7 +4382,8 @@ export default function WorkSession() {
           border: "1px solid rgba(245,198,66,0.3)",
           fontSize: 10, fontWeight: 600, color: "#9A7030",
         }}>
-          ■ {outputType ? OUTPUT_TYPES.find(t => t.id === outputType)?.label || outputType : "Not set yet"}
+          ■ {catalogOutputTypeLabel(outputType)
+            ?? (outputId ? "Catalog type loading…" : "Catalog type when you save your draft")}
         </span>
       </div>
       <div style={{
@@ -4370,6 +4472,7 @@ export default function WorkSession() {
             onFix={handleReviewFix}
             onDirectReplace={handleDirectReplace}
             formatDrafts={formatDrafts}
+            showChannelPicker={selectedFormats.length > 1}
           />
         )
       )}
