@@ -76,6 +76,31 @@
   box-sizing: border-box;
 }
 
+/* Edit stage: draft body fills column; scrollbar slightly easier to spot than OS default */
+.work-edit-draft-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(74, 144, 217, 0.5) rgba(0, 0, 0, 0.06);
+}
+.work-edit-draft-textarea::-webkit-scrollbar {
+  width: 9px;
+}
+.work-edit-draft-textarea::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  margin: 4px 0;
+}
+.work-edit-draft-textarea::-webkit-scrollbar-thumb {
+  background: rgba(74, 144, 217, 0.42);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.work-edit-draft-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 144, 217, 0.62);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 .work-chat-input-row {
   display: flex;
   align-items: flex-end;

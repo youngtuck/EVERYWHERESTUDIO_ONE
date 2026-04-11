@@ -849,6 +849,10 @@ function StageIntake({
   const reedQuestionCount = messages.filter(m => m.role === "reed" && m.content.trim().endsWith("?")).length;
   const totalQuestions = 5;
   const progress = Math.min(reedQuestionCount / totalQuestions, 1);
+  /** Prominent outline CTA: API ready, or full question arc in the UI. */
+  const showProminentOutlineCta = isReady || reedQuestionCount >= totalQuestions;
+  /** Early-only skip link: hide after a few questions so the path forward is clearer. */
+  const showJustWriteEscape = reedQuestionCount < 3 && !showProminentOutlineCta;
 
   // Welcome state: show centered greeting until user sends first message
   const hasUserMessage = messages.some(m => m.role === "user");
@@ -985,19 +989,48 @@ function StageIntake({
           </div>
         </div>
 
-        {/* "Build outline" appears above the input when ready */}
-        {isReady && (
-          <div style={{ display: "flex", justifyContent: "center", padding: "8px clamp(12px, 4vw, 24px) 0" }}>
-            <button
-              onClick={onAdvance}
-              style={{
-                fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 6,
-                background: "var(--gold-bright)", border: "none", color: "var(--fg)",
-                cursor: "pointer", fontFamily: FONT, letterSpacing: "0.01em",
-              }}
-            >
-              Build outline →
-            </button>
+        {/* Clear next step: outline (replaces small duplicate when arc is complete or API says ready) */}
+        {showProminentOutlineCta && (
+          <div style={{
+            padding: "14px clamp(12px, 4vw, 24px) 12px",
+            background: "rgba(245,198,66,0.06)",
+            borderTop: "1px solid rgba(245,198,66,0.22)",
+            flexShrink: 0,
+          }}>
+            <div style={{
+              maxWidth: 420,
+              margin: "0 auto",
+              textAlign: "center" as const,
+            }}>
+              <p style={{
+                fontSize: 12,
+                lineHeight: 1.55,
+                color: "var(--fg-2)",
+                margin: "0 0 12px",
+                fontFamily: FONT,
+              }}>
+                {reedQuestionCount >= totalQuestions
+                  ? "You have reached the last planned question. You are not stuck: keep replying if you want more from Reed, or move on when you are ready to structure this piece."
+                  : "Reed has enough to work with. You can keep the conversation going below, or continue to outline whenever you want."}
+              </p>
+              <button
+                type="button"
+                className="liquid-glass-btn-gold"
+                onClick={onAdvance}
+                style={{
+                  width: "100%",
+                  maxWidth: 300,
+                  padding: "12px 20px",
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: FONT,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                <span className="liquid-glass-btn-gold-label">Ready to make an outline</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -1017,18 +1050,23 @@ function StageIntake({
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 5 }}>
             <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
-              Question {Math.min(reedQuestionCount, totalQuestions)} of {totalQuestions}
+              {reedQuestionCount >= totalQuestions
+                ? `${totalQuestions} of ${totalQuestions} questions answered`
+                : `Question ${Math.min(reedQuestionCount, totalQuestions)} of ${totalQuestions}`}
             </span>
-            <button
-              onClick={onAdvance}
-              style={{
-                fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
-                border: "none", cursor: "pointer", padding: 0, fontFamily: FONT,
-                letterSpacing: "0.01em",
-              }}
-            >
-              Just write it →
-            </button>
+            {showJustWriteEscape ? (
+              <button
+                type="button"
+                onClick={onAdvance}
+                style={{
+                  fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
+                  border: "none", cursor: "pointer", padding: 0, fontFamily: FONT,
+                  letterSpacing: "0.01em",
+                }}
+              >
+                Just write it →
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -1461,12 +1499,12 @@ function StageOutline({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", alignItems: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden", alignItems: "center" }}>
       <div
         className="work-stage-content-column"
         style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", width: "100%" }}
       >
-        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 20 }}>
           {building ? (
             <LoadingDots label="Building outline from your conversation..." />
           ) : (
@@ -1660,17 +1698,28 @@ function StageEdit({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", alignItems: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden", alignItems: "center" }}>
       <div
         className="work-stage-content-column"
         style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", width: "100%" }}
       >
-        <div className="edit-area" style={{ flex: 1, overflowY: "auto", padding: "24px clamp(16px, 3vw, 28px)" }}>
+        <div
+          className="edit-area"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            padding: "20px clamp(16px, 3vw, 28px) 8px",
+          }}
+        >
           {/* Version tabs */}
           {versions.length > 0 && !generating && (
           <div style={{
             display: "flex", alignItems: "center", gap: 8,
-            marginBottom: 16, paddingBottom: 12,
+            flexShrink: 0,
+            marginBottom: 14, paddingBottom: 12,
             borderBottom: "1px solid var(--glass-border)",
           }}>
             {versions.map((v, i) => (
@@ -1714,9 +1763,21 @@ function StageEdit({
           </div>
         )}
         {generating ? (
-          <GenerationProgress />
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+            <GenerationProgress />
+          </div>
         ) : (
-          <div className="draft-body" style={{ position: "relative" }}>
+          <div
+            className="draft-body"
+            style={{
+              position: "relative",
+              flex: 1,
+              minHeight: 120,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
             {(() => {
               const lines = draft.split("\n");
               const rawTitle = lines[0] || "";
@@ -1729,6 +1790,7 @@ function StageEdit({
                     onChange={(e) => onDraftChange(e.target.value + "\n" + body)}
                     style={{
                       width: "100%",
+                      flexShrink: 0,
                       fontFamily: "var(--font)",
                       fontSize: "clamp(22px, 3vw, 32px)",
                       fontWeight: 700,
@@ -1737,25 +1799,29 @@ function StageEdit({
                       border: "none",
                       outline: "none",
                       padding: 0,
-                      marginBottom: 16,
+                      marginBottom: 14,
                       lineHeight: 1.2,
                     }}
                   />
                   <textarea
+                    className="work-edit-draft-textarea"
                     value={body}
                     onChange={(e) => onDraftChange(title + "\n" + e.target.value)}
                     style={{
+                      flex: 1,
+                      minHeight: 0,
                       width: "100%",
-                      minHeight: 400,
+                      boxSizing: "border-box",
                       background: "transparent",
                       border: "none",
                       outline: "none",
-                      resize: "vertical",
+                      resize: "none",
                       fontFamily: "var(--font)",
                       fontSize: 15,
                       lineHeight: 1.75,
                       color: "var(--fg)",
                       padding: 0,
+                      overflowY: "auto",
                     }}
                     spellCheck
                   />
@@ -1765,18 +1831,6 @@ function StageEdit({
           </div>
         )}
         </div>
-
-        {/* Word count bar visible in edit area */}
-        {!generating && draft && (
-          <div style={{
-            padding: "6px clamp(16px, 3vw, 28px)", display: "flex", alignItems: "center", justifyContent: "space-between",
-            borderTop: "1px solid var(--glass-border)", background: "var(--glass-topbar)", flexShrink: 0,
-            backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
-            fontSize: 11, color: "var(--fg-3)",
-          }}>
-            <span>{draft.split(/\s+/).filter(Boolean).length} words</span>
-          </div>
-        )}
 
         {!generating && draft && <AdvanceButton label="Finish and Review &#8594;" onClick={onAdvance} />}
       </div>
@@ -2486,6 +2540,13 @@ export default function WorkSession() {
   const [intakeReady, setIntakeReady] = useState(persisted?.isReady ?? false);
   const [readySummary, setReadySummary] = useState("");
 
+  /** After five Reed questions ending in "?", treat intake as ready so outline CTA is never stuck behind API-only flags. */
+  useEffect(() => {
+    if (stage !== "Intake") return;
+    const rq = messages.filter(m => m.role === "reed" && m.content.trim().endsWith("?")).length;
+    if (rq >= 5 && !intakeReady) setIntakeReady(true);
+  }, [messages, stage, intakeReady]);
+
   // ── Output type (CO-003) ─────────────────────────────────────
   const [outputType, setOutputType] = useState<string | null>(() => persisted?.outputTypeId ?? null);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -2855,7 +2916,7 @@ export default function WorkSession() {
     } finally {
       setIntakeSending(false);
     }
-  }, [messages, selectedFormats, voiceDnaMd, user?.id, outputType]);
+  }, [messages, selectedFormats, voiceDnaMd, user?.id, outputType, intakeReady]);
 
   // ── INTAKE → OUTLINE: Build outline from conversation ─────────
   const handleBuildOutline = useCallback(async () => {
@@ -4223,6 +4284,14 @@ export default function WorkSession() {
           ■ {outputType ? OUTPUT_TYPES.find(t => t.id === outputType)?.label || outputType : "Not set yet"}
         </span>
       </div>
+      <div style={{
+        flex: 1,
+        minHeight: 0,
+        minWidth: 0,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}>
       {stage === "Intake" && (
         <StageIntake
           messages={messages}
@@ -4304,6 +4373,7 @@ export default function WorkSession() {
           />
         )
       )}
+      </div>
     </div>
   );
 }

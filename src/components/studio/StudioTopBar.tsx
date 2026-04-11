@@ -139,6 +139,10 @@ function ProjectSwitcher() {
   const [newName, setNewName] = useState("");
   const [createBusy, setCreateBusy] = useState(false);
   const [createErr, setCreateErr] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [renameBusy, setRenameBusy] = useState(false);
+  const [renameErr, setRenameErr] = useState<string | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
@@ -171,6 +175,9 @@ function ProjectSwitcher() {
       setCreating(false);
       setNewName("");
       setCreateErr(null);
+      setEditingId(null);
+      setEditName("");
+      setRenameErr(null);
     }
   }, [open]);
 
@@ -205,6 +212,31 @@ function ProjectSwitcher() {
     }
   };
 
+  const canRenameProject = (id: string) => id !== "default" && !!user;
+
+  const onRenameSubmit = async (e: React.FormEvent, projectId: string) => {
+    e.preventDefault();
+    if (!user || !editName.trim()) return;
+    setRenameBusy(true);
+    setRenameErr(null);
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .update({ name: editName.trim(), updated_at: new Date().toISOString() })
+        .eq("id", projectId)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      await refreshProjects();
+      setEditingId(null);
+      setEditName("");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not rename project.";
+      setRenameErr(msg);
+    } finally {
+      setRenameBusy(false);
+    }
+  };
+
   const menuPortal = open && menuPos && typeof document !== "undefined"
     ? createPortal(
         <>
@@ -236,26 +268,137 @@ function ProjectSwitcher() {
           >
             <div style={{ overflowY: "auto", flex: 1, minHeight: 0 }}>
               {projects.map(p => (
-                <button
-                  type="button"
-                  key={p.id}
-                  role="menuitem"
-                  onClick={() => { setActiveProjectId(p.id); setOpen(false); }}
-                  style={{
-                    display: "block", width: "100%", textAlign: "left" as const,
-                    padding: "9px 12px", fontSize: 12, cursor: "pointer",
-                    color: p.id === activeProjectId ? "rgba(255,255,255,0.98)" : "rgba(255,255,255,0.82)",
-                    fontWeight: p.id === activeProjectId ? 600 : 400,
-                    background: p.id === activeProjectId ? "rgba(245,198,66,0.12)" : "transparent",
-                    border: "none", fontFamily: "inherit",
-                    transition: "background 0.12s",
-                  }}
-                  onMouseEnter={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
-                  onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
-                >
-                  {p.name}
-                  {p.is_default && <span style={{ fontSize: 9, color: "rgba(255,255,255,0.62)", marginLeft: 6 }}>default</span>}
-                </button>
+                editingId === p.id ? (
+                  <form
+                    key={p.id}
+                    onSubmit={e => void onRenameSubmit(e, p.id)}
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      padding: "8px 10px",
+                      borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      background: "rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    <input
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      autoFocus
+                      placeholder="Project name"
+                      aria-label="Project name"
+                      onKeyDown={e => {
+                        if (e.key === "Escape") {
+                          setEditingId(null);
+                          setEditName("");
+                          setRenameErr(null);
+                        }
+                      }}
+                      style={{
+                        width: "100%", boxSizing: "border-box", marginBottom: 6,
+                        padding: "7px 9px", borderRadius: 8, fontSize: 12, fontFamily: "inherit",
+                        border: "1px solid rgba(255,255,255,0.14)", background: "rgba(0,0,0,0.25)",
+                        color: "rgba(255,255,255,0.92)", outline: "none",
+                      }}
+                    />
+                    {renameErr && (
+                      <div style={{ fontSize: 10, color: "#f87171", marginBottom: 6 }}>{renameErr}</div>
+                    )}
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button
+                        type="submit"
+                        disabled={renameBusy || !editName.trim()}
+                        style={{
+                          flex: 1, padding: "6px 8px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                          border: "none", cursor: renameBusy || !editName.trim() ? "default" : "pointer",
+                          background: "rgba(245,198,66,0.28)", color: "rgba(255,255,255,0.95)",
+                          opacity: renameBusy || !editName.trim() ? 0.5 : 1, fontFamily: "inherit",
+                        }}
+                      >
+                        {renameBusy ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setEditingId(null); setEditName(""); setRenameErr(null); }}
+                        style={{
+                          padding: "6px 8px", borderRadius: 8, fontSize: 11,
+                          border: "1px solid rgba(255,255,255,0.12)", background: "transparent",
+                          color: "rgba(255,255,255,0.75)", cursor: "pointer", fontFamily: "inherit",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div
+                    key={p.id}
+                    style={{
+                      display: "flex", alignItems: "stretch",
+                      borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      background: p.id === activeProjectId ? "rgba(245,198,66,0.08)" : "transparent",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => { setActiveProjectId(p.id); setOpen(false); }}
+                      style={{
+                        flex: 1, minWidth: 0, textAlign: "left" as const,
+                        padding: "9px 8px 9px 12px", fontSize: 12, cursor: "pointer",
+                        color: p.id === activeProjectId ? "rgba(255,255,255,0.98)" : "rgba(255,255,255,0.82)",
+                        fontWeight: p.id === activeProjectId ? 600 : 400,
+                        background: "transparent",
+                        border: "none", fontFamily: "inherit",
+                        transition: "background 0.12s",
+                        display: "flex", alignItems: "center", gap: 6,
+                      }}
+                      onMouseEnter={e => {
+                        if (p.id !== activeProjectId) e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = "transparent";
+                      }}
+                    >
+                      <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                        {p.name}
+                      </span>
+                      {p.is_default && (
+                        <span style={{ fontSize: 9, color: "rgba(255,255,255,0.62)", flexShrink: 0 }}>default</span>
+                      )}
+                    </button>
+                    {canRenameProject(p.id) && (
+                      <button
+                        type="button"
+                        title="Rename project"
+                        aria-label={`Rename ${p.name}`}
+                        onClick={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setEditingId(p.id);
+                          setEditName(p.name);
+                          setRenameErr(null);
+                        }}
+                        style={{
+                          flexShrink: 0, width: 36, padding: 0,
+                          border: "none", borderLeft: "1px solid rgba(255,255,255,0.08)",
+                          background: "transparent", cursor: "pointer", color: "rgba(255,255,255,0.55)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.color = "rgba(255,255,255,0.9)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.55)"; }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <path
+                            d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )
               ))}
             </div>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
