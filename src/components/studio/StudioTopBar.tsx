@@ -36,6 +36,9 @@ function useBreadcrumbs(): { left: React.ReactNode } {
     "/studio/projects": "Projects",
     "/studio/resources": "Resources",
     "/studio/settings": "Settings",
+    "/studio/settings/voice": "Voice DNA",
+    "/studio/settings/brand": "Brand DNA",
+    "/studio/settings/memory": "Composer memory",
     "/studio/workbench": "Workbench",
   };
 

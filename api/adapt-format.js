@@ -5,7 +5,8 @@ import { CLAUDE_MODEL } from "./_config.js";
 import fs from "fs";
 import path from "path";
 import { requireAuth } from "./_auth.js";
-import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
+import { clipDna, DNA_LIMITS, METHOD_DNA_LEXICON_LINE } from "./_dnaContext.js";
+import { formatStructuredIntakeForPrompt } from "./_structuredIntakePrompt.js";
 
 function loadPrompt(filename) {
   const paths = [
@@ -235,7 +236,17 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-  const { draft, format, voiceDnaMd, brandDnaMd, methodDnaMd, userId, wrapConstraintSupplement } = req.body || {};
+  const {
+    draft,
+    format,
+    voiceDnaMd,
+    brandDnaMd,
+    methodDnaMd,
+    userId,
+    wrapConstraintSupplement,
+    /** WorkSession: Reed-locked checklist, same shape as /api/generate. */
+    structuredIntake,
+  } = req.body || {};
   if (!draft) return res.status(400).json({ error: "draft is required" });
   if (!format) return res.status(400).json({ error: "format is required" });
 
@@ -259,6 +270,11 @@ export default async function handler(req, res) {
   let system = `${formatConfig.system}\n\n${channelDifferentiationBlock(effectiveFormat)}`;
 
   const L = DNA_LIMITS.adapt;
+  const methodDna = methodDnaMd || resources.methodDna;
+  if (methodDna?.trim()) {
+    system += `\n\nMETHOD DNA (ACTIVE CONSTRAINT):\n${METHOD_DNA_LEXICON_LINE}\n\nMETHOD DNA:\n${clipDna(methodDna.trim(), L.method)}`;
+  }
+
   const voiceDna = voiceDnaMd || resources.voiceDna;
   if (voiceDna) {
     system += `\n\nVOICE DNA (ACTIVE CONSTRAINT, write in this voice from the first word):\n${clipDna(voiceDna, L.voice)}`;
@@ -269,10 +285,7 @@ export default async function handler(req, res) {
     system += `\n\nBRAND DNA:\n${clipDna(brandDna, L.brand)}`;
   }
 
-  const methodDna = methodDnaMd || resources.methodDna;
-  if (methodDna) {
-    system += `\n\nMETHOD DNA (ACTIVE CONSTRAINT; use proprietary terms exactly, never generic replacements):\n${clipDna(methodDna, L.method)}`;
-  }
+  system += formatStructuredIntakeForPrompt(structuredIntake);
 
   const platformSection = dmitriSpec.split(`### ${formatConfig.platformSpec}`)[1];
   if (platformSection) {

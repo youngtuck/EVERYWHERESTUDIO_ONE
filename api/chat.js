@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 import { getUserResources } from "./_resources.js";
-import { clipDna, DNA_LIMITS } from "./_dnaContext.js";
+import { clipDna, DNA_LIMITS, METHOD_DNA_LEXICON_LINE } from "./_dnaContext.js";
 import { loadReedDoctrine } from "./_reedDoctrine.js";
 import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
@@ -293,15 +293,15 @@ function buildReedSystem(outputType, voiceProfile, voiceDnaMd, resources, userNa
     system += "COMPOSER MEMORY (stable facts; treat as true unless the user contradicts them in this session):\n\n" + resources.composerMemory.trim() + "\n\n---\n\n";
   }
   const RL = DNA_LIMITS.reed;
+  if (resources?.methodDna?.trim()) {
+    system += "METHOD DNA (ACTIVE CONSTRAINT):\n" + METHOD_DNA_LEXICON_LINE + "\n\nMETHOD DNA:\n\n" + clipDna(resources.methodDna.trim(), RL.method) + "\n\n---\n\n";
+  }
   const voiceContext = clipDna(((resources?.voiceDna || "") + "\n" + (voiceDnaMd || "")).trim(), RL.voice);
   if (voiceContext) {
     system += "VOICE DNA - Write exactly like this person:\n\n" + voiceContext + "\n\n---\n\n";
   }
   if (resources?.brandDna) {
     system += "BRAND DNA - Stay consistent with this brand:\n\n" + clipDna(resources.brandDna.trim(), RL.brand) + "\n\n---\n\n";
-  }
-  if (resources?.methodDna) {
-    system += "METHOD DNA - Use these frameworks and proprietary concepts. Use the exact terminology. Do not paraphrase proprietary tool names into generic language:\n\n" + clipDna(resources.methodDna.trim(), RL.method) + "\n\n---\n\n";
   }
   if (resources?.references) {
     system += "REFERENCE MATERIALS:\n\n" + clipDna(resources.references.trim(), RL.references) + "\n\n---\n\n";

@@ -25,6 +25,12 @@ import {
   saveSession, loadSession, clearSession, deleteRemoteWorkSession, getWorkStageFromPersisted,
   type PersistedSession,
 } from "../../lib/sessionPersistence";
+import {
+  mergeStoredAndParsed,
+  parseStructuredIntakeFromReedReply,
+  structuredIntakeForApiBody,
+  type StructuredIntake,
+} from "../../lib/reedStructuredIntake";
 import { publishWorkSessionMeta } from "../../lib/workSessionMetaBridge";
 
 import { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
@@ -2717,6 +2723,15 @@ export default function WorkSession() {
   const [intakeSending, setIntakeSending] = useState(false);
   const [intakeReady, setIntakeReady] = useState(persisted?.isReady ?? false);
   const [readySummary, setReadySummary] = useState("");
+  const [structuredIntake, setStructuredIntake] = useState<StructuredIntake | null>(() => {
+    const lastAssist = [...(persisted?.messages || [])].reverse().find(m => m.role === "assistant");
+    return mergeStoredAndParsed(persisted?.structuredIntake ?? null, lastAssist?.content);
+  });
+
+  const structuredIntakePayload = useMemo(
+    () => structuredIntakeForApiBody(structuredIntake),
+    [structuredIntake],
+  );
 
   /** After five Reed questions ending in "?", treat intake as ready so outline CTA is never stuck behind API-only flags. */
   useEffect(() => {
@@ -2849,8 +2864,9 @@ export default function WorkSession() {
       workStage: stage,
       outlineRows: outlineRows.map(r => ({ label: r.label, content: r.content, indent: r.indent })),
       selectedFormats,
+      structuredIntake,
     }, { userId: user?.id });
-  }, [messages, draft, intakeReady, outputId, stage, outlineRows, selectedFormats, outputType, user?.id, resolvedSessionTitle, sessionNameOverride]);
+  }, [messages, draft, intakeReady, outputId, stage, outlineRows, selectedFormats, outputType, user?.id, resolvedSessionTitle, sessionNameOverride, structuredIntake]);
 
   // ── Stage navigation ──────────────────────────────────────────
   const goToStage = useCallback((s: WorkStage) => {
@@ -2868,6 +2884,8 @@ export default function WorkSession() {
         : [{ role: "reed", content: "Good to see you. What are you working on?" }],
     );
     setIntakeReady(p.isReady ?? false);
+    const lastAssistHydrate = [...(p.messages || [])].reverse().find(m => m.role === "assistant");
+    setStructuredIntake(mergeStoredAndParsed(p.structuredIntake ?? null, lastAssistHydrate?.content));
     setDraft(p.generatedContent || "");
     setOutputId(p.generatedOutputId ? p.generatedOutputId : null);
     setOutputType(p.outputTypeId ?? null);
@@ -3096,6 +3114,9 @@ export default function WorkSession() {
 
       setMessages(prev => [...prev, { role: "reed", content: reply, isChallenge: data.isChallenge }]);
 
+      const parsedIntake = parseStructuredIntakeFromReedReply(reply);
+      if (parsedIntake) setStructuredIntake(parsedIntake);
+
       if (data.readyToGenerate) {
         setIntakeReady(true);
         setReadySummary(reply);
@@ -3259,6 +3280,7 @@ export default function WorkSession() {
               revisionNotes: `Fix these quality checkpoint issues while preserving the voice and argument:\n\n${issues}`,
               userId: user.id,
               maxTokens: 4096,
+              ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
             }),
           }, { timeout: 90000 });
 
@@ -3315,7 +3337,7 @@ export default function WorkSession() {
     } finally {
       setBackgroundPipelineRunning(false);
     }
-  }, [user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, draftChangedSinceBackground]);
+  }, [user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, draftChangedSinceBackground, structuredIntakePayload]);
 
   // Track when user edits draft after background check started
   const handleDraftChangeWithTracking = useCallback((newDraft: string) => {
@@ -3351,6 +3373,7 @@ export default function WorkSession() {
           thesis: outlineRows[0]?.content || "",
           userId: user?.id,
           maxTokens: 4096,
+          ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
 
@@ -3398,7 +3421,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage, handleBackgroundQualityCheck, outputType]);
+  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage, handleBackgroundQualityCheck, outputType, structuredIntakePayload]);
 
   // ── EDIT: Revise draft ────────────────────────────────────────
   const handleRevise = useCallback(async (instructions: string) => {
@@ -3417,6 +3440,7 @@ export default function WorkSession() {
           revisionNotes: instructions,
           userId: user?.id,
           maxTokens: 4096,
+          ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
 
@@ -3439,7 +3463,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [draft, buildConvSummary, selectedFormats, user?.id, activeVersionIdx, toast]);
+  }, [draft, buildConvSummary, selectedFormats, user?.id, activeVersionIdx, toast, structuredIntakePayload]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
   // ── EDIT: Generate another draft version ─────────────────────
@@ -3464,6 +3488,7 @@ export default function WorkSession() {
           revisionNotes: variationInstruction,
           userId: user?.id,
           maxTokens: 4096,
+          ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
 
@@ -3483,7 +3508,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [draft, generating, draftVersions, buildConvSummary, outputType, selectedFormats, user?.id, toast]);
+  }, [draft, generating, draftVersions, buildConvSummary, outputType, selectedFormats, user?.id, toast, structuredIntakePayload]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
   // ── Format adaptation (parallel with pipeline) ──────────────
@@ -3512,6 +3537,7 @@ export default function WorkSession() {
             brandDnaMd,
             userId: user.id,
             wrapConstraintSupplement,
+            ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
           }),
         }, { timeout: 60000 });
         if (!res.ok) throw new Error(`Adapt error ${res.status}`);
@@ -3524,7 +3550,7 @@ export default function WorkSession() {
       }
     });
     await Promise.allSettled(promises);
-  }, [draft, user, selectedFormats, voiceDnaMd, brandDnaMd, outputType, preWrapPresentationMins]);
+  }, [draft, user, selectedFormats, voiceDnaMd, brandDnaMd, outputType, preWrapPresentationMins, structuredIntakePayload]);
 
   // ── EDIT -> REVIEW: Run pipeline ──────────────────────────────
   const handleRunPipeline = useCallback(async () => {
@@ -3896,6 +3922,7 @@ export default function WorkSession() {
     setIntakeSending(false);
     setIntakeReady(false);
     setReadySummary("");
+    setStructuredIntake(null);
     setOutputType(null);
     setSelectedFormats(DEFAULT_FORMATS);
     setSessionFiles([]);
@@ -3963,6 +3990,7 @@ export default function WorkSession() {
           revisionNotes: `Apply this specific improvement to the draft. Keep everything else the same. Only change what is necessary to address this note: ${instruction}`,
           userId: user?.id,
           maxTokens: 4096,
+          ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
 
@@ -4003,6 +4031,7 @@ export default function WorkSession() {
               brandDnaMd,
               userId: user?.id,
               wrapConstraintSupplement,
+              ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
             }),
           }, { timeout: 60000 });
           if (adaptRes.ok) {
@@ -4025,7 +4054,7 @@ export default function WorkSession() {
       toast("Fix failed. Try again.", "error");
       throw err;
     }
-  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast, preWrapPresentationMins]);
+  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast, preWrapPresentationMins, structuredIntakePayload]);
 
   // ── REVIEW: Instant text replacement (Grammarly-style accept) ──
   const handleDirectReplace = useCallback((original: string, replacement: string) => {
@@ -4139,6 +4168,7 @@ export default function WorkSession() {
           revisionNotes: `Fix these quality checkpoint issues while preserving the voice and argument:\n\n${issues}`,
           userId: user.id,
           maxTokens: 4096,
+          ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
 
@@ -4254,7 +4284,7 @@ export default function WorkSession() {
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd, outputId]);
+  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd, outputId, structuredIntakePayload]);
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {

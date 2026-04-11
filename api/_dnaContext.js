@@ -17,6 +17,12 @@ export const DNA_LIMITS = {
 };
 
 /**
+ * Single line prepended with METHOD DNA when it is placed before Voice/Brand (chat, generate, adapt).
+ */
+export const METHOD_DNA_LEXICON_LINE =
+  "METHOD LEXICON (non-negotiable): proprietary framework and product names must appear exactly as written; never genericize or substitute plain-language equivalents.";
+
+/**
  * @param {string} [text]
  * @param {number} maxLen
  * @returns {string}

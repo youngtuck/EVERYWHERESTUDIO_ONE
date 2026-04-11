@@ -33,6 +33,7 @@ import Resources from "./pages/studio/Resources";
 import Settings from "./pages/studio/Settings";
 import VoiceDnaSettings from "./pages/studio/VoiceDnaSettings";
 import BrandDnaSettings from "./pages/studio/BrandDnaSettings";
+import ComposerMemorySettings from "./pages/studio/ComposerMemorySettings";
 import TheLot from "./pages/studio/TheLot";
 import Workbench from "./pages/studio/Workbench";
 import Wrap from "./pages/studio/Wrap";
@@ -131,6 +132,7 @@ const App = () => (
             <Route path="settings" element={<Settings />} />
             <Route path="settings/voice" element={<VoiceDnaSettings />} />
             <Route path="settings/brand" element={<BrandDnaSettings />} />
+            <Route path="settings/memory" element={<ComposerMemorySettings />} />
             <Route path="lot" element={<TheLot />} />
             <Route path="workbench" element={<Workbench />} />
             <Route path="admin" element={<AdminPanel />} />

@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { StructuredIntake } from "./reedStructuredIntake";
 
 const SESSION_KEY = "ew-active-work-session";
 
@@ -30,6 +31,8 @@ export interface PersistedSession {
   workStage?: PersistedWorkStage;
   outlineRows?: PersistedOutlineRow[];
   selectedFormats?: string[];
+  /** Reed-locked Thesis / Audience / Goal / Hook / Format; synced to work_sessions.payload. */
+  structuredIntake?: StructuredIntake | null;
 }
 
 export function getWorkStageFromPersisted(state: PersistedSession): PersistedWorkStage {

@@ -222,6 +222,20 @@ export default function Settings() {
               Brand DNA
             </span>
           </button>
+          <button
+            type="button"
+            className="liquid-glass-btn"
+            onClick={() => nav("/studio/settings/memory")}
+            style={{
+              fontSize: 12,
+              padding: "8px 16px",
+              fontFamily: FONT,
+            }}
+          >
+            <span className="liquid-glass-btn-label" style={{ color: "var(--fg)", fontWeight: 600 }}>
+              Composer memory
+            </span>
+          </button>
         </div>
       </div>
       </div>

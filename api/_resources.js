@@ -1,6 +1,47 @@
 import { createClient } from "@supabase/supabase-js";
 import { clipDna } from "./_dnaContext.js";
 
+/**
+ * DNA PRECEDENCE (Voice, Brand, Method, references)
+ *
+ * Single merge contract for all API routes that call getUserResources(userId):
+ *
+ * 1) profiles (per user_id, global baseline)
+ *    Voice: voice_dna_md, else a text summary built from voice_dna JSON.
+ *    Brand: brand_dna_md, else a text summary built from brand_dna JSON.
+ *
+ * 2) resources (is_active = true), appended after the profile slice for the same kind when applicable.
+ *    Profile is canonical baseline. Resource rows are supplements (uploads, Method packs, extra brand
+ *    sheets). The model sees profile first, then resources; put fresher or more specific material in
+ *    rows with a later updated_at so they sort later in the string.
+ *
+ *    Row order within resources: project_id NULL first (user-global rows), then non-null project_id
+ *    by UUID string order, then updated_at ascending (older first, newer last). When project-scoped
+ *    loading is added later, pass an optional projectId filter or reorder without breaking this
+ *    "profile first, then sorted resources" rule.
+ *
+ * 3) Method DNA today is resources-only (profiles have no method field). Same resource row order.
+ *
+ * composer_memory is separate; see the composer_memory query below.
+ */
+
+/**
+ * @param {Array<{ project_id?: string | null, updated_at?: string }>} rows
+ * @returns {typeof rows}
+ */
+function sortResourceRowsByPrecedence(rows) {
+  return [...rows].sort((a, b) => {
+    const aGlobal = a.project_id == null || a.project_id === "";
+    const bGlobal = b.project_id == null || b.project_id === "";
+    if (aGlobal !== bGlobal) return aGlobal ? -1 : 1;
+    const pid = String(a.project_id || "").localeCompare(String(b.project_id || ""));
+    if (pid !== 0) return pid;
+    const ta = new Date(a.updated_at || 0).getTime();
+    const tb = new Date(b.updated_at || 0).getTime();
+    return (Number.isFinite(ta) ? ta : 0) - (Number.isFinite(tb) ? tb : 0);
+  });
+}
+
 export async function getUserResources(userId) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -12,7 +53,7 @@ export async function getUserResources(userId) {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // 1. Load from profiles table (primary source for Voice DNA and Brand DNA)
+  // 1. profiles: global Voice + Brand baseline (see DNA PRECEDENCE header)
   let voiceDna = "";
   let brandDna = "";
 
@@ -66,37 +107,36 @@ export async function getUserResources(userId) {
     console.error("[_resources] Failed to load profile DNA:", err);
   }
 
-  // 2. Load from resources table (uploaded reference files, method DNA, manually added DNA)
+  // 2. resources: supplements + method + references (sorted; appended after profile for voice/brand)
   let methodDna = "";
   let references = "";
 
   try {
     const { data, error } = await supabase
       .from("resources")
-      .select("resource_type, title, content")
+      .select("resource_type, title, content, project_id, updated_at")
       .eq("user_id", userId)
       .eq("is_active", true);
 
-    if (!error && data && data.length > 0) {
-      for (const r of data) {
-        const block = "## " + r.title + "\n" + (r.content || "") + "\n\n";
-        switch (r.resource_type) {
-          case "voice_dna":
-            // Supplements profile-based voice DNA, does not replace
-            voiceDna += "\n\n" + block;
-            break;
-          case "brand_dna":
-            brandDna += "\n\n" + block;
-            break;
-          case "method_dna":
-            methodDna += block;
-            break;
-          case "reference":
-            references += block;
-            break;
-        }
+    const rows = !error && data && data.length > 0 ? sortResourceRowsByPrecedence(data) : [];
+    for (const r of rows) {
+      const block = "## " + r.title + "\n" + (r.content || "") + "\n\n";
+      switch (r.resource_type) {
+        case "voice_dna":
+          voiceDna += "\n\n" + block;
+          break;
+        case "brand_dna":
+          brandDna += "\n\n" + block;
+          break;
+        case "method_dna":
+          methodDna += block;
+          break;
+        case "reference":
+          references += block;
+          break;
       }
     }
+    if (error) console.error("[_resources] resources query:", error.message);
   } catch (err) {
     console.error("[_resources] Failed to load resources:", err);
   }
@@ -105,13 +145,21 @@ export async function getUserResources(userId) {
   try {
     const { data, error } = await supabase
       .from("composer_memory")
-      .select("body")
+      .select("title, body")
       .eq("user_id", userId)
       .order("sort_priority", { ascending: false })
       .order("updated_at", { ascending: false })
       .limit(20);
     if (!error && data?.length) {
-      const joined = data.map(r => (r.body || "").trim()).filter(Boolean).join("\n\n");
+      const joined = data
+        .map((r) => {
+          const t = (r.title || "").trim();
+          const b = (r.body || "").trim();
+          if (!b) return "";
+          return t ? `${t}\n${b}` : b;
+        })
+        .filter(Boolean)
+        .join("\n\n");
       composerMemory = clipDna(joined, 2500);
     } else if (error && !String(error.message || "").includes("does not exist")) {
       console.warn("[_resources] composer_memory:", error.message);
