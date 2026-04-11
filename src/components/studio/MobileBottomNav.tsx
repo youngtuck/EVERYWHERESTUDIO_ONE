@@ -17,6 +17,7 @@ export default function MobileBottomNav() {
     if (path === "/studio/work") return loc.pathname === path || loc.pathname.startsWith("/studio/work/");
     if (path === "/studio/settings") return loc.pathname.startsWith("/studio/settings");
     if (path === "/studio/wrap") return loc.pathname === path || loc.pathname.startsWith("/studio/wrap/");
+    if (path === "/studio/dashboard") return loc.pathname === path || loc.pathname === "/studio" || loc.pathname === "/studio/";
     return loc.pathname === path;
   };
 

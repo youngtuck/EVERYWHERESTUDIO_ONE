@@ -2,10 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
-import Logo from "../Logo";
 import { APP_VERSION } from "../../lib/constants";
-import EverywhereMarkIcon from "./EverywhereMarkIcon";
-import { clearSession } from "../../lib/sessionPersistence";
 
 // ── Nav structure matching wireframe ───────────────────────────
 const NAV = [
@@ -156,7 +153,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
     if (p === "/studio/work") return loc.pathname === p || loc.pathname.startsWith("/studio/work/");
     if (p === "/studio/settings") return loc.pathname.startsWith("/studio/settings");
     if (p === "/studio/wrap") return loc.pathname === p || loc.pathname.startsWith("/studio/wrap/");
-    if (p === "/studio/outputs") return loc.pathname === "/studio/outputs";
+    if (p === "/studio/outputs") return loc.pathname.startsWith("/studio/outputs");
     return loc.pathname === p || loc.pathname.startsWith(p + "/");
   };
 
@@ -240,6 +237,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
 
             {/* Collapse button, expanded state */}
             <button
+              type="button"
               onClick={onToggleCollapsed}
               title="Collapse sidebar"
               style={{
@@ -265,6 +263,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         {/* Collapsed: entire header is the expand button */}
         {collapsed && !onMobileClose && (
           <button
+            type="button"
             onClick={onToggleCollapsed}
             title="Expand sidebar"
             style={{
@@ -301,6 +300,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         )}
         {onMobileClose && (
           <button
+            type="button"
             onClick={onMobileClose}
             style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 16, padding: 4, flexShrink: 0 }}
             aria-label="Close menu"
@@ -365,7 +365,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
               label="Admin Panel"
               active={loc.pathname === "/studio/admin"}
               collapsed={collapsed}
-              onClick={() => nav("/studio/admin")}
+              onClick={() => { nav("/studio/admin"); onMobileClose?.(); }}
               icon={
                 <svg style={{ width: 16, height: 16, stroke: "var(--gold)", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -405,7 +405,8 @@ function NavItem({
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
       onMouseEnter={e => {
         if (!active) {
@@ -432,6 +433,12 @@ function NavItem({
         background: active ? "rgba(245,198,66,0.1)" : "transparent",
         border: active ? "1px solid rgba(245,198,66,0.15)" : "1px solid transparent",
         justifyContent: collapsed ? "center" : "flex-start",
+        width: "100%",
+        font: "inherit",
+        color: "inherit",
+        textAlign: collapsed ? "center" : "left",
+        appearance: "none",
+        WebkitAppearance: "none",
       }}
     >
       {/* Icon */}
@@ -489,7 +496,7 @@ function NavItem({
           <div style={{ opacity: 0.75, fontSize: 10 }}>{desc}</div>
         </div>
       )}
-    </div>
+    </button>
   );
 }
 

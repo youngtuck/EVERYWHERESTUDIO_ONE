@@ -1800,7 +1800,7 @@ function StageReview({
   onTabClick, onAdvance, onGoBack, onFix, onDirectReplace, formatDrafts,
 }: {
   draft: string; pipelineRun: PipelineRun | null; running: boolean;
-  activeTab: string; tabs: string[]; onTabClick: (t: string) => void;
+  activeTab: Format; tabs: Format[]; onTabClick: (t: Format) => void;
   onAdvance: () => void; onGoBack: (instructions: string) => void;
   onFix: (instruction: string) => Promise<void>;
   onDirectReplace: (original: string, replacement: string) => void;
@@ -2031,7 +2031,7 @@ export default function WorkSession() {
   const [fixingGate, setFixingGate] = useState<string | null>(null);
   const [rerunningPipeline, setRerunningPipeline] = useState(false);
   const [pipelineRunning, setPipelineRunning] = useState(false);
-  const [activeReviewTab, setActiveReviewTab] = useState(selectedFormats[0] ?? "LinkedIn");
+  const [activeReviewTab, setActiveReviewTab] = useState<Format>(selectedFormats[0] ?? "LinkedIn");
   const [hvtAttempts, setHvtAttempts] = useState(0);
   const [hvtRunning, setHvtRunning] = useState(false);
 
@@ -3534,7 +3534,7 @@ export default function WorkSession() {
           running={pipelineRunning}
           activeTab={activeReviewTab}
           tabs={selectedFormats.length > 0 ? selectedFormats : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[]}
-          onTabClick={(t) => setActiveReviewTab(t as any)}
+          onTabClick={(t) => setActiveReviewTab(t)}
           onAdvance={() => handleExportAll()}
           onGoBack={handleGoBackToEdit}
           onFix={handleReviewFix}
