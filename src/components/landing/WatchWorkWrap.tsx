@@ -13,7 +13,7 @@ const DATA = [
     heading:"Where ideas become publication-ready content.",
     body:"Reed, your First Listener, interviews you. Not a form. Not a prompt. A conversation. Reed asks the questions that pull the real story out, the one that was stuck in your head.",
     detail:"What emerges sounds like you because it came from you. Voice DNA captures your rhythm, your vocabulary, your argumentative structure. It sharpens with every session.",
-    items:["Reed conversation-first production","Voice DNA: 3 layers","7 Quality Checkpoints in sequence","Impact Score 1-100","12 output formats"],
+    items:["Reed conversation-first production","Voice DNA: 3 layers","Blocking checkpoints in sequence","Impact Score 1-100","Multi-format export"],
   },
   {
     num:"03", id:"wrap", label:"Wrap", accent:"#4A90D9",

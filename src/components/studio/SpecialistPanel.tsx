@@ -9,49 +9,49 @@ import { useMobile } from "../../hooks/useMobile";
 const SPECIALIST_INFO: Record<number, { name: string; role: string; color: string; detail: string }> = {
   0: {
     name: "Deduplication",
-    role: "Checkpoint 0",
+    role: "Quality checkpoint",
     color: "var(--cornflower)",
     detail: "Scans for conceptual repetition, not just word-for-word duplicates. If your piece restates the same argument in different words across sections, it catches it.",
   },
   1: {
     name: "Research Validation",
-    role: "Checkpoint 1",
+    role: "Quality checkpoint",
     color: "var(--gold)",
     detail: "Verifies every factual claim against independent sources. Unverified claims are flagged for revision or removal. Minimum 8 sources for long-form.",
   },
   2: {
     name: "Voice Authenticity",
-    role: "Checkpoint 2",
+    role: "Quality checkpoint",
     color: "var(--cornflower)",
     detail: "Compares every sentence against your Voice DNA profile. Vocabulary, rhythm, tonal register, metaphor patterns, and structural habits all get scored. Target is 95% fidelity.",
   },
   3: {
     name: "Engagement Optimization",
-    role: "Checkpoint 3",
+    role: "Quality checkpoint",
     color: "#A080F5",
     detail: "Runs the 7-second hook test. If your opening does not earn attention within the first two sentences, it fails. Also checks for clear stakes and counts quotable moments.",
   },
   4: {
     name: "SLOP Detection",
-    role: "Checkpoint 4",
+    role: "Quality checkpoint",
     color: "#E8506A",
     detail: "Scans for Superfluity, Loops, Overwrought prose, and Pretension. Zero tolerance for AI padding.",
   },
   5: {
     name: "Editorial Excellence",
-    role: "Checkpoint 5",
+    role: "Quality checkpoint",
     color: "var(--cornflower)",
     detail: "Applies publication-grade editorial standards plus the Stranger Test. Every term must be explained for a cold reader. If a stranger cannot follow your argument without context, it fails.",
   },
   6: {
     name: "Perspective & Risk",
-    role: "Checkpoint 6",
+    role: "Quality checkpoint",
     color: "#50c8a0",
     detail: "Checks for cultural blind spots and unexamined assumptions. Applies nonviolent communication principles. Ensures content challenges without alienating.",
   },
 };
 
-// Map simplified checkpoint keys (from /api/generate) to specialist indices
+// Map simplified checkpoint keys (from /api/generate) to checkpoint card indices
 const CHECKPOINT_KEY_MAP: Record<string, number> = {
   accuracy: 1, voice: 2, audience: 3, ai_tells: 4, strategy: 5, platform: 6, impact: 6,
 };
@@ -322,7 +322,7 @@ export default function SpecialistPanel({
     if (!selected || !selectedInfo) {
       return (
         <div style={{ padding: 32, textAlign: "center", color: "var(--fg-3)", fontSize: 14 }}>
-          Click a specialist to see their evaluation
+          Click a checkpoint to see its evaluation
         </div>
       );
     }
@@ -331,11 +331,11 @@ export default function SpecialistPanel({
       <div style={{ padding: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
           <span style={{ width: 32, height: 32, borderRadius: 8, background: selectedInfo.color + "18", color: selectedInfo.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
-            {selected.index + 1}
+            {"\u2022"}
           </span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{selectedInfo.role}</div>
-            <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{selectedInfo.name}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{selectedInfo.name}</div>
+            <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{selectedInfo.role}</div>
           </div>
           {selected.score !== undefined && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
@@ -370,7 +370,7 @@ export default function SpecialistPanel({
           </div>
         ) : selected.score !== undefined ? (
           <p style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 8 }}>
-            Run the quality pipeline for detailed specialist feedback on this checkpoint.
+            Run the quality pipeline for detailed feedback on this checkpoint.
           </p>
         ) : null}
 
@@ -394,7 +394,7 @@ export default function SpecialistPanel({
         QUALITY PIPELINE
       </div>
       <p style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.25, marginBottom: 16, marginTop: -8 }}>
-        Your content was reviewed by 7 specialists. Click any to see their evaluation.
+        Your content ran through the full quality pipeline. Open any step to see its evaluation.
       </p>
       <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 12, color: "var(--fg-3)" }}>
         <span><span style={{ color: "#50c8a0", fontWeight: 700 }}>80+</span> Strong</span>
@@ -403,7 +403,7 @@ export default function SpecialistPanel({
       </div>
 
       <div style={{ display: isMobile ? "flex" : "grid", gridTemplateColumns: "1fr 360px", flexDirection: "column", gap: 16, marginBottom: showTotal ? 24 : 0 }}>
-        {/* Left: Specialist cards */}
+        {/* Left: Checkpoint cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {gates.map((g, i) => {
             const info = SPECIALIST_INFO[g.index];
@@ -440,11 +440,11 @@ export default function SpecialistPanel({
                 onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
               >
                 <span style={{ width: 28, height: 28, borderRadius: 6, background: info.color + "18", color: info.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
-                  {i + 1}
+                  {"\u2022"}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{info.role}</div>
-                  <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{info.name}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{info.name}</div>
+                  <div style={{ fontSize: 12, color: "var(--fg-3)" }}>{info.role}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                   {isRevealed && g.score !== undefined ? (
@@ -499,7 +499,7 @@ export default function SpecialistPanel({
               if (lowest.length === 0) return "Below threshold. Revisions recommended.";
               const names = lowest.map(g => {
                 const info = SPECIALIST_INFO[g.index];
-                return info ? `${info.name} (${info.role})` : null;
+                return info ? info.name : null;
               }).filter(Boolean);
               return `Focus on improving ${names.join(" and ")} to reach the publication threshold.`;
             })()}

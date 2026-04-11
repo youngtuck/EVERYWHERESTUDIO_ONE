@@ -6,13 +6,13 @@ import MarketingFooter from "../components/marketing/MarketingFooter";
 import Reveal from "../components/marketing/Reveal";
 
 const CHECKPOINTS = [
-  { num: 1, name: "Deduplication", desc: "No repeated content." },
-  { num: 2, name: "Research Validation", desc: "Every claim verified." },
-  { num: 3, name: "Voice Authenticity", desc: "Sounds like you wrote it." },
-  { num: 4, name: "Engagement", desc: "Passes the 7-second test." },
-  { num: 5, name: "SLOP Detection", desc: "No AI padding. No filler. No fluff." },
-  { num: 6, name: "Editorial Excellence", desc: "Publication grade. No exceptions." },
-  { num: 7, name: "Perspective and Risk", desc: "No blind spots." },
+  { id: "dedup", name: "Deduplication", desc: "No repeated content." },
+  { id: "research", name: "Research Validation", desc: "Every claim verified." },
+  { id: "voice", name: "Voice Authenticity", desc: "Sounds like you wrote it." },
+  { id: "engage", name: "Engagement", desc: "Passes the opening test." },
+  { id: "slop", name: "SLOP Detection", desc: "No AI padding. No filler. No fluff." },
+  { id: "editorial", name: "Editorial Excellence", desc: "Publication grade. No exceptions." },
+  { id: "risk", name: "Perspective and Risk", desc: "No blind spots." },
 ];
 
 export default function HowItWorksPage() {
@@ -102,7 +102,7 @@ export default function HowItWorksPage() {
                 Your first listener opens every session with one question: What are we working on? The interview draws out what you actually mean to say. Not the surface version. The real one. The brief gets built. The structure follows. The draft gets written.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-                Then the quality system runs. Seven checkpoints. Every one blocking. Voice authenticity. Research validation. SLOP detection. Editorial excellence. Perspective and risk. Nothing exits Work until it passes. Then the Impact Score. Threshold: 75. No exceptions. Then the Human Voice Test. It either passes or it doesn't. Approve only activates when everything is ready.
+                Then the quality system runs. Blocking checkpoints in sequence. Voice authenticity. Research validation. SLOP detection. Editorial excellence. Perspective and risk. Nothing exits Work until it passes. Then the Impact Score. Threshold: 75. No exceptions. Then the Human Voice Test. It either passes or it doesn't. Approve only activates when everything is ready.
               </p>
             </div>
           </Reveal>
@@ -142,18 +142,17 @@ export default function HowItWorksPage() {
         <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto" }}>
           <Reveal>
             <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, color: "var(--xp-on-dark)", textAlign: "center", marginBottom: 16 }}>
-              Seven checkpoints. All blocking.
+              Blocking checkpoints. No bypass.
             </h2>
             <p style={{ fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)", textAlign: "center", maxWidth: 500, margin: "0 auto 64px" }}>
-              Nothing ships until every one clears.
+              Nothing ships until the pipeline clears.
             </p>
           </Reveal>
 
           <div className="checkpoint-grid">
             {CHECKPOINTS.map((cp, i) => (
-              <Reveal key={cp.num} delay={i * 80}>
+              <Reveal key={cp.id} delay={i * 80}>
                 <div className="xp-glass-card-dark" style={{ padding: 32, minHeight: 200, display: "flex", flexDirection: "column" as const }}>
-                  <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", color: "var(--xp-gold)", marginBottom: 12 }}>{String(cp.num).padStart(2, "0")}</div>
                   <div style={{ fontSize: 18, fontWeight: 600, color: "var(--xp-on-dark)", marginBottom: 10 }}>{cp.name}</div>
                   <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--xp-dim-dark)", margin: 0 }}>{cp.desc}</p>
                 </div>

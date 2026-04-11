@@ -132,7 +132,7 @@ export async function runAgent(
       gate: gateName,
       status: "FLAG",
       score: 0,
-      feedback: `Agent call failed: ${error?.message || "No response"}`,
+      feedback: `Request failed: ${error?.message || "No response"}`,
       issues: ["SYSTEM_ERROR"],
       timestamp: new Date().toISOString(),
     };

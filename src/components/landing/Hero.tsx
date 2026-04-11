@@ -86,7 +86,7 @@ export default function Hero() {
           </h1>
 
           <p style={{ fontSize:"clamp(15px,1.4vw,17px)", lineHeight:1.82, color:bodyC, maxWidth:420, marginBottom:40, fontFamily:"'Afacad Flux', sans-serif", fontWeight:300 }}>
-            There is a mountain between the spark and the audience. EVERYWHERE Studio carries it: one idea, twelve formats, everywhere it belongs.
+            There is a mountain between the spark and the audience. EVERYWHERE Studio carries it: one idea, many surfaces, everywhere it belongs.
           </p>
 
           <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:24 }}>

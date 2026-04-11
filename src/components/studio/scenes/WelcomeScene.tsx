@@ -81,7 +81,7 @@ export default function WelcomeScene({ isActive }: { isActive: boolean }) {
           EVERYWHERE Studio
         </div>
         <p style={{ fontSize: 24, fontWeight: 600, color: "#fff", lineHeight: 1.4, margin: 0, fontFamily: "'Afacad Flux', sans-serif" }}>
-          You bring the idea.<br />40 specialists bring it to life.
+          You bring the idea.<br />Reed and the studio carry it to the line.
         </p>
       </div>
     </div>

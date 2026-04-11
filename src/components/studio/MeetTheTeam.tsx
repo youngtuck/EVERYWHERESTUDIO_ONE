@@ -1,90 +1,36 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
-interface Agent {
+interface TeamMember {
   name: string;
   role: string;
   description: string;
 }
 
-interface Division {
-  title: string;
-  color: string;
-  agents: Agent[];
-}
+const REED: TeamMember = {
+  name: "Reed",
+  role: "First Listener",
+  description: "Named for the reading that built him. Built for the writing that matters.",
+};
 
-const DIVISIONS: Division[] = [
-  {
-    title: "Watch Division",
-    color: "var(--cornflower)",
-    agents: [
-      { name: "Reed", role: "First Listener", description: "Named for the reading that built him. Built for the writing that matters." },
-      { name: "Sentinel", role: "Category Intelligence", description: "Always monitoring your market." },
-      { name: "Scout", role: "Special Intelligence", description: "Deploys on command for specific recon." },
-    ],
-  },
-  {
-    title: "Strategic Business Unit",
-    color: "var(--gold)",
-    agents: [
-      { name: "Victor", role: "Results Architect", description: "Frames every decision with Outcome, Purpose, Action, Timing." },
-      { name: "Evan", role: "Design Thinking", description: "Who is this for and what job does it do?" },
-      { name: "Josh", role: "Category Designer", description: "Different game or competing on someone else's terms?" },
-      { name: "Lee", role: "Brand Architect", description: "Does this build the brand you want?" },
-      { name: "Guy", role: "Business Development", description: "Natural next step for the reader?" },
-      { name: "Ward", role: "Sales", description: "Right people say yes, wrong people disqualify?" },
-      { name: "Monty", role: "Deal Maker", description: "Structure and terms." },
-      { name: "Basil", role: "Visibility Auditor", description: "Builds authority or spends it?" },
-      { name: "Scott", role: "Market Realist", description: "Does the market actually want this?" },
-      { name: "Dana", role: "Red Team Lead", description: "Best argument against this?" },
-      { name: "Forecast", role: "Final Gut Check", description: "Would you click? Would you share?" },
-    ],
-  },
-  {
-    title: "Quality Checkpoint Officers",
-    color: "#50c8a0",
-    agents: [
-      { name: "Deduplication", role: "Checkpoint 0", description: "Zero redundant content." },
-      { name: "Research Validation", role: "Checkpoint 1", description: "100% verified claims." },
-      { name: "Voice Authenticity", role: "Checkpoint 2", description: ">95% match to your voice." },
-      { name: "Engagement Optimization", role: "Checkpoint 3", description: "7-second test: earn the read or don't ship." },
-      { name: "SLOP Detection", role: "Checkpoint 4", description: "Zero AI fingerprints." },
-      { name: "Editorial Excellence", role: "Checkpoint 5", description: "Publication-grade plus the Stranger Test." },
-      { name: "Perspective & Risk", role: "Checkpoint 6", description: "Cultural sensitivity." },
-      { name: "NVC Review", role: "Part of Checkpoint 6", description: "Nonviolent communication." },
-    ],
-  },
-  {
-    title: "Operations",
-    color: "#A080F5",
-    agents: [
-      { name: "Sara", role: "Chief of Staff", description: "Composes everything." },
-      { name: "Martin", role: "CTO", description: "System architecture." },
-      { name: "Riley", role: "Build Master", description: "Tracks versions and dependencies." },
-      { name: "Diane", role: "Documentation", description: "System memory." },
-    ],
-  },
-  {
-    title: "Wrap Division",
-    color: "#E8B4A0",
-    agents: [
-      { name: "Byron", role: "Humanization", description: "Final human pass before ship." },
-      { name: "Mira", role: "Format and Presentation", description: "Packaging." },
-      { name: "Dmitri", role: "Platform Optimization", description: "Native to every channel." },
-    ],
-  },
-  {
-    title: "Training",
-    color: "#64748B",
-    agents: [
-      { name: "Sande", role: "The Trainer", description: "See One, Do One, Teach One." },
-    ],
-  },
+const CHECKPOINT_ROWS = [
+  { name: "Deduplication", desc: "Zero redundant content. Catches repeated ideas across paragraphs and sections." },
+  { name: "Research Validation", desc: "Every factual claim verified with two independent sources. Hard-blocks on unverified assertions." },
+  { name: "Voice Authenticity", desc: "Scores draft against Voice DNA. Target: 95% match or above." },
+  { name: "Engagement Optimization", desc: "Opening test: if the lead does not earn the read, the piece does not ship." },
+  { name: "SLOP Detection", desc: "Zero AI fingerprints. Catches phrases, patterns, and structures that read as machine-generated." },
+  { name: "Editorial Excellence", desc: "Publication-grade writing plus the Stranger Test. Would a stranger who has never heard of you still get value?" },
+  { name: "Perspective and Risk", desc: "Cultural sensitivity, blind spots, and the nonviolent communication review." },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DETAIL VIEW DATA
-// ─────────────────────────────────────────────────────────────────────────────
+const REED_CAPABILITIES = [
+  { name: "Voice Check", desc: "Compares your draft against your Voice DNA. Flags phrases that do not sound like you." },
+  { name: "Strategic Advice", desc: "Surfaces the lenses that matter: Category Design, Positioning, Market Reality." },
+  { name: "Challenge This", desc: "Takes the other side and surfaces the strongest counter-argument." },
+  { name: "Audience Check", desc: "Are you writing for the right person? Asks before you get too far in." },
+  { name: "What Is Next", desc: "Reads where you are in the session and tells you exactly where to focus." },
+  { name: "Editorial Review", desc: "Is this ready? Reads the draft as an adversarial editor." },
+];
 
 interface DetailView {
   id: string;
@@ -93,30 +39,11 @@ interface DetailView {
   content: React.ReactNode;
 }
 
-const REED_CAPABILITIES = [
-  { name: "Voice Check", desc: "Compares your draft against your Voice DNA. Flags phrases that do not sound like you." },
-  { name: "Strategic Advice", desc: "Surfaces the advisors that matter: Category Design, Positioning, Market Reality." },
-  { name: "Challenge This", desc: "Takes the other side and surfaces the strongest counter-argument." },
-  { name: "Audience Check", desc: "Are you writing for the right person? Asks before you get too far in." },
-  { name: "What Is Next", desc: "Reads where you are in the session and tells you exactly where to focus." },
-  { name: "Editorial Review", desc: "Is this ready? Reads the draft as an adversarial editor." },
-];
-
-const CHECKPOINTS = [
-  { num: 1, name: "Deduplication", agent: "Echo", desc: "Zero redundant content. Catches repeated ideas across paragraphs and sections." },
-  { num: 2, name: "Research Validation", agent: "Priya", desc: "Every factual claim verified with two independent sources. Hard-blocks on unverified assertions." },
-  { num: 3, name: "Voice Authenticity", agent: "Jordan", desc: "Scores draft against Voice DNA. Target: 95% match or above." },
-  { num: 4, name: "Engagement Optimization", agent: "David", desc: "7-second test. If the opening does not earn the read, the piece does not ship." },
-  { num: 5, name: "SLOP Detection", agent: "Elena", desc: "Zero AI fingerprints. Catches phrases, patterns, and structures that read as machine-generated." },
-  { num: 6, name: "Editorial Excellence", agent: "Natasha", desc: "Publication-grade writing plus the Stranger Test. Would a stranger who has never heard of you still get value?" },
-  { num: 7, name: "Perspective and Risk", agent: "Christopher", desc: "Cultural sensitivity, blind spots, and the nonviolent communication review." },
-];
-
 function ReedDetailContent() {
   return (
     <>
       <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.75, marginBottom: 20 }}>
-        <p style={{ margin: "0 0 12px" }}>Reed is named for what he does: he reads. Deeply, across your industry, your competitors, your audience's conversations. He distills what matters into signal you can act on.</p>
+        <p style={{ margin: "0 0 12px" }}>Reed is named for what he does: he reads. Deeply, across your industry, your competitors, and what your audience is saying. He distills what matters into signal you can act on.</p>
         <p style={{ margin: "0 0 12px" }}>Reed does not just surface information. He challenges it. He is skeptical of first answers, because the first answer is almost never the right one. He pushes back not to be difficult, but because he has seen enough weak premises dressed up as insight to know the difference.</p>
         <p style={{ margin: "0 0 12px" }}>Reed is not an assistant. He is a thought partner. He asks better questions than most people do. He remembers what you have said. He connects what you are writing to what is happening in your space. When your writing is strong, he tells you. When it is not, he tells you that too.</p>
         <p style={{ margin: 0, fontWeight: 600 }}>Named for the reading that built him. Built for the writing that matters.</p>
@@ -140,22 +67,16 @@ function CheckpointsDetailContent() {
   return (
     <>
       <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.75, marginBottom: 20 }}>
-        Every piece of content passes through seven sequential quality checkpoints before it can be approved for publication. Each checkpoint is a hard gate: if the piece fails, it cannot advance until the issue is resolved.
+        Review runs a sequence of blocking quality checkpoints. Each gate is binary: if the piece fails, it cannot advance until the issue is resolved. Reed carries the conversation; the pipeline carries the standard.
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {CHECKPOINTS.map((cp) => (
-          <div key={cp.num} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        {CHECKPOINT_ROWS.map((cp) => (
+          <div key={cp.name} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
             <div style={{
-              width: 26, height: 26, borderRadius: "50%", background: "#0D1B2A",
-              color: "#F5C642", display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 12, fontWeight: 700, flexShrink: 0,
-            }}>
-              {cp.num}
-            </div>
+              width: 8, height: 8, borderRadius: "50%", background: "#F5C642", marginTop: 6, flexShrink: 0,
+            }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-                {cp.name} <span style={{ fontWeight: 400, color: "var(--text-tertiary)" }}>({cp.agent})</span>
-              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{cp.name}</div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>{cp.desc}</div>
             </div>
           </div>
@@ -203,33 +124,27 @@ function HumanVoiceTestDetailContent() {
 
 const DETAIL_VIEWS: DetailView[] = [
   { id: "reed", title: "Reed", tag: "FIRST LISTENER", content: <ReedDetailContent /> },
-  { id: "checkpoints", title: "7 Quality Checkpoints", tag: "QUALITY SYSTEM", content: <CheckpointsDetailContent /> },
+  { id: "checkpoints", title: "Quality checkpoints", tag: "QUALITY SYSTEM", content: <CheckpointsDetailContent /> },
   { id: "impact-score", title: "Impact Score", tag: "SCORING SYSTEM", content: <ImpactScoreDetailContent /> },
   { id: "human-voice-test", title: "Human Voice Test", tag: "ADVERSARIAL SYSTEM", content: <HumanVoiceTestDetailContent /> },
 ];
 
-// Clickable items in the main grid that map to detail views
-const CLICKABLE_AGENTS: Record<string, string> = {
-  "Reed": "reed",
-};
 const CLICKABLE_SYSTEM_ITEMS = [
-  { label: "7 Quality Checkpoints", detailId: "checkpoints" },
+  { label: "Quality checkpoints", detailId: "checkpoints" },
   { label: "Impact Score", detailId: "impact-score" },
   { label: "Human Voice Test", detailId: "human-voice-test" },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface MeetTheTeamProps {
   onClose: () => void;
+  /** Reserved for future use (e.g. highlight Reed when active in session). */
   activeAgents?: string[];
 }
 
 export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamProps) {
   const [activeDetail, setActiveDetail] = useState<string | null>(null);
   const detailView = activeDetail ? DETAIL_VIEWS.find(d => d.id === activeDetail) : null;
+  const reedActive = activeAgents.includes("Reed");
 
   return (
     <>
@@ -244,7 +159,7 @@ export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamP
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Meet the Team"
+        aria-label="Studio overview"
         style={{
           position: "fixed", left: "50%", top: "50%",
           transform: "translate(-50%, -50%)",
@@ -258,10 +173,10 @@ export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamP
           padding: "28px 32px",
         }}
       >
-        {/* ── Detail View ── */}
         {detailView ? (
           <>
             <button
+              type="button"
               onClick={() => setActiveDetail(null)}
               style={{
                 background: "none", border: "none", cursor: "pointer", padding: 0,
@@ -286,18 +201,18 @@ export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamP
             {detailView.content}
           </>
         ) : (
-          /* ── Main Grid ── */
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
               <div>
                 <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.02em" }}>
-                  40 Specialists
+                  Reed, then the pipeline
                 </h2>
                 <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "4px 0 0" }}>
-                  Every piece runs through the full team.
+                  You work with Reed. Review runs blocking checks you never have to name in a meeting.
                 </p>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--text-tertiary)" }}
                 aria-label="Close"
@@ -306,11 +221,11 @@ export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamP
               </button>
             </div>
 
-            {/* System feature cards */}
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
               {CLICKABLE_SYSTEM_ITEMS.map((item) => (
                 <button
                   key={item.detailId}
+                  type="button"
                   onClick={() => setActiveDetail(item.detailId)}
                   style={{
                     padding: "8px 14px", borderRadius: 8,
@@ -327,58 +242,33 @@ export default function MeetTheTeam({ onClose, activeAgents = [] }: MeetTheTeamP
               ))}
             </div>
 
-            {DIVISIONS.map((div) => (
-              <div key={div.title} style={{ marginBottom: 24 }}>
-                <div style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
-                  textTransform: "uppercase", color: div.color, marginBottom: 10,
-                }}>
-                  {div.title}
+            <button
+              type="button"
+              onClick={() => setActiveDetail("reed")}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 12,
+                padding: "12px 14px", borderRadius: 10, marginBottom: 20,
+                background: reedActive ? "rgba(74,144,217,0.08)" : "transparent",
+                border: reedActive ? "1px solid rgba(74,144,217,0.35)" : "1px solid var(--glass-border)",
+                cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+              }}
+            >
+              <span style={{
+                width: 32, height: 32, borderRadius: 8, background: "rgba(74,144,217,0.15)", color: "#4A90D9",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0,
+              }}>R</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+                  {REED.name}
+                  <span style={{ fontWeight: 400, color: "var(--text-tertiary)", marginLeft: 8, fontSize: 12 }}>{REED.role}</span>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {div.agents.map((agent) => {
-                    const isActive = activeAgents.includes(agent.name);
-                    const detailId = CLICKABLE_AGENTS[agent.name];
-                    const isClickable = !!detailId;
-                    return (
-                      <div
-                        key={agent.name}
-                        onClick={isClickable ? () => setActiveDetail(detailId) : undefined}
-                        style={{
-                          display: "flex", alignItems: "center", gap: 12,
-                          padding: "8px 12px", borderRadius: 8,
-                          background: isActive ? `${div.color}10` : "transparent",
-                          border: isActive ? `1px solid ${div.color}30` : "1px solid transparent",
-                          transition: "all 0.15s ease",
-                          cursor: isClickable ? "pointer" : "default",
-                        }}
-                        onMouseEnter={isClickable ? (e) => { e.currentTarget.style.background = `${div.color}10`; } : undefined}
-                        onMouseLeave={isClickable ? (e) => { if (!isActive) e.currentTarget.style.background = "transparent"; } : undefined}
-                      >
-                        <span style={{
-                          width: 28, height: 28, borderRadius: 6,
-                          background: `${div.color}18`, color: div.color,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 11, fontWeight: 700, flexShrink: 0,
-                        }}>
-                          {agent.name.charAt(0)}
-                        </span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
-                            {agent.name}
-                            <span style={{ fontWeight: 400, color: "var(--text-tertiary)", marginLeft: 8, fontSize: 12 }}>{agent.role}</span>
-                          </div>
-                          <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{agent.description}</div>
-                        </div>
-                        {isActive && (
-                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: div.color, flexShrink: 0 }} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.45 }}>{REED.description}</div>
               </div>
-            ))}
+            </button>
+
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65, margin: 0 }}>
+              Watch keeps your category in view. Work moves from Intake through Review with Reed in the room. Wrap turns approved thinking into channel-ready assets. Sentinel runs beside Watch; the rest of the depth stays under the hood.
+            </p>
           </>
         )}
       </div>

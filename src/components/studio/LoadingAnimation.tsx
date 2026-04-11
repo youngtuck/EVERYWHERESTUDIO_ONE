@@ -6,10 +6,10 @@ interface LoadingAnimationProps {
   variant?: LoadingVariant;
   progress?: number;
   message?: string;
-  agentName?: string;
+  detailLabel?: string;
 }
 
-export default function LoadingAnimation({ variant = 'reed', progress, message, agentName }: LoadingAnimationProps) {
+export default function LoadingAnimation({ variant = 'reed', progress, message, detailLabel }: LoadingAnimationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [displayProgress, setDisplayProgress] = useState(0);
 
@@ -184,14 +184,14 @@ export default function LoadingAnimation({ variant = 'reed', progress, message, 
             {message}
           </span>
         )}
-        {agentName && (
+        {detailLabel && (
           <span style={{
             fontFamily: "'Afacad Flux', sans-serif",
             fontSize: 12,
             color: 'var(--cornflower)',
             fontWeight: 600,
           }}>
-            {agentName}
+            {detailLabel}
           </span>
         )}
       </div>

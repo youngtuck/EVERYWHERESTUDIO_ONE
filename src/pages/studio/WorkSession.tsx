@@ -214,7 +214,7 @@ function renderInlineMarkdown(text: string): React.ReactNode {
   return <>{rendered}</>;
 }
 
-/** Map legacy agent names to function labels for old saved outputs */
+/** Map legacy checkpoint labels to function labels for old saved outputs */
 const AGENT_TO_FUNCTION: Record<string, string> = {
   "Echo": "Deduplication",
   "Priya": "Research Validation",

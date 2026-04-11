@@ -1,9 +1,9 @@
 const STATS = [
-  { num:"40", label:"Specialists" },
-  { num:"12", label:"Output Formats" },
-  { num:"7", label:"Quality Checkpoints" },
-  { num:"100", label:"Impact Score Maximum" },
-  { num:"3", label:"Layers" },
+  { num: "Reed", label: "First listener, every session" },
+  { num: "Wrap", label: "From approved draft to channel-ready assets" },
+  { num: "Hold", label: "Review blocks until the checks clear" },
+  { num: "100", label: "Impact Score ceiling" },
+  { num: "3", label: "Voice DNA layers" },
 ];
 export default function StatsBar() {
   return (

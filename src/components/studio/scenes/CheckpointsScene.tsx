@@ -61,10 +61,10 @@ export default function CheckpointsScene({ isActive }: { isActive: boolean }) {
         transition: "all 0.8s ease",
       }}>
         <p style={{ fontSize: 20, fontWeight: 600, color: "#fff", lineHeight: 1.5, margin: "0 0 12px", fontFamily: "'Afacad Flux', sans-serif" }}>
-          7 specialists review every piece.
+          Reed runs Review. The pipeline does not blink.
         </p>
         <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, margin: 0, fontFamily: "'Afacad Flux', sans-serif" }}>
-          Voice match. Fact check. Hook strength. AI detection. Editorial standards. Nothing ships without passing all seven.
+          Voice match. Fact check. Hook strength. AI detection. Editorial standards. Nothing ships until the checks clear.
         </p>
       </div>
     </div>

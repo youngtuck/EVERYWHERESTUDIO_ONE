@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import HeroCanvas from "../components/landing/HeroCanvas";
-import { MARKETING_NUMBERS } from "../lib/constants";
 import { MARKETING_CSS, EASE } from "../styles/marketing";
 
 /* ═══════════════════════════════════════════════════════════
@@ -11,8 +10,6 @@ import { MARKETING_CSS, EASE } from "../styles/marketing";
    Liquid glass: blur + static corner luminance (no sweeping specular loop).
    Instrument Sans + DM Mono. Earned scroll.
    ═══════════════════════════════════════════════════════════ */
-
-function easeOut(t: number) { return 1 - Math.pow(1 - t, 3); }
 
 // ══════════════════════════════════
 // HOOKS
@@ -56,23 +53,6 @@ function useScrollReveal(_threshold = 0.1) {
     };
   }, []);
   return { ref, isVisible };
-}
-
-function useCountUp(target: number, duration: number, trigger: boolean) {
-  const [val, setVal] = useState(0);
-  const ran = useRef(false);
-  useEffect(() => {
-    if (!trigger || ran.current) return;
-    ran.current = true;
-    const t0 = performance.now();
-    const go = (now: number) => {
-      const p = Math.min(1, (now - t0) / duration);
-      setVal(Math.round(target * easeOut(p)));
-      if (p < 1) requestAnimationFrame(go);
-    };
-    requestAnimationFrame(go);
-  }, [trigger, target, duration]);
-  return val;
 }
 
 // ══════════════════════════════════
@@ -143,18 +123,18 @@ const CSS = MARKETING_CSS + `
 // ══════════════════════════════════
 
 const PROBLEMS = [
-  { without: "The strategy is clear. The insight is sharp. But somewhere between the thought and the published piece, everything slows down. Drafts sit unfinished. Opportunities pass. The mountain grows.", with: "A system that watches the landscape, works the idea all the way through, and wraps the output for the world. One idea, worked all the way through. Seven quality checkpoints. Nothing ships until it is ready." },
-  { without: "That's not a creativity problem. It's a systems problem.", with: "Specialized intelligence working as an orchestrated ensemble. Every session has a first listener who asks the right questions. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep." },
+  { without: "The strategy is clear. The insight is sharp. But somewhere between the thought and the published piece, everything slows down. Drafts sit unfinished. Opportunities pass. The mountain grows.", with: "A system that watches the landscape, works the idea all the way through, and wraps the output for the world. One idea, worked all the way through. Blocking quality checkpoints. Nothing ships until it is ready." },
+  { without: "That's not a creativity problem. It's a systems problem.", with: "Composed Intelligence behind one conversation. Every session opens with Reed, your first listener. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep." },
 ];
 
 const ROOMS = [
   { name: "Watch", desc: "Know what's moving before your competitors do. EVERYWHERE monitors your category overnight and delivers a structured briefing every morning. Signals scored. Opportunities ranked. Content angles ready to go." },
-  { name: "Work", desc: "One idea, worked all the way through. Your first listener asks the right questions. Structure emerges. The draft gets written, refined, and run through seven quality checkpoints. Nothing ships until it's ready." },
+  { name: "Work", desc: "One idea, worked all the way through. Your first listener asks the right questions. Structure emerges. The draft gets written, refined, and run through blocking quality checkpoints. Nothing ships until it's ready." },
   { name: "Wrap", desc: "From approved to published. Choose a format. Choose a channel. Your thinking reaches the people who need to hear it." },
 ];
 
 const GATES = ["Dedup", "Research", "Voice", "Engage", "SLOP", "Editorial", "Risk"];
-const SPECIALIST_TAGS = ["Brand Voice", "Enterprise Copy", "SEO", "Distribution", "Analytics"];
+const SIGNAL_TAGS = ["Brand Voice", "Enterprise Copy", "SEO", "Distribution", "Analytics"];
 const STATEMENT_WORDS = ["The", "idea", "is", "never", "the", "problem."];
 
 
@@ -709,7 +689,7 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
             Not an AI writing tool.<br />Not a content calendar.<br />Structured Intelligence.
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", maxWidth: 520, marginBottom: 56 }}>
-            Specialized intelligence working as an orchestrated ensemble. Every session has a first listener who asks the right questions. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep. The system thinks with you. Not for you.
+            Composed Intelligence behind one conversation. Every session has a first listener who asks the right questions. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep. The system thinks with you. Not for you.
           </p>
         </Reveal>
 
@@ -787,7 +767,7 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
                       <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--xp-gold)" }} />
                     </div>
                     <div className="xp-dots" style={{ display: "flex", gap: 3 }}><span /><span /><span /></div>
-                    <span className="xp-mono" style={{ fontSize: 11, color: "var(--xp-ter)" }}>Composing with 12 specialists...</span>
+                    <span className="xp-mono" style={{ fontSize: 11, color: "var(--xp-ter)" }}>Reed is composing...</span>
                   </div>
 
                   {/* Reed response */}
@@ -810,7 +790,7 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
                           I analyzed your brand voice profile, reviewed the Q2 feature documentation, and cross-referenced engagement patterns from your last three launches. The draft targets the strategic pain points your enterprise segment flagged in March. Copy maintains a 96% voice DNA match with your established tone.
                         </div>
                         <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 12 }}>
-                          {SPECIALIST_TAGS.map((tag, i) => (
+                          {SIGNAL_TAGS.map((tag, i) => (
                             <span key={tag} className="xp-mono" style={{
                               padding: "3px 9px", borderRadius: 999,
                               background: "rgba(200,169,110,0.06)",
@@ -851,20 +831,15 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
                   <div style={{ height: 1, background: "var(--xp-border)", margin: "14px 0" }} />
 
                   <div style={{ opacity: step >= 4 ? 1 : 0, transition: "opacity .5s ease .4s" }}>
-                    <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Gates</div>
-                    <div style={{ display: "flex", gap: 3, marginBottom: 18 }}>
-                      {Array.from({ length: 7 }, (_, n) => (
-                        <div key={n} className="xp-mono" style={{
-                          width: 18, height: 18, borderRadius: "50%",
-                          border: "1px solid var(--xp-gold)",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 8, color: "var(--xp-gold)",
-                        }}>{n + 1}</div>
-                      ))}
+                    <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Quality pipeline</div>
+                    <div style={{
+                      height: 6, borderRadius: 999, background: "var(--xp-border)", marginBottom: 10, overflow: "hidden",
+                    }}>
+                      <div style={{ width: "72%", height: "100%", borderRadius: 999, background: "linear-gradient(90deg, var(--xp-gold), rgba(200,169,110,0.45))" }} />
                     </div>
-                    <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Specialists</div>
-                    <div style={{ fontSize: 22, fontWeight: 600, lineHeight: 1 }}>
-                      12 <span style={{ fontSize: 12, color: "var(--xp-ter)", fontWeight: 400 }}>activated</span>
+                    <div className="xp-mono" style={{ fontSize: 10, color: "var(--xp-ter)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Status</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.2, color: "var(--xp-text)" }}>
+                      Review <span style={{ fontSize: 12, color: "var(--xp-ter)", fontWeight: 400 }}>in progress</span>
                     </div>
                   </div>
                 </div>
@@ -879,14 +854,25 @@ function ReedSection({ isMobile }: { isMobile: boolean }) {
 
 
 // ═══════════════════════════════════════════
-// ACT 5: ARCHITECTURAL NUMBERS
+// ACT 5: PRODUCT PILLARS (no headcount, no roster)
 // ═══════════════════════════════════════════
 
 function NumbersSection() {
   const { ref, isVisible } = useScrollReveal(0.15);
-  const a = useCountUp(MARKETING_NUMBERS.specialistCount, 1600, isVisible);
-  const b = useCountUp(MARKETING_NUMBERS.outputFormatCount, 1200, isVisible);
-  const c = useCountUp(MARKETING_NUMBERS.qualityCheckpoints, 900, isVisible);
+  const pillars = [
+    {
+      title: "Voice DNA",
+      body: "Your rhythm, vocabulary, and register captured once, then held to the same standard on every draft.",
+    },
+    {
+      title: "Impact Score",
+      body: "A clear publish signal. Threshold-backed, not vibes. You know when the work is ready.",
+    },
+    {
+      title: "Blocking Review",
+      body: "Review is a hard line. The draft does not advance until the checks clear.",
+    },
+  ];
 
   return (
     <section data-nav-theme="light" ref={ref} style={{
@@ -897,30 +883,34 @@ function NumbersSection() {
       overflow: "hidden",
     }}>
       <div className="xp-parallax-nums" style={{
-        display: "flex", alignItems: "flex-end", justifyContent: "center",
-        gap: "clamp(40px, 8vw, 120px)",
-        maxWidth: 1200, width: "100%",
+        display: "flex", alignItems: "stretch", justifyContent: "center",
+        gap: "clamp(32px, 6vw, 80px)",
+        maxWidth: 1100, width: "100%",
       }}>
-        {[
-          { v: a, label: "Specialists", size: "clamp(80px, 15vw, 180px)" },
-          { v: b, label: "Output Formats", size: "clamp(80px, 15vw, 180px)" },
-          { v: c, label: "Quality Gates", size: "clamp(80px, 15vw, 180px)" },
-        ].map((s, i) => (
-          <div key={s.label} style={{
-            textAlign: "center",
+        {pillars.map((p, i) => (
+          <div key={p.title} style={{
+            flex: "1 1 0", minWidth: 0, maxWidth: 340,
+            textAlign: "left",
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? "translateY(0)" : "translateY(40px)",
             transition: `opacity 0.8s ${EASE} ${i * 150}ms, transform 0.8s ${EASE} ${i * 150}ms`,
+            padding: "28px 24px",
+            borderRadius: 16,
+            border: "1px solid var(--xp-border)",
+            background: "rgba(255,255,255,0.72)",
+            backdropFilter: "blur(14px) saturate(140%)",
+            WebkitBackdropFilter: "blur(14px) saturate(140%)",
           }}>
-            <div style={{
-              fontSize: s.size, fontWeight: 700,
-              letterSpacing: "-0.05em", lineHeight: 0.85,
-              color: "var(--xp-text)", opacity: 0.9,
-            }}>{s.v}</div>
             <div className="xp-mono" style={{
-              fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase",
-              color: "var(--xp-ter)", marginTop: 16,
-            }}>{s.label}</div>
+              fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
+              color: "var(--xp-gold)", marginBottom: 12,
+            }}>{String(i + 1).padStart(2, "0")}</div>
+            <div style={{
+              fontSize: "clamp(22px, 2.4vw, 28px)", fontWeight: 600,
+              letterSpacing: "-0.03em", lineHeight: 1.15,
+              color: "var(--xp-text)", marginBottom: 12,
+            }}>{p.title}</div>
+            <p style={{ fontSize: 15, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>{p.body}</p>
           </div>
         ))}
       </div>
@@ -1058,7 +1048,7 @@ function QualitySection() {
   useEffect(() => {
     if (!isVisible) return;
     let i = 0;
-    const iv = setInterval(() => { i++; setLit(i); if (i >= 7) clearInterval(iv); }, 260);
+    const iv = setInterval(() => { i++; setLit(i); if (i >= GATES.length) clearInterval(iv); }, 260);
     return () => clearInterval(iv);
   }, [isVisible]);
 
@@ -1077,10 +1067,10 @@ function QualitySection() {
         <Reveal>
           <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>04 / Quality Standard</div>
           <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 16 }}>
-            Seven gates. Zero compromises.
+            Hard quality. Zero compromises.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--xp-sec)", maxWidth: 520, margin: "0 auto 56px" }}>
-            Nothing ships until every one clears. Voice authenticity. Research validation. SLOP detection. Editorial excellence. Perspective and risk.
+            Nothing ships until the checks clear. Voice authenticity. Research validation. SLOP detection. Editorial excellence. Perspective and risk.
           </p>
         </Reveal>
 
@@ -1102,7 +1092,7 @@ function QualitySection() {
                         ? "radial-gradient(circle at 38% 32%, rgba(200,169,110,0.22), rgba(200,169,110,0.06))"
                         : "radial-gradient(circle at 38% 32%, rgba(248,249,250,0.9), rgba(240,238,230,0.6))",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 14, fontWeight: 500,
+                      fontSize: 16, fontWeight: 600,
                       color: on ? "var(--xp-gold)" : "var(--xp-ter)",
                       transition: `all .35s ${EASE}`,
                       backdropFilter: "blur(12px) saturate(140%)",
@@ -1111,7 +1101,7 @@ function QualitySection() {
                         ? "0 4px 16px rgba(200,169,110,0.18), inset 0 0 12px rgba(200,169,110,0.08), inset 0 1px 0 rgba(255,255,255,0.25), inset -1px -1px 1px rgba(200,169,110,0.1)"
                         : "0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0.5px rgba(255,255,255,0.15)",
                       animation: justLit ? "xpGatePulse 0.6s ease" : "none",
-                    }}><span style={{ position: "relative", zIndex: 5 }}>{i + 1}</span></div>
+                    }}><span style={{ position: "relative", zIndex: 5, lineHeight: 1 }}>{on ? "\u2713" : ""}</span></div>
                     <span className="xp-mono" style={{
                       fontSize: 9, letterSpacing: "0.07em", textTransform: "uppercase",
                       color: on ? "var(--xp-gold)" : "var(--xp-ter)",

@@ -42,16 +42,6 @@ interface CheckpointResultsPanelProps {
   blockedAt?: string;
 }
 
-const GATE_ROLE_LABELS: Record<string, string> = {
-  "Deduplication": "Checkpoint 0",
-  "Research Validation": "Checkpoint 1",
-  "Voice Authenticity": "Checkpoint 2",
-  "Engagement Optimization": "Checkpoint 3",
-  "SLOP Detection": "Checkpoint 4",
-  "Editorial Excellence": "Checkpoint 5",
-  "Perspective & Risk": "Checkpoint 6",
-};
-
 export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResultsPanelProps) {
   if (!results.length) return null;
 
@@ -155,7 +145,7 @@ export function CheckpointResultsPanel({ results, blockedAt }: CheckpointResults
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {GATE_ROLE_LABELS[result.gate] || result.gate}
+                    {result.gate}
                   </span>
                 </div>
                 <div

@@ -109,7 +109,7 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={200}>
             <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-dim-dark)" }}>
-              Specialized intelligence working as an orchestrated ensemble. Every session has a first listener who asks the right questions. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep. The system thinks with you. Not for you.
+              Composed Intelligence behind one conversation. Every session has a first listener who asks the right questions. A quality system that won't let mediocre content through. An intelligence layer monitoring your category while you sleep. The system thinks with you. Not for you.
             </p>
           </Reveal>
         </div>

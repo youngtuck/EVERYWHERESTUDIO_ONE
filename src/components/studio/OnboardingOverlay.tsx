@@ -3,7 +3,7 @@ import { useState } from "react";
 const STEPS = [
   {
     title: "Welcome to the Studio",
-    body: "You're about to work with a team of 40 specialists. Reed listens first. Then the Room shapes your idea. Then the team writes, reviews, and polishes until it's publication-ready.\n\nEvery word is yours. Every claim is verified. Nothing ships without passing 7 quality checkpoints.",
+    body: "You are about to work inside a Reed-led studio. Reed listens first. Then the Room shapes your idea. Then drafting, review, and polish run until the work is publication-ready.\n\nEvery word is yours. Every claim is verified. Nothing ships until the blocking quality checkpoints clear.",
   },
   {
     title: "Reed, Your First Listener",
@@ -11,11 +11,11 @@ const STEPS = [
   },
   {
     title: "The Room",
-    body: "After Reed, your idea goes to the Writer's Room. The team explores angles, builds a structure, writes a first draft, and then stress-tests it from every direction: Can you sell this? Does the logic hold? Would a stranger get it?\n\nYou're in control at every step. Edit the outline. Revise the draft. Accept or reject suggestions.",
+    body: "After Reed, your idea goes to the Writer's Room. The Room explores angles, builds a structure, writes a first draft, and then stress-tests it from every direction: Can you sell this? Does the logic hold? Would a stranger get it?\n\nYou're in control at every step. Edit the outline. Revise the draft. Accept or reject suggestions.",
   },
   {
     title: "Quality Checkpoints",
-    body: "Before anything ships, 7 specialists review your work independently:\n\nDeduplication catches repetition. Research validates every fact. Voice Authenticity matches your voice. Engagement tests the hook. SLOP Detection catches AI fingerprints. Editorial Excellence enforces publication standards. Perspective checks blind spots and sensitivity.\n\nThe Impact Score (1-100) is your final quality measure. 75+ means it is ready to publish.",
+    body: "Before anything ships, the quality pipeline runs in sequence:\n\nDeduplication catches repetition. Research validates every fact. Voice Authenticity matches your voice. Engagement tests the hook. SLOP Detection catches AI fingerprints. Editorial Excellence enforces publication standards. Perspective checks blind spots and sensitivity.\n\nThe Impact Score (1-100) is your final quality measure. 75+ means it is ready to publish.",
   },
 ];
 

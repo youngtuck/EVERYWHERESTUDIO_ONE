@@ -52,7 +52,7 @@ export async function scoreImpact(
         nvcCompliance: 0,
       },
       verdict: "REJECT",
-      topIssue: "Scoring failed: no response from scoring agent.",
+      topIssue: "Scoring failed: no response from the scoring service.",
       gutCheck: "Unable to score.",
     };
   }

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 
-interface Agent {
+interface PolishPhase {
   name: string;
   title: string;
   desc: string;
 }
 
-const AGENTS: Agent[] = [
+const POLISH_PHASES: PolishPhase[] = [
   { name: "SLOP Detection", title: "SLOP Detection", desc: "Scanning for AI fingerprints and filler..." },
   { name: "Voice Authenticity", title: "Voice Authenticity", desc: "Matching your voice DNA..." },
   { name: "Perspective & Risk", title: "Perspective + Impact", desc: "Checking perspective and sensitivity..." },
@@ -24,9 +24,9 @@ const CSS = `
 `;
 
 interface PolishLoadingAnimationProps {
-  /** Index of the currently running agent (0-3). -1 means not started. */
+  /** Index of the currently running polish phase (0-3). -1 means not started. */
   currentIndex?: number;
-  /** Completed results: map of agent name to score */
+  /** Completed results: map of phase name to score */
   completedScores?: Record<string, number>;
 }
 
@@ -37,7 +37,7 @@ export default function PolishLoadingAnimation({ currentIndex = 0, completedScor
   useEffect(() => {
     if (Object.keys(completedScores).length > 0) return; // Real data, don't simulate
     const interval = setInterval(() => {
-      setSimIndex(i => Math.min(i + 1, AGENTS.length));
+      setSimIndex(i => Math.min(i + 1, POLISH_PHASES.length));
     }, 8000);
     return () => clearInterval(interval);
   }, [completedScores]);
@@ -48,15 +48,15 @@ export default function PolishLoadingAnimation({ currentIndex = 0, completedScor
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
       <style>{CSS}</style>
       <div style={{ width: 320, display: "flex", flexDirection: "column", gap: 8 }}>
-        {AGENTS.map((agent, i) => {
-          const completed = agent.name in completedScores || i < activeIndex;
+        {POLISH_PHASES.map((phase, i) => {
+          const completed = phase.name in completedScores || i < activeIndex;
           const running = i === activeIndex && !completed;
           const pending = i > activeIndex;
-          const score = completedScores[agent.name];
+          const score = completedScores[phase.name];
 
           return (
             <div
-              key={agent.name}
+              key={phase.name}
               style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "10px 14px", borderRadius: 8,
@@ -77,10 +77,9 @@ export default function PolishLoadingAnimation({ currentIndex = 0, completedScor
               }}>
                 {completed && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>&#10003;</span>}
               </div>
-              {/* Agent info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{agent.name}</div>
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{agent.title}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{phase.name}</div>
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{phase.title}</div>
               </div>
               {/* Score */}
               {score !== undefined && (
@@ -93,7 +92,7 @@ export default function PolishLoadingAnimation({ currentIndex = 0, completedScor
         })}
       </div>
       <div style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "'Afacad Flux', sans-serif", textAlign: "center", fontStyle: "normal" }}>
-        {AGENTS[Math.min(activeIndex, AGENTS.length - 1)]?.desc || "Finishing up..."}
+        {POLISH_PHASES[Math.min(activeIndex, POLISH_PHASES.length - 1)]?.desc || "Finishing up..."}
       </div>
     </div>
   );

@@ -689,7 +689,7 @@ export default function OutputDetail() {
             {!pipelineRun && !pipelineRunning && (
               <div style={{ textAlign: "center", padding: "32px 16px" }}>
                 <p style={{ fontSize: 14, color: "var(--fg-2)", maxWidth: 480, marginInline: "auto" }}>
-                  7 specialists will review your content for voice authenticity, research accuracy, engagement, and more. Use the "Run Quality Pipeline" button in the toolbar above to start.
+                  {`Reed will run the full quality pipeline on your content: voice authenticity, research accuracy, engagement, and more. Use the "Run Quality Pipeline" button in the toolbar above to start.`}
                 </p>
               </div>
             )}
@@ -698,7 +698,7 @@ export default function OutputDetail() {
             {pipelineRunning && (
               <div style={{ textAlign: "center", padding: "32px 16px", color: "var(--fg-2)", fontSize: 14 }}>
                 <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid var(--gold)", borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
-                Running 7 quality checkpoints...
+                Running quality checkpoints...
               </div>
             )}
 

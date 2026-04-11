@@ -103,7 +103,7 @@ const INSPECTOR_HELP_LINES: Record<string, string[]> = {
     "Add competitors and publications you care about so Watch can surface gaps and timing.",
   ],
   work: [
-    "Intake is a conversation with Reed. Outline locks structure. Edit is the draft. Review runs the seven quality checkpoints before export.",
+    "Intake is a conversation with Reed. Outline locks structure. Edit is the draft. Review runs blocking quality checkpoints before export.",
     "Session context and files travel with the stage. Export saves the master draft to Catalog.",
   ],
   wrap: [
@@ -610,7 +610,7 @@ function ReedStageContext({ stage }: { stage: string }) {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
-          Reed is reviewing your draft against 7 quality checkpoints.
+          Reed is reviewing your draft against the full quality checkpoint sequence.
         </div>
       </div>
     );
