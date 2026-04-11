@@ -1247,60 +1247,12 @@ export default function WrapPage() {
       <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
         <WrapStepRail phase="build" />
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px" }}>
-          {!isMobile ? (
-            <div style={{
-              maxWidth: 920,
-              margin: "0 auto",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "flex-start",
-              gap: 28,
-            }}>
-              <nav
-                aria-label="Channels generating"
-                style={{
-                  width: 168,
-                  flexShrink: 0,
-                  position: "sticky",
-                  top: 8,
-                  alignSelf: "flex-start",
-                  zIndex: 2,
-                  padding: "6px 0 8px",
-                  borderRight: "1px solid var(--glass-border)",
-                  background: "var(--surface)",
-                  boxShadow: "12px 0 20px -8px var(--surface)",
-                }}
-              >
-                {formats.map((fmt, i) => (
-                  <div
-                    key={fmt}
-                    style={{
-                      padding: i === 0 ? "4px 12px 20px 2px" : "20px 12px 20px 2px",
-                      borderTop: i === 0 ? "none" : "1px solid var(--glass-border)",
-                    }}
-                  >
-                    <div style={{
-                      fontSize: 14, fontWeight: 700, color: "var(--fg)",
-                      letterSpacing: "-0.02em", lineHeight: 1.2,
-                    }}
-                    >{fmt}</div>
-                  </div>
-                ))}
-              </nav>
-              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-                {buildIntro}
-                {formats.map(fmt => renderBuildChannelCard(fmt, false))}
-                {buildFooter}
-              </div>
-            </div>
-          ) : (
-            <div style={{ maxWidth: 720, margin: "0 auto", display: "grid", gap: 12 }}>
-              {buildIntro}
-              {formats.map(fmt => renderBuildChannelCard(fmt, true))}
-              {buildFooter}
-            </div>
-          )}
-          <style>{`@keyframes wrapspin { to { transform: rotate(360deg); } }`}</style>
+          <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
+            {buildIntro}
+            {formats.map(fmt => renderBuildChannelCard(fmt, true))}
+            {buildFooter}
+          </div>
+          <style>{`@keyframes wrapspin { to{ transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );
