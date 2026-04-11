@@ -103,15 +103,29 @@ function WorkBreadcrumb() {
                 fontSize: 11,
                 padding: "4px 10px",
                 cursor: canClick ? "pointer" : "default",
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? "var(--fg)" : "var(--fg-3)",
-                opacity: isActive || isDone ? 1 : 0.78,
                 transition: "color 0.15s ease, opacity 0.15s ease",
+                opacity: isActive || isDone ? 1 : 0.78,
               }}
-              onMouseEnter={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
-              onMouseLeave={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
+              onMouseEnter={e => {
+                const label = e.currentTarget.querySelector(".work-stage-pill-label");
+                if (!isActive && label) (label as HTMLElement).style.color = "var(--fg-2)";
+              }}
+              onMouseLeave={e => {
+                const label = e.currentTarget.querySelector(".work-stage-pill-label");
+                if (!isActive && label) (label as HTMLElement).style.color = "var(--fg-3)";
+              }}
             >
-              {s}
+              <span
+                className="work-stage-pill-label"
+                style={{
+                  position: "relative",
+                  zIndex: 3,
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? "var(--fg)" : "var(--fg-3)",
+                }}
+              >
+                {s}
+              </span>
             </span>
           </div>
         );

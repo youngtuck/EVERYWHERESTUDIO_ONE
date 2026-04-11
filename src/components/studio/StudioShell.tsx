@@ -8,8 +8,6 @@ import { useMobile } from "../../hooks/useMobile";
 import Logo from "../Logo";
 import NotificationBell from "./NotificationBell";
 import { REED_STAGE_CHIPS } from "../../lib/constants";
-import { supabase } from "../../lib/supabase";
-import { useAuth } from "../../context/AuthContext";
 import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -254,14 +252,6 @@ export default function StudioShell() {
   const [reedPrefill, setReedPrefill] = useState("");
   const [reedThread, setReedThread] = useState<Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>>([]);
 
-  const { user } = useAuth();
-  const [outputCount, setOutputCount] = useState<number>(1); // default 1 so returning users see full nav
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("outputs").select("id", { count: "exact", head: true }).eq("user_id", user.id)
-      .then(({ count }) => { if (typeof count === "number") setOutputCount(count); });
-  }, [user]);
-
   return (
     <ShellContext.Provider value={{
       dashOpen, setDashOpen,
@@ -294,7 +284,6 @@ export default function StudioShell() {
             collapsed={!isMobile && sidebarCollapsed}
             onToggleCollapsed={() => setSidebarCollapsed(c => !c)}
             onMobileClose={isMobile ? () => setSidebarOpen(false) : undefined}
-            simplified={outputCount === 0}
           />
         </div>
 

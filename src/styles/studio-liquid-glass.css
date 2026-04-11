@@ -215,6 +215,11 @@
   position: relative;
   z-index: 2;
 }
+/* Text must be in an element child; direct text nodes sit under ::before */
+.liquid-glass-pill .work-stage-pill-label {
+  position: relative;
+  z-index: 3;
+}
 
 [data-theme="dark"] .liquid-glass-pill {
   background: rgba(30, 37, 51, 0.5);
@@ -501,6 +506,10 @@
 .liquid-glass-btn > * {
   position: relative;
   z-index: 2;
+}
+.liquid-glass-btn .liquid-glass-btn-label {
+  position: relative;
+  z-index: 3;
 }
 .liquid-glass-btn:hover {
   background: rgba(255, 255, 255, 0.55);

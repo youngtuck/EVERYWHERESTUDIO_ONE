@@ -112,7 +112,7 @@ interface SidebarProps {
 
 interface Project { id: string; name: string; is_default: boolean; }
 
-export default function StudioSidebar({ collapsed = false, onToggleCollapsed, onMobileClose, simplified = false }: SidebarProps & { simplified?: boolean }) {
+export default function StudioSidebar({ collapsed = false, onToggleCollapsed, onMobileClose }: SidebarProps) {
   const nav = useNavigate();
   const loc = useLocation();
   const { user, displayName } = useAuth();
@@ -264,7 +264,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           </div>
 
           <nav className="studio-sidebar-nav">
-        {NAV.filter(group => !simplified || group.group === "Studio" || group.group === "You").map((group, gi) => {
+        {NAV.map((group, gi) => {
           // On mobile, skip items already in bottom nav
           const items = onMobileClose
             ? group.items.filter(i => !["/studio/dashboard", "/studio/watch", "/studio/work", "/studio/wrap", "/studio/settings"].includes(i.path))

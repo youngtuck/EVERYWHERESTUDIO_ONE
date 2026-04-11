@@ -187,26 +187,34 @@ export default function Settings() {
       {/* Voice & Brand DNA links */}
       <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--glass-border)" }}>
         <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>Voice and Brand DNA are configured separately.</div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
+            type="button"
             className="liquid-glass-btn"
             onClick={() => nav("/studio/settings/voice")}
             style={{
-              fontSize: 12, padding: "8px 16px",
-              color: "var(--fg-2)", fontFamily: FONT,
+              fontSize: 12,
+              padding: "8px 16px",
+              fontFamily: FONT,
             }}
           >
-            Voice DNA →
+            <span className="liquid-glass-btn-label" style={{ color: "var(--fg)", fontWeight: 600 }}>
+              VoiceDNA
+            </span>
           </button>
           <button
+            type="button"
             className="liquid-glass-btn"
             onClick={() => nav("/studio/settings/brand")}
             style={{
-              fontSize: 12, padding: "8px 16px",
-              color: "var(--fg-2)", fontFamily: FONT,
+              fontSize: 12,
+              padding: "8px 16px",
+              fontFamily: FONT,
             }}
           >
-            Brand Profile →
+            <span className="liquid-glass-btn-label" style={{ color: "var(--fg)", fontWeight: 600 }}>
+              Brand DNA
+            </span>
           </button>
         </div>
       </div>
