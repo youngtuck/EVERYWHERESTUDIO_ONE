@@ -97,7 +97,7 @@ export default function TheLot() {
   const isMobile = useMobile();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { setDashContent, setDashOpen } = useShell();
+  const { setDashContent } = useShell();
 
   const [parkedIdeas, setParkedIdeas] = useState<PipelineItem[]>([]);
   const [signals, setSignals] = useState<PipelineItem[]>(STATIC_SIGNALS);
@@ -172,7 +172,6 @@ export default function TheLot() {
 
   useLayoutEffect(() => {
     if (selectedItem) {
-      setDashOpen(true);
       setDashContent(
         <PipelineDetailPanel
           item={selectedItem}
@@ -186,7 +185,6 @@ export default function TheLot() {
         />
       );
     } else {
-      setDashOpen(false);
       setDashContent(
         <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
           Select a signal or idea to see details.
@@ -194,7 +192,7 @@ export default function TheLot() {
       );
     }
     return () => setDashContent(null);
-  }, [selectedItem, handleActivate, handleRemove, setDashContent, setDashOpen]);
+  }, [selectedItem, handleActivate, handleRemove, setDashContent]);
 
   const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="liquid-glass-card" style={{ padding: 14, marginBottom: 10 }}>

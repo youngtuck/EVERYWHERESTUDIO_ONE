@@ -12,10 +12,10 @@
   --surface-elevated: #FFFFFF;
   --sidebar: #0D1B2A;
 
-  /* Text */
+  /* Text (contrast-tuned for cream surfaces and light liquid glass) */
   --fg: #0D1B2A;
-  --fg-2: #334155;
-  --fg-3: #64748B;
+  --fg-2: #1e293b;
+  --fg-3: #475569;
 
   /* Borders */
   --line: #E2E8F0;
@@ -433,10 +433,10 @@ button { font-family: var(--font); }
   --studio-body-color: #1B263B;
   --studio-card-label-size: 11px;
   --studio-card-label-spacing: 2px;
-  --studio-card-label-color: #64748B;
+  --studio-card-label-color: #475569;
   --studio-big-number-size: 36px;
   --studio-interactive-size: 13px;
-  --studio-interactive-color: #64748B;
+  --studio-interactive-color: #475569;
   --studio-interactive-hover: #4A90D9;
   /* Typography scale (Option C) */
   --studio-display-font: 'Instrument Sans', 'Afacad Flux', sans-serif;
@@ -469,13 +469,13 @@ button { font-family: var(--font); }
 ────────────────────────────────────────────────────────────────── */
 
 :root {
-  --glass-surface: rgba(255, 255, 255, 0.45);
-  --glass-surface-hover: rgba(255, 255, 255, 0.6);
-  --glass-card: rgba(255, 255, 255, 0.5);
-  --glass-card-hover: rgba(255, 255, 255, 0.65);
+  --glass-surface: rgba(255, 255, 255, 0.52);
+  --glass-surface-hover: rgba(255, 255, 255, 0.66);
+  --glass-card: rgba(255, 255, 255, 0.58);
+  --glass-card-hover: rgba(255, 255, 255, 0.72);
   --glass-sidebar: rgba(13, 27, 42, 0.92);
-  --glass-topbar: rgba(255, 255, 255, 0.55);
-  --glass-right-panel: rgba(255, 255, 255, 0.45);
+  --glass-topbar: rgba(255, 255, 255, 0.62);
+  --glass-right-panel: rgba(255, 255, 255, 0.52);
   --glass-border-shell: rgba(255, 255, 255, 0.08);
   --glass-input: rgba(255, 255, 255, 0.6);
   --glass-input-focus: rgba(255, 255, 255, 0.8);

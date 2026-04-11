@@ -72,13 +72,13 @@ function HomeDashContent({
     fontWeight: 700,
     letterSpacing: "0.08em",
     textTransform: "uppercase" as const,
-    color: "rgba(255,255,255,0.4)",
+    color: "var(--fg-3)",
     marginBottom: 6,
   } };
   const row = (label: string, value: string | number) => (
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <span style={{ color: "rgba(255,255,255,0.65)" }}>{label}</span>
-      <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>{value}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+      <span style={{ color: "var(--fg-2)" }}>{label}</span>
+      <span style={{ fontWeight: 600, color: "var(--fg)" }}>{value}</span>
     </div>
   );
 
@@ -91,8 +91,8 @@ function HomeDashContent({
           {row("Sessions", sessions)}
           {row("Formats exported", formatsExported)}
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0" }}>
-            <span style={{ color: "rgba(255,255,255,0.65)" }}>Signals tracked</span>
-            <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>{signalsTracked}</span>
+            <span style={{ color: "var(--fg-2)" }}>Signals tracked</span>
+            <span style={{ fontWeight: 600, color: "var(--fg)" }}>{signalsTracked}</span>
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@ function HomeDashContent({
       {inProgressTitle && (
         <div style={{ marginBottom: 14 }}>
           <div style={S.label}>In progress</div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", padding: "5px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", lineHeight: 1.4 }}>
+          <div style={{ fontSize: 11, color: "var(--fg-2)", padding: "5px 0", borderBottom: "1px solid rgba(0,0,0,0.06)", lineHeight: 1.4 }}>
             {inProgressTitle}
             <br />
             <span style={{ fontSize: 10, color: "#F5C642", fontWeight: 600 }}>
@@ -114,7 +114,7 @@ function HomeDashContent({
       {/* Today's briefing */}
       <div style={{ marginBottom: 14 }}>
         <div style={S.label}>Today's briefing</div>
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, fontStyle: "normal" }}>
+        <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.7, fontStyle: "normal" }}>
           Run a briefing in Watch to see today's signals here.
         </div>
         <button
@@ -137,7 +137,7 @@ function StepHint({ number, text, active }: { number: number; text: string; acti
   return (
     <div style={{
       display: "flex", alignItems: "flex-start", gap: 12,
-      opacity: active ? 1 : 0.4,
+      opacity: active ? 1 : 0.72,
       transition: "opacity 0.3s",
     }}>
       <div style={{

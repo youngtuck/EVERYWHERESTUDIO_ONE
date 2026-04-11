@@ -1964,7 +1964,7 @@ function ActionChips({ chips, onChipClick }: { chips: string[]; onChipClick: (te
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function WorkSession() {
-  const { setFeedbackContent, setDashOpen, setActiveDashTab, setReedPrefill, setReedThread } = useShell();
+  const { setFeedbackContent, setActiveDashTab, setReedPrefill, setReedThread } = useShell();
   const prefillReed = useCallback((text: string) => {
     setActiveDashTab("reed");
     setReedPrefill(text);
@@ -3195,9 +3195,6 @@ export default function WorkSession() {
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
-    // Keep the Reed panel open across all stages
-    setDashOpen(true);
-
     const dashNode = (() => {
       switch (stage) {
         case "Intake":
@@ -3335,13 +3332,6 @@ export default function WorkSession() {
     prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
     dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
   ]);
-
-  // Auto-open dashboard when pipeline finishes in Review
-  useEffect(() => {
-    if (stage === "Review" && pipelineRun && !pipelineRunning) {
-      setDashOpen(true);
-    }
-  }, [stage, pipelineRun, pipelineRunning, setDashOpen]);
 
   // ─────────────────────────────────────────────────────────────
   // RENDER

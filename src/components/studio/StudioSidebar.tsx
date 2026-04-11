@@ -177,13 +177,13 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                     className="studio-sidebar-chip"
                     style={{ cursor: projects.length > 1 ? "pointer" : "default" }}
                   >
-                    <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.45)" }}>Project</span>
+                    <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.58)" }}>Project</span>
                     <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 4, marginTop: 2 }}>
                       <span style={{ fontSize: 12, color: "rgba(255,255,255,0.94)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {activeProject?.name ?? "Loading..."}
                       </span>
                       {projects.length > 1 && (
-                        <svg style={{ width: 11, height: 11, stroke: "rgba(255,255,255,0.45)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+                        <svg style={{ width: 11, height: 11, stroke: "rgba(255,255,255,0.6)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
                       )}
@@ -201,7 +201,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                             style={{
                               display: "block", width: "100%", textAlign: "left" as const,
                               padding: "9px 11px", fontSize: 12, cursor: "pointer",
-                              color: p.id === activeProjectId ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.7)",
+                              color: p.id === activeProjectId ? "rgba(255,255,255,0.98)" : "rgba(255,255,255,0.82)",
                               fontWeight: p.id === activeProjectId ? 600 : 400,
                               background: p.id === activeProjectId ? "rgba(245,198,66,0.12)" : "transparent",
                               border: "none", fontFamily: "inherit",
@@ -211,7 +211,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                             onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
                           >
                             {p.name}
-                            {p.is_default && <span style={{ fontSize: 9, color: "rgba(255,255,255,0.42)", marginLeft: 6 }}>default</span>}
+                            {p.is_default && <span style={{ fontSize: 9, color: "rgba(255,255,255,0.62)", marginLeft: 6 }}>default</span>}
                           </button>
                         ))}
                       </div>
@@ -249,7 +249,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             {onMobileClose && (
               <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
                 <div className="studio-sidebar-chip" style={{ cursor: "default" }}>
-                  <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.45)" }}>Project</span>
+                  <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.58)" }}>Project</span>
                   <span style={{ fontSize: 12, color: "rgba(255,255,255,0.94)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block", marginTop: 2 }}>
                     {activeProject?.name ?? "Loading..."}
                   </span>
@@ -371,8 +371,8 @@ function NavItem({
         width: 20, height: 20,
         display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0,
-        opacity: active ? 1 : 0.45,
-        color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.65)",
+        opacity: active ? 1 : 0.88,
+        color: active ? "rgba(255,255,255,0.96)" : "rgba(255,255,255,0.78)",
         transition: "opacity 0.1s",
       }}>
         {icon}
@@ -382,7 +382,7 @@ function NavItem({
       {!collapsed && (
         <span style={{
           fontSize: 12,
-          color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.55)",
+          color: active ? "rgba(255,255,255,0.96)" : "rgba(255,255,255,0.78)",
           fontWeight: active ? 600 : 500,
           whiteSpace: "nowrap",
           overflow: "hidden",
@@ -413,7 +413,7 @@ function NavItem({
           }}
         >
           <div style={{ fontWeight: 600, marginBottom: 2 }}>{label}</div>
-          <div style={{ opacity: 0.75, fontSize: 10 }}>{desc}</div>
+          <div style={{ opacity: 0.9, fontSize: 10 }}>{desc}</div>
         </div>
       )}
     </button>

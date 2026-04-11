@@ -107,7 +107,7 @@ export function CommandPalette() {
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`
-          .command-palette-input::placeholder { color: rgba(255,255,255,0.4); }
+          .command-palette-input::placeholder { color: rgba(255,255,255,0.62); }
         `}</style>
         <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <input
@@ -132,13 +132,13 @@ export function CommandPalette() {
               if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") e.preventDefault();
             }}
           />
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginTop: 8, marginBottom: 0 }}>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.68)", marginTop: 8, marginBottom: 0 }}>
             ↑↓ to move · Enter to go · Esc to close
           </p>
         </div>
         <div style={{ maxHeight: 320, overflowY: "auto" }}>
           {filtered.length === 0 ? (
-            <div style={{ padding: 24, textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
+            <div style={{ padding: 24, textAlign: "center", color: "rgba(255,255,255,0.68)", fontSize: 14 }}>
               No matches
             </div>
           ) : (
@@ -156,7 +156,7 @@ export function CommandPalette() {
                   fontFamily: "var(--font)",
                   fontSize: 14,
                   fontWeight: 500,
-                  color: "rgba(255,255,255,0.75)",
+                  color: "rgba(255,255,255,0.9)",
                   textAlign: "left",
                   display: "flex",
                   alignItems: "center",

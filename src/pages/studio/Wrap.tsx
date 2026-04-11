@@ -121,7 +121,7 @@ function WrapDashPanel({
 export default function WrapPage() {
   const nav = useNavigate();
   const location = useLocation();
-  const { setFeedbackContent, setDashOpen, setReedPrefill, setActiveDashTab } = useShell();
+  const { setFeedbackContent, setReedPrefill, setActiveDashTab } = useShell();
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useMobile();
@@ -350,9 +350,8 @@ export default function WrapPage() {
     }).catch(() => {});
   }, [activeFormat, formatContents, activeOutput, toast]);
 
-  // Right panel dashboard
+  // Right panel dashboard (content only; Reed flyout opens when the user taps the launcher)
   useLayoutEffect(() => {
-    setDashOpen(true);
     if (hasContent) {
       setFeedbackContent(
         <WrapDashPanel
@@ -368,7 +367,7 @@ export default function WrapPage() {
       setFeedbackContent(null);
     }
     return () => setFeedbackContent(null);
-  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setDashOpen, setFeedbackContent]);
+  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent]);
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: "center", color: "var(--fg-3)", fontSize: 13, fontFamily: FONT }}>Loading...</div>;

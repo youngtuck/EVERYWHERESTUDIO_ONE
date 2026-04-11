@@ -47,9 +47,10 @@
   isolation: isolate;
   overflow: hidden;
   transform: translateZ(0);
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: var(--glass-radius);
-  background: rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.52);
+  color: var(--fg);
   animation: studioLgEdgeBreathLight 20s ease-in-out infinite;
   transition: border-color 0.35s var(--glass-ease), background 0.35s ease;
 }
@@ -180,7 +181,8 @@
   transform: translateZ(0);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.44);
+  color: var(--fg);
 }
 .liquid-glass-pill::after {
   content: "";
@@ -226,14 +228,15 @@
 
 /* ─── Cards (dashboard, settings, modals) ─── */
 .liquid-glass-card {
-  --lg-card-tint: rgba(255, 255, 255, 0.36);
+  --lg-card-tint: rgba(255, 255, 255, 0.5);
   position: relative;
   isolation: isolate;
   overflow: hidden;
   transform: translateZ(0);
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: var(--glass-radius-lg);
   background: var(--lg-card-tint);
+  color: var(--fg);
   animation: studioLgEdgeBreathLight 22s ease-in-out infinite;
   transition:
     transform 0.4s var(--glass-ease),
@@ -279,7 +282,7 @@
   z-index: 2;
 }
 .liquid-glass-card:hover {
-  --lg-card-tint: rgba(255, 255, 255, 0.5);
+  --lg-card-tint: rgba(255, 255, 255, 0.62);
   transform: translate3d(0, -3px, 0);
   border-color: rgba(74, 144, 217, 0.14);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -329,7 +332,7 @@
 }
 .liquid-glass-input::placeholder {
   color: var(--fg-3);
-  opacity: 0.75;
+  opacity: 1;
 }
 .liquid-glass-input:focus {
   background: rgba(255, 255, 255, 0.72);
@@ -363,6 +366,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--glass-radius);
   background: rgba(14, 20, 32, 0.72);
+  color: rgba(255, 255, 255, 0.94);
   animation: studioLgEdgeBreathDark 24s ease-in-out infinite;
 }
 .liquid-glass-menu::after {
@@ -567,12 +571,13 @@
   border-radius: 20px;
   overflow: hidden;
   transform: translateZ(0);
+  color: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.11);
   box-shadow:
     0 28px 64px rgba(0, 0, 0, 0.32),
     0 0 0 1px rgba(0, 0, 0, 0.18) inset,
     0 1px 0 rgba(255, 255, 255, 0.12) inset;
-  background: rgba(8, 16, 28, 0.38);
+  background: rgba(8, 16, 28, 0.52);
   animation: studioLgEdgeBreathDark 20s ease-in-out infinite;
 }
 .studio-sidebar-glass-inner::after {
@@ -647,7 +652,7 @@
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(16px) saturate(1.5);
   -webkit-backdrop-filter: blur(16px) saturate(1.5);
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.78);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -678,7 +683,7 @@
 }
 .studio-sidebar-group-label {
   font-size: 8px;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.55);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 700;
@@ -735,7 +740,7 @@
   flex-shrink: 0;
   padding: 6px 14px 12px;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.45);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   letter-spacing: 0.02em;
 }
@@ -749,27 +754,7 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
-/* ─── Reed / dashboard flyout (StudioShell) ─── */
-.studio-reed-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 55;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  background: rgba(12, 26, 42, 0.22);
-  backdrop-filter: blur(6px) saturate(1.2);
-  -webkit-backdrop-filter: blur(6px) saturate(1.2);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.studio-reed-backdrop.is-open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
+/* ─── Reed / dashboard flyout (StudioShell): no full-page overlay; panel only ─── */
 .liquid-glass-card.studio-reed-flyout {
   position: fixed;
   z-index: 56;
@@ -873,7 +858,6 @@
   .liquid-glass-btn-gold::before {
     animation: none !important;
   }
-  .studio-reed-backdrop,
   .liquid-glass-card.studio-reed-flyout {
     transition: none !important;
   }

@@ -36,7 +36,7 @@ interface ShellCtx {
 }
 
 const ShellContext = createContext<ShellCtx>({
-  dashOpen: true,
+  dashOpen: false,
   setDashOpen: () => {},
   advisorsOpen: false,
   setAdvisorsOpen: () => {},
@@ -217,7 +217,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "dashboard", color: "#64748B", icon: "◼", name: "Dashboard",
     desc: "Context panel for your current stage.",
     rationale: "Templates, outputs, files, and actions.",
-    detail: "The Dashboard is the context panel on the right side of every screen. It shows information and actions relevant to whatever stage you are in.\n\nIn Intake: output format selection, templates, session files, project files.\nIn Edit: voice match score, flag counts, word count, output queue.\nIn Review: improvement cards, per-format scores, export controls.\nIn Wrap: source file, template selection, export options.\nIn Watch: sources being tracked, topic configuration.\n\nClick Dashboard in the top bar to show or hide it. It opens automatically when you enter Work or Wrap.",
+    detail: "The Dashboard is the context panel on the right side of every screen. It shows information and actions relevant to whatever stage you are in.\n\nIn Intake: output format selection, templates, session files, project files.\nIn Edit: voice match score, flag counts, word count, output queue.\nIn Review: improvement cards, per-format scores, export controls.\nIn Wrap: source file, template selection, export options.\nIn Watch: sources being tracked, topic configuration.\n\nTap the Reed launcher on the right edge to open or close it. It stays closed until you open it; page content keeps updating in the background.",
     launchLabel: "Toggle Dashboard", route: null,
   },
   {
@@ -381,14 +381,6 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
         </button>
       )}
 
-      <button
-        type="button"
-        tabIndex={-1}
-        className={`studio-reed-backdrop ${open ? "is-open" : ""}`}
-        aria-label="Close Reed panel"
-        onClick={() => setOpen(false)}
-      />
-
       <aside
         id="studio-reed-flyout"
         className={`liquid-glass-card studio-reed-flyout ${open ? "is-open" : ""} ${isMobile ? "studio-reed-flyout-mobile" : ""}`}
@@ -437,7 +429,6 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
         <div style={{
           padding: "8px 14px",
           fontSize: 9, color: "var(--fg-3)",
-          opacity: 0.55,
           textAlign: "center" as const,
           flexShrink: 0,
           borderTop: "1px solid rgba(0,0,0,0.05)",
@@ -626,7 +617,7 @@ function ReedPanel() {
                 }}>
                   CARRIED FROM {m.from?.toUpperCase()}
                 </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 6 }}>{m.text}</div>
+                <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 6 }}>{m.text}</div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                   <button onClick={() => prefillAndFocus(`Let's work on this now: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Work on this now</button>
                   <button onClick={() => prefillAndFocus(`Apply this to the current ${stage} context: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Apply to {stage}</button>
@@ -648,7 +639,7 @@ function ReedPanel() {
                 <div style={{
                   background: "rgba(74,144,217,0.06)", border: "1px solid rgba(74,144,217,0.2)",
                   borderRadius: "0 8px 8px 8px", padding: "8px 10px",
-                  fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, maxWidth: "85%",
+                  fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, maxWidth: "85%",
                 }}>{m.text}</div>
               </div>
             );
@@ -659,7 +650,7 @@ function ReedPanel() {
               <div style={{
                 background: "rgba(245,198,66,0.1)", border: "1px solid rgba(245,198,66,0.2)",
                 borderRadius: "8px 0 8px 8px", padding: "8px 10px",
-                fontSize: 11, color: "rgba(255,255,255,0.92)", lineHeight: 1.6, maxWidth: "85%",
+                fontSize: 11, color: "var(--fg)", lineHeight: 1.6, maxWidth: "85%",
               }}>{m.text}</div>
             </div>
           );
@@ -674,8 +665,8 @@ function ReedPanel() {
               onClick={() => prefillAndFocus(chip.prefill)}
               style={{
                 fontSize: 10, padding: "4px 10px", borderRadius: 99,
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.06)",
-                color: "rgba(255,255,255,0.65)", cursor: "pointer", fontFamily: "inherit",
+                background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.1)",
+                color: "var(--fg-2)", cursor: "pointer", fontFamily: "inherit",
               }}
             >
               {chip.label}
@@ -685,7 +676,7 @@ function ReedPanel() {
       )}
       <div style={{
         display: "flex", alignItems: "center", gap: 6,
-        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.1)",
         borderRadius: 8, padding: "8px 10px", flexShrink: 0,
       }}>
         <input
@@ -696,18 +687,18 @@ function ReedPanel() {
           placeholder="Reply to Reed..."
           style={{
             flex: 1, background: "transparent", border: "none", outline: "none",
-            fontSize: 12, color: "rgba(255,255,255,0.92)", fontFamily: "var(--font)",
+            fontSize: 12, color: "var(--fg)", fontFamily: "var(--font)",
           }}
         />
         <button
           onClick={handleSend}
           style={{
-            width: 28, height: 28, borderRadius: 6, background: input.trim() ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.06)",
+            width: 28, height: 28, borderRadius: 6, background: input.trim() ? "var(--fg)" : "rgba(0,0,0,0.06)",
             border: "none", cursor: input.trim() ? "pointer" : "not-allowed", display: "flex",
             alignItems: "center", justifyContent: "center", transition: "background 0.15s",
           }}
         >
-          <svg style={{ width: 11, height: 11, stroke: input.trim() ? "#0D1B2A" : "rgba(255,255,255,0.4)", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
+          <svg style={{ width: 11, height: 11, stroke: input.trim() ? "#F5F3EF" : "var(--fg-3)", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
             <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
         </button>
@@ -749,9 +740,9 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
         <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>Advisors</span>
-            <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>{stageLabel}</span>
+            <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.82)", fontWeight: 600 }}>{stageLabel}</span>
           </div>
-          <button onClick={onClose} aria-label="Close panel" style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
+          <button onClick={onClose} aria-label="Close panel" style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.66)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
         </div>
 
         {/* Body */}
@@ -761,7 +752,7 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
             <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#6BA8E8", marginBottom: 6 }}>
               Advisors' Recommendation
             </div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>{ctx.rec}</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.82)", lineHeight: 1.65 }}>{ctx.rec}</div>
           </div>
 
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 0 16px" }} />
@@ -785,7 +776,7 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
                         fontSize: 10, padding: "3px 10px", borderRadius: 4,
                         border: agreed ? "1px solid #6BA8E8" : "1px solid rgba(255,255,255,0.06)",
                         background: agreed ? "rgba(74,144,217,0.1)" : "rgba(255,255,255,0.03)",
-                        color: agreed ? "#6BA8E8" : "rgba(255,255,255,0.65)",
+                        color: agreed ? "#6BA8E8" : "rgba(255,255,255,0.82)",
                         cursor: "pointer", fontFamily: "var(--font)",
                         transition: "all 0.1s",
                       }}
@@ -794,13 +785,13 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
                     </button>
                     <button
                       onClick={() => setSkippedIdx(p => p.includes(i) ? p.filter(x => x !== i) : [...p, i])}
-                      style={{ fontSize: 10, padding: "3px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontFamily: "var(--font)" }}
+                      style={{ fontSize: 10, padding: "3px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.66)", cursor: "pointer", fontFamily: "var(--font)" }}
                     >
                       Skip
                     </button>
                   </div>
                 </div>
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.55 }}>{card.text}</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.84)", lineHeight: 1.55 }}>{card.text}</div>
               </div>
             );
           })}
@@ -808,7 +799,7 @@ function AdvisorsModal({ pathname, onClose }: { pathname: string; onClose: () =>
 
         {/* Footer */}
         <div style={{ padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "flex-end", gap: 8, flexShrink: 0 }}>
-          <button onClick={onClose} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontFamily: "var(--font)" }}>Dismiss</button>
+          <button onClick={onClose} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.66)", cursor: "pointer", fontFamily: "var(--font)" }}>Dismiss</button>
           <button
             onClick={onClose}
             style={{ fontSize: 12, padding: "7px 16px", borderRadius: 5, background: "rgba(255,255,255,0.92)", border: "none", color: "#0D1B2A", cursor: "pointer", fontFamily: "var(--font)", fontWeight: 600 }}
@@ -843,7 +834,7 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
 
   const formatDetail = (text: string) =>
     text.split("\n\n").map((para, i) => (
-      <p key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.75, marginBottom: 12 }}>
+      <p key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.84)", lineHeight: 1.75, marginBottom: 12 }}>
         {para.split("\n").map((line, j) => (
           <span key={j}>
             {line}
@@ -875,12 +866,12 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
               <button
                 onClick={() => setDetailItem(null)}
-                style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", padding: 0 }}
+                style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", color: "rgba(255,255,255,0.66)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font)", padding: 0 }}
               >
                 <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
                 All tools
               </button>
-              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.66)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
             </div>
 
             {/* Detail header */}
@@ -917,7 +908,7 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
           <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.01em" }}>Discover</div>
-              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
+              <button onClick={onClose} aria-label="Close panel" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.66)", fontSize: 18, cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
             </div>
 
             <input
@@ -953,8 +944,8 @@ function DiscoverOverlay({ onClose, pathname }: { onClose: () => void; pathname:
                     {item.icon}
                   </div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.92)", marginBottom: 3 }}>{item.name}</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", lineHeight: 1.4, marginBottom: 5 }}>{item.desc}</div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontStyle: "normal", lineHeight: 1.4 }}>{item.rationale}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.84)", lineHeight: 1.4, marginBottom: 5 }}>{item.desc}</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.66)", fontStyle: "normal", lineHeight: 1.4 }}>{item.rationale}</div>
                 </div>
               ))}
             </div>

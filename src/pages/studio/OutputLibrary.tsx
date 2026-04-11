@@ -131,7 +131,7 @@ export default function OutputLibrary() {
   const isMobile = useMobile();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { setDashContent, setDashOpen } = useShell();
+  const { setDashContent } = useShell();
 
   const [outputs, setOutputs] = useState<OutputRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,7 +195,6 @@ export default function OutputLibrary() {
   // Dashboard panel
   useLayoutEffect(() => {
     if (selectedOutput) {
-      setDashOpen(true);
       setDashContent(
         <SessionDetailPanel
           output={{ ...selectedOutput, content: selectedContent }}
@@ -205,7 +204,6 @@ export default function OutputLibrary() {
         />
       );
     } else {
-      setDashOpen(false);
       setDashContent(
         <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
           Select a session to see its files.
@@ -213,7 +211,7 @@ export default function OutputLibrary() {
       );
     }
     return () => setDashContent(null);
-  }, [selectedOutput, selectedContent, handleReopen, handleDelete, setDashContent, setDashOpen]);
+  }, [selectedOutput, selectedContent, handleReopen, handleDelete, setDashContent]);
 
   const filtered = outputs.filter(o =>
     !search || o.title.toLowerCase().includes(search.toLowerCase())

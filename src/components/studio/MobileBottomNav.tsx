@@ -60,7 +60,7 @@ export default function MobileBottomNav() {
               padding: "8px 12px",
               minWidth: 56,
               minHeight: 44,
-              color: active ? "#F5C642" : "rgba(255,255,255,0.4)",
+              color: active ? "#F5C642" : "rgba(255,255,255,0.72)",
               transition: "color 0.15s ease",
             }}
           >

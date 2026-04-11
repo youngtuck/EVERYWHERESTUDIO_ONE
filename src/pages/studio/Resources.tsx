@@ -171,7 +171,7 @@ export default function Resources() {
   const isMobile = useMobile();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { setDashContent, setDashOpen } = useShell();
+  const { setDashContent } = useShell();
   const nav = useNavigate();
 
   const [resources, setResources] = useState<Resource[]>([]);
@@ -286,7 +286,6 @@ export default function Resources() {
   // Dashboard panel
   useLayoutEffect(() => {
     if (selectedResource) {
-      setDashOpen(true);
       setDashContent(
         <FileDetailPanel
           resource={selectedResource}
@@ -296,7 +295,6 @@ export default function Resources() {
         />
       );
     } else {
-      setDashOpen(false);
       setDashContent(
         <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
           Select a file to see details.
@@ -304,7 +302,7 @@ export default function Resources() {
       );
     }
     return () => setDashContent(null);
-  }, [selectedResource, setDashContent, setDashOpen]);
+  }, [selectedResource, setDashContent]);
 
   const FileRow = ({ resource }: { resource: Resource }) => {
     const active = selectedId === resource.id;

@@ -49,7 +49,7 @@ function useBreadcrumbs(): {
         </span>
         {label !== "Home" && (
           <>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.3 }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--fg-3)", opacity: 0.85 }}>
               <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)", padding: "3px 8px", borderRadius: 6, background: "rgba(200,169,110,0.1)", border: "1px solid rgba(200,169,110,0.18)" }}>
@@ -86,7 +86,7 @@ function WorkBreadcrumb() {
         return (
           <div key={s} style={{ display: "flex", alignItems: "center" }}>
             {i > 0 && (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.25, margin: "0 1px" }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--fg-3)", opacity: 0.8, margin: "0 1px" }}>
                 <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
@@ -103,7 +103,7 @@ function WorkBreadcrumb() {
                 cursor: canClick ? "pointer" : "default",
                 fontWeight: isActive ? 700 : 500,
                 color: isActive ? "var(--fg)" : "var(--fg-3)",
-                opacity: isActive || isDone ? 1 : 0.42,
+                opacity: isActive || isDone ? 1 : 0.78,
                 transition: "color 0.15s ease, opacity 0.15s ease",
               }}
               onMouseEnter={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
@@ -199,8 +199,8 @@ function UserAvatar() {
                 </div>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.92)" }}>{displayName || "User"}</div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>EVERYWHERE Studio</div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Alpha 3.021</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.72)" }}>EVERYWHERE Studio</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.72)" }}>Alpha 3.021</div>
                 </div>
               </div>
             </div>
@@ -216,7 +216,7 @@ function UserAvatar() {
                   key={item.label}
                   role="menuitem"
                   onClick={item.action}
-                  style={{ padding: "7px 10px", fontSize: 12, color: "rgba(255,255,255,0.75)", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
+                  style={{ padding: "7px 10px", fontSize: 12, color: "rgba(255,255,255,0.88)", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                 >

@@ -219,7 +219,7 @@ export default function NotificationBell() {
                     {n.title}
                   </div>
                   {n.body && (
-                    <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2, lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: 12, color: "var(--fg-2)", marginTop: 2, lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {n.body}
                     </div>
                   )}

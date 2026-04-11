@@ -345,7 +345,7 @@ export default function Watch() {
   const nav = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { setDashContent, setDashOpen, setFeedbackContent, setReedPrefill, setActiveDashTab } = useShell();
+  const { setFeedbackContent, setReedPrefill, setActiveDashTab } = useShell();
   const isMobile = useMobile();
 
   const [activeTab, setActiveTab] = useState<"briefing" | "research" | "settings">("briefing");
@@ -646,9 +646,8 @@ export default function Watch() {
   const now = new Date();
   const displayDate = briefingDate || now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
-  // Inject right panel dashboard
+  // Inject right panel dashboard (Reed flyout opens only from the edge launcher)
   useLayoutEffect(() => {
-    setDashOpen(true);
     setFeedbackContent(
       <WatchRightPanel
         briefing={briefing}
@@ -658,7 +657,7 @@ export default function Watch() {
       />
     );
     return () => setFeedbackContent(null);
-  }, [briefing, contentTriggers, opportunities, prefillReed, setDashOpen, setFeedbackContent]);
+  }, [briefing, contentTriggers, opportunities, prefillReed, setFeedbackContent]);
 
   const activeHint = WATCH_TABS.find(t => t.id === activeTab)?.hint ?? "";
 
