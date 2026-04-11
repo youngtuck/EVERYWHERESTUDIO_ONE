@@ -337,13 +337,23 @@ export default function ExplorePage() {
           }} />
 
           <p style={{
-            fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)",
-            maxWidth: 460, marginBottom: 44,
+            fontSize: "clamp(13px, 3.6vw, 17px)", lineHeight: 1.65, color: "var(--xp-dim-dark)",
+            maxWidth: "min(720px, 96vw)", marginBottom: 44,
             animation: `xpHeroSub 0.8s ${EASE} 1.5s both`,
           }}>
-            EVERYWHERE Studio moves your thinking from private to published,
-            <br />
-            at the level your ideas deserve.
+            {isMobile ? (
+              <>
+                EVERYWHERE Studio moves your thinking
+                <br />
+                from private to published, at the level your ideas deserve.
+              </>
+            ) : (
+              <>
+                EVERYWHERE Studio moves your thinking from private to published,
+                <br />
+                at the level your ideas deserve.
+              </>
+            )}
           </p>
 
           <div style={{ animation: `xpHeroCta 0.7s ${EASE} 1.8s both` }}>
