@@ -1101,120 +1101,179 @@ export default function WrapPage() {
     });
     const canContinueToDeliver = buildDone > 0 && !buildStillRunning;
 
+    const buildIntro = (
+      <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0, lineHeight: 1.55 }}>
+        {buildErrors > 0
+          ? "When every row is ready, you move forward automatically. If you prefer, jump ahead with the versions that finished."
+          : "Reed is shaping each channel. This usually stays under a minute per surface."}
+      </p>
+    );
+
+    const renderBuildChannelCard = (fmt: string, showChannelTitle: boolean) => {
+      const st = formatContents[fmt]?.status;
+      const loadingFmt = st === "loading" || st === "pending" || st === undefined;
+      const doneFmt = st === "done";
+      const errFmt = st === "error";
+      return (
+        <div
+          key={fmt}
+          className="liquid-glass-card"
+          style={{
+            padding: "18px 20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            flexWrap: "wrap" as const,
+            border: errFmt ? "1px solid rgba(220,38,38,0.25)" : undefined,
+          }}
+        >
+          <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+            {showChannelTitle ? (
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{fmt}</div>
+            ) : null}
+            <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: showChannelTitle ? 4 : 0, lineHeight: 1.45 }}>
+              {loadingFmt
+                ? "Reed is adapting your draft for this channel…"
+                : errFmt
+                  ? "This request did not complete. Retry the same channel, or continue with the ones that are ready."
+                  : "Ready to open in Your pieces."}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            {errFmt ? (
+              <button
+                type="button"
+                className="liquid-glass-btn-gold"
+                disabled={loadingFmt}
+                onClick={() => void adaptFormat(fmt)}
+                style={{ padding: "8px 16px" }}
+              >
+                <span className="liquid-glass-btn-gold-label">Retry</span>
+              </button>
+            ) : null}
+            {loadingFmt ? (
+              <div
+                title="Working"
+                style={{
+                  width: 22, height: 22, borderRadius: "50%",
+                  border: "2px solid rgba(245,198,66,0.35)",
+                  borderTopColor: "var(--gold-bright, #F5C642)",
+                  animation: "wrapspin 0.85s linear infinite",
+                }}
+              />
+            ) : doneFmt ? (
+              <span style={{
+                fontSize: 11, fontWeight: 700, color: "#16A34A",
+                padding: "4px 10px", borderRadius: 8,
+                background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.28)",
+              }}>Ready</span>
+            ) : null}
+          </div>
+        </div>
+      );
+    };
+
+    const buildFooter = (
+      <div className="liquid-glass-card" style={{ padding: "16px 18px", marginTop: 8, display: "flex", flexWrap: "wrap" as const, gap: 12, alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
+          <strong style={{ color: "var(--fg)", fontWeight: 600 }}>{buildDone}</strong>
+          {" "}of{" "}
+          <strong style={{ color: "var(--fg)", fontWeight: 600 }}>{formats.length}</strong>
+          {" "}channel{formats.length !== 1 ? "s" : ""} ready
+          {buildErrors > 0 ? (
+            <span style={{ color: "var(--fg-3)" }}>{` · ${buildErrors} ${buildErrors === 1 ? "needs" : "need"} attention`}</span>
+          ) : null}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 10 }}>
+          <button
+            type="button"
+            className="liquid-glass-btn"
+            onClick={() => {
+              setWrapPhase("choose");
+              setSelectedChannels([...formats]);
+            }}
+            style={{ padding: "10px 16px" }}
+          >
+            <span className="liquid-glass-btn-label" style={{ fontWeight: 600, color: "var(--fg-2)" }}>Back to channels</span>
+          </button>
+          <button
+            type="button"
+            className="liquid-glass-btn-gold"
+            disabled={!canContinueToDeliver}
+            onClick={() => setWrapPhase("deliver")}
+            style={{
+              padding: "10px 20px",
+              opacity: canContinueToDeliver ? 1 : 0.45,
+              cursor: canContinueToDeliver ? "pointer" : "not-allowed",
+            }}
+          >
+            <span className="liquid-glass-btn-gold-label">
+              {buildDone > 0 ? `View ${buildDone} ready piece${buildDone !== 1 ? "s" : ""}` : "Wait for at least one channel"}
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
         <WrapStepRail phase="build" />
-        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto", display: "grid", gap: 12 }}>
-            <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 4px", lineHeight: 1.55 }}>
-              {buildErrors > 0
-                ? "When every row is ready, you move forward automatically. If you prefer, jump ahead with the versions that finished."
-                : "Reed is shaping each channel. This usually stays under a minute per surface."}
-            </p>
-            {formats.map(fmt => {
-              const st = formatContents[fmt]?.status;
-              const loadingFmt = st === "loading" || st === "pending" || st === undefined;
-              const doneFmt = st === "done";
-              const errFmt = st === "error";
-              return (
-                <div
-                  key={fmt}
-                  className="liquid-glass-card"
-                  style={{
-                    padding: "18px 20px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 16,
-                    flexWrap: "wrap" as const,
-                    border: errFmt ? "1px solid rgba(220,38,38,0.25)" : undefined,
-                  }}
-                >
-                  <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{fmt}</div>
-                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4, lineHeight: 1.45 }}>
-                      {loadingFmt
-                        ? "Reed is adapting your draft for this channel…"
-                        : errFmt
-                          ? "This request did not complete. Retry the same channel, or continue with the ones that are ready."
-                          : "Ready to open in Your pieces."}
-                    </div>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px" }}>
+          {!isMobile ? (
+            <div style={{
+              maxWidth: 920,
+              margin: "0 auto",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "flex-start",
+              gap: 28,
+            }}>
+              <nav
+                aria-label="Channels generating"
+                style={{
+                  width: 168,
+                  flexShrink: 0,
+                  position: "sticky",
+                  top: 8,
+                  alignSelf: "flex-start",
+                  zIndex: 2,
+                  padding: "6px 0 8px",
+                  borderRight: "1px solid var(--glass-border)",
+                  background: "var(--surface)",
+                  boxShadow: "12px 0 20px -8px var(--surface)",
+                }}
+              >
+                {formats.map((fmt, i) => (
+                  <div
+                    key={fmt}
+                    style={{
+                      padding: i === 0 ? "4px 12px 20px 2px" : "20px 12px 20px 2px",
+                      borderTop: i === 0 ? "none" : "1px solid var(--glass-border)",
+                    }}
+                  >
+                    <div style={{
+                      fontSize: 14, fontWeight: 700, color: "var(--fg)",
+                      letterSpacing: "-0.02em", lineHeight: 1.2,
+                    }}
+                    >{fmt}</div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                    {errFmt ? (
-                      <button
-                        type="button"
-                        className="liquid-glass-btn-gold"
-                        disabled={loadingFmt}
-                        onClick={() => void adaptFormat(fmt)}
-                        style={{ padding: "8px 16px" }}
-                      >
-                        <span className="liquid-glass-btn-gold-label">Retry</span>
-                      </button>
-                    ) : null}
-                    {loadingFmt ? (
-                      <div
-                        title="Working"
-                        style={{
-                          width: 22, height: 22, borderRadius: "50%",
-                          border: "2px solid rgba(245,198,66,0.35)",
-                          borderTopColor: "var(--gold-bright, #F5C642)",
-                          animation: "wrapspin 0.85s linear infinite",
-                        }}
-                      />
-                    ) : doneFmt ? (
-                      <span style={{
-                        fontSize: 11, fontWeight: 700, color: "#16A34A",
-                        padding: "4px 10px", borderRadius: 8,
-                        background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.28)",
-                      }}>Ready</span>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-            <style>{`@keyframes wrapspin { to { transform: rotate(360deg); } }`}</style>
-
-            <div className="liquid-glass-card" style={{ padding: "16px 18px", marginTop: 8, display: "flex", flexWrap: "wrap" as const, gap: 12, alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
-                <strong style={{ color: "var(--fg)", fontWeight: 600 }}>{buildDone}</strong>
-                {" "}of{" "}
-                <strong style={{ color: "var(--fg)", fontWeight: 600 }}>{formats.length}</strong>
-                {" "}channel{formats.length !== 1 ? "s" : ""} ready
-                {buildErrors > 0 ? (
-                  <span style={{ color: "var(--fg-3)" }}>{` · ${buildErrors} ${buildErrors === 1 ? "needs" : "need"} attention`}</span>
-                ) : null}
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 10 }}>
-                <button
-                  type="button"
-                  className="liquid-glass-btn"
-                  onClick={() => {
-                    setWrapPhase("choose");
-                    setSelectedChannels([...formats]);
-                  }}
-                  style={{ padding: "10px 16px" }}
-                >
-                  <span className="liquid-glass-btn-label" style={{ fontWeight: 600, color: "var(--fg-2)" }}>Back to channels</span>
-                </button>
-                <button
-                  type="button"
-                  className="liquid-glass-btn-gold"
-                  disabled={!canContinueToDeliver}
-                  onClick={() => setWrapPhase("deliver")}
-                  style={{
-                    padding: "10px 20px",
-                    opacity: canContinueToDeliver ? 1 : 0.45,
-                    cursor: canContinueToDeliver ? "pointer" : "not-allowed",
-                  }}
-                >
-                  <span className="liquid-glass-btn-gold-label">
-                    {buildDone > 0 ? `View ${buildDone} ready piece${buildDone !== 1 ? "s" : ""}` : "Wait for at least one channel"}
-                  </span>
-                </button>
+                ))}
+              </nav>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                {buildIntro}
+                {formats.map(fmt => renderBuildChannelCard(fmt, false))}
+                {buildFooter}
               </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ maxWidth: 720, margin: "0 auto", display: "grid", gap: 12 }}>
+              {buildIntro}
+              {formats.map(fmt => renderBuildChannelCard(fmt, true))}
+              {buildFooter}
+            </div>
+          )}
+          <style>{`@keyframes wrapspin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );

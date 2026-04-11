@@ -1929,13 +1929,10 @@ function GenerationProgress() {
 
 // ── Review progress (format adaptation + quality pipeline) ───────────────────
 function ReviewProgress({
-  pipelineRunning, formatDrafts, selectedFormats, quietAdaptationList,
+  formatDrafts, selectedFormats,
 }: {
-  pipelineRunning: boolean;
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
   selectedFormats: string[];
-  /** When true, skip the per-channel grid (default multi-channel adaptation runs in the background). */
-  quietAdaptationList?: boolean;
 }) {
   const formatStatuses = selectedFormats.map(f => ({
     name: f,
@@ -1945,61 +1942,18 @@ function ReviewProgress({
     && formatStatuses.every(f => f.status === "done" || f.status === "error");
 
   return (
-    <div style={{ padding: "32px clamp(16px, 3vw, 28px)", width: "100%", boxSizing: "border-box" as const }}>
-      {/* Format Adaptation */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.03em", marginBottom: 12 }}>
-          {quietAdaptationList
-            ? (allFormatsComplete ? "Previews ready" : "Preparing previews")
-            : (allFormatsComplete ? "Formats adapted" : "Adapting formats")}
+    <div style={{ padding: "16px clamp(16px, 3vw, 28px) 24px", width: "100%", boxSizing: "border-box" as const }}>
+      {/* Format adaptation (compact; per-channel grid removed so Review does not crowd the stage) */}
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fg)", letterSpacing: "0.03em", marginBottom: 8 }}>
+          {allFormatsComplete ? "Previews ready" : "Preparing previews"}
         </div>
-        {quietAdaptationList ? (
-          <div style={{
-            fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, padding: "12px 14px",
-            borderRadius: 8, border: "1px solid var(--glass-border)", background: "var(--glass-card)",
-          }}>
-            Reed is shaping channel-specific versions in the background. You will confirm which formats save to Catalog when you start Wrap.
-          </div>
-        ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
-          {formatStatuses.map((f, i) => (
-            <div
-              key={f.name}
-              className="progress-card"
-              style={{
-                padding: "10px 14px", borderRadius: 8,
-                border: "1px solid var(--glass-border)",
-                background: f.status === "done" ? "rgba(74,144,217,0.06)" : "var(--glass-card)",
-                transition: "all 0.4s ease",
-                animationDelay: `${i * 100}ms`,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{
-                  width: 16, height: 16, borderRadius: "50%",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: f.status === "done" ? "var(--blue)" : f.status === "generating" ? "var(--gold-bright)" : "var(--line)",
-                  transition: "all 0.4s ease",
-                }}>
-                  {f.status === "done" && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  )}
-                  {f.status === "generating" && (
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "white", animation: "pulse-dot 1s ease-in-out infinite" }} />
-                  )}
-                </div>
-                <span style={{
-                  fontSize: 12, fontWeight: f.status === "generating" ? 600 : 400,
-                  color: f.status === "done" ? "var(--blue)" : f.status === "generating" ? "var(--fg)" : "var(--fg-3)",
-                  transition: "all 0.3s ease",
-                }}>
-                  {f.name}
-                </span>
-              </div>
-            </div>
-          ))}
+        <div style={{
+          fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, padding: "10px 12px",
+          borderRadius: 8, border: "1px solid var(--glass-border)", background: "var(--glass-card)",
+        }}>
+          Reed is shaping channel-specific versions in the background. You will confirm which formats save to Catalog when you start Wrap.
         </div>
-        )}
       </div>
 
       {/* Quality Pipeline - simplified */}
@@ -2451,10 +2405,8 @@ function StageReview({
           )}
           {running ? (
             <ReviewProgress
-              pipelineRunning={running}
               formatDrafts={formatDrafts}
               selectedFormats={tabs}
-              quietAdaptationList={!showChannelPicker}
             />
           ) : (
             <>
@@ -2901,6 +2853,13 @@ export default function WorkSession() {
         .single();
 
       if (!data) return;
+
+      // Clear stale multi-channel picks from an older session so Review does not show the four-format grid.
+      setSelectedFormats(DEFAULT_FORMATS);
+
+      if (data.output_type) {
+        setOutputType(data.output_type);
+      }
 
       // Seed the conversation with the title as context
       if (reopenTitle) {
