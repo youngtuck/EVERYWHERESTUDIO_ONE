@@ -17,6 +17,14 @@ import "./shared.css";
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
 
+type WatchTabId = "briefing" | "research" | "settings";
+
+const WATCH_TABS: { id: WatchTabId; label: string; hint: string }[] = [
+  { id: "briefing", label: "Briefing", hint: "Scored signals from your watchlist" },
+  { id: "research", label: "Research", hint: "Find outlets and people to track" },
+  { id: "settings", label: "Settings", hint: "Sources, keywords, and delivery" },
+];
+
 // ── Types ──────────────────────────────────────────────────────
 interface Signal {
   title: string;
@@ -76,7 +84,7 @@ function SignalCard({ signal, ctaLabel, ctaColor, onCta }: {
         )}
       </div>
       {onCta && (
-        <button onClick={onCta} style={{
+        <button type="button" onClick={onCta} style={{
           fontSize: 10, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const,
           padding: "3px 8px", borderRadius: 4, border: `1px solid ${ctaColor}33`,
           background: `${ctaColor}09`, color: ctaColor, flexShrink: 0,
@@ -102,15 +110,56 @@ function OpportunityRow({ signal, active }: { signal: Signal; active: boolean })
   );
 }
 
-// ── Briefing Card ──────────────────────────────────────────────
-function Card({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+// ── Briefing section card (header + body hierarchy) ──────────
+function Card({
+  title, subtitle, count, children, action,
+}: {
+  title: string;
+  subtitle?: string;
+  count?: number;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className="liquid-glass-card" style={{ padding: 14, marginBottom: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>{title}</div>
-        {action}
+    <div className="liquid-glass-card" style={{ padding: 0, marginBottom: 14, overflow: "hidden" }}>
+      <div style={{
+        padding: "14px 16px",
+        borderBottom: "1px solid var(--glass-border)",
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: 12,
+        background: "rgba(0,0,0,0.02)",
+      }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase" as const,
+            color: "var(--fg-3)",
+            fontFamily: "var(--studio-mono-font, ui-monospace, monospace)",
+          }}>{title}</div>
+          {subtitle ? (
+            <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 5, lineHeight: 1.45 }}>{subtitle}</div>
+          ) : null}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {count != null && count > 0 ? (
+            <span style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: "var(--fg-3)",
+              padding: "3px 9px",
+              borderRadius: 999,
+              background: "var(--glass-surface)",
+              border: "1px solid var(--glass-border)",
+            }}>{count}</span>
+          ) : null}
+          {action}
+        </div>
       </div>
-      {children}
+      <div style={{ padding: "6px 16px 14px" }}>{children}</div>
     </div>
   );
 }
@@ -119,21 +168,61 @@ function Card({ title, children, action }: { title: string; children: React.Reac
 function AddRow({ placeholder, onAdd }: { placeholder: string; onAdd: (v: string) => void }) {
   const [v, setV] = useState("");
   return (
-    <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-      <input value={v} onChange={e => setV(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && v.trim()) { onAdd(v.trim()); setV(""); } }} placeholder={placeholder} style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: "4px 8px", fontSize: 10, color: "var(--fg)", fontFamily: FONT, outline: "none", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }} />
-      <button onClick={() => { if (v.trim()) { onAdd(v.trim()); setV(""); } }} style={{ padding: "4px 9px", borderRadius: 4, background: "var(--fg)", border: "none", color: "var(--surface)", fontSize: 16, lineHeight: 1, cursor: "pointer" }}>+</button>
+    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+      <input
+        value={v}
+        onChange={e => setV(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter" && v.trim()) { onAdd(v.trim()); setV(""); } }}
+        placeholder={placeholder}
+        style={{
+          flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10,
+          padding: "8px 11px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none",
+          backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => { if (v.trim()) { onAdd(v.trim()); setV(""); } }}
+        style={{
+          padding: "0 14px", borderRadius: 10, background: "var(--fg)", border: "none", color: "var(--surface)",
+          fontSize: 18, lineHeight: 1, cursor: "pointer", fontWeight: 300,
+        }}
+        aria-label="Add"
+      >+</button>
     </div>
   );
 }
 
 // ── Tag Chips ──────────────────────────────────────────────────
 function TagChips({ items, onRemove, chipStyle }: { items: string[]; onRemove: (v: string) => void; chipStyle?: React.CSSProperties }) {
+  if (items.length === 0) {
+    return (
+      <div style={{ fontSize: 11, color: "var(--fg-3)", fontStyle: "italic", marginBottom: 10, padding: "4px 0" }}>
+        None yet. Add below.
+      </div>
+    );
+  }
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
       {items.map(item => (
-        <span key={item} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--fg-2)", background: "var(--glass-surface)", border: "1px solid var(--glass-border)", padding: "3px 8px", borderRadius: 4, ...chipStyle }}>
+        <span
+          key={item}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--fg-2)",
+            background: "var(--glass-surface)", border: "1px solid var(--glass-border)", padding: "5px 10px",
+            borderRadius: 8, ...chipStyle,
+          }}
+        >
           {item}
-          <span onClick={() => onRemove(item)} style={{ cursor: "pointer", color: "var(--fg-3)", fontSize: 12, lineHeight: 1 }}>&times;</span>
+          <button
+            type="button"
+            onClick={() => onRemove(item)}
+            aria-label={`Remove ${item}`}
+            style={{
+              cursor: "pointer", color: "var(--fg-3)", fontSize: 14, lineHeight: 1, border: "none", background: "none",
+              padding: 0, display: "flex", alignItems: "center",
+            }}
+          >&times;</button>
         </span>
       ))}
     </div>
@@ -142,14 +231,41 @@ function TagChips({ items, onRemove, chipStyle }: { items: string[]; onRemove: (
 
 // ── Source Rows (newsletter/podcast/pub style) ─────────────────
 function SourceRows({ items, onRemove, borderColor }: { items: string[]; onRemove: (v: string) => void; borderColor: string }) {
+  if (items.length === 0) {
+    return (
+      <div style={{ fontSize: 11, color: "var(--fg-3)", fontStyle: "italic", marginBottom: 10, padding: "4px 0" }}>
+        None yet. Add below.
+      </div>
+    );
+  }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 10 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 10, borderRadius: 8, overflow: "hidden", border: "1px solid var(--glass-border)" }}>
       {items.map(item => (
-        <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderLeft: `3px solid ${borderColor}`, borderBottom: "1px solid var(--glass-border)" }}>
-          <span style={{ flex: 1, fontSize: 11, color: "var(--fg-2)" }}>{item}</span>
-          <span onClick={() => onRemove(item)} style={{ cursor: "pointer", color: "var(--fg-3)", fontSize: 12, lineHeight: 1 }}>&times;</span>
+        <div key={item} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderLeft: `3px solid ${borderColor}`, borderBottom: "1px solid var(--glass-border)", background: "rgba(0,0,0,0.015)" }}>
+          <span style={{ flex: 1, fontSize: 12, color: "var(--fg-2)" }}>{item}</span>
+          <button
+            type="button"
+            onClick={() => onRemove(item)}
+            aria-label={`Remove ${item}`}
+            style={{ cursor: "pointer", color: "var(--fg-3)", fontSize: 14, lineHeight: 1, border: "none", background: "none", padding: 4 }}
+          >&times;</button>
         </div>
       ))}
+    </div>
+  );
+}
+
+function WatchFieldGroup({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 4 }}>
+      <div style={{
+        fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)",
+        marginBottom: description ? 4 : 8, fontFamily: "var(--studio-mono-font, ui-monospace, monospace)",
+      }}>{title}</div>
+      {description ? (
+        <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 10, lineHeight: 1.45 }}>{description}</div>
+      ) : null}
+      {children}
     </div>
   );
 }
@@ -213,7 +329,7 @@ function WatchRightPanel({ briefing, contentTriggers, opportunities, prefillReed
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
         {chips.map((chip, i) => (
-          <button key={i} onClick={() => prefillReed(chip.prefill)} style={{
+          <button key={i} type="button" onClick={() => prefillReed(chip.prefill)} style={{
             fontSize: 10, padding: "4px 10px", borderRadius: 99,
             background: "#EDF1F5", border: "1px solid #CBD5E1",
             color: "#334155", cursor: "pointer", fontFamily: "inherit",
@@ -544,63 +660,143 @@ export default function Watch() {
     return () => setFeedbackContent(null);
   }, [briefing, contentTriggers, opportunities, prefillReed, setDashOpen, setFeedbackContent]);
 
-  // ── Settings tab content ─────────────────────────────────────
-  const SettingsLabel = ({ children }: { children: React.ReactNode }) => (
-    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>{children}</div>
-  );
+  const activeHint = WATCH_TABS.find(t => t.id === activeTab)?.hint ?? "";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
-      {/* ── Tab Bar ── */}
-      <div className="liquid-glass" style={{ display: "flex", alignItems: "center", borderRadius: 0, borderBottom: "1px solid rgba(0,0,0,0.06)", padding: "0 20px", flexShrink: 0 }}>
-        {(["briefing", "research", "settings"] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={{
-            fontSize: 11, fontWeight: activeTab === tab ? 600 : 500,
-            color: activeTab === tab ? "var(--fg)" : "var(--fg-3)",
-            padding: "11px 14px", borderBottom: activeTab === tab ? "2px solid var(--fg)" : "2px solid transparent",
-            cursor: "pointer", transition: "color 0.1s, border-color 0.1s",
-            background: "none", border: "none", borderBottomStyle: "solid",
-            fontFamily: FONT,
-          }}>{tab.charAt(0).toUpperCase() + tab.slice(1)}</button>
-        ))}
+      <header className="liquid-glass" style={{
+        display: "flex", flexDirection: "column", flexShrink: 0, borderRadius: 0,
+        borderBottom: "1px solid var(--glass-border)",
+      }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 16, flexWrap: "wrap", padding: "12px 20px 10px",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", minWidth: 0 }}>
+            <div
+              role="tablist"
+              aria-label="Watch sections"
+              style={{
+                display: "inline-flex", gap: 4, padding: 5,
+                borderRadius: 14, background: "rgba(0,0,0,0.028)", border: "1px solid var(--glass-border)",
+              }}
+            >
+              {WATCH_TABS.map(({ id, label }) => {
+                const selected = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => setActiveTab(id)}
+                    style={{
+                      fontSize: 11, fontWeight: selected ? 600 : 500, fontFamily: FONT,
+                      color: selected ? "var(--fg)" : "var(--fg-3)",
+                      padding: "7px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+                      background: selected ? "var(--glass-surface)" : "transparent",
+                      boxShadow: selected ? "0 1px 0 rgba(0,0,0,0.04)" : "none",
+                      transition: "background 0.12s, color 0.12s",
+                    }}
+                  >{label}</button>
+                );
+              })}
+            </div>
+            <p style={{
+              margin: 0, fontSize: 11, color: "var(--fg-3)", lineHeight: 1.45, maxWidth: 320,
+              display: isMobile ? "none" : "block",
+            }}>{activeHint}</p>
+          </div>
+        </div>
 
-        {/* Right-side controls */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 12, flexWrap: "wrap", padding: "10px 20px 12px",
+          borderTop: "1px solid var(--glass-border)", background: "rgba(0,0,0,0.02)",
+        }}>
           {activeTab === "briefing" && (
-            <>
-              <span style={{ fontSize: 10, color: "var(--fg-3)" }}>{displayDate} · {briefingTime}</span>
-              <button onClick={handleGenerateBriefing} disabled={generatingBriefing || loadingBriefing} style={{
-                fontSize: 10, fontWeight: 600, padding: "4px 14px", borderRadius: 5,
-                background: "var(--fg)", color: "var(--gold, #F5C642)", border: "none",
-                cursor: generatingBriefing ? "not-allowed" : "pointer", fontFamily: FONT,
-                letterSpacing: "0.02em", opacity: generatingBriefing ? 0.5 : 1,
-              }}>{generatingBriefing ? "Running..." : "Run Brief"}</button>
-            </>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flex: 1, flexWrap: "wrap", width: "100%" }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 2 }}>
+                  Latest run
+                </div>
+                <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.4 }}>
+                  {displayDate}
+                  <span style={{ color: "var(--fg-3)", margin: "0 6px" }}>·</span>
+                  <span style={{ fontFamily: "var(--studio-mono-font, ui-monospace, monospace)" }}>{briefingTime}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleGenerateBriefing}
+                disabled={generatingBriefing || loadingBriefing}
+                style={{
+                  fontSize: 11, fontWeight: 600, padding: "8px 18px", borderRadius: 10,
+                  background: "var(--fg)", color: "var(--gold, #F5C642)", border: "none",
+                  cursor: generatingBriefing || loadingBriefing ? "not-allowed" : "pointer", fontFamily: FONT,
+                  letterSpacing: "0.02em", opacity: generatingBriefing || loadingBriefing ? 0.5 : 1,
+                  flexShrink: 0,
+                }}
+              >{generatingBriefing ? "Running..." : "Run Brief"}</button>
+            </div>
           )}
+
+          {activeTab === "research" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", flex: 1 }}>
+              <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.45, flex: 1, minWidth: 200 }}>
+                Results come from the open web. Add anything you want Reed to remember in Settings.
+              </div>
+            </div>
+          )}
+
           {activeTab === "settings" && (
-            <>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>FREQ</span>
-              {([["Daily", "daily"], ["Weekly", "weekly"], ["Real-time", "realtime"]] as const).map(([label, val]) => (
-                <label key={val} style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 10, color: "var(--fg-2)", cursor: "pointer" }}>
-                  <input type="radio" name="freq" checked={frequency === val} onChange={() => setFrequency(val as any)} style={{ accentColor: "var(--blue, #4A90D9)" }} />{label}
-                </label>
-              ))}
-              <button onClick={handleSaveSettings} disabled={saving} style={{
-                fontSize: 10, fontWeight: 600, padding: "4px 14px", borderRadius: 5,
-                background: "var(--fg)", color: "var(--gold, #F5C642)", border: "none",
-                cursor: saving ? "not-allowed" : "pointer", fontFamily: FONT, letterSpacing: "0.02em",
-                opacity: saving ? 0.5 : 1,
-              }}>{saving ? "Saving..." : "Save"}</button>
-            </>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", width: "100%" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>
+                  Briefing cadence
+                </span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {([
+                    ["Daily", "daily" as const],
+                    ["Weekly", "weekly" as const],
+                    ["Real-time", "realtime" as const],
+                  ] as const).map(([label, val]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setFrequency(val)}
+                      style={{
+                        fontSize: 11, fontWeight: frequency === val ? 600 : 500,
+                        padding: "6px 12px", borderRadius: 9, border: "1px solid var(--glass-border)",
+                        background: frequency === val ? "var(--glass-surface)" : "transparent",
+                        color: frequency === val ? "var(--fg)" : "var(--fg-3)",
+                        cursor: "pointer", fontFamily: FONT,
+                      }}
+                    >{label}</button>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                disabled={saving}
+                style={{
+                  fontSize: 11, fontWeight: 600, padding: "8px 18px", borderRadius: 10,
+                  background: "var(--fg)", color: "var(--gold, #F5C642)", border: "none",
+                  cursor: saving ? "not-allowed" : "pointer", fontFamily: FONT, letterSpacing: "0.02em",
+                  opacity: saving ? 0.5 : 1, flexShrink: 0,
+                }}
+              >{saving ? "Saving..." : "Save settings"}</button>
+            </div>
           )}
         </div>
-      </div>
+      </header>
 
       {/* ── Tab Content ── */}
       <div style={{ flex: 1, overflowY: "auto" }}>
         {/* ── BRIEFING TAB ── */}
         {activeTab === "briefing" && (
-          <div style={{ padding: 20 }}>
+          <div style={{ padding: "20px 20px 28px", maxWidth: 760, margin: "0 auto", width: "100%" }}>
             {loadingBriefing ? (
               <div style={{ fontSize: 12, color: "var(--fg-3)", padding: "40px 0", textAlign: "center" as const }}>Loading briefing...</div>
             ) : generatingBriefing ? (
@@ -608,22 +804,36 @@ export default function Watch() {
                 Generating your briefing. This takes about 60 seconds...
               </div>
             ) : contentTriggers.length === 0 && opportunities.length === 0 && marketSignals.length === 0 ? (
-              <div style={{ textAlign: "center" as const, padding: "48px 24px" }}>
-                <div style={{ fontSize: 28, color: "var(--line)", marginBottom: 16 }}>&#9673;</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>No briefing yet</div>
-                <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.6, marginBottom: 20, maxWidth: 320, margin: "0 auto 20px" }}>
-                  Add your keywords and sources in the Settings tab, then hit Run Brief to generate your first briefing.
+              <div className="liquid-glass-card" style={{ textAlign: "center" as const, padding: "40px 28px", maxWidth: 400, margin: "0 auto" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 10 }}>
+                  Sentinel
                 </div>
-                <button onClick={handleGenerateBriefing} disabled={generatingBriefing} style={{
-                  fontSize: 12, fontWeight: 600, padding: "9px 20px", borderRadius: 8,
+                <div style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 10 }}>No briefing yet</div>
+                <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.65, marginBottom: 22 }}>
+                  Configure keywords and sources in Settings, then run a brief. Reed ranks what matters for your next move.
+                </div>
+                <button type="button" onClick={handleGenerateBriefing} disabled={generatingBriefing} style={{
+                  fontSize: 12, fontWeight: 600, padding: "10px 22px", borderRadius: 10,
                   background: "var(--fg)", border: "none", color: "var(--surface)",
                   cursor: "pointer", fontFamily: FONT,
                 }}>Generate briefing</button>
               </div>
             ) : (
               <>
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>
+                    At a glance
+                  </div>
+                  <div style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
+                    Top five per section. Use a signal in Work, or open Ask Reed from the right panel for deeper follow-up.
+                  </div>
+                </div>
                 {contentTriggers.length > 0 && (
-                  <Card title="Content Triggers">
+                  <Card
+                    title="Content triggers"
+                    subtitle="Timely hooks Reed surfaced from your sources."
+                    count={Math.min(5, contentTriggers.length)}
+                  >
                     {contentTriggers.slice(0, 5).map((item, i) => (
                       <SignalCard key={i} signal={item}
                         ctaLabel={item.cta_label === "Note it" ? "Note it" : "Use this"}
@@ -640,16 +850,24 @@ export default function Watch() {
                   </Card>
                 )}
                 {opportunities.length > 0 && (
-                  <Card title="Opportunities">
+                  <Card
+                    title="Opportunities"
+                    subtitle="Angles worth drafting while the window is open."
+                    count={Math.min(5, opportunities.length)}
+                  >
                     {opportunities.slice(0, 5).map((item, i) => (
-                      <OpportunityRow key={i} signal={item} active={(item as any).priority !== "Low"} />
+                      <OpportunityRow key={i} signal={item} active={item.priority !== "Low"} />
                     ))}
                   </Card>
                 )}
                 {marketSignals.length > 0 && (
-                  <Card title="Market Signals">
+                  <Card
+                    title="Market signals"
+                    subtitle="Movement from competitors and named voices you track."
+                    count={Math.min(5, marketSignals.length)}
+                  >
                     {marketSignals.slice(0, 5).map((item, i) => (
-                      <OpportunityRow key={i} signal={item} active={(item as any).priority === "High"} />
+                      <OpportunityRow key={i} signal={item} active={item.priority === "High"} />
                     ))}
                   </Card>
                 )}
@@ -660,144 +878,203 @@ export default function Watch() {
 
         {/* ── RESEARCH TAB ── */}
         {activeTab === "research" && (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <div style={{ padding: 20, flexShrink: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>Research a person, publication, or topic</div>
-              <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 12 }}>Reed searches across podcasts, newsletters, Substack, Reddit, and publications. You decide what to follow.</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input value={researchQuery} onChange={e => setResearchQuery(e.target.value)}
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "20px 20px 24px", maxWidth: 820, margin: "0 auto", width: "100%" }}>
+            <div className="liquid-glass-card" style={{ padding: 18, marginBottom: 16, flexShrink: 0 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>
+                Discovery
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Find a person, publication, or topic</div>
+              <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, marginBottom: 16 }}>
+                Search pulls live pages. When something fits your watchlist, add it as a keyword, publication, or competitor without leaving this tab.
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <input
+                  value={researchQuery}
+                  onChange={e => setResearchQuery(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") handleResearch(); }}
                   placeholder="e.g. Scott Galloway, Stratechery, fractional CAIO..."
-                  style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }} />
-                <button onClick={handleResearch} disabled={searching}
-                  style={{ padding: "8px 16px", borderRadius: 8, background: "var(--fg)", color: "var(--surface)", border: "none", fontSize: 12, fontWeight: 600, cursor: searching ? "not-allowed" : "pointer", fontFamily: FONT, opacity: searching ? 0.5 : 1 }}>
-                  {searching ? "Searching..." : "Search"}
-                </button>
+                  aria-label="Research query"
+                  style={{
+                    flex: "1 1 220px", minWidth: 0, background: "var(--glass-input)", border: "1px solid var(--glass-border)",
+                    borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--fg)", fontFamily: FONT, outline: "none",
+                    backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleResearch}
+                  disabled={searching}
+                  style={{
+                    padding: "10px 22px", borderRadius: 10, background: "var(--fg)", color: "var(--surface)", border: "none",
+                    fontSize: 13, fontWeight: 600, cursor: searching ? "not-allowed" : "pointer", fontFamily: FONT, opacity: searching ? 0.5 : 1,
+                  }}
+                >{searching ? "Searching..." : "Search"}</button>
               </div>
             </div>
 
             {researchMessage && (
-              <div style={{ padding: "10px 20px", background: "rgba(74,144,217,0.05)", borderBottom: "1px solid rgba(74,144,217,0.15)", flexShrink: 0 }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--fg)", flexShrink: 0 }} />
-                  <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, flex: 1 }}>{researchMessage}</div>
+              <div className="liquid-glass-card" style={{ padding: "14px 16px", marginBottom: 16, flexShrink: 0, background: "rgba(74,144,217,0.04)", borderColor: "rgba(74,144,217,0.2)" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--blue, #4A90D9)", marginBottom: 6 }}>
+                  Summary
                 </div>
+                <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6 }}>{researchMessage}</div>
               </div>
             )}
 
-            {/* Results */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "0 20px" }}>
-              {searching && (
-                <div style={{ fontSize: 12, color: "var(--fg-3)", textAlign: "center" as const, paddingTop: 40 }}>Searching...</div>
-              )}
+            <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 10, marginBottom: 10, paddingBottom: 8, borderBottom: "1px solid var(--glass-border)",
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>
+                  Results
+                </div>
+                {!searching && searchResults.length > 0 ? (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, color: "var(--fg-3)", padding: "3px 9px", borderRadius: 999,
+                    background: "var(--glass-surface)", border: "1px solid var(--glass-border)",
+                  }}>{searchResults.length}</span>
+                ) : null}
+              </div>
 
-              {!searching && searchResults.length > 0 && searchResults.map((result, i) => (
-                <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid var(--glass-border)" }}>
-                  {result.url ? (
-                    <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", textDecoration: "none" }}>
-                      {result.title || result.url}
-                    </a>
-                  ) : (
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>{result.title || "Untitled"}</div>
-                  )}
-                  {result.url && (
-                    <div style={{ fontSize: 10, color: "var(--fg-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, maxWidth: 400 }}>{result.url}</div>
-                  )}
-                  {result.description && (
-                    <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5, marginTop: 4, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{result.description}</div>
-                  )}
-                  <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
-                    <button onClick={() => {
-                      const name = result.title || result.url || "";
-                      if (name) { addKeyword(name); toast("Added as keyword."); }
-                    }} style={{
-                      fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 4,
-                      background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.2)",
-                      color: "var(--blue, #4A90D9)", cursor: "pointer", fontFamily: FONT,
-                    }}>+ Keyword</button>
-                    <button onClick={() => {
-                      const name = result.title || result.url || "";
-                      if (name) { addItem(setPublications)(name); toast("Added as source."); }
-                    }} style={{
-                      fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 4,
-                      background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)",
-                      color: "#7C3AED", cursor: "pointer", fontFamily: FONT,
-                    }}>+ Source</button>
-                    <button onClick={() => {
-                      const name = result.title || result.url || "";
-                      if (name) { addItem(setCompetitors)(name); toast("Added as competitor."); }
-                    }} style={{
-                      fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 4,
-                      background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
-                      color: "#DC2626", cursor: "pointer", fontFamily: FONT,
-                    }}>+ Competitor</button>
+              <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
+                {searching && (
+                  <div style={{ fontSize: 12, color: "var(--fg-3)", textAlign: "center" as const, paddingTop: 36 }}>Searching...</div>
+                )}
+
+                {!searching && searchResults.length > 0 && searchResults.map((result, i) => (
+                  <div
+                    key={i}
+                    className="liquid-glass-card"
+                    style={{ padding: "14px 16px", marginBottom: 10 }}
+                  >
+                    {result.url ? (
+                      <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", textDecoration: "none", display: "inline-block", marginBottom: 4 }}>
+                        {result.title || result.url}
+                      </a>
+                    ) : (
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>{result.title || "Untitled"}</div>
+                    )}
+                    {result.url && (
+                      <div style={{ fontSize: 10, color: "var(--fg-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, maxWidth: "100%" }}>{result.url}</div>
+                    )}
+                    {result.description && (
+                      <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55, marginTop: 8, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{result.description}</div>
+                    )}
+                    <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const name = result.title || result.url || "";
+                          if (name) { addKeyword(name); toast("Added as keyword."); }
+                        }}
+                        style={{
+                          fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
+                          background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.22)",
+                          color: "var(--blue, #4A90D9)", cursor: "pointer", fontFamily: FONT,
+                        }}
+                      >Add keyword</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const name = result.title || result.url || "";
+                          if (name) { addItem(setPublications)(name); toast("Added as source."); }
+                        }}
+                        style={{
+                          fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
+                          background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.22)",
+                          color: "#7C3AED", cursor: "pointer", fontFamily: FONT,
+                        }}
+                      >Add publication</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const name = result.title || result.url || "";
+                          if (name) { addItem(setCompetitors)(name); toast("Added as competitor."); }
+                        }}
+                        style={{
+                          fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
+                          background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)",
+                          color: "#DC2626", cursor: "pointer", fontFamily: FONT,
+                        }}
+                      >Add competitor</button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
 
-              {!searching && searchResults.length === 0 && !researchMessage && (
-                <div style={{ fontSize: 11, color: "var(--fg-3)", textAlign: "center" as const, paddingTop: 40 }}>
-                  Search to see results. Reed will help you decide what is worth following.
-                </div>
-              )}
+                {!searching && searchResults.length === 0 && !researchMessage && (
+                  <div className="liquid-glass-card" style={{ padding: "28px 20px", textAlign: "center" as const }}>
+                    <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.6 }}>
+                      Run a search to preview outlets and names. Promote anything promising straight into Settings.
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* ── SETTINGS TAB ── */}
         {activeTab === "settings" && (
-          <div style={{ padding: 20 }}>
-            {/* New user setup guide: show suggested defaults they can add */}
+          <div style={{ padding: "20px 20px 32px", maxWidth: 960, margin: "0 auto", width: "100%" }}>
             {!hasSetup && keywords.length === 0 && competitors.length === 0 && newsletters.length === 0 && (
-              <div style={{
-                background: "rgba(245,198,66,0.06)", border: "1px solid rgba(245,198,66,0.2)",
-                borderRadius: 10, padding: "16px 20px", marginBottom: 20,
+              <div className="liquid-glass-card" style={{
+                background: "rgba(245,198,66,0.05)", borderColor: "rgba(245,198,66,0.22)",
+                padding: "18px 20px", marginBottom: 22,
               }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>
+                  Quick start
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
                   Set up your Watch
                 </div>
-                <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 16 }}>
                   Tell Reed what to track. Add a few keywords about your industry, name your competitors, and pick some sources you read. You can always change these later.
                 </div>
 
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Suggested keywords (click to add)</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Suggested keywords</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {DEFAULT_KEYWORDS.filter(k => !keywords.includes(k)).map(k => (
-                      <button key={k} onClick={() => addKeyword(k)} style={{
-                        fontSize: 10, padding: "3px 10px", borderRadius: 4,
+                      <button key={k} type="button" onClick={() => addKeyword(k)} style={{
+                        fontSize: 11, padding: "6px 12px", borderRadius: 8,
                         background: "var(--glass-surface)", border: "1px solid var(--glass-border)",
                         color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT,
                         transition: "border-color 0.1s",
                       }}
                         onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
                         onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--glass-border)"; }}
-                      >+ {k}</button>
+                      >Add {k}</button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Suggested sources (click to add)</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 8 }}>Suggested sources</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {DEFAULT_SOURCES.filter(s => s.type === "newsletter" || s.type === "substack").slice(0, 12).map(s => {
                       const isAdded = (s.type === "newsletter" ? newsletters : substacks).includes(s.name);
                       return (
-                        <button key={s.name} onClick={() => {
-                          if (!isAdded) {
-                            if (s.type === "newsletter") addItem(setNewsletters)(s.name);
-                            else addItem(setSubstacks)(s.name);
-                          }
-                        }} disabled={isAdded} style={{
-                          fontSize: 10, padding: "3px 10px", borderRadius: 4,
-                          background: isAdded ? "rgba(34,197,94,0.08)" : "var(--glass-surface)",
-                          border: isAdded ? "1px solid rgba(34,197,94,0.3)" : "1px solid var(--glass-border)",
-                          color: isAdded ? "#16A34A" : "var(--fg-2)", cursor: isAdded ? "default" : "pointer",
-                          fontFamily: FONT, transition: "border-color 0.1s",
-                        }}
+                        <button
+                          key={s.name}
+                          type="button"
+                          onClick={() => {
+                            if (!isAdded) {
+                              if (s.type === "newsletter") addItem(setNewsletters)(s.name);
+                              else addItem(setSubstacks)(s.name);
+                            }
+                          }}
+                          disabled={isAdded}
+                          style={{
+                            fontSize: 11, padding: "6px 12px", borderRadius: 8,
+                            background: isAdded ? "rgba(34,197,94,0.08)" : "var(--glass-surface)",
+                            border: isAdded ? "1px solid rgba(34,197,94,0.3)" : "1px solid var(--glass-border)",
+                            color: isAdded ? "#16A34A" : "var(--fg-2)", cursor: isAdded ? "default" : "pointer",
+                            fontFamily: FONT, transition: "border-color 0.1s",
+                          }}
                           onMouseEnter={e => { if (!isAdded) e.currentTarget.style.borderColor = "rgba(245,198,66,0.5)"; }}
                           onMouseLeave={e => { if (!isAdded) e.currentTarget.style.borderColor = "var(--glass-border)"; }}
-                        >{isAdded ? "Added" : "+"} {s.name}</button>
+                        >{isAdded ? "Added" : "Add"} {s.name}</button>
                       );
                     })}
                   </div>
@@ -805,55 +1082,84 @@ export default function Watch() {
               </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 24 }}>
-              {/* LEFT COLUMN */}
-              <div>
-                <SettingsLabel>Keywords</SettingsLabel>
-                <div style={{ fontSize: 11, color: "var(--fg-2)", marginBottom: 10 }}>Reed watches these terms across all sources.</div>
-                <TagChips items={keywords} onRemove={removeKeyword} />
-                <AddRow placeholder="Add a keyword..." onAdd={addKeyword} />
-
-                <div style={{ marginTop: 20 }}>
-                  <SettingsLabel>Newsletters</SettingsLabel>
-                  <SourceRows items={newsletters} onRemove={removeItem(setNewsletters)} borderColor="rgba(74,144,217,0.4)" />
-                  <AddRow placeholder="Add newsletter..." onAdd={addItem(setNewsletters)} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div className="liquid-glass-card" style={{ padding: "18px 20px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>
+                  Topic & community
                 </div>
-
-                <div style={{ marginTop: 20 }}>
-                  <SettingsLabel>Podcasts</SettingsLabel>
-                  <SourceRows items={podcasts} onRemove={removeItem(setPodcasts)} borderColor="rgba(196,154,32,0.4)" />
-                  <AddRow placeholder="Add podcast..." onAdd={addItem(setPodcasts)} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>What to listen for</div>
+                <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, marginBottom: 18 }}>
+                  Keywords run across every channel. Reddit adds community-level chatter on top.
                 </div>
-
-                <div style={{ marginTop: 20 }}>
-                  <SettingsLabel>Reddit Communities</SettingsLabel>
-                  <TagChips items={redditCommunities} onRemove={removeItem(setRedditCommunities)} />
-                  <AddRow placeholder="e.g. r/consulting..." onAdd={addItem(setRedditCommunities)} />
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 22 }}>
+                  <div>
+                    <WatchFieldGroup title="Keywords" description="Terms Reed should treat as signal, not noise.">
+                      <TagChips items={keywords} onRemove={removeKeyword} />
+                      <AddRow placeholder="Add a keyword..." onAdd={addKeyword} />
+                    </WatchFieldGroup>
+                  </div>
+                  <div>
+                    <WatchFieldGroup title="Reddit communities" description="Use full paths like r/consulting.">
+                      <TagChips items={redditCommunities} onRemove={removeItem(setRedditCommunities)} />
+                      <AddRow placeholder="e.g. r/consulting..." onAdd={addItem(setRedditCommunities)} />
+                    </WatchFieldGroup>
+                  </div>
                 </div>
               </div>
 
-              {/* RIGHT COLUMN */}
-              <div>
-                <SettingsLabel>Competitors</SettingsLabel>
-                <TagChips items={competitors} onRemove={removeItem(setCompetitors)} chipStyle={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "#991B1B" }} />
-                <AddRow placeholder="Add competitor..." onAdd={addItem(setCompetitors)} />
-
-                <div style={{ marginTop: 20 }}>
-                  <SettingsLabel>Thought Leaders</SettingsLabel>
-                  <TagChips items={thoughtLeaders} onRemove={removeItem(setThoughtLeaders)} chipStyle={{ background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.3)", color: "#92400E" }} />
-                  <AddRow placeholder="Add thought leader..." onAdd={addItem(setThoughtLeaders)} />
+              <div className="liquid-glass-card" style={{ padding: "18px 20px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>
+                  Media you follow
                 </div>
-
-                <div style={{ marginTop: 20 }}>
-                  <SettingsLabel>Publications</SettingsLabel>
-                  <SourceRows items={publications} onRemove={removeItem(setPublications)} borderColor="rgba(74,144,217,0.3)" />
-                  <AddRow placeholder="Add publication..." onAdd={addItem(setPublications)} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>Sources for the briefing</div>
+                <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, marginBottom: 18 }}>
+                  Layer newsletters, podcasts, publications, and Substacks. Reed weights all of them when Sentinel runs.
                 </div>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 22 }}>
+                  <div>
+                    <WatchFieldGroup title="Newsletters" description="Named editions you subscribe to or skim regularly.">
+                      <SourceRows items={newsletters} onRemove={removeItem(setNewsletters)} borderColor="rgba(74,144,217,0.4)" />
+                      <AddRow placeholder="Add newsletter..." onAdd={addItem(setNewsletters)} />
+                    </WatchFieldGroup>
+                    <div style={{ marginTop: 20 }}>
+                      <WatchFieldGroup title="Podcasts" description="Shows and feeds where your buyers show up.">
+                        <SourceRows items={podcasts} onRemove={removeItem(setPodcasts)} borderColor="rgba(196,154,32,0.4)" />
+                        <AddRow placeholder="Add podcast..." onAdd={addItem(setPodcasts)} />
+                      </WatchFieldGroup>
+                    </div>
+                  </div>
+                  <div>
+                    <WatchFieldGroup title="Publications" description="Sites, columns, and trade desks worth tracking.">
+                      <SourceRows items={publications} onRemove={removeItem(setPublications)} borderColor="rgba(74,144,217,0.3)" />
+                      <AddRow placeholder="Add publication..." onAdd={addItem(setPublications)} />
+                    </WatchFieldGroup>
+                    <div style={{ marginTop: 20 }}>
+                      <WatchFieldGroup title="Substack" description="Individual writers publishing on Substack.">
+                        <SourceRows items={substacks} onRemove={removeItem(setSubstacks)} borderColor="rgba(168,85,247,0.3)" />
+                        <AddRow placeholder="Add Substack..." onAdd={addItem(setSubstacks)} />
+                      </WatchFieldGroup>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                <div style={{ marginTop: 20 }}>
-                  <SettingsLabel>Substack</SettingsLabel>
-                  <SourceRows items={substacks} onRemove={removeItem(setSubstacks)} borderColor="rgba(168,85,247,0.3)" />
-                  <AddRow placeholder="Add Substack..." onAdd={addItem(setSubstacks)} />
+              <div className="liquid-glass-card" style={{ padding: "18px 20px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>
+                  Competitive lens
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>People and brands to contrast</div>
+                <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, marginBottom: 18 }}>
+                  Competitors sharpen positioning signals. Thought leaders keep you honest on narrative shifts.
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 22 }}>
+                  <WatchFieldGroup title="Competitors" description="Companies you win against or watch for moves.">
+                    <TagChips items={competitors} onRemove={removeItem(setCompetitors)} chipStyle={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "#991B1B" }} />
+                    <AddRow placeholder="Add competitor..." onAdd={addItem(setCompetitors)} />
+                  </WatchFieldGroup>
+                  <WatchFieldGroup title="Thought leaders" description="Voices your audience already trusts.">
+                    <TagChips items={thoughtLeaders} onRemove={removeItem(setThoughtLeaders)} chipStyle={{ background: "rgba(245,198,66,0.08)", border: "1px solid rgba(245,198,66,0.3)", color: "#92400E" }} />
+                    <AddRow placeholder="Add thought leader..." onAdd={addItem(setThoughtLeaders)} />
+                  </WatchFieldGroup>
                 </div>
               </div>
             </div>
