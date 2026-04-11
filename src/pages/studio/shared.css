@@ -76,29 +76,78 @@
   box-sizing: border-box;
 }
 
+/* Work Intake: message list scrollbar (was easy to lose on cream) */
+.work-intake-messages-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(36, 92, 158, 0.72) rgba(13, 27, 42, 0.08);
+}
+.work-intake-messages-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.work-intake-messages-scroll::-webkit-scrollbar-track {
+  background: rgba(13, 27, 42, 0.07);
+  border-radius: 8px;
+  margin: 6px 0;
+}
+.work-intake-messages-scroll::-webkit-scrollbar-thumb {
+  background: rgba(36, 92, 158, 0.65);
+  border-radius: 8px;
+  border: 2px solid rgba(245, 243, 239, 0.85);
+  background-clip: padding-box;
+}
+.work-intake-messages-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 74, 140, 0.88);
+  border: 2px solid rgba(245, 243, 239, 0.85);
+  background-clip: padding-box;
+}
+
+[data-theme="dark"] .work-intake-messages-scroll {
+  scrollbar-color: rgba(148, 163, 184, 0.55) rgba(0, 0, 0, 0.25);
+}
+[data-theme="dark"] .work-intake-messages-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+}
+[data-theme="dark"] .work-intake-messages-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-color: rgba(30, 37, 51, 0.9);
+}
+[data-theme="dark"] .work-intake-messages-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(203, 213, 225, 0.65);
+}
+
 /* Edit stage: draft body fills column; scrollbar slightly easier to spot than OS default */
 .work-edit-draft-textarea {
   scrollbar-width: thin;
-  scrollbar-color: rgba(74, 144, 217, 0.5) rgba(0, 0, 0, 0.06);
+  scrollbar-color: rgba(36, 92, 158, 0.72) rgba(13, 27, 42, 0.08);
 }
 .work-edit-draft-textarea::-webkit-scrollbar {
   width: 9px;
 }
 .work-edit-draft-textarea::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(13, 27, 42, 0.07);
   border-radius: 6px;
   margin: 4px 0;
 }
 .work-edit-draft-textarea::-webkit-scrollbar-thumb {
-  background: rgba(74, 144, 217, 0.42);
+  background: rgba(36, 92, 158, 0.62);
   border-radius: 6px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 .work-edit-draft-textarea::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 144, 217, 0.62);
+  background: rgba(26, 74, 140, 0.88);
   border: 2px solid transparent;
   background-clip: padding-box;
+}
+
+[data-theme="dark"] .work-edit-draft-textarea {
+  scrollbar-color: rgba(148, 163, 184, 0.5) rgba(0, 0, 0, 0.25);
+}
+[data-theme="dark"] .work-edit-draft-textarea::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.48);
+}
+[data-theme="dark"] .work-edit-draft-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(203, 213, 225, 0.62);
 }
 
 .work-chat-input-row {

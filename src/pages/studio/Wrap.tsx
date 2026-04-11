@@ -678,20 +678,48 @@ export default function WrapPage() {
 
   const handleCopy = useCallback(() => {
     const entry = formatContents[activeFormat];
-    const textToCopy =
+    const rawBody =
       entry?.status === "error"
         ? ""
         : entry?.content && entry.content.trim().length > 0
-          ? entry.content
-          : (entry ? "" : (activeOutput?.content || ""));
-    if (!textToCopy.trim()) {
+          ? entry.content.trim()
+          : (entry ? "" : (activeOutput?.content || "").trim());
+    if (!rawBody) {
       toast("Nothing to copy for this channel yet.", "error");
       return;
     }
+
+    const title = (activeOutput?.title || "Untitled").trim();
+    const md = (entry?.metadata ?? {}) as Record<string, string>;
+    const lines: string[] = [];
+
+    if (md.subject) lines.push(`Subject: ${md.subject}`);
+    if (md.preview) lines.push(`Preview text: ${md.preview}`);
+    if (md.videoTitle) lines.push(`Video title: ${md.videoTitle}`);
+    if (md.episodeTitle) lines.push(`Episode title: ${md.episodeTitle}`);
+    if (lines.length) lines.push("");
+
+    lines.push(activeFormat);
+    lines.push("");
+    lines.push(title);
+    lines.push("");
+
+    let body = rawBody;
+    const firstLine = body.split("\n")[0]?.trim();
+    if (firstLine && firstLine === title) {
+      body = body.split("\n").slice(1).join("\n").trim();
+    }
+    if (body.length > 0) {
+      lines.push(body);
+    } else if (rawBody.trim() !== title) {
+      lines.push(rawBody);
+    }
+
+    const textToCopy = lines.join("\n");
     navigator.clipboard.writeText(textToCopy).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast(`${activeFormat} version copied.`);
+      toast(`${activeFormat} version copied (title and body).`);
     }).catch(() => {});
   }, [activeFormat, formatContents, activeOutput, toast]);
 

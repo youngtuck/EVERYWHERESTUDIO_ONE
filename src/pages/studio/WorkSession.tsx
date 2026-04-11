@@ -971,6 +971,7 @@ function StageIntake({
         {/* Scrollable message area */}
         <div
           ref={scrollAreaRef}
+          className="work-intake-messages-scroll"
           style={{
             flex: 1, minHeight: 0, overflowY: "auto",
             padding: "20px clamp(12px, 4vw, 24px)",
