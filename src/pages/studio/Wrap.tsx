@@ -467,6 +467,16 @@ export default function WrapPage() {
   const [wrapCatalogTypeId, setWrapCatalogTypeId] = useState("freestyle");
   const [originCatalogTypeId, setOriginCatalogTypeId] = useState<string | null>(null);
   const [landingShelf, setLandingShelf] = useState<LandingShelfKey>("content");
+  const [wrapPieceQuery, setWrapPieceQuery] = useState("");
+
+  const pickerOutputs = useMemo(() => {
+    const q = wrapPieceQuery.trim().toLowerCase();
+    if (!q) return outputs;
+    return outputs.filter(o =>
+      (o.title || "").toLowerCase().includes(q)
+      || (o.output_type || "").toLowerCase().includes(q),
+    );
+  }, [outputs, wrapPieceQuery]);
 
   useLayoutEffect(() => {
     if (!activeOutput?.id) {
@@ -766,71 +776,100 @@ export default function WrapPage() {
             </div>
           </div>
         </header>
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-          {outputs.map(output => {
-            const preview = (output.content || "").replace(/\n+/g, " ").slice(0, 140);
-            const date = new Date(output.created_at);
-            const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-            return (
-              <button
-                key={output.id}
-                type="button"
-                onClick={() => {
-                  setSelectedOutputId(output.id);
-                  setFormats([...WRAP_CHANNEL_FORMATS]);
-                  setActiveFormat(WRAP_CHANNEL_FORMATS[0]);
-                  setFormatContents({});
-                  adaptingRef.current.clear();
-                  setExported(false);
-                  setCopied(false);
-                  setCatalogLinkId(null);
-                  setWrapPhase("choose");
-                  setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
-                  if (output.output_type === "presentation") {
-                    setWrapPresentationMinutes(DEFAULT_PRESENTATION_MINUTES);
-                  }
-                }}
-                className="liquid-glass-card"
-                style={{
-                  display: "block", width: "100%", textAlign: "left",
-                  padding: "16px 18px", marginBottom: 10,
-                  cursor: "pointer", fontFamily: FONT,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>
-                    {output.title || "Untitled"}
-                  </span>
-                  <span style={{ fontSize: 10, color: "var(--fg-3)", flexShrink: 0, marginLeft: 12 }}>
-                    {dateStr}
-                  </span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{
-                    fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4,
-                    background: "rgba(245,198,66,0.12)", color: "#9A7030",
-                    textTransform: "uppercase" as const, letterSpacing: "0.05em",
-                  }}>
-                    {output.output_type || "freestyle"}
-                  </span>
-                  {typeof output.score === "number" && output.score > 0 && (
-                    <span style={{
-                      fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4,
-                      background: output.score >= 75 ? "rgba(34,197,94,0.12)" : "rgba(245,198,66,0.12)",
-                      color: output.score >= 75 ? "#16A34A" : "#9A7030",
-                    }}>
-                      {output.score}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: "16px 24px" }}>
+          {outputs.length > 5 && (
+            <input
+              type="search"
+              className="liquid-glass-input"
+              value={wrapPieceQuery}
+              onChange={e => setWrapPieceQuery(e.target.value)}
+              placeholder="Filter by title or type…"
+              aria-label="Filter saved pieces"
+              style={{ width: "100%", marginBottom: 12, fontSize: 12, boxSizing: "border-box" as const }}
+            />
+          )}
+          <div style={{
+            flex: 1,
+            minHeight: 0,
+            maxHeight: isMobile ? "55vh" : "min(520px, calc(100vh - 220px))",
+            overflowY: "auto",
+            borderRadius: 12,
+            border: "1px solid var(--glass-border)",
+            background: "rgba(255,255,255,0.02)",
+          }}>
+            {pickerOutputs.length === 0 ? (
+              <div style={{ padding: 24, textAlign: "center", fontSize: 12, color: "var(--fg-3)" }}>
+                No pieces match that filter.
+              </div>
+            ) : (
+              pickerOutputs.map((output, idx) => {
+                const date = new Date(output.created_at);
+                const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                const last = idx === pickerOutputs.length - 1;
+                return (
+                  <button
+                    key={output.id}
+                    type="button"
+                    onClick={() => {
+                      setWrapPieceQuery("");
+                      setSelectedOutputId(output.id);
+                      setFormats([...WRAP_CHANNEL_FORMATS]);
+                      setActiveFormat(WRAP_CHANNEL_FORMATS[0]);
+                      setFormatContents({});
+                      adaptingRef.current.clear();
+                      setExported(false);
+                      setCopied(false);
+                      setCatalogLinkId(null);
+                      setWrapPhase("choose");
+                      setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
+                      if (output.output_type === "presentation") {
+                        setWrapPresentationMinutes(DEFAULT_PRESENTATION_MINUTES);
+                      }
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      width: "100%",
+                      textAlign: "left" as const,
+                      padding: "10px 14px",
+                      border: "none",
+                      borderBottom: last ? "none" : "1px solid var(--glass-border)",
+                      background: "transparent",
+                      cursor: "pointer",
+                      fontFamily: FONT,
+                    }}
+                  >
+                    <span style={{ fontSize: 10, color: "var(--fg-3)", width: 72, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+                      {dateStr}
                     </span>
-                  )}
-                </div>
-                {preview && (
-                  <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8, lineHeight: 1.5 }}>
-                    {preview}{preview.length >= 140 ? "…" : ""}
-                  </div>
-                )}
-              </button>
-            );
-          })}
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                      {output.title || "Untitled"}
+                    </span>
+                    <span style={{
+                      fontSize: 9, fontWeight: 600, padding: "3px 7px", borderRadius: 6,
+                      background: "rgba(245,198,66,0.12)", color: "#9A7030",
+                      textTransform: "uppercase" as const, letterSpacing: "0.04em",
+                      flexShrink: 0, maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const,
+                    }}>
+                      {output.output_type || "freestyle"}
+                    </span>
+                    {typeof output.score === "number" && output.score > 0 && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, color: output.score >= 75 ? "#16A34A" : "#9A7030",
+                        flexShrink: 0, width: 36, textAlign: "right" as const,
+                      }}>
+                        {output.score}
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+          <p style={{ fontSize: 10, color: "var(--fg-3)", margin: "10px 0 0", lineHeight: 1.45 }}>
+            {outputs.length} saved piece{outputs.length !== 1 ? "s" : ""}. Open one to set channels and versions.
+          </p>
         </div>
       </div>
     );
@@ -866,14 +905,27 @@ export default function WrapPage() {
               </div>
             </div>
 
-            <div className="liquid-glass-card" style={{ padding: "16px 18px", marginBottom: 18 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "var(--fg-3)", marginBottom: 8, textTransform: "uppercase" as const }}>
-                Library filing
-              </div>
-              <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 14px", lineHeight: 1.55 }}>
-                Defaults to your Work output type. Pick any shelf that matches where this should live in Catalog (Content, Business, Social Media, Extended, or Templates). Changing this does not rerun Work; it only affects how the row is filed and filtered.
+            <details
+              className="liquid-glass-card"
+              style={{ padding: "12px 14px", marginBottom: 18, borderRadius: 14 }}
+            >
+              <summary style={{
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 700,
+                color: "var(--fg)",
+                listStyle: "none" as const,
+              }}
+              >
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase" as const, marginRight: 8 }}>Library filing</span>
+                <span style={{ fontWeight: 600 }}>{outputTypeDisplayLabel(wrapCatalogTypeId)}</span>
+                <span style={{ color: "var(--fg-3)", fontWeight: 500 }}>{` · ${landingShelfLabel(landingShelf)}`}</span>
+                <span style={{ color: "var(--fg-3)", fontWeight: 500, fontSize: 11 }}> · expand to change</span>
+              </summary>
+              <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "14px 0 12px", lineHeight: 1.55 }}>
+                Defaults to your Work output type. Pick a shelf and type for Catalog only. This does not rerun Work.
               </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
                 {LANDING_SHELF_ORDER.map(shelf => {
                   const on = landingShelf === shelf;
                   return (
@@ -889,11 +941,11 @@ export default function WrapPage() {
                       }}
                       className={on ? "liquid-glass-card" : "liquid-glass"}
                       style={{
-                        padding: "8px 12px",
-                        borderRadius: 10,
+                        padding: "6px 10px",
+                        borderRadius: 8,
                         cursor: "pointer",
                         fontFamily: FONT,
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: on ? 700 : 600,
                         color: on ? "var(--fg)" : "var(--fg-3)",
                         border: on ? "1px solid rgba(245,198,66,0.45)" : "1px solid var(--glass-border)",
@@ -907,8 +959,11 @@ export default function WrapPage() {
               </div>
               <div style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(118px, 1fr))",
-                gap: 8,
+                gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))",
+                gap: 6,
+                maxHeight: 200,
+                overflowY: "auto",
+                paddingRight: 2,
               }}>
                 {typesForLandingShelf(landingShelf).map(t => {
                   const sel = wrapCatalogTypeId === t.id;
@@ -921,21 +976,21 @@ export default function WrapPage() {
                       className={sel ? "liquid-glass-card" : "liquid-glass"}
                       style={{
                         textAlign: "left" as const,
-                        padding: "10px 12px",
-                        borderRadius: 10,
+                        padding: "8px 10px",
+                        borderRadius: 8,
                         cursor: "pointer",
                         fontFamily: FONT,
                         border: sel ? "2px solid rgba(245,198,66,0.55)" : "1px solid var(--glass-border)",
                         background: sel ? "rgba(245,198,66,0.08)" : undefined,
                       }}
                     >
-                      <span style={{ fontSize: 11, fontWeight: sel ? 700 : 600, color: "var(--fg)", display: "block" }}>{t.name}</span>
-                      <span style={{ fontSize: 8, color: "var(--fg-3)", marginTop: 4, display: "block", fontFamily: "var(--font-mono, ui-monospace, monospace)" }}>{t.id}</span>
+                      <span style={{ fontSize: 10, fontWeight: sel ? 700 : 600, color: "var(--fg)", display: "block", lineHeight: 1.25 }}>{t.name}</span>
+                      <span style={{ fontSize: 7, color: "var(--fg-3)", marginTop: 3, display: "block", fontFamily: "var(--font-mono, ui-monospace, monospace)" }}>{t.id}</span>
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </details>
 
             {originCatalogTypeId && wrapCatalogTypeId !== originCatalogTypeId && (
               <div
@@ -959,40 +1014,47 @@ export default function WrapPage() {
               </div>
             )}
 
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)", marginBottom: 8, textTransform: "uppercase" as const }}>
+              Channels ({selectedChannels.length} selected)
+            </div>
             <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(152px, 1fr))",
-              gap: 10,
-              marginBottom: 28,
+              maxHeight: isMobile ? 240 : 280,
+              overflowY: "auto",
+              marginBottom: 20,
+              paddingRight: 4,
             }}>
-              {ALL_WRAP_CHANNELS.map(ch => {
-                const on = selectedChannels.includes(ch);
-                return (
-                  <button
-                    key={ch}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => toggleChannel(ch)}
-                    className={on ? "liquid-glass-card" : "liquid-glass"}
-                    style={{
-                      textAlign: "left" as const,
-                      padding: "14px 14px",
-                      cursor: "pointer",
-                      border: on ? "2px solid rgba(245,198,66,0.55)" : "1px solid var(--glass-border)",
-                      borderRadius: 12,
-                      background: on ? "rgba(245,198,66,0.08)" : undefined,
-                      fontFamily: FONT,
-                    }}
-                  >
-                    <span style={{ fontSize: 12, fontWeight: on ? 700 : 600, color: "var(--fg)" }}>{ch}</span>
-                    {on ? (
-                      <div style={{ fontSize: 9, fontWeight: 600, color: "#9A7030", marginTop: 6 }}>Selected</div>
-                    ) : (
-                      <div style={{ fontSize: 9, color: "var(--fg-3)", marginTop: 6 }}>Tap to include</div>
-                    )}
-                  </button>
-                );
-              })}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))",
+                gap: 8,
+              }}>
+                {ALL_WRAP_CHANNELS.map(ch => {
+                  const on = selectedChannels.includes(ch);
+                  return (
+                    <button
+                      key={ch}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggleChannel(ch)}
+                      className={on ? "liquid-glass-card" : "liquid-glass"}
+                      style={{
+                        textAlign: "left" as const,
+                        padding: "10px 12px",
+                        cursor: "pointer",
+                        border: on ? "2px solid rgba(245,198,66,0.55)" : "1px solid var(--glass-border)",
+                        borderRadius: 10,
+                        background: on ? "rgba(245,198,66,0.08)" : undefined,
+                        fontFamily: FONT,
+                      }}
+                    >
+                      <span style={{ fontSize: 11, fontWeight: on ? 700 : 600, color: "var(--fg)", display: "block", lineHeight: 1.25 }}>{ch}</span>
+                      {on ? (
+                        <span style={{ fontSize: 8, fontWeight: 600, color: "#9A7030", marginTop: 4, display: "block" }}>On</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center", alignItems: "center" }}>
@@ -1176,188 +1238,285 @@ export default function WrapPage() {
   const contentTitle = activeOutput.title || "Untitled";
   const contentParas = displayContent ? displayContent.split("\n").filter(Boolean) : [];
 
+  const deliverToolbar = (
+    <>
+      <button
+        type="button"
+        className="liquid-glass-btn"
+        onClick={() => {
+          setWrapPhase("choose");
+          setSelectedChannels([...formats]);
+        }}
+        style={{ flexShrink: 0, padding: "8px 12px" }}
+      >
+        <span className="liquid-glass-btn-label" style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)" }}>Edit channels</span>
+      </button>
+      {!sessionDraft && selectedOutputId && (
+        <button
+          type="button"
+          className="liquid-glass-btn"
+          onClick={() => {
+            setSelectedOutputId(null);
+            setFormats([...WRAP_CHANNEL_FORMATS]);
+            setActiveFormat(WRAP_CHANNEL_FORMATS[0]);
+            setFormatContents({});
+            adaptingRef.current.clear();
+            setExported(false);
+            setCatalogLinkId(null);
+            setWrapPhase("choose");
+            setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
+          }}
+          style={{ flexShrink: 0, padding: "8px 12px" }}
+        >
+          <span className="liquid-glass-btn-label" style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)" }}>All pieces</span>
+        </button>
+      )}
+    </>
+  );
+
+  const catalogBanner = catalogLinkId ? (
+    <div className="liquid-glass-card" style={{
+      display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10,
+      margin: isMobile ? "0 0 10px" : "0 0 12px", padding: "12px 16px",
+      flexShrink: 0,
+    }}>
+      <span style={{ fontSize: 12, color: "var(--fg-2)", flex: "1 1 200px" }}>
+        This piece is in your Catalog (saved master draft).
+      </span>
+      <button type="button" className="liquid-glass-btn" onClick={() => nav(`/studio/outputs/${catalogLinkId}`)} style={{ padding: "6px 14px" }}>
+        <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Open in Catalog</span>
+      </button>
+      <button type="button" className="liquid-glass-btn-gold" onClick={() => nav("/studio/outputs")} style={{ padding: "6px 14px" }}>
+        <span className="liquid-glass-btn-gold-label">All pieces</span>
+      </button>
+    </div>
+  ) : (
+    <div className="liquid-glass" style={{
+      margin: isMobile ? "0 0 10px" : "0 0 12px", padding: "10px 16px", flexShrink: 0,
+      borderRadius: 12, border: "1px solid var(--glass-border)",
+    }}>
+      <span style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>
+        <strong style={{ color: "var(--fg-2)", fontWeight: 600 }}>Catalog</strong>
+        {" "}lives under Library. After Export All in the dashboard, your master draft is marked saved there.
+      </span>
+    </div>
+  );
+
+  const readerCard = (
+    <div className="liquid-glass-card" style={{
+      width: "100%", maxWidth: 640,
+      padding: isMobile ? "22px 20px" : "32px 36px",
+      minHeight: 200,
+    }}>
+      {isAdapting ? (
+        <div style={{ textAlign: "center", padding: "48px 0" }}>
+          <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Adapting {activeFormat}…</div>
+        </div>
+      ) : isChannelError ? (
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
+            {activeFormat} did not generate
+          </div>
+          <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, lineHeight: 1.55 }}>
+            The request failed. Retry here, use Edit channels to drop this surface, or switch to another channel in the list.
+          </div>
+          <button type="button" className="liquid-glass-btn-gold" onClick={() => void adaptFormat(activeFormat)} style={{ padding: "10px 22px" }}>
+            <span className="liquid-glass-btn-gold-label">Retry {activeFormat}</span>
+          </button>
+        </div>
+      ) : contentParas.length > 0 ? (
+        <>
+          {displayMetadata.subject && (
+            <div style={{ marginBottom: displayMetadata.preview ? 4 : 16 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>SUBJECT: </span>
+              <span style={{ fontSize: 12, color: "var(--fg)" }}>{displayMetadata.subject}</span>
+            </div>
+          )}
+          {displayMetadata.preview && (
+            <div style={{ marginBottom: 16 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>PREVIEW: </span>
+              <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{displayMetadata.preview}</span>
+            </div>
+          )}
+          {displayMetadata.videoTitle && (
+            <div style={{ marginBottom: 16 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>VIDEO TITLE: </span>
+              <span style={{ fontSize: 12, color: "var(--fg)" }}>{displayMetadata.videoTitle}</span>
+            </div>
+          )}
+
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#9A7030", marginBottom: 10, textTransform: "uppercase" as const }}>
+            {activeFormat}
+          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", margin: "0 0 20px", lineHeight: 1.25 }}>
+            {contentTitle}
+          </h1>
+          {contentParas.map((p, i) => (
+            <p key={i} style={{ fontSize: 14, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 14 : 0 }}>{p}</p>
+          ))}
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 28, paddingTop: 20, borderTop: "1px solid var(--glass-border)" }}>
+            <button type="button" className="liquid-glass-btn" onClick={handleCopy} style={{ padding: "8px 18px" }}>
+              <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>
+                {copied ? "Copied" : `Copy ${activeFormat}`}
+              </span>
+            </button>
+            <button type="button" className="liquid-glass-btn-gold" onClick={() => {
+              sessionStorage.setItem("ew-reopen-output-id", activeOutput.id);
+              sessionStorage.setItem("ew-reopen-title", activeOutput.title);
+              nav("/studio/work");
+            }} style={{ padding: "8px 18px" }}
+            >
+              <span className="liquid-glass-btn-gold-label">Reopen in Work</span>
+            </button>
+          </div>
+        </>
+      ) : (
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Adapt {activeFormat}</div>
+          <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16, lineHeight: 1.55 }}>
+            This version is not ready yet. Run adapt or open the dashboard for Export All.
+          </div>
+          <button type="button" className="liquid-glass-btn-gold" onClick={() => void adaptFormat(activeFormat)} style={{ padding: "10px 22px" }}>
+            <span className="liquid-glass-btn-gold-label">Adapt now</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
       <WrapStepRail phase="deliver" />
 
       <div className="liquid-glass" style={{
-        display: "flex", alignItems: "center", borderRadius: 0,
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "stretch" : "center",
+        justifyContent: "space-between",
+        gap: isMobile ? 10 : 16,
+        borderRadius: 0,
         borderBottom: "1px solid rgba(0,0,0,0.06)",
-        padding: "0 12px 0 20px", flexShrink: 0,
-        overflowX: "auto", gap: 4,
+        padding: isMobile ? "10px 14px 12px" : "8px 20px 8px 16px",
+        flexShrink: 0,
       }}>
-        <button
-          type="button"
-          className="liquid-glass-btn"
-          onClick={() => {
-            setWrapPhase("choose");
-            setSelectedChannels([...formats]);
-          }}
-          style={{ flexShrink: 0, padding: "8px 12px", marginRight: 8 }}
-        >
-          <span className="liquid-glass-btn-label" style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)" }}>Edit channels</span>
-        </button>
-        {!sessionDraft && selectedOutputId && (
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedOutputId(null);
-              setFormats([...WRAP_CHANNEL_FORMATS]);
-              setActiveFormat(WRAP_CHANNEL_FORMATS[0]);
-              setFormatContents({});
-              adaptingRef.current.clear();
-              setExported(false);
-              setCatalogLinkId(null);
-              setWrapPhase("choose");
-              setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
-            }}
-            style={{
-              fontSize: 10, fontWeight: 600, color: "var(--fg-3)",
-              padding: "10px 10px", cursor: "pointer",
-              background: "none", border: "none", fontFamily: FONT,
-              borderRight: "1px solid var(--glass-border)", marginRight: 4,
-            }}
-          >
-            All pieces
-          </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {deliverToolbar}
+        </div>
+        {isMobile && (
+          <label style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%" }}>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)", textTransform: "uppercase" as const }}>Channel version</span>
+            <select
+              className="liquid-glass-input"
+              value={activeFormat}
+              onChange={e => handleFormatChange(e.target.value)}
+              style={{ fontSize: 12, padding: "8px 10px", width: "100%", boxSizing: "border-box" as const }}
+            >
+              {formats.map(fmt => (
+                <option key={fmt} value={fmt}>
+                  {fmt}{formatContents[fmt]?.status === "error" ? " (issue)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
-        {formats.map(fmt => {
-          const tabErr = formatContents[fmt]?.status === "error";
-          return (
-            <button key={fmt} type="button" onClick={() => handleFormatChange(fmt)} style={{
-              fontSize: 11, fontWeight: activeFormat === fmt ? 600 : 500,
-              color: activeFormat === fmt ? "var(--fg)" : "var(--fg-3)",
-              padding: "11px 14px",
-              borderBottom: activeFormat === fmt ? "2px solid var(--fg)" : "2px solid transparent",
-              cursor: "pointer", whiteSpace: "nowrap" as const,
-              transition: "all 0.1s", background: "none", border: "none",
-              borderBottomStyle: "solid" as const, fontFamily: FONT,
-              display: "inline-flex", alignItems: "center", gap: 6,
-            }}>
-              {fmt}
-              {tabErr ? (
-                <span style={{
-                  fontSize: 8, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.06em",
-                  color: "#B91C1C", padding: "2px 5px", borderRadius: 4,
-                  background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.22)",
-                }}>Issue</span>
-              ) : null}
-            </button>
-          );
-        })}
       </div>
 
-      {catalogLinkId ? (
-        <div className="liquid-glass-card" style={{
-          display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10,
-          margin: "10px 20px 0", padding: "12px 16px",
-          flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 12, color: "var(--fg-2)", flex: "1 1 200px" }}>
-            This piece is in your Catalog (saved master draft).
-          </span>
-          <button type="button" className="liquid-glass-btn" onClick={() => nav(`/studio/outputs/${catalogLinkId}`)} style={{ padding: "6px 14px" }}>
-            <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Open in Catalog</span>
-          </button>
-          <button type="button" className="liquid-glass-btn-gold" onClick={() => nav("/studio/outputs")} style={{ padding: "6px 14px" }}>
-            <span className="liquid-glass-btn-gold-label">All pieces</span>
-          </button>
-        </div>
-      ) : (
-        <div className="liquid-glass" style={{
-          margin: "10px 20px 0", padding: "10px 16px", flexShrink: 0,
-          borderRadius: 12, border: "1px solid var(--glass-border)",
-        }}>
-          <span style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>
-            <strong style={{ color: "var(--fg-2)", fontWeight: 600 }}>Catalog</strong>
-            {" "}lives under Library. After Export All in the dashboard, your master draft is marked saved there.
-          </span>
-        </div>
-      )}
-
       <div style={{
-        flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px 32px" : "28px 24px 40px",
-        display: "flex", alignItems: "flex-start", justifyContent: "center",
+        flex: 1,
+        display: "flex",
+        flexDirection: "row",
+        minHeight: 0,
+        overflow: "hidden",
       }}>
-        <div className="liquid-glass-card" style={{
-          width: "100%", maxWidth: 640,
-          padding: isMobile ? "22px 20px" : "32px 36px",
-          minHeight: 200,
-        }}>
-          {isAdapting ? (
-            <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Adapting {activeFormat}…</div>
+        {!isMobile && (
+          <aside
+            aria-label="Channel versions"
+            style={{
+              width: 196,
+              flexShrink: 0,
+              borderRight: "1px solid var(--glass-border)",
+              display: "flex",
+              flexDirection: "column",
+              padding: "10px 8px 12px",
+              overflowY: "auto",
+              background: "rgba(255,255,255,0.02)",
+            }}
+          >
+            <div style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)",
+              textTransform: "uppercase" as const, padding: "4px 8px 8px",
+            }}>
+              Versions · {formats.length}
             </div>
-          ) : isChannelError ? (
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
-                {activeFormat} did not generate
-              </div>
-              <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, lineHeight: 1.55 }}>
-                The request failed. Retry here, use Edit channels to drop this surface, or continue with your other tabs.
-              </div>
-              <button type="button" className="liquid-glass-btn-gold" onClick={() => void adaptFormat(activeFormat)} style={{ padding: "10px 22px" }}>
-                <span className="liquid-glass-btn-gold-label">Retry {activeFormat}</span>
-              </button>
-            </div>
-          ) : contentParas.length > 0 ? (
-            <>
-              {displayMetadata.subject && (
-                <div style={{ marginBottom: displayMetadata.preview ? 4 : 16 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>SUBJECT: </span>
-                  <span style={{ fontSize: 12, color: "var(--fg)" }}>{displayMetadata.subject}</span>
-                </div>
-              )}
-              {displayMetadata.preview && (
-                <div style={{ marginBottom: 16 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>PREVIEW: </span>
-                  <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{displayMetadata.preview}</span>
-                </div>
-              )}
-              {displayMetadata.videoTitle && (
-                <div style={{ marginBottom: 16 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>VIDEO TITLE: </span>
-                  <span style={{ fontSize: 12, color: "var(--fg)" }}>{displayMetadata.videoTitle}</span>
-                </div>
-              )}
-
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#9A7030", marginBottom: 10, textTransform: "uppercase" as const }}>
-                {activeFormat}
-              </div>
-              <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", margin: "0 0 20px", lineHeight: 1.25 }}>
-                {contentTitle}
-              </h1>
-              {contentParas.map((p, i) => (
-                <p key={i} style={{ fontSize: 14, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 14 : 0 }}>{p}</p>
-              ))}
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 28, paddingTop: 20, borderTop: "1px solid var(--glass-border)" }}>
-                <button type="button" className="liquid-glass-btn" onClick={handleCopy} style={{ padding: "8px 18px" }}>
-                  <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>
-                    {copied ? "Copied" : `Copy ${activeFormat}`}
-                  </span>
-                </button>
-                <button type="button" className="liquid-glass-btn-gold" onClick={() => {
-                  sessionStorage.setItem("ew-reopen-output-id", activeOutput.id);
-                  sessionStorage.setItem("ew-reopen-title", activeOutput.title);
-                  nav("/studio/work");
-                }} style={{ padding: "8px 18px" }}
+            {formats.map(fmt => {
+              const tabErr = formatContents[fmt]?.status === "error";
+              const active = activeFormat === fmt;
+              const ready = formatContents[fmt]?.status === "done";
+              return (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => handleFormatChange(fmt)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left" as const,
+                    padding: "8px 10px",
+                    borderRadius: 8,
+                    border: active ? "1px solid rgba(245,198,66,0.45)" : "1px solid transparent",
+                    background: active ? "rgba(245,198,66,0.1)" : "transparent",
+                    cursor: "pointer",
+                    fontFamily: FONT,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 6,
+                    marginBottom: 2,
+                  }}
                 >
-                  <span className="liquid-glass-btn-gold-label">Reopen in Work</span>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: active ? 700 : 500,
+                    color: active ? "var(--fg)" : "var(--fg-2)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap" as const,
+                    minWidth: 0,
+                  }}>{fmt}</span>
+                  {tabErr ? (
+                    <span style={{
+                      fontSize: 8, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.06em",
+                      color: "#B91C1C", padding: "2px 5px", borderRadius: 4, flexShrink: 0,
+                      background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.22)",
+                    }}>Issue</span>
+                  ) : ready ? (
+                    <span style={{ fontSize: 9, fontWeight: 700, color: "#16A34A", flexShrink: 0 }}>OK</span>
+                  ) : null}
                 </button>
-              </div>
-            </>
-          ) : (
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Adapt {activeFormat}</div>
-              <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16, lineHeight: 1.55 }}>
-                This version is not ready yet. Run adapt or open the dashboard for Export All.
-              </div>
-              <button type="button" className="liquid-glass-btn-gold" onClick={() => void adaptFormat(activeFormat)} style={{ padding: "10px 22px" }}>
-                <span className="liquid-glass-btn-gold-label">Adapt now</span>
-              </button>
-            </div>
-          )}
+              );
+            })}
+          </aside>
+        )}
+
+        <div style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+          minHeight: 0,
+          overflow: "hidden",
+          padding: isMobile ? "12px 14px 16px" : "16px 20px 20px",
+        }}>
+          {catalogBanner}
+          <div style={{
+            flex: 1,
+            overflowY: "auto",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "center",
+          }}>
+            {readerCard}
+          </div>
         </div>
       </div>
 
