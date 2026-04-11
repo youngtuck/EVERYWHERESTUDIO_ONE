@@ -83,9 +83,7 @@ export default function TemplateEditor({ selected, onSelect, compact }: { select
     { id: "session-brief", name: "Session Brief", desc: "Decision-ready executive summary" },
   ];
 
-  const userTemplates = [
-    { id: "custom-1", name: "Weekly Coaching Email", desc: "Based on Email · Modified" },
-  ];
+  const userTemplates: Array<{ id: string; name: string; desc: string }> = [];
 
   return (
     <div style={{ display: "flex", height: "100%", fontFamily: FONT }}>
@@ -117,21 +115,27 @@ export default function TemplateEditor({ selected, onSelect, compact }: { select
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>Yours</span>
           <span style={{ fontSize: 10, color: "var(--blue, #4A90D9)", cursor: "pointer" }}>+ New</span>
         </div>
-        {userTemplates.map(t => (
-          <div
-            key={t.id}
-            onClick={() => setActiveTemplate(t.id)}
-            style={{
-              padding: "10px 12px", borderRadius: 6, marginBottom: 4,
-              background: activeTemplate === t.id ? "rgba(245,198,66,0.08)" : "transparent",
-              border: activeTemplate === t.id ? "1px solid rgba(245,198,66,0.3)" : "1px solid transparent",
-              cursor: "pointer", transition: "all 0.12s",
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>{t.name}</div>
-            <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 2 }}>{t.desc}</div>
+        {userTemplates.length === 0 ? (
+          <div style={{ fontSize: 10, color: "var(--fg-3)", padding: "4px 2px 8px", lineHeight: 1.4 }}>
+            No custom templates yet.
           </div>
-        ))}
+        ) : (
+          userTemplates.map(t => (
+            <div
+              key={t.id}
+              onClick={() => setActiveTemplate(t.id)}
+              style={{
+                padding: "10px 12px", borderRadius: 6, marginBottom: 4,
+                background: activeTemplate === t.id ? "rgba(245,198,66,0.08)" : "transparent",
+                border: activeTemplate === t.id ? "1px solid rgba(245,198,66,0.3)" : "1px solid transparent",
+                cursor: "pointer", transition: "all 0.12s",
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>{t.name}</div>
+              <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 2 }}>{t.desc}</div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Right column: Reed conversation */}

@@ -75,11 +75,8 @@ const SYSTEM_TEMPLATES: SystemTemplate[] = [
   },
 ];
 
-const USER_TEMPLATES = [
-  { name: "Doug's Coaching Brief", base: "Session Brief", modified: true },
-  { name: "Weekly Signal Digest", base: "Newsletter", modified: true },
-  { name: "CEO LinkedIn Voice", base: "Essay", modified: true },
-];
+/** User-created templates (persisted per user when backend is wired). New accounts start empty. */
+const USER_TEMPLATES: Array<{ name: string; base: string; modified: boolean }> = [];
 
 export default function Templates() {
   const [selected, setSelected] = useState<number | null>(null);
@@ -138,23 +135,29 @@ export default function Templates() {
             padding: "1px 6px", cursor: "pointer",
           }}>+ New</span>
         </div>
-        {USER_TEMPLATES.map((t, i) => (
-          <div
-            key={`usr-${i}`}
-            onClick={() => { setSelected(i); setSection("yours"); }}
-            style={{
-              padding: "8px 16px", cursor: "pointer",
-              background: section === "yours" && selected === i ? "rgba(74,144,217,0.06)" : "transparent",
-              borderLeft: section === "yours" && selected === i ? "2px solid var(--blue, #4A90D9)" : "2px solid transparent",
-              transition: "all 0.1s",
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 500, color: "var(--fg)" }}>{t.name}</div>
-            <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 1 }}>
-              Based on {t.base} {t.modified ? "· Modified" : ""}
-            </div>
+        {USER_TEMPLATES.length === 0 ? (
+          <div style={{ padding: "10px 16px 12px", fontSize: 11, color: "var(--fg-3)", lineHeight: 1.45 }}>
+            No custom templates yet. Use + New when you are ready to build one from a system template or from scratch.
           </div>
-        ))}
+        ) : (
+          USER_TEMPLATES.map((t, i) => (
+            <div
+              key={`usr-${i}`}
+              onClick={() => { setSelected(i); setSection("yours"); }}
+              style={{
+                padding: "8px 16px", cursor: "pointer",
+                background: section === "yours" && selected === i ? "rgba(74,144,217,0.06)" : "transparent",
+                borderLeft: section === "yours" && selected === i ? "2px solid var(--blue, #4A90D9)" : "2px solid transparent",
+                transition: "all 0.1s",
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 500, color: "var(--fg)" }}>{t.name}</div>
+              <div style={{ fontSize: 10, color: "var(--fg-3)", marginTop: 1 }}>
+                Based on {t.base} {t.modified ? "· Modified" : ""}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Right pane (56%) */}
