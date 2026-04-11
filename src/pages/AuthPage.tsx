@@ -728,7 +728,7 @@ const AuthPage = () => {
                         color: "#C8A96E",
                         fontFamily: "inherit",
                         textDecoration: "underline",
-                        textUnderlineOffset: 3px,
+                        textUnderlineOffset: "3px",
                       }}
                     >
                       Sign in
