@@ -538,19 +538,11 @@ function ReedStageContext({ stage }: { stage: string }) {
     return (
       <div style={{ marginBottom: 10, flexShrink: 0 }}>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 8 }}>
-          Freestyle mode. No format review required. Reed has packaged your content for every channel. Export All gives you clean, formatted outputs ready to publish.
+          Switch format tabs in the main view to read each channel version and copy. Open the Dashboard to run Export All and save the piece to Catalog (Library in the sidebar).
         </div>
         <div style={calloutStyle}>
           This piece has good legs. The LinkedIn version is strong. The essay close would make a solid standalone Sunday post if you want to file it separately.
         </div>
-        <button style={{
-          width: "100%", padding: 8, borderRadius: 6,
-          background: "var(--fg)", color: "var(--gold-bright)",
-          fontSize: 11, fontWeight: 700, border: "none",
-          cursor: "pointer", fontFamily: "inherit", marginTop: 8,
-        }}>
-          Export All
-        </button>
       </div>
     );
   }

@@ -2735,9 +2735,8 @@ export default function WorkSession() {
     }
   }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId, backgroundPipelineRun, draftChangedSinceBackground]);
 
-  // ── REVIEW: Export all ─────────────────────────────────────────
-  const handleExportAll = useCallback(() => {
-    // 1. Mark all formats as exported (immediate, synchronous)
+  // ── REVIEW: Export all (save to Catalog first, then hand off to Wrap) ──
+  const handleExportAll = useCallback(async () => {
     const formats: Format[] = selectedFormats.length > 0
       ? selectedFormats
       : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
@@ -2746,13 +2745,47 @@ export default function WorkSession() {
     setExportedTabs(exported);
     setAllExported(true);
 
-    // 2. Store the draft in sessionStorage so Wrap can read it even if Supabase fails
+    let resolvedOutputId = outputId;
+    if (user && draft) {
+      try {
+        if (outputId) {
+          const { error } = await supabase.from("outputs").update({
+            content: draft,
+            content_state: "vault",
+          }).eq("id", outputId);
+          if (error) throw error;
+        } else {
+          const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
+          const outputTypeId = outputType || "freestyle";
+          const { data, error } = await supabase.from("outputs").insert({
+            user_id: user.id,
+            title: title.slice(0, 200),
+            content: draft,
+            output_type: outputTypeId,
+            output_type_id: outputTypeId,
+            content_state: "vault",
+            score: pipelineRun?.impactScore?.total ?? 0,
+          }).select("id").single();
+          if (error) throw error;
+          if (data?.id) {
+            resolvedOutputId = data.id;
+            setOutputId(data.id);
+          }
+        }
+      } catch (e) {
+        console.error("[Export] Supabase save failed:", e);
+        toast("Could not save to Catalog yet. Wrap still has your draft.", "error");
+      }
+    }
+
     try {
       sessionStorage.setItem("ew-wrap-draft", draft || "");
       sessionStorage.setItem("ew-wrap-title", outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled");
       sessionStorage.setItem("ew-wrap-output-type", outputType || "freestyle");
-      if (outputId) {
-        sessionStorage.setItem("ew-wrap-output-id", outputId);
+      if (resolvedOutputId) {
+        sessionStorage.setItem("ew-wrap-output-id", resolvedOutputId);
+      } else {
+        sessionStorage.removeItem("ew-wrap-output-id");
       }
       const adaptedContent: Record<string, string> = {};
       formats.forEach(f => {
@@ -2762,43 +2795,15 @@ export default function WorkSession() {
       });
       if (Object.keys(adaptedContent).length > 0) {
         sessionStorage.setItem("ew-wrap-formats", JSON.stringify(adaptedContent));
+      } else {
+        sessionStorage.removeItem("ew-wrap-formats");
       }
     } catch (e) {
       console.warn("[Export] sessionStorage write failed:", e);
     }
 
-    // 3. Navigate to Wrap IMMEDIATELY (do not wait for anything)
     nav("/studio/wrap");
-
-    // 4. Save to Supabase in the background (fire and forget)
-    if (user && draft) {
-      const saveToSupabase = async () => {
-        try {
-          if (outputId) {
-            await supabase.from("outputs").update({
-              content: draft,
-              content_state: "vault",
-            }).eq("id", outputId);
-          } else {
-            const title = outlineRows[0]?.content || "Untitled";
-            const outputTypeId = outputType || "freestyle";
-            await supabase.from("outputs").insert({
-              user_id: user.id,
-              title: title.slice(0, 200),
-              content: draft,
-              output_type: outputTypeId,
-              output_type_id: outputTypeId,
-              content_state: "vault",
-              score: pipelineRun?.impactScore?.total ?? 0,
-            });
-          }
-        } catch (e) {
-          console.error("[Export] Supabase save failed:", e);
-        }
-      };
-      saveToSupabase();
-    }
-  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts]);
+  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast]);
 
   // ── REVIEW: Rerun Human Voice Test only ───────────────────────
   const handleRerunHVT = useCallback(async () => {

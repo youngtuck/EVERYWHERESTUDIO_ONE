@@ -68,15 +68,16 @@ function WrapDashPanel({
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <DpLabel>Ready to Export</DpLabel>
+        <DpLabel>How Wrap works</DpLabel>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
           {isFreestyle
-            ? "Freestyle mode. No format review required. Reed has packaged your content for every channel. Export All gives you clean, formatted outputs ready to publish."
-            : `Reed has formatted your content for ${formatCount} channel${formatCount !== 1 ? "s" : ""}. Review each tab, then export.`}
+            ? "Use the format tabs in the main view to read each channel version. Copy any tab. Export All marks the master draft saved in Catalog (Library) and stamps it published."
+            : `Reed has formatted your content for ${formatCount} channel${formatCount !== 1 ? "s" : ""}. Switch tabs in the main view, copy what you need, then Export All to save the session to Catalog.`}
         </div>
       </div>
 
       <button
+        type="button"
         onClick={onExportAll}
         disabled={exported || exporting}
         style={{
@@ -105,7 +106,7 @@ function WrapDashPanel({
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
         {chips.map((chip, i) => (
-          <button key={i} onClick={() => prefillReed(chip.prefill)} style={{
+          <button key={i} type="button" onClick={() => prefillReed(chip.prefill)} style={{
             fontSize: 10, padding: "4px 10px", borderRadius: 99,
             background: "#EDF1F5", border: "1px solid #CBD5E1",
             color: "#334155", cursor: "pointer", fontFamily: "inherit",
@@ -135,6 +136,7 @@ export default function WrapPage() {
   const [exported, setExported] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [formatContents, setFormatContents] = useState<Record<string, FormatEntry>>({});
+  const [catalogLinkId, setCatalogLinkId] = useState<string | null>(null);
 
   // Track which formats we've already started adapting to avoid duplicates
   const adaptingRef = useRef<Set<string>>(new Set());
@@ -160,10 +162,24 @@ export default function WrapPage() {
 
       if (wrapFormats) {
         try {
-          const parsed = JSON.parse(wrapFormats);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setFormats(parsed);
-            setActiveFormat(parsed[0]);
+          const parsed = JSON.parse(wrapFormats) as unknown;
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            const keys = Object.keys(parsed as Record<string, string>);
+            if (keys.length > 0) {
+              setFormats(keys);
+              setActiveFormat(keys[0]);
+              const seeded: Record<string, FormatEntry> = {};
+              keys.forEach(k => {
+                const text = typeof (parsed as Record<string, string>)[k] === "string"
+                  ? (parsed as Record<string, string>)[k]
+                  : "";
+                seeded[k] = { content: text, metadata: {}, status: "done" };
+              });
+              setFormatContents(seeded);
+            }
+          } else if (Array.isArray(parsed) && parsed.length > 0) {
+            setFormats(parsed as string[]);
+            setActiveFormat((parsed as string[])[0]);
           }
         } catch { /* use defaults */ }
       }
@@ -275,13 +291,12 @@ export default function WrapPage() {
     setActiveDashTab("reed");
   }, [setReedPrefill, setActiveDashTab]);
 
-  // Export all formats
+  // Export: persist session to Catalog, or mark existing output published
   const handleExportAll = useCallback(async () => {
     if (!activeOutput || !user) return;
     setExporting(true);
 
     try {
-      // Adapt any pending formats first
       const pendingFormats = formats.filter(f => {
         const entry = formatContents[f];
         return !entry || entry.status !== "done";
@@ -290,16 +305,33 @@ export default function WrapPage() {
         await adaptFormat(fmt);
       }
 
-      // Save to Supabase
-      if (activeOutput.id !== "session-draft") {
-        await supabase.from("outputs").update({
+      let savedId = activeOutput.id;
+      if (activeOutput.id === "session-draft") {
+        const { data, error } = await supabase.from("outputs").insert({
+          user_id: user.id,
+          title: (activeOutput.title || "Untitled").slice(0, 200),
+          content: activeOutput.content,
+          output_type: activeOutput.output_type || "freestyle",
+          output_type_id: activeOutput.output_type || "freestyle",
+          content_state: "vault",
+          published_at: new Date().toISOString(),
+        }).select("id").single();
+        if (error) throw error;
+        if (data?.id) {
+          savedId = data.id;
+          setSessionDraft({ ...activeOutput, id: data.id });
+        }
+      } else {
+        const { error } = await supabase.from("outputs").update({
           content_state: "vault",
           published_at: new Date().toISOString(),
         }).eq("id", activeOutput.id);
+        if (error) throw error;
       }
 
       setExported(true);
-      toast("All formats exported and saved.");
+      setCatalogLinkId(savedId && savedId !== "session-draft" ? savedId : null);
+      toast("Saved to Catalog. Use Open in Catalog below or Library, then Catalog, in the sidebar.");
     } catch (err) {
       console.error("[Wrap] export error:", err);
       toast("Export failed.", "error");
@@ -356,9 +388,9 @@ export default function WrapPage() {
             Nothing to wrap yet.
           </div>
           <div style={{ fontSize: 13, color: "var(--fg-3)", maxWidth: 320, lineHeight: 1.5, marginBottom: 24 }}>
-            Complete a Work session first. Once you finish and review your draft, it will appear here.
+            Complete a Work session first, or open Catalog (Library in the sidebar) to pick any saved piece and send it back through Wrap.
           </div>
-          <button onClick={() => nav("/studio/work")} style={{
+          <button type="button" onClick={() => nav("/studio/work")} style={{
             padding: "10px 24px", borderRadius: 8,
             background: "var(--gold-bright, #F5C642)", border: "none",
             color: "var(--fg)", fontSize: 13, fontWeight: 600,
@@ -394,12 +426,14 @@ export default function WrapPage() {
             return (
               <button
                 key={output.id}
+                type="button"
                 onClick={() => {
                   setSelectedOutputId(output.id);
                   setFormatContents({});
                   adaptingRef.current.clear();
                   setExported(false);
                   setCopied(false);
+                  setCatalogLinkId(null);
                 }}
                 className="liquid-glass-card"
                 style={{
@@ -467,11 +501,13 @@ export default function WrapPage() {
         {/* Back to list button when viewing from picker (not session draft) */}
         {!sessionDraft && selectedOutputId && (
           <button
+            type="button"
             onClick={() => {
               setSelectedOutputId(null);
               setFormatContents({});
               adaptingRef.current.clear();
               setExported(false);
+              setCatalogLinkId(null);
             }}
             style={{
               fontSize: 11, fontWeight: 500, color: "var(--fg-3)",
@@ -487,7 +523,7 @@ export default function WrapPage() {
           </button>
         )}
         {formats.map(fmt => (
-          <button key={fmt} onClick={() => handleFormatChange(fmt)} style={{
+          <button key={fmt} type="button" onClick={() => handleFormatChange(fmt)} style={{
             fontSize: 11, fontWeight: activeFormat === fmt ? 600 : 500,
             color: activeFormat === fmt ? "var(--fg)" : "var(--fg-3)",
             padding: "11px 14px",
@@ -498,6 +534,46 @@ export default function WrapPage() {
           }}>{fmt}</button>
         ))}
       </div>
+
+      {catalogLinkId ? (
+        <div style={{
+          display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10,
+          padding: "10px 20px", borderBottom: "1px solid var(--glass-border)",
+          background: "rgba(74,144,217,0.06)", flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 12, color: "var(--fg-2)", flex: "1 1 200px" }}>
+            This piece is in your Catalog (saved master draft).
+          </span>
+          <button
+            type="button"
+            onClick={() => nav(`/studio/outputs/${catalogLinkId}`)}
+            style={{
+              fontSize: 11, fontWeight: 600, padding: "6px 14px", borderRadius: 8,
+              border: "1px solid var(--glass-border)", background: "var(--glass-surface)",
+              color: "var(--fg)", cursor: "pointer", fontFamily: FONT,
+            }}
+          >Open in Catalog</button>
+          <button
+            type="button"
+            onClick={() => nav("/studio/outputs")}
+            style={{
+              fontSize: 11, fontWeight: 600, padding: "6px 14px", borderRadius: 8,
+              border: "none", background: "var(--fg)", color: "var(--gold, #F5C642)",
+              cursor: "pointer", fontFamily: FONT,
+            }}
+          >All pieces</button>
+        </div>
+      ) : (
+        <div style={{
+          padding: "8px 20px 10px", borderBottom: "1px solid var(--glass-border)",
+          background: "rgba(0,0,0,0.02)", flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>
+            <strong style={{ color: "var(--fg-2)", fontWeight: 600 }}>Catalog</strong>
+            {" "}is under Library in the sidebar. After you run Export All in the Dashboard, open Catalog to see every saved piece.
+          </span>
+        </div>
+      )}
 
       {/* ── Content Preview ── */}
       <div style={{
@@ -536,11 +612,11 @@ export default function WrapPage() {
               ))}
 
               <div style={{ display: "flex", gap: 8, marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                <button className="liquid-glass-btn" onClick={handleCopy} style={{
+                <button type="button" className="liquid-glass-btn" onClick={handleCopy} style={{
                   fontSize: 11, padding: "6px 16px",
                   color: "var(--fg-2)", fontFamily: FONT, fontWeight: 500,
                 }}>{copied ? "Copied" : "Copy"}</button>
-                <button onClick={() => {
+                <button type="button" onClick={() => {
                   sessionStorage.setItem("ew-reopen-output-id", activeOutput.id);
                   sessionStorage.setItem("ew-reopen-title", activeOutput.title);
                   nav("/studio/work");
@@ -554,9 +630,11 @@ export default function WrapPage() {
           ) : (
             <div style={{ textAlign: "center", paddingTop: 80 }}>
               <div style={{ fontSize: 28, color: "var(--gold, #F5C642)", marginBottom: 14 }}>&#10022;</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>Ready to wrap {activeFormat}</div>
-              <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16 }}>Choose a template in the dashboard, then hit Wrap it.</div>
-              <button onClick={() => adaptFormat(activeFormat)} style={{
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>Adapt for {activeFormat}</div>
+              <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16, maxWidth: 360, margin: "0 auto 16px", lineHeight: 1.55 }}>
+                Reed has not generated this channel version yet. Run adapt below, or open the Dashboard (top bar) for Export All and Reed shortcuts.
+              </div>
+              <button type="button" onClick={() => adaptFormat(activeFormat)} style={{
                 fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8,
                 background: "var(--fg)", border: "none", color: "var(--surface)",
                 cursor: "pointer", fontFamily: FONT,
