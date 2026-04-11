@@ -10,6 +10,7 @@ import NotificationBell from "./NotificationBell";
 import { REED_STAGE_CHIPS } from "../../lib/constants";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHELL CONTEXT
@@ -94,7 +95,7 @@ const ADVISOR_CONTENT: Record<string, AdvisorContext> = {
 function getAdvisorCtx(pathname: string): { ctx: AdvisorContext; stageLabel: string } {
   if (pathname.includes("/watch")) return { ctx: ADVISOR_CONTENT.watch, stageLabel: "Watch" };
   if (pathname.includes("/wrap")) return { ctx: ADVISOR_CONTENT.wrap, stageLabel: "Wrap" };
-  return { ctx: ADVISOR_CONTENT.work, stageLabel: (window as any).__ewWorkStage || "Work" };
+  return { ctx: ADVISOR_CONTENT.work, stageLabel: window.__ewWorkStage || "Work" };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -286,7 +287,7 @@ export default function StudioShell() {
         {/* Left Rail */}
         <div style={
           isMobile
-            ? { position: "fixed", top: 0, left: 0, height: "100vh", width: 220, transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)", transition: "transform 0.18s ease", zIndex: 40 }
+            ? { position: "fixed", top: 0, left: 0, height: "100vh", width: 220, transform: sidebarOpen ? "translate3d(0,0,0)" : "translate3d(-100%,0,0)", transition: "transform 0.22s cubic-bezier(0.16,1,0.3,1)", zIndex: 40 }
             : { position: "relative", height: "100vh", width: sidebarCollapsed ? 52 : 220, flexShrink: 0, zIndex: 1, transition: "width 0.18s ease" }
         }>
           <StudioSidebar
@@ -562,8 +563,8 @@ function ReedPanel() {
   const [input, setInput] = useState(reedPrefill || "");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const stage = (window as any).__ewWorkStage || "Intake";
-  const stageChips = REED_STAGE_CHIPS[stage] || [];
+  const stage = useWorkStageFromShell();
+  const stageChips = REED_STAGE_CHIPS[stage] || REED_STAGE_CHIPS.Review;
 
   // Pick up prefill
   useEffect(() => {
@@ -599,7 +600,7 @@ function ReedPanel() {
       <ReedStageContext stage={stage} />
       <div style={{ flex: 1, overflowY: "auto", marginBottom: 8 }}>
         {reedThread.length === 0 && (
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5, marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 12 }}>
             Ask Reed anything about your current session.
           </div>
         )}

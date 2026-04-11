@@ -3,3 +3,8 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
+
+interface Window {
+  __ewWorkStage?: string;
+  __ewSetWorkStage?: (stage: string) => void;
+}

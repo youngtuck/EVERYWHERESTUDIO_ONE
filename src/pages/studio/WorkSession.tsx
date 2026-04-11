@@ -782,7 +782,7 @@ function ReviewDash({
           {!scoreOk && (
             <button
               onClick={() => {
-                (window as any).__ewSetWorkStage?.("Edit");
+                window.__ewSetWorkStage?.("Edit");
               }}
               style={{
                 width: "100%", padding: 10, borderRadius: 6, marginBottom: 8,
@@ -2142,13 +2142,15 @@ export default function WorkSession() {
     })();
   }, [user, goToStage]);
 
-  // Expose to StudioTopBar breadcrumb
+  // Expose to StudioTopBar breadcrumb and Reed panel (useWorkStageFromShell subscribes)
   useEffect(() => {
-    (window as any).__ewWorkStage = stage;
-    (window as any).__ewSetWorkStage = goToStage;
+    window.__ewWorkStage = stage;
+    window.__ewSetWorkStage = goToStage;
+    window.dispatchEvent(new CustomEvent("ew-work-stage"));
     return () => {
-      delete (window as any).__ewWorkStage;
-      delete (window as any).__ewSetWorkStage;
+      delete window.__ewWorkStage;
+      delete window.__ewSetWorkStage;
+      window.dispatchEvent(new CustomEvent("ew-work-stage"));
     };
   }, [stage, goToStage]);
 

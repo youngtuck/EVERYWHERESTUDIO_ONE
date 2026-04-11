@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useShell } from "./StudioShell";
 import { useState } from "react";
+import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
 
 // ── Route to breadcrumb config ──────────────────────────────────
 function useBreadcrumbs(): {
@@ -64,13 +65,13 @@ const WORK_STAGES = ["Intake", "Outline", "Edit", "Review"] as const;
 type WorkStage = typeof WORK_STAGES[number];
 
 function WorkBreadcrumb() {
-  // The active stage is driven by WorkSession's internal state.
-  // We expose a global event for now so WorkSession can set it.
-  // For the breadcrumb, we just show the stages.
-  const stage: WorkStage = (window as any).__ewWorkStage || "Intake";
+  const stageRaw = useWorkStageFromShell();
+  const stage: WorkStage = WORK_STAGES.includes(stageRaw as WorkStage)
+    ? (stageRaw as WorkStage)
+    : "Review";
 
   const stages = WORK_STAGES;
-  const activeIdx = stages.indexOf(stage as WorkStage);
+  const activeIdx = stages.indexOf(stage);
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -89,7 +90,7 @@ function WorkBreadcrumb() {
             <span
               onClick={() => {
                 if (canClick) {
-                  (window as any).__ewSetWorkStage?.(s);
+                  window.__ewSetWorkStage?.(s);
                 }
               }}
               className={isActive ? "liquid-glass-pill" : ""}
@@ -98,8 +99,9 @@ function WorkBreadcrumb() {
                 padding: "4px 10px",
                 cursor: canClick ? "pointer" : "default",
                 fontWeight: isActive ? 700 : 500,
-                color: isActive ? "var(--fg)" : isDone ? "var(--fg-3)" : "rgba(0,0,0,0.2)",
-                transition: "all 0.15s",
+                color: isActive ? "var(--fg)" : "var(--fg-3)",
+                opacity: isActive || isDone ? 1 : 0.42,
+                transition: "color 0.15s ease, opacity 0.15s ease",
               }}
               onMouseEnter={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
               onMouseLeave={e => { if (!isActive) (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
@@ -328,5 +330,5 @@ export default function StudioTopBar() {
 }
 
 function Divider() {
-  return <div style={{ width: 1, height: 14, background: "rgba(0,0,0,0.08)", flexShrink: 0 }} />;
+  return <div className="studio-topbar-divider" aria-hidden />;
 }
