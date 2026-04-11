@@ -1,8 +1,10 @@
-import { useState, useRef, useEffect, createContext, useContext, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { ShellContext, useShell } from "./StudioShellContext";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
 import StudioTopBar from "./StudioTopBar";
-import { CommandPalette } from "./CommandPalette";
+import { StudioGlobalSearch } from "./StudioGlobalSearch";
+import { ProjectProvider } from "../../context/ProjectContext";
 import MobileBottomNav from "./MobileBottomNav";
 import { useMobile } from "../../hooks/useMobile";
 import Logo from "../Logo";
@@ -11,47 +13,7 @@ import { REED_STAGE_CHIPS } from "../../lib/constants";
 import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
 import { ReedProfileIcon } from "./ReedProfileIcon";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SHELL CONTEXT
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface ShellCtx {
-  dashOpen: boolean;
-  setDashOpen: (v: boolean) => void;
-  discoverOpen: boolean;
-  setDiscoverOpen: (v: boolean) => void;
-  dashContent: React.ReactNode | null;
-  setDashContent: (node: React.ReactNode | null) => void;
-  activeDashTab: "feedback" | "reed" | "help";
-  setActiveDashTab: (tab: "feedback" | "reed" | "help") => void;
-  feedbackContent: React.ReactNode | null;
-  setFeedbackContent: (node: React.ReactNode | null) => void;
-  reedPrefill: string;
-  setReedPrefill: (text: string) => void;
-  reedThread: Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>;
-  setReedThread: (fn: (prev: any[]) => any[]) => void;
-}
-
-const ShellContext = createContext<ShellCtx>({
-  dashOpen: false,
-  setDashOpen: () => {},
-  discoverOpen: false,
-  setDiscoverOpen: () => {},
-  dashContent: null,
-  setDashContent: () => {},
-  activeDashTab: "feedback" as const,
-  setActiveDashTab: () => {},
-  feedbackContent: null,
-  setFeedbackContent: () => {},
-  reedPrefill: "",
-  setReedPrefill: () => {},
-  reedThread: [],
-  setReedThread: () => {},
-});
-
-export function useShell() {
-  return useContext(ShellContext);
-}
+export { useShell } from "./StudioShellContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADVISORS CONTENT, context-aware per page (matches wireframe advContent object)
@@ -95,7 +57,7 @@ function getAdvisorCtx(pathname: string): { ctx: AdvisorContext; stageLabel: str
 
 const INSPECTOR_HELP_LINES: Record<string, string[]> = {
   default: [
-    "Use the left sidebar to switch areas. This panel stays available from the edge control.",
+    "Use the left sidebar to switch areas. Use the top bar for project, search (⌘K), and new session. This panel stays available from the edge control.",
     "Feedback shows session readouts from the page you are on. Ask Reed is for quick notes and prompts tied to the current stage.",
   ],
   watch: [
@@ -317,7 +279,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
     id: "project", color: "#0D1B2A", icon: "◇", name: "What is a Project?",
     desc: "One client or one voice. A container.",
     rationale: "Projects hold files, settings, and sessions.",
-    detail: "A Project is a container for one client, one voice, or one publishing identity.\n\nEverything inside a project shares the same context: the Brand DNA, the Voice DNA, the Project Files, the Watch configuration, and the Preferences.\n\nWhen you switch projects using the dropdown in the upper left, Studio switches to that context. Different templates, different voice calibration, different tracked sources.\n\nExamples of projects: a coaching client, your personal brand, a company you consult for, a podcast you produce.\n\nSessions, the Catalog, and the Pipeline all live inside a project. They do not cross project lines.",
+    detail: "A Project is a container for one client, one voice, or one publishing identity.\n\nEverything inside a project shares the same context: the Brand DNA, the Voice DNA, the Project Files, the Watch configuration, and the Preferences.\n\nWhen you switch projects from the project menu in the top bar, Studio switches to that context. Different templates, different voice calibration, different tracked sources.\n\nExamples of projects: a coaching client, your personal brand, a company you consult for, a podcast you produce.\n\nSessions, the Catalog, and the Pipeline all live inside a project. They do not cross project lines.",
     launchLabel: "Got it", route: null,
   },
   {
@@ -336,6 +298,7 @@ const DISCOVER_ITEMS: DiscoverItem[] = [
 export default function StudioShell() {
   const isMobile = useMobile();
   const location = useLocation();
+  const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashOpen, setDashOpen] = useState(false);
@@ -348,6 +311,7 @@ export default function StudioShell() {
 
   return (
     <ShellContext.Provider value={{
+      searchOpen, setSearchOpen,
       dashOpen, setDashOpen,
       discoverOpen, setDiscoverOpen,
       dashContent, setDashContent,
@@ -356,11 +320,12 @@ export default function StudioShell() {
       reedPrefill, setReedPrefill,
       reedThread, setReedThread,
     }}>
+      <ProjectProvider>
       <div style={{
         display: "flex", height: "100vh",
         background: "var(--bg)", fontFamily: "var(--font)", overflow: "hidden",
       }}>
-        <CommandPalette />
+        <StudioGlobalSearch />
 
         {/* Mobile sidebar overlay */}
         {isMobile && sidebarOpen && (
@@ -389,7 +354,24 @@ export default function StudioShell() {
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
               <Logo size="sm" />
-              <NotificationBell />
+              <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  title="Search"
+                  aria-label="Open search"
+                  style={{
+                    background: "none", border: "none", borderRadius: 8, padding: 6, cursor: "pointer",
+                    color: "var(--fg-3)", display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                </button>
+                <NotificationBell />
+              </div>
             </div>
           ) : (
             <StudioTopBar />
@@ -419,6 +401,7 @@ export default function StudioShell() {
 
         <FloatingReedPanel isMobile={isMobile} open={dashOpen} setOpen={setDashOpen} />
       </div>
+      </ProjectProvider>
     </ShellContext.Provider>
   );
 }

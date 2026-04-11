@@ -14,6 +14,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
+import { useStudioProject } from "../../context/ProjectContext";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { supabase } from "../../lib/supabase";
@@ -2369,6 +2370,7 @@ export default function WorkSession() {
     setReedPrefill(text);
   }, [setActiveDashTab, setReedPrefill]);
   const { user, displayName } = useAuth();
+  const { activeProjectId: shellProjectId } = useStudioProject();
   const { toast } = useToast();
   const nav = useNavigate();
   const { voiceDnaMd, brandDnaMd, methodDnaMd } = useUserDNA(user?.id);
@@ -2399,6 +2401,14 @@ export default function WorkSession() {
   // ── Output type (CO-003) ─────────────────────────────────────
   const [outputType, setOutputType] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!shellProjectId || shellProjectId === "default") {
+      setProjectId(null);
+      return;
+    }
+    setProjectId(shellProjectId);
+  }, [shellProjectId]);
 
   // ── Formats + templates ───────────────────────────────────────
   const [selectedFormats, setSelectedFormats] = useState<Format[]>(DEFAULT_FORMATS);

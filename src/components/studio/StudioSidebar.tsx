@@ -110,44 +110,18 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-interface Project { id: string; name: string; is_default: boolean; }
-
 export default function StudioSidebar({ collapsed = false, onToggleCollapsed, onMobileClose }: SidebarProps) {
   const nav = useNavigate();
   const loc = useLocation();
-  const { user, displayName } = useAuth();
+  const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const [showProjectMenu, setShowProjectMenu] = useState(false);
-
-  const activeProject = projects.find(p => p.id === activeProjectId) ?? projects.find(p => p.is_default) ?? projects[0];
 
   useEffect(() => {
     if (!user) return;
-    // Load admin status
     supabase.from("profiles").select("is_admin").eq("id", user.id).single().then(({ data }) => {
       setIsAdmin(!!data?.is_admin);
     });
-    // Load projects
-    supabase
-      .from("projects")
-      .select("id, name, is_default")
-      .eq("user_id", user.id)
-      .order("is_default", { ascending: false })
-      .order("sort_order")
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setProjects(data as Project[]);
-          const def = data.find((p: Project) => p.is_default);
-          setActiveProjectId(def?.id ?? data[0].id);
-        } else {
-          // Fallback: show display name as project
-          setProjects([{ id: "default", name: displayName?.split(" ")[0] ? `${displayName.split(" ")[0]}'s Studio` : "My Studio", is_default: true }]);
-          setActiveProjectId("default");
-        }
-      });
-  }, [user, displayName]);
+  }, [user]);
 
   const isActive = (p: string) => {
     if (p === "/studio/work") return loc.pathname === p || loc.pathname.startsWith("/studio/work/");
@@ -168,57 +142,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
           <div className="studio-sidebar-header">
             {!collapsed && !onMobileClose && (
               <>
-                <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => projects.length > 1 && setShowProjectMenu(m => !m)}
-                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); projects.length > 1 && setShowProjectMenu(m => !m); } }}
-                    className="studio-sidebar-chip"
-                    style={{ cursor: projects.length > 1 ? "pointer" : "default" }}
-                  >
-                    <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.58)" }}>Project</span>
-                    <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 4, marginTop: 2 }}>
-                      <span style={{ fontSize: 12, color: "rgba(255,255,255,0.94)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {activeProject?.name ?? "Loading..."}
-                      </span>
-                      {projects.length > 1 && (
-                        <svg style={{ width: 11, height: 11, stroke: "rgba(255,255,255,0.6)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  {showProjectMenu && projects.length > 1 && (
-                    <>
-                      <button type="button" aria-label="Close project menu" onClick={() => setShowProjectMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 99, border: "none", padding: 0, margin: 0, background: "transparent", cursor: "default" }} />
-                      <div className="liquid-glass-menu" style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 100, overflow: "hidden", borderRadius: 12 }}>
-                        {projects.map(p => (
-                          <button
-                            type="button"
-                            key={p.id}
-                            onClick={() => { setActiveProjectId(p.id); setShowProjectMenu(false); }}
-                            style={{
-                              display: "block", width: "100%", textAlign: "left" as const,
-                              padding: "9px 11px", fontSize: 12, cursor: "pointer",
-                              color: p.id === activeProjectId ? "rgba(255,255,255,0.98)" : "rgba(255,255,255,0.82)",
-                              fontWeight: p.id === activeProjectId ? 600 : 400,
-                              background: p.id === activeProjectId ? "rgba(245,198,66,0.12)" : "transparent",
-                              border: "none", fontFamily: "inherit",
-                              transition: "background 0.12s",
-                            }}
-                            onMouseEnter={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
-                            onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
-                          >
-                            {p.name}
-                            {p.is_default && <span style={{ fontSize: 9, color: "rgba(255,255,255,0.62)", marginLeft: 6 }}>default</span>}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-
+                <div style={{ flex: 1, minWidth: 0 }} />
                 <button
                   type="button"
                   onClick={onToggleCollapsed}
@@ -247,13 +171,10 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             )}
 
             {onMobileClose && (
-              <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
-                <div className="studio-sidebar-chip" style={{ cursor: "default" }}>
-                  <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.58)" }}>Project</span>
-                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.94)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block", marginTop: 2 }}>
-                    {activeProject?.name ?? "Loading..."}
-                  </span>
-                </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.55)" }}>
+                  Navigation
+                </span>
               </div>
             )}
             {onMobileClose && (
