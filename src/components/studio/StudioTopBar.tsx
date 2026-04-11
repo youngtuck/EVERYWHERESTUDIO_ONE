@@ -406,14 +406,15 @@ export default function StudioTopBar() {
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         {/* +New Session button */}
         <button
+          type="button"
           className="liquid-glass-btn-gold"
           onClick={() => {
             sessionStorage.setItem("ew-new-session", "1");
             nav("/studio/work");
           }}
-          style={{ fontSize: 11, padding: "5px 12px" }}
+          style={{ fontSize: 11, padding: "6px 14px" }}
         >
-          + New Session
+          <span className="liquid-glass-btn-gold-label">+ New Session</span>
         </button>
 
         <Divider />

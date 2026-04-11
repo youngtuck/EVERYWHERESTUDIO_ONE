@@ -313,6 +313,59 @@
   box-shadow: 0 12px 44px rgba(0, 0, 0, 0.35), 0 0 24px rgba(200, 169, 110, 0.06);
 }
 
+/* Dashboard home: deeper glass stack on cream substrate */
+.liquid-glass-card.dashboard-home-card {
+  --lg-card-tint: rgba(255, 255, 255, 0.36);
+  border: 1px solid rgba(12, 26, 41, 0.1);
+  box-shadow:
+    0 6px 28px rgba(12, 26, 41, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.58) inset;
+}
+.liquid-glass-card.dashboard-home-card::before {
+  background-image:
+    linear-gradient(
+      122deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.16) 43%,
+      rgba(255, 255, 255, 0.42) 50%,
+      rgba(255, 255, 255, 0.14) 57%,
+      transparent 100%
+    ),
+    linear-gradient(135deg, rgba(107, 127, 242, 0.08), rgba(255, 255, 255, 0.06));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.52),
+    inset 0 -1px 0 rgba(12, 26, 41, 0.05);
+}
+.liquid-glass-card.dashboard-home-card:hover {
+  --lg-card-tint: rgba(255, 255, 255, 0.48);
+  border-color: rgba(74, 144, 217, 0.22);
+  box-shadow:
+    0 16px 52px rgba(12, 26, 41, 0.11),
+    0 4px 16px rgba(74, 144, 217, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.55) inset;
+}
+[data-theme="dark"] .liquid-glass-card.dashboard-home-card {
+  --lg-card-tint: rgba(22, 30, 44, 0.78);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 8px 36px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .liquid-glass-card.dashboard-home-card:hover {
+  border-color: rgba(200, 169, 110, 0.22);
+}
+
+.liquid-glass-btn--sm {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 999px;
+}
+.liquid-glass-btn--sm .liquid-glass-btn-label {
+  position: relative;
+  z-index: 3;
+}
+
 /* ─── Inputs (no pseudos: replaced elements ignore ::before/::after in most engines) ─── */
 .liquid-glass-input {
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -472,16 +525,24 @@
   isolation: isolate;
   overflow: hidden;
   transform: translateZ(0);
-  border: 1px solid rgba(245, 198, 66, 0.28);
+  border: 1px solid rgba(200, 160, 50, 0.45);
   border-radius: var(--glass-radius-sm);
-  background: rgba(245, 198, 66, 0.14);
-  color: var(--gold-dark);
+  background: linear-gradient(165deg, rgba(245, 198, 66, 0.38) 0%, rgba(212, 168, 50, 0.52) 100%);
+  color: #0a1628;
   cursor: pointer;
   font-family: var(--font);
   font-size: 13px;
   font-weight: 700;
   padding: 10px 22px;
   transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.liquid-glass-btn-gold .liquid-glass-btn-gold-label {
+  position: relative;
+  z-index: 3;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 .liquid-glass-btn-gold::after {
   content: "";
@@ -515,16 +576,21 @@
   z-index: 2;
 }
 .liquid-glass-btn-gold:hover {
-  background: rgba(245, 198, 66, 0.22);
+  background: linear-gradient(165deg, rgba(245, 198, 66, 0.48) 0%, rgba(220, 175, 55, 0.58) 100%);
   transform: translate3d(0, -1px, 0);
-  box-shadow: 0 4px 20px rgba(245, 198, 66, 0.12);
+  box-shadow: 0 4px 20px rgba(245, 198, 66, 0.18);
 }
 .liquid-glass-btn-gold:active {
   transform: translate3d(0, 0, 0) scale(0.98);
 }
 
 [data-theme="dark"] .liquid-glass-btn-gold {
-  color: #f5c642;
+  color: #f8e6b0;
+  background: linear-gradient(165deg, rgba(245, 198, 66, 0.22) 0%, rgba(180, 140, 40, 0.35) 100%);
+  border-color: rgba(245, 198, 66, 0.35);
+}
+[data-theme="dark"] .liquid-glass-btn-gold .liquid-glass-btn-gold-label {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 /* Top bar vertical rule (theme aware) */
@@ -572,12 +638,12 @@
   overflow: hidden;
   transform: translateZ(0);
   color: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 28px 64px rgba(0, 0, 0, 0.32),
-    0 0 0 1px rgba(0, 0, 0, 0.18) inset,
-    0 1px 0 rgba(255, 255, 255, 0.12) inset;
-  background: rgba(8, 16, 28, 0.52);
+    0 28px 64px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.28) inset,
+    0 1px 0 rgba(255, 255, 255, 0.07) inset;
+  background: rgba(4, 10, 20, 0.82);
   animation: studioLgEdgeBreathDark 20s ease-in-out infinite;
 }
 .studio-sidebar-glass-inner::after {
@@ -598,12 +664,12 @@
   z-index: 1;
   pointer-events: none;
   background-image:
-    linear-gradient(128deg, rgba(255, 255, 255, 0.11) 0%, transparent 45%),
-    linear-gradient(210deg, transparent 35%, rgba(74, 144, 217, 0.09) 100%);
+    linear-gradient(128deg, rgba(255, 255, 255, 0.06) 0%, transparent 42%),
+    linear-gradient(210deg, transparent 40%, rgba(74, 144, 217, 0.07) 100%);
   background-size: 140% 140%, 100% 100%;
   background-position: 8% 18%, 0 0;
   animation: studioLgSpecularDriftDark 30s ease-in-out infinite;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 .studio-sidebar-glass-inner > * {
   position: relative;
@@ -625,8 +691,8 @@
   flex: 1;
   min-width: 0;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(18px) saturate(1.55);
   -webkit-backdrop-filter: blur(18px) saturate(1.55);
   box-shadow:
@@ -636,8 +702,8 @@
   transition: border-color 0.2s ease, box-shadow 0.25s ease, background 0.2s ease;
 }
 .studio-sidebar-chip:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.3);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 6px 24px rgba(74, 144, 217, 0.1);
@@ -648,8 +714,8 @@
   width: 32px;
   height: 32px;
   border-radius: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(16px) saturate(1.5);
   -webkit-backdrop-filter: blur(16px) saturate(1.5);
   color: rgba(255, 255, 255, 0.78);
@@ -668,8 +734,8 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .studio-sidebar-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.9);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -705,7 +771,7 @@
   margin-bottom: 3px;
   border-radius: 12px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.16);
   cursor: pointer;
   font: inherit;
   color: inherit;
@@ -723,8 +789,8 @@
   padding: 8px 6px;
 }
 .studio-sidebar-nav-row:hover:not(.is-active) {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 4px 18px rgba(0, 0, 0, 0.12);

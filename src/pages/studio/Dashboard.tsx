@@ -222,8 +222,13 @@ export default function Dashboard() {
     <div style={{
       flex: 1,
       overflowY: "auto",
-      padding: isMobile ? "24px 20px" : "24px 28px",
+      padding: isMobile ? "24px 20px" : "32px 28px 48px",
+      width: "100%",
       maxWidth: 520,
+      margin: "0 auto",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
     }}>
       {/* Greeting */}
       <div style={{
@@ -232,34 +237,58 @@ export default function Dashboard() {
         fontWeight: 600,
         letterSpacing: "-0.02em",
         color: "var(--fg)",
-        marginBottom: 2,
+        marginBottom: 4,
+        textAlign: "center",
+        width: "100%",
       }}>
         {getGreeting()}, {firstName}.
       </div>
-      <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 20 }}>
+      <div style={{ fontSize: 11, color: "var(--fg-3)", marginBottom: 28, textAlign: "center", width: "100%" }}>
         {getDateLabel()}
       </div>
 
       {/* Start something new */}
       <div
-        className="liquid-glass-card"
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            nav("/studio/work");
+          }
+        }}
+        className="liquid-glass-card dashboard-home-card"
         onClick={() => nav("/studio/work")}
         style={{
-          padding: "14px 18px",
-          marginBottom: 20,
+          padding: "24px 28px",
+          marginBottom: 24,
           cursor: "pointer",
+          width: "100%",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "space-between",
+          textAlign: "center",
         }}
       >
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--fg)", marginBottom: 2 }}>Start something new</div>
-          <div style={{ fontSize: 11, color: "var(--fg-3)" }}>Drop an idea, a transcript, or just start talking.</div>
+        <div style={{
+          width: 44,
+          height: 44,
+          borderRadius: 14,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 14,
+          background: "rgba(245, 198, 66, 0.12)",
+          border: "1px solid rgba(245, 198, 66, 0.28)",
+        }}>
+          <svg style={{ width: 20, height: 20, stroke: "var(--gold-bright)", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
         </div>
-        <svg style={{ width: 18, height: 18, stroke: "var(--gold-bright)", strokeWidth: 2.5, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fg)", marginBottom: 6 }}>Start something new</div>
+        <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, maxWidth: 320 }}>
+          Drop an idea, a transcript, or just start talking.
+        </div>
       </div>
 
       {/* Section divider */}
@@ -271,7 +300,9 @@ export default function Dashboard() {
           letterSpacing: "0.08em",
           textTransform: "uppercase" as const,
           color: "var(--fg-3)",
-          marginBottom: 12,
+          marginBottom: 14,
+          textAlign: "center",
+          width: "100%",
         }}>
           Or pick up where you left off
         </div>
@@ -279,18 +310,18 @@ export default function Dashboard() {
 
       {/* Loading skeleton */}
       {loading && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
           {[1, 2, 3].map(i => (
-            <div key={i} className="liquid-glass-card" style={{ padding: "12px 14px", borderLeft: "4px solid var(--glass-border)" }}>
-              <div style={{ height: 13, width: "60%", background: "var(--bg-2)", borderRadius: 3, marginBottom: 6 }} />
-              <div style={{ height: 11, width: "80%", background: "var(--bg-2)", borderRadius: 3 }} />
+            <div key={i} className="liquid-glass-card dashboard-home-card" style={{ padding: "20px 22px", width: "100%" }}>
+              <div style={{ height: 13, width: "55%", background: "var(--bg-2)", borderRadius: 3, margin: "0 auto 10px" }} />
+              <div style={{ height: 11, width: "75%", background: "var(--bg-2)", borderRadius: 3, margin: "0 auto" }} />
             </div>
           ))}
         </div>
       )}
 
       {!loading && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
 
           {/* Briefing card — only shown when signals exist */}
           {signals.length > 0 ? (
@@ -373,40 +404,60 @@ function HomeCard({
 }) {
   return (
     <div
-      className="liquid-glass-card"
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onCta();
+        }
+      }}
+      className="liquid-glass-card dashboard-home-card"
+      onClick={onCta}
       style={{
-        borderLeft: `4px solid ${accentColor}`,
-        padding: "12px 14px",
+        padding: "22px 24px",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
         cursor: "pointer",
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-        <div style={{ minWidth: 0 }}>
-          {label && (
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: labelColor || "var(--fg-3)", marginBottom: 3 }}>
-              {label}
-            </div>
-          )}
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 3, lineHeight: 1.3 }}>
-            {title}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.4 }}>
-            {meta}
-          </div>
+      <div
+        style={{
+          width: 40,
+          height: 3,
+          borderRadius: 2,
+          background: accentColor,
+          marginBottom: 14,
+          opacity: 0.95,
+        }}
+      />
+      {label && (
+        <div style={{
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase" as const,
+          color: labelColor || "var(--fg-3)",
+          marginBottom: 8,
+        }}>
+          {label}
         </div>
-        <button
-          onClick={e => { e.stopPropagation(); onCta(); }}
-          style={{
-            fontSize: 11, fontWeight: 600, color: "var(--blue)",
-            cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-            paddingTop: 1, background: "none", border: "none",
-            fontFamily: "var(--font)", transition: "opacity 0.1s",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = "0.7"; }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
-        >
-          {cta}
-        </button>
+      )}
+      <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8, lineHeight: 1.35, maxWidth: 380 }}>
+        {title}
+      </div>
+      <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, marginBottom: 18, maxWidth: 380 }}>
+        {meta}
+      </div>
+      <div
+        className="liquid-glass-btn liquid-glass-btn--sm"
+        style={{ pointerEvents: "none" }}
+        aria-hidden
+      >
+        <span className="liquid-glass-btn-label">{cta}</span>
       </div>
     </div>
   );
