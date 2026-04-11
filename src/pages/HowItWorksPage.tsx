@@ -46,16 +46,16 @@ export default function HowItWorksPage() {
             animation: `xpHeroLabel 0.8s ${EASE} 0.3s both`,
           }}>The System</div>
           <h1 style={{
-            fontSize: "clamp(40px, 7vw, 80px)", fontWeight: 600,
-            letterSpacing: "-0.04em", lineHeight: 1.08,
-            color: "var(--xp-on-dark)", marginBottom: 24,
+            fontSize: "clamp(40px, 8vw, 88px)", fontWeight: 600,
+            letterSpacing: "-0.04em", lineHeight: 1.06,
+            color: "var(--xp-on-dark)", marginBottom: 20,
             animation: `xpHeroHead 1s ${EASE} 0.6s both`,
-          }}>EVERYWHERE Studio runs on one sequence. Every session follows the same path.</h1>
+          }}>WATCH. WORK. WRAP.</h1>
           <p style={{
             fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)",
-            maxWidth: 500, margin: "0 auto",
+            maxWidth: 520, margin: "0 auto",
             animation: `xpHeroSub 0.8s ${EASE} 0.9s both`,
-          }}>WATCH. WORK. WRAP.</p>
+          }}>EVERYWHERE Studio runs on one sequence. Every session follows the same path.</p>
         </div>
       </section>
 
@@ -64,9 +64,12 @@ export default function HowItWorksPage() {
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase One</div>
-            <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 24 }}>
-              Watch. Intelligence before execution.
+            <h2 style={{ fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.06, marginBottom: 10 }}>
+              WATCH.
             </h2>
+            <p style={{ fontSize: "clamp(17px, 2.4vw, 22px)", lineHeight: 1.45, color: "var(--xp-sec)", fontWeight: 500, marginBottom: 24 }}>
+              Intelligence before execution.
+            </p>
           </Reveal>
           <Reveal delay={100}>
             <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
@@ -89,9 +92,12 @@ export default function HowItWorksPage() {
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase Two</div>
-            <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 24 }}>
-              Work. One idea. All the way through.
+            <h2 style={{ fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.06, marginBottom: 10 }}>
+              WORK.
             </h2>
+            <p style={{ fontSize: "clamp(17px, 2.4vw, 22px)", lineHeight: 1.45, color: "var(--xp-sec)", fontWeight: 500, marginBottom: 24 }}>
+              One idea. All the way through.
+            </p>
           </Reveal>
           <Reveal delay={100}>
             <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
@@ -114,9 +120,12 @@ export default function HowItWorksPage() {
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase Three</div>
-            <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 24 }}>
-              Wrap. Ideas become assets.
+            <h2 style={{ fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.06, marginBottom: 10 }}>
+              WRAP.
             </h2>
+            <p style={{ fontSize: "clamp(17px, 2.4vw, 22px)", lineHeight: 1.45, color: "var(--xp-sec)", fontWeight: 500, marginBottom: 24 }}>
+              Ideas become assets.
+            </p>
           </Reveal>
           <Reveal delay={100}>
             <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
@@ -149,12 +158,23 @@ export default function HowItWorksPage() {
             </p>
           </Reveal>
 
-          <div className="checkpoint-grid">
+          <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 0 }}>
             {CHECKPOINTS.map((cp, i) => (
-              <Reveal key={cp.id} delay={i * 80}>
-                <div className="xp-glass-card-dark" style={{ padding: 32, minHeight: 200, display: "flex", flexDirection: "column" as const }}>
-                  <div style={{ fontSize: 18, fontWeight: 600, color: "var(--xp-on-dark)", marginBottom: 10 }}>{cp.name}</div>
-                  <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--xp-dim-dark)", margin: 0 }}>{cp.desc}</p>
+              <Reveal key={cp.id} delay={i * 60}>
+                <div
+                  className="xp-glass-card-dark"
+                  style={{
+                    padding: "12px 16px",
+                    display: "flex",
+                    flexDirection: "column" as const,
+                    alignItems: "flex-start",
+                    gap: 4,
+                    borderRadius: 10,
+                    marginBottom: i < CHECKPOINTS.length - 1 ? 6 : 0,
+                  }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--xp-on-dark)", letterSpacing: "-0.01em" }}>{cp.name}</div>
+                  <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--xp-dim-dark)", margin: 0 }}>{cp.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -176,10 +196,15 @@ export default function HowItWorksPage() {
         <div style={{ position: "relative", zIndex: 1 }}>
           <Reveal>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <h2 style={{ fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.08, color: "var(--xp-on-dark)", maxWidth: 600, marginBottom: 24 }}>
+              <h2 style={{
+                fontSize: "clamp(22px, 5vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.08,
+                color: "var(--xp-on-dark)", maxWidth: 720, marginBottom: 24, whiteSpace: "nowrap",
+              }}>
                 Built for one kind of person.
               </h2>
-              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
+              <p style={{
+                fontSize: 16, lineHeight: 1.7, color: "var(--xp-dim-dark)", maxWidth: 560, margin: "0 auto 48px", textAlign: "left" as const,
+              }}>
                 You're not a marketer. You're not a content creator. You're a practitioner with something important to say. You've been waiting too long for the system to catch up to the thinking. EVERYWHERE Studio was built for you.
               </p>
               <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>

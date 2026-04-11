@@ -136,9 +136,6 @@ const ROOMS = [
 
 const GATES = ["Dedup", "Research", "Voice", "Engage", "SLOP", "Editorial", "Risk"];
 const SIGNAL_TAGS = ["Brand Voice", "Enterprise Copy", "SEO", "Distribution", "Analytics"];
-const STATEMENT_WORDS = ["The", "idea", "is", "never", "the", "problem."];
-
-
 // ═══════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════
@@ -341,10 +338,12 @@ export default function ExplorePage() {
 
           <p style={{
             fontSize: 17, lineHeight: 1.65, color: "var(--xp-dim-dark)",
-            maxWidth: 400, marginBottom: 44,
+            maxWidth: 460, marginBottom: 44,
             animation: `xpHeroSub 0.8s ${EASE} 1.5s both`,
           }}>
-            EVERYWHERE Studio moves your thinking from private<br />to published, at the level your ideas deserve.
+            EVERYWHERE Studio moves your thinking from private to published,
+            <br />
+            at the level your ideas deserve.
           </p>
 
           <div style={{ animation: `xpHeroCta 0.7s ${EASE} 1.8s both` }}>
@@ -365,9 +364,6 @@ export default function ExplorePage() {
 
       {/* ═══ ACT 1.5: THREE-PART DEMO ═══ */}
       <DemoSection />
-
-      {/* ═══ ACT 2: THE STATEMENT ═══ */}
-      <StatementSection />
 
       {/* ═══ ACT 3: THE SPLIT ═══ */}
       <SplitSection />
@@ -404,13 +400,21 @@ export default function ExplorePage() {
           <Reveal>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <h2 style={{
-                fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600,
+                fontSize: "clamp(22px, 5vw, 72px)", fontWeight: 600,
                 letterSpacing: "-0.04em", lineHeight: 1.08,
-                color: "var(--xp-on-dark)", maxWidth: 600, marginBottom: 24,
+                color: "var(--xp-on-dark)", maxWidth: 720, marginBottom: 24,
+                whiteSpace: "nowrap",
               }}>
                 Built for one kind of person.
               </h2>
-              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-dim-dark)", maxWidth: 380, marginBottom: 48 }}>
+              <p style={{
+                fontSize: 16,
+                lineHeight: 1.7,
+                color: "var(--xp-dim-dark)",
+                maxWidth: 560,
+                margin: "0 auto 48px",
+                textAlign: "left" as const,
+              }}>
                 You're not a marketer. You're not a content creator. You're a practitioner with something important to say. You've been waiting too long for the system to catch up to the thinking. EVERYWHERE Studio was built for you.
               </p>
               <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
@@ -472,81 +476,6 @@ function DemoSection() {
     </section>
   );
 }
-
-// ═══════════════════════════════════════════
-// ACT 2: THE STATEMENT
-// ═══════════════════════════════════════════
-
-function StatementSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [wordIndex, setWordIndex] = useState(-1);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          STATEMENT_WORDS.forEach((_, i) => {
-            setTimeout(() => setWordIndex(i), 150 * (i + 1));
-          });
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <section data-nav-theme="light" ref={ref} style={{
-      minHeight: "80vh",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "112px 48px",
-      background: "var(--xp-white)",
-    }}>
-      <div style={{ maxWidth: 1100, width: "100%", textAlign: "center" }}>
-        <h2 className="xp-statement-text" style={{
-          fontSize: "clamp(36px, 7vw, 88px)",
-          fontWeight: 600,
-          letterSpacing: "-0.04em",
-          lineHeight: 1.1,
-          color: "var(--xp-text)",
-        }}>
-          {STATEMENT_WORDS.map((word, i) => {
-            const isGold = word === "problem.";
-            const visible = i <= wordIndex;
-            return (
-              <span key={i} style={{
-                display: "inline-block",
-                marginRight: i < STATEMENT_WORDS.length - 1 ? "0.3em" : 0,
-                opacity: visible ? 1 : 0,
-                transform: visible ? "translateY(0)" : "translateY(14px)",
-                transition: `opacity 0.6s ${EASE}, transform 0.6s ${EASE}`,
-              }}>
-                <span style={{ color: isGold ? "var(--xp-gold)" : "inherit" }}>{word}</span>
-              </span>
-            );
-          })}
-        </h2>
-        <div style={{
-          marginTop: 40,
-          opacity: wordIndex >= STATEMENT_WORDS.length - 1 ? 1 : 0,
-          transition: `opacity 0.8s ${EASE} 0.3s`,
-        }}>
-          <span className="xp-mono" style={{
-            fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase",
-            color: "var(--xp-ter)",
-          }}>
-            EVERYWHERE Studio
-          </span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 
 // ═══════════════════════════════════════════
 // ACT 3: THE SPLIT

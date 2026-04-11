@@ -44,27 +44,31 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Mark's Story */}
+      {/* Mark: context + story (one surface) */}
       <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-white)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <Reveal>
-            <div className="xp-glass-card" style={{ padding: "48px 40px", marginBottom: 48 }}>
+            <div className="xp-glass-card" style={{ padding: "44px 40px" }}>
               <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 4 }}>Mark Sylvester</div>
-              <div className="xp-mono" style={{ fontSize: 12, letterSpacing: "0.08em", color: "var(--xp-ter)", marginBottom: 20 }}>Founder, Mixed Grill</div>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", margin: 0 }}>
-                Santa Barbara-based entrepreneur, TEDx producer, co-founder of Coastal Intelligence, an AI think tank and consultancy. Mark helped build Wavefront and was part of the team behind the Academy Award-winning visual effects technology that changed how movies are made. He has spent 35 years building things that didn't exist yet and helping others find the courage to do the same.
+              <div className="xp-mono" style={{ fontSize: 12, letterSpacing: "0.08em", color: "var(--xp-ter)", marginBottom: 22 }}>Co-founder, Coastal Intelligence</div>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", margin: "0 0 28px" }}>
+                Mark Sylvester is a co-founder of Coastal Intelligence, an AI think tank and consultancy, based in Santa Barbara. EVERYWHERE Studio™ is his platform for thought leaders, because the ideas in your head belong everywhere.
               </p>
-            </div>
-          </Reveal>
-          <Reveal delay={100}>
-            <div className="xp-glass-card" style={{ padding: "36px 40px", marginTop: 32 }}>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+              <div style={{
+                height: 1,
+                background: "linear-gradient(90deg, transparent, var(--xp-border), transparent)",
+                margin: "0 0 28px",
+              }} />
+              <div className="xp-mono" style={{
+                fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--xp-ter)", marginBottom: 16,
+              }}>In Mark's words</div>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 20 }}>
                 It started with a Substack and a problem I couldn't solve.
               </p>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 20 }}>
                 I had things to say. I was writing every week, building the audience, learning what landed and what didn't. But the gap between what I was thinking and what I was actually publishing was driving me crazy. The ideas were there. The system to get them out wasn't.
               </p>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
+              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 20 }}>
                 So I started building one. One week at a time. A function here, a checkpoint there. Each piece solving the specific problem in front of me. After enough weeks, I looked up and realized I hadn't just fixed my own workflow. I'd built infrastructure that any practitioner with something important to say could use.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500, margin: 0 }}>
