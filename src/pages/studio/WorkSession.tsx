@@ -12,7 +12,7 @@
 import {
   useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useStudioProject } from "../../context/ProjectContext";
 import { useAuth } from "../../context/AuthContext";
@@ -21,7 +21,10 @@ import { supabase } from "../../lib/supabase";
 import { fetchWithRetry } from "../../lib/retry";
 import { useMobile } from "../../hooks/useMobile";
 import { useHoldToTranscribe } from "../../hooks/useHoldToTranscribe";
-import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
+import {
+  saveSession, loadSession, clearSession, deleteRemoteWorkSession, getWorkStageFromPersisted,
+  type PersistedSession,
+} from "../../lib/sessionPersistence";
 
 import { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
 import { DEFAULT_PRESENTATION_MINUTES } from "../../lib/wrapFormatRules";
@@ -86,6 +89,12 @@ const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
   "Case Study": "business", "One-Pager": "business",
   Presentation: "presentation", "Book Chapter": "book",
 };
+
+function formatsFromPersisted(raw: string[] | undefined): Format[] {
+  if (!raw?.length) return [];
+  const allowed = new Set<string>(Object.keys(FORMAT_TO_OUTPUT_TYPE));
+  return raw.filter((x): x is Format => allowed.has(x));
+}
 
 const WORD_TARGETS: Record<string, number> = {
   essay: 2500, podcast: 1500, video_script: 800, email: 300,
@@ -2392,6 +2401,15 @@ function ActionChips({ chips, onChipClick }: { chips: string[]; onChipClick: (te
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+function readResumeQuery(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return new URLSearchParams(window.location.search).get("resume");
+  } catch {
+    return null;
+  }
+}
+
 export default function WorkSession() {
   const { setFeedbackContent, setActiveDashTab, setReedPrefill, setReedThread } = useShell();
   const prefillReed = useCallback((text: string) => {
@@ -2402,15 +2420,16 @@ export default function WorkSession() {
   const { activeProjectId: shellProjectId } = useStudioProject();
   const { toast } = useToast();
   const nav = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { voiceDnaMd, brandDnaMd, methodDnaMd } = useUserDNA(user?.id);
 
   // ── Restore persisted session on mount ────────────────────────
   const restored = useRef(false);
-  const persisted = !restored.current ? loadSession() : null;
+  const persisted = !restored.current && !readResumeQuery() ? loadSession() : null;
 
   // ── Stage state ──────────────────────────────────────────────
-  const [stage, setStage] = useState<WorkStage>(
-    (persisted?.phase === "complete" ? "Edit" : persisted?.phase === "generating" ? "Edit" : "Intake") as WorkStage
+  const [stage, setStage] = useState<WorkStage>(() =>
+    persisted ? getWorkStageFromPersisted(persisted) : "Intake",
   );
 
   // ── Intake ───────────────────────────────────────────────────
@@ -2428,7 +2447,7 @@ export default function WorkSession() {
   const [readySummary, setReadySummary] = useState("");
 
   // ── Output type (CO-003) ─────────────────────────────────────
-  const [outputType, setOutputType] = useState<string | null>(null);
+  const [outputType, setOutputType] = useState<string | null>(() => persisted?.outputTypeId ?? null);
   const [projectId, setProjectId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -2440,12 +2459,17 @@ export default function WorkSession() {
   }, [shellProjectId]);
 
   // ── Formats + templates ───────────────────────────────────────
-  const [selectedFormats, setSelectedFormats] = useState<Format[]>(DEFAULT_FORMATS);
+  const [selectedFormats, setSelectedFormats] = useState<Format[]>(() => {
+    const f = formatsFromPersisted(persisted?.selectedFormats);
+    return f.length > 0 ? f : DEFAULT_FORMATS;
+  });
   const [selectedTemplate, setSelectedTemplate] = useState("Weekly Insight");
   const [sessionFiles, setSessionFiles] = useState<string[]>([]);
 
   // ── Outline ──────────────────────────────────────────────────
-  const [outlineRows, setOutlineRows] = useState<OutlineRow[]>([]);
+  const [outlineRows, setOutlineRows] = useState<OutlineRow[]>(() =>
+    (persisted?.outlineRows || []).map(r => ({ label: r.label, content: r.content, indent: r.indent })),
+  );
   const [outlineAngles, setOutlineAngles] = useState<{ a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null>(null);
   const [selectedAngle, setSelectedAngle] = useState<"a" | "b">("a");
   const [buildingOutline, setBuildingOutline] = useState(false);
@@ -2502,6 +2526,7 @@ export default function WorkSession() {
       })),
       input: "",
       outputType: selectedFormats[0] || "LinkedIn",
+      outputTypeId: outputType,
       sessionTitle: outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 60) || "",
       phase: draft ? "complete" : "input",
       generatedContent: draft,
@@ -2510,13 +2535,138 @@ export default function WorkSession() {
       generatedGates: null,
       isReady: intakeReady,
       timestamp: Date.now(),
-    });
-  }, [messages, draft, intakeReady, outputId, stage]);
+      workStage: stage,
+      outlineRows: outlineRows.map(r => ({ label: r.label, content: r.content, indent: r.indent })),
+      selectedFormats,
+    }, { userId: user?.id });
+  }, [messages, draft, intakeReady, outputId, stage, outlineRows, selectedFormats, outputType, user?.id]);
 
   // ── Stage navigation ──────────────────────────────────────────
   const goToStage = useCallback((s: WorkStage) => {
     setStage(s);
   }, []);
+
+  const hydrateFromPersisted = useCallback((p: PersistedSession) => {
+    setStage(getWorkStageFromPersisted(p));
+    setMessages(
+      p.messages?.length
+        ? p.messages.map(m => ({
+            role: m.role === "assistant" ? "reed" as const : "user" as const,
+            content: m.content,
+          }))
+        : [{ role: "reed", content: "Good to see you. What are you working on?" }],
+    );
+    setIntakeReady(p.isReady ?? false);
+    setDraft(p.generatedContent || "");
+    setOutputId(p.generatedOutputId ? p.generatedOutputId : null);
+    setOutputType(p.outputTypeId ?? null);
+    setOutlineRows((p.outlineRows || []).map(r => ({ label: r.label, content: r.content, indent: r.indent })));
+    const f = formatsFromPersisted(p.selectedFormats);
+    const nextFormats = f.length > 0 ? f : DEFAULT_FORMATS;
+    setSelectedFormats(nextFormats);
+    setActiveReviewTab(nextFormats[0] ?? "LinkedIn");
+    setPipelineRun(null);
+    setPipelineRunning(false);
+    setBackgroundPipelineRun(null);
+    setBackgroundPipelineRunning(false);
+    setDraftChangedSinceBackground(false);
+    backgroundDraftRef.current = "";
+    setFormatDrafts({});
+    setAllExported(false);
+    setExportedTabs({});
+    setPreWrapPickId(null);
+    setGenerating(false);
+    setFixingGate(null);
+    setRerunningPipeline(false);
+  }, []);
+
+  const stripResumeParams = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("resume");
+        next.delete("outputId");
+        next.delete("title");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
+
+  // ── Resume from Pipeline (TheLot) or explicit URL ────────────
+  const resumeParam = searchParams.get("resume");
+  const resumeOutputId = searchParams.get("outputId");
+  const resumeTitle = searchParams.get("title");
+  useEffect(() => {
+    if (!resumeParam) return;
+
+    const run = async () => {
+      if (resumeParam === "local") {
+        const p = loadSession();
+        if (p) hydrateFromPersisted(p);
+        stripResumeParams();
+        return;
+      }
+
+      if (!user?.id) {
+        stripResumeParams();
+        return;
+      }
+
+      if (resumeParam === "work_session") {
+        const { data } = await supabase
+          .from("work_sessions")
+          .select("payload")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data?.payload) {
+          hydrateFromPersisted(data.payload as PersistedSession);
+        }
+        stripResumeParams();
+        return;
+      }
+
+      if (resumeParam === "output") {
+        const oid = resumeOutputId;
+        if (!oid) {
+          stripResumeParams();
+          return;
+        }
+        const titleHint = resumeTitle;
+        const { data } = await supabase
+          .from("outputs")
+          .select("id, title, content, output_type")
+          .eq("id", oid)
+          .eq("user_id", user.id)
+          .single();
+        if (!data?.content) {
+          stripResumeParams();
+          return;
+        }
+        stripResumeParams();
+        let decodedHint = "";
+        try {
+          decodedHint = titleHint ? decodeURIComponent(titleHint) : "";
+        } catch {
+          decodedHint = titleHint || "";
+        }
+        const title = decodedHint || data.title || "Untitled";
+        setMessages([
+          { role: "reed", content: "What's on your mind?" },
+          { role: "user", content: `I want to continue working on: ${title}` },
+          { role: "reed", content: "Picking up where we left off. I've loaded your draft. Jump to Edit to continue, or tell me what you'd like to change." },
+        ]);
+        setDraft(data.content);
+        setOutputId(data.id);
+        setOutputType(data.output_type || null);
+        goToStage("Edit");
+        setPipelineRun(null);
+        setFormatDrafts({});
+      }
+    };
+
+    void run();
+  }, [resumeParam, resumeOutputId, resumeTitle, user?.id, hydrateFromPersisted, stripResumeParams, goToStage]);
 
   // ── Prefill from Watch/Pipeline signal ───────────────────────
   // When "Use this in Work" is clicked from Watch or TheLot,
@@ -3221,6 +3371,8 @@ export default function WorkSession() {
             setOutputId(data.id);
           }
         }
+        void deleteRemoteWorkSession(user.id);
+        clearSession();
       } catch (e) {
         console.error("[Export] Supabase save failed:", e);
         toast("Could not save to Catalog yet. Wrap still has your draft.", "error");
@@ -3343,6 +3495,7 @@ export default function WorkSession() {
   // ── NEW SESSION: Reset everything ────────────────────────────
   const handleNewSession = useCallback(() => {
     clearSession();
+    if (user?.id) void deleteRemoteWorkSession(user.id);
     setMessages([{ role: "reed", content: "Good to see you. What are you working on?" }]);
     setStage("Intake");
     setIntakeSending(false);
@@ -3373,7 +3526,7 @@ export default function WorkSession() {
     setSelectedAngle("a");
     setPreWrapPickId(null);
     setPreWrapPresentationMins(DEFAULT_PRESENTATION_MINUTES);
-  }, []);
+  }, [user?.id]);
 
   // ── New Session from top nav ─────────────────────────────────
   useEffect(() => {

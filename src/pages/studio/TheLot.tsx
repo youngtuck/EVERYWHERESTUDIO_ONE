@@ -1,7 +1,7 @@
 /**
  * TheLot.tsx — The Pipeline
- * Phase 6: wired to Supabase outputs table (content_state = 'lot')
- * plus static watched signals. Selecting opens detail in dashboard panel.
+ * Wired to Supabase outputs (content_state = 'lot' parked, 'in_progress' drafts),
+ * work_sessions (active Work sync), sessionStorage (local-only), plus Watch signals.
  */
 import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -11,12 +11,14 @@ import { useToast } from "../../context/ToastContext";
 import { useShell } from "../../components/studio/StudioShell";
 import { useMobile } from "../../hooks/useMobile";
 import { timeAgo } from "../../utils/timeAgo";
+import { loadSession, clearSession, getWorkStageFromPersisted, type PersistedSession } from "../../lib/sessionPersistence";
 import "./shared.css";
 
 const FONT = "var(--font)";
 
-type ItemType = "signal" | "idea";
+type ItemType = "signal" | "idea" | "progress";
 type SignalStrength = "getting-stronger" | "steady" | "quieting";
+type ProgressKind = "work_session" | "output" | "local";
 
 interface PipelineItem {
   id: string;
@@ -29,10 +31,9 @@ interface PipelineItem {
   detail: string;
   action: string;
   outputId?: string;
+  progressKind?: ProgressKind;
 }
 
-// Static signals — surfaced by Watch, parked here
-// No static signals — signals come from Watch via run-sentinel
 const STATIC_SIGNALS: PipelineItem[] = [];
 
 function strengthColor(s?: SignalStrength): string {
@@ -41,7 +42,6 @@ function strengthColor(s?: SignalStrength): string {
   return "var(--line)";
 }
 
-// ── Pipeline detail dashboard panel ──────────────────────────
 function PipelineDetailPanel({
   item, onActivate, onRemove, onSendToWrap,
 }: {
@@ -51,11 +51,13 @@ function PipelineDetailPanel({
   onSendToWrap?: () => void;
 }) {
   const isSignal = item.type === "signal";
+  const isProgress = item.type === "progress";
+  const kindLabel = isSignal ? "Signal" : isProgress ? "In progress" : "Parked idea";
   return (
     <>
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 4 }}>
-          {isSignal ? "Signal" : "Parked idea"}
+          {kindLabel}
         </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 4, lineHeight: 1.4 }}>{item.title}</div>
         <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 12 }}>{item.subtitle}</div>
@@ -70,7 +72,7 @@ function PipelineDetailPanel({
           >
             {item.action}
           </button>
-          {item.outputId && onSendToWrap && (
+          {!isProgress && item.outputId && onSendToWrap && (
             <button
               onClick={onSendToWrap}
               style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--gold-bright)", background: "rgba(245,198,66,0.06)", fontSize: 11, color: "var(--gold)", cursor: "pointer", fontFamily: FONT, fontWeight: 600 }}
@@ -78,12 +80,14 @@ function PipelineDetailPanel({
               Send to Wrap
             </button>
           )}
-          <button style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}>Edit note</button>
+          {!isProgress && (
+            <button style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid var(--glass-border)", background: "var(--glass-input)", fontSize: 11, color: "var(--fg-2)", cursor: "pointer", fontFamily: FONT }}>Edit note</button>
+          )}
           <button
             onClick={onRemove}
             style={{ width: "100%", textAlign: "left" as const, padding: "7px 10px", borderRadius: 5, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.04)", fontSize: 11, color: "var(--danger)", cursor: "pointer", fontFamily: FONT }}
           >
-            Remove
+            {isProgress ? (item.progressKind === "output" ? "Delete draft" : "Clear session") : "Remove"}
           </button>
         </div>
       </div>
@@ -91,7 +95,6 @@ function PipelineDetailPanel({
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────
 export default function TheLot() {
   const nav = useNavigate();
   const isMobile = useMobile();
@@ -99,25 +102,139 @@ export default function TheLot() {
   const { toast } = useToast();
   const { setDashContent } = useShell();
 
+  const [inProgressItems, setInProgressItems] = useState<PipelineItem[]>([]);
   const [parkedIdeas, setParkedIdeas] = useState<PipelineItem[]>([]);
   const [signals, setSignals] = useState<PipelineItem[]>(STATIC_SIGNALS);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // Load parked ideas from Supabase (content_state = 'lot')
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
+    setLoading(true);
     (async () => {
-      const { data } = await supabase
-        .from("outputs")
-        .select("id, title, output_type, created_at, score")
-        .eq("user_id", user.id)
-        .eq("content_state", "lot")
-        .order("created_at", { ascending: false })
-        .limit(20);
+      const progressList: PipelineItem[] = [];
 
-      if (data && data.length > 0) {
-        setParkedIdeas(data.map(r => ({
+      if (!user) {
+        const local = loadSession();
+        const p = local as PersistedSession | null;
+        const localHas = Boolean(
+          p && ((Array.isArray(p.messages) && p.messages.length > 1) || !!(p.generatedContent || "").trim()),
+        );
+        if (localHas && p) {
+          const stage = getWorkStageFromPersisted(p);
+          const title = (p.sessionTitle || "").trim()
+            || p.messages?.find(m => m.role === "user")?.content?.slice(0, 60)
+            || "Work on this device";
+          progressList.push({
+            id: "progress:local",
+            type: "progress",
+            title: title.slice(0, 60),
+            meta: `${stage} · ${timeAgo(new Date(p.timestamp).toISOString())}`,
+            subtitle: "This browser · not synced",
+            detail: "Open Work to continue this session on this device.",
+            action: "Continue",
+            progressKind: "local",
+          });
+        }
+        setInProgressItems(progressList);
+        setParkedIdeas([]);
+        setLoading(false);
+        return;
+      }
+
+      const [wsRes, outRes, parkedRes] = await Promise.all([
+        supabase
+          .from("work_sessions")
+          .select("session_title, work_stage, updated_at, payload")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("outputs")
+          .select("id, title, output_type, created_at, updated_at, content_state")
+          .eq("user_id", user.id)
+          .eq("content_state", "in_progress")
+          .order("updated_at", { ascending: false })
+          .limit(15),
+        supabase
+          .from("outputs")
+          .select("id, title, output_type, created_at, score")
+          .eq("user_id", user.id)
+          .eq("content_state", "lot")
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
+
+      const ws = wsRes.data;
+      const payload = ws?.payload as PersistedSession | undefined;
+      const hasWsContent = Boolean(
+        ws && (
+          (Array.isArray(payload?.messages) && payload.messages.length > 1)
+          || !!(payload?.generatedContent || "").trim()
+        ),
+      );
+      let linkedOutputId: string | undefined;
+      if (hasWsContent && payload?.generatedOutputId) {
+        linkedOutputId = String(payload.generatedOutputId).trim() || undefined;
+      }
+
+      if (hasWsContent && ws) {
+        const stage = (ws.work_stage || "Intake") as string;
+        const title = (ws.session_title || "").trim() || "Work in progress";
+        progressList.push({
+          id: `progress:ws:${user.id}`,
+          type: "progress",
+          title: title.slice(0, 60),
+          meta: `${stage} · ${timeAgo(ws.updated_at)}`,
+          subtitle: "Synced session",
+          detail: "Continue in Work at the stage you left off.",
+          action: "Continue",
+          progressKind: "work_session",
+        });
+      }
+
+      const local = loadSession();
+      const lp = local as PersistedSession | null;
+      const localHas = Boolean(
+        lp && ((Array.isArray(lp.messages) && lp.messages.length > 1) || !!(lp.generatedContent || "").trim()),
+      );
+      if (localHas && lp && !hasWsContent) {
+        const stage = getWorkStageFromPersisted(lp);
+        const title = (lp.sessionTitle || "").trim()
+          || lp.messages?.find(m => m.role === "user")?.content?.slice(0, 60)
+          || "This device";
+        progressList.push({
+          id: "progress:local",
+          type: "progress",
+          title: title.slice(0, 60),
+          meta: `${stage} · ${timeAgo(new Date(lp.timestamp).toISOString())}`,
+          subtitle: "This browser · not synced to cloud yet",
+          detail: "Open Work to continue. Sign in to sync across devices.",
+          action: "Continue",
+          progressKind: "local",
+        });
+      }
+
+      const outputs = outRes.data || [];
+      for (const r of outputs) {
+        if (linkedOutputId && r.id === linkedOutputId) continue;
+        const when = r.updated_at || r.created_at;
+        progressList.push({
+          id: `progress:out:${r.id}`,
+          type: "progress",
+          title: (r.title || "Untitled").slice(0, 60),
+          meta: `Edit · ${timeAgo(when)}`,
+          subtitle: "Catalog draft · in progress",
+          detail: `${r.title || "Untitled"}. Output type: ${(r.output_type || "").replace(/_/g, " ")}.`,
+          action: "Continue",
+          outputId: r.id,
+          progressKind: "output",
+        });
+      }
+
+      setInProgressItems(progressList);
+
+      const parkedData = parkedRes.data;
+      if (parkedData && parkedData.length > 0) {
+        setParkedIdeas(parkedData.map(r => ({
           id: r.id,
           type: "idea" as ItemType,
           title: r.title || "Untitled",
@@ -130,27 +247,41 @@ export default function TheLot() {
       } else {
         setParkedIdeas([]);
       }
+
       setLoading(false);
     })();
   }, [user]);
 
-  const allItems = [...signals, ...parkedIdeas];
+  const allItems = [...signals, ...inProgressItems, ...parkedIdeas];
   const selectedItem = allItems.find(i => i.id === selectedId) ?? null;
 
-  const handleActivate = useCallback(async () => {
+  const handleActivate = useCallback(() => {
     if (!selectedItem) return;
 
+    if (selectedItem.type === "progress") {
+      const k = selectedItem.progressKind;
+      if (k === "work_session") {
+        nav("/studio/work?resume=work_session");
+        return;
+      }
+      if (k === "local") {
+        nav("/studio/work?resume=local");
+        return;
+      }
+      if (k === "output" && selectedItem.outputId) {
+        const t = encodeURIComponent(selectedItem.title);
+        nav(`/studio/work?resume=output&outputId=${selectedItem.outputId}&title=${t}`);
+      }
+      return;
+    }
+
     if (selectedItem.type === "signal") {
-      // Signals don't have a saved output — seed Reed with the signal context
-      // WorkSession reads ew-signal-text on mount and prefills the conversation
       sessionStorage.setItem("ew-signal-text", selectedItem.title);
       sessionStorage.setItem("ew-signal-detail", selectedItem.detail);
     } else if (selectedItem.outputId) {
-      // Parked ideas with real outputs — reopen in Edit stage
       sessionStorage.setItem("ew-reopen-output-id", selectedItem.outputId);
       sessionStorage.setItem("ew-reopen-title", selectedItem.title);
     } else {
-      // Parked idea without a saved output — seed Reed with the idea title
       sessionStorage.setItem("ew-signal-text", selectedItem.title);
       sessionStorage.setItem("ew-signal-detail", selectedItem.detail);
     }
@@ -160,6 +291,25 @@ export default function TheLot() {
 
   const handleRemove = useCallback(async () => {
     if (!selectedItem) return;
+
+    if (selectedItem.type === "progress") {
+      const k = selectedItem.progressKind;
+      if (k === "output" && selectedItem.outputId && user) {
+        await supabase.from("outputs").delete().eq("id", selectedItem.outputId).eq("user_id", user.id);
+        setInProgressItems(prev => prev.filter(i => i.id !== selectedItem.id));
+      } else if (k === "work_session" && user) {
+        await supabase.from("work_sessions").delete().eq("user_id", user.id);
+        clearSession();
+        setInProgressItems(prev => prev.filter(i => i.id !== selectedItem.id));
+      } else if (k === "local") {
+        clearSession();
+        setInProgressItems(prev => prev.filter(i => i.id !== selectedItem.id));
+      }
+      setSelectedId(null);
+      toast("Removed from Pipeline.");
+      return;
+    }
+
     if (selectedItem.type === "idea" && selectedItem.outputId && user) {
       await supabase.from("outputs").delete().eq("id", selectedItem.outputId).eq("user_id", user.id);
       setParkedIdeas(prev => prev.filter(i => i.id !== selectedItem.id));
@@ -177,22 +327,22 @@ export default function TheLot() {
           item={selectedItem}
           onActivate={handleActivate}
           onRemove={handleRemove}
-          onSendToWrap={selectedItem.outputId ? () => {
+          onSendToWrap={selectedItem.outputId && selectedItem.type === "idea" ? () => {
             sessionStorage.setItem("ew-wrap-output-id", selectedItem.outputId!);
             sessionStorage.setItem("ew-wrap-title", selectedItem.title);
             nav("/studio/wrap");
           } : undefined}
-        />
+        />,
       );
     } else {
       setDashContent(
         <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
           Select a signal or idea to see details.
-        </div>
+        </div>,
       );
     }
     return () => setDashContent(null);
-  }, [selectedItem, handleActivate, handleRemove, setDashContent]);
+  }, [selectedItem, handleActivate, handleRemove, setDashContent, nav]);
 
   const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="liquid-glass-card" style={{ padding: 14, marginBottom: 10 }}>
@@ -238,6 +388,18 @@ export default function TheLot() {
           </div>
         ) : (
           signals.map(item => <PipelineRow key={item.id} item={item} />)
+        )}
+      </Card>
+
+      <Card title="In progress">
+        {loading ? (
+          <div style={{ padding: "8px 0", fontSize: 11, color: "var(--fg-3)" }}>Loading...</div>
+        ) : inProgressItems.length === 0 ? (
+          <div style={{ padding: "16px 4px", fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
+            Nothing in progress. Start a session in Work and it will appear here while you have messages or a draft and have not finished Wrap.
+          </div>
+        ) : (
+          inProgressItems.map(item => <PipelineRow key={item.id} item={item} />)
         )}
       </Card>
 
