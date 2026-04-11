@@ -566,7 +566,6 @@ export default function WrapPage() {
           title: (activeOutput.title || "Untitled").slice(0, 200),
           content: activeOutput.content,
           output_type: activeOutput.output_type || "freestyle",
-          output_type_id: activeOutput.output_type || "freestyle",
           content_state: "vault",
           published_at: new Date().toISOString(),
         }).select("id").single();

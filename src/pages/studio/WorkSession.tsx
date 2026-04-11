@@ -3100,7 +3100,6 @@ export default function WorkSession() {
           title: title.slice(0, 200),
           content: data.content,
           output_type: outputTypeId,
-          output_type_id: outputTypeId,
           content_state: "in_progress",
           score: 0,
         }).select("id").single().then(({ data: savedOutput, error }) => {
@@ -3266,7 +3265,6 @@ export default function WorkSession() {
       const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
       const score = backgroundPipelineRun.impactScore?.total ?? 0;
       const outputTypeId = outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay";
-      const outputCategory = OUTPUT_TYPES.find(t => t.id === outputTypeId)?.category?.toLowerCase() || null;
 
       if (outputId) {
         await supabase.from("outputs").update({
@@ -3274,7 +3272,6 @@ export default function WorkSession() {
           score: Math.round(score),
           gates: backgroundPipelineRun.checkpointResults || null,
           content_state: score >= 60 ? "vault" : "in_progress",
-          output_category: outputCategory,
         }).eq("id", outputId);
       } else {
         const { data: savedOutput } = await supabase.from("outputs").insert({
@@ -3282,8 +3279,6 @@ export default function WorkSession() {
           title: title.slice(0, 200),
           content: backgroundPipelineRun.finalDraft || draft,
           output_type: outputTypeId,
-          output_type_id: outputTypeId,
-          output_category: outputCategory,
           project_id: projectId || undefined,
           score: Math.round(score),
           gates: backgroundPipelineRun.checkpointResults || null,
@@ -3336,7 +3331,6 @@ export default function WorkSession() {
         const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
         const score = result.impactScore?.total ?? 0;
         const outputTypeId = outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay";
-        const outputCategory = OUTPUT_TYPES.find(t => t.id === outputTypeId)?.category?.toLowerCase() || null;
 
         if (outputId) {
           // Update existing record with pipeline results
@@ -3345,7 +3339,6 @@ export default function WorkSession() {
             score: Math.round(score),
             gates: result.checkpointResults || null,
             content_state: score >= 60 ? "vault" : "in_progress",
-            output_category: outputCategory,
           }).eq("id", outputId);
         } else {
           // Create new record
@@ -3354,8 +3347,6 @@ export default function WorkSession() {
             title: title.slice(0, 200),
             content: result.finalDraft || draft,
             output_type: outputTypeId,
-            output_type_id: outputTypeId,
-            output_category: outputCategory,
             project_id: projectId || undefined,
             score: Math.round(score),
             gates: result.checkpointResults || null,
@@ -3412,13 +3403,10 @@ export default function WorkSession() {
 
         if (outputId) {
           const first = primaryTypeId;
-          const firstCat = OUTPUT_TYPES.find(t => t.id === first)?.category?.toLowerCase() || null;
           const { error: upErr } = await supabase.from("outputs").update({
             content: draft,
             content_state: "vault",
             output_type: first,
-            output_type_id: first,
-            output_category: firstCat,
             score: scoreVal,
             gates: gatesVal,
             project_id: projectId || undefined,
@@ -3428,14 +3416,11 @@ export default function WorkSession() {
 
           for (let i = 1; i < resolvedTypeIds.length; i++) {
             const tid = resolvedTypeIds[i];
-            const cat = OUTPUT_TYPES.find(t => t.id === tid)?.category?.toLowerCase() || null;
             const { error: insErr } = await supabase.from("outputs").insert({
               user_id: user.id,
               title: title.slice(0, 200),
               content: draft,
               output_type: tid,
-              output_type_id: tid,
-              output_category: cat,
               content_state: "vault",
               score: scoreVal,
               gates: gatesVal,
@@ -3446,14 +3431,11 @@ export default function WorkSession() {
         } else {
           for (let i = 0; i < resolvedTypeIds.length; i++) {
             const tid = resolvedTypeIds[i];
-            const cat = OUTPUT_TYPES.find(t => t.id === tid)?.category?.toLowerCase() || null;
             const { data: rows, error: insErr } = await supabase.from("outputs").insert({
               user_id: user.id,
               title: title.slice(0, 200),
               content: draft,
               output_type: tid,
-              output_type_id: tid,
-              output_category: cat,
               content_state: "vault",
               score: scoreVal,
               gates: gatesVal,
