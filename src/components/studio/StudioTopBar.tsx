@@ -1,8 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useShell } from "./StudioShell";
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
+
+const USER_MENU_OVERLAY_Z = 10050;
 
 // ── Route to breadcrumb config ──────────────────────────────────
 function useBreadcrumbs(): {
@@ -121,6 +124,8 @@ function UserAvatar() {
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
 
   const initials = displayName
     ? displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
@@ -131,32 +136,55 @@ function UserAvatar() {
     nav("/");
   };
 
-  return (
-    <>
-    <div style={{ position: "relative" }}>
-      <div
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: 28, height: 28, borderRadius: "50%",
-          background: "rgba(200,169,110,0.1)",
-          border: "1px solid rgba(200,169,110,0.2)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 9, fontWeight: 700, color: "var(--gold-dark)",
-          cursor: "pointer", flexShrink: 0,
-        }}
-      >
-        {initials}
-      </div>
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuPos(null);
+      return;
+    }
+    const el = anchorRef.current;
+    if (!el) return;
+    const place = () => {
+      const r = el.getBoundingClientRect();
+      setMenuPos({
+        top: r.bottom + 6,
+        right: Math.max(8, window.innerWidth - r.right),
+      });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
 
-      {open && (
+  const menuPortal = open && menuPos && typeof document !== "undefined"
+    ? createPortal(
         <>
-          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 290 }} />
-          <div className="liquid-glass-menu" style={{
-            position: "absolute", top: 36, right: 0,
-            zIndex: 300,
-            width: 220,
-            overflow: "hidden",
-          }}>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: USER_MENU_OVERLAY_Z,
+              border: "none", padding: 0, margin: 0, cursor: "default",
+              background: "transparent",
+            }}
+          />
+          <div
+            className="liquid-glass-menu"
+            role="menu"
+            aria-label="Account menu"
+            style={{
+              position: "fixed",
+              top: menuPos.top,
+              right: menuPos.right,
+              zIndex: USER_MENU_OVERLAY_Z + 1,
+              width: 220,
+              overflow: "hidden",
+            }}
+          >
             {/* Header */}
             <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.04)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -186,6 +214,7 @@ function UserAvatar() {
               ].map(item => (
                 <div
                   key={item.label}
+                  role="menuitem"
                   onClick={item.action}
                   style={{ padding: "7px 10px", fontSize: 12, color: "rgba(255,255,255,0.75)", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
@@ -196,6 +225,7 @@ function UserAvatar() {
               ))}
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "4px 0" }} />
               <div
+                role="menuitem"
                 onClick={handleSignOut}
                 style={{ padding: "7px 10px", fontSize: 12, color: "#e85d75", cursor: "pointer", borderRadius: 5, transition: "background 0.1s" }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
@@ -205,9 +235,34 @@ function UserAvatar() {
               </div>
             </div>
           </div>
-        </>
-      )}
+        </>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <>
+    <div style={{ position: "relative" }}>
+      <button
+        type="button"
+        ref={anchorRef}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: 28, height: 28, borderRadius: "50%",
+          background: "rgba(200,169,110,0.1)",
+          border: "1px solid rgba(200,169,110,0.2)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 9, fontWeight: 700, color: "var(--gold-dark)",
+          cursor: "pointer", flexShrink: 0,
+          padding: 0, fontFamily: "inherit",
+        }}
+      >
+        {initials}
+      </button>
     </div>
+    {menuPortal}
       {activeModal === "system" && (
         <div onClick={() => setActiveModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "var(--surface)", borderRadius: 12, width: 420, maxHeight: 480, padding: "20px 24px", boxShadow: "0 16px 48px rgba(0,0,0,0.14)" }}>

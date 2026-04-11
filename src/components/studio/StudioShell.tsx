@@ -245,7 +245,7 @@ export default function StudioShell() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [dashOpen, setDashOpen] = useState(true);
+  const [dashOpen, setDashOpen] = useState(false);
   const [advisorsOpen, setAdvisorsOpen] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const [dashContent, setDashContent] = useState<React.ReactNode | null>(null);
@@ -313,7 +313,7 @@ export default function StudioShell() {
             <StudioTopBar />
           )}
 
-          {/* Content + Dashboard panel row */}
+          {/* Main canvas (Reed / dashboard is a floating glass flyout) */}
           <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
             <main className="studio-main-inner studio-content-substrate" style={{
               flex: 1, overflowY: "auto", minWidth: 0,
@@ -323,9 +323,6 @@ export default function StudioShell() {
             }}>
               <Outlet />
             </main>
-            {!isMobile && (
-              <RightPanel open={dashOpen} onToggle={() => setDashOpen(!dashOpen)} />
-            )}
           </div>
         </div>
 
@@ -343,95 +340,112 @@ export default function StudioShell() {
         )}
 
         {isMobile && <MobileBottomNav />}
+
+        <FloatingReedPanel isMobile={isMobile} open={dashOpen} setOpen={setDashOpen} />
       </div>
     </ShellContext.Provider>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DASHBOARD PANEL
+// FLOATING REED / DASHBOARD (liquid glass flyout + edge launcher)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function RightPanel({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; open: boolean; setOpen: (v: boolean) => void }) {
   const { feedbackContent, dashContent } = useShell();
 
-  return (
-    <div style={{
-      width: open ? 260 : 40, flexShrink: 0,
-      overflow: "visible", transition: "width 0.25s cubic-bezier(0.16,1,0.3,1)",
-      display: "flex", flexDirection: "column",
-      padding: open ? "8px 8px 8px 0" : "8px 4px 8px 0",
-      position: "relative",
-    }}>
-      {/* Collapse/expand toggle */}
-      <button
-        onClick={onToggle}
-        className="liquid-glass-pill"
-        style={{
-          position: "absolute", top: 12, left: open ? 8 : 4,
-          width: 28, height: 28, borderRadius: "50%",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer", zIndex: 10, padding: 0,
-          fontSize: 12, color: "var(--fg-3)",
-          fontFamily: "var(--font)",
-          border: "1px solid rgba(0,0,0,0.06)",
-        }}
-        title={open ? "Collapse Reed panel" : "Expand Reed panel"}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ transform: open ? "rotate(0)" : "rotate(180deg)", transition: "transform 0.2s" }}>
-          <path d="M9 3L5 7L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, setOpen]);
 
-      {/* The glass panel content */}
-      <div className="liquid-glass-card" style={{
-        width: open ? 244 : 0,
-        height: "100%",
-        display: "flex", flexDirection: "column",
-        opacity: open ? 1 : 0,
-        transition: "opacity 0.15s ease, width 0.25s cubic-bezier(0.16,1,0.3,1)",
-        pointerEvents: open ? "auto" : "none",
-        borderRadius: 16,
-        overflow: "hidden",
-      }}>
-        {/* Header */}
+  return (
+    <>
+      {!open && (
+        <button
+          type="button"
+          className={`liquid-glass-pill studio-reed-launcher ${isMobile ? "studio-reed-launcher-mobile" : "studio-reed-launcher-desktop"}`}
+          onClick={() => setOpen(true)}
+          aria-expanded="false"
+          aria-controls="studio-reed-flyout"
+          aria-label="Open Reed and dashboard"
+          style={{ color: "var(--fg-2)" }}
+        >
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden>
+            <path d="M1 1.5h16M1 7h16M1 12.5h16" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+
+      <button
+        type="button"
+        tabIndex={-1}
+        className={`studio-reed-backdrop ${open ? "is-open" : ""}`}
+        aria-label="Close Reed panel"
+        onClick={() => setOpen(false)}
+      />
+
+      <aside
+        id="studio-reed-flyout"
+        className={`liquid-glass-card studio-reed-flyout ${open ? "is-open" : ""} ${isMobile ? "studio-reed-flyout-mobile" : ""}`}
+        aria-hidden={!open}
+      >
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          borderBottom: "1px solid rgba(0,0,0,0.04)",
-          background: "rgba(255,255,255,0.2)", flexShrink: 0,
-          padding: "10px 14px", paddingLeft: 44,
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          background: "rgba(255,255,255,0.42)", flexShrink: 0,
+          padding: "10px 12px",
         }}>
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{
-              width: 20, height: 20, borderRadius: "50%",
-              background: "rgba(74,144,217,0.08)",
-              border: "1px solid rgba(74,144,217,0.15)",
+              width: 22, height: 22, borderRadius: "50%",
+              background: "rgba(74,144,217,0.1)",
+              border: "1px solid rgba(74,144,217,0.2)",
               color: "var(--blue)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 8, fontWeight: 700, flexShrink: 0,
-              marginRight: 8,
+              fontSize: 9, fontWeight: 700, flexShrink: 0,
             }}>R</div>
             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close Reed panel"
+            style={{
+              width: 30, height: 30, borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)",
+              background: "rgba(255,255,255,0.5)", color: "var(--fg-3)", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+              fontFamily: "var(--font)", transition: "background 0.12s, color 0.12s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; e.currentTarget.style.color = "var(--fg)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.5)"; e.currentTarget.style.color = "var(--fg-3)"; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+              <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
 
-        {/* Stage feedback and context */}
-        <div style={{ padding: 14, flex: 1, overflowY: "auto" }}>
+        <div style={{ padding: 14, flex: 1, overflowY: "auto", minHeight: 0 }}>
           {feedbackContent ?? dashContent ?? <DefaultDashContent />}
         </div>
 
-        {/* Copyright footer */}
         <div style={{
           padding: "8px 14px",
           fontSize: 9, color: "var(--fg-3)",
-          opacity: 0.5,
+          opacity: 0.55,
           textAlign: "center" as const,
           flexShrink: 0,
+          borderTop: "1px solid rgba(0,0,0,0.05)",
         }}>
           &copy; 2026 Mixed Grill, LLC
         </div>
-      </div>
-    </div>
+      </aside>
+    </>
   );
 }
 

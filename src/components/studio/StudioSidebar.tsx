@@ -158,158 +158,112 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
   };
 
   return (
-    <aside style={{
-      width: collapsed ? 52 : 220,
-      height: "100vh",
-      background: "var(--glass-sidebar)",
-      borderRight: "1px solid rgba(255,255,255,0.06)",
-      backdropFilter: "var(--glass-blur)",
-      WebkitBackdropFilter: "var(--glass-blur)",
-      boxShadow: "var(--glass-inner-dark), 2px 0 12px rgba(0,0,0,0.15)",
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden",
-      fontFamily: "var(--font)",
-      transition: "width 0.18s ease",
-      flexShrink: 0,
-    }}>
-
-      {/* Rail top: project selector + collapse button */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 8px",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        flexShrink: 0,
-        height: 50,
-      }}>
-        {/* Expanded: project block + collapse button */}
-        {!collapsed && !onMobileClose && (
-          <>
-            <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
-              <div
-                onClick={() => projects.length > 1 && setShowProjectMenu(m => !m)}
-                style={{
-                  display: "flex", alignItems: "flex-start", flexDirection: "column",
-                  gap: 1, background: "rgba(255,255,255,0.06)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)",
-                  padding: "5px 8px", cursor: projects.length > 1 ? "pointer" : "default",
-                }}
-              >
-                <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.4)" }}>Project</span>
-                <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 4 }}>
-                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.92)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {activeProject?.name ?? "Loading..."}
-                  </span>
-                  {projects.length > 1 && (
-                    <svg style={{ width: 11, height: 11, stroke: "rgba(255,255,255,0.4)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
+    <aside
+      className={`studio-sidebar-rail ${collapsed ? "studio-sidebar-rail--collapsed" : ""}`}
+      style={{ width: collapsed ? 52 : 220 }}
+    >
+      <div className="studio-sidebar-glass">
+        <div className="studio-sidebar-glass-inner">
+          {/* Rail top: project selector + collapse / mobile close */}
+          <div className="studio-sidebar-header">
+            {!collapsed && !onMobileClose && (
+              <>
+                <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => projects.length > 1 && setShowProjectMenu(m => !m)}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); projects.length > 1 && setShowProjectMenu(m => !m); } }}
+                    className="studio-sidebar-chip"
+                    style={{ cursor: projects.length > 1 ? "pointer" : "default" }}
+                  >
+                    <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.45)" }}>Project</span>
+                    <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 4, marginTop: 2 }}>
+                      <span style={{ fontSize: 12, color: "rgba(255,255,255,0.94)", fontWeight: 600, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {activeProject?.name ?? "Loading..."}
+                      </span>
+                      {projects.length > 1 && (
+                        <svg style={{ width: 11, height: 11, stroke: "rgba(255,255,255,0.45)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  {showProjectMenu && projects.length > 1 && (
+                    <>
+                      <button type="button" aria-label="Close project menu" onClick={() => setShowProjectMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 99, border: "none", padding: 0, margin: 0, background: "transparent", cursor: "default" }} />
+                      <div className="liquid-glass-menu" style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 100, overflow: "hidden", borderRadius: 12 }}>
+                        {projects.map(p => (
+                          <button
+                            type="button"
+                            key={p.id}
+                            onClick={() => { setActiveProjectId(p.id); setShowProjectMenu(false); }}
+                            style={{
+                              display: "block", width: "100%", textAlign: "left" as const,
+                              padding: "9px 11px", fontSize: 12, cursor: "pointer",
+                              color: p.id === activeProjectId ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.7)",
+                              fontWeight: p.id === activeProjectId ? 600 : 400,
+                              background: p.id === activeProjectId ? "rgba(245,198,66,0.12)" : "transparent",
+                              border: "none", fontFamily: "inherit",
+                              transition: "background 0.12s",
+                            }}
+                            onMouseEnter={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                            onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
+                          >
+                            {p.name}
+                            {p.is_default && <span style={{ fontSize: 9, color: "rgba(255,255,255,0.42)", marginLeft: 6 }}>default</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={onToggleCollapsed}
+                  title="Collapse sidebar"
+                  className="studio-sidebar-icon-btn"
+                >
+                  <svg style={{ width: 13, height: 13, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+              </>
+            )}
+
+            {collapsed && !onMobileClose && (
+              <button
+                type="button"
+                onClick={onToggleCollapsed}
+                title="Expand sidebar"
+                className="studio-sidebar-icon-btn"
+                style={{ width: "100%", height: 36, borderRadius: 12 }}
+              >
+                <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            )}
+
+            {onMobileClose && (
+              <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
+                <div className="studio-sidebar-chip" style={{ cursor: "default" }}>
+                  <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.45)" }}>Project</span>
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.94)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block", marginTop: 2 }}>
+                    {activeProject?.name ?? "Loading..."}
+                  </span>
+                </div>
               </div>
-              {showProjectMenu && projects.length > 1 && (
-                <>
-                  <div onClick={() => setShowProjectMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 99 }} />
-                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 7, boxShadow: "var(--shadow-md)", zIndex: 100, overflow: "hidden" }}>
-                    {projects.map(p => (
-                      <div
-                        key={p.id}
-                        onClick={() => { setActiveProjectId(p.id); setShowProjectMenu(false); }}
-                        style={{
-                          padding: "8px 10px", fontSize: 12, cursor: "pointer",
-                          color: p.id === activeProjectId ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.65)",
-                          fontWeight: p.id === activeProjectId ? 600 : 400,
-                          background: p.id === activeProjectId ? "rgba(245,198,66,0.08)" : "transparent",
-                          transition: "background 0.1s",
-                        }}
-                        onMouseEnter={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "var(--bg)"; }}
-                        onMouseLeave={e => { if (p.id !== activeProjectId) e.currentTarget.style.background = "transparent"; }}
-                      >
-                        {p.name}
-                        {p.is_default && <span style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginLeft: 6 }}>default</span>}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Collapse button, expanded state */}
-            <button
-              type="button"
-              onClick={onToggleCollapsed}
-              title="Collapse sidebar"
-              style={{
-                width: 28, height: 28, borderRadius: 5,
-                border: "1px solid rgba(255,255,255,0.06)",
-                background: "transparent",
-                color: "rgba(255,255,255,0.4)",
-                cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-                transition: "all 0.12s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
-            >
-              <svg style={{ width: 13, height: 13, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-          </>
-        )}
-
-        {/* Collapsed: entire header is the expand button */}
-        {collapsed && !onMobileClose && (
-          <button
-            type="button"
-            onClick={onToggleCollapsed}
-            title="Expand sidebar"
-            style={{
-              width: "100%", height: "100%",
-              background: "transparent", border: "none",
-              cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              borderRadius: 0,
-              color: "rgba(255,255,255,0.4)",
-              transition: "background 0.12s, color 0.12s",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
-          >
-            <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 2, fill: "none" }} viewBox="0 0 24 24">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-        )}
-
-        {/* Mobile close */}
-        {onMobileClose && (
-          <div style={{ flex: 1, overflow: "hidden", minWidth: 0, position: "relative" }}>
-            <div style={{
-              display: "flex", alignItems: "flex-start", flexDirection: "column",
-              gap: 1, background: "rgba(255,255,255,0.06)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", padding: "5px 8px",
-            }}>
-              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.4)" }}>Project</span>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.92)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {activeProject?.name ?? "Loading..."}
-              </span>
-            </div>
+            )}
+            {onMobileClose && (
+              <button type="button" onClick={onMobileClose} className="studio-sidebar-icon-btn" aria-label="Close menu">
+                <span style={{ fontSize: 15, lineHeight: 1, fontWeight: 300 }}>×</span>
+              </button>
+            )}
           </div>
-        )}
-        {onMobileClose && (
-          <button
-            type="button"
-            onClick={onMobileClose}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 16, padding: 4, flexShrink: 0 }}
-            aria-label="Close menu"
-          >✕</button>
-        )}
-      </div>
 
-      {/* Navigation body */}
-      <nav style={{ flex: 1, padding: "6px 5px", overflowY: "auto" }}>
+          <nav className="studio-sidebar-nav">
         {NAV.filter(group => !simplified || group.group === "Studio" || group.group === "You").map((group, gi) => {
           // On mobile, skip items already in bottom nav
           const items = onMobileClose
@@ -321,17 +275,12 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
             <div key={gi}>
               {/* Group label */}
               {!collapsed && (
-                <div style={{
-                  fontSize: 8, color: "rgba(255,255,255,0.3)",
-                  letterSpacing: "0.1em", textTransform: "uppercase" as const,
-                  padding: "10px 6px 3px", whiteSpace: "nowrap",
-                  fontWeight: 600,
-                }}>
+                <div className="studio-sidebar-group-label">
                   {group.group}
                 </div>
               )}
               {collapsed && gi > 0 && (
-                <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 6px", opacity: 0.5 }} />
+                <div className="studio-sidebar-group-rule" />
               )}
 
               {items.map(({ path, label, icon, desc }) => {
@@ -356,11 +305,11 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         {isAdmin && (
           <>
             {!collapsed && (
-              <div style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase" as const, padding: "10px 6px 3px", fontWeight: 600 }}>
+              <div className="studio-sidebar-group-label">
                 Admin
               </div>
             )}
-            {collapsed && <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "8px 6px", opacity: 0.5 }} />}
+            {collapsed && <div className="studio-sidebar-group-rule" />}
             <NavItem
               label="Admin Panel"
               active={loc.pathname === "/studio/admin"}
@@ -376,12 +325,13 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
         )}
       </nav>
 
-      {/* Version */}
       {!collapsed && (
-        <div style={{ padding: "4px 14px 10px", fontSize: 10, color: "rgba(255,255,255,0.2)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="studio-sidebar-footer">
           v{APP_VERSION}
         </div>
       )}
+        </div>
+      </div>
     </aside>
   );
 }
@@ -408,37 +358,12 @@ function NavItem({
     <button
       type="button"
       onClick={onClick}
-      onMouseEnter={e => {
-        if (!active) {
-          e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-        }
-        setShowTooltip(true);
-      }}
-      onMouseLeave={e => {
-        if (!active) {
-          e.currentTarget.style.background = "transparent";
-        }
-        setShowTooltip(false);
-      }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      className={`studio-sidebar-nav-row ${active ? "is-active" : ""}`}
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 9,
-        padding: "7px 8px",
-        borderRadius: 6,
-        cursor: "pointer",
-        transition: "background 0.1s",
-        position: "relative",
-        marginBottom: 1,
-        background: active ? "rgba(245,198,66,0.1)" : "transparent",
-        border: active ? "1px solid rgba(245,198,66,0.15)" : "1px solid transparent",
         justifyContent: collapsed ? "center" : "flex-start",
-        width: "100%",
-        font: "inherit",
-        color: "inherit",
-        textAlign: collapsed ? "center" : "left",
-        appearance: "none",
-        WebkitAppearance: "none",
+        textAlign: collapsed ? "center" as const : "left",
       }}
     >
       {/* Icon */}
@@ -471,25 +396,20 @@ function NavItem({
       {/* Super tooltip: shows on hover for both expanded and collapsed modes */}
       {showTooltip && desc && (
         <div
+          className="studio-sidebar-tooltip"
           style={{
             position: "absolute",
             left: collapsed ? 52 : 220,
             top: "50%",
             transform: "translateY(-50%)",
-            background: "rgba(13, 27, 42, 0.9)",
-            borderRadius: 8,
-            padding: "6px 10px",
+            padding: "8px 11px",
             fontSize: 11,
             color: "rgba(255,255,255,0.92)",
             whiteSpace: "normal",
-            width: 180,
-            lineHeight: 1.4,
+            width: 188,
+            lineHeight: 1.45,
             zIndex: 200,
             pointerEvents: "none",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
           }}
         >
           <div style={{ fontWeight: 600, marginBottom: 2 }}>{label}</div>

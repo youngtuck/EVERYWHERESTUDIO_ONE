@@ -1,21 +1,8 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../Logo";
-import ThemeToggle from "../ThemeToggle";
-import { useTheme } from "../../context/ThemeContext";
 
 export default function Nav() {
-  const [scrolled, setScrolled] = useState(false);
-  const { theme } = useTheme();
   const navigate = useNavigate();
-  const dark = theme === "dark";
-  const overHero = !scrolled;
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", fn, { passive:true }); fn();
-    return () => window.removeEventListener("scroll", fn);
-  }, []);
 
   const bg     = "#0D1B2A";
   const bd     = "rgba(255,255,255,0.1)";
@@ -38,7 +25,6 @@ export default function Nav() {
             {s}
           </a>
         ))}
-        <ThemeToggle onDark={overHero || dark} />
         <a href="/auth" onClick={(e)=>{e.preventDefault();navigate("/auth");}}
           style={{ padding:"8px 20px", borderRadius:8, background:"#F5C642", color:"#0D1B2A", fontSize:13, fontWeight:700, textDecoration:"none", textTransform:"uppercase", letterSpacing:"0.06em", fontFamily:"'Afacad Flux', sans-serif", transition:"opacity 0.15s" }}
           onMouseEnter={e=>(e.currentTarget.style.opacity="0.88")}

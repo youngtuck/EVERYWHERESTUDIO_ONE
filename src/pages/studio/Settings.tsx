@@ -1,13 +1,10 @@
 /**
  * Settings.tsx — Preferences
- * Fixed:
- *  - Dark mode now actually calls ThemeContext.toggleTheme()
- *  - Font size slider now applies zoom to document.documentElement
+ * Studio display is light mode only (see ThemeContext).
  */
 import { useState, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
-import { useTheme } from "../../context/ThemeContext";
 import { useMobile } from "../../hooks/useMobile";
 import "./shared.css";
 
@@ -109,7 +106,6 @@ export default function Settings() {
   const nav = useNavigate();
   const isMobile = useMobile();
   const { setDashContent, setDashOpen } = useShell();
-  const { theme, toggleTheme } = useTheme();
 
   // Font size: read from localStorage so it persists
   const [fontSize, setFontSize] = useState<number>(() => {
@@ -136,11 +132,6 @@ export default function Settings() {
     try { localStorage.setItem("ew-font-size", String(fontSize)); } catch {}
   }, [fontSize]);
 
-  // Dark mode: call the real ThemeContext toggle when mode changes
-  const handleModeChange = (mode: string) => {
-    if (mode !== theme) toggleTheme();
-  };
-
   useLayoutEffect(() => {
     setDashOpen(false);
     setDashContent(null);
@@ -153,14 +144,6 @@ export default function Settings() {
 
       {/* Display */}
       <Card title="Display">
-        <PrefRow label="Mode">
-          <RadioGroup
-            name="display-mode"
-            options={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }]}
-            value={theme}
-            onChange={handleModeChange}
-          />
-        </PrefRow>
         <div style={{ padding: "10px 0" }}>
           <div style={{ display: "flex", alignItems: "flex-start", flexDirection: "column", gap: 10 }}>
             <span style={{ fontSize: 12, color: "var(--fg-2)", fontWeight: 500 }}>Font size</span>

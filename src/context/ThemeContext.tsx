@@ -1,18 +1,36 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-type Theme = "light" | "dark";
-interface ThemeCtx { theme: Theme; toggleTheme: () => void; toggle: () => void; }
-const ThemeContext = createContext<ThemeCtx>({ theme: "light", toggleTheme: () => {}, toggle: () => {} });
+import { createContext, useContext, useLayoutEffect, ReactNode } from "react";
+
+type Theme = "light";
+
+interface ThemeCtx {
+  theme: Theme;
+  toggleTheme: () => void;
+  toggle: () => void;
+}
+
+const ThemeContext = createContext<ThemeCtx>({
+  theme: "light",
+  toggleTheme: () => {},
+  toggle: () => {},
+});
+
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    try { const s = localStorage.getItem("ew-theme"); if (s === "light" || s === "dark") return s; } catch {}
-    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) return "dark";
-    return "light";
-  });
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("ew-theme", theme);
-  }, [theme]);
-  const toggleTheme = () => setTheme(t => t === "dark" ? "light" : "dark");
-  return <ThemeContext.Provider value={{ theme, toggleTheme, toggle: toggleTheme }}>{children}</ThemeContext.Provider>;
+  useLayoutEffect(() => {
+    document.documentElement.setAttribute("data-theme", "light");
+    try {
+      localStorage.setItem("ew-theme", "light");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const theme: Theme = "light";
+  const noop = () => {};
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme: noop, toggle: noop }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 };
+
 export const useTheme = () => useContext(ThemeContext);
