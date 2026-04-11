@@ -208,7 +208,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(503).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-  const { draft, format, voiceDnaMd, brandDnaMd, userId } = req.body || {};
+  const { draft, format, voiceDnaMd, brandDnaMd, userId, wrapConstraintSupplement } = req.body || {};
   if (!draft) return res.status(400).json({ error: "draft is required" });
   if (!format) return res.status(400).json({ error: "format is required" });
 
@@ -248,6 +248,11 @@ export default async function handler(req, res) {
   }
 
   system += "\n\nCRITICAL FORMATTING RULE: Never use em-dashes (the long dash character) anywhere in your output. Use commas, periods, colons, or semicolons instead. This is non-negotiable.";
+
+  if (wrapConstraintSupplement && typeof wrapConstraintSupplement === "string" && wrapConstraintSupplement.trim()) {
+    const clip = wrapConstraintSupplement.trim().slice(0, 6000);
+    system += `\n\nSOURCE TYPE CONSTRAINTS (apply together with channel rules; if a conflict appears, obey the stricter platform safety limits):\n${clip}`;
+  }
 
   const userContent = `ORIGINAL DRAFT TO ADAPT:\n\n${draft.slice(0, 8000)}\n\nAdapt this draft for ${format}. Follow all platform rules. Preserve the author's voice. Output only the adapted content in the specified format.`;
 

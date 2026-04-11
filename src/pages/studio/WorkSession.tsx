@@ -23,6 +23,7 @@ import { useHoldToTranscribe } from "../../hooks/useHoldToTranscribe";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 
 import { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
+import { DEFAULT_PRESENTATION_MINUTES } from "../../lib/wrapFormatRules";
 import { ReedProfileIcon } from "../../components/studio/ReedProfileIcon";
 import "./shared.css";
 
@@ -2003,12 +2004,16 @@ function PreWrapOutputGate({
   selectedId,
   onSelect,
   onStartWrap,
+  presentationMinutes,
+  onPresentationMinutesChange,
 }: {
   pipelineRun: PipelineRun | null;
   recommendedId: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onStartWrap: () => void;
+  presentationMinutes: number;
+  onPresentationMinutesChange: (n: number) => void;
 }) {
   const score = pipelineRun?.impactScore?.total;
   const scoreLine = score != null ? `Impact Score ${Math.round(score)} / 100` : "Validation complete";
@@ -2117,6 +2122,49 @@ function PreWrapOutputGate({
             </div>
           </div>
         ))}
+
+        {selectedId === "presentation" && (
+          <div style={{
+            marginBottom: 24,
+            padding: "14px 16px",
+            borderRadius: 10,
+            border: "1px solid var(--glass-border)",
+            background: "var(--glass-card)",
+            fontFamily: FONT,
+            maxWidth: 420,
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", marginBottom: 8, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+              Talk length
+            </div>
+            <label style={{ fontSize: 12, color: "var(--fg-2)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
+              <span>Duration (minutes)</span>
+              <input
+                type="number"
+                min={3}
+                max={180}
+                step={1}
+                value={presentationMinutes}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10);
+                  if (Number.isFinite(v)) onPresentationMinutesChange(Math.min(180, Math.max(3, v)));
+                }}
+                style={{
+                  width: 72,
+                  padding: "6px 8px",
+                  borderRadius: 8,
+                  border: "1px solid var(--glass-border)",
+                  fontSize: 13,
+                  fontFamily: FONT,
+                }}
+              />
+              <span style={{ fontSize: 11, color: "var(--fg-3)" }}>
+                Target ≈ {presentationMinutes * 300} words in Wrap
+              </span>
+            </label>
+          </div>
+        )}
 
         <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
           <button
@@ -2383,6 +2431,8 @@ export default function WorkSession() {
   const [hvtRunning, setHvtRunning] = useState(false);
   /** Chosen OUTPUT_TYPES id on the Pre-Wrap full screen; cleared when that gate appears. */
   const [preWrapPickId, setPreWrapPickId] = useState<string | null>(null);
+  /** Talk length for presentation output type (Wrap target words = minutes × 300). */
+  const [preWrapPresentationMins, setPreWrapPresentationMins] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
 
   // ── Background pipeline (Redesign 2: run quality check during generation) ──
   const [backgroundPipelineRun, setBackgroundPipelineRun] = useState<PipelineRun | null>(null);
@@ -3147,13 +3197,18 @@ export default function WorkSession() {
       } else {
         sessionStorage.removeItem("ew-wrap-output-id");
       }
+      if (resolvedTypeId === "presentation") {
+        sessionStorage.setItem("ew-wrap-presentation-minutes", String(preWrapPresentationMins));
+      } else {
+        sessionStorage.removeItem("ew-wrap-presentation-minutes");
+      }
       const adaptedContent: Record<string, string> = {};
       formats.forEach(f => {
         if (formatDrafts[f]?.status === "done" && formatDrafts[f]?.content) {
           adaptedContent[f] = formatDrafts[f].content;
         }
       });
-      if (Object.keys(adaptedContent).length > 0) {
+      if (resolvedTypeId === "freestyle" && Object.keys(adaptedContent).length > 0) {
         sessionStorage.setItem("ew-wrap-formats", JSON.stringify(adaptedContent));
       } else {
         sessionStorage.removeItem("ew-wrap-formats");
@@ -3163,7 +3218,7 @@ export default function WorkSession() {
     }
 
     nav("/studio/wrap");
-  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast]);
+  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins]);
 
   const handleStartWrapFromGate = useCallback(() => {
     if (!preWrapPickId) return;
@@ -3199,6 +3254,12 @@ export default function WorkSession() {
   useEffect(() => {
     if (showPreWrapOutputGate) setPreWrapPickId(null);
   }, [showPreWrapOutputGate]);
+
+  useEffect(() => {
+    if (preWrapPickId !== "presentation") {
+      setPreWrapPresentationMins(DEFAULT_PRESENTATION_MINUTES);
+    }
+  }, [preWrapPickId]);
 
   // ── REVIEW: Rerun Human Voice Test only ───────────────────────
   const handleRerunHVT = useCallback(async () => {
@@ -3272,6 +3333,7 @@ export default function WorkSession() {
     setOutlineAngles(null);
     setSelectedAngle("a");
     setPreWrapPickId(null);
+    setPreWrapPresentationMins(DEFAULT_PRESENTATION_MINUTES);
   }, []);
 
   // ── New Session from top nav ─────────────────────────────────
@@ -3907,6 +3969,8 @@ export default function WorkSession() {
             selectedId={preWrapPickId}
             onSelect={setPreWrapPickId}
             onStartWrap={handleStartWrapFromGate}
+            presentationMinutes={preWrapPresentationMins}
+            onPresentationMinutesChange={setPreWrapPresentationMins}
           />
         ) : (
           <StageReview

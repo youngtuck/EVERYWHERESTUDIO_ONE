@@ -2,13 +2,20 @@
  * Wrap.tsx, Format tabs + centered preview + export controls
  * Wired: format adaptation via /api/adapt-format, export to Supabase, per-format copy
  */
-import { useState, useLayoutEffect, useEffect, useCallback, useRef } from "react";
+import { useState, useLayoutEffect, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { supabase } from "../../lib/supabase";
 import { useMobile } from "../../hooks/useMobile";
+import {
+  buildWrapConstraintSupplement,
+  getWrapRuleSummaryLines,
+  outputTypeDisplayLabel,
+  presentationTargetWords,
+  DEFAULT_PRESENTATION_MINUTES,
+} from "../../lib/wrapFormatRules";
 import "./shared.css";
 
 const FONT = "var(--font)";
@@ -44,6 +51,7 @@ interface FormatEntry {
 // ── Right Panel Dashboard ─────────────────────────────────────
 function WrapDashPanel({
   outputType, formatCount, onExportAll, exported, exporting, prefillReed,
+  ruleSummaryLines, presentationMinutes,
 }: {
   outputType: string;
   formatCount: number;
@@ -51,6 +59,8 @@ function WrapDashPanel({
   exported: boolean;
   exporting: boolean;
   prefillReed: (text: string) => void;
+  ruleSummaryLines: string[];
+  presentationMinutes: number | null;
 }) {
   const isFreestyle = !outputType || outputType === "freestyle";
   const DpLabel = ({ children }: { children: React.ReactNode }) => (
@@ -85,6 +95,29 @@ function WrapDashPanel({
             ? "Use the format tabs in the main view to read each channel version. Copy any tab. Export All marks the master draft saved in Catalog (Library) and stamps it published."
             : `Reed has formatted your content for ${formatCount} channel${formatCount !== 1 ? "s" : ""}. Switch tabs in the main view, copy what you need, then Export All to save the session to Catalog.`}
         </div>
+      </div>
+
+      <div style={{
+        marginBottom: 14,
+        padding: "10px 12px",
+        borderRadius: 8,
+        border: "1px solid rgba(245,198,66,0.35)",
+        background: "rgba(245,198,66,0.06)",
+      }}>
+        <DpLabel>Active format rules</DpLabel>
+        <div style={{ fontSize: 10, fontWeight: 600, color: "#9A7030", marginBottom: 6 }}>
+          {outputTypeDisplayLabel(outputType)}
+          {outputType === "presentation" && presentationMinutes != null && (
+            <span style={{ fontWeight: 500, color: "var(--fg-3)" }}>
+              {" "}· {presentationMinutes} min (~{presentationTargetWords(presentationMinutes)} words)
+            </span>
+          )}
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 16, fontSize: 10, color: "var(--fg-2)", lineHeight: 1.55 }}>
+          {ruleSummaryLines.map((line, i) => (
+            <li key={i} style={{ marginBottom: 4 }}>{line}</li>
+          ))}
+        </ul>
       </div>
 
       <button
@@ -148,6 +181,7 @@ export default function WrapPage() {
   const [exporting, setExporting] = useState(false);
   const [formatContents, setFormatContents] = useState<Record<string, FormatEntry>>({});
   const [catalogLinkId, setCatalogLinkId] = useState<string | null>(null);
+  const [wrapPresentationMinutes, setWrapPresentationMinutes] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
 
   // Track which formats we've already started adapting to avoid duplicates
   const adaptingRef = useRef<Set<string>>(new Set());
@@ -194,6 +228,15 @@ export default function WrapPage() {
           }
         } catch { /* use defaults */ }
       }
+
+      const wrapPres = sessionStorage.getItem("ew-wrap-presentation-minutes");
+      if (wrapPres != null) {
+        const n = parseInt(wrapPres, 10);
+        if (Number.isFinite(n) && n >= 3) {
+          setWrapPresentationMinutes(Math.min(180, n));
+        }
+      }
+      sessionStorage.removeItem("ew-wrap-presentation-minutes");
 
       setLoading(false);
       sessionStorage.removeItem("ew-wrap-draft");
@@ -270,6 +313,9 @@ export default function WrapPage() {
       setExported(false);
       setCopied(false);
       setCatalogLinkId(null);
+      if (row.output_type === "presentation") {
+        setWrapPresentationMinutes(DEFAULT_PRESENTATION_MINUTES);
+      }
       setOutputs(prev => (prev.some(o => o.id === row.id) ? prev : [row, ...prev]));
       fetchOutputs({ silent: true });
       setLoading(false);
@@ -289,6 +335,10 @@ export default function WrapPage() {
     if (adaptingRef.current.has(format)) return;
     adaptingRef.current.add(format);
 
+    const ot = activeOutput.output_type || "freestyle";
+    const presMins = ot === "presentation" ? wrapPresentationMinutes : null;
+    const wrapConstraintSupplement = buildWrapConstraintSupplement(ot, format, presMins);
+
     setFormatContents(prev => ({ ...prev, [format]: { content: "", metadata: {}, status: "loading" } }));
 
     try {
@@ -301,6 +351,7 @@ export default function WrapPage() {
           voiceDnaMd: "",
           brandDnaMd: "",
           userId: user.id,
+          wrapConstraintSupplement,
         }),
       });
 
@@ -324,7 +375,7 @@ export default function WrapPage() {
     } finally {
       adaptingRef.current.delete(format);
     }
-  }, [activeOutput, user]);
+  }, [activeOutput, user, wrapPresentationMinutes]);
 
   // Auto-adapt first format when content loads
   useEffect(() => {
@@ -409,6 +460,22 @@ export default function WrapPage() {
     }).catch(() => {});
   }, [activeFormat, formatContents, activeOutput, toast]);
 
+  const wrapRuleLines = useMemo(
+    () => (hasContent
+      ? getWrapRuleSummaryLines(
+        activeOutput?.output_type || "freestyle",
+        activeOutput?.output_type === "presentation" ? wrapPresentationMinutes : null,
+      )
+      : []),
+    [hasContent, activeOutput?.output_type, wrapPresentationMinutes],
+  );
+
+  const applyPresentationLength = useCallback(() => {
+    setFormatContents({});
+    adaptingRef.current.clear();
+    void adaptFormat(activeFormat);
+  }, [activeFormat, adaptFormat]);
+
   // Right panel dashboard (content only; Reed flyout opens when the user taps the launcher)
   useLayoutEffect(() => {
     if (hasContent) {
@@ -420,13 +487,15 @@ export default function WrapPage() {
           exported={exported}
           exporting={exporting}
           prefillReed={prefillReed}
+          ruleSummaryLines={wrapRuleLines}
+          presentationMinutes={activeOutput?.output_type === "presentation" ? wrapPresentationMinutes : null}
         />
       );
     } else {
       setFeedbackContent(null);
     }
     return () => setFeedbackContent(null);
-  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent]);
+  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent, wrapRuleLines, wrapPresentationMinutes]);
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: "center", color: "var(--fg-3)", fontSize: 13, fontFamily: FONT }}>Loading...</div>;
@@ -494,6 +563,9 @@ export default function WrapPage() {
                   setExported(false);
                   setCopied(false);
                   setCatalogLinkId(null);
+                  if (output.output_type === "presentation") {
+                    setWrapPresentationMinutes(DEFAULT_PRESENTATION_MINUTES);
+                  }
                 }}
                 className="liquid-glass-card"
                 style={{
@@ -595,6 +667,66 @@ export default function WrapPage() {
             borderBottomStyle: "solid" as const, fontFamily: FONT,
           }}>{fmt}</button>
         ))}
+      </div>
+
+      <div style={{
+        padding: "10px 20px 12px",
+        borderBottom: "1px solid var(--glass-border)",
+        background: "rgba(245,198,66,0.07)",
+        flexShrink: 0,
+      }}>
+        <div style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "var(--fg-3)",
+          textTransform: "uppercase" as const, marginBottom: 6,
+        }}>
+          Active format rules
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#9A7030", marginBottom: 6 }}>
+          {outputTypeDisplayLabel(activeOutput.output_type || "freestyle")}
+          {activeOutput.output_type === "presentation" && (
+            <span style={{ fontWeight: 500, color: "var(--fg-3)" }}>
+              {" "}· {wrapPresentationMinutes} min (~{presentationTargetWords(wrapPresentationMinutes)} words)
+            </span>
+          )}
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5 }}>
+          {wrapRuleLines.map((line, i) => (
+            <li key={i} style={{ marginBottom: 3 }}>{line}</li>
+          ))}
+        </ul>
+        {activeOutput.output_type === "presentation" && (
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 }}>
+            <label style={{ fontSize: 11, color: "var(--fg-2)", display: "flex", alignItems: "center", gap: 8 }}>
+              <span>Duration (min)</span>
+              <input
+                type="number"
+                min={3}
+                max={180}
+                step={1}
+                value={wrapPresentationMinutes}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10);
+                  if (Number.isFinite(v)) setWrapPresentationMinutes(Math.min(180, Math.max(3, v)));
+                }}
+                style={{
+                  width: 64, padding: "5px 8px", borderRadius: 6,
+                  border: "1px solid var(--glass-border)", fontSize: 12, fontFamily: FONT,
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={applyPresentationLength}
+              style={{
+                fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 6,
+                border: "none", background: "var(--fg)", color: "var(--gold, #F5C642)",
+                cursor: "pointer", fontFamily: FONT,
+              }}
+            >
+              Apply length and re-adapt
+            </button>
+          </div>
+        )}
       </div>
 
       {catalogLinkId ? (

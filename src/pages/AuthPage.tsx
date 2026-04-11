@@ -385,11 +385,13 @@ const AuthPage = () => {
         <div style={{ textAlign: "center", marginBottom: 22 }}>
           <span
             style={{
-              fontSize: 11,
-              letterSpacing: "0.2em",
+              display: "inline-block",
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.14em",
               textTransform: "uppercase",
-              color: "rgba(240,237,228,0.38)",
-              fontFamily: "'DM Mono', ui-monospace, monospace",
+              color: "var(--gold-bright, #F5C642)",
+              fontFamily: "'Instrument Sans', 'Afacad Flux', system-ui, sans-serif",
             }}
           >
             Ideas to Impact
