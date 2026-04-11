@@ -461,10 +461,10 @@ function DemoSection() {
       data-nav-theme="dark"
       style={{
         background: "var(--xp-navy-deep)",
-        padding: "0 48px 120px",
+        padding: "32px 48px 88px",
       }}
     >
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ maxWidth: 920, margin: "0 auto" }}>
         <Reveal delay={0}>
           <EverywhereDemo />
         </Reveal>
