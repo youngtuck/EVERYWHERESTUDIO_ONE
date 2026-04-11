@@ -88,6 +88,30 @@ function reviewFormatToApiFormat(f: Format): string {
   return f;
 }
 
+/** Map Review format tabs to Wrap channel names (must match Wrap WRAP_CHANNEL_FORMATS / adapt-format). */
+function workReviewFormatsToWrapChannels(rows: Format[]): string[] {
+  const map: Partial<Record<Format, string>> = {
+    LinkedIn: "LinkedIn",
+    Newsletter: "Newsletter",
+    Podcast: "Podcast",
+    "Sunday Story": "Sunday Story",
+    Email: "Email",
+    Thread: "X Thread",
+    Article: "Sunday Story",
+    "Video Script": "YouTube Description",
+    "Case Study": "Executive Brief",
+    "One-Pager": "Executive Brief",
+    Presentation: "Podcast",
+    "Book Chapter": "Newsletter",
+  };
+  const out = new Set<string>();
+  rows.forEach(f => {
+    const c = map[f];
+    if (c) out.add(c);
+  });
+  return [...out];
+}
+
 const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
   LinkedIn: "socials", Newsletter: "newsletter", Podcast: "podcast",
   "Sunday Story": "essay", Article: "essay", Email: "newsletter",
@@ -3486,6 +3510,12 @@ export default function WorkSession() {
         sessionStorage.setItem("ew-wrap-formats", JSON.stringify(adaptedContent));
       } else {
         sessionStorage.removeItem("ew-wrap-formats");
+      }
+      const wrapChannelPicks = workReviewFormatsToWrapChannels(formats);
+      if (wrapChannelPicks.length > 0) {
+        sessionStorage.setItem("ew-wrap-channel-picks", JSON.stringify(wrapChannelPicks));
+      } else {
+        sessionStorage.removeItem("ew-wrap-channel-picks");
       }
     } catch (e) {
       console.warn("[Export] sessionStorage write failed:", e);

@@ -1,6 +1,6 @@
 /**
- * Wrap.tsx, Format tabs + centered preview + export controls
- * Wired: format adaptation via /api/adapt-format, export to Supabase, per-format copy
+ * Wrap.tsx — Staged workflow: Choose channels → Build → Deliver
+ * Adaptation via /api/adapt-format, liquid glass presentation, export to Catalog
  */
 import { useState, useLayoutEffect, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -19,6 +19,7 @@ import {
 import "./shared.css";
 
 const FONT = "var(--font)";
+
 /** Tab labels must match `FORMAT_INSTRUCTIONS` keys in api/adapt-format.js */
 const WRAP_CHANNEL_FORMATS = [
   "LinkedIn",
@@ -30,8 +31,17 @@ const WRAP_CHANNEL_FORMATS = [
   "Executive Brief",
   "YouTube Description",
 ] as const;
-const DEFAULT_FORMATS = [...WRAP_CHANNEL_FORMATS];
+
+const ALL_WRAP_CHANNELS: readonly string[] = WRAP_CHANNEL_FORMATS;
+const DEFAULT_CHANNEL_PRESELECT = ["LinkedIn", "Newsletter", "Sunday Story", "Email"];
+
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+
+type WrapPhase = "choose" | "build" | "deliver";
+
+function isValidWrapChannel(s: string): s is typeof WRAP_CHANNEL_FORMATS[number] {
+  return (ALL_WRAP_CHANNELS as readonly string[]).includes(s);
+}
 
 interface OutputItem {
   id: string;
@@ -48,10 +58,55 @@ interface FormatEntry {
   status: "pending" | "loading" | "done" | "error";
 }
 
-// ── Right Panel Dashboard ─────────────────────────────────────
+function WrapStepRail({ phase }: { phase: WrapPhase }) {
+  const steps: { id: WrapPhase; label: string; n: number }[] = [
+    { id: "choose", label: "Choose channels", n: 1 },
+    { id: "build", label: "Generate", n: 2 },
+    { id: "deliver", label: "Your pieces", n: 3 },
+  ];
+  const idx = phase === "choose" ? 0 : phase === "build" ? 1 : 2;
+  return (
+    <div className="liquid-glass" style={{
+      flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)",
+      padding: "10px 20px 12px",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", maxWidth: 720, margin: "0 auto" }}>
+        {steps.map((s, i) => {
+          const done = i < idx;
+          const active = i === idx;
+          return (
+            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 11, fontWeight: 700,
+                background: done ? "rgba(34,197,94,0.15)" : active ? "rgba(245,198,66,0.2)" : "rgba(0,0,0,0.04)",
+                border: `1px solid ${done ? "rgba(34,197,94,0.4)" : active ? "rgba(245,198,66,0.55)" : "var(--glass-border)"}`,
+                color: done ? "#16A34A" : active ? "#9A7030" : "var(--fg-3)",
+              }}>
+                {done ? "✓" : s.n}
+              </div>
+              <span style={{
+                fontSize: 11, fontWeight: active ? 700 : 500,
+                color: active ? "var(--fg)" : "var(--fg-3)",
+                letterSpacing: "0.02em",
+              }}>
+                {s.label}
+              </span>
+              {i < steps.length - 1 ? (
+                <span style={{ width: 20, height: 1, background: "var(--glass-border)", margin: "0 4px" }} />
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function WrapDashPanel({
   outputType, formatCount, onExportAll, exported, exporting, prefillReed,
-  ruleSummaryLines, presentationMinutes,
+  ruleSummaryLines, presentationMinutes, phase,
 }: {
   outputType: string;
   formatCount: number;
@@ -61,6 +116,7 @@ function WrapDashPanel({
   prefillReed: (text: string) => void;
   ruleSummaryLines: string[];
   presentationMinutes: number | null;
+  phase: WrapPhase;
 }) {
   const isFreestyle = !outputType || outputType === "freestyle";
   const DpLabel = ({ children }: { children: React.ReactNode }) => (
@@ -73,6 +129,19 @@ function WrapDashPanel({
     { label: "Write the email subject line", prefill: "Write 3 subject line options for the newsletter version of this piece." },
     { label: "What else can I make from this?", prefill: "What other content can I extract or adapt from this piece?" },
   ];
+
+  if (phase !== "deliver") {
+    return (
+      <div className="liquid-glass-card" style={{ padding: 14 }}>
+        <DpLabel>Wrap</DpLabel>
+        <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
+          {phase === "choose"
+            ? "Pick the channels you need, then generate. Reed adapts your draft for each surface."
+            : "Reed is generating your channel versions. This usually takes under a minute per channel."}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -92,18 +161,12 @@ function WrapDashPanel({
         <DpLabel>How Wrap works</DpLabel>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
           {isFreestyle
-            ? "Use the format tabs in the main view to read each channel version. Copy any tab. Export All marks the master draft saved in Catalog (Library) and stamps it published."
-            : `Reed has formatted your content for ${formatCount} channel${formatCount !== 1 ? "s" : ""}. Switch tabs in the main view, copy what you need, then Export All to save the session to Catalog.`}
+            ? "You chose these channels. Copy any version, or run Export All to mark the piece saved in Catalog."
+            : `Reed formatted your content for ${formatCount} channel${formatCount !== 1 ? "s" : ""}. Copy what you need, then Export All to save to Catalog.`}
         </div>
       </div>
 
-      <div style={{
-        marginBottom: 14,
-        padding: "10px 12px",
-        borderRadius: 8,
-        border: "1px solid rgba(245,198,66,0.35)",
-        background: "rgba(245,198,66,0.06)",
-      }}>
+      <div className="liquid-glass-card" style={{ marginBottom: 14, padding: "10px 12px" }}>
         <DpLabel>Active format rules</DpLabel>
         <div style={{ fontSize: 10, fontWeight: 600, color: "#9A7030", marginBottom: 6 }}>
           {outputTypeDisplayLabel(outputType)}
@@ -124,44 +187,42 @@ function WrapDashPanel({
         type="button"
         onClick={onExportAll}
         disabled={exported || exporting}
+        className={exported ? "liquid-glass-btn" : "liquid-glass-btn-gold"}
         style={{
-          width: "100%", padding: 8, borderRadius: 8, marginBottom: 12,
-          background: exported ? "rgba(74,144,217,0.12)" : "var(--fg)",
-          color: exported ? "var(--blue, #4A90D9)" : "var(--gold, #F5C642)",
-          border: exported ? "1px solid rgba(74,144,217,0.3)" : "none",
+          width: "100%", padding: 10, borderRadius: 10, marginBottom: 12,
           fontSize: 11, fontWeight: 700,
           cursor: exported || exporting ? "default" : "pointer",
           fontFamily: FONT, letterSpacing: "0.04em",
           opacity: exporting ? 0.6 : 1,
         }}
       >
-        {exported ? "Exported" : exporting ? "Exporting..." : "Export All"}
+        {exported ? (
+          <span className="liquid-glass-btn-label" style={{ color: "var(--blue, #4A90D9)", fontWeight: 700 }}>Exported</span>
+        ) : exporting ? (
+          <span className="liquid-glass-btn-gold-label">Exporting…</span>
+        ) : (
+          <span className="liquid-glass-btn-gold-label">Export All to Catalog</span>
+        )}
       </button>
 
-      <div style={{
-        border: "1px solid rgba(74,144,217,0.25)", borderRadius: 8,
-        padding: "10px 12px", background: "rgba(74,144,217,0.04)", marginBottom: 12,
-      }}>
+      <div className="liquid-glass-card" style={{ padding: "10px 12px", marginBottom: 12 }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: "#4A90D9", marginBottom: 6 }}>Reed</div>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
-          This piece has good legs. The LinkedIn version is strong. The essay close would make a solid standalone Sunday post if you want to file it separately.
+          Each tab is ready to paste. Tweak tone in the Reed panel if you want a pass on one channel.
         </div>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
         {chips.map((chip, i) => (
-          <button key={i} type="button" onClick={() => prefillReed(chip.prefill)} style={{
-            fontSize: 10, padding: "4px 10px", borderRadius: 99,
-            background: "#EDF1F5", border: "1px solid #CBD5E1",
-            color: "#334155", cursor: "pointer", fontFamily: "inherit",
-          }}>{chip.label}</button>
+          <button key={i} type="button" className="liquid-glass-btn" onClick={() => prefillReed(chip.prefill)} style={{ fontSize: 10, padding: "4px 10px" }}>
+            <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 500 }}>{chip.label}</span>
+          </button>
         ))}
       </div>
     </>
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────
 export default function WrapPage() {
   const nav = useNavigate();
   const location = useLocation();
@@ -174,8 +235,8 @@ export default function WrapPage() {
   const [loading, setLoading] = useState(true);
   const [sessionDraft, setSessionDraft] = useState<OutputItem | null>(null);
   const [selectedOutputId, setSelectedOutputId] = useState<string | null>(null);
-  const [formats, setFormats] = useState<string[]>(DEFAULT_FORMATS);
-  const [activeFormat, setActiveFormat] = useState<string>(DEFAULT_FORMATS[0]);
+  const [formats, setFormats] = useState<string[]>([...WRAP_CHANNEL_FORMATS]);
+  const [activeFormat, setActiveFormat] = useState<string>(WRAP_CHANNEL_FORMATS[0]);
   const [copied, setCopied] = useState(false);
   const [exported, setExported] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -183,72 +244,99 @@ export default function WrapPage() {
   const [catalogLinkId, setCatalogLinkId] = useState<string | null>(null);
   const [wrapPresentationMinutes, setWrapPresentationMinutes] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
 
-  // Track which formats we've already started adapting to avoid duplicates
+  const [wrapPhase, setWrapPhase] = useState<WrapPhase>("choose");
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+
   const adaptingRef = useRef<Set<string>>(new Set());
 
-  // Read session data passed from Work Export
+  // Handoff from Work Export (draft + optional pre-seeded formats + channel picks)
   useEffect(() => {
     const wrapDraft = sessionStorage.getItem("ew-wrap-draft");
     const wrapTitle = sessionStorage.getItem("ew-wrap-title");
     const wrapOutputType = sessionStorage.getItem("ew-wrap-output-type");
     const wrapOutputId = sessionStorage.getItem("ew-wrap-output-id");
     const wrapFormats = sessionStorage.getItem("ew-wrap-formats");
+    const wrapPicks = sessionStorage.getItem("ew-wrap-channel-picks");
 
-    if (wrapDraft) {
-      const sessionOutput: OutputItem = {
-        id: wrapOutputId || "session-draft",
-        title: wrapTitle || "Untitled",
-        content: wrapDraft,
-        output_type: wrapOutputType || "freestyle",
-        created_at: new Date().toISOString(),
-        score: 0,
-      };
-      setSessionDraft(sessionOutput);
+    if (!wrapDraft) return;
 
-      if (wrapFormats) {
-        try {
-          const parsed = JSON.parse(wrapFormats) as unknown;
-          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-            const keys = Object.keys(parsed as Record<string, string>);
-            if (keys.length > 0) {
-              setFormats(keys);
-              setActiveFormat(keys[0]);
-              const seeded: Record<string, FormatEntry> = {};
-              keys.forEach(k => {
-                const text = typeof (parsed as Record<string, string>)[k] === "string"
-                  ? (parsed as Record<string, string>)[k]
-                  : "";
-                seeded[k] = { content: text, metadata: {}, status: "done" };
-              });
-              setFormatContents(seeded);
-            }
-          } else if (Array.isArray(parsed) && parsed.length > 0) {
-            setFormats(parsed as string[]);
-            setActiveFormat((parsed as string[])[0]);
+    const sessionOutput: OutputItem = {
+      id: wrapOutputId || "session-draft",
+      title: wrapTitle || "Untitled",
+      content: wrapDraft,
+      output_type: wrapOutputType || "freestyle",
+      created_at: new Date().toISOString(),
+      score: 0,
+    };
+    setSessionDraft(sessionOutput);
+
+    let seededDeliver = false;
+    if (wrapFormats) {
+      try {
+        const parsed = JSON.parse(wrapFormats) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          const keys = Object.keys(parsed as Record<string, string>);
+          if (keys.length > 0) {
+            setFormats(keys);
+            setActiveFormat(keys[0]);
+            const seeded: Record<string, FormatEntry> = {};
+            keys.forEach(k => {
+              const text = typeof (parsed as Record<string, string>)[k] === "string"
+                ? (parsed as Record<string, string>)[k]
+                : "";
+              seeded[k] = { content: text, metadata: {}, status: "done" };
+            });
+            setFormatContents(seeded);
+            setSelectedChannels(keys);
+            seededDeliver = true;
           }
-        } catch { /* use defaults */ }
-      }
-
-      const wrapPres = sessionStorage.getItem("ew-wrap-presentation-minutes");
-      if (wrapPres != null) {
-        const n = parseInt(wrapPres, 10);
-        if (Number.isFinite(n) && n >= 3) {
-          setWrapPresentationMinutes(Math.min(180, n));
+        } else if (Array.isArray(parsed) && parsed.length > 0) {
+          const keys = (parsed as string[]).filter((x): x is string => typeof x === "string" && isValidWrapChannel(x));
+          if (keys.length) {
+            setFormats(keys);
+            setActiveFormat(keys[0]);
+            setSelectedChannels(keys);
+            setWrapPhase("choose");
+          }
         }
-      }
-      sessionStorage.removeItem("ew-wrap-presentation-minutes");
-
-      setLoading(false);
-      sessionStorage.removeItem("ew-wrap-draft");
-      sessionStorage.removeItem("ew-wrap-title");
-      sessionStorage.removeItem("ew-wrap-output-type");
-      sessionStorage.removeItem("ew-wrap-output-type-ids");
-      sessionStorage.removeItem("ew-wrap-output-id");
-      sessionStorage.removeItem("ew-wrap-formats");
+      } catch { /* ignore */ }
     }
+
+    if (wrapPicks) {
+      if (!seededDeliver) {
+        try {
+          const arr = JSON.parse(wrapPicks) as unknown;
+          if (Array.isArray(arr)) {
+            const valid = arr.filter((x): x is string => typeof x === "string" && isValidWrapChannel(x));
+            if (valid.length) setSelectedChannels(valid);
+          }
+        } catch { /* ignore */ }
+      }
+      sessionStorage.removeItem("ew-wrap-channel-picks");
+    } else if (!seededDeliver) {
+      setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
+    }
+
+    setWrapPhase(seededDeliver ? "deliver" : "choose");
+
+    const wrapPres = sessionStorage.getItem("ew-wrap-presentation-minutes");
+    if (wrapPres != null) {
+      const n = parseInt(wrapPres, 10);
+      if (Number.isFinite(n) && n >= 3) {
+        setWrapPresentationMinutes(Math.min(180, n));
+      }
+    }
+    sessionStorage.removeItem("ew-wrap-presentation-minutes");
+
+    setLoading(false);
+    sessionStorage.removeItem("ew-wrap-draft");
+    sessionStorage.removeItem("ew-wrap-title");
+    sessionStorage.removeItem("ew-wrap-output-type");
+    sessionStorage.removeItem("ew-wrap-output-type-ids");
+    sessionStorage.removeItem("ew-wrap-output-id");
+    sessionStorage.removeItem("ew-wrap-formats");
   }, []);
 
-  // Fetch outputs from Supabase: all completed work ready for wrapping
   const fetchOutputs = useCallback((options?: { silent?: boolean }) => {
     if (!user) {
       if (!options?.silent) setLoading(false);
@@ -271,7 +359,6 @@ export default function WrapPage() {
       });
   }, [user]);
 
-  // List load, or Catalog / detail handoff via ew-wrap-from-catalog-id (avoid racing two loaders)
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -314,6 +401,8 @@ export default function WrapPage() {
       setExported(false);
       setCopied(false);
       setCatalogLinkId(null);
+      setWrapPhase("choose");
+      setSelectedChannels(row.output_type === "freestyle" ? [...DEFAULT_CHANNEL_PRESELECT] : [...DEFAULT_CHANNEL_PRESELECT]);
       if (row.output_type === "presentation") {
         setWrapPresentationMinutes(DEFAULT_PRESENTATION_MINUTES);
       }
@@ -325,12 +414,10 @@ export default function WrapPage() {
     return () => { cancelled = true; };
   }, [user, location.key, toast, fetchOutputs]);
 
-  // Active content: session draft takes priority, then selected output, then nothing (show picker)
   const selectedOutput = selectedOutputId ? outputs.find(o => o.id === selectedOutputId) || null : null;
   const activeOutput = sessionDraft || selectedOutput;
   const hasContent = !!activeOutput;
 
-  // Adapt format via API
   const adaptFormat = useCallback(async (format: string) => {
     if (!activeOutput?.content || !user) return;
     if (adaptingRef.current.has(format)) return;
@@ -382,31 +469,58 @@ export default function WrapPage() {
     }
   }, [activeOutput, user, wrapPresentationMinutes]);
 
-  // Auto-adapt first format when content loads
+  const runBuildForChannels = useCallback(async (channels: string[]) => {
+    if (!activeOutput?.content || !user || channels.length === 0) return;
+    await Promise.all(channels.map(fmt => adaptFormat(fmt)));
+  }, [activeOutput, user, adaptFormat]);
+
+  const handleConfirmChannels = useCallback(async () => {
+    if (!activeOutput || selectedChannels.length === 0) {
+      toast("Select at least one channel.", "error");
+      return;
+    }
+    const list = [...selectedChannels];
+    setFormats(list);
+    setActiveFormat(list[0]);
+    setFormatContents({});
+    adaptingRef.current.clear();
+    setWrapPhase("build");
+    try {
+      await runBuildForChannels(list);
+      setWrapPhase("deliver");
+    } catch {
+      toast("Something failed while generating. Try again or pick fewer channels.", "error");
+      setWrapPhase("choose");
+    }
+  }, [activeOutput, selectedChannels, runBuildForChannels, toast]);
+
   useEffect(() => {
-    if (!activeOutput?.content) return;
+    if (!activeOutput?.content || wrapPhase !== "deliver") return;
     const entry = formatContents[activeFormat];
     if (!entry || entry.status === "pending") {
-      adaptFormat(activeFormat);
+      void adaptFormat(activeFormat);
     }
-  }, [activeOutput, activeFormat, formatContents, adaptFormat]);
+  }, [activeOutput, activeFormat, formatContents, adaptFormat, wrapPhase]);
 
-  // Handle format tab change
   const handleFormatChange = useCallback((format: string) => {
     setActiveFormat(format);
     const entry = formatContents[format];
     if (!entry || entry.status === "pending") {
-      adaptFormat(format);
+      void adaptFormat(format);
     }
   }, [formatContents, adaptFormat]);
 
-  // Prefill Reed
+  const toggleChannel = useCallback((ch: string) => {
+    setSelectedChannels(prev =>
+      prev.includes(ch) ? prev.filter(x => x !== ch) : [...prev, ch],
+    );
+  }, []);
+
   const prefillReed = useCallback((text: string) => {
     setReedPrefill(text);
     setActiveDashTab("reed");
   }, [setReedPrefill, setActiveDashTab]);
 
-  // Export: persist session to Catalog, or mark existing output published
   const handleExportAll = useCallback(async () => {
     if (!activeOutput || !user) return;
     setExporting(true);
@@ -455,7 +569,6 @@ export default function WrapPage() {
     }
   }, [activeOutput, user, formats, formatContents, adaptFormat, toast]);
 
-  // Copy adapted content for active format
   const handleCopy = useCallback(() => {
     const textToCopy = formatContents[activeFormat]?.content || activeOutput?.content || "";
     navigator.clipboard.writeText(textToCopy).then(() => {
@@ -481,7 +594,6 @@ export default function WrapPage() {
     void adaptFormat(activeFormat);
   }, [activeFormat, adaptFormat]);
 
-  // Right panel dashboard (content only; Reed flyout opens when the user taps the launcher)
   useLayoutEffect(() => {
     if (hasContent) {
       setFeedbackContent(
@@ -494,20 +606,24 @@ export default function WrapPage() {
           prefillReed={prefillReed}
           ruleSummaryLines={wrapRuleLines}
           presentationMinutes={activeOutput?.output_type === "presentation" ? wrapPresentationMinutes : null}
-        />
+          phase={wrapPhase}
+        />,
       );
     } else {
       setFeedbackContent(null);
     }
     return () => setFeedbackContent(null);
-  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent, wrapRuleLines, wrapPresentationMinutes]);
+  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent, wrapRuleLines, wrapPresentationMinutes, wrapPhase]);
 
   if (loading) {
-    return <div style={{ padding: 40, textAlign: "center", color: "var(--fg-3)", fontSize: 13, fontFamily: FONT }}>Loading...</div>;
+    return (
+      <div className="liquid-glass-card" style={{ margin: 24, padding: 32, textAlign: "center", fontFamily: FONT }}>
+        <div style={{ fontSize: 13, color: "var(--fg-3)" }}>Loading Wrap…</div>
+      </div>
+    );
   }
 
   if (!hasContent) {
-    // No active output: show a picker of completed sessions
     if (outputs.length === 0) {
       return (
         <div style={{
@@ -515,42 +631,35 @@ export default function WrapPage() {
           justifyContent: "center", flex: 1, padding: 40, textAlign: "center",
           fontFamily: FONT,
         }}>
-          <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.3 }}>&#10022;</div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
-            Nothing to wrap yet.
+          <div className="liquid-glass-card" style={{ padding: "40px 32px", maxWidth: 400 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
+              Nothing to wrap yet.
+            </div>
+            <div style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.5, marginBottom: 24 }}>
+              Complete a Work session first, or open Catalog (Library in the sidebar) to send a saved piece here.
+            </div>
+            <button type="button" className="liquid-glass-btn-gold" onClick={() => nav("/studio/work")} style={{ padding: "10px 24px" }}>
+              <span className="liquid-glass-btn-gold-label">Start a session</span>
+            </button>
           </div>
-          <div style={{ fontSize: 13, color: "var(--fg-3)", maxWidth: 320, lineHeight: 1.5, marginBottom: 24 }}>
-            Complete a Work session first, or open Catalog (Library in the sidebar) to pick any saved piece and send it back through Wrap.
-          </div>
-          <button type="button" onClick={() => nav("/studio/work")} style={{
-            padding: "10px 24px", borderRadius: 8,
-            background: "var(--gold-bright, #F5C642)", border: "none",
-            color: "var(--fg)", fontSize: 13, fontWeight: 600,
-            cursor: "pointer", fontFamily: FONT,
-          }}>Start a session</button>
         </div>
       );
     }
 
-    // Show the list of completed outputs to wrap
     return (
       <div style={{
         display: "flex", flexDirection: "column", flex: 1,
         overflow: "hidden", fontFamily: FONT,
       }}>
-        <div style={{
-          padding: "20px 24px 12px",
-          borderBottom: "1px solid var(--glass-border)",
-          flexShrink: 0,
-        }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
-            Wrap
+        <header className="liquid-glass" style={{ flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)" }}>
+          <div style={{ padding: "16px 24px 12px" }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "var(--fg)", marginBottom: 4 }}>Wrap</div>
+            <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5 }}>
+              Choose a saved piece. You will pick channels next, then get paste-ready versions.
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5 }}>
-            Select a completed piece to adapt for different channels.
-          </div>
-        </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "12px 24px" }}>
+        </header>
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
           {outputs.map(output => {
             const preview = (output.content || "").replace(/\n+/g, " ").slice(0, 140);
             const date = new Date(output.created_at);
@@ -568,6 +677,8 @@ export default function WrapPage() {
                   setExported(false);
                   setCopied(false);
                   setCatalogLinkId(null);
+                  setWrapPhase("choose");
+                  setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
                   if (output.output_type === "presentation") {
                     setWrapPresentationMinutes(DEFAULT_PRESENTATION_MINUTES);
                   }
@@ -575,12 +686,12 @@ export default function WrapPage() {
                 className="liquid-glass-card"
                 style={{
                   display: "block", width: "100%", textAlign: "left",
-                  padding: "14px 16px", marginBottom: 8,
+                  padding: "16px 18px", marginBottom: 10,
                   cursor: "pointer", fontFamily: FONT,
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>
                     {output.title || "Untitled"}
                   </span>
                   <span style={{ fontSize: 10, color: "var(--fg-3)", flexShrink: 0, marginLeft: 12 }}>
@@ -606,8 +717,8 @@ export default function WrapPage() {
                   )}
                 </div>
                 {preview && (
-                  <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 6, lineHeight: 1.5 }}>
-                    {preview}{preview.length >= 140 ? "..." : ""}
+                  <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8, lineHeight: 1.5 }}>
+                    {preview}{preview.length >= 140 ? "…" : ""}
                   </div>
                 )}
               </button>
@@ -618,7 +729,138 @@ export default function WrapPage() {
     );
   }
 
-  // Display content: use adapted version if available, else raw
+  // ── Choose channels ─────────────────────────────────────────
+  if (wrapPhase === "choose") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
+        <WrapStepRail phase="choose" />
+        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px 40px" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            <h1 style={{ fontSize: "clamp(22px, 3.5vw, 28px)", fontWeight: 700, color: "var(--fg)", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+              Where should this land?
+            </h1>
+            <p style={{ fontSize: 13, color: "var(--fg-3)", margin: "0 0 24px", lineHeight: 1.55 }}>
+              Select every channel you want Reed to adapt. Your draft stays the source of truth; each channel gets its own surface and structure.
+            </p>
+
+            <div className="liquid-glass-card" style={{ padding: "16px 18px", marginBottom: 20 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "var(--fg-3)", marginBottom: 6, textTransform: "uppercase" as const }}>Piece</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", lineHeight: 1.35 }}>{activeOutput.title || "Untitled"}</div>
+              <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 6 }}>
+                {Math.round((activeOutput.content || "").length / 5)} words approx. · {outputTypeDisplayLabel(activeOutput.output_type || "freestyle")}
+              </div>
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(152px, 1fr))",
+              gap: 10,
+              marginBottom: 28,
+            }}>
+              {ALL_WRAP_CHANNELS.map(ch => {
+                const on = selectedChannels.includes(ch);
+                return (
+                  <button
+                    key={ch}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleChannel(ch)}
+                    className={on ? "liquid-glass-card" : "liquid-glass"}
+                    style={{
+                      textAlign: "left" as const,
+                      padding: "14px 14px",
+                      cursor: "pointer",
+                      border: on ? "2px solid rgba(245,198,66,0.55)" : "1px solid var(--glass-border)",
+                      borderRadius: 12,
+                      background: on ? "rgba(245,198,66,0.08)" : undefined,
+                      fontFamily: FONT,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, fontWeight: on ? 700 : 600, color: "var(--fg)" }}>{ch}</span>
+                    {on ? (
+                      <div style={{ fontSize: 9, fontWeight: 600, color: "#9A7030", marginTop: 6 }}>Selected</div>
+                    ) : (
+                      <div style={{ fontSize: 9, color: "var(--fg-3)", marginTop: 6 }}>Tap to include</div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center", alignItems: "center" }}>
+              <button
+                type="button"
+                className="liquid-glass-btn-gold"
+                disabled={selectedChannels.length === 0}
+                onClick={() => void handleConfirmChannels()}
+                style={{
+                  padding: "14px 28px", opacity: selectedChannels.length ? 1 : 0.5,
+                  cursor: selectedChannels.length ? "pointer" : "not-allowed",
+                }}
+              >
+                <span className="liquid-glass-btn-gold-label">
+                  {selectedChannels.length
+                    ? `Generate ${selectedChannels.length} version${selectedChannels.length !== 1 ? "s" : ""}`
+                    : "Select channels"}
+                </span>
+              </button>
+              {!sessionDraft && selectedOutputId && (
+                <button
+                  type="button"
+                  className="liquid-glass-btn"
+                  onClick={() => {
+                    setSelectedOutputId(null);
+                    setWrapPhase("choose");
+                    setSelectedChannels([]);
+                  }}
+                  style={{ padding: "12px 20px" }}
+                >
+                  <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>All pieces</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Build (generating) ───────────────────────────────────────
+  if (wrapPhase === "build") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
+        <WrapStepRail phase="build" />
+        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto", display: "grid", gap: 12 }}>
+            {formats.map(fmt => {
+              const st = formatContents[fmt]?.status;
+              const loadingFmt = st === "loading" || st === undefined;
+              return (
+                <div key={fmt} className="liquid-glass-card" style={{ padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{fmt}</div>
+                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4 }}>
+                      {loadingFmt ? "Reed is adapting your draft for this channel…" : st === "error" ? "This channel hit an error. You can retry from the next screen." : "Ready"}
+                    </div>
+                  </div>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: "50%",
+                    border: "2px solid rgba(245,198,66,0.35)",
+                    borderTopColor: "var(--gold-bright, #F5C642)",
+                    animation: loadingFmt ? "wrapspin 0.85s linear infinite" : "none",
+                    opacity: loadingFmt ? 1 : 0.25,
+                  }} />
+                </div>
+              );
+            })}
+            <style>{`@keyframes wrapspin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Deliver (gallery + reader) ───────────────────────────────
   const formatEntry = formatContents[activeFormat];
   const displayContent = formatEntry?.content || activeOutput.content || "";
   const displayMetadata = formatEntry?.metadata || {};
@@ -628,14 +870,25 @@ export default function WrapPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
-      {/* ── Format Tabs ── */}
+      <WrapStepRail phase="deliver" />
+
       <div className="liquid-glass" style={{
         display: "flex", alignItems: "center", borderRadius: 0,
         borderBottom: "1px solid rgba(0,0,0,0.06)",
-        padding: "0 20px", flexShrink: 0,
-        overflowX: "auto",
+        padding: "0 12px 0 20px", flexShrink: 0,
+        overflowX: "auto", gap: 4,
       }}>
-        {/* Back to list button when viewing from picker (not session draft) */}
+        <button
+          type="button"
+          className="liquid-glass-btn"
+          onClick={() => {
+            setWrapPhase("choose");
+            setSelectedChannels([...formats]);
+          }}
+          style={{ flexShrink: 0, padding: "8px 12px", marginRight: 8 }}
+        >
+          <span className="liquid-glass-btn-label" style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)" }}>Edit channels</span>
+        </button>
         {!sessionDraft && selectedOutputId && (
           <button
             type="button"
@@ -647,18 +900,17 @@ export default function WrapPage() {
               adaptingRef.current.clear();
               setExported(false);
               setCatalogLinkId(null);
+              setWrapPhase("choose");
+              setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
             }}
             style={{
-              fontSize: 11, fontWeight: 500, color: "var(--fg-3)",
-              padding: "11px 14px", cursor: "pointer",
+              fontSize: 10, fontWeight: 600, color: "var(--fg-3)",
+              padding: "10px 10px", cursor: "pointer",
               background: "none", border: "none", fontFamily: FONT,
               borderRight: "1px solid var(--glass-border)", marginRight: 4,
-              transition: "color 0.1s",
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = "var(--fg)"; }}
-            onMouseLeave={e => { e.currentTarget.style.color = "var(--fg-3)"; }}
           >
-            ← All pieces
+            All pieces
           </button>
         )}
         {formats.map(fmt => (
@@ -674,37 +926,116 @@ export default function WrapPage() {
         ))}
       </div>
 
-      <div style={{
-        padding: "10px 20px 12px",
-        borderBottom: "1px solid var(--glass-border)",
-        background: "rgba(245,198,66,0.07)",
-        flexShrink: 0,
-      }}>
-        <div style={{
-          fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "var(--fg-3)",
-          textTransform: "uppercase" as const, marginBottom: 6,
+      {catalogLinkId ? (
+        <div className="liquid-glass-card" style={{
+          display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10,
+          margin: "10px 20px 0", padding: "12px 16px",
+          flexShrink: 0,
         }}>
-          Active format rules
+          <span style={{ fontSize: 12, color: "var(--fg-2)", flex: "1 1 200px" }}>
+            This piece is in your Catalog (saved master draft).
+          </span>
+          <button type="button" className="liquid-glass-btn" onClick={() => nav(`/studio/outputs/${catalogLinkId}`)} style={{ padding: "6px 14px" }}>
+            <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Open in Catalog</span>
+          </button>
+          <button type="button" className="liquid-glass-btn-gold" onClick={() => nav("/studio/outputs")} style={{ padding: "6px 14px" }}>
+            <span className="liquid-glass-btn-gold-label">All pieces</span>
+          </button>
         </div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: "#9A7030", marginBottom: 6 }}>
-          {outputTypeDisplayLabel(activeOutput.output_type || "freestyle")}
-          {activeOutput.output_type === "presentation" && (
-            <span style={{ fontWeight: 500, color: "var(--fg-3)" }}>
-              {" "}· {wrapPresentationMinutes} min (~{presentationTargetWords(wrapPresentationMinutes)} words)
-            </span>
+      ) : (
+        <div className="liquid-glass" style={{
+          margin: "10px 20px 0", padding: "10px 16px", flexShrink: 0,
+          borderRadius: 12, border: "1px solid var(--glass-border)",
+        }}>
+          <span style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>
+            <strong style={{ color: "var(--fg-2)", fontWeight: 600 }}>Catalog</strong>
+            {" "}lives under Library. After Export All in the dashboard, your master draft is marked saved there.
+          </span>
+        </div>
+      )}
+
+      <div style={{
+        flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px 32px" : "28px 24px 40px",
+        display: "flex", alignItems: "flex-start", justifyContent: "center",
+      }}>
+        <div className="liquid-glass-card" style={{
+          width: "100%", maxWidth: 640,
+          padding: isMobile ? "22px 20px" : "32px 36px",
+          minHeight: 200,
+        }}>
+          {isAdapting ? (
+            <div style={{ textAlign: "center", padding: "48px 0" }}>
+              <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Adapting {activeFormat}…</div>
+            </div>
+          ) : contentParas.length > 0 ? (
+            <>
+              {displayMetadata.subject && (
+                <div style={{ marginBottom: displayMetadata.preview ? 4 : 16 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>SUBJECT: </span>
+                  <span style={{ fontSize: 12, color: "var(--fg)" }}>{displayMetadata.subject}</span>
+                </div>
+              )}
+              {displayMetadata.preview && (
+                <div style={{ marginBottom: 16 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>PREVIEW: </span>
+                  <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{displayMetadata.preview}</span>
+                </div>
+              )}
+              {displayMetadata.videoTitle && (
+                <div style={{ marginBottom: 16 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>VIDEO TITLE: </span>
+                  <span style={{ fontSize: 12, color: "var(--fg)" }}>{displayMetadata.videoTitle}</span>
+                </div>
+              )}
+
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#9A7030", marginBottom: 10, textTransform: "uppercase" as const }}>
+                {activeFormat}
+              </div>
+              <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", margin: "0 0 20px", lineHeight: 1.25 }}>
+                {contentTitle}
+              </h1>
+              {contentParas.map((p, i) => (
+                <p key={i} style={{ fontSize: 14, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 14 : 0 }}>{p}</p>
+              ))}
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 28, paddingTop: 20, borderTop: "1px solid var(--glass-border)" }}>
+                <button type="button" className="liquid-glass-btn" onClick={handleCopy} style={{ padding: "8px 18px" }}>
+                  <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)", fontWeight: 600 }}>
+                    {copied ? "Copied" : `Copy ${activeFormat}`}
+                  </span>
+                </button>
+                <button type="button" className="liquid-glass-btn-gold" onClick={() => {
+                  sessionStorage.setItem("ew-reopen-output-id", activeOutput.id);
+                  sessionStorage.setItem("ew-reopen-title", activeOutput.title);
+                  nav("/studio/work");
+                }} style={{ padding: "8px 18px" }}
+                >
+                  <span className="liquid-glass-btn-gold-label">Reopen in Work</span>
+                </button>
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Adapt {activeFormat}</div>
+              <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16, lineHeight: 1.55 }}>
+                This version is not ready yet. Run adapt or open the dashboard for Export All.
+              </div>
+              <button type="button" className="liquid-glass-btn-gold" onClick={() => void adaptFormat(activeFormat)} style={{ padding: "10px 22px" }}>
+                <span className="liquid-glass-btn-gold-label">Adapt now</span>
+              </button>
+            </div>
           )}
         </div>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5 }}>
-          {wrapRuleLines.map((line, i) => (
-            <li key={i} style={{ marginBottom: 3 }}>{line}</li>
-          ))}
-        </ul>
-        {activeOutput.output_type === "presentation" && (
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 }}>
+      </div>
+
+      {activeOutput.output_type === "presentation" && (
+        <div className="liquid-glass-card" style={{ margin: "0 20px 16px", padding: "12px 16px", flexShrink: 0 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
             <label style={{ fontSize: 11, color: "var(--fg-2)", display: "flex", alignItems: "center", gap: 8 }}>
               <span>Duration (min)</span>
               <input
                 type="number"
+                className="liquid-glass-input"
                 min={3}
                 max={180}
                 step={1}
@@ -713,145 +1044,15 @@ export default function WrapPage() {
                   const v = parseInt(e.target.value, 10);
                   if (Number.isFinite(v)) setWrapPresentationMinutes(Math.min(180, Math.max(3, v)));
                 }}
-                style={{
-                  width: 64, padding: "5px 8px", borderRadius: 6,
-                  border: "1px solid var(--glass-border)", fontSize: 12, fontFamily: FONT,
-                }}
+                style={{ width: 72, fontSize: 12, padding: "6px 10px" }}
               />
             </label>
-            <button
-              type="button"
-              onClick={applyPresentationLength}
-              style={{
-                fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 6,
-                border: "none", background: "var(--fg)", color: "var(--gold, #F5C642)",
-                cursor: "pointer", fontFamily: FONT,
-              }}
-            >
-              Apply length and re-adapt
+            <button type="button" className="liquid-glass-btn" onClick={applyPresentationLength} style={{ padding: "6px 12px" }}>
+              <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Apply length and re-adapt</span>
             </button>
           </div>
-        )}
-      </div>
-
-      {catalogLinkId ? (
-        <div style={{
-          display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10,
-          padding: "10px 20px", borderBottom: "1px solid var(--glass-border)",
-          background: "rgba(74,144,217,0.06)", flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 12, color: "var(--fg-2)", flex: "1 1 200px" }}>
-            This piece is in your Catalog (saved master draft).
-          </span>
-          <button
-            type="button"
-            onClick={() => nav(`/studio/outputs/${catalogLinkId}`)}
-            style={{
-              fontSize: 11, fontWeight: 600, padding: "6px 14px", borderRadius: 8,
-              border: "1px solid var(--glass-border)", background: "var(--glass-surface)",
-              color: "var(--fg)", cursor: "pointer", fontFamily: FONT,
-            }}
-          >Open in Catalog</button>
-          <button
-            type="button"
-            onClick={() => nav("/studio/outputs")}
-            style={{
-              fontSize: 11, fontWeight: 600, padding: "6px 14px", borderRadius: 8,
-              border: "none", background: "var(--fg)", color: "var(--gold, #F5C642)",
-              cursor: "pointer", fontFamily: FONT,
-            }}
-          >All pieces</button>
-        </div>
-      ) : (
-        <div style={{
-          padding: "8px 20px 10px", borderBottom: "1px solid var(--glass-border)",
-          background: "rgba(0,0,0,0.02)", flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>
-            <strong style={{ color: "var(--fg-2)", fontWeight: 600 }}>Catalog</strong>
-            {" "}is under Library in the sidebar. After you run Export All in the Dashboard, open Catalog to see every saved piece.
-          </span>
         </div>
       )}
-
-      {/* ── Content Preview ── */}
-      <div style={{
-        flex: 1, overflowY: "auto", padding: isMobile ? "24px 20px" : "32px 40px",
-        display: "flex", alignItems: "flex-start", justifyContent: "center",
-      }}>
-        <div style={{ width: "100%", maxWidth: 580 }}>
-          {isAdapting ? (
-            <div style={{ textAlign: "center", paddingTop: 80 }}>
-              <div style={{ fontSize: 13, color: "var(--fg-3)", animation: "pulse 2s ease-in-out infinite" }}>
-                Adapting for {activeFormat}...
-              </div>
-              <style>{`@keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }`}</style>
-            </div>
-          ) : contentParas.length > 0 ? (
-            <>
-              {/* Metadata (subject line, preview text) */}
-              {displayMetadata.subject && (
-                <div style={{ marginBottom: displayMetadata.preview ? 4 : 16 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>SUBJECT: </span>
-                  <span style={{ fontSize: 11, color: "var(--fg)" }}>{displayMetadata.subject}</span>
-                </div>
-              )}
-              {displayMetadata.preview && (
-                <div style={{ marginBottom: 16 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>PREVIEW: </span>
-                  <span style={{ fontSize: 11, color: "var(--fg-2)" }}>{displayMetadata.preview}</span>
-                </div>
-              )}
-              {displayMetadata.videoTitle && (
-                <div style={{ marginBottom: 16 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", letterSpacing: "0.08em" }}>VIDEO TITLE: </span>
-                  <span style={{ fontSize: 11, color: "var(--fg)" }}>{displayMetadata.videoTitle}</span>
-                </div>
-              )}
-
-              <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--fg)", margin: "0 0 20px", lineHeight: 1.3 }}>
-                {contentTitle}
-              </h1>
-              {contentParas.map((p, i) => (
-                <p key={i} style={{ fontSize: 13, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 12 : 0 }}>{p}</p>
-              ))}
-
-              <div style={{ display: "flex", gap: 8, marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                <button type="button" className="liquid-glass-btn" onClick={handleCopy} style={{
-                  fontSize: 11, padding: "6px 16px",
-                  fontFamily: FONT, fontWeight: 500,
-                }}>
-                  <span className="liquid-glass-btn-label" style={{ color: "var(--fg-2)" }}>
-                    {copied ? "Copied" : "Copy"}
-                  </span>
-                </button>
-                <button type="button" onClick={() => {
-                  sessionStorage.setItem("ew-reopen-output-id", activeOutput.id);
-                  sessionStorage.setItem("ew-reopen-title", activeOutput.title);
-                  nav("/studio/work");
-                }} style={{
-                  fontSize: 11, padding: "6px 16px", borderRadius: 8,
-                  border: "none", background: "var(--fg)", color: "var(--surface)",
-                  cursor: "pointer", fontFamily: FONT, fontWeight: 600,
-                }}>Reopen in Work</button>
-              </div>
-            </>
-          ) : (
-            <div style={{ textAlign: "center", paddingTop: 80 }}>
-              <div style={{ fontSize: 28, color: "var(--gold, #F5C642)", marginBottom: 14 }}>&#10022;</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>Adapt for {activeFormat}</div>
-              <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16, maxWidth: 360, margin: "0 auto 16px", lineHeight: 1.55 }}>
-                Reed has not generated this channel version yet. Run adapt below, or open the Dashboard (top bar) for Export All and Reed shortcuts.
-              </div>
-              <button type="button" onClick={() => adaptFormat(activeFormat)} style={{
-                fontSize: 12, fontWeight: 600, padding: "8px 20px", borderRadius: 8,
-                background: "var(--fg)", border: "none", color: "var(--surface)",
-                cursor: "pointer", fontFamily: FONT,
-              }}>Adapt for {activeFormat}</button>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
