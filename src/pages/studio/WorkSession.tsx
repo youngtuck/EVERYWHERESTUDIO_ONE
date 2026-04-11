@@ -3472,7 +3472,16 @@ export default function WorkSession() {
         catalogOk = true;
       } catch (e) {
         console.error("[Export] Supabase save failed:", e);
-        toast("Could not save to Catalog yet. Wrap still has your draft.", "error");
+        const msg =
+          e && typeof e === "object" && "message" in e && typeof (e as { message: unknown }).message === "string"
+            ? (e as { message: string }).message.trim()
+            : "";
+        toast(
+          msg
+            ? `Could not save to Catalog: ${msg}`
+            : "Could not save to Catalog. Check your connection and sign-in. The Wrap screen loads only after this save succeeds.",
+          "error",
+        );
       }
     }
 
