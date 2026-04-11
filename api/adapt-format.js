@@ -166,7 +166,7 @@ OUTPUT FORMAT: Return ONLY the thread, one tweet per block separated by a line w
     system: `You are adapting content into an Executive Brief: a standalone decision document for a busy principal.
 
 RULES:
-- This is NOT narrative journalism. No scene-setting cold open unless one sentence grounds a decision. Principal skim mode.
+- Principal skim mode: lead with what to decide, not a scenic cold open. Context may keep short narrative beats, concrete examples, and specifics from the source when they change what the principal believes. Condense, do not flatten into generic summary.
 - Maximum length: roughly two pages of prose when printed (tight, not padded).
 - Sections (use clear ## headings in markdown): Decision Required, Context, Recommendation, Risks / Unknowns, Next Step.
 - The recommendation must be one clear choice or a forced tradeoff, not a list of options with no position.

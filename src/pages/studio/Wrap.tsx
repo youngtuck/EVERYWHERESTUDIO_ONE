@@ -2,7 +2,7 @@
  * Wrap.tsx — Staged workflow: Choose channels → Build → Deliver
  * Adaptation via /api/adapt-format, liquid glass presentation, export to Catalog
  */
-import { useState, useLayoutEffect, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useLayoutEffect, useEffect, useCallback, useRef, useMemo, type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
@@ -21,6 +21,151 @@ import { OUTPUT_TYPES } from "../../lib/constants";
 import "./shared.css";
 
 const FONT = "var(--font)";
+
+/** Heuristic: use heading/list/bold rendering instead of one <p> per line. */
+function contentUsesLightMarkdown(text: string): boolean {
+  const t = text.replace(/\r\n/g, "\n");
+  if (/^#{1,6}\s/m.test(t)) return true;
+  if (/^\s*[-*]\s+/m.test(t)) return true;
+  if (/\*\*[^*]+\*\*/.test(t)) return true;
+  return false;
+}
+
+function parseInlineBold(text: string, keyPrefix: string): ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) {
+      return <strong key={`${keyPrefix}-b-${i}`}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={`${keyPrefix}-t-${i}`}>{part}</span>;
+  });
+}
+
+function WrapReaderFormattedBody({ content }: { content: string }) {
+  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  const nodes: ReactNode[] = [];
+  let paraLines: string[] = [];
+  let listItems: string[] = [];
+  let k = 0;
+  const nextKey = () => `wrf-${k++}`;
+
+  const gapTop = () => (nodes.length === 0 ? 0 : 14);
+
+  const flushPara = () => {
+    if (paraLines.length === 0) return;
+    const text = paraLines.map(s => s.trim()).join(" ");
+    paraLines = [];
+    const pk = nextKey();
+    nodes.push(
+      <p
+        key={pk}
+        style={{
+          fontSize: 14,
+          lineHeight: 1.75,
+          color: "var(--fg-2)",
+          margin: 0,
+          marginTop: gapTop(),
+        }}
+      >
+        {parseInlineBold(text, pk)}
+      </p>,
+    );
+  };
+
+  const flushList = () => {
+    if (listItems.length === 0) return;
+    const lk = nextKey();
+    nodes.push(
+      <ul
+        key={lk}
+        style={{
+          margin: 0,
+          marginTop: gapTop(),
+          paddingLeft: 20,
+          color: "var(--fg-2)",
+          fontSize: 14,
+          lineHeight: 1.7,
+        }}
+      >
+        {listItems.map((raw, i) => {
+          const item = raw.replace(/^\s*[-*]\s+/, "").trim();
+          const ik = `${lk}-li-${i}`;
+          return (
+            <li key={ik} style={{ marginTop: i > 0 ? 6 : 0 }}>
+              {parseInlineBold(item, ik)}
+            </li>
+          );
+        })}
+      </ul>,
+    );
+    listItems = [];
+  };
+
+  for (const line of lines) {
+    const trimmedEnd = line.trimEnd();
+    const trimmed = trimmedEnd.trim();
+    if (trimmed.length === 0) {
+      flushList();
+      flushPara();
+      continue;
+    }
+    const heading3 = trimmed.match(/^###\s+(.+)$/);
+    const heading2 = trimmed.match(/^##\s+(.+)$/);
+    const heading1 = trimmed.match(/^#\s+(.+)$/);
+    const listMatch = trimmed.match(/^\s*[-*]\s+(.+)$/);
+    if (heading3 || heading2 || heading1) {
+      flushList();
+      flushPara();
+      const body = (heading3?.[1] ?? heading2?.[1] ?? heading1?.[1] ?? "").trim();
+      const level = heading3 ? 3 : heading2 ? 2 : 1;
+      const hk = nextKey();
+      const style =
+        level === 3
+          ? {
+              fontSize: 14,
+              fontWeight: 600 as const,
+              color: "var(--fg)",
+              margin: 0,
+              marginTop: gapTop(),
+              lineHeight: 1.35,
+            }
+          : level === 2
+            ? {
+                fontSize: 16,
+                fontWeight: 700 as const,
+                color: "var(--fg)",
+                margin: 0,
+                marginTop: gapTop(),
+                lineHeight: 1.3,
+              }
+            : {
+                fontSize: 17,
+                fontWeight: 700 as const,
+                color: "var(--fg)",
+                margin: 0,
+                marginTop: gapTop(),
+                lineHeight: 1.3,
+              };
+      const Tag = level === 3 ? "h4" : level === 2 ? "h3" : "h2";
+      nodes.push(
+        <Tag key={hk} style={style}>
+          {parseInlineBold(body, hk)}
+        </Tag>,
+      );
+      continue;
+    }
+    if (listMatch) {
+      flushPara();
+      listItems.push(trimmed);
+      continue;
+    }
+    flushList();
+    paraLines.push(trimmedEnd.trim());
+  }
+  flushList();
+  flushPara();
+  return <>{nodes}</>;
+}
 
 /** Library shelves (match sidebar Outputs: Content, Business, Social, Extended, Templates). */
 type LandingShelfKey = "content" | "business" | "social" | "extended" | "templates";
@@ -1129,11 +1274,18 @@ export default function WrapPage() {
     const canContinueToDeliver = buildDone > 0 && !buildStillRunning;
 
     const buildIntro = (
-      <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0, lineHeight: 1.55 }}>
-        {buildErrors > 0
-          ? "When every row is ready, you move forward automatically. If you prefer, jump ahead with the versions that finished."
-          : "Reed is shaping each channel. This usually stays under a minute per surface."}
-      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0, lineHeight: 1.55 }}>
+          {buildErrors > 0
+            ? "When every row is ready, you move forward automatically. If you prefer, jump ahead with the versions that finished."
+            : "Reed is shaping each channel. This usually stays under a minute per surface."}
+        </p>
+        {buildErrors === 0 ? (
+          <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0, lineHeight: 1.55 }}>
+            Your full draft is the Catalog piece you opened (same text you exported from Work). Each row is an adapted surface only, not a second copy of the long story unless that channel is meant to carry it.
+          </p>
+        ) : null}
+      </div>
     );
 
     const renderBuildChannelCard = (fmt: string, showChannelTitle: boolean) => {
@@ -1165,6 +1317,11 @@ export default function WrapPage() {
                 : errFmt
                   ? "This request did not complete. Retry the same channel, or continue with the ones that are ready."
                   : "Ready to open in Your pieces."}
+              {!errFmt ? (
+                <span style={{ display: "block", marginTop: 6, opacity: 0.92 }}>
+                  Surface version: your master draft stays in Work and Catalog unchanged.
+                </span>
+              ) : null}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
@@ -1270,7 +1427,14 @@ export default function WrapPage() {
   const isAdapting = formatEntry?.status === "loading";
   const isChannelError = formatEntry?.status === "error";
   const contentTitle = activeOutput.title || "Untitled";
-  const contentParas = displayContent ? displayContent.split("\n").filter(Boolean) : [];
+  const readerUsesMarkdown = Boolean(displayContent && contentUsesLightMarkdown(displayContent));
+  const contentParas =
+    displayContent && !readerUsesMarkdown ? displayContent.split("\n").filter(Boolean) : [];
+  const hasReaderBody = displayContent.trim().length > 0;
+  const surfaceHint =
+    activeFormat === "Executive Brief"
+      ? "Executive Brief is a tight decision memo, not your long-form story. Your full draft is the saved master (Reopen in Work or Catalog)."
+      : `${activeFormat} is adapted for this surface. Your full draft is the saved master (Reopen in Work or Catalog).`;
 
   const deliverToolbar = (
     <>
@@ -1369,7 +1533,7 @@ export default function WrapPage() {
             <span className="liquid-glass-btn-gold-label">Retry {activeFormat}</span>
           </button>
         </div>
-      ) : contentParas.length > 0 ? (
+      ) : hasReaderBody ? (
         <>
           {displayMetadata.subject && (
             <div style={{ marginBottom: displayMetadata.preview ? 4 : 16 }}>
@@ -1393,12 +1557,19 @@ export default function WrapPage() {
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#9A7030", marginBottom: 10, textTransform: "uppercase" as const }}>
             {activeFormat}
           </div>
+          <p style={{ fontSize: 11, color: "var(--fg-3)", margin: "0 0 14px", lineHeight: 1.55 }}>
+            {surfaceHint}
+          </p>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--fg)", margin: "0 0 20px", lineHeight: 1.25 }}>
             {contentTitle}
           </h1>
-          {contentParas.map((p, i) => (
-            <p key={i} style={{ fontSize: 14, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 14 : 0 }}>{p}</p>
-          ))}
+          {readerUsesMarkdown ? (
+            <WrapReaderFormattedBody content={displayContent} />
+          ) : (
+            contentParas.map((p, i) => (
+              <p key={i} style={{ fontSize: 14, lineHeight: 1.75, color: "var(--fg-2)", margin: 0, marginTop: i > 0 ? 14 : 0 }}>{p}</p>
+            ))
+          )}
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 28, paddingTop: 20, borderTop: "1px solid var(--glass-border)" }}>
             <button type="button" className="liquid-glass-btn" onClick={handleCopy} style={{ padding: "8px 18px" }}>
