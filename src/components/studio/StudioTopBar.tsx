@@ -1,11 +1,13 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useShell } from "./StudioShell";
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
 
 const USER_MENU_OVERLAY_Z = 10050;
+/** Above account menu; portaled to document.body so #root zoom does not clip dialogs */
+const STUDIO_CENTER_MODAL_Z = 10100;
 
 // ── Route to breadcrumb config ──────────────────────────────────
 function useBreadcrumbs(): {
@@ -159,6 +161,15 @@ function UserAvatar() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!activeModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveModal(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeModal]);
+
   const menuPortal = open && menuPos && typeof document !== "undefined"
     ? createPortal(
         <>
@@ -240,6 +251,106 @@ function UserAvatar() {
       )
     : null;
 
+  const centerModalShell = (
+    id: string,
+    title: string,
+    rows: { label: string; value: string }[],
+  ) => (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={id}
+      onClick={() => setActiveModal(null)}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: STUDIO_CENTER_MODAL_Z,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+        boxSizing: "border-box",
+        background: "rgba(13,27,42,0.45)",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="liquid-glass-card"
+        style={{
+          width: "min(440px, calc(100vw - 48px))",
+          maxHeight: "min(560px, calc(100vh - 48px))",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          padding: 0,
+          borderRadius: 16,
+          boxShadow: "0 24px 80px rgba(0,0,0,0.16)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "18px 22px",
+            flexShrink: 0,
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          <span id={id} style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)" }}>{title}</span>
+          <button
+            type="button"
+            onClick={() => setActiveModal(null)}
+            aria-label="Close dialog"
+            style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 4 }}
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ padding: "8px 22px 22px", overflowY: "auto", minHeight: 0 }}>
+          {rows.map(field => (
+            <div
+              key={field.label}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 16,
+                padding: "12px 0",
+                borderBottom: "1px solid var(--line)",
+              }}
+            >
+              <span style={{ fontSize: 13, color: "var(--fg-2)" }}>{field.label}</span>
+              <span style={{ fontSize: 13, color: "var(--fg)", fontWeight: 500, textAlign: "right" as const }}>{field.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const systemModalPortal = activeModal === "system" && typeof document !== "undefined"
+    ? createPortal(
+        centerModalShell("studio-system-settings-title", "System Settings", [
+          { label: "Default AI Model", value: "Claude Opus 4" },
+          { label: "Session Timeout", value: "30 minutes" },
+          { label: "Data Region", value: "US East" },
+        ]),
+        document.body,
+      )
+    : null;
+
+  const adminModalPortal = activeModal === "admin" && typeof document !== "undefined"
+    ? createPortal(
+        centerModalShell("studio-admin-panel-title", "Admin Panel", [
+          { label: "Organization", value: "Mixed Grill, LLC" },
+          { label: "Plan", value: "Alpha" },
+          { label: "Users", value: "1" },
+        ]),
+        document.body,
+      )
+    : null;
+
   return (
     <>
     <div style={{ position: "relative" }}>
@@ -263,46 +374,8 @@ function UserAvatar() {
       </button>
     </div>
     {menuPortal}
-      {activeModal === "system" && (
-        <div onClick={() => setActiveModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "var(--surface)", borderRadius: 12, width: 420, maxHeight: 480, padding: "20px 24px", boxShadow: "0 16px 48px rgba(0,0,0,0.14)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <span style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>System Settings</span>
-              <button onClick={() => setActiveModal(null)} aria-label="Close dialog" style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16 }}>✕</button>
-            </div>
-            {[
-              { label: "Default AI Model", value: "Claude Opus 4" },
-              { label: "Session Timeout", value: "30 minutes" },
-              { label: "Data Region", value: "US East" },
-            ].map(field => (
-              <div key={field.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
-                <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{field.label}</span>
-                <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>{field.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {activeModal === "admin" && (
-        <div onClick={() => setActiveModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "var(--surface)", borderRadius: 12, width: 420, maxHeight: 480, padding: "20px 24px", boxShadow: "0 16px 48px rgba(0,0,0,0.14)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <span style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>Admin Panel</span>
-              <button onClick={() => setActiveModal(null)} aria-label="Close dialog" style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 16 }}>✕</button>
-            </div>
-            {[
-              { label: "Organization", value: "Mixed Grill, LLC" },
-              { label: "Plan", value: "Alpha" },
-              { label: "Users", value: "1" },
-            ].map(field => (
-              <div key={field.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
-                <span style={{ fontSize: 12, color: "var(--fg-2)" }}>{field.label}</span>
-                <span style={{ fontSize: 12, color: "var(--fg)", fontWeight: 500 }}>{field.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+    {systemModalPortal}
+    {adminModalPortal}
     </>
   );
 }
