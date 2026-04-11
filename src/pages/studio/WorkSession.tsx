@@ -22,6 +22,7 @@ import { useMobile } from "../../hooks/useMobile";
 import { saveSession, loadSession, clearSession } from "../../lib/sessionPersistence";
 
 import OutputTypePicker, { OUTPUT_TYPES, PROJECT_TYPE_IDS } from "../../components/studio/OutputTypePicker";
+import { ReedProfileIcon } from "../../components/studio/ReedProfileIcon";
 import "./shared.css";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,6 +31,40 @@ import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
+
+/** Build attachment block for Intake messages (shared with composer queue + send). */
+async function formatIntakeFileAttachments(fileArr: File[]): Promise<string> {
+  const TEXT_EXTS = [".txt", ".md", ".csv", ".json", ".html", ".xml", ".yml", ".yaml"];
+  const contents: string[] = [];
+
+  for (const file of fileArr) {
+    const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+    try {
+      if (TEXT_EXTS.includes(ext) || file.type.startsWith("text/")) {
+        const text = await file.text();
+        if (text.trim()) {
+          contents.push(`[File: ${file.name}]\n${text.slice(0, 12000)}`);
+        }
+      } else if (ext === ".pdf") {
+        const text = await file.text();
+        const readable = text.replace(/[^\x20-\x7E\n\r\t]/g, " ").replace(/\s{3,}/g, " ").trim();
+        if (readable.length > 50) {
+          contents.push(`[File: ${file.name}]\n${readable.slice(0, 12000)}`);
+        } else {
+          contents.push(`[File: ${file.name}] (PDF attached, ${(file.size / 1024).toFixed(0)}KB)`);
+        }
+      } else if (ext === ".doc" || ext === ".docx") {
+        contents.push(`[File: ${file.name}] (Document attached, ${(file.size / 1024).toFixed(0)}KB)`);
+      } else {
+        contents.push(`[File: ${file.name}] (${file.type || "file"} attached, ${(file.size / 1024).toFixed(0)}KB)`);
+      }
+    } catch {
+      contents.push(`[File: ${file.name}] (Could not read file)`);
+    }
+  }
+
+  return contents.join("\n\n");
+}
 
 type WorkStage = "Intake" | "Outline" | "Edit" | "Review";
 const STAGES: WorkStage[] = ["Intake", "Outline", "Edit", "Review"];
@@ -822,13 +857,17 @@ function ReviewDash({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StageIntake({
-  messages, onSend, sending, isReady, onAdvance, userInitials, firstName, onFileAttach, onNewSession,
+  messages, onSend, sending, isReady, onAdvance, userInitials, firstName,
+  serializeSessionFiles, onCommitAttachedFiles, onNewSession,
 }: {
-  messages: ChatMessage[]; onSend: (text: string) => void;
+  messages: ChatMessage[]; onSend: (text: string) => void | Promise<void>;
   sending: boolean; isReady: boolean; onAdvance: () => void; userInitials?: string; firstName?: string;
-  onFileAttach?: (files: FileList) => void; onNewSession?: () => void;
+  serializeSessionFiles: (files: File[]) => Promise<string>;
+  onCommitAttachedFiles?: (files: File[]) => void;
+  onNewSession?: () => void;
 }) {
   const [input, setInput] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile();
@@ -864,9 +903,30 @@ function StageIntake({
   }, [sending]);
 
   const handleSend = () => {
-    if (!input.trim() || sending) return;
-    onSend(input.trim());
-    setInput("");
+    if (sending) return;
+    void (async () => {
+      const trimmed = input.trim();
+      if (!trimmed && pendingFiles.length === 0) return;
+
+      const parts: string[] = [];
+      if (trimmed) parts.push(trimmed);
+
+      const filesSnapshot = [...pendingFiles];
+      if (filesSnapshot.length > 0) {
+        const fileBlock = await serializeSessionFiles(filesSnapshot);
+        if (fileBlock) {
+          parts.push(`I've attached the following for this session:\n\n${fileBlock}`);
+        }
+      }
+
+      if (parts.length === 0) return;
+      if (filesSnapshot.length > 0) {
+        onCommitAttachedFiles?.(filesSnapshot);
+      }
+      setInput("");
+      setPendingFiles([]);
+      await onSend(parts.join("\n\n"));
+    })();
   };
 
   // Welcome state: centered greeting + input, like Claude's empty chat
@@ -906,7 +966,9 @@ function StageIntake({
               onSend={handleSend}
               disabled={sending}
               autoFocus
-              onFileAttach={onFileAttach}
+              pendingFiles={pendingFiles}
+              onAddPendingFiles={files => setPendingFiles(prev => [...prev, ...Array.from(files)])}
+              onRemovePendingFile={idx => setPendingFiles(prev => prev.filter((_, i) => i !== idx))}
             />
           </div>
 
@@ -1004,7 +1066,9 @@ function StageIntake({
             onSend={handleSend}
             disabled={sending}
             autoFocus
-            onFileAttach={onFileAttach}
+            pendingFiles={pendingFiles}
+            onAddPendingFiles={files => setPendingFiles(prev => [...prev, ...Array.from(files)])}
+            onRemovePendingFile={idx => setPendingFiles(prev => prev.filter((_, i) => i !== idx))}
           />
         </div>
       </div>
@@ -1015,13 +1079,14 @@ function StageIntake({
 function ReedAvatar() {
   return (
     <div style={{
-      width: 28, height: 28, borderRadius: "50%",
-      background: "linear-gradient(135deg, rgba(74,144,217,0.18) 0%, rgba(74,144,217,0.08) 100%)",
-      border: "1px solid rgba(74,144,217,0.25)",
+      width: 28, height: 28, borderRadius: 9,
+      background: "linear-gradient(145deg, rgba(74,144,217,0.14) 0%, rgba(74,144,217,0.05) 100%)",
+      border: "1px solid rgba(74,144,217,0.24)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: 10, fontWeight: 700, color: "var(--blue)",
-      flexShrink: 0, marginTop: 2, letterSpacing: "0.03em",
-    }}>R</div>
+      flexShrink: 0, marginTop: 2,
+    }}>
+      <ReedProfileIcon size={17} title="Reed" />
+    </div>
   );
 }
 
@@ -1110,7 +1175,7 @@ function ChatBubble({ role, text, userInitials, isChallenge }: { role: "reed" | 
         </>
       ) : (
         <>
-          <div className="liquid-glass-dark user-bubble-wrap">
+          <div className="liquid-glass-dark liquid-glass-dark--static user-bubble-wrap">
             <p>{text}</p>
           </div>
           <div style={{
@@ -1127,18 +1192,100 @@ function ChatBubble({ role, text, userInitials, isChallenge }: { role: "reed" | 
   );
 }
 
+function ChatPendingFileThumb({ file }: { file: File }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file.type.startsWith("image/")) return;
+    const u = URL.createObjectURL(file);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt=""
+        style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 6, flexShrink: 0 }}
+      />
+    );
+  }
+  return (
+    <div style={{
+      width: 32, height: 32, borderRadius: 6, flexShrink: 0,
+      background: "rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.2)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <svg style={{ width: 14, height: 14, stroke: "var(--blue, #4A90D9)", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+    </div>
+  );
+}
+
+function ChatPendingAttachments({
+  files, onRemove,
+}: {
+  files: File[];
+  onRemove: (index: number) => void;
+}) {
+  if (files.length === 0) return null;
+  return (
+    <div style={{
+      display: "flex", flexWrap: "wrap", gap: 6,
+      padding: "2px 2px 6px", width: "100%",
+      borderBottom: "1px solid var(--glass-border)",
+    }}>
+      {files.map((file, i) => (
+        <div
+          key={`${file.name}-${file.size}-${file.lastModified}-${i}`}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "4px 6px 4px 4px",
+            borderRadius: 10,
+            background: "rgba(74,144,217,0.06)",
+            border: "1px solid rgba(74,144,217,0.15)",
+            maxWidth: "100%",
+          }}
+        >
+          <ChatPendingFileThumb file={file} />
+          <span style={{
+            fontSize: 11, color: "var(--fg-2)", overflow: "hidden",
+            textOverflow: "ellipsis", whiteSpace: "nowrap" as const, flex: 1, minWidth: 0,
+          }} title={file.name}>{file.name}</span>
+          <button
+            type="button"
+            title="Remove attachment"
+            onClick={() => onRemove(i)}
+            style={{
+              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+              border: "none", background: "rgba(0,0,0,0.06)", color: "var(--fg-3)",
+              cursor: "pointer", fontSize: 14, lineHeight: 1, fontFamily: FONT,
+            }}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Clean, centered input bar for the chat interface
 function ChatInputBar({
-  placeholder, value, onChange, onSend, disabled, autoFocus, onFileAttach,
+  placeholder, value, onChange, onSend, disabled, autoFocus,
+  pendingFiles, onAddPendingFiles, onRemovePendingFile,
 }: {
   placeholder: string; value: string; onChange: (v: string) => void;
   onSend: () => void; disabled?: boolean; autoFocus?: boolean;
-  onFileAttach?: (files: FileList) => void;
+  pendingFiles: File[];
+  onAddPendingFiles: (files: FileList) => void;
+  onRemovePendingFile: (index: number) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Focus on mount when autoFocus is set
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
       textareaRef.current.focus();
@@ -1158,18 +1305,18 @@ function ChatInputBar({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0 && onFileAttach) {
-      onFileAttach(files);
+    if (files && files.length > 0) {
+      onAddPendingFiles(files);
     }
-    // Reset so the same file can be re-selected
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const canSend = Boolean(value.trim() || pendingFiles.length > 0);
 
   return (
     <div style={{
       display: "flex", flexDirection: "column", gap: 6,
     }}>
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -1179,9 +1326,9 @@ function ChatInputBar({
         onChange={handleFileChange}
       />
       <div className="liquid-glass" style={{
-        display: "flex", alignItems: "center", gap: 8,
+        display: "flex", flexDirection: "column",
         borderRadius: 16,
-        padding: "10px 12px 10px 16px",
+        padding: pendingFiles.length > 0 ? "8px 10px 10px 12px" : "10px 12px 10px 16px",
         transition: "border-color 0.2s, box-shadow 0.2s",
       }}
         onFocus={e => {
@@ -1193,46 +1340,56 @@ function ChatInputBar({
           (e.currentTarget as HTMLElement).style.boxShadow = "";
         }}
       >
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={e => { if (!disabled) onChange(e.target.value); }}
-          onKeyDown={e => { if (!disabled) handleKey(e); }}
-          placeholder={placeholder}
-          readOnly={disabled}
-          rows={1}
-          className="reed-input"
-          style={{
-            flex: 1, resize: "none",
-            background: "transparent", border: "none", outline: "none",
-            fontSize: 14, color: "var(--fg)", fontFamily: FONT,
-            lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
-            opacity: disabled ? 0.5 : 1,
-          }}
-          onInput={e => {
-            const t = e.target as HTMLTextAreaElement;
-            t.style.height = "auto";
-            t.style.height = Math.min(t.scrollHeight, 120) + "px";
-          }}
-        />
-        <IaBtn title="Attach file" onClick={handleFileClick}><AttachIcon /></IaBtn>
-        <button
-          onClick={onSend}
-          disabled={disabled || !value.trim()}
-          style={{
-            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-            background: value.trim() && !disabled ? "rgba(13,27,42,0.85)" : "rgba(0,0,0,0.08)",
-            border: value.trim() && !disabled ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
-            cursor: value.trim() && !disabled ? "pointer" : "not-allowed",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "background 0.15s, border-color 0.15s",
-            backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-          }}
-        >
-          <svg style={{ width: 13, height: 13, stroke: "#fff", strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
-            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
-        </button>
+        <ChatPendingAttachments files={pendingFiles} onRemove={onRemovePendingFile} />
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 8, width: "100%" }}>
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={e => { if (!disabled) onChange(e.target.value); }}
+            onKeyDown={e => { if (!disabled) handleKey(e); }}
+            placeholder={placeholder}
+            readOnly={disabled}
+            rows={1}
+            className="reed-input"
+            style={{
+              flex: 1, resize: "none",
+              background: "transparent", border: "none", outline: "none",
+              fontSize: 14, color: "var(--fg)", fontFamily: FONT,
+              lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
+              opacity: disabled ? 0.5 : 1,
+              minHeight: 22,
+            }}
+            onInput={e => {
+              const t = e.target as HTMLTextAreaElement;
+              t.style.height = "auto";
+              t.style.height = Math.min(t.scrollHeight, 120) + "px";
+            }}
+          />
+          <IaBtn title="Attach file" onClick={handleFileClick}><AttachIcon /></IaBtn>
+          <button
+            type="button"
+            onClick={onSend}
+            disabled={disabled || !canSend}
+            style={{
+              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+              background: canSend && !disabled ? "rgba(13,27,42,0.85)" : "rgba(0,0,0,0.08)",
+              border: canSend && !disabled ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
+              cursor: canSend && !disabled ? "pointer" : "not-allowed",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "background 0.15s, border-color 0.15s",
+              backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            }}
+          >
+            <svg style={{
+              width: 13, height: 13,
+              stroke: canSend && !disabled ? "#fff" : "var(--fg-3)",
+              strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round",
+            }} viewBox="0 0 24 24"
+            >
+              <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -3443,47 +3600,9 @@ export default function WorkSession() {
           onAdvance={handleBuildOutline}
           userInitials={displayName ? displayName.split(" ").map(w => w[0]).join("").slice(0, 2) : "U"}
           firstName={displayName ? displayName.split(" ")[0] : undefined}
-          onFileAttach={async (files) => {
-            const fileArr = Array.from(files);
-            const names = fileArr.map(f => f.name);
-            setSessionFiles(prev => [...prev, ...names]);
-
-            // Read file contents and send to Reed
-            const TEXT_EXTS = [".txt", ".md", ".csv", ".json", ".html", ".xml", ".yml", ".yaml"];
-            const contents: string[] = [];
-
-            for (const file of fileArr) {
-              const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
-              try {
-                if (TEXT_EXTS.includes(ext) || file.type.startsWith("text/")) {
-                  const text = await file.text();
-                  if (text.trim()) {
-                    contents.push(`[File: ${file.name}]\n${text.slice(0, 12000)}`);
-                  }
-                } else if (ext === ".pdf") {
-                  // Read PDF as text (basic extraction)
-                  const text = await file.text();
-                  // PDF binary contains some readable text fragments
-                  const readable = text.replace(/[^\x20-\x7E\n\r\t]/g, " ").replace(/\s{3,}/g, " ").trim();
-                  if (readable.length > 50) {
-                    contents.push(`[File: ${file.name}]\n${readable.slice(0, 12000)}`);
-                  } else {
-                    contents.push(`[File: ${file.name}] (PDF attached, ${(file.size / 1024).toFixed(0)}KB)`);
-                  }
-                } else if (ext === ".doc" || ext === ".docx") {
-                  contents.push(`[File: ${file.name}] (Document attached, ${(file.size / 1024).toFixed(0)}KB)`);
-                } else {
-                  contents.push(`[File: ${file.name}] (${file.type || "file"} attached, ${(file.size / 1024).toFixed(0)}KB)`);
-                }
-              } catch {
-                contents.push(`[File: ${file.name}] (Could not read file)`);
-              }
-            }
-
-            if (contents.length > 0) {
-              const fileMsg = contents.join("\n\n");
-              handleIntakeSend(`I've attached the following content for this session:\n\n${fileMsg}`);
-            }
+          serializeSessionFiles={formatIntakeFileAttachments}
+          onCommitAttachedFiles={files => {
+            setSessionFiles(prev => [...prev, ...files.map(f => f.name)]);
           }}
           onNewSession={handleNewSession}
         />

@@ -9,6 +9,7 @@ import Logo from "../Logo";
 import NotificationBell from "./NotificationBell";
 import { REED_STAGE_CHIPS } from "../../lib/constants";
 import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
+import { ReedProfileIcon } from "./ReedProfileIcon";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHELL CONTEXT
@@ -383,13 +384,14 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{
-              width: 22, height: 22, borderRadius: "50%",
+              width: 22, height: 22, borderRadius: 7,
               background: "rgba(74,144,217,0.1)",
               border: "1px solid rgba(74,144,217,0.2)",
-              color: "var(--blue)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 9, fontWeight: 700, flexShrink: 0,
-            }}>R</div>
+              flexShrink: 0,
+            }}>
+              <ReedProfileIcon size={14} title="Reed" />
+            </div>
             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)" }}>Reed</span>
           </div>
           <button
@@ -619,12 +621,13 @@ function ReedPanel() {
             return (
               <div key={i} style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "flex-start" }}>
                 <div style={{
-                  width: 20, height: 20, borderRadius: "50%",
-                  background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
-                  color: "#6BA8E8",
+                  width: 22, height: 22, borderRadius: 7,
+                  background: "rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.22)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 8, fontWeight: 700, flexShrink: 0,
-                }}>R</div>
+                  flexShrink: 0,
+                }}>
+                  <ReedProfileIcon size={14} title="Reed" />
+                </div>
                 <div style={{
                   background: "rgba(74,144,217,0.06)", border: "1px solid rgba(74,144,217,0.2)",
                   borderRadius: "0 8px 8px 8px", padding: "8px 10px",

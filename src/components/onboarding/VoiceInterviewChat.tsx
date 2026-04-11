@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, Send } from "lucide-react";
 import type { VoiceDNA } from "../../utils/voiceDNAProcessor";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
+import { ReedProfileIcon } from "../studio/ReedProfileIcon";
 
 interface QA {
   id: string;
@@ -231,21 +232,16 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: "50%",
-                    background: "rgba(200,150,26,0.12)",
+                    borderRadius: 10,
+                    background: "rgba(74,144,217,0.12)",
+                    border: "1px solid rgba(74,144,217,0.22)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
                   }}
                 >
-                  <span style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: "rgba(200,150,26,0.85)",
-                    lineHeight: 1,
-                  }}>R</span>
+                  <ReedProfileIcon size={18} title="Reed" />
                 </div>
                 <div
                   style={{

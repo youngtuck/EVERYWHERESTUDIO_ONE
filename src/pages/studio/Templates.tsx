@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ReedProfileIcon } from "../../components/studio/ReedProfileIcon";
 
 const FONT = "var(--font)";
 
@@ -218,11 +219,13 @@ export default function Templates() {
             /* Reed greeting for user templates or no selection */
             <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 16 }}>
               <div style={{
-                width: 26, height: 26, borderRadius: "50%",
+                width: 28, height: 28, borderRadius: 8,
                 background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 700, color: "var(--blue, #4A90D9)", flexShrink: 0,
-              }}>R</div>
+                flexShrink: 0,
+              }}>
+                <ReedProfileIcon size={16} title="Reed" />
+              </div>
               <div style={{
                 background: "rgba(74,144,217,0.07)", border: "1px solid rgba(74,144,217,0.15)",
                 borderRadius: "0 10px 10px 10px", padding: "10px 14px",

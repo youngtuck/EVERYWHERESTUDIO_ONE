@@ -3,6 +3,7 @@ import { Send } from "lucide-react";
 import { generateBrandDNAFromConversation } from "../../utils/brandDNAProcessor";
 import type { BrandDNAResponse } from "../../utils/brandDNAProcessor";
 import { fetchWithRetry } from "../../lib/retry";
+import { ReedProfileIcon } from "../studio/ReedProfileIcon";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 
@@ -177,21 +178,16 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: "50%",
-                    background: "rgba(200,150,26,0.12)",
+                    borderRadius: 10,
+                    background: "rgba(74,144,217,0.12)",
+                    border: "1px solid rgba(74,144,217,0.22)",
                     marginBottom: 8,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  <span style={{
-                    fontFamily: "'Afacad Flux', sans-serif",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: "rgba(200,150,26,0.85)",
-                    lineHeight: 1,
-                  }}>R</span>
+                  <ReedProfileIcon size={18} title="Reed" />
                 </div>
               )}
               {m.content}
