@@ -18,6 +18,8 @@ export interface PersistedSession {
   /** OUTPUT_TYPES id when set (e.g. essay, linkedin_post). */
   outputTypeId?: string | null;
   sessionTitle: string;
+  /** User-chosen thread name. When null or empty on save, title is derived from outline or intake. */
+  sessionNameOverride?: string | null;
   phase: "input" | "generating" | "complete";
   generatedContent: string;
   generatedScore: number;

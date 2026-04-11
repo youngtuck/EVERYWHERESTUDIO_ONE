@@ -57,7 +57,7 @@ function getAdvisorCtx(pathname: string): { ctx: AdvisorContext; stageLabel: str
 
 const INSPECTOR_HELP_LINES: Record<string, string[]> = {
   default: [
-    "Use the left sidebar to switch areas. Use the top bar for project, search (⌘K), and new session. This panel stays available from the edge control.",
+    "Use the left sidebar to switch areas. Use the top bar for project, new session, and session name on the left; search (⌘K), help, and account on the right. This panel stays available from the edge control.",
     "Feedback shows session readouts from the page you are on. Ask Reed is for quick notes and prompts tied to the current stage.",
   ],
   watch: [
@@ -75,7 +75,7 @@ const INSPECTOR_HELP_LINES: Record<string, string[]> = {
     "Catalog lists saved sessions. Open a row for actions, or send a piece to Wrap for channel versions.",
   ],
   dashboard: [
-    "Home shows recent work and quick paths. Start a new session from the top bar when you are ready.",
+    "Home shows recent work and quick paths. Start a new session from the top bar next to the project name when you are ready.",
   ],
 };
 

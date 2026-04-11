@@ -25,6 +25,7 @@ import {
   saveSession, loadSession, clearSession, deleteRemoteWorkSession, getWorkStageFromPersisted,
   type PersistedSession,
 } from "../../lib/sessionPersistence";
+import { publishWorkSessionMeta } from "../../lib/workSessionMetaBridge";
 
 import { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
 import { DEFAULT_PRESENTATION_MINUTES, buildWrapConstraintSupplement } from "../../lib/wrapFormatRules";
@@ -1556,15 +1557,21 @@ function StageOutline({
               </div>
             </div>
 
-            {/* Outline structure with brainstorm icons */}
+            <p style={{
+              fontSize: 11, fontWeight: 500, color: "var(--fg-3)", lineHeight: 1.5, margin: "0 0 12px", maxWidth: 560,
+            }}>
+              Click Title, Hook, Body, Stakes, or Close on the left to compare the two angles for that line and drop one in. Edit the field on the right anytime.
+            </p>
             <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: 14, minHeight: 200, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
               {outlineRows.map((row, i) => (
                 <OutlineRowComponent
                   key={i}
+                  rowIndex={i}
                   label={row.label}
                   content={row.content}
                   indent={row.indent}
                   onChange={v => onUpdateRow(i, v)}
+                  angles={angles}
                 />
               ))}
             </div>
@@ -1618,7 +1625,7 @@ function StageOutline({
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Ask Reed to restructure, or click any line to edit..."
+              placeholder="Ask Reed to restructure, or click a section label to compare angles..."
               style={{
                 flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" as const,
                 background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10,
@@ -1643,38 +1650,142 @@ function StageOutline({
   );
 }
 
-/** Outline row with brainstorm hover icon matching wireframe v7.23 */
-function OutlineRowComponent({ label, content, indent, onChange }: {
-  label: string; content: string; indent?: boolean; onChange: (v: string) => void;
+/** Outline row: labeled sections open an angle comparison popover; body is always editable. */
+function OutlineRowComponent({
+  rowIndex, label, content, indent, onChange, angles,
+}: {
+  rowIndex: number;
+  label: string;
+  content: string;
+  indent?: boolean;
+  onChange: (v: string) => void;
+  angles?: { a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null;
 }) {
-  const [showBrainstorm, setShowBrainstorm] = useState(false);
+  const [popOpen, setPopOpen] = useState(false);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const hasLabel = Boolean(label?.trim());
+
+  useLayoutEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const cur = el.textContent ?? "";
+    if (cur !== content) el.textContent = content;
+  }, [content]);
+
+  useEffect(() => {
+    if (!popOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (anchorRef.current?.contains(e.target as Node)) return;
+      setPopOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [popOpen]);
+
+  useEffect(() => {
+    if (!popOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPopOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [popOpen]);
+
+  const focusEditorEnd = useCallback(() => {
+    setPopOpen(false);
+    const el = contentRef.current;
+    if (!el) return;
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }, []);
+
+  const applyLine = useCallback((text: string) => {
+    onChange(text);
+    setPopOpen(false);
+    queueMicrotask(() => {
+      const el = contentRef.current;
+      if (!el) return;
+      el.textContent = text;
+      el.focus();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    });
+  }, [onChange]);
+
+  const onLabelClick = () => {
+    if (!hasLabel) return;
+    if (!angles || rowIndex >= angles.a.length || rowIndex >= angles.b.length) {
+      contentRef.current?.focus();
+      return;
+    }
+    setPopOpen(o => !o);
+  };
+
+  const aLine = angles?.a[rowIndex];
+  const bLine = angles?.b[rowIndex];
+  const aText = aLine?.content ?? "";
+  const bText = bLine?.content ?? "";
+  const nameA = angles?.aMeta?.name?.trim() || "Angle A";
+  const nameB = angles?.bMeta?.name?.trim() || "Angle B";
+  const canCompare = Boolean(angles && hasLabel && rowIndex < angles.a.length && rowIndex < angles.b.length);
+  const linesDiffer = aText.trim() !== bText.trim();
 
   return (
-    <div
-      className="os-row"
-      onMouseEnter={() => setShowBrainstorm(true)}
-      onMouseLeave={() => setShowBrainstorm(false)}
-    >
-      <div className="os-label">
-        {label && (
-          <span
-            className="os-brainstorm"
-            style={{ opacity: showBrainstorm ? 1 : 0 }}
-            onClick={e => { e.stopPropagation(); /* future: open brainstorm popover */ }}
-            title="Brainstorm alternatives"
-          >&#8635;</span>
-        )}
-        {label}
+    <div className="os-row">
+      <div ref={anchorRef} className="os-label-anchor">
+        {hasLabel ? (
+          <button
+            type="button"
+            className="os-label-btn"
+            onClick={onLabelClick}
+            title={canCompare ? "Compare both angles for this line" : "Focus the line on the right to edit"}
+          >
+            {label}
+          </button>
+        ) : null}
+        {popOpen && canCompare ? (
+          <div className="os-outline-pop" role="dialog" aria-label={`${label} angle options`}>
+            <div className="os-outline-pop-h">{label}</div>
+            <p className="os-outline-pop-sub">Pick a version from either angle, then tune it in the field on the right.</p>
+            {linesDiffer ? (
+              <>
+                <button type="button" className="os-outline-opt" onClick={() => applyLine(aText)}>
+                  <span className="os-outline-opt-k">{nameA}</span>
+                  {aText}
+                </button>
+                <button type="button" className="os-outline-opt" onClick={() => applyLine(bText)}>
+                  <span className="os-outline-opt-k">{nameB}</span>
+                  {bText}
+                </button>
+              </>
+            ) : (
+              <p className="os-outline-same">Both angles use the same wording for this line.</p>
+            )}
+            <button type="button" className="os-outline-done" onClick={focusEditorEnd}>
+              Edit on the right
+            </button>
+          </div>
+        ) : null}
       </div>
       <div
+        ref={contentRef}
         className={`os-content${indent ? " os-indent" : ""}`}
         contentEditable
         suppressContentEditableWarning
         spellCheck={false}
         onInput={e => onChange((e.target as HTMLDivElement).textContent || "")}
-      >
-        {content}
-      </div>
+      />
     </div>
   );
 }
@@ -2614,6 +2725,10 @@ export default function WorkSession() {
   // ── Output type (CO-003) ─────────────────────────────────────
   const [outputType, setOutputType] = useState<string | null>(() => persisted?.outputTypeId ?? null);
   const [projectId, setProjectId] = useState<string | null>(null);
+  /** User-set thread name in the top bar. Null means follow auto title from outline or intake. */
+  const [sessionNameOverride, setSessionNameOverride] = useState<string | null>(
+    () => persisted?.sessionNameOverride ?? null,
+  );
 
   useEffect(() => {
     if (!shellProjectId || shellProjectId === "default") {
@@ -2678,10 +2793,35 @@ export default function WorkSession() {
   // Mark restored so we don't re-read persisted on re-renders
   useEffect(() => { restored.current = true; }, []);
 
+  const firstUserSnippet = useMemo(
+    () => messages.find(m => m.role === "user")?.content?.trim().slice(0, 60) || "",
+    [messages],
+  );
+  const derivedSessionTitle = useMemo(() => {
+    const fromOutline = outlineRows[0]?.content?.trim() || "";
+    return (fromOutline || firstUserSnippet || "").slice(0, 200);
+  }, [outlineRows, firstUserSnippet]);
+  const resolvedSessionTitle = (sessionNameOverride?.trim() || derivedSessionTitle || "New session").slice(0, 200);
+
+  useLayoutEffect(() => {
+    publishWorkSessionMeta({ title: resolvedSessionTitle, active: true });
+    return () => publishWorkSessionMeta({ title: "", active: false });
+  }, [resolvedSessionTitle]);
+
+  useEffect(() => {
+    const onRename = (e: Event) => {
+      const ce = e as CustomEvent<{ name?: string }>;
+      const raw = typeof ce.detail?.name === "string" ? ce.detail.name.trim() : "";
+      setSessionNameOverride(raw.length > 0 ? raw.slice(0, 200) : null);
+    };
+    window.addEventListener("ew-session-rename-request", onRename);
+    return () => window.removeEventListener("ew-session-rename-request", onRename);
+  }, []);
+
   // ── Auto-save session on every meaningful state change ─────────
   useEffect(() => {
     if (!restored.current) return; // skip the initial mount
-    const hasContent = messages.length > 1 || draft;
+    const hasContent = messages.length > 1 || draft || Boolean(sessionNameOverride?.trim());
     if (!hasContent) return;
 
     saveSession({
@@ -2694,7 +2834,8 @@ export default function WorkSession() {
       input: "",
       outputType: selectedFormats[0] || "LinkedIn",
       outputTypeId: outputType,
-      sessionTitle: outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 60) || "",
+      sessionTitle: resolvedSessionTitle,
+      sessionNameOverride,
       phase: draft ? "complete" : "input",
       generatedContent: draft,
       generatedScore: 0,
@@ -2706,7 +2847,7 @@ export default function WorkSession() {
       outlineRows: outlineRows.map(r => ({ label: r.label, content: r.content, indent: r.indent })),
       selectedFormats,
     }, { userId: user?.id });
-  }, [messages, draft, intakeReady, outputId, stage, outlineRows, selectedFormats, outputType, user?.id]);
+  }, [messages, draft, intakeReady, outputId, stage, outlineRows, selectedFormats, outputType, user?.id, resolvedSessionTitle, sessionNameOverride]);
 
   // ── Stage navigation ──────────────────────────────────────────
   const goToStage = useCallback((s: WorkStage) => {
@@ -2728,6 +2869,7 @@ export default function WorkSession() {
     setOutputId(p.generatedOutputId ? p.generatedOutputId : null);
     setOutputType(p.outputTypeId ?? null);
     setOutlineRows((p.outlineRows || []).map(r => ({ label: r.label, content: r.content, indent: r.indent })));
+    setSessionNameOverride(p.sessionNameOverride ?? null);
     const f = formatsFromPersisted(p.selectedFormats);
     const nextFormats = f.length > 0 ? f : DEFAULT_FORMATS;
     setSelectedFormats(nextFormats);
@@ -3776,6 +3918,7 @@ export default function WorkSession() {
     setSelectedAngle("a");
     setPreWrapPickIds([]);
     setPreWrapPresentationMins(DEFAULT_PRESENTATION_MINUTES);
+    setSessionNameOverride(null);
   }, [user?.id]);
 
   // ── New Session from top nav ─────────────────────────────────
@@ -4342,6 +4485,8 @@ export default function WorkSession() {
     };
   }, []);
 
+  const resolvedCatalogTypeLabel = catalogOutputTypeLabel(outputType);
+
   return (
     <div style={{
       position: "absolute",
@@ -4350,25 +4495,48 @@ export default function WorkSession() {
       display: "flex", flexDirection: "column",
       overflow: "hidden", fontFamily: FONT,
     }}>
-      <div style={{
-        padding: "6px 20px",
-        fontSize: 10, fontWeight: 600,
-        color: "var(--fg-3)",
-        letterSpacing: "0.05em",
-        display: "flex", alignItems: "center", gap: 8,
-        flexShrink: 0,
-      }}>
-        <span style={{ textTransform: "uppercase" as const }}>Working on:</span>
-        <span style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "3px 10px", borderRadius: 99,
-          background: "rgba(245,198,66,0.12)",
-          border: "1px solid rgba(245,198,66,0.3)",
-          fontSize: 10, fontWeight: 600, color: "#9A7030",
-        }}>
-          ■ {catalogOutputTypeLabel(outputType)
-            ?? (outputId ? "Catalog type loading…" : "Catalog type when you save your draft")}
-        </span>
+      <div
+        title={resolvedCatalogTypeLabel ? undefined : "This value is not editable here. It is set when the draft is saved to Catalog."}
+        style={{
+          padding: "6px 20px",
+          fontSize: 10,
+          fontWeight: 600,
+          color: "var(--fg-3)",
+          letterSpacing: "0.05em",
+          display: "flex", alignItems: "center", gap: 8,
+          flexShrink: 0, flexWrap: "wrap" as const,
+        }}
+      >
+        <span style={{ textTransform: "uppercase" as const }}>Catalog type:</span>
+        {resolvedCatalogTypeLabel ? (
+          <span
+            title="How this piece is filed in Catalog."
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "3px 10px", borderRadius: 99,
+              background: "rgba(245,198,66,0.12)",
+              border: "1px solid rgba(245,198,66,0.3)",
+              fontSize: 10, fontWeight: 600, color: "#9A7030",
+            }}
+          >
+            {resolvedCatalogTypeLabel}
+          </span>
+        ) : (
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 500,
+              color: "var(--fg-2)",
+              letterSpacing: "0.02em",
+              lineHeight: 1.45,
+              maxWidth: 520,
+            }}
+          >
+            {outputId
+              ? "Loading how this piece is filed in Catalog…"
+              : "Filled in automatically when your draft is first saved to Catalog."}
+          </span>
+        )}
       </div>
       <div style={{
         flex: 1,

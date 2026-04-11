@@ -1,7 +1,13 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useShell } from "./StudioShellContext";
-import { useState, useRef, useLayoutEffect, useEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect, useSyncExternalStore } from "react";
+import {
+  subscribeWorkSessionMeta,
+  getWorkSessionMetaSnapshot,
+  getServerWorkSessionMetaSnapshot,
+  requestSessionRename,
+} from "../../lib/workSessionMetaBridge";
 import { createPortal } from "react-dom";
 import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
 import { useStudioProject } from "../../context/ProjectContext";
@@ -497,6 +503,102 @@ function ProjectSwitcher() {
   );
 }
 
+function WorkSessionTitleChip() {
+  const loc = useLocation();
+  const onWork = loc.pathname.startsWith("/studio/work");
+  const meta = useSyncExternalStore(
+    subscribeWorkSessionMeta,
+    getWorkSessionMetaSnapshot,
+    getServerWorkSessionMetaSnapshot,
+  );
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const skipBlurCommit = useRef(false);
+
+  if (!onWork || !meta.active) return null;
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draftName}
+        onChange={e => setDraftName(e.target.value)}
+        maxLength={200}
+        aria-label="Session name"
+        placeholder="Name this session"
+        onKeyDown={e => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            requestSessionRename(draftName.trim());
+            setEditing(false);
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            skipBlurCommit.current = true;
+            setEditing(false);
+          }
+        }}
+        onBlur={() => {
+          if (skipBlurCommit.current) {
+            skipBlurCommit.current = false;
+            return;
+          }
+          requestSessionRename(draftName.trim());
+          setEditing(false);
+        }}
+        style={{
+          width: 200,
+          maxWidth: "min(200px, 28vw)",
+          boxSizing: "border-box",
+          padding: "4px 8px",
+          borderRadius: 8,
+          fontSize: 11,
+          fontWeight: 600,
+          fontFamily: "inherit",
+          border: "1px solid rgba(245,198,66,0.45)",
+          background: "var(--glass-input)",
+          color: "var(--fg)",
+          outline: "none",
+        }}
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setDraftName(meta.title);
+        setEditing(true);
+      }}
+      title="Click to name this session (search and sync use this title)"
+      style={{
+        maxWidth: "min(220px, 30vw)",
+        padding: "4px 10px",
+        borderRadius: 8,
+        border: "1px solid var(--glass-border)",
+        background: "var(--glass-card)",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        textAlign: "left" as const,
+        overflow: "hidden",
+      }}
+    >
+      <span style={{
+        display: "block",
+        fontSize: 11,
+        fontWeight: 600,
+        color: "var(--fg-2)",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      }}>
+        {meta.title}
+      </span>
+    </button>
+  );
+}
+
 function SearchIconButton({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -544,16 +646,8 @@ export default function StudioTopBar() {
       gap: 12,
       flexShrink: 0,
     }}>
-      <ProjectSwitcher />
-
-      {/* Breadcrumbs */}
-      <div style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", minWidth: 0 }}>
-        {left}
-      </div>
-
-      {/* Right: actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-        {/* +New Session button */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        <ProjectSwitcher />
         <button
           type="button"
           className="liquid-glass-btn-gold"
@@ -561,13 +655,21 @@ export default function StudioTopBar() {
             sessionStorage.setItem("ew-new-session", "1");
             nav("/studio/work");
           }}
-          style={{ fontSize: 11, padding: "6px 14px" }}
+          style={{ fontSize: 11, padding: "6px 14px", flexShrink: 0 }}
         >
           <span className="liquid-glass-btn-gold-label">+ New Session</span>
         </button>
+        <WorkSessionTitleChip />
+      </div>
 
+      {/* Breadcrumbs */}
+      <div style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", minWidth: 0 }}>
+        {left}
+      </div>
+
+      {/* Right: system actions */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
         <Divider />
-
         <SearchIconButton onClick={() => setSearchOpen(true)} />
 
         <button
