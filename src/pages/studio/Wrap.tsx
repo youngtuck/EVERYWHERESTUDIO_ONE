@@ -418,9 +418,9 @@ export default function WrapPage() {
   const activeOutput = sessionDraft || selectedOutput;
   const hasContent = !!activeOutput;
 
-  const adaptFormat = useCallback(async (format: string) => {
-    if (!activeOutput?.content || !user) return;
-    if (adaptingRef.current.has(format)) return;
+  const adaptFormat = useCallback(async (format: string): Promise<"done" | "error"> => {
+    if (!activeOutput?.content || !user) return "error";
+    if (adaptingRef.current.has(format)) return "error";
     adaptingRef.current.add(format);
 
     const ot = activeOutput.output_type || "freestyle";
@@ -458,20 +458,32 @@ export default function WrapPage() {
           status: "done",
         },
       }));
+      return "done";
     } catch (err) {
       console.error("[Wrap] adapt error:", err);
       setFormatContents(prev => ({
         ...prev,
-        [format]: { content: activeOutput.content, metadata: {}, status: "error" },
+        [format]: { content: "", metadata: {}, status: "error" },
       }));
+      return "error";
     } finally {
       adaptingRef.current.delete(format);
     }
   }, [activeOutput, user, wrapPresentationMinutes]);
 
   const runBuildForChannels = useCallback(async (channels: string[]) => {
-    if (!activeOutput?.content || !user || channels.length === 0) return;
-    await Promise.all(channels.map(fmt => adaptFormat(fmt)));
+    if (!activeOutput?.content || !user || channels.length === 0) {
+      return { succeeded: [] as string[], failed: [...channels] };
+    }
+    const outcomes = await Promise.all(
+      channels.map(async fmt => {
+        const r = await adaptFormat(fmt);
+        return { fmt, r };
+      }),
+    );
+    const succeeded = outcomes.filter(o => o.r === "done").map(o => o.fmt);
+    const failed = outcomes.filter(o => o.r === "error").map(o => o.fmt);
+    return { succeeded, failed };
   }, [activeOutput, user, adaptFormat]);
 
   const handleConfirmChannels = useCallback(async () => {
@@ -485,14 +497,27 @@ export default function WrapPage() {
     setFormatContents({});
     adaptingRef.current.clear();
     setWrapPhase("build");
-    try {
-      await runBuildForChannels(list);
-      setWrapPhase("deliver");
-    } catch {
-      toast("Something failed while generating. Try again or pick fewer channels.", "error");
+    const { succeeded, failed } = await runBuildForChannels(list);
+    if (succeeded.length === 0) {
+      toast("None of the channels could be generated. Check your connection and try again.", "error");
+      setFormatContents({});
+      adaptingRef.current.clear();
       setWrapPhase("choose");
+      return;
+    }
+    if (failed.length > 0) {
+      toast("Some channels failed. Retry any row below, or continue with the versions that finished.", "error");
     }
   }, [activeOutput, selectedChannels, runBuildForChannels, toast]);
+
+  /** When every row in build is done, move to deliver (covers all-success on first pass and retry-after-partial). */
+  useEffect(() => {
+    if (wrapPhase !== "build") return;
+    if (formats.length === 0) return;
+    const allDone = formats.every(f => formatContents[f]?.status === "done");
+    if (!allDone) return;
+    setWrapPhase("deliver");
+  }, [wrapPhase, formats, formatContents]);
 
   useEffect(() => {
     if (!activeOutput?.content || wrapPhase !== "deliver") return;
@@ -570,7 +595,17 @@ export default function WrapPage() {
   }, [activeOutput, user, formats, formatContents, adaptFormat, toast]);
 
   const handleCopy = useCallback(() => {
-    const textToCopy = formatContents[activeFormat]?.content || activeOutput?.content || "";
+    const entry = formatContents[activeFormat];
+    const textToCopy =
+      entry?.status === "error"
+        ? ""
+        : entry?.content && entry.content.trim().length > 0
+          ? entry.content
+          : (entry ? "" : (activeOutput?.content || ""));
+    if (!textToCopy.trim()) {
+      toast("Nothing to copy for this channel yet.", "error");
+      return;
+    }
     navigator.clipboard.writeText(textToCopy).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -827,33 +862,127 @@ export default function WrapPage() {
 
   // ── Build (generating) ───────────────────────────────────────
   if (wrapPhase === "build") {
+    const buildDone = formats.filter(f => formatContents[f]?.status === "done").length;
+    const buildErrors = formats.filter(f => formatContents[f]?.status === "error").length;
+    const buildStillRunning = formats.some(f => {
+      const s = formatContents[f]?.status;
+      return s === "loading" || s === "pending" || s === undefined;
+    });
+    const canContinueToDeliver = buildDone > 0 && !buildStillRunning;
+
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
         <WrapStepRail phase="build" />
         <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px" }}>
           <div style={{ maxWidth: 720, margin: "0 auto", display: "grid", gap: 12 }}>
+            <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 4px", lineHeight: 1.55 }}>
+              {buildErrors > 0
+                ? "When every row is ready, you move forward automatically. If you prefer, jump ahead with the versions that finished."
+                : "Reed is shaping each channel. This usually stays under a minute per surface."}
+            </p>
             {formats.map(fmt => {
               const st = formatContents[fmt]?.status;
-              const loadingFmt = st === "loading" || st === undefined;
+              const loadingFmt = st === "loading" || st === "pending" || st === undefined;
+              const doneFmt = st === "done";
+              const errFmt = st === "error";
               return (
-                <div key={fmt} className="liquid-glass-card" style={{ padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-                  <div>
+                <div
+                  key={fmt}
+                  className="liquid-glass-card"
+                  style={{
+                    padding: "18px 20px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    flexWrap: "wrap" as const,
+                    border: errFmt ? "1px solid rgba(220,38,38,0.25)" : undefined,
+                  }}
+                >
+                  <div style={{ flex: "1 1 200px", minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{fmt}</div>
-                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4 }}>
-                      {loadingFmt ? "Reed is adapting your draft for this channel…" : st === "error" ? "This channel hit an error. You can retry from the next screen." : "Ready"}
+                    <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 4, lineHeight: 1.45 }}>
+                      {loadingFmt
+                        ? "Reed is adapting your draft for this channel…"
+                        : errFmt
+                          ? "This request did not complete. Retry the same channel, or continue with the ones that are ready."
+                          : "Ready to open in Your pieces."}
                     </div>
                   </div>
-                  <div style={{
-                    width: 22, height: 22, borderRadius: "50%",
-                    border: "2px solid rgba(245,198,66,0.35)",
-                    borderTopColor: "var(--gold-bright, #F5C642)",
-                    animation: loadingFmt ? "wrapspin 0.85s linear infinite" : "none",
-                    opacity: loadingFmt ? 1 : 0.25,
-                  }} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                    {errFmt ? (
+                      <button
+                        type="button"
+                        className="liquid-glass-btn-gold"
+                        disabled={loadingFmt}
+                        onClick={() => void adaptFormat(fmt)}
+                        style={{ padding: "8px 16px" }}
+                      >
+                        <span className="liquid-glass-btn-gold-label">Retry</span>
+                      </button>
+                    ) : null}
+                    {loadingFmt ? (
+                      <div
+                        title="Working"
+                        style={{
+                          width: 22, height: 22, borderRadius: "50%",
+                          border: "2px solid rgba(245,198,66,0.35)",
+                          borderTopColor: "var(--gold-bright, #F5C642)",
+                          animation: "wrapspin 0.85s linear infinite",
+                        }}
+                      />
+                    ) : doneFmt ? (
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, color: "#16A34A",
+                        padding: "4px 10px", borderRadius: 8,
+                        background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.28)",
+                      }}>Ready</span>
+                    ) : null}
+                  </div>
                 </div>
               );
             })}
             <style>{`@keyframes wrapspin { to { transform: rotate(360deg); } }`}</style>
+
+            <div className="liquid-glass-card" style={{ padding: "16px 18px", marginTop: 8, display: "flex", flexWrap: "wrap" as const, gap: 12, alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
+                <strong style={{ color: "var(--fg)", fontWeight: 600 }}>{buildDone}</strong>
+                {" "}of{" "}
+                <strong style={{ color: "var(--fg)", fontWeight: 600 }}>{formats.length}</strong>
+                {" "}channel{formats.length !== 1 ? "s" : ""} ready
+                {buildErrors > 0 ? (
+                  <span style={{ color: "var(--fg-3)" }}>{` · ${buildErrors} ${buildErrors === 1 ? "needs" : "need"} attention`}</span>
+                ) : null}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 10 }}>
+                <button
+                  type="button"
+                  className="liquid-glass-btn"
+                  onClick={() => {
+                    setWrapPhase("choose");
+                    setSelectedChannels([...formats]);
+                  }}
+                  style={{ padding: "10px 16px" }}
+                >
+                  <span className="liquid-glass-btn-label" style={{ fontWeight: 600, color: "var(--fg-2)" }}>Back to channels</span>
+                </button>
+                <button
+                  type="button"
+                  className="liquid-glass-btn-gold"
+                  disabled={!canContinueToDeliver}
+                  onClick={() => setWrapPhase("deliver")}
+                  style={{
+                    padding: "10px 20px",
+                    opacity: canContinueToDeliver ? 1 : 0.45,
+                    cursor: canContinueToDeliver ? "pointer" : "not-allowed",
+                  }}
+                >
+                  <span className="liquid-glass-btn-gold-label">
+                    {buildDone > 0 ? `View ${buildDone} ready piece${buildDone !== 1 ? "s" : ""}` : "Wait for at least one channel"}
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -862,9 +991,15 @@ export default function WrapPage() {
 
   // ── Deliver (gallery + reader) ───────────────────────────────
   const formatEntry = formatContents[activeFormat];
-  const displayContent = formatEntry?.content || activeOutput.content || "";
+  const displayContent =
+    formatEntry == null
+      ? (activeOutput.content || "")
+      : formatEntry.status === "error"
+        ? ""
+        : (formatEntry.content || "");
   const displayMetadata = formatEntry?.metadata || {};
   const isAdapting = formatEntry?.status === "loading";
+  const isChannelError = formatEntry?.status === "error";
   const contentTitle = activeOutput.title || "Untitled";
   const contentParas = displayContent ? displayContent.split("\n").filter(Boolean) : [];
 
@@ -913,17 +1048,30 @@ export default function WrapPage() {
             All pieces
           </button>
         )}
-        {formats.map(fmt => (
-          <button key={fmt} type="button" onClick={() => handleFormatChange(fmt)} style={{
-            fontSize: 11, fontWeight: activeFormat === fmt ? 600 : 500,
-            color: activeFormat === fmt ? "var(--fg)" : "var(--fg-3)",
-            padding: "11px 14px",
-            borderBottom: activeFormat === fmt ? "2px solid var(--fg)" : "2px solid transparent",
-            cursor: "pointer", whiteSpace: "nowrap" as const,
-            transition: "all 0.1s", background: "none", border: "none",
-            borderBottomStyle: "solid" as const, fontFamily: FONT,
-          }}>{fmt}</button>
-        ))}
+        {formats.map(fmt => {
+          const tabErr = formatContents[fmt]?.status === "error";
+          return (
+            <button key={fmt} type="button" onClick={() => handleFormatChange(fmt)} style={{
+              fontSize: 11, fontWeight: activeFormat === fmt ? 600 : 500,
+              color: activeFormat === fmt ? "var(--fg)" : "var(--fg-3)",
+              padding: "11px 14px",
+              borderBottom: activeFormat === fmt ? "2px solid var(--fg)" : "2px solid transparent",
+              cursor: "pointer", whiteSpace: "nowrap" as const,
+              transition: "all 0.1s", background: "none", border: "none",
+              borderBottomStyle: "solid" as const, fontFamily: FONT,
+              display: "inline-flex", alignItems: "center", gap: 6,
+            }}>
+              {fmt}
+              {tabErr ? (
+                <span style={{
+                  fontSize: 8, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.06em",
+                  color: "#B91C1C", padding: "2px 5px", borderRadius: 4,
+                  background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.22)",
+                }}>Issue</span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
       {catalogLinkId ? (
@@ -966,6 +1114,18 @@ export default function WrapPage() {
           {isAdapting ? (
             <div style={{ textAlign: "center", padding: "48px 0" }}>
               <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Adapting {activeFormat}…</div>
+            </div>
+          ) : isChannelError ? (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
+                {activeFormat} did not generate
+              </div>
+              <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, lineHeight: 1.55 }}>
+                The request failed. Retry here, use Edit channels to drop this surface, or continue with your other tabs.
+              </div>
+              <button type="button" className="liquid-glass-btn-gold" onClick={() => void adaptFormat(activeFormat)} style={{ padding: "10px 22px" }}>
+                <span className="liquid-glass-btn-gold-label">Retry {activeFormat}</span>
+              </button>
             </div>
           ) : contentParas.length > 0 ? (
             <>
