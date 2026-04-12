@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Logo from "../Logo";
 import { EASE, EASE_SMOOTH } from "../../styles/marketing";
 
@@ -21,6 +21,11 @@ export interface EverywhereDemoProps {
   autoPlay?: boolean;
 }
 
+/** Pointer path starts at M5 3 in viewBox 0..24; SVG renders at 22px. Click coords are the tip. */
+const CURSOR_TIP_OFFSET_X = (5 / 24) * 22;
+const CURSOR_TIP_OFFSET_Y = (3 / 24) * 22;
+const CURSOR_CLICK_RING = 40;
+
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
@@ -33,21 +38,22 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
+/** x/y are the hotspot (pointer tip) in the containing positioned box. */
 function DemoCursor({ x, y, visible, click }: { x: number; y: number; visible: boolean; click?: boolean }) {
   if (!visible) return null;
+  const half = CURSOR_CLICK_RING / 2;
   return (
     <div
       style={{
         position: "absolute",
-        left: x,
-        top: y,
+        left: x - CURSOR_TIP_OFFSET_X,
+        top: y - CURSOR_TIP_OFFSET_Y,
         width: 22,
         height: 22,
-        marginLeft: -5,
-        marginTop: -3,
         pointerEvents: "none",
-        zIndex: 50,
-        transition: `left 0.65s ${EASE}, top 0.65s ${EASE}`,
+        zIndex: 60,
+        transition: `left 0.65s ${EASE}, top 0.65s ${EASE}, transform 0.08s ease-out`,
+        transform: click ? "translateY(2px)" : "translateY(0)",
       }}
       aria-hidden
     >
@@ -55,12 +61,12 @@ function DemoCursor({ x, y, visible, click }: { x: number; y: number; visible: b
         <span
           style={{
             position: "absolute",
-            left: -10,
-            top: -10,
-            width: 36,
-            height: 36,
+            left: CURSOR_TIP_OFFSET_X - half,
+            top: CURSOR_TIP_OFFSET_Y - half,
+            width: CURSOR_CLICK_RING,
+            height: CURSOR_CLICK_RING,
             borderRadius: "50%",
-            border: "2px solid rgba(200,169,110,0.55)",
+            border: "2px solid rgba(200,169,110,0.65)",
             animation: "xpEwDemoClickRing 0.38s ease-out forwards",
             pointerEvents: "none",
           }}
@@ -73,8 +79,7 @@ function DemoCursor({ x, y, visible, click }: { x: number; y: number; visible: b
         fill="none"
         style={{
           filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.4))",
-          transform: click ? "translateY(2px)" : "translateY(0)",
-          transition: "transform 0.08s ease-out",
+          display: "block",
         }}
       >
         <path
@@ -129,8 +134,8 @@ export default function EverywhereDemo({ stageDuration = 6800, autoPlay = true }
           to { opacity: 1; }
         }
         @keyframes xpEwDemoClickRing {
-          from { transform: scale(0.35); opacity: 0.95; }
-          to { transform: scale(1.15); opacity: 0; }
+          from { transform: scale(0.28); opacity: 0.95; }
+          to { transform: scale(1.05); opacity: 0; }
         }
         @keyframes xpEwDemoBriefIn {
           from { opacity: 0; transform: scale(0.96) translate3d(0, 8px, 0); }
@@ -456,7 +461,7 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
     }
   }, [phase]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!wrapRef.current) return;
     const wrap = wrapRef.current.getBoundingClientRect();
     if (phase === 0) {
@@ -464,29 +469,39 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
       return;
     }
     if (phase === 1) {
-      setCursor({ x: wrap.width * 0.84, y: 18, visible: true, click: false });
+      const row = row0Ref.current?.getBoundingClientRect();
+      if (row) {
+        setCursor({
+          x: row.left - wrap.left + row.width * 0.3,
+          y: row.top - wrap.top + row.height * 0.52,
+          visible: true,
+          click: false,
+        });
+      } else {
+        setCursor({ x: wrap.width * 0.38, y: 40, visible: true, click: false });
+      }
       return;
     }
     if (phase === 2 || phase === 3) {
       const row = row0Ref.current?.getBoundingClientRect();
       if (row) {
         setCursor({
-          x: row.right - wrap.left - 14,
-          y: row.top - wrap.top + row.height * 0.42,
+          x: row.left - wrap.left + row.width * 0.3,
+          y: row.top - wrap.top + row.height * 0.52,
           visible: true,
-          click: phase === 3,
+          click: false,
         });
       }
       return;
     }
     if (phase === 4 || phase === 5) {
       const btn = closeRef.current?.getBoundingClientRect();
-      if (btn) {
+      if (btn && btn.width > 0) {
         setCursor({
-          x: btn.left - wrap.left + btn.width * 0.45,
-          y: btn.top - wrap.top + btn.height * 0.45,
+          x: btn.left - wrap.left + btn.width * 0.5,
+          y: btn.top - wrap.top + btn.height * 0.5,
           visible: true,
-          click: phase === 5,
+          click: false,
         });
       }
       return;
@@ -495,10 +510,10 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
       const row = row1Ref.current?.getBoundingClientRect();
       if (row) {
         setCursor({
-          x: row.right - wrap.left - 14,
-          y: row.top - wrap.top + row.height * 0.42,
+          x: row.left - wrap.left + row.width * 0.3,
+          y: row.top - wrap.top + row.height * 0.52,
           visible: true,
-          click: phase === 7,
+          click: false,
         });
       }
       return;
@@ -527,8 +542,9 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
           const rowHot =
             (isR0 && (phase === 2 || phase === 3)) || (isR1 && (phase === 6 || phase === 7)) || (isR0 && modal === "peek");
           return (
-            <div key={row.line} ref={rowRef}>
+            <div key={row.line}>
               <div
+                ref={rowRef}
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
@@ -809,7 +825,7 @@ function WorkCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
     return () => timers.forEach(clearTimeout);
   }, [animKey, reducedMotion]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!rootRef.current || reducedMotion) return;
     const root = rootRef.current.getBoundingClientRect();
     if (cursorMode === "hide") {
@@ -818,12 +834,14 @@ function WorkCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
     }
     if (cursorMode === "send" && sendRef.current) {
       const b = sendRef.current.getBoundingClientRect();
-      setCursor({
-        x: b.left - root.left + b.width * 0.5,
-        y: b.top - root.top + b.height * 0.45,
-        visible: true,
-        click: false,
-      });
+      if (b.width > 0) {
+        setCursor({
+          x: b.left - root.left + b.width * 0.5,
+          y: b.top - root.top + b.height * 0.5,
+          visible: true,
+          click: false,
+        });
+      }
       const t = window.setTimeout(() => setCursor(c => ({ ...c, click: true })), 120);
       const t2 = window.setTimeout(() => setCursor(c => ({ ...c, click: false })), 300);
       return () => {
@@ -833,12 +851,14 @@ function WorkCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
     }
     if (cursorMode === "build" && buildRef.current) {
       const b = buildRef.current.getBoundingClientRect();
-      setCursor({
-        x: b.left - root.left + b.width * 0.55,
-        y: b.top - root.top + b.height * 0.48,
-        visible: true,
-        click: false,
-      });
+      if (b.width > 0) {
+        setCursor({
+          x: b.left - root.left + b.width * 0.5,
+          y: b.top - root.top + b.height * 0.5,
+          visible: true,
+          click: false,
+        });
+      }
       return;
     }
   }, [cursorMode, sendFlash, showBuild, reducedMotion]);
@@ -1065,7 +1085,7 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
     }
   }, [phase]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!wrapRef.current) return;
     const wrap = wrapRef.current.getBoundingClientRect();
     if (phase === 0) {
@@ -1073,41 +1093,53 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
       return;
     }
     if (phase === 1) {
-      setCursor({ x: wrap.width * 0.82, y: 22, visible: true, click: false });
+      const el = linkedInRef.current?.getBoundingClientRect();
+      if (el && el.width > 0) {
+        setCursor({
+          x: el.left - wrap.left + el.width * 0.5,
+          y: el.top - wrap.top + el.height * 0.5,
+          visible: true,
+          click: false,
+        });
+      } else {
+        setCursor({ x: wrap.width * 0.42, y: 32, visible: true, click: false });
+      }
       return;
     }
     if (phase === 2 || phase === 3) {
       const el = linkedInRef.current?.getBoundingClientRect();
-      if (el) {
+      if (el && el.width > 0) {
         setCursor({
-          x: el.left - wrap.left + el.width * 0.55,
-          y: el.top - wrap.top + el.height * 0.45,
+          x: el.left - wrap.left + el.width * 0.5,
+          y: el.top - wrap.top + el.height * 0.5,
           visible: true,
-          click: phase === 3,
+          click: false,
         });
       }
       return;
     }
     if (phase === 4 || phase === 5) {
       const el = emailRef.current?.getBoundingClientRect();
-      if (el) {
+      if (el && el.width > 0) {
         setCursor({
           x: el.left - wrap.left + el.width * 0.5,
-          y: el.top - wrap.top + el.height * 0.45,
+          y: el.top - wrap.top + el.height * 0.5,
           visible: true,
-          click: phase === 5,
+          click: false,
         });
       }
       return;
     }
     if ((phase === 6 || phase === 7 || phase === 8) && wrapItRef.current) {
       const el = wrapItRef.current.getBoundingClientRect();
-      setCursor({
-        x: el.left - wrap.left + el.width * 0.52,
-        y: el.top - wrap.top + el.height * 0.48,
-        visible: true,
-        click: phase === 8,
-      });
+      if (el.width > 0) {
+        setCursor({
+          x: el.left - wrap.left + el.width * 0.5,
+          y: el.top - wrap.top + el.height * 0.5,
+          visible: true,
+          click: false,
+        });
+      }
       return;
     }
     if (phase >= 9) {
