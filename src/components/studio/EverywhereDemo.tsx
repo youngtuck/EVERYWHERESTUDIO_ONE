@@ -6,6 +6,7 @@ const TABS = ["Watch", "Work", "Wrap"] as const;
 
 const font = { fontFamily: "var(--xp-font, 'Instrument Sans', system-ui, sans-serif)" };
 const mono = { fontFamily: "var(--xp-mono, 'DM Mono', monospace)" };
+const textWhite = "#FFFFFF";
 
 /** Flat panel (toned down vs liquid glass). */
 const panelSurface: React.CSSProperties = {
@@ -88,16 +89,10 @@ function DemoCursor({ x, y, visible, click }: { x: number; y: number; visible: b
   );
 }
 
-export default function EverywhereDemo({ stageDuration = 14500, autoPlay = true }: EverywhereDemoProps) {
+export default function EverywhereDemo({ stageDuration = 6800, autoPlay = true }: EverywhereDemoProps) {
   const [stage, setStage] = useState(0);
   const [fillNonce, setFillNonce] = useState(0);
-  const [hoverPause, setHoverPause] = useState(false);
-  const hoverPauseRef = useRef(false);
   const reducedMotion = usePrefersReducedMotion();
-
-  useEffect(() => {
-    hoverPauseRef.current = hoverPause;
-  }, [hoverPause]);
 
   const selectTab = (i: number) => {
     setStage(i);
@@ -105,22 +100,17 @@ export default function EverywhereDemo({ stageDuration = 14500, autoPlay = true 
   };
 
   const onBarEnd = useCallback(() => {
-    if (hoverPauseRef.current || !autoPlay) return;
+    if (!autoPlay) return;
     setStage(s => (s + 1) % 3);
     setFillNonce(n => n + 1);
   }, [autoPlay]);
 
-  const playState: React.CSSProperties["animationPlayState"] =
-    hoverPause || !autoPlay ? "paused" : "running";
+  const playState: React.CSSProperties["animationPlayState"] = autoPlay ? "running" : "paused";
 
   const effectiveDuration = reducedMotion ? Math.min(stageDuration, 4000) : stageDuration;
 
   return (
-    <div
-      onMouseEnter={() => setHoverPause(true)}
-      onMouseLeave={() => setHoverPause(false)}
-      style={{ ...font, maxWidth: 1040, margin: "0 auto" }}
-    >
+    <div style={{ ...font, maxWidth: 1040, margin: "0 auto" }}>
       <style>{`
         @keyframes xpEwDemoFillBar {
           from { transform: scaleX(0.04); }
@@ -402,35 +392,64 @@ const SIGNAL_ROWS: { src: string; line: string }[] = [
   { src: "Scan", line: "Competitor launched a thinner story with louder distribution" },
 ];
 
-const WATCH_TARGET_INDEX = 1;
+const WATCH_ROW_FIRST = 0;
+const WATCH_ROW_SECOND = 1;
+
+const WATCH_PEEK_BODY =
+  "Snapshot only: rates steady, hiring language softer. Use this as a one-line cold open, not the argument.";
+
+const WATCH_FULL_BODY = `You asked for a full briefing. Here it is.
+
+Thesis: buyers are pausing spend until they see proof tied to outcomes they already trust. The market is not confused about the category. It is waiting for a crisp story that names the constraint, shows one credible artifact, and ends with a next step that fits a calendar, not a committee.
+
+Audience: primary readers are VP Ops and CFO sponsors who scan for risk before they scan for upside. Secondary readers are internal champions who need language they can forward without rewriting you.
+
+Proof plan: anchor on three signals pulled from Wire and Field. First, repeat objections from calls (same three concerns). Second, delivery risk flagged in your internal memo for Q3. Third, competitor noise that proves distribution is loud but thin on substance.
+
+Recommended moves: open external copy with the tradeoff in sentence one. Pair every claim with a verification path: customer quote, metric, or dated milestone. Close every asset with one question that forces a reply, not a nod.
+
+If you only do one thing next: ship a one-page decision brief that your champion can send upward unchanged. Watch stays the source of truth so the story tightens every week without you starting from zero.`;
 
 function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const targetRef = useRef<HTMLDivElement>(null);
+  const row0Ref = useRef<HTMLDivElement>(null);
+  const row1Ref = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const [phase, setPhase] = useState(0);
+  const [modal, setModal] = useState<null | "peek" | "full">(null);
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false, click: false });
 
   useEffect(() => {
     setPhase(0);
+    setModal(null);
     setCursor({ x: 0, y: 0, visible: false, click: false });
     if (reducedMotion) {
-      setPhase(4);
+      setPhase(8);
+      setModal("full");
       return;
     }
     const t0 = window.setTimeout(() => setPhase(1), 400);
-    const t1 = window.setTimeout(() => setPhase(2), 1200);
-    const t2 = window.setTimeout(() => setPhase(3), 2100);
-    const t3 = window.setTimeout(() => setPhase(4), 2480);
+    const t1 = window.setTimeout(() => setPhase(2), 1100);
+    const t2 = window.setTimeout(() => {
+      setPhase(3);
+      setModal("peek");
+    }, 2000);
+    const t3 = window.setTimeout(() => setPhase(4), 2600);
+    const t4 = window.setTimeout(() => setPhase(5), 3360);
+    const t4b = window.setTimeout(() => setModal(null), 3650);
+    const t5 = window.setTimeout(() => setPhase(6), 4100);
+    const t6 = window.setTimeout(() => {
+      setPhase(7);
+      setModal("full");
+    }, 5000);
+    const t7 = window.setTimeout(() => setPhase(8), 5400);
     return () => {
-      window.clearTimeout(t0);
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
+      [t0, t1, t2, t3, t4, t4b, t5, t6, t7].forEach(clearTimeout);
     };
   }, [animKey, reducedMotion]);
 
   useEffect(() => {
-    if (phase === 3) {
+    if (phase === 3 || phase === 5 || phase === 7) {
       setCursor(c => ({ ...c, click: true }));
       const t = window.setTimeout(() => setCursor(c => ({ ...c, click: false })), 220);
       return () => window.clearTimeout(t);
@@ -445,28 +464,50 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
       return;
     }
     if (phase === 1) {
-      setCursor({
-        x: wrap.width * 0.84,
-        y: 18,
-        visible: true,
-        click: false,
-      });
+      setCursor({ x: wrap.width * 0.84, y: 18, visible: true, click: false });
       return;
     }
-    if (phase >= 2 && phase <= 3 && targetRef.current) {
-      const row = targetRef.current.getBoundingClientRect();
-      setCursor({
-        x: row.right - wrap.left - 12,
-        y: row.top - wrap.top + row.height * 0.4,
-        visible: true,
-        click: phase === 3,
-      });
+    if (phase === 2 || phase === 3) {
+      const row = row0Ref.current?.getBoundingClientRect();
+      if (row) {
+        setCursor({
+          x: row.right - wrap.left - 14,
+          y: row.top - wrap.top + row.height * 0.42,
+          visible: true,
+          click: phase === 3,
+        });
+      }
       return;
     }
-    if (phase >= 4) {
-      setCursor({ x: 0, y: 0, visible: false, click: false });
+    if (phase === 4 || phase === 5) {
+      const btn = closeRef.current?.getBoundingClientRect();
+      if (btn) {
+        setCursor({
+          x: btn.left - wrap.left + btn.width * 0.45,
+          y: btn.top - wrap.top + btn.height * 0.45,
+          visible: true,
+          click: phase === 5,
+        });
+      }
+      return;
     }
-  }, [phase]);
+    if (phase === 6 || phase === 7) {
+      const row = row1Ref.current?.getBoundingClientRect();
+      if (row) {
+        setCursor({
+          x: row.right - wrap.left - 14,
+          y: row.top - wrap.top + row.height * 0.42,
+          visible: true,
+          click: phase === 7,
+        });
+      }
+      return;
+    }
+    setCursor({ x: 0, y: 0, visible: false, click: false });
+  }, [phase, modal]);
+
+  const modalBody = modal === "peek" ? WATCH_PEEK_BODY : modal === "full" ? WATCH_FULL_BODY : "";
+  const modalTitle = modal === "peek" ? "Signal" : modal === "full" ? "Briefing" : "";
 
   return (
     <div key={animKey} ref={wrapRef} style={{ position: "relative", height: "100%", minHeight: 0 }}>
@@ -480,9 +521,13 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
         }}
       >
         {SIGNAL_ROWS.map((row, i) => {
-          const isTarget = i === WATCH_TARGET_INDEX;
+          const isR0 = i === WATCH_ROW_FIRST;
+          const isR1 = i === WATCH_ROW_SECOND;
+          const rowRef = isR0 ? row0Ref : isR1 ? row1Ref : undefined;
+          const rowHot =
+            (isR0 && (phase === 2 || phase === 3)) || (isR1 && (phase === 6 || phase === 7)) || (isR0 && modal === "peek");
           return (
-            <div key={row.line} ref={isTarget ? targetRef : undefined}>
+            <div key={row.line} ref={rowRef}>
               <div
                 style={{
                   display: "flex",
@@ -490,8 +535,8 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
                   gap: 10,
                   padding: "10px 12px",
                   animation: reducedMotion ? "none" : `xpEwDemoRowIn 0.4s ${EASE} both`,
-                  animationDelay: reducedMotion ? "0ms" : `${45 * i}ms`,
-                  background: phase >= 3 && isTarget ? "rgba(200,169,110,0.07)" : "transparent",
+                  animationDelay: reducedMotion ? "0ms" : `${40 * i}ms`,
+                  background: rowHot ? "rgba(200,169,110,0.07)" : "transparent",
                   transition: "background 0.2s ease",
                 }}
               >
@@ -509,9 +554,7 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
                   >
                     {row.src}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.86)", lineHeight: 1.45 }}>
-                    {row.line}
-                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: textWhite, lineHeight: 1.45 }}>{row.line}</div>
                 </div>
               </div>
               {i < SIGNAL_ROWS.length - 1 ? (
@@ -522,7 +565,7 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
         })}
       </div>
 
-      {phase >= 4 ? (
+      {modal ? (
         <div
           style={{
             position: "absolute",
@@ -531,7 +574,7 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: 16,
+            padding: 12,
             background: "rgba(2, 8, 16, 0.55)",
             backdropFilter: "blur(4px)",
             WebkitBackdropFilter: "blur(4px)",
@@ -541,10 +584,13 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
           <div
             style={{
               width: "100%",
-              maxWidth: 380,
+              maxWidth: modal === "full" ? 400 : 340,
+              maxHeight: "min(78%, 320px)",
               borderRadius: 12,
               overflow: "hidden",
-              background: "rgba(10, 18, 30, 0.96)",
+              display: "flex",
+              flexDirection: "column",
+              background: "rgba(10, 18, 30, 0.98)",
               border: "1px solid rgba(255,255,255,0.12)",
               boxShadow: "0 16px 48px rgba(0,0,0,0.45)",
             }}
@@ -555,19 +601,68 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "10px 12px",
+                flexShrink: 0,
                 borderBottom: "1px solid rgba(255,255,255,0.08)",
                 background: "rgba(255,255,255,0.03)",
               }}
             >
-              <span className="xp-mono" style={{ ...mono, fontSize: 9, letterSpacing: "0.12em", color: "var(--xp-gold)", textTransform: "uppercase" }}>
-                Brief
-              </span>
-              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.35)", lineHeight: 1 }} aria-hidden>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span
+                  className="xp-mono"
+                  style={{
+                    ...mono,
+                    fontSize: 9,
+                    letterSpacing: "0.12em",
+                    color: "var(--xp-gold)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {modalTitle}
+                </span>
+                {modal === "full" ? (
+                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.45)" }}>Compiled from Wire, Field, and Internal</span>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                ref={closeRef}
+                aria-label="Close"
+                style={{
+                  border: "none",
+                  background: "rgba(255,255,255,0.06)",
+                  color: textWhite,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  fontSize: 18,
+                  lineHeight: 1,
+                  cursor: "default",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 ×
-              </span>
+              </button>
             </div>
-            <div style={{ padding: "14px 14px 16px", fontSize: 12, lineHeight: 1.55, color: "rgba(255,255,255,0.82)" }}>
-              Pull the Wire line into a one-page brief: thesis, audience, and the proof buyers still need before they move. Watch keeps the signal tight so you open on substance, not noise.
+            <div
+              style={{
+                padding: "12px 14px 14px",
+                fontSize: 11,
+                lineHeight: 1.55,
+                color: textWhite,
+                overflow: "auto",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {modal === "full" ? (
+                <>
+                  <span style={{ display: "block", marginBottom: 10, fontWeight: 600, color: textWhite }}>Briefing ready</span>
+                  {modalBody}
+                </>
+              ) : (
+                modalBody
+              )}
             </div>
           </div>
         </div>
@@ -577,71 +672,182 @@ function WatchCenter({ animKey, reducedMotion }: { animKey: string; reducedMotio
 }
 
 const REED_OPEN = "What is the single outcome you want a reader to act on?";
-const USER_TYPE = "Credibility without the corporate fog. Plain stakes, plain ask.";
-const REED_REPLY =
-  "Good. Open with the tradeoff, then prove it once. What is the one risk you want them to feel before they scroll away?";
+const USER_MSG_1 = "Credibility first. Plain stakes, plain ask.";
+const REED_REPLY_1 =
+  "Good. Lead with the tradeoff, not the footnotes. What is the one risk you want them to feel before they scroll away?";
+const USER_MSG_2 = "Name the pilot risk early. Honest, not loud.";
+const REED_REPLY_2 = "Right constraint. Tighten the opening, then prove the plan in one beat.";
 
-function bubbleShell(side: "reed" | "you"): React.CSSProperties {
+function bubbleShellWork(side: "reed" | "you"): React.CSSProperties {
   return {
     borderRadius: 10,
     padding: "8px 11px",
     fontSize: 12,
     lineHeight: 1.45,
+    color: textWhite,
     border: side === "you" ? "1px solid rgba(200,169,110,0.28)" : "1px solid rgba(255,255,255,0.1)",
     background: side === "you" ? "rgba(200,169,110,0.07)" : "rgba(255,255,255,0.05)",
   };
 }
 
 function WorkCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion: boolean }) {
-  const [phase, setPhase] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const sendRef = useRef<HTMLButtonElement>(null);
+  const buildRef = useRef<HTMLButtonElement>(null);
   const [typed, setTyped] = useState("");
-  const [showUserBubble, setShowUserBubble] = useState(false);
-  const [reedTail, setReedTail] = useState("");
+  const [sendFlash, setSendFlash] = useState(0);
+  const [bubble1, setBubble1] = useState("");
+  const [bubble2, setBubble2] = useState("");
+  const [reed1, setReed1] = useState("");
+  const [reed2, setReed2] = useState("");
+  const [showBuild, setShowBuild] = useState(false);
+  const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false, click: false });
+  const [cursorMode, setCursorMode] = useState<"hide" | "send" | "build">("hide");
 
   useEffect(() => {
-    setPhase(0);
     setTyped("");
-    setShowUserBubble(false);
-    setReedTail("");
+    setSendFlash(0);
+    setBubble1("");
+    setBubble2("");
+    setReed1("");
+    setReed2("");
+    setShowBuild(false);
+    setCursor({ x: 0, y: 0, visible: false, click: false });
+    setCursorMode("hide");
     if (reducedMotion) {
-      setPhase(5);
-      setTyped(USER_TYPE);
-      setShowUserBubble(true);
-      setReedTail(REED_REPLY);
+      setBubble1(USER_MSG_1);
+      setReed1(REED_REPLY_1);
+      setBubble2(USER_MSG_2);
+      setReed2(REED_REPLY_2);
+      setShowBuild(true);
       return;
     }
+
+    const userChar = 13;
+    const reedChar = 11;
     const timers: number[] = [];
-    const startType = 220;
-    const charMs = 5;
-    timers.push(window.setTimeout(() => setPhase(1), 280));
-    for (let i = 1; i <= USER_TYPE.length; i++) {
-      timers.push(
-        window.setTimeout(() => {
-          setTyped(USER_TYPE.slice(0, i));
-          if (i === USER_TYPE.length) setPhase(2);
-        }, startType + i * charMs),
-      );
-    }
-    const sendAt = startType + (USER_TYPE.length + 1) * charMs + 280;
-    timers.push(window.setTimeout(() => setPhase(3), sendAt));
+    let T = 260;
+
+    const typeString = (s: string, start: number, setter: (v: string) => void) => {
+      for (let i = 1; i <= s.length; i++) {
+        timers.push(window.setTimeout(() => setter(s.slice(0, i)), start + i * userChar));
+      }
+      return start + s.length * userChar;
+    };
+
+    const typeReed = (s: string, start: number, setter: (v: string) => void) => {
+      for (let j = 1; j <= s.length; j++) {
+        timers.push(window.setTimeout(() => setter(s.slice(0, j)), start + j * reedChar));
+      }
+      return start + s.length * reedChar;
+    };
+
+    T = typeString(USER_MSG_1, T, setTyped);
+    T += 240;
     timers.push(
       window.setTimeout(() => {
-        setShowUserBubble(true);
-        setTyped("");
-        setPhase(4);
-      }, sendAt + 320),
+        setSendFlash(1);
+        setCursorMode("send");
+      }, T),
     );
-    const reedStart = sendAt + 520;
-    timers.push(window.setTimeout(() => setPhase(5), reedStart));
-    const reedChar = 4;
-    for (let j = 1; j <= REED_REPLY.length; j++) {
-      timers.push(window.setTimeout(() => setReedTail(REED_REPLY.slice(0, j)), reedStart + j * reedChar));
-    }
-    return () => timers.forEach(t => window.clearTimeout(t));
+    T += 220;
+    timers.push(
+      window.setTimeout(() => {
+        setBubble1(USER_MSG_1);
+        setTyped("");
+        setSendFlash(0);
+        setCursorMode("hide");
+      }, T),
+    );
+    T += 260;
+    T = typeReed(REED_REPLY_1, T, setReed1);
+    T += 320;
+    T = typeString(USER_MSG_2, T, setTyped);
+    T += 240;
+    timers.push(
+      window.setTimeout(() => {
+        setSendFlash(2);
+        setCursorMode("send");
+      }, T),
+    );
+    T += 220;
+    timers.push(
+      window.setTimeout(() => {
+        setBubble2(USER_MSG_2);
+        setTyped("");
+        setSendFlash(0);
+        setCursorMode("hide");
+      }, T),
+    );
+    T += 260;
+    T = typeReed(REED_REPLY_2, T, setReed2);
+    T += 360;
+    timers.push(
+      window.setTimeout(() => {
+        setShowBuild(true);
+      }, T),
+    );
+    T += 380;
+    timers.push(
+      window.setTimeout(() => {
+        setCursorMode("build");
+      }, T),
+    );
+    T += 520;
+    timers.push(
+      window.setTimeout(() => {
+        setCursor(c => ({ ...c, click: true }));
+      }, T),
+    );
+    timers.push(
+      window.setTimeout(() => {
+        setCursor({ x: 0, y: 0, visible: false, click: false });
+        setCursorMode("hide");
+      }, T + 220),
+    );
+
+    return () => timers.forEach(clearTimeout);
   }, [animKey, reducedMotion]);
 
+  useEffect(() => {
+    if (!rootRef.current || reducedMotion) return;
+    const root = rootRef.current.getBoundingClientRect();
+    if (cursorMode === "hide") {
+      setCursor({ x: 0, y: 0, visible: false, click: false });
+      return;
+    }
+    if (cursorMode === "send" && sendRef.current) {
+      const b = sendRef.current.getBoundingClientRect();
+      setCursor({
+        x: b.left - root.left + b.width * 0.5,
+        y: b.top - root.top + b.height * 0.45,
+        visible: true,
+        click: false,
+      });
+      const t = window.setTimeout(() => setCursor(c => ({ ...c, click: true })), 120);
+      const t2 = window.setTimeout(() => setCursor(c => ({ ...c, click: false })), 300);
+      return () => {
+        window.clearTimeout(t);
+        window.clearTimeout(t2);
+      };
+    }
+    if (cursorMode === "build" && buildRef.current) {
+      const b = buildRef.current.getBoundingClientRect();
+      setCursor({
+        x: b.left - root.left + b.width * 0.55,
+        y: b.top - root.top + b.height * 0.48,
+        visible: true,
+        click: false,
+      });
+      return;
+    }
+  }, [cursorMode, sendFlash, showBuild, reducedMotion]);
+
+  const sendActive = sendFlash > 0;
+
   return (
-    <div key={animKey} style={{ display: "flex", flexDirection: "column", gap: 8, height: "100%", minHeight: 0 }}>
+    <div key={animKey} ref={rootRef} style={{ position: "relative", display: "flex", flexDirection: "column", gap: 8, height: "100%", minHeight: 0 }}>
+      <DemoCursor x={cursor.x} y={cursor.y} visible={cursor.visible} click={cursor.click} />
       <div style={{ flex: 1, minHeight: 0, overflow: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
         <div
           style={{
@@ -650,80 +856,109 @@ function WorkCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
             animation: reducedMotion ? "none" : `xpEwDemoBubble 0.35s ${EASE} both`,
           }}
         >
-          <div style={{ ...bubbleShell("reed") }}>
-            <span style={{ ...mono, fontSize: 8, letterSpacing: "0.08em", color: "rgba(200,169,110,0.8)", display: "block", marginBottom: 4 }}>Reed</span>
-            {REED_OPEN}
+          <div style={{ ...bubbleShellWork("reed") }}>
+            <span style={{ ...mono, fontSize: 8, letterSpacing: "0.08em", color: "rgba(200,169,110,0.85)", display: "block", marginBottom: 4 }}>Reed</span>
+            <span style={{ color: textWhite }}>{REED_OPEN}</span>
           </div>
         </div>
-        {showUserBubble ? (
-          <div
-            style={{
-              alignSelf: "flex-end",
-              maxWidth: "88%",
-              animation: reducedMotion ? "none" : `xpEwDemoBubble 0.3s ${EASE} both`,
-            }}
-          >
-            <div style={{ ...bubbleShell("you") }}>
-              <span style={{ ...mono, fontSize: 8, letterSpacing: "0.08em", color: "rgba(255,255,255,0.42)", display: "block", marginBottom: 4 }}>You</span>
-              {USER_TYPE}
+        {bubble1 ? (
+          <div style={{ alignSelf: "flex-end", maxWidth: "88%", animation: reducedMotion ? "none" : `xpEwDemoBubble 0.3s ${EASE} both` }}>
+            <div style={{ ...bubbleShellWork("you") }}>
+              <span style={{ ...mono, fontSize: 8, letterSpacing: "0.08em", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 4 }}>You</span>
+              <span style={{ color: textWhite }}>{bubble1}</span>
             </div>
           </div>
         ) : null}
-        {reedTail ? (
-          <div
-            style={{
-              alignSelf: "flex-start",
-              maxWidth: "88%",
-              animation: reducedMotion ? "none" : `xpEwDemoBubble 0.3s ${EASE} both`,
-            }}
-          >
-            <div style={{ ...bubbleShell("reed") }}>
-              <span style={{ ...mono, fontSize: 8, letterSpacing: "0.08em", color: "rgba(200,169,110,0.8)", display: "block", marginBottom: 4 }}>Reed</span>
-              {reedTail}
+        {reed1 ? (
+          <div style={{ alignSelf: "flex-start", maxWidth: "88%", animation: reducedMotion ? "none" : `xpEwDemoBubble 0.3s ${EASE} both` }}>
+            <div style={{ ...bubbleShellWork("reed") }}>
+              <span style={{ ...mono, fontSize: 8, letterSpacing: "0.08em", color: "rgba(200,169,110,0.85)", display: "block", marginBottom: 4 }}>Reed</span>
+              <span style={{ color: textWhite }}>{reed1}</span>
+            </div>
+          </div>
+        ) : null}
+        {bubble2 ? (
+          <div style={{ alignSelf: "flex-end", maxWidth: "88%", animation: reducedMotion ? "none" : `xpEwDemoBubble 0.3s ${EASE} both` }}>
+            <div style={{ ...bubbleShellWork("you") }}>
+              <span style={{ ...mono, fontSize: 8, letterSpacing: "0.08em", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 4 }}>You</span>
+              <span style={{ color: textWhite }}>{bubble2}</span>
+            </div>
+          </div>
+        ) : null}
+        {reed2 ? (
+          <div style={{ alignSelf: "flex-start", maxWidth: "88%", animation: reducedMotion ? "none" : `xpEwDemoBubble 0.3s ${EASE} both` }}>
+            <div style={{ ...bubbleShellWork("reed") }}>
+              <span style={{ ...mono, fontSize: 8, letterSpacing: "0.08em", color: "rgba(200,169,110,0.85)", display: "block", marginBottom: 4 }}>Reed</span>
+              <span style={{ color: textWhite }}>{reed2}</span>
             </div>
           </div>
         ) : null}
       </div>
-      <div style={{ flexShrink: 0, display: "flex", gap: 8, alignItems: "flex-end" }}>
-        <textarea
-          readOnly
-          value={typed}
-          placeholder={phase < 2 && !showUserBubble ? "Type your reply…" : ""}
-          rows={2}
-          style={{
-            ...font,
-            flex: 1,
-            resize: "none",
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(0,0,0,0.22)",
-            color: "rgba(255,255,255,0.9)",
-            fontSize: 12,
-            padding: "9px 11px",
-            lineHeight: 1.4,
-            outline: "none",
-          }}
-        />
-        <button
-          type="button"
-          style={{
-            ...mono,
-            flexShrink: 0,
-            padding: "9px 12px",
-            borderRadius: 10,
-            border: "none",
-            fontSize: 9,
-            fontWeight: 600,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            cursor: "default",
-            background: phase === 3 ? "rgba(200,169,110,0.42)" : "rgba(255,255,255,0.1)",
-            color: "rgba(255,255,255,0.92)",
-            transition: "background 0.15s ease",
-          }}
-        >
-          Send
-        </button>
+      <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        {showBuild ? (
+          <button
+            type="button"
+            ref={buildRef}
+            style={{
+              ...mono,
+              alignSelf: "stretch",
+              padding: "11px 14px",
+              borderRadius: 10,
+              border: "1px solid rgba(200,169,110,0.35)",
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              cursor: "default",
+              background: "rgba(200,169,110,0.18)",
+              color: textWhite,
+            }}
+          >
+            Build it
+          </button>
+        ) : null}
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-end", opacity: showBuild ? 0.45 : 1 }}>
+          <textarea
+            readOnly
+            value={typed}
+            placeholder={!bubble1 ? "Type your reply…" : !bubble2 ? "Type your reply…" : ""}
+            rows={2}
+            style={{
+              ...font,
+              flex: 1,
+              resize: "none",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(0,0,0,0.28)",
+              color: textWhite,
+              fontSize: 12,
+              padding: "9px 11px",
+              lineHeight: 1.4,
+              outline: "none",
+            }}
+          />
+          <button
+            ref={sendRef}
+            type="button"
+            style={{
+              ...mono,
+              flexShrink: 0,
+              padding: "9px 12px",
+              borderRadius: 10,
+              border: "none",
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              cursor: "default",
+              background: sendActive ? "rgba(200,169,110,0.45)" : "rgba(255,255,255,0.1)",
+              color: textWhite,
+              transition: "background 0.15s ease",
+            }}
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -731,14 +966,35 @@ function WorkCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
 
 const OUTPUT_LABELS = ["LinkedIn Post", "Essay", "Podcast", "Email", "Board Report", "Newsletter"] as const;
 
-const WRAP_LI = `The tradeoff is simple: buyers will wait for proof, not promises. Name the proof in line one. End with one question they can answer in a comment.`;
+const WRAP_LI = `If you are selling a serious B2B change, your first job is not excitement. It is legibility.
 
-const WRAP_EMAIL = `Subject: Proof before promises\n\nTeam,\n\nLead with what buyers already believe, then show the one artifact that closes the gap. Keep it under 180 words so it gets read before the next meeting.`;
+Buyers are not confused about your category. They are tired of promises that age badly. So open with the tradeoff they already feel: speed versus certainty, cost versus coverage, autonomy versus auditability. Name it in plain language before you touch the product.
+
+Then prove one thing. Not ten slides of pedigree. One artifact: a customer quote with a role and a date, a metric that moved for a team like theirs, or a crisp scope boundary that shows you understand what can go wrong in Q3.
+
+Close with a question that earns a reply. Not "thoughts?" Ask what proof would change their next internal meeting. Ask what risk they need you to dismantle first. LinkedIn rewards threads that feel like a hallway conversation with an operator, not a keynote with a logo wall.
+
+If you only remember one line: credibility is the absence of fog. Tighten until a busy VP can forward your post without rewriting you.`;
+
+const WRAP_EMAIL = `Subject: Proof before promises: the Q3 narrative
+
+Team,
+
+We are going to tighten how we talk outside the building this quarter. Buyers are pausing until they see proof tied to outcomes they already trust. That means our outbound story needs three parts, always in this order.
+
+One, lead with the tradeoff the market already believes is true. Two, attach one verification path per claim: a quote, a number, or a milestone with a date. Three, end with a single next step that fits a calendar, not a committee.
+
+Internally, pull language from Watch so we are not inventing a new thesis every week. Wire and Field already gave us the repeated objections. Internal flagged delivery risk on the pilot. Competitor noise is loud but thin. That is the spine.
+
+Please reply with one paragraph: what proof asset you can own by Friday, and who validates it. If we cannot name the validator, we do not ship the sentence.
+
+Thanks`;
 
 function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const linkedInRef = useRef<HTMLDivElement>(null);
   const emailRef = useRef<HTMLDivElement>(null);
+  const wrapItRef = useRef<HTMLButtonElement>(null);
   const [phase, setPhase] = useState(0);
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false, click: false });
   const [liText, setLiText] = useState("");
@@ -746,6 +1002,8 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
   const [showWrapCursor, setShowWrapCursor] = useState(true);
   const [liSelected, setLiSelected] = useState(false);
   const [emSelected, setEmSelected] = useState(false);
+  const [showWrapBtn, setShowWrapBtn] = useState(false);
+  const [results, setResults] = useState(false);
 
   useEffect(() => {
     setPhase(0);
@@ -755,26 +1013,35 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
     setShowWrapCursor(true);
     setLiSelected(false);
     setEmSelected(false);
+    setShowWrapBtn(false);
+    setResults(false);
     if (reducedMotion) {
-      setPhase(6);
       setLiText(WRAP_LI);
       setEmText(WRAP_EMAIL);
       setShowWrapCursor(false);
       setLiSelected(true);
       setEmSelected(true);
+      setResults(true);
       return;
     }
     const t0 = window.setTimeout(() => setPhase(1), 400);
-    const t1 = window.setTimeout(() => setPhase(2), 1100);
-    const t2 = window.setTimeout(() => setPhase(3), 1850);
-    const t3 = window.setTimeout(() => setPhase(4), 2300);
-    const t4 = window.setTimeout(() => setPhase(5), 3000);
+    const t1 = window.setTimeout(() => setPhase(2), 1000);
+    const t2 = window.setTimeout(() => setPhase(3), 1700);
+    const t3 = window.setTimeout(() => setPhase(4), 2150);
+    const t4 = window.setTimeout(() => setPhase(5), 2800);
     const t5 = window.setTimeout(() => {
       setPhase(6);
+      setShowWrapBtn(true);
+    }, 3000);
+    const t6 = window.setTimeout(() => setPhase(7), 3450);
+    const t7 = window.setTimeout(() => setPhase(8), 3950);
+    const t8 = window.setTimeout(() => {
+      setPhase(9);
       setShowWrapCursor(false);
-    }, 3450);
+      setResults(true);
+    }, 4250);
     return () => {
-      [t0, t1, t2, t3, t4, t5].forEach(clearTimeout);
+      [t0, t1, t2, t3, t4, t5, t6, t7, t8].forEach(clearTimeout);
     };
   }, [animKey, reducedMotion]);
 
@@ -787,6 +1054,11 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
     }
     if (phase === 5) {
       setEmSelected(true);
+      setCursor(c => ({ ...c, click: true }));
+      const t = window.setTimeout(() => setCursor(c => ({ ...c, click: false })), 200);
+      return () => window.clearTimeout(t);
+    }
+    if (phase === 8) {
       setCursor(c => ({ ...c, click: true }));
       const t = window.setTimeout(() => setCursor(c => ({ ...c, click: false })), 200);
       return () => window.clearTimeout(t);
@@ -828,27 +1100,37 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
       }
       return;
     }
-    if (phase >= 6) {
+    if ((phase === 6 || phase === 7 || phase === 8) && wrapItRef.current) {
+      const el = wrapItRef.current.getBoundingClientRect();
+      setCursor({
+        x: el.left - wrap.left + el.width * 0.52,
+        y: el.top - wrap.top + el.height * 0.48,
+        visible: true,
+        click: phase === 8,
+      });
+      return;
+    }
+    if (phase >= 9) {
       setCursor({ x: 0, y: 0, visible: false, click: false });
     }
-  }, [phase]);
+  }, [phase, showWrapBtn, results]);
 
   useEffect(() => {
-    if (phase < 6 || reducedMotion) return;
+    if (!results || reducedMotion) return;
     let li = 0;
     let em = 0;
-    const step = 5;
+    const step = 22;
     const id = window.setInterval(() => {
       li = Math.min(WRAP_LI.length, li + step);
       em = Math.min(WRAP_EMAIL.length, em + step);
       setLiText(WRAP_LI.slice(0, li));
       setEmText(WRAP_EMAIL.slice(0, em));
       if (li >= WRAP_LI.length && em >= WRAP_EMAIL.length) window.clearInterval(id);
-    }, 8);
+    }, 5);
     return () => window.clearInterval(id);
-  }, [phase, reducedMotion]);
+  }, [results, reducedMotion]);
 
-  if (phase >= 6) {
+  if (results) {
     return (
       <div key={animKey} ref={wrapRef} style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
         <div
@@ -877,10 +1159,10 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
             <div className="xp-mono" style={{ ...mono, fontSize: 9, letterSpacing: "0.1em", color: "var(--xp-gold)", textTransform: "uppercase" }}>
               LinkedIn Post
             </div>
-            <div style={{ fontSize: 11, lineHeight: 1.5, color: "rgba(255,255,255,0.84)", overflow: "auto", whiteSpace: "pre-wrap" }}>
+            <div style={{ fontSize: 10, lineHeight: 1.5, color: textWhite, overflow: "auto", whiteSpace: "pre-wrap" }}>
               {liText}
               {liText.length > 0 && liText.length < WRAP_LI.length ? (
-                <span style={{ display: "inline-block", width: 5, height: 12, marginLeft: 1, background: "var(--xp-gold)", verticalAlign: "-1px", opacity: 0.65 }} />
+                <span style={{ display: "inline-block", width: 4, height: 11, marginLeft: 1, background: "var(--xp-gold)", verticalAlign: "-1px", opacity: 0.65 }} />
               ) : null}
             </div>
           </div>
@@ -900,10 +1182,10 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
             <div className="xp-mono" style={{ ...mono, fontSize: 9, letterSpacing: "0.1em", color: "var(--xp-gold)", textTransform: "uppercase" }}>
               Email
             </div>
-            <div style={{ fontSize: 11, lineHeight: 1.5, color: "rgba(255,255,255,0.84)", overflow: "auto", whiteSpace: "pre-wrap" }}>
+            <div style={{ fontSize: 10, lineHeight: 1.5, color: textWhite, overflow: "auto", whiteSpace: "pre-wrap" }}>
               {emText}
               {emText.length > 0 && emText.length < WRAP_EMAIL.length ? (
-                <span style={{ display: "inline-block", width: 5, height: 12, marginLeft: 1, background: "var(--xp-gold)", verticalAlign: "-1px", opacity: 0.65 }} />
+                <span style={{ display: "inline-block", width: 4, height: 11, marginLeft: 1, background: "var(--xp-gold)", verticalAlign: "-1px", opacity: 0.65 }} />
               ) : null}
             </div>
           </div>
@@ -913,15 +1195,15 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
   }
 
   return (
-    <div key={animKey} ref={wrapRef} style={{ position: "relative", height: "100%" }}>
+    <div key={animKey} ref={wrapRef} style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
       {showWrapCursor ? <DemoCursor x={cursor.x} y={cursor.y} visible={cursor.visible} click={cursor.click} /> : null}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
           gap: 8,
-          height: "100%",
           alignContent: "start",
+          flex: showWrapBtn ? "0 0 auto" : 1,
         }}
       >
         {OUTPUT_LABELS.map((name, i) => {
@@ -950,6 +1232,29 @@ function WrapCenter({ animKey, reducedMotion }: { animKey: string; reducedMotion
           );
         })}
       </div>
+      {showWrapBtn ? (
+        <button
+          type="button"
+          ref={wrapItRef}
+          style={{
+            ...mono,
+            flexShrink: 0,
+            marginTop: "auto",
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid rgba(200,169,110,0.32)",
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            cursor: "default",
+            background: "rgba(200,169,110,0.14)",
+            color: textWhite,
+          }}
+        >
+          Wrap it
+        </button>
+      ) : null}
     </div>
   );
 }
