@@ -3,52 +3,12 @@ import { callWithRetry } from "./_retry.js";
 import { CLAUDE_MODEL } from "./_config.js";
 import { requireAuth } from "./_auth.js";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
-
-const SYSTEM_PROMPT = `You are a Voice DNA analyst for EVERYWHERE Studio. Given interview responses,
+const SYSTEM_PROMPT = `You are a Voice DNA analyst for EVERYWHERE Studio. Given interview responses and/or authentic writing samples (plain text and/or PDF documents from the same author),
 produce a structured Voice DNA profile. Respond with ONLY a raw JSON object.
 No preamble. No markdown code fences. No explanation. Pure JSON only.
 The JSON must be parseable by JSON.parse() with no preprocessing.`;
 
-function buildUserMessage(userName, responses, textSamples) {
-  const lines = [];
-
-  // Format 1: Structured interview responses (object with question keys)
-  if (responses && typeof responses === "object" && !Array.isArray(responses) && Object.keys(responses).length > 0) {
-    lines.push(`Interview responses from ${userName}:`);
-    for (const [key, value] of Object.entries(responses)) {
-      lines.push(`${key}: ${String(value)}`);
-    }
-  }
-  // Format 2: Conversation array (Reed chat history)
-  else if (Array.isArray(responses) && responses.length > 0) {
-    lines.push(`Conversation with ${userName}:`);
-    responses.forEach((m) => {
-      const role = m.role === "assistant" || m.role === "reed" ? "Reed" : userName;
-      if (m.content && String(m.content).trim()) {
-        lines.push(`${role}: ${String(m.content).trim()}`);
-      }
-    });
-  }
-  // Format 3: Raw text samples
-  else if (textSamples && typeof textSamples === "string" && textSamples.trim()) {
-    lines.push(`Writing samples from ${userName}:`);
-    lines.push(textSamples.trim());
-  }
-  // Format 4: Single text field in responses
-  else if (typeof responses === "string" && responses.trim()) {
-    lines.push(`Writing samples from ${userName}:`);
-    lines.push(responses.trim());
-  }
-
-  if (lines.length === 0) {
-    return null;
-  }
-
+function appendVoiceDnaJsonSchema(lines) {
   lines.push(
     "",
     "Generate a Voice DNA profile as this exact JSON structure:",
@@ -75,7 +35,76 @@ function buildUserMessage(userName, responses, textSamples) {
     '  "markdown": "<full Voice DNA .md document as a string>"',
     "}"
   );
+}
+
+function buildUserMessage(userName, responses, textSamples) {
+  const lines = [];
+
+  if (responses && typeof responses === "object" && !Array.isArray(responses) && Object.keys(responses).length > 0) {
+    lines.push(`Interview responses from ${userName}:`);
+    for (const [key, value] of Object.entries(responses)) {
+      lines.push(`${key}: ${String(value)}`);
+    }
+  } else if (Array.isArray(responses) && responses.length > 0) {
+    lines.push(`Conversation with ${userName}:`);
+    responses.forEach((m) => {
+      const role = m.role === "assistant" || m.role === "reed" ? "Reed" : userName;
+      if (m.content && String(m.content).trim()) {
+        lines.push(`${role}: ${String(m.content).trim()}`);
+      }
+    });
+  } else if (textSamples && typeof textSamples === "string" && textSamples.trim()) {
+    lines.push(`Writing samples from ${userName}:`);
+    lines.push(textSamples.trim());
+  } else if (typeof responses === "string" && responses.trim()) {
+    lines.push(`Writing samples from ${userName}:`);
+    lines.push(responses.trim());
+  }
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  appendVoiceDnaJsonSchema(lines);
   return lines.join("\n");
+}
+
+/** Build multimodal user content: instruction text + one document block per PDF. */
+function buildWritingSamplesWithPdfContent(userName, plainText, pdfAttachments) {
+  const valid = (pdfAttachments || []).filter(
+    (p) => p && typeof p.base64 === "string" && p.base64.length > 200
+  );
+  if (valid.length === 0) {
+    return null;
+  }
+
+  const lines = [];
+  if (plainText && plainText.trim()) {
+    lines.push(`Plain text writing samples from ${userName}:`, "", plainText.trim(), "");
+  }
+  lines.push(
+    `The same author attached ${valid.length} PDF file(s) after this text block.`,
+    "Read every page. Combine what you see in the PDFs with any plain text above.",
+    "Infer vocabulary, rhythm, cadence, sentence shape, stance, and recurring phrases from the combined material.",
+    ""
+  );
+  appendVoiceDnaJsonSchema(lines);
+
+  const content = [{ type: "text", text: lines.join("\n") }];
+  for (const p of valid) {
+    let data = String(p.base64);
+    if (data.includes(",")) data = data.split(",").pop() || "";
+    data = data.replace(/\s/g, "");
+    if (data.length < 200) continue;
+    content.push({
+      type: "document",
+      source: { type: "base64", media_type: "application/pdf", data },
+    });
+  }
+  if (content.length < 2) {
+    return null;
+  }
+  return content;
 }
 
 function stripMarkdownFences(text) {
@@ -118,25 +147,36 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
   }
 
-  const { responses, userName = "the user", textSamples, text: textInput } = req.body || {};
+  const body = req.body || {};
+  const { responses, userName = "the user", textSamples, text: textInput, pdfAttachments } = body;
+  const plainText = String(textSamples || textInput || "").trim();
 
   try {
     const client = new Anthropic({ apiKey });
-    const userMessage = buildUserMessage(userName, responses, textSamples || textInput);
 
-    if (!userMessage) {
-      return res.status(400).json({
-        error: "No voice content provided. Send interview responses, conversation history, or text samples.",
-        hint: "Send { responses: { question: answer } } OR { responses: [{ role, content }] } OR { text: 'writing sample...' }"
-      });
+    const pdfList = Array.isArray(pdfAttachments) ? pdfAttachments : [];
+    const multimodalContent = buildWritingSamplesWithPdfContent(userName, plainText, pdfList);
+
+    let userMessage;
+    if (multimodalContent) {
+      userMessage = { role: "user", content: multimodalContent };
+    } else {
+      const textOnly = buildUserMessage(userName, responses, plainText || null);
+      if (!textOnly) {
+        return res.status(400).json({
+          error: "No voice content provided. Upload text files, add writing samples, or send interview responses.",
+          hint: "Send { text: '...' } with plain text, optional { pdfAttachments: [{ filename, base64 }] }, or { responses: { question: answer } }.",
+        });
+      }
+      userMessage = { role: "user", content: textOnly };
     }
 
     const response = await callWithRetry(() =>
       client.messages.create({
         model: CLAUDE_MODEL,
-        max_tokens: 4000,
+        max_tokens: 8192,
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
+        messages: [userMessage],
       })
     );
 
@@ -161,6 +201,13 @@ export default async function handler(req, res) {
     return res.status(200).json({ voiceDna, markdown });
   } catch (err) {
     console.error("[api/voice-dna]", err);
+    const msg = err?.message || String(err);
+    if (msg.includes("document") || msg.includes("pdf") || msg.includes("PDF")) {
+      return res.status(502).json({
+        error:
+          "One or more PDFs could not be read by the model. Try exporting the PDF to plain text (.txt) and upload that instead.",
+      });
+    }
     return res.status(502).json({ error: "Something went wrong. Please try again." });
   }
 }

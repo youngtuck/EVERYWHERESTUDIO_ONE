@@ -9,7 +9,7 @@ import { VoiceUpload } from "../components/onboarding/VoiceUpload";
 import { VoiceDNAReview } from "../components/onboarding/VoiceDNAReview";
 import { BrandDNAChat } from "../components/onboarding/BrandDNAChat";
 import type { VoiceDNA, VoiceDNAResponse } from "../utils/voiceDNAProcessor";
-import { generateVoiceDNAFromInterview, generateVoiceDNAFromUploads } from "../utils/voiceDNAProcessor";
+import { generateVoiceDNAFromInterview, generateVoiceDNAFromWritingSamples } from "../utils/voiceDNAProcessor";
 import type { BrandDNAResponse } from "../utils/brandDNAProcessor";
 import { fetchWithRetry } from "../lib/retry";
 import { useMobile } from "../hooks/useMobile";
@@ -244,7 +244,10 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleUploadComplete = async (payload: { fileUrls: string[] }) => {
+  const handleWritingSamplesAnalysis = async (payload: {
+    combinedText: string;
+    pdfAttachments?: { filename: string; base64: string }[];
+  }) => {
     if (!user) return;
     setProcessing(true);
     setErrorMessage(null);
@@ -264,8 +267,11 @@ export default function OnboardingPage() {
         setProcessing(false);
         return;
       }
-      const result: VoiceDNAResponse = await generateVoiceDNAFromUploads({
-        fileUrls: payload.fileUrls,
+      const fullName = (user.user_metadata?.full_name as string | undefined) || user.email || "the user";
+      const result: VoiceDNAResponse = await generateVoiceDNAFromWritingSamples({
+        combinedText: payload.combinedText,
+        pdfAttachments: payload.pdfAttachments,
+        userName: fullName,
         accessToken,
       });
       const finalVoiceDna: VoiceDNA = {
@@ -824,15 +830,7 @@ export default function OnboardingPage() {
         )}
 
         {showStep2Upload && (
-          <VoiceUpload
-            onComplete={async ({ fileSummaries }) => {
-              // In a fuller implementation these files would be uploaded
-              // to Supabase Storage and we would pass their URLs. For now
-              // we call the backend with an empty list and let it decide.
-              const urls = fileSummaries.map(item => item.name);
-              await handleUploadComplete({ fileUrls: urls });
-            }}
-          />
+          <VoiceUpload onComplete={handleWritingSamplesAnalysis} />
         )}
 
         {showStep3 && voiceDNA && (
