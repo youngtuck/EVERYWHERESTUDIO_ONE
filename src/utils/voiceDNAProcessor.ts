@@ -37,35 +37,54 @@ export interface VoiceDNAResponse {
 export async function generateVoiceDNAFromInterview(payload: {
   responses: Record<string, string>;
   userName?: string;
+  /** Supabase session JWT; required because /api/voice-dna uses requireAuth. */
+  accessToken: string;
 }): Promise<VoiceDNAResponse> {
   const url = `${API_BASE}/api/voice-dna`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${payload.accessToken}`,
+    },
     body: JSON.stringify({
       type: "interview",
       responses: payload.responses,
       userName: payload.userName,
     }),
   });
+  const data = (await res.json().catch(() => ({}))) as VoiceDNAResponse & { error?: string };
   if (!res.ok) {
-    throw new Error("Failed to generate Voice DNA from interview.");
+    const errText =
+      typeof data?.error === "string" && data.error.trim()
+        ? data.error.trim()
+        : `Voice DNA request failed (${res.status}).`;
+    throw new Error(errText);
   }
-  return res.json();
+  return { voiceDna: data.voiceDna, markdown: data.markdown };
 }
 
 export async function generateVoiceDNAFromUploads(payload: {
   fileUrls: string[];
+  accessToken: string;
 }): Promise<VoiceDNAResponse> {
   const url = `${API_BASE}/api/voice-dna`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${payload.accessToken}`,
+    },
     body: JSON.stringify({ type: "upload", fileUrls: payload.fileUrls }),
   });
+  const data = (await res.json().catch(() => ({}))) as VoiceDNAResponse & { error?: string };
   if (!res.ok) {
-    throw new Error("Failed to generate Voice DNA from uploads.");
+    const errText =
+      typeof data?.error === "string" && data.error.trim()
+        ? data.error.trim()
+        : `Voice DNA request failed (${res.status}).`;
+    throw new Error(errText);
   }
-  return res.json();
+  return { voiceDna: data.voiceDna, markdown: data.markdown };
 }
 

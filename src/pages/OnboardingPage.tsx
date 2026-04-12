@@ -35,7 +35,7 @@ const BRAND_STATUS_MESSAGES = [
 ];
 
 export default function OnboardingPage() {
-  const { user, refreshProfile } = useAuth();
+  const { user, session, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const nav = useNavigate();
   const isMobile = useMobile();
@@ -198,10 +198,22 @@ export default function OnboardingPage() {
     setOverlayComplete(false);
     setStatusIndex(0);
     try {
+      let accessToken = session?.access_token ?? null;
+      if (!accessToken) {
+        const { data } = await supabase.auth.getSession();
+        accessToken = data.session?.access_token ?? null;
+      }
+      if (!accessToken) {
+        setOverlayVisible(false);
+        setErrorMessage("Your session expired. Please sign in again, then continue Voice DNA.");
+        setProcessing(false);
+        return;
+      }
       const fullName = (user.user_metadata?.full_name as string | undefined) || user.email || "the user";
       const result: VoiceDNAResponse = await generateVoiceDNAFromInterview({
         responses: payload.interviewResponses,
         userName: fullName,
+        accessToken,
       });
       const finalVoiceDna: VoiceDNA = {
         ...result.voiceDna,
@@ -225,7 +237,9 @@ export default function OnboardingPage() {
     } catch (err) {
       console.error("Voice DNA interview processing failed", err);
       setOverlayVisible(false);
-      setErrorMessage("We could not analyze your responses. Please try again in a moment.");
+      const fallback = "We could not analyze your responses. Please try again in a moment.";
+      const msg = err instanceof Error ? err.message.trim() : "";
+      setErrorMessage(msg && msg.length < 400 ? msg : fallback);
       setProcessing(false);
     }
   };
@@ -239,8 +253,20 @@ export default function OnboardingPage() {
     setOverlayComplete(false);
     setStatusIndex(0);
     try {
+      let accessToken = session?.access_token ?? null;
+      if (!accessToken) {
+        const { data } = await supabase.auth.getSession();
+        accessToken = data.session?.access_token ?? null;
+      }
+      if (!accessToken) {
+        setOverlayVisible(false);
+        setErrorMessage("Your session expired. Please sign in again, then continue Voice DNA.");
+        setProcessing(false);
+        return;
+      }
       const result: VoiceDNAResponse = await generateVoiceDNAFromUploads({
         fileUrls: payload.fileUrls,
+        accessToken,
       });
       const finalVoiceDna: VoiceDNA = {
         ...result.voiceDna,
@@ -263,7 +289,9 @@ export default function OnboardingPage() {
     } catch (err) {
       console.error("Voice DNA upload processing failed", err);
       setOverlayVisible(false);
-      setErrorMessage("We could not analyze your writing samples. Please try again.");
+      const fallback = "We could not analyze your writing samples. Please try again.";
+      const msg = err instanceof Error ? err.message.trim() : "";
+      setErrorMessage(msg && msg.length < 400 ? msg : fallback);
       setProcessing(false);
     }
   };
