@@ -12,6 +12,93 @@ const panel: React.CSSProperties = {
   boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
 };
 
+/** Full script length including dwell at the end before the loop restarts. */
+const WATCH_CYCLE_MS = 12000;
+const WORK_CYCLE_MS = 15600;
+
+function useDemoLoopProgress(loopEpoch: number, totalMs: number, reduced: boolean): number {
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    if (reduced) {
+      setP(1);
+      return;
+    }
+    const start = performance.now();
+    let rid = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / totalMs);
+      setP(t);
+      if (t < 1) rid = requestAnimationFrame(tick);
+    };
+    rid = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rid);
+  }, [loopEpoch, totalMs, reduced]);
+  return reduced ? 1 : p;
+}
+
+function HiwDemoLoopChrome({
+  labels,
+  activeIdx,
+  progress,
+  reduced,
+}: {
+  labels: readonly [string, string, string];
+  activeIdx: number;
+  progress: number;
+  reduced: boolean;
+}) {
+  const fill = reduced ? 1 : progress;
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 6,
+        }}
+      >
+        {labels.map((lab, i) => (
+          <div
+            key={lab}
+            style={{
+              textAlign: "center",
+              fontSize: 9,
+              ...mono,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              lineHeight: 1.25,
+              color: i === activeIdx ? "var(--xp-gold)" : "rgba(255,255,255,0.34)",
+              fontWeight: i === activeIdx ? 700 : 500,
+            }}
+          >
+            {lab}
+          </div>
+        ))}
+      </div>
+      <div
+        style={{
+          height: 3,
+          borderRadius: 99,
+          background: "rgba(255,255,255,0.1)",
+          marginTop: 10,
+          overflow: "hidden",
+        }}
+        aria-hidden
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${Math.round(fill * 1000) / 10}%`,
+            borderRadius: 99,
+            background: "rgba(200,169,110,0.55)",
+            transition: reduced ? undefined : "width 0.04s linear",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
@@ -31,6 +118,8 @@ function pulseClick(setClick: (v: boolean) => void) {
 
 // ── Watch: Settings → interest → Briefing → Run brief → signals → Use this ──
 
+const WATCH_ACT_LABELS = ["Interests", "Briefing", "Hand off"] as const;
+
 export function WatchDeepDemo({ animKey = "watch" }: { animKey?: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const interestInputRef = useRef<HTMLInputElement>(null);
@@ -41,12 +130,16 @@ export function WatchDeepDemo({ animKey = "watch" }: { animKey?: string }) {
   const useThisRef = useRef<HTMLButtonElement>(null);
   const reduced = usePrefersReducedMotion();
 
+  const [loopEpoch, setLoopEpoch] = useState(0);
   const [activeTab, setActiveTab] = useState<"settings" | "briefing">("settings");
   const [keyword, setKeyword] = useState("");
   const [interestAdded, setInterestAdded] = useState(false);
   const [briefingState, setBriefingState] = useState<"idle" | "loading" | "ready">("idle");
   const [phase, setPhase] = useState(0);
   const [cursor, setCursor] = useState({ x: 0, y: 0, v: false, click: false });
+
+  const loopProgress = useDemoLoopProgress(loopEpoch, WATCH_CYCLE_MS, reduced);
+  const watchActIdx = reduced ? 2 : phase <= 3 ? 0 : phase <= 8 ? 1 : 2;
 
   useEffect(() => {
     setActiveTab("settings");
@@ -97,11 +190,12 @@ export function WatchDeepDemo({ animKey = "watch" }: { animKey?: string }) {
       setPhase(8);
     }, 7800));
     timeouts.push(window.setTimeout(() => setPhase(9), 8800));
+    timeouts.push(window.setTimeout(() => setLoopEpoch(e => e + 1), WATCH_CYCLE_MS));
     return () => {
       timeouts.forEach(x => window.clearTimeout(x));
       intervals.forEach(x => window.clearInterval(x));
     };
-  }, [animKey, reduced]);
+  }, [animKey, reduced, loopEpoch]);
 
   useEffect(() => {
     if ([2, 5, 7, 9].includes(phase)) pulseClick(c => setCursor(p => ({ ...p, click: c })));
@@ -147,10 +241,8 @@ export function WatchDeepDemo({ animKey = "watch" }: { animKey?: string }) {
   }, [phase, activeTab, briefingState, interestAdded]);
 
   return (
-    <div key={animKey} style={{ ...font, marginTop: 28 }}>
-      <p style={{ fontSize: 13, color: "var(--xp-sec)", lineHeight: 1.55, marginBottom: 14, maxWidth: 560 }}>
-        Add what you are watching for, run a brief, then open a signal in Work when you are ready to draft.
-      </p>
+    <div style={{ ...font, marginTop: 28 }}>
+      <HiwDemoLoopChrome labels={WATCH_ACT_LABELS} activeIdx={watchActIdx} progress={loopProgress} reduced={reduced} />
       <div ref={rootRef} style={{ position: "relative", ...panel, padding: 12, minHeight: 400, maxHeight: 440 }}>
         <MarketingDemoCursor x={cursor.x} y={cursor.y} visible={cursor.v} click={cursor.click} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
@@ -301,16 +393,22 @@ const WORK_STAGES = ["Intake", "Outline", "Edit", "Pipeline", "Review"] as const
 
 const WORK_OUTLINE_LINES = ["Opening: the accountable thread", "Middle: proof from your lane", "Close: one ask the reader can answer"];
 
+const WORK_ACT_LABELS = ["Intake", "Draft", "Check"] as const;
+
 export function WorkDeepDemo({ animKey = "work" }: { animKey?: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const buildRef = useRef<HTMLButtonElement>(null);
   const wrapBtnRef = useRef<HTMLButtonElement>(null);
   const reduced = usePrefersReducedMotion();
+  const [loopEpoch, setLoopEpoch] = useState(0);
   const [stageIdx, setStageIdx] = useState(0);
   const [outlineLines, setOutlineLines] = useState<string[]>([]);
   const [pipelineFill, setPipelineFill] = useState(0);
   const [phase, setPhase] = useState(0);
   const [cursor, setCursor] = useState({ x: 0, y: 0, v: false, click: false });
+
+  const loopProgress = useDemoLoopProgress(loopEpoch, WORK_CYCLE_MS, reduced);
+  const workActIdx = reduced ? 2 : stageIdx <= 0 ? 0 : stageIdx <= 2 ? 1 : 2;
 
   useEffect(() => {
     setStageIdx(0);
@@ -357,11 +455,12 @@ export function WorkDeepDemo({ animKey = "work" }: { animKey?: string }) {
     timeouts.push(window.setTimeout(() => setStageIdx(4), 10200));
     timeouts.push(window.setTimeout(() => setPhase(4), 10800));
     timeouts.push(window.setTimeout(() => setPhase(5), 11800));
+    timeouts.push(window.setTimeout(() => setLoopEpoch(e => e + 1), WORK_CYCLE_MS));
     return () => {
       timeouts.forEach(clearTimeout);
       intervals.forEach(clearInterval);
     };
-  }, [animKey, reduced]);
+  }, [animKey, reduced, loopEpoch]);
 
   useLayoutEffect(() => {
     if (!rootRef.current) return;
@@ -397,10 +496,8 @@ export function WorkDeepDemo({ animKey = "work" }: { animKey?: string }) {
   }, [phase]);
 
   return (
-    <div key={animKey} style={{ ...font, marginTop: 28 }}>
-      <p style={{ fontSize: 13, color: "var(--xp-sec)", lineHeight: 1.55, marginBottom: 14, maxWidth: 560 }}>
-        Reed interviews you, you build the outline, edit the draft, run the checkpoint pipeline, then send the approved piece to Wrap.
-      </p>
+    <div style={{ ...font, marginTop: 28 }}>
+      <HiwDemoLoopChrome labels={WORK_ACT_LABELS} activeIdx={workActIdx} progress={loopProgress} reduced={reduced} />
       <div ref={rootRef} style={{ position: "relative", ...panel, padding: 12, minHeight: 400, maxHeight: 460 }}>
         <MarketingDemoCursor x={cursor.x} y={cursor.y} visible={cursor.v} click={cursor.click} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: 8 }}>
@@ -533,16 +630,27 @@ const WRAP_COPY_LI = "Hook on accountability. One proof point. Close with a ques
 const WRAP_COPY_EM = "Subject: Who owns the next model release\n\nName the owner in line one. Add one risk line. End with a 10-minute ask.";
 const WRAP_COPY_EB = "Decision: assign a single accountable lead. Proof: one field signal. Next step: calendar the review.";
 
+const WRAP_CYCLE_MS =
+  4800 +
+  Math.ceil(Math.max(WRAP_COPY_LI.length, WRAP_COPY_EM.length, WRAP_COPY_EB.length) / 2) * 28 +
+  4400;
+
+const WRAP_ACT_LABELS = ["Channels", "Adapt", "Pieces"] as const;
+
 export function WrapDeepDemo({ animKey = "wrap" }: { animKey?: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const runRef = useRef<HTMLButtonElement>(null);
   const reduced = usePrefersReducedMotion();
+  const [loopEpoch, setLoopEpoch] = useState(0);
   const [picked, setPicked] = useState<Set<string>>(() => new Set());
   const [phase, setPhase] = useState<"choose" | "running" | "deliver">("choose");
   const [cursor, setCursor] = useState({ x: 0, y: 0, v: false, click: false });
   const [liBody, setLiBody] = useState("");
   const [emBody, setEmBody] = useState("");
   const [ebBody, setEbBody] = useState("");
+
+  const loopProgress = useDemoLoopProgress(loopEpoch, WRAP_CYCLE_MS, reduced);
+  const wrapActIdx = reduced ? 2 : phase === "choose" ? 0 : phase === "running" ? 1 : 2;
 
   useEffect(() => {
     setPicked(new Set());
@@ -580,11 +688,12 @@ export function WrapDeepDemo({ animKey = "wrap" }: { animKey?: string }) {
       }, 28);
       intervals.push(id);
     }, 4800));
+    timeouts.push(window.setTimeout(() => setLoopEpoch(e => e + 1), WRAP_CYCLE_MS));
     return () => {
       timeouts.forEach(clearTimeout);
       intervals.forEach(clearInterval);
     };
-  }, [animKey, reduced]);
+  }, [animKey, reduced, loopEpoch]);
 
   useLayoutEffect(() => {
     if (!rootRef.current) return;
@@ -608,22 +717,13 @@ export function WrapDeepDemo({ animKey = "wrap" }: { animKey?: string }) {
   }, [phase]);
 
   return (
-    <div key={animKey} style={{ ...font, marginTop: 28 }}>
-      <p style={{ fontSize: 13, color: "var(--xp-sec)", lineHeight: 1.55, marginBottom: 14, maxWidth: 560 }}>
-        Pick the surfaces you need, run Wrap, then copy paste-ready versions side by side.
-      </p>
+    <div style={{ ...font, marginTop: 28 }}>
+      <HiwDemoLoopChrome labels={WRAP_ACT_LABELS} activeIdx={wrapActIdx} progress={loopProgress} reduced={reduced} />
       <div ref={rootRef} style={{ position: "relative", ...panel, padding: 12, minHeight: 400, maxHeight: 480 }}>
         <MarketingDemoCursor x={cursor.x} y={cursor.y} visible={cursor.v} click={cursor.click} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: 8 }}>
           <Logo size={14} variant="dark" />
           <span style={{ ...mono, fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Wrap</span>
-        </div>
-        <div style={{ display: "flex", gap: 6, marginBottom: 10, fontSize: 9, ...mono, color: "rgba(255,255,255,0.35)", justifyContent: "center" }}>
-          <span style={{ color: phase !== "choose" ? "var(--xp-gold)" : undefined }}>1 Choose</span>
-          <span>·</span>
-          <span style={{ color: phase === "running" ? "var(--xp-gold)" : undefined }}>2 Adapt</span>
-          <span>·</span>
-          <span style={{ color: phase === "deliver" ? "var(--xp-gold)" : undefined }}>3 Pieces</span>
         </div>
 
         {phase === "choose" ? (

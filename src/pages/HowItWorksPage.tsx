@@ -75,20 +75,34 @@ export default function HowItWorksPage() {
               Intelligence before execution.
             </p>
           </Reveal>
-          <Reveal delay={100}>
-            <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-                Before a single word gets written, you know what's moving in your category. What the market is saying. Where the opportunity sits.
-              </p>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-                EVERYWHERE monitors your competitive landscape overnight. By the time you arrive, the briefing is ready. Signals are ranked by impact. Opportunities are scored. Content angles are mapped to the Work pipeline.
-              </p>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-                You don't start the day catching up. You start ahead.
+          <Reveal delay={80}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 28 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Watch · 01</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Set what you watch for</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                Interests steer what surfaces in your feed. Add the phrases and themes you care about, tune the set, then move on when you are ready to read signals.
               </p>
             </div>
           </Reveal>
-          <Reveal delay={180}>
+          <Reveal delay={140}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 16 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Watch · 02</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Open the briefing</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                EVERYWHERE monitors your landscape overnight. By the time you arrive, the briefing is ready. Signals rank by impact, angles map toward Work, and you are looking at ranked triggers, not noise.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={200}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 16 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Watch · 03</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Use one signal in Work</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                When a line is strong enough, tap Use this. It lands as a structured starter in Work. You stay in control of send, and you do not start the day catching up.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={260}>
             <WatchDeepDemo animKey="hiw-watch" />
           </Reveal>
         </div>
@@ -106,20 +120,34 @@ export default function HowItWorksPage() {
               One idea. All the way through.
             </p>
           </Reveal>
-          <Reveal delay={100}>
-            <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-                Work opens in Intake, moves through Outline and Edit, runs the blocking checkpoint pipeline, then lands in Review before you send to Wrap.
-              </p>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-                Your first listener opens every session with one question: What are we working on? The interview draws out what you actually mean to say. Not the surface version. The real one. The brief gets built. The structure follows. The draft gets written.
-              </p>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-                Then the quality system runs. Blocking checkpoints in sequence. Voice authenticity. Research validation. SLOP detection. Editorial excellence. Perspective and risk. Nothing exits Work until it passes. Then the Impact Score. Threshold: 75. No exceptions. Then the Human Voice Test. It either passes or it doesn't. Approve only activates when everything is ready.
+          <Reveal delay={80}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 28 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Work · 01</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Intake with Reed</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                Reed opens with what you want the reader to do. The interview pulls the real brief out of you, not the polite version. That agreement sets the spine for the whole piece.
               </p>
             </div>
           </Reveal>
-          <Reveal delay={180}>
+          <Reveal delay={140}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 16 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Work · 02</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Outline and edit</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                Build this turns the interview into an outline, then into draft text you can tighten. Work moves through Intake, Outline, and Edit before the quality system touches the file.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={200}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 16 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Work · 03</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Pipeline, review, send</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                Blocking checkpoints run in order: voice, research, SLOP, editorial, risk, Impact Score, Human Voice Test. Nothing exits Work until it clears. Review is where you confirm, then Send to Wrap moves the approved draft downstream.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={260}>
             <WorkDeepDemo animKey="hiw-work" />
           </Reveal>
         </div>
@@ -137,20 +165,34 @@ export default function HowItWorksPage() {
               Ideas become assets.
             </p>
           </Reveal>
-          <Reveal delay={100}>
-            <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-                Approved work moves to Wrap. Choose a format. Choose a channel. EVERYWHERE structures your thinking for the platform it's going to.
-              </p>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
-                LinkedIn post. Newsletter. Presentation. Podcast script. Report. One-pager.
-              </p>
-              <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", fontWeight: 500 }}>
-                The format changes. The thinking survives it.
+          <Reveal delay={80}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 28 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Wrap · 01</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Pick your surfaces</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                Approved work lands in Wrap. Toggle every channel that matters for this idea. On means Wrap includes it in the run, off skips it so you stay focused.
               </p>
             </div>
           </Reveal>
-          <Reveal delay={180}>
+          <Reveal delay={140}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 16 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Wrap · 02</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Run Wrap once</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                One button adapts structure, tone, and length for each surface. LinkedIn, newsletter, deck, script, report, one-pager. The format changes, the thinking survives it.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={200}>
+            <div className="xp-glass-card" style={{ padding: "28px 32px", marginTop: 16 }}>
+              <div className="xp-mono" style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 12 }}>Wrap · 03</div>
+              <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--xp-text)", marginBottom: 12 }}>Copy the versions you need</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--xp-sec)", margin: 0 }}>
+                You get paste-ready pieces in parallel. Same argument, different containers. Grab what fits, leave what does not, and ship without rewriting from zero.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={260}>
             <WrapDeepDemo animKey="hiw-wrap" />
           </Reveal>
         </div>
