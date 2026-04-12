@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MARKETING_CSS, EASE } from "../styles/marketing";
 import MarketingNav from "../components/marketing/MarketingNav";
+import MarketingBuiltForCta from "../components/marketing/MarketingBuiltForCta";
 import MarketingFooter from "../components/marketing/MarketingFooter";
 import Reveal from "../components/marketing/Reveal";
 
@@ -195,28 +196,7 @@ export default function HowItWorksPage() {
       }}>
         <div style={{ position: "relative", zIndex: 1 }}>
           <Reveal>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <h2 style={{
-                fontSize: "clamp(22px, 5vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.08,
-                color: "var(--xp-on-dark)", maxWidth: 720, marginBottom: 24, whiteSpace: "nowrap",
-              }}>
-                Built for one kind of person.
-              </h2>
-              <p style={{
-                fontSize: 16, lineHeight: 1.7, color: "var(--xp-dim-dark)", maxWidth: 560, margin: "0 auto 48px", textAlign: "left" as const,
-              }}>
-                You're not a marketer. You're not a content creator. You're a practitioner with something important to say. You've been waiting too long for the system to catch up to the thinking. EVERYWHERE Studio was built for you.
-              </p>
-              <button className="xp-btn xp-btn-liquid" onClick={goSignup} style={{ marginBottom: 16 }}>Request Access</button>
-              <div style={{ marginTop: 20 }}>
-                <button className="xp-btn xp-btn-glass" onClick={goSignin}>Sign In</button>
-              </div>
-              <div style={{ marginTop: 40 }}>
-                <a href="mailto:beta@everywherestudio.ai" className="xp-mono" style={{ fontSize: 12, color: "var(--xp-dim-dark)", textDecoration: "none" }}>
-                  beta@everywherestudio.ai
-                </a>
-              </div>
-            </div>
+            <MarketingBuiltForCta onRequestAccess={goSignup} onSignIn={goSignin} />
           </Reveal>
         </div>
       </section>
