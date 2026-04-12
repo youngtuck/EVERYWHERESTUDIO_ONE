@@ -3,7 +3,7 @@
  * Rewritten to match Alpha 3.001 wireframe: three center tabs, simplified right panel
  */
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, type NavigateFunction } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -16,6 +16,15 @@ import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
+
+/** Start Work with a fresh session and the intake composer pre-filled (user sends when ready). */
+function goToWorkFromWatchItem(navigate: NavigateFunction, title: string, summary: string) {
+  sessionStorage.setItem("ew-new-session", "1");
+  sessionStorage.setItem("ew-signal-draft-only", "1");
+  sessionStorage.setItem("ew-signal-text", title);
+  sessionStorage.setItem("ew-signal-detail", summary || "");
+  navigate("/studio/work");
+}
 
 type WatchTabId = "briefing" | "research" | "settings";
 
@@ -86,11 +95,29 @@ function SignalCard({ signal, ctaLabel, ctaColor, onCta }: {
   );
 }
 
-function OpportunityRow({ signal, active }: { signal: Signal; active: boolean }) {
+function OpportunityRow({ signal, active, onUseThis }: { signal: Signal; active: boolean; onUseThis?: () => void }) {
+  const ctaColor = "var(--blue)";
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0", opacity: active ? 1 : 0.5 }}>
+    <div style={{
+      display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 0",
+      borderBottom: "1px solid var(--glass-border)", opacity: active ? 1 : 0.55,
+    }}>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: active ? "var(--blue)" : "var(--line-2)", flexShrink: 0, marginTop: 5 }} />
-      <span style={{ fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5, flex: 1 }}>{signal.title}{signal.summary ? `, ${signal.summary}` : ""}</span>
+      <div style={{ flex: 1, fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5, minWidth: 0 }}>
+        <strong style={{ color: "var(--fg)" }}>{signal.title}</strong>
+        {signal.summary ? `, ${signal.summary}` : ""}
+      </div>
+      {onUseThis ? (
+        <button type="button" onClick={onUseThis} style={{
+          fontSize: 10, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const,
+          padding: "3px 8px", borderRadius: 4, border: `1px solid ${ctaColor}33`,
+          background: `${ctaColor}09`, color: ctaColor, flexShrink: 0,
+          fontFamily: FONT, transition: "opacity 0.1s",
+        }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = "0.75"; }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+        >Use this</button>
+      ) : null}
     </div>
   );
 }
@@ -822,9 +849,7 @@ export default function Watch() {
                         ctaColor={item.cta_label === "Note it" ? "var(--gold)" : "var(--blue)"}
                         onCta={() => {
                           if (item.cta_label !== "Note it") {
-                            sessionStorage.setItem("ew-signal-text", item.title);
-                            sessionStorage.setItem("ew-signal-detail", item.summary || "");
-                            nav("/studio/work");
+                            goToWorkFromWatchItem(nav, item.title, item.summary || "");
                           }
                         }}
                       />
@@ -838,7 +863,12 @@ export default function Watch() {
                     count={Math.min(5, opportunities.length)}
                   >
                     {opportunities.slice(0, 5).map((item, i) => (
-                      <OpportunityRow key={i} signal={item} active={item.priority !== "Low"} />
+                      <OpportunityRow
+                        key={i}
+                        signal={item}
+                        active={item.priority !== "Low"}
+                        onUseThis={() => goToWorkFromWatchItem(nav, item.title, item.summary || "")}
+                      />
                     ))}
                   </Card>
                 )}
@@ -849,7 +879,12 @@ export default function Watch() {
                     count={Math.min(5, marketSignals.length)}
                   >
                     {marketSignals.slice(0, 5).map((item, i) => (
-                      <OpportunityRow key={i} signal={item} active={item.priority === "High"} />
+                      <OpportunityRow
+                        key={i}
+                        signal={item}
+                        active={item.priority === "High"}
+                        onUseThis={() => goToWorkFromWatchItem(nav, item.title, item.summary || "")}
+                      />
                     ))}
                   </Card>
                 )}

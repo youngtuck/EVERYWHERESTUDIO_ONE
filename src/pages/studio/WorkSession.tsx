@@ -933,12 +933,15 @@ function ReviewDash({
 function StageIntake({
   messages, onSend, sending, isReady, onAdvance, userInitials, firstName,
   serializeSessionFiles, onCommitAttachedFiles, onNewSession,
+  composerSeed, onConsumeComposerSeed,
 }: {
   messages: ChatMessage[]; onSend: (text: string) => void | Promise<void>;
   sending: boolean; isReady: boolean; onAdvance: () => void; userInitials?: string; firstName?: string;
   serializeSessionFiles: (files: File[]) => Promise<string>;
   onCommitAttachedFiles?: (files: File[]) => void;
   onNewSession?: () => void;
+  composerSeed?: string | null;
+  onConsumeComposerSeed?: () => void;
 }) {
   const [input, setInput] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -979,6 +982,12 @@ function StageIntake({
     }
     prevSending.current = sending;
   }, [sending]);
+
+  useEffect(() => {
+    if (composerSeed == null || composerSeed === "") return;
+    setInput(composerSeed);
+    onConsumeComposerSeed?.();
+  }, [composerSeed, onConsumeComposerSeed]);
 
   const handleSend = () => {
     if (sending) return;
@@ -2801,6 +2810,8 @@ export default function WorkSession() {
     return [{ role: "reed", content: "Good to see you. What are you working on?" }];
   });
   const [intakeSending, setIntakeSending] = useState(false);
+  /** One-shot text for the Intake composer when arriving from Watch "Use this" (draft only, not sent). */
+  const [intakeComposerSeed, setIntakeComposerSeed] = useState<string | null>(null);
   const [intakeReady, setIntakeReady] = useState(persisted?.isReady ?? false);
   const [readySummary, setReadySummary] = useState("");
   const [structuredIntake, setStructuredIntake] = useState<StructuredIntake | null>(() => {
@@ -3085,27 +3096,6 @@ export default function WorkSession() {
 
     void run();
   }, [resumeParam, resumeOutputId, resumeTitle, user?.id, hydrateFromPersisted, stripResumeParams, goToStage]);
-
-  // ── Prefill from Watch/Pipeline signal ───────────────────────
-  // When "Use this in Work" is clicked from Watch or TheLot,
-  // sessionStorage has the signal title and detail.
-  // We seed Reed with the context so the user lands in a live conversation.
-  useEffect(() => {
-    const signalText = sessionStorage.getItem("ew-signal-text");
-    const signalDetail = sessionStorage.getItem("ew-signal-detail");
-    if (!signalText) return;
-
-    sessionStorage.removeItem("ew-signal-text");
-    sessionStorage.removeItem("ew-signal-detail");
-
-    const detail = signalDetail ? ` ${signalDetail}` : "";
-    setMessages([
-      { role: "reed", content: "Good to see you. What are you working on?" },
-      { role: "user", content: `I want to write about this: ${signalText}.${detail}` },
-      { role: "reed", content: `Good signal. Let me shape this into something worth publishing.\n\nTell me more about what you want to say.` },
-    ]);
-    // Keep stage at Intake so Reed continues the conversation naturally
-  }, []);
 
   // ── Reopen from Catalog or Pipeline ──────────────────────────
   // When a user hits "Reopen in Work" from OutputLibrary or TheLot,
@@ -4121,6 +4111,7 @@ export default function WorkSession() {
   const handleNewSession = useCallback(() => {
     clearSession();
     if (user?.id) void deleteRemoteWorkSession(user.id);
+    setIntakeComposerSeed(null);
     setMessages([{ role: "reed", content: "Good to see you. What are you working on?" }]);
     setStage("Intake");
     setIntakeSending(false);
@@ -4161,12 +4152,42 @@ export default function WorkSession() {
     setSessionNameOverride(null);
   }, [user?.id]);
 
-  // ── New Session from top nav ─────────────────────────────────
-  useEffect(() => {
-    const flag = sessionStorage.getItem("ew-new-session");
-    if (!flag) return;
-    sessionStorage.removeItem("ew-new-session");
-    handleNewSession();
+  const clearIntakeComposerSeed = useCallback(() => setIntakeComposerSeed(null), []);
+
+  // ── New Session (top bar) + Watch "Use this" / TheLot signal (once, before paint) ──
+  useLayoutEffect(() => {
+    const wantsNew = sessionStorage.getItem("ew-new-session") === "1";
+    const signalText = sessionStorage.getItem("ew-signal-text");
+    const signalDetail = sessionStorage.getItem("ew-signal-detail") ?? "";
+    const draftOnly = sessionStorage.getItem("ew-signal-draft-only") === "1";
+
+    if (wantsNew) {
+      sessionStorage.removeItem("ew-new-session");
+      handleNewSession();
+    }
+
+    if (!signalText) return;
+
+    if (draftOnly) {
+      sessionStorage.removeItem("ew-signal-draft-only");
+      sessionStorage.removeItem("ew-signal-text");
+      sessionStorage.removeItem("ew-signal-detail");
+      const trimmed = signalDetail.trim();
+      const prompt = trimmed
+        ? `From my Watch briefing:\n\n${signalText}\n\n${trimmed}\n\nHelp me turn this into a sharp piece.`
+        : `From my Watch briefing:\n\n${signalText}\n\nHelp me turn this into a sharp piece.`;
+      setIntakeComposerSeed(prompt);
+      return;
+    }
+
+    sessionStorage.removeItem("ew-signal-text");
+    sessionStorage.removeItem("ew-signal-detail");
+    const detail = signalDetail ? ` ${signalDetail}` : "";
+    setMessages([
+      { role: "reed", content: "Good to see you. What are you working on?" },
+      { role: "user", content: `I want to write about this: ${signalText}.${detail}` },
+      { role: "reed", content: "Good signal. Let me shape this into something worth publishing.\n\nTell me more about what you want to say." },
+    ]);
   }, [handleNewSession]);
 
   const handleGoBackToEdit = useCallback((instructions: string) => {
@@ -4813,6 +4834,8 @@ export default function WorkSession() {
             setSessionFiles(prev => [...prev, ...files.map(f => f.name)]);
           }}
           onNewSession={handleNewSession}
+          composerSeed={intakeComposerSeed}
+          onConsumeComposerSeed={clearIntakeComposerSeed}
         />
       )}
       {stage === "Outline" && (
