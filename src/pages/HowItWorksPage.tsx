@@ -5,6 +5,8 @@ import MarketingNav from "../components/marketing/MarketingNav";
 import MarketingBuiltForCta from "../components/marketing/MarketingBuiltForCta";
 import MarketingFooter from "../components/marketing/MarketingFooter";
 import Reveal from "../components/marketing/Reveal";
+import { marketingDemoClickRingKeyframes } from "../components/marketing/MarketingDemoCursor";
+import { WatchDeepDemo, WorkDeepDemo, WrapDeepDemo } from "../components/marketing/HowItWorksFlowDemos";
 
 const CHECKPOINTS = [
   { id: "dedup", name: "Deduplication", desc: "No repeated content." },
@@ -32,6 +34,7 @@ export default function HowItWorksPage() {
   return (
     <div className="xp" style={{ opacity: pageLoaded ? 1 : 0, transition: `opacity 0.5s ${EASE}` }}>
       <style>{MARKETING_CSS}</style>
+      <style>{marketingDemoClickRingKeyframes()}</style>
       <MarketingNav onSignin={goSignin} onSignup={goSignup} />
 
       {/* Hero */}
@@ -62,7 +65,7 @@ export default function HowItWorksPage() {
 
       {/* Phase One: Watch */}
       <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-white)" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase One</div>
             <h2 style={{ fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.06, marginBottom: 10 }}>
@@ -85,12 +88,15 @@ export default function HowItWorksPage() {
               </p>
             </div>
           </Reveal>
+          <Reveal delay={180}>
+            <WatchDeepDemo animKey="hiw-watch" />
+          </Reveal>
         </div>
       </section>
 
       {/* Phase Two: Work */}
       <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-off)" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase Two</div>
             <h2 style={{ fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.06, marginBottom: 10 }}>
@@ -103,7 +109,7 @@ export default function HowItWorksPage() {
           <Reveal delay={100}>
             <div className="xp-glass-card" style={{ padding: "32px 36px", marginTop: 32 }}>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-sec)", marginBottom: 24 }}>
-                Work has four stages: Intake, Outline, Edit, Review.
+                Work opens in Intake, moves through Outline and Edit, runs the blocking checkpoint pipeline, then lands in Review before you send to Wrap.
               </p>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "var(--xp-text)", marginBottom: 24 }}>
                 Your first listener opens every session with one question: What are we working on? The interview draws out what you actually mean to say. Not the surface version. The real one. The brief gets built. The structure follows. The draft gets written.
@@ -113,12 +119,15 @@ export default function HowItWorksPage() {
               </p>
             </div>
           </Reveal>
+          <Reveal delay={180}>
+            <WorkDeepDemo animKey="hiw-work" />
+          </Reveal>
         </div>
       </section>
 
       {/* Phase Three: Wrap */}
       <section data-nav-theme="light" className="xp-sect" style={{ padding: "var(--xp-section-pad-y) var(--xp-section-pad-x)", background: "var(--xp-white)" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <Reveal>
             <div className="xp-mono" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--xp-ter)", marginBottom: 40 }}>Phase Three</div>
             <h2 style={{ fontSize: "clamp(36px, 6vw, 72px)", fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.06, marginBottom: 10 }}>
@@ -140,6 +149,9 @@ export default function HowItWorksPage() {
                 The format changes. The thinking survives it.
               </p>
             </div>
+          </Reveal>
+          <Reveal delay={180}>
+            <WrapDeepDemo animKey="hiw-wrap" />
           </Reveal>
         </div>
       </section>
