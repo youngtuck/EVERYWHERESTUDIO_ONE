@@ -119,6 +119,28 @@ function workReviewFormatsToWrapChannels(rows: Format[]): string[] {
   return [...out];
 }
 
+/** Map each Review format tab to a Wrap sidebar / adapt-format channel key. Values must match `WRAP_CHANNEL_FORMATS` in Wrap.tsx. */
+function reviewFormatToWrapChannelKey(f: Format): string {
+  const fromMap = workReviewFormatsToWrapChannels([f]);
+  if (fromMap.length > 0) return fromMap[0];
+  return reviewFormatToApiFormat(f);
+}
+
+/** Per-channel adapted bodies for handoff to Wrap (deliver step). */
+function buildWrapSeededContentFromFormatDrafts(
+  formats: Format[],
+  formatDrafts: Record<string, { content?: string; metadata?: Record<string, string>; status?: string }>,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const f of formats) {
+    const fd = formatDrafts[f];
+    if (!fd || fd.status !== "done" || !String(fd.content || "").trim()) continue;
+    const wrapKey = reviewFormatToWrapChannelKey(f);
+    out[wrapKey] = fd.content;
+  }
+  return out;
+}
+
 const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
   LinkedIn: "socials", Newsletter: "newsletter", Podcast: "podcast",
   "Sunday Story": "essay", Article: "essay", Email: "newsletter",
@@ -3995,13 +4017,8 @@ export default function WorkSession() {
       } else {
         sessionStorage.removeItem("ew-wrap-presentation-minutes");
       }
-      const adaptedContent: Record<string, string> = {};
-      formats.forEach(f => {
-        if (formatDrafts[f]?.status === "done" && formatDrafts[f]?.content) {
-          adaptedContent[f] = formatDrafts[f].content;
-        }
-      });
-      if (primaryTypeId === "freestyle" && Object.keys(adaptedContent).length > 0) {
+      const adaptedContent = buildWrapSeededContentFromFormatDrafts(formats, formatDrafts);
+      if (Object.keys(adaptedContent).length > 0) {
         sessionStorage.setItem("ew-wrap-formats", JSON.stringify(adaptedContent));
       } else {
         sessionStorage.removeItem("ew-wrap-formats");

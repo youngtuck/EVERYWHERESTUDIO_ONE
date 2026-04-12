@@ -466,7 +466,7 @@ export default function WrapPage() {
       try {
         const parsed = JSON.parse(wrapFormats) as unknown;
         if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          const keys = Object.keys(parsed as Record<string, string>);
+          const keys = Object.keys(parsed as Record<string, string>).filter(k => isValidWrapChannel(k));
           if (keys.length > 0) {
             setFormats(keys);
             setActiveFormat(keys[0]);
@@ -1665,6 +1665,11 @@ export default function WrapPage() {
             }}>
               Versions · {formats.length}
             </div>
+            {formats.length > 1 ? (
+              <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.45, padding: "0 8px 10px" }}>
+                Each label is a different wrapped channel. Click one to open it in the reader.
+              </div>
+            ) : null}
             {formats.map(fmt => {
               const tabErr = formatContents[fmt]?.status === "error";
               const active = activeFormat === fmt;
