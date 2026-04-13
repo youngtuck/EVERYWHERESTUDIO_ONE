@@ -8,6 +8,64 @@
  * Element gap: 12px (tight), 16px (standard), 24px (relaxed)
  * ─────────────────────────────────────────────────── */
 
+/* ─── STUDIO VIEWPORT (StudioShell) ─────────────────────────────
+   Shell fills one viewport; document does not scroll behind studio.
+   Center main (.studio-stage-scroll) is the primary vertical scroll region.
+   Sidebar nav + advisor flyout use their own overflow-y when content is tall.
+────────────────────────────────────────────────────────────────── */
+html:has(.studio-app-shell),
+html:has(.studio-app-shell) body {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.studio-app-shell {
+  box-sizing: border-box;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  width: 100%;
+}
+
+@supports (height: 100dvh) {
+  .studio-app-shell {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+
+.studio-app-main-column {
+  min-height: 0;
+}
+
+.studio-app-shell .studio-stage-canvas {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.studio-app-shell .studio-main-inner.studio-stage-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Inspector flyout: scroll region (aside is flex column in studio-liquid-glass.css) */
+.studio-reed-flyout .studio-advisor-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Shared keyframes for studio pages */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import "../../pages/studio/shared.css";
 import { ShellContext, useShell } from "./StudioShellContext";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import StudioSidebar from "./StudioSidebar";
@@ -283,10 +284,15 @@ export default function StudioShell() {
       reedThread, setReedThread,
     }}>
       <ProjectProvider>
-      <div style={{
-        display: "flex", height: "100vh",
-        background: "var(--bg)", fontFamily: "var(--font)", overflow: "hidden",
-      }}>
+      <div
+        className="studio-app-shell"
+        style={{
+          display: "flex",
+          background: "var(--bg)", fontFamily: "var(--font)",
+          minHeight: 0,
+          width: "100%",
+        }}
+      >
         <StudioGlobalSearch />
 
         {/* Mobile sidebar overlay */}
@@ -297,8 +303,8 @@ export default function StudioShell() {
         {/* Left Rail */}
         <div style={
           isMobile
-            ? { position: "fixed", top: 0, left: 0, height: "100vh", width: 220, transform: sidebarOpen ? "translate3d(0,0,0)" : "translate3d(-100%,0,0)", transition: "transform 0.22s cubic-bezier(0.16,1,0.3,1)", zIndex: 40 }
-            : { position: "relative", height: "100vh", width: sidebarCollapsed ? 52 : 220, flexShrink: 0, zIndex: 1, transition: "width 0.18s ease" }
+            ? { position: "fixed", top: 0, left: 0, bottom: 0, width: 220, transform: sidebarOpen ? "translate3d(0,0,0)" : "translate3d(-100%,0,0)", transition: "transform 0.22s cubic-bezier(0.16,1,0.3,1)", zIndex: 40 }
+            : { position: "relative", alignSelf: "stretch", height: "100%", minHeight: 0, width: sidebarCollapsed ? 52 : 220, flexShrink: 0, zIndex: 1, transition: "width 0.18s ease" }
         }>
           <StudioSidebar
             collapsed={!isMobile && sidebarCollapsed}
@@ -308,7 +314,7 @@ export default function StudioShell() {
         </div>
 
         {/* Main column */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, minHeight: 0 }}>
+        <div className="studio-app-main-column" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, minHeight: 0 }}>
           {/* Top bar */}
           {isMobile ? (
             <div className="liquid-glass" style={{ height: 48, borderRadius: 0, borderBottom: "1px solid rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 }}>
@@ -340,11 +346,11 @@ export default function StudioShell() {
           )}
 
           {/* Main canvas (Reed / dashboard is a floating glass flyout) */}
-          <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
+          <div className="studio-stage-canvas" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0, minWidth: 0 }}>
             <main
-              className={`studio-main-inner studio-content-substrate${studioGlassDense ? " studio-glass-dense" : ""}`}
+              className={`studio-main-inner studio-stage-scroll studio-content-substrate${studioGlassDense ? " studio-glass-dense" : ""}`}
               style={{
-                flex: 1, overflowY: "auto", minWidth: 0,
+                flex: 1, minWidth: 0,
                 paddingBottom: isMobile ? 80 : 0, position: "relative",
                 borderRadius: "12px 0 0 0",
                 minHeight: 0,
@@ -440,7 +446,7 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
           </button>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "12px 12px 10px" }}>
+        <div className="studio-advisor-scroll" style={{ flex: 1, minHeight: 0, padding: "12px 12px 10px" }}>
           <InspectorEyebrow>Feedback</InspectorEyebrow>
           <div style={{ marginBottom: 2 }}>
             {feedbackBody ?? <AdvisorFeedbackFallback pathname={pathname} />}

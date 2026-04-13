@@ -4883,83 +4883,12 @@ export default function WorkSession() {
   // RENDER
   // ─────────────────────────────────────────────────────────────
 
-  // Measure the actual visible height of the content area, accounting for zoom
-  const [chatHeight, setChatHeight] = useState<string>("100%");
-  const chatHeightRef = useRef<string>("100%");
-
-  useEffect(() => {
-    const measure = () => {
-      const main = document.querySelector(".studio-main-inner") as HTMLElement;
-      if (!main) return;
-      const rect = main.getBoundingClientRect();
-      const root = document.getElementById("root");
-      const zoom = root ? (parseFloat(getComputedStyle(root).zoom as string) || 1) : 1;
-      // The visible height = from the top of main to the bottom of the viewport,
-      // converted from viewport pixels to CSS pixels by dividing by zoom.
-      // rect.top is the distance from viewport top to main top (in viewport px).
-      // window.innerHeight is the viewport height (in viewport px).
-      // The visible portion of main = min(rect.height, innerHeight - rect.top)
-      const visibleViewportPx = Math.min(rect.height, window.innerHeight - rect.top);
-      const cssHeight = Math.floor(visibleViewportPx / zoom);
-      const val = cssHeight + "px";
-      if (chatHeightRef.current !== val) {
-        chatHeightRef.current = val;
-        setChatHeight(val);
-      }
-    };
-    measure();
-    // Re-measure on resize
-    window.addEventListener("resize", measure);
-    // Also observe the main element for size changes
-    const main = document.querySelector(".studio-main-inner") as HTMLElement;
-    let ro: ResizeObserver | null = null;
-    if (main) {
-      ro = new ResizeObserver(measure);
-      ro.observe(main);
-    }
-    return () => {
-      window.removeEventListener("resize", measure);
-      ro?.disconnect();
-    };
-  }, []);
-
-  // Lock parent main + body + html scroll when WorkSession is active
-  useEffect(() => {
-    const main = document.querySelector(".studio-main-inner") as HTMLElement;
-    if (!main) return;
-
-    // Save originals
-    const origMainOverflow = main.style.overflow;
-    const origMainOverflowY = main.style.overflowY;
-    const origMainPadding = main.style.padding;
-    const origBodyOverflow = document.body.style.overflow;
-    const origHtmlOverflow = document.documentElement.style.overflow;
-
-    // Lock ALL scrolling: main, body, html
-    main.style.setProperty("overflow", "hidden", "important");
-    main.style.setProperty("overflow-y", "hidden", "important");
-    main.style.padding = "0";
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-
-    return () => {
-      main.style.removeProperty("overflow");
-      main.style.removeProperty("overflow-y");
-      main.style.overflow = origMainOverflow;
-      main.style.overflowY = origMainOverflowY;
-      main.style.padding = origMainPadding;
-      document.body.style.overflow = origBodyOverflow;
-      document.documentElement.style.overflow = origHtmlOverflow;
-    };
-  }, []);
-
   const resolvedCatalogTypeLabel = catalogOutputTypeLabel(outputType);
 
   return (
     <div style={{
-      position: "absolute",
-      top: 0, left: 0, right: 0,
-      height: chatHeight,
+      height: "100%",
+      minHeight: 0,
       display: "flex", flexDirection: "column",
       overflow: "hidden", fontFamily: FONT,
     }}>
