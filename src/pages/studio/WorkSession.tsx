@@ -135,7 +135,7 @@ const IO_OUTLINE_ENTER_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 const INTAKE_DOCKED_COMPOSER_WRAP = {
   display: "flex",
   flexDirection: "column",
-  padding: "8px clamp(12px, 4vw, 24px) max(8px, env(safe-area-inset-bottom))",
+  padding: "4px clamp(12px, 4vw, 24px) max(4px, env(safe-area-inset-bottom))",
   background: "var(--bg)",
   borderTop: "1px solid var(--glass-border)",
   flexShrink: 0,
@@ -1739,7 +1739,7 @@ function ChatInputBar({
         style={{
           display: "flex", flexDirection: "column",
           borderRadius: 16,
-          padding: pendingFiles.length > 0 ? "8px min(12px, 3vw) 10px min(14px, 3.5vw)" : "10px min(12px, 3vw) 10px min(16px, 4vw)",
+          padding: pendingFiles.length > 0 ? "8px min(12px, 3vw) 10px min(14px, 3.5vw)" : "8px min(12px, 3vw) 8px min(16px, 4vw)",
           transition: "border-color 0.2s, box-shadow 0.2s",
         }}
         onFocus={e => {
@@ -1770,8 +1770,8 @@ function ChatInputBar({
               maxHeight: "min(72vh, 800px)",
               overflowY: "hidden",
               opacity: disabled ? 0.5 : 1,
-              minHeight: 44,
-              padding: "8px 4px 8px 0",
+              minHeight: 40,
+              padding: "6px 4px 6px 0",
             }}
             onInput={adjustComposerHeight}
           />
@@ -6073,7 +6073,7 @@ export default function WorkSession() {
             {stage === "Intake" && (
               <div style={{ width: "100%", maxWidth: "clamp(400px, 60vw, 780px)", margin: "0 auto" }}>
                 {/* Progress bar: same width as composer, directly above it */}
-                <div style={{ marginBottom: 6 }}>
+                <div style={{ marginBottom: 4 }}>
                   <div style={{ width: "100%", height: 4, background: "var(--glass-border)", borderRadius: 2, overflow: "hidden" }}>
                     <div style={{
                       height: "100%", width: `${Math.round(intakeProgressValue * 100)}%`,
@@ -6081,7 +6081,7 @@ export default function WorkSession() {
                       transition: "width 0.3s ease",
                     }} />
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
                     <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
                       {intakeReedQCount >= intakeTotalQ
                         ? `${intakeTotalQ} of ${intakeTotalQ} questions answered`
