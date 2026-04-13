@@ -1258,7 +1258,7 @@ function ReedTextRenderer({ text }: { text: string }) {
         if (isSearchLine(line)) {
           return (
             <div key={li} style={{
-              fontSize: 11, color: "var(--blue)", fontStyle: "normal",
+              fontSize: 15, lineHeight: 1.65, color: "var(--blue)", fontStyle: "normal",
               padding: "3px 0", display: "flex", alignItems: "center", gap: 6,
             }}>
               <svg style={{ width: 12, height: 12, stroke: "var(--blue)", strokeWidth: 2, fill: "none", flexShrink: 0 }} viewBox="0 0 24 24">
@@ -1522,7 +1522,7 @@ function ChatInputBar({
         onChange={handleFileChange}
       />
       <div
-        className="liquid-glass liquid-glass-chat-composer"
+        className="liquid-glass liquid-glass-chat-composer work-intake-composer"
         style={{
           display: "flex", flexDirection: "column",
           borderRadius: 16,
@@ -1553,8 +1553,7 @@ function ChatInputBar({
               flex: "1 1 0%",
               resize: "none",
               background: "transparent", border: "none", outline: "none",
-              fontSize: 14, color: "var(--fg)", fontFamily: FONT,
-              lineHeight: 1.5,
+              color: "var(--fg)", fontFamily: FONT,
               maxHeight: "min(72vh, 800px)",
               overflowY: "hidden",
               opacity: disabled ? 0.5 : 1,
@@ -2074,7 +2073,7 @@ function StageEdit({
                       resize: "none",
                       fontFamily: "var(--font)",
                       fontSize: 15,
-                      lineHeight: 1.75,
+                      lineHeight: 1.7,
                       color: "var(--fg)",
                       padding: 0,
                       overflowY: "auto",

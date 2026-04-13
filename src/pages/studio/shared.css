@@ -47,11 +47,11 @@
   border-radius: 4px 14px 14px 14px !important;
   padding: 10px 14px;
   max-width: 560px;
-  font-size: 13px;
-  line-height: 1.35;
+  font-size: 15px;
+  line-height: 1.65;
 }
 .reed-bubble-wrap p,
-.reed-bubble-wrap div { font-size: 13px; color: var(--fg-2); line-height: 1.35; }
+.reed-bubble-wrap div { font-size: 15px; color: var(--fg-2); line-height: 1.65; }
 .reed-bubble-wrap p strong,
 .reed-bubble-wrap div strong { color: var(--fg); }
 .user-bubble-wrap {
@@ -59,7 +59,7 @@
   padding: 10px 14px;
   max-width: 420px;
 }
-.user-bubble-wrap p { font-size: 13px; color: rgba(255,255,255,0.92); line-height: 1.35; }
+.user-bubble-wrap p { font-size: 15px; color: rgba(255,255,255,0.92); line-height: 1.65; }
 
 /* Intake composer: avoid clipping multi-line textarea; flex children may shrink */
 .liquid-glass.liquid-glass-chat-composer {
@@ -135,6 +135,15 @@
   min-width: 0;
   width: 100%;
   max-width: 100%;
+}
+
+/* Intake stage only: composer text and placeholder (outline bottom bar uses a separate input) */
+.work-intake-composer .reed-input {
+  font-size: 15px;
+  line-height: 1.65;
+}
+.work-intake-composer .reed-input::placeholder {
+  font-size: 15px;
 }
 
 @media (max-width: 768px) {
@@ -283,7 +292,7 @@
   border-radius: 6px; cursor: pointer;
 }
 .os-outline-done:hover { color: var(--fg-2); border-color: var(--fg-3); }
-.os-content { flex: 1; font-size: 13px; color: var(--fg); line-height: 1.5; font-weight: 500; outline: none; cursor: text; border-radius: 3px; padding: 1px 4px; min-width: 0; }
+.os-content { flex: 1; font-size: 13px; color: var(--fg); line-height: 1.6; font-weight: 500; outline: none; cursor: text; border-radius: 3px; padding: 1px 4px; min-width: 0; }
 .os-content:hover { background: rgba(245, 198, 66, 0.1); }
 .os-content:focus { background: rgba(245, 198, 66, 0.12); box-shadow: inset 0 0 0 1px rgba(245, 198, 66, 0.35); }
 .os-content::selection { background: rgba(200, 169, 110, 0.38); color: var(--fg); }
