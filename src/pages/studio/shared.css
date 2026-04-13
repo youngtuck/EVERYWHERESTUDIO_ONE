@@ -286,19 +286,48 @@ html:has(.studio-app-shell) body {
 .os-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--glass-border); position: relative; }
 .os-row:last-child { border-bottom: none; }
 .os-label-anchor {
-  width: 76px; min-width: 76px; flex-shrink: 0; padding-top: 1px;
+  width: 88px; min-width: 88px; flex-shrink: 0; padding-top: 1px;
   position: relative; align-self: flex-start;
 }
+.os-label-with-hint {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+.os-label-edit-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.28);
+}
+.os-row:hover .os-label-edit-icon {
+  opacity: 0.55;
+}
+[data-theme="light"] .os-label-edit-icon {
+  color: rgba(10, 10, 10, 0.28);
+}
 .os-label-btn {
-  display: block; width: 100%; margin: 0; padding: 0;
+  display: block; flex: 1; min-width: 0; margin: 0; padding: 0;
   background: none; border: none; cursor: pointer; text-align: left;
   font-size: 10px; font-weight: 600; color: var(--line-2);
   text-transform: uppercase; letter-spacing: 0.08em;
   font-family: var(--font);
-  border-bottom: 1px dashed transparent;
+  border-bottom: 1px solid transparent;
   transition: color 0.12s ease, border-color 0.12s ease;
 }
-.os-label-btn:hover { color: var(--fg); border-bottom-color: rgba(245, 198, 66, 0.45); }
+.os-label-btn:hover {
+  color: var(--fg);
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+[data-theme="light"] .os-label-btn:hover {
+  border-bottom-color: rgba(10, 10, 10, 0.2);
+}
 .os-label-btn:focus-visible {
   outline: none;
   color: var(--fg);
@@ -322,10 +351,7 @@ html:has(.studio-app-shell) body {
 }
 .os-outline-pop-h {
   font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--gold); margin-bottom: 4px;
-}
-.os-outline-pop-sub {
-  font-size: 10px; color: var(--fg-3); line-height: 1.45; margin: 0 0 8px;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 8px;
 }
 .os-outline-opt {
   display: block; width: 100%; text-align: left; margin: 0 0 6px; padding: 8px 10px;
@@ -350,7 +376,22 @@ html:has(.studio-app-shell) body {
   border-radius: 6px; cursor: pointer;
 }
 .os-outline-done:hover { color: var(--fg-2); border-color: var(--fg-3); }
-.os-content { flex: 1; font-size: 13px; color: var(--fg); line-height: 1.6; font-weight: 500; outline: none; cursor: text; border-radius: 3px; padding: 1px 4px; min-width: 0; }
+.os-content {
+  flex: 1;
+  font-size: 13px;
+  color: var(--fg);
+  line-height: 1.6;
+  font-weight: 500;
+  outline: none;
+  cursor: default;
+  border-radius: 3px;
+  padding: 1px 4px;
+  min-width: 0;
+}
+.os-content:hover,
+.os-content:focus {
+  cursor: text;
+}
 .os-content:hover { background: rgba(245, 198, 66, 0.1); }
 .os-content:focus { background: rgba(245, 198, 66, 0.12); box-shadow: inset 0 0 0 1px rgba(245, 198, 66, 0.35); }
 .os-content::selection { background: rgba(200, 169, 110, 0.38); color: var(--fg); }

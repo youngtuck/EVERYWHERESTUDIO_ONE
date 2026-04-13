@@ -155,19 +155,6 @@ function formatsFromPersisted(raw: string[] | undefined): Format[] {
   return raw.filter((x): x is Format => allowed.has(x));
 }
 
-/** Catalog row `output_type` id to display label (picker list plus common API ids). */
-function catalogOutputTypeLabel(id: string | null): string | null {
-  if (!id) return null;
-  const fromPicker = OUTPUT_TYPES.find(t => t.id === id);
-  if (fromPicker) return fromPicker.label;
-  const extra: Record<string, string> = {
-    socials: "LinkedIn Post",
-    newsletter: "Newsletter",
-    sunday_story: "Sunday Story",
-  };
-  return extra[id] || id.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-}
-
 const WORD_TARGETS: Record<string, number> = {
   essay: 2500, talk: 3000, podcast: 1500, video_script: 800, email: 300,
   presentation: 1200, proposal: 1500, one_pager: 400, report: 2000,
@@ -1663,6 +1650,16 @@ function StageOutline({
           ) : (
             <>
               {/* Lens cards: two angles side by side */}
+              <p style={{
+                fontSize: 12,
+                fontWeight: 400,
+                color: "rgba(255,255,255,0.45)",
+                margin: "0 0 12px",
+                lineHeight: 1.45,
+                maxWidth: 560,
+              }}>
+                Here are two ways to look at your idea.
+              </p>
               <div className="lens-row">
               <div
                 className={`lens-card${activeAngle === "a" ? " selected" : ""}`}
@@ -1670,14 +1667,6 @@ function StageOutline({
               >
                 <div className="lens-title-row">
                   <div className="lens-title">{lensA.title}</div>
-                  <div style={{ display: "flex", gap: 2, alignItems: "center", flexShrink: 0 }}>
-                    <button onClick={e => e.stopPropagation()} title="More like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: activeAngle === "a" ? "var(--blue)" : "var(--line-2)" }}>
-                      <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-                    </button>
-                    <button onClick={e => e.stopPropagation()} title="Less like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "var(--line-2)" }}>
-                      <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
-                    </button>
-                  </div>
                 </div>
                 <div className="lens-desc">{lensA.desc}</div>
                 {activeAngle === "a" && <div className="lens-selected-badge">SELECTED &#10003;</div>}
@@ -1688,25 +1677,12 @@ function StageOutline({
               >
                 <div className="lens-title-row">
                   <div className="lens-title">{lensB.title}</div>
-                  <div style={{ display: "flex", gap: 2, alignItems: "center", flexShrink: 0 }}>
-                    <button onClick={e => e.stopPropagation()} title="More like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: activeAngle === "b" ? "var(--blue)" : "var(--line-2)" }}>
-                      <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-                    </button>
-                    <button onClick={e => e.stopPropagation()} title="Less like this" style={{ width: 26, height: 26, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "var(--line-2)" }}>
-                      <svg style={{ width: 14, height: 14, stroke: "currentColor", strokeWidth: 1.75, fill: "none" }} viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
-                    </button>
-                  </div>
                 </div>
                 <div className="lens-desc">{lensB.desc}</div>
                 {activeAngle === "b" && <div className="lens-selected-badge">SELECTED &#10003;</div>}
               </div>
             </div>
 
-            <p style={{
-              fontSize: 11, fontWeight: 500, color: "var(--fg-3)", lineHeight: 1.5, margin: "0 0 12px", maxWidth: 560,
-            }}>
-              Click Title, Hook, Body, Stakes, or Close on the left to compare the two angles for that line and drop one in. Edit the field on the right anytime.
-            </p>
             <div style={{
               marginBottom: 14,
               padding: 12,
@@ -1907,19 +1883,26 @@ function OutlineRowComponent({
     <div className="os-row">
       <div ref={anchorRef} className="os-label-anchor">
         {hasLabel ? (
-          <button
-            type="button"
-            className="os-label-btn"
-            onClick={onLabelClick}
-            title={canCompare ? "Compare both angles for this line" : "Focus the line on the right to edit"}
-          >
-            {label}
-          </button>
+          <div className="os-label-with-hint">
+            <button
+              type="button"
+              className="os-label-btn"
+              onClick={onLabelClick}
+              title={canCompare ? "Compare both angles for this line" : "Focus the line on the right to edit"}
+            >
+              {label}
+            </button>
+            <span className="os-label-edit-icon" aria-hidden>
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            </span>
+          </div>
         ) : null}
         {popOpen && canCompare ? (
           <div className="os-outline-pop" role="dialog" aria-label={`${label} angle options`}>
             <div className="os-outline-pop-h">{label}</div>
-            <p className="os-outline-pop-sub">Pick a version from either angle, then tune it in the field on the right.</p>
             {linesDiffer ? (
               <>
                 <button type="button" className="os-outline-opt" onClick={() => applyLine(aText)}>
@@ -4883,8 +4866,6 @@ export default function WorkSession() {
   // RENDER
   // ─────────────────────────────────────────────────────────────
 
-  const resolvedCatalogTypeLabel = catalogOutputTypeLabel(outputType);
-
   return (
     <div style={{
       height: "100%",
@@ -4892,49 +4873,6 @@ export default function WorkSession() {
       display: "flex", flexDirection: "column",
       overflow: "hidden", fontFamily: FONT,
     }}>
-      <div
-        title={resolvedCatalogTypeLabel ? undefined : "This value is not editable here. It is set when the draft is saved to Catalog."}
-        style={{
-          padding: "6px 20px",
-          fontSize: 10,
-          fontWeight: 600,
-          color: "var(--fg-3)",
-          letterSpacing: "0.05em",
-          display: "flex", alignItems: "center", gap: 8,
-          flexShrink: 0, flexWrap: "wrap" as const,
-        }}
-      >
-        <span style={{ textTransform: "uppercase" as const }}>Catalog type:</span>
-        {resolvedCatalogTypeLabel ? (
-          <span
-            title="How this piece is filed in Catalog."
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "3px 10px", borderRadius: 99,
-              background: "rgba(245,198,66,0.12)",
-              border: "1px solid rgba(245,198,66,0.3)",
-              fontSize: 10, fontWeight: 600, color: "#9A7030",
-            }}
-          >
-            {resolvedCatalogTypeLabel}
-          </span>
-        ) : (
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 500,
-              color: "var(--fg-2)",
-              letterSpacing: "0.02em",
-              lineHeight: 1.45,
-              maxWidth: 520,
-            }}
-          >
-            {outputId
-              ? "Loading how this piece is filed in Catalog…"
-              : "Filled in automatically when your draft is first saved to Catalog."}
-          </span>
-        )}
-      </div>
       <div style={{
         flex: 1,
         minHeight: 0,
