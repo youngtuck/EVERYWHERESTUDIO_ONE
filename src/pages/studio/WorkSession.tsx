@@ -1205,7 +1205,7 @@ function StageIntake({
 
         {/* Intake progress bar */}
         <div style={{
-          padding: "8px clamp(12px, 4vw, 24px) 0",
+          padding: "8px clamp(12px, 4vw, 24px) 8px",
           background: "transparent",
           borderTop: "1px solid rgba(0,0,0,0.06)",
           flexShrink: 0,
@@ -1217,7 +1217,7 @@ function StageIntake({
               transition: "width 0.3s ease",
             }} />
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 5 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
             <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
               {reedQuestionCount >= totalQuestions
                 ? `${totalQuestions} of ${totalQuestions} questions answered`
@@ -1229,7 +1229,7 @@ function StageIntake({
                 onClick={onAdvance}
                 style={{
                   fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
-                  border: "none", cursor: "pointer", padding: 0, fontFamily: FONT,
+                  border: "none", cursor: "pointer", padding: "4px 2px", fontFamily: FONT,
                   letterSpacing: "0.01em",
                 }}
               >
@@ -1421,11 +1421,14 @@ function ChatPendingAttachments({
 }) {
   if (files.length === 0) return null;
   return (
-    <div style={{
-      display: "flex", flexWrap: "wrap", gap: 6,
-      padding: "2px 2px 6px", width: "100%",
-      borderBottom: "1px solid var(--glass-border)",
-    }}>
+    <div
+      className="chat-pending-attachments"
+      style={{
+        display: "flex", flexWrap: "wrap", gap: 6,
+        padding: "4px 2px 8px", width: "100%",
+        borderBottom: "1px solid var(--glass-border)",
+      }}
+    >
       {files.map((file, i) => (
         <div
           key={`${file.name}-${file.size}-${file.lastModified}-${i}`}
@@ -1828,7 +1831,7 @@ function StageOutline({
         </div>
 
         {!building && (
-          <div style={{ display: "flex", justifyContent: "center", padding: "8px clamp(12px, 4vw, 24px) 0" }}>
+          <div style={{ display: "flex", justifyContent: "center", padding: "8px clamp(12px, 4vw, 24px) 8px" }}>
             <button
               type="button"
               className="liquid-glass-btn-gold"

@@ -188,6 +188,10 @@ html:has(.studio-app-shell) body {
   min-width: 0;
   box-sizing: border-box;
 }
+/* Attachment strip ends with a divider; keep the control row from sitting on that line */
+.liquid-glass-chat-composer > .chat-pending-attachments + .work-chat-input-row {
+  margin-top: 8px;
+}
 .work-chat-input-row .reed-input {
   box-sizing: border-box;
   min-width: 0;
@@ -283,7 +287,7 @@ html:has(.studio-app-shell) body {
 .lens-selected-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
 
 /* ── OUTLINE ROWS (label opens angle picker; content is editable) ── */
-.os-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--glass-border); position: relative; }
+.os-row { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--glass-border); position: relative; }
 .os-row:last-child { border-bottom: none; }
 .os-label-anchor {
   width: 88px; min-width: 88px; flex-shrink: 0; padding-top: 1px;
