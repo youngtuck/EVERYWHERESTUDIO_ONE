@@ -358,6 +358,8 @@ export default function StudioShell() {
               className={`studio-main-inner studio-stage-scroll studio-content-substrate${studioGlassDense ? " studio-glass-dense" : ""}`}
               style={{
                 minWidth: 0,
+                minHeight: 0,
+                overflow: "hidden",
                 paddingBottom: isMobile ? 80 : 0, position: "relative",
                 borderRadius: "12px 0 0 0",
               }}

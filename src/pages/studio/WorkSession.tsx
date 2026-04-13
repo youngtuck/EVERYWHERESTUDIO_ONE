@@ -135,7 +135,7 @@ const IO_OUTLINE_ENTER_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 const INTAKE_DOCKED_COMPOSER_WRAP = {
   display: "flex",
   flexDirection: "column",
-  padding: "8px clamp(12px, 4vw, 24px) max(12px, env(safe-area-inset-bottom))",
+  padding: "8px clamp(12px, 4vw, 24px) max(8px, env(safe-area-inset-bottom))",
   background: "var(--bg)",
   borderTop: "1px solid var(--glass-border)",
   flexShrink: 0,

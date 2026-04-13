@@ -112,6 +112,7 @@ html:has(.studio-app-shell--viewport-lock) body {
 
 .studio-app-shell--viewport-lock .studio-app-main-column {
   min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
