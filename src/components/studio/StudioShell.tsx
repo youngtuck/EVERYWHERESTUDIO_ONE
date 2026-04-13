@@ -276,6 +276,8 @@ export default function StudioShell() {
     location.pathname.startsWith("/studio/admin") ||
     location.pathname.startsWith("/studio/lot");
 
+  const studioViewportLock = location.pathname.startsWith("/studio/work");
+
   return (
     <ShellContext.Provider value={{
       searchOpen, setSearchOpen,
@@ -289,11 +291,9 @@ export default function StudioShell() {
     }}>
       <ProjectProvider>
       <div
-        className="studio-app-shell"
+        className={`studio-app-shell ${studioViewportLock ? "studio-app-shell--viewport-lock" : "studio-app-shell--document-scroll"}`}
         style={{
-          display: "flex",
           background: "var(--bg)", fontFamily: "var(--font)",
-          minHeight: 0,
           width: "100%",
         }}
       >
@@ -305,11 +305,14 @@ export default function StudioShell() {
         )}
 
         {/* Left Rail */}
-        <div style={
+        <div
+          className={isMobile ? undefined : "studio-app-sidebar-wrap"}
+          style={
           isMobile
             ? { position: "fixed", top: 0, left: 0, bottom: 0, width: 220, transform: sidebarOpen ? "translate3d(0,0,0)" : "translate3d(-100%,0,0)", transition: "transform 0.22s cubic-bezier(0.16,1,0.3,1)", zIndex: 40 }
-            : { position: "relative", alignSelf: "stretch", height: "100%", minHeight: 0, width: sidebarCollapsed ? 52 : 220, flexShrink: 0, zIndex: 1, transition: "width 0.18s ease" }
-        }>
+            : { position: "relative", width: sidebarCollapsed ? 52 : 220, flexShrink: 0, zIndex: 1, transition: "width 0.18s ease" }
+        }
+        >
           <StudioSidebar
             collapsed={!isMobile && sidebarCollapsed}
             onToggleCollapsed={() => setSidebarCollapsed(c => !c)}
@@ -318,7 +321,7 @@ export default function StudioShell() {
         </div>
 
         {/* Main column */}
-        <div className="studio-app-main-column" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, minHeight: 0 }}>
+        <div className="studio-app-main-column" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           {/* Top bar */}
           {isMobile ? (
             <div className="liquid-glass" style={{ height: 48, borderRadius: 0, borderBottom: "1px solid rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 }}>
@@ -350,14 +353,13 @@ export default function StudioShell() {
           )}
 
           {/* Main canvas (Reed / dashboard is a floating glass flyout) */}
-          <div className="studio-stage-canvas" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0, minWidth: 0 }}>
+          <div className="studio-stage-canvas" style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
             <main
               className={`studio-main-inner studio-stage-scroll studio-content-substrate${studioGlassDense ? " studio-glass-dense" : ""}`}
               style={{
-                flex: 1, minWidth: 0,
+                minWidth: 0,
                 paddingBottom: isMobile ? 80 : 0, position: "relative",
                 borderRadius: "12px 0 0 0",
-                minHeight: 0,
               }}
             >
               <Outlet />

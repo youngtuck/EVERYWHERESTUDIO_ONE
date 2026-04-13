@@ -9,12 +9,15 @@
  * ─────────────────────────────────────────────────── */
 
 /* ─── STUDIO VIEWPORT (StudioShell) ─────────────────────────────
-   Shell fills one viewport; document does not scroll behind studio.
-   Center main (.studio-stage-scroll) is the primary vertical scroll region.
-   Left rail: .studio-sidebar-glass-inner scrolls when nav + footer exceed height.
+   Default (.studio-app-shell--document-scroll): html/body scroll as one page.
+   Sidebar and main grow with content; no nested viewport trap.
+
+   Work (.studio-app-shell--viewport-lock): lock document; flex column fills
+   one viewport so only WorkSession can bind overflow to the Reed chat list.
 ────────────────────────────────────────────────────────────────── */
-html:has(.studio-app-shell),
-html:has(.studio-app-shell) body {
+
+html:has(.studio-app-shell--viewport-lock),
+html:has(.studio-app-shell--viewport-lock) body {
   height: 100%;
   max-height: 100%;
   overflow: hidden;
@@ -22,44 +25,113 @@ html:has(.studio-app-shell) body {
 
 .studio-app-shell {
   box-sizing: border-box;
-  height: 100vh;
-  max-height: 100vh;
-  overflow: hidden;
   width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+/* Most routes: one scrollbar for the whole studio (sidebar + main together) */
+.studio-app-shell--document-scroll {
+  min-height: 100vh;
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 @supports (height: 100dvh) {
-  .studio-app-shell {
+  .studio-app-shell--document-scroll {
+    min-height: 100dvh;
+  }
+}
+
+.studio-app-shell--document-scroll .studio-app-sidebar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-height: 100vh;
+}
+
+@supports (height: 100dvh) {
+  .studio-app-shell--document-scroll .studio-app-sidebar-wrap {
+    min-height: 100dvh;
+  }
+}
+
+.studio-app-shell--document-scroll .studio-app-sidebar-wrap > .studio-sidebar-rail {
+  flex: 1 1 auto;
+}
+
+.studio-app-shell--document-scroll .studio-app-main-column {
+  overflow: visible;
+}
+
+.studio-app-shell--document-scroll .studio-stage-canvas {
+  flex: 0 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: visible;
+}
+
+.studio-app-shell--document-scroll .studio-main-inner.studio-stage-scroll {
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-x: hidden;
+  overflow-y: visible;
+  overscroll-behavior-y: auto;
+}
+
+.studio-app-shell--document-scroll .studio-sidebar-rail {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.studio-app-shell--document-scroll .studio-sidebar-glass-inner {
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+/* Work: fixed viewport, inner main scroll (WorkSession pins chat separately) */
+.studio-app-shell--viewport-lock {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  .studio-app-shell--viewport-lock {
     height: 100dvh;
     max-height: 100dvh;
   }
 }
 
-.studio-app-main-column {
+.studio-app-shell--viewport-lock .studio-app-main-column {
   min-height: 0;
+  overflow: hidden;
 }
 
-.studio-app-shell .studio-stage-canvas {
+.studio-app-shell--viewport-lock .studio-stage-canvas {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
 }
 
-.studio-app-shell .studio-main-inner.studio-stage-scroll {
+.studio-app-shell--viewport-lock .studio-main-inner.studio-stage-scroll {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
-  /* Do not set height: 100% here: with flex parents it can make the box match
-     the viewport without overflow, so nothing scrolls. min-height: 0 + flex
-     is enough for a bounded scroll region. */
   display: flex;
   flex-direction: column;
   align-items: stretch;
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+  overflow-y: hidden;
+  overscroll-behavior-y: none;
 }
 
 /* Inspector flyout: scroll region (aside is flex column in studio-liquid-glass.css) */
