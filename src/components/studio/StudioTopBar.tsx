@@ -691,7 +691,7 @@ function ProjectSwitcher({ appearance = "context" }: { appearance?: "default" | 
     ? {
         fontSize: 12,
         fontWeight: 500,
-        color: "rgba(255,255,255,0.4)",
+        color: "var(--fg-2)",
         whiteSpace: "nowrap" as const,
         overflow: "hidden",
         textOverflow: "ellipsis" as const,
@@ -708,7 +708,7 @@ function ProjectSwitcher({ appearance = "context" }: { appearance?: "default" | 
         flex: 1,
         minWidth: 0,
       };
-  const chevronColor = isContext ? "rgba(255,255,255,0.35)" : "var(--fg-3)";
+  const chevronColor = isContext ? "var(--fg-3)" : "var(--fg-3)";
 
   return (
     <div style={{ position: "relative", flexShrink: isContext ? 1 : 0, minWidth: 0 }}>
@@ -746,7 +746,7 @@ function WorkSessionPathDivider() {
       aria-hidden
       style={{
         fontSize: 12,
-        color: "rgba(255,255,255,0.4)",
+        color: "var(--fg-3)",
         flexShrink: 0,
         userSelect: "none",
         lineHeight: 1,
@@ -810,9 +810,9 @@ function WorkSessionTitleChip() {
           fontSize: 13,
           fontWeight: 500,
           fontFamily: "inherit",
-          border: "1px solid rgba(255,255,255,0.1)",
-          background: "rgba(255,255,255,0.07)",
-          color: "rgba(255,255,255,0.9)",
+          border: "1px solid var(--glass-border)",
+          background: "rgba(0,0,0,0.04)",
+          color: "var(--fg)",
           outline: "none",
         }}
       />
@@ -831,8 +831,8 @@ function WorkSessionTitleChip() {
         maxWidth: "min(280px, 36vw)",
         padding: "4px 10px",
         borderRadius: 6,
-        border: "1px solid rgba(255,255,255,0.1)",
-        background: "rgba(255,255,255,0.07)",
+        border: "1px solid var(--glass-border)",
+        background: "rgba(0,0,0,0.04)",
         cursor: "pointer",
         fontFamily: "inherit",
         textAlign: "left" as const,
@@ -844,7 +844,7 @@ function WorkSessionTitleChip() {
         display: "block",
         fontSize: 13,
         fontWeight: 500,
-        color: "rgba(255,255,255,0.9)",
+        color: "var(--fg)",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
