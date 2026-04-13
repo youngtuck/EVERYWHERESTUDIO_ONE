@@ -1295,7 +1295,7 @@ function StageIntake({
             overflowY: "auto",
             padding: "20px clamp(12px, 4vw, 24px)",
             display: "flex", flexDirection: "column",
-            justifyContent: messages.length <= 3 ? "flex-end" : "flex-start",
+            justifyContent: messages.length <= 8 ? "flex-end" : "flex-start",
           }}
         >
           <div style={{
@@ -1303,6 +1303,7 @@ function StageIntake({
             display: "flex",
             flexDirection: "column",
             gap: isMobile ? 10 : 14,
+            paddingTop: "40px",
           }}>
             {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.content} userInitials={userInitials} isChallenge={m.isChallenge} />)}
             {sending && (
