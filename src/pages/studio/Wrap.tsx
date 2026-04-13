@@ -1,6 +1,6 @@
 /**
- * Wrap.tsx — Staged workflow: Choose channels → Build → Deliver
- * Adaptation via /api/adapt-format, liquid glass presentation, export to Catalog
+ * Wrap.tsx — Staged workflow: Choose channels → Refine → Deliver
+ * Format refinement via /api/adapt-format, liquid glass presentation, export to Catalog
  */
 import { useState, useLayoutEffect, useEffect, useCallback, useRef, useMemo, type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -250,13 +250,28 @@ interface FormatEntry {
   status: "pending" | "loading" | "done" | "error";
 }
 
-function WrapStepRail({ phase }: { phase: WrapPhase }) {
+function WrapStepRail({
+  phase,
+  chooseConfirmed,
+  refineConfirmed,
+}: {
+  phase: WrapPhase;
+  chooseConfirmed: boolean;
+  refineConfirmed: boolean;
+}) {
   const steps: { id: WrapPhase; label: string; n: number }[] = [
     { id: "choose", label: "Choose channels", n: 1 },
-    { id: "build", label: "Adapt", n: 2 },
-    { id: "deliver", label: "Your pieces", n: 3 },
+    { id: "build", label: "Refine", n: 2 },
+    { id: "deliver", label: "Your outputs", n: 3 },
   ];
-  const idx = phase === "choose" ? 0 : phase === "build" ? 1 : 2;
+  const currentIdx = phase === "choose" ? 0 : phase === "build" ? 1 : 2;
+
+  const showCheck = (i: number) => {
+    if (i === 2) return false;
+    if (i === 0) return chooseConfirmed && currentIdx > 0;
+    return refineConfirmed && currentIdx > 1;
+  };
+
   return (
     <div className="liquid-glass" style={{
       flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)",
@@ -264,19 +279,19 @@ function WrapStepRail({ phase }: { phase: WrapPhase }) {
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", maxWidth: 720, margin: "0 auto" }}>
         {steps.map((s, i) => {
-          const done = i < idx;
-          const active = i === idx;
+          const active = i === currentIdx;
+          const check = showCheck(i);
           return (
             <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{
                 width: 26, height: 26, borderRadius: "50%",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 11, fontWeight: 700,
-                background: done ? "rgba(34,197,94,0.15)" : active ? "rgba(245,198,66,0.2)" : "rgba(0,0,0,0.04)",
-                border: `1px solid ${done ? "rgba(34,197,94,0.4)" : active ? "rgba(245,198,66,0.55)" : "var(--glass-border)"}`,
-                color: done ? "#16A34A" : active ? "#9A7030" : "var(--fg-3)",
+                background: check && !active ? "rgba(34,197,94,0.15)" : active ? "rgba(245,198,66,0.2)" : "rgba(0,0,0,0.04)",
+                border: `1px solid ${check && !active ? "rgba(34,197,94,0.4)" : active ? "rgba(245,198,66,0.55)" : "var(--glass-border)"}`,
+                color: check && !active ? "#16A34A" : active ? "#9A7030" : "var(--fg-3)",
               }}>
-                {done ? "✓" : s.n}
+                {check && !active ? "✓" : s.n}
               </div>
               <span style={{
                 fontSize: 11, fontWeight: active ? 700 : 500,
@@ -329,8 +344,8 @@ function WrapDashPanel({
         <DpLabel>Wrap</DpLabel>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
           {phase === "choose"
-            ? "Confirm channels and Library filing, then run the Wrap pass. Reed adapts your draft for each surface you keep on."
-            : "Reed is adapting your draft for each channel. This usually takes under a minute per surface."}
+            ? "Confirm channels and Library filing, then run the Wrap pass. Reed refines your draft for each surface you keep on."
+            : "Reed is refining your draft for each channel. This usually takes under a minute per surface."}
         </div>
       </div>
     );
@@ -406,7 +421,7 @@ function WrapDashPanel({
       <div className="liquid-glass-card" style={{ padding: "10px 12px", marginBottom: 12 }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: "#4A90D9", marginBottom: 6 }}>Reed</div>
         <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6 }}>
-          Each tab is ready to paste. Tweak tone in the Reed panel if you want a pass on one channel.
+          Each format is ready to paste. Tweak tone in the Reed panel if you want a pass on one surface.
         </div>
       </div>
 
@@ -445,6 +460,11 @@ export default function WrapPage() {
 
   const [wrapPhase, setWrapPhase] = useState<WrapPhase>("choose");
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+  /** Step rail: only show prior steps complete after explicit in-flow confirmation (not session handoff). */
+  const [wrapChooseConfirmed, setWrapChooseConfirmed] = useState(false);
+  const [wrapRefineConfirmed, setWrapRefineConfirmed] = useState(false);
+  /** Deliver desktop: channel list hidden until user opens it. */
+  const [deliverChannelListOpen, setDeliverChannelListOpen] = useState(false);
 
   const adaptingRef = useRef<Set<string>>(new Set());
 
@@ -468,6 +488,8 @@ export default function WrapPage() {
       score: 0,
     };
     setSessionDraft(sessionOutput);
+    setWrapChooseConfirmed(false);
+    setWrapRefineConfirmed(false);
 
     let seededDeliver = false;
     if (wrapFormats) {
@@ -517,6 +539,7 @@ export default function WrapPage() {
     }
 
     setWrapPhase(seededDeliver ? "deliver" : "choose");
+    setDeliverChannelListOpen(false);
 
     const wrapPres = sessionStorage.getItem("ew-wrap-presentation-minutes");
     if (wrapPres != null) {
@@ -609,6 +632,8 @@ export default function WrapPage() {
       setExported(false);
       setCopied(false);
       setCatalogLinkId(null);
+      setWrapChooseConfirmed(false);
+      setWrapRefineConfirmed(false);
       setWrapPhase("choose");
       setSelectedChannels(row.output_type === "freestyle" ? [...DEFAULT_CHANNEL_PRESELECT] : [...DEFAULT_CHANNEL_PRESELECT]);
       if (row.output_type === "presentation") {
@@ -736,6 +761,7 @@ export default function WrapPage() {
       toast("Select at least one channel.", "error");
       return;
     }
+    setWrapChooseConfirmed(true);
     const list = [...selectedChannels];
     setFormats(list);
     setActiveFormat(list[0]);
@@ -747,22 +773,14 @@ export default function WrapPage() {
       toast("None of the channels could be generated. Check your connection, confirm you are signed in, then try again.", "error");
       setFormatContents({});
       adaptingRef.current.clear();
+      setWrapChooseConfirmed(false);
       setWrapPhase("choose");
       return;
     }
     if (failed.length > 0) {
-      toast("Some channels failed. Retry any row below, or continue with the versions that finished.", "error");
+      toast("Some channels failed. Retry any row below, or continue with the outputs that finished.", "error");
     }
   }, [activeOutput, selectedChannels, runBuildForChannels, toast]);
-
-  /** When every row in build is done, move to deliver (covers all-success on first pass and retry-after-partial). */
-  useEffect(() => {
-    if (wrapPhase !== "build") return;
-    if (formats.length === 0) return;
-    const allDone = formats.every(f => formatContents[f]?.status === "done");
-    if (!allDone) return;
-    setWrapPhase("deliver");
-  }, [wrapPhase, formats, formatContents]);
 
   useEffect(() => {
     if (!activeOutput?.content || wrapPhase !== "deliver") return;
@@ -1012,6 +1030,8 @@ export default function WrapPage() {
                       setExported(false);
                       setCopied(false);
                       setCatalogLinkId(null);
+                      setWrapChooseConfirmed(false);
+                      setWrapRefineConfirmed(false);
                       setWrapPhase("choose");
                       setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
                       if (output.output_type === "presentation") {
@@ -1071,7 +1091,7 @@ export default function WrapPage() {
   if (wrapPhase === "choose") {
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
-        <WrapStepRail phase="choose" />
+        <WrapStepRail phase="choose" chooseConfirmed={wrapChooseConfirmed} refineConfirmed={wrapRefineConfirmed} />
         <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px 40px" }}>
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <h1 style={{ fontSize: "clamp(22px, 3.5vw, 28px)", fontWeight: 700, color: "var(--fg)", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
@@ -1268,6 +1288,8 @@ export default function WrapPage() {
                   className="liquid-glass-btn"
                   onClick={() => {
                     setSelectedOutputId(null);
+                    setWrapChooseConfirmed(false);
+                    setWrapRefineConfirmed(false);
                     setWrapPhase("choose");
                     setSelectedChannels([]);
                   }}
@@ -1297,7 +1319,7 @@ export default function WrapPage() {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <p style={{ fontSize: 12, color: "var(--fg-3)", margin: 0, lineHeight: 1.55 }}>
           {buildErrors > 0
-            ? "When every row is ready, you move forward automatically. If you prefer, jump ahead with the versions that finished."
+            ? "When every row is ready, use View ready outputs below. If some rows failed, you can still continue with the outputs that finished."
             : "Reed is shaping each channel. This usually stays under a minute per surface."}
         </p>
         {buildErrors === 0 ? (
@@ -1333,10 +1355,10 @@ export default function WrapPage() {
             ) : null}
             <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: showChannelTitle ? 4 : 0, lineHeight: 1.45 }}>
               {loadingFmt
-                ? "Reed is adapting your draft for this channel…"
+                ? "Reed is refining your draft for this channel…"
                 : errFmt
                   ? "This request did not complete. Retry the same channel, or continue with the ones that are ready."
-                  : "Ready to open in Your pieces."}
+                  : "Ready in Your outputs."}
               {!errFmt ? (
                 <span style={{ display: "block", marginTop: 6, opacity: 0.92 }}>
                   Surface version: your master draft stays in Work and Catalog unchanged.
@@ -1394,6 +1416,8 @@ export default function WrapPage() {
             type="button"
             className="liquid-glass-btn"
             onClick={() => {
+              setWrapChooseConfirmed(false);
+              setWrapRefineConfirmed(false);
               setWrapPhase("choose");
               setSelectedChannels([...formats]);
             }}
@@ -1405,7 +1429,11 @@ export default function WrapPage() {
             type="button"
             className="liquid-glass-btn-gold"
             disabled={!canContinueToDeliver}
-            onClick={() => setWrapPhase("deliver")}
+            onClick={() => {
+              setWrapRefineConfirmed(true);
+              setDeliverChannelListOpen(false);
+              setWrapPhase("deliver");
+            }}
             style={{
               padding: "10px 20px",
               opacity: canContinueToDeliver ? 1 : 0.45,
@@ -1413,7 +1441,7 @@ export default function WrapPage() {
             }}
           >
             <span className="liquid-glass-btn-gold-label">
-              {buildDone > 0 ? `View ${buildDone} ready piece${buildDone !== 1 ? "s" : ""}` : "Wait for at least one channel"}
+              {buildDone > 0 ? `View ${buildDone} ready output${buildDone !== 1 ? "s" : ""}` : "Wait for at least one channel"}
             </span>
           </button>
         </div>
@@ -1422,7 +1450,7 @@ export default function WrapPage() {
 
     return (
       <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
-        <WrapStepRail phase="build" />
+        <WrapStepRail phase="build" chooseConfirmed={wrapChooseConfirmed} refineConfirmed={wrapRefineConfirmed} />
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px" }}>
           <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
             {buildIntro}
@@ -1456,18 +1484,38 @@ export default function WrapPage() {
       ? "Executive Brief is a tight decision memo, not your long-form story. Your full draft is the saved master (Reopen in Work or Catalog)."
       : `${activeFormat} is adapted for this surface. Your full draft is the saved master (Reopen in Work or Catalog).`;
 
+  /** Sticky channel rail height: below shell top bar + step rail + deliver toolbar. */
+  const wrapDeliverChannelRailMaxH = "calc(100dvh - 168px)";
+
   const deliverToolbar = (
     <>
+      {!isMobile && (
+        <button
+          type="button"
+          className="liquid-glass-btn"
+          onClick={() => setDeliverChannelListOpen(v => !v)}
+          aria-expanded={deliverChannelListOpen}
+          aria-controls={deliverChannelListOpen ? "wrap-channel-list" : undefined}
+          style={{ flexShrink: 0, padding: "8px 12px" }}
+        >
+          <span className="liquid-glass-btn-label" style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-2)" }}>
+            {deliverChannelListOpen ? "Hide channels" : `Channels (${formats.length})`}
+          </span>
+        </button>
+      )}
       <button
         type="button"
         className="liquid-glass-btn"
         onClick={() => {
+          setWrapChooseConfirmed(false);
+          setWrapRefineConfirmed(false);
+          setDeliverChannelListOpen(false);
           setWrapPhase("choose");
           setSelectedChannels([...formats]);
         }}
         style={{ flexShrink: 0, padding: "8px 12px" }}
       >
-        <span className="liquid-glass-btn-label" style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)" }}>Edit channels</span>
+        <span className="liquid-glass-btn-label" style={{ fontSize: 10, fontWeight: 600, color: "var(--fg-3)" }}>Change formats</span>
       </button>
       {!sessionDraft && selectedOutputId && (
         <button
@@ -1481,6 +1529,9 @@ export default function WrapPage() {
             adaptingRef.current.clear();
             setExported(false);
             setCatalogLinkId(null);
+            setWrapChooseConfirmed(false);
+            setWrapRefineConfirmed(false);
+            setDeliverChannelListOpen(false);
             setWrapPhase("choose");
             setSelectedChannels([...DEFAULT_CHANNEL_PRESELECT]);
           }}
@@ -1539,7 +1590,7 @@ export default function WrapPage() {
     }}>
       {isAdapting ? (
         <div style={{ textAlign: "center", padding: "48px 0" }}>
-          <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Adapting {activeFormat}…</div>
+          <div style={{ fontSize: 14, color: "var(--fg-3)" }}>Refining {activeFormat}…</div>
         </div>
       ) : isChannelError ? (
         <div style={{ textAlign: "center", padding: "40px 0" }}>
@@ -1547,7 +1598,7 @@ export default function WrapPage() {
             {activeFormat} did not generate
           </div>
           <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 20, lineHeight: 1.55 }}>
-            The request failed. Retry here, use Edit channels to drop this surface, or switch to another channel in the list.
+            The request failed. Retry here, use Change formats to drop this surface, or switch to another channel in the list.
           </div>
           <button type="button" className="liquid-glass-btn-gold" onClick={() => void adaptFormat(activeFormat)} style={{ padding: "10px 22px" }}>
             <span className="liquid-glass-btn-gold-label">Retry {activeFormat}</span>
@@ -1609,12 +1660,12 @@ export default function WrapPage() {
         </>
       ) : (
         <div style={{ textAlign: "center", padding: "40px 0" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Adapt {activeFormat}</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>Refine {activeFormat}</div>
           <div style={{ fontSize: 12, color: "var(--fg-3)", marginBottom: 16, lineHeight: 1.55 }}>
-            This version is not ready yet. Run adapt or open the dashboard for Export All.
+            This version is not ready yet. Run refine or open the dashboard for Export All.
           </div>
           <button type="button" className="liquid-glass-btn-gold" onClick={() => void adaptFormat(activeFormat)} style={{ padding: "10px 22px" }}>
-            <span className="liquid-glass-btn-gold-label">Adapt now</span>
+            <span className="liquid-glass-btn-gold-label">Refine now</span>
           </button>
         </div>
       )}
@@ -1622,8 +1673,8 @@ export default function WrapPage() {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
-      <WrapStepRail phase="deliver" />
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100%", fontFamily: FONT, overflow: "visible" }}>
+      <WrapStepRail phase="deliver" chooseConfirmed={wrapChooseConfirmed} refineConfirmed={wrapRefineConfirmed} />
 
       <div className="liquid-glass" style={{
         display: "flex",
@@ -1659,15 +1710,15 @@ export default function WrapPage() {
       </div>
 
       <div style={{
-        flex: 1,
         display: "flex",
         flexDirection: "row",
-        minHeight: 0,
-        overflow: "hidden",
+        alignItems: "flex-start",
+        width: "100%",
       }}>
-        {!isMobile && (
+        {!isMobile && deliverChannelListOpen ? (
           <aside
-            aria-label="Channel versions"
+            id="wrap-channel-list"
+            aria-label="Output formats"
             style={{
               width: 196,
               flexShrink: 0,
@@ -1675,21 +1726,17 @@ export default function WrapPage() {
               display: "flex",
               flexDirection: "column",
               padding: "10px 8px 12px",
+              overflowX: "hidden",
               overflowY: "auto",
+              overscrollBehavior: "contain",
+              alignSelf: "flex-start",
+              position: "sticky",
+              top: 0,
+              maxHeight: wrapDeliverChannelRailMaxH,
               background: "rgba(255,255,255,0.02)",
+              WebkitOverflowScrolling: "touch",
             }}
           >
-            <div style={{
-              fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)",
-              textTransform: "uppercase" as const, padding: "4px 8px 8px",
-            }}>
-              Versions · {formats.length}
-            </div>
-            {formats.length > 1 ? (
-              <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.45, padding: "0 8px 10px" }}>
-                Each label is a different wrapped channel. Click one to open it in the reader.
-              </div>
-            ) : null}
             {formats.map(fmt => {
               const tabErr = formatContents[fmt]?.status === "error";
               const active = activeFormat === fmt;
@@ -1737,33 +1784,25 @@ export default function WrapPage() {
               );
             })}
           </aside>
-        )}
+        ) : null}
 
         <div style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
           minWidth: 0,
-          minHeight: 0,
-          overflow: "hidden",
           padding: isMobile ? "12px 14px 16px" : "16px clamp(12px, 2.5vw, 28px) 24px",
         }}>
-          {/* Centered reading column: banner + draft share one width so the stage does not hug the versions rail */}
           <div style={{
             width: "100%",
             maxWidth: 720,
             margin: "0 auto",
-            flex: 1,
-            minHeight: 0,
             display: "flex",
             flexDirection: "column" as const,
             gap: 12,
           }}>
             {catalogBanner}
             <div style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
               display: "flex",
               flexDirection: "column" as const,
               alignItems: "center",
@@ -1796,7 +1835,7 @@ export default function WrapPage() {
               />
             </label>
             <button type="button" className="liquid-glass-btn" onClick={applyWrapSourceLength} style={{ padding: "6px 12px" }}>
-              <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Apply length and re-adapt</span>
+              <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Apply length and re-refine</span>
             </button>
           </div>
         </div>
@@ -1821,7 +1860,7 @@ export default function WrapPage() {
               />
             </label>
             <button type="button" className="liquid-glass-btn" onClick={applyWrapSourceLength} style={{ padding: "6px 12px" }}>
-              <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Apply length and re-adapt</span>
+              <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Apply length and re-refine</span>
             </button>
           </div>
         </div>
