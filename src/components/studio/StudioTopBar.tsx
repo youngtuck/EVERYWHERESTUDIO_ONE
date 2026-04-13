@@ -1,13 +1,24 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useShell } from "./StudioShellContext";
-import { useState, useRef, useLayoutEffect, useEffect, useSyncExternalStore } from "react";
+import { useState, useRef, useLayoutEffect, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import {
   subscribeWorkSessionMeta,
   getWorkSessionMetaSnapshot,
   getServerWorkSessionMetaSnapshot,
   requestSessionRename,
+  subscribeStudioWorkSessionBar,
+  getStudioWorkSessionBarSnapshot,
+  getServerStudioWorkSessionBarSnapshot,
 } from "../../lib/workSessionMetaBridge";
+import {
+  loadSession,
+  workProjectKeyFromShellId,
+  workSessionRowHasMeaningfulWork,
+  sessionTitleFromWorkSessionRow,
+  type WorkSessionDbRow,
+} from "../../lib/sessionPersistence";
+import type { StudioProject } from "../../context/ProjectContext";
 import { createPortal } from "react-dom";
 import { useWorkStageFromShell } from "../../hooks/useWorkStageBridge";
 import { useStudioProject } from "../../context/ProjectContext";
@@ -17,16 +28,27 @@ import { StudioUserAccountMenu } from "./StudioUserAccountMenu";
 const PROJECT_MENU_Z = 10120;
 
 // ── Route to breadcrumb config ──────────────────────────────────
-function useBreadcrumbs(): { left: React.ReactNode } {
-  const loc = useLocation();
-  const nav = useNavigate();
+type CloudBarPickup = { title: string; projectKey: string; projectName: string };
 
-  const path = loc.pathname;
+type CloudWorkRow = WorkSessionDbRow & { projects?: { name: string } | null };
 
-  if (path.startsWith("/studio/work")) {
-    return { left: <WorkBreadcrumb /> };
+function resolveSessionProjectLabel(
+  projects: StudioProject[],
+  activeProject: StudioProject | null,
+  bar: ReturnType<typeof getStudioWorkSessionBarSnapshot>,
+  cloud: CloudBarPickup | null,
+): string {
+  const k = bar.projectKey ?? cloud?.projectKey ?? null;
+  if (k) {
+    const match = projects.find(p => workProjectKeyFromShellId(p.id) === k);
+    if (match) return match.name;
   }
+  const pn = (cloud?.projectName || "").trim();
+  if (pn) return pn;
+  return activeProject?.name ?? "My Studio";
+}
 
+function HomeRouteBreadcrumb({ path, nav }: { path: string; nav: ReturnType<typeof useNavigate> }) {
   const labelMap: Record<string, string> = {
     "/studio/dashboard": "Home",
     "/studio/watch": "Watch",
@@ -44,29 +66,185 @@ function useBreadcrumbs(): { left: React.ReactNode } {
 
   const label = labelMap[path] || "Studio";
 
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+      <span
+        onClick={() => nav("/studio/dashboard")}
+        style={{ fontSize: 11, color: "var(--fg-3)", cursor: "pointer", transition: "color 0.1s" }}
+        onMouseEnter={e => { (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
+        onMouseLeave={e => { (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
+      >
+        Home
+      </span>
+      {label !== "Home" && (
+        <>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--fg-3)", opacity: 0.85 }}>
+            <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)", padding: "3px 8px", borderRadius: 6, background: "rgba(200,169,110,0.1)", border: "1px solid rgba(200,169,110,0.18)" }}>
+            {label}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SessionProjectSessionBreadcrumb({ projectLabel, sessionTitle }: { projectLabel: string; sessionTitle: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: "var(--fg)",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          maxWidth: "min(200px, 28vw)",
+        }}
+      >
+        {projectLabel}
+      </span>
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--fg-3)", opacity: 0.85, flexShrink: 0 }}>
+        <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: "var(--fg)",
+          padding: "3px 8px",
+          borderRadius: 6,
+          background: "rgba(200,169,110,0.1)",
+          border: "1px solid rgba(200,169,110,0.18)",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          maxWidth: "min(240px, 36vw)",
+        }}
+      >
+        {sessionTitle}
+      </span>
+    </div>
+  );
+}
+
+function useStudioTopBarCenterBreadcrumbs(): {
+  center: ReactNode;
+  showReturnPill: boolean;
+  onReturnToSession: () => void;
+} {
+  const loc = useLocation();
+  const nav = useNavigate();
+  const { user } = useAuth();
+  const { projects, activeProject, setActiveProjectId } = useStudioProject();
+  const [cloudBarPickup, setCloudBarPickup] = useState<CloudBarPickup | null>(null);
+
+  const bar = useSyncExternalStore(
+    subscribeStudioWorkSessionBar,
+    getStudioWorkSessionBarSnapshot,
+    getServerStudioWorkSessionBarSnapshot,
+  );
+
+  const path = loc.pathname;
+  const onWork = path.startsWith("/studio/work");
+  const hasContext = bar.hasWorkSessionContext || cloudBarPickup != null;
+
+  useEffect(() => {
+    if (!user?.id || onWork || loadSession()) {
+      setCloudBarPickup(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("work_sessions")
+          .select(`
+            id,
+            session_title,
+            stage,
+            work_stage,
+            updated_at,
+            project_key,
+            project_id,
+            messages,
+            outline_rows,
+            draft,
+            payload,
+            projects ( name )
+          `)
+          .eq("user_id", user.id)
+          .neq("stage", "complete")
+          .order("updated_at", { ascending: false })
+          .limit(12);
+        if (error) throw error;
+        const rows = (data || []) as CloudWorkRow[];
+        const filtered = rows
+          .filter(r => workSessionRowHasMeaningfulWork(r as WorkSessionDbRow))
+          .slice(0, 1);
+        const row = filtered[0];
+        if (cancelled) return;
+        if (!row) {
+          setCloudBarPickup(null);
+          return;
+        }
+        const pk = row.project_key || "default";
+        const projectName = (row.projects?.name || "").trim();
+        setCloudBarPickup({
+          title: sessionTitleFromWorkSessionRow(row as WorkSessionDbRow),
+          projectKey: pk,
+          projectName,
+        });
+      } catch {
+        if (!cancelled) setCloudBarPickup(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, onWork, bar.hasLocalMirror]);
+
+  const projectLabel = resolveSessionProjectLabel(projects, activeProject, bar, cloudBarPickup);
+  const sessionTitleForDisplay = cloudBarPickup?.title ?? bar.title;
+
+  const onReturnToSession = () => {
+    const pk = bar.projectKey ?? cloudBarPickup?.projectKey ?? "default";
+    if (pk !== "default") setActiveProjectId(pk);
+    else setActiveProjectId("default");
+    if (loadSession()) {
+      nav("/studio/work");
+    } else {
+      nav(`/studio/work?resume=work_session&projectKey=${encodeURIComponent(pk)}`);
+    }
+  };
+
+  if (onWork) {
+    return {
+      center: <WorkBreadcrumb />,
+      showReturnPill: false,
+      onReturnToSession,
+    };
+  }
+
+  if (hasContext) {
+    return {
+      center: (
+        <SessionProjectSessionBreadcrumb
+          projectLabel={projectLabel}
+          sessionTitle={sessionTitleForDisplay}
+        />
+      ),
+      showReturnPill: true,
+      onReturnToSession,
+    };
+  }
+
   return {
-    left: (
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <span
-          onClick={() => nav("/studio/dashboard")}
-          style={{ fontSize: 11, color: "var(--fg-3)", cursor: "pointer", transition: "color 0.1s" }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.color = "var(--fg-2)"; }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.color = "var(--fg-3)"; }}
-        >
-          Home
-        </span>
-        {label !== "Home" && (
-          <>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--fg-3)", opacity: 0.85 }}>
-              <path d="M4.5 2.5L7.5 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fg)", padding: "3px 8px", borderRadius: 6, background: "rgba(200,169,110,0.1)", border: "1px solid rgba(200,169,110,0.18)" }}>
-              {label}
-            </span>
-          </>
-        )}
-      </div>
-    ),
+    center: <HomeRouteBreadcrumb path={path} nav={nav} />,
+    showReturnPill: false,
+    onReturnToSession,
   };
 }
 
@@ -711,7 +889,7 @@ function SearchIconButton({ onClick }: { onClick: () => void }) {
 export default function StudioTopBar() {
   const nav = useNavigate();
   const { setDiscoverOpen, setSearchOpen } = useShell();
-  const { left } = useBreadcrumbs();
+  const { center, showReturnPill, onReturnToSession } = useStudioTopBarCenterBreadcrumbs();
 
   return (
     <div className="liquid-glass" style={{
@@ -743,9 +921,40 @@ export default function StudioTopBar() {
         </button>
       </div>
 
+      {showReturnPill && (
+        <button
+          type="button"
+          onClick={onReturnToSession}
+          style={{
+            flexShrink: 0,
+            fontSize: 11,
+            lineHeight: 1.2,
+            fontWeight: 600,
+            padding: "5px 12px",
+            borderRadius: 999,
+            border: "1px solid rgba(200, 169, 110, 0.55)",
+            background: "rgba(200, 169, 110, 0.08)",
+            color: "var(--fg)",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            transition: "background 0.12s, border-color 0.12s",
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "rgba(200, 169, 110, 0.14)";
+            e.currentTarget.style.borderColor = "rgba(200, 169, 110, 0.75)";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "rgba(200, 169, 110, 0.08)";
+            e.currentTarget.style.borderColor = "rgba(200, 169, 110, 0.55)";
+          }}
+        >
+          Return to session
+        </button>
+      )}
+
       {/* Breadcrumbs */}
       <div style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", minWidth: 0 }}>
-        {left}
+        {center}
       </div>
 
       {/* Right: system actions */}

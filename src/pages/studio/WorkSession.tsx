@@ -33,6 +33,7 @@ import {
   workProjectKeyFromShellId,
   studioProjectUuidForRow,
   getWorkStageFromPersisted,
+  sessionTitleFromPersisted,
   WORK_SESSION_OUTPUT_TYPE_ID_EVENT,
   WORK_SESSION_CLOUD_DEBOUNCE_MS,
   type PersistedSession,
@@ -3151,7 +3152,17 @@ export default function WorkSession() {
 
   useLayoutEffect(() => {
     publishWorkSessionMeta({ title: resolvedSessionTitle, active: true });
-    return () => publishWorkSessionMeta({ title: "", active: false });
+    return () => {
+      const p = loadSession();
+      const title =
+        (resolvedSessionTitle || "").trim() ||
+        (p ? sessionTitleFromPersisted(p) : "") ||
+        "";
+      publishWorkSessionMeta({
+        title: title.slice(0, 200),
+        active: p != null,
+      });
+    };
   }, [resolvedSessionTitle]);
 
   useEffect(() => {
@@ -4364,6 +4375,7 @@ export default function WorkSession() {
         }
         void deleteRemoteWorkSession(user.id, workSessionProjectKey);
         clearSession();
+        publishWorkSessionMeta({ title: "", active: false });
         catalogOk = true;
       } catch (e) {
         console.error("[Export] Supabase save failed:", e);
@@ -4519,6 +4531,7 @@ export default function WorkSession() {
   // ── NEW SESSION: Reset everything ────────────────────────────
   const handleNewSession = useCallback((opts?: { skipRemoteDelete?: boolean }) => {
     clearSession();
+    publishWorkSessionMeta({ title: "", active: false });
     if (user?.id && !opts?.skipRemoteDelete) void deleteRemoteWorkSession(user.id, workSessionProjectKey);
     setIntakeComposerSeed(null);
     setMessages([{ role: "reed", content: "Good to see you. What are you working on?" }]);

@@ -3,6 +3,12 @@
  * WorkSession is the source of truth; the top bar only displays and requests renames.
  */
 
+import {
+  loadSession,
+  sessionTitleFromPersisted,
+  WORK_SESSION_MIRROR_CHANGED_EVENT,
+} from "./sessionPersistence";
+
 export type WorkSessionMetaSnapshot = {
   title: string;
   active: boolean;
@@ -32,6 +38,48 @@ export function subscribeWorkSessionMeta(onChange: () => void) {
 
 export function getServerWorkSessionMetaSnapshot(): WorkSessionMetaSnapshot {
   return serverSnapshot;
+}
+
+/** Top bar: sessionStorage mirror + in-memory meta for breadcrumb and Return to session. */
+export type StudioWorkSessionBarSnapshot = {
+  hasLocalMirror: boolean;
+  metaActive: boolean;
+  hasWorkSessionContext: boolean;
+  title: string;
+  projectKey: string | null;
+};
+
+const serverBarSnapshot: StudioWorkSessionBarSnapshot = {
+  hasLocalMirror: false,
+  metaActive: false,
+  hasWorkSessionContext: false,
+  title: "",
+  projectKey: null,
+};
+
+export function getStudioWorkSessionBarSnapshot(): StudioWorkSessionBarSnapshot {
+  const m = getWorkSessionMetaSnapshot();
+  const p = typeof window !== "undefined" ? loadSession() : null;
+  const hasLocalMirror = p != null;
+  const hasWorkSessionContext = hasLocalMirror || m.active;
+  const title = ((m.title || "").trim() || (p ? sessionTitleFromPersisted(p) : "") || "New session").slice(0, 200);
+  const projectKey = p?.projectKey ?? null;
+  return { hasLocalMirror, metaActive: m.active, hasWorkSessionContext, title, projectKey };
+}
+
+export function getServerStudioWorkSessionBarSnapshot(): StudioWorkSessionBarSnapshot {
+  return serverBarSnapshot;
+}
+
+export function subscribeStudioWorkSessionBar(onChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const h = () => onChange();
+  window.addEventListener("ew-work-session-meta", h);
+  window.addEventListener(WORK_SESSION_MIRROR_CHANGED_EVENT, h);
+  return () => {
+    window.removeEventListener("ew-work-session-meta", h);
+    window.removeEventListener(WORK_SESSION_MIRROR_CHANGED_EVENT, h);
+  };
 }
 
 /** Empty string clears the user override and returns to auto naming. */

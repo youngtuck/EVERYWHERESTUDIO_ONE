@@ -68,6 +68,42 @@ export function getWorkStageFromPersisted(state: PersistedSession): PersistedWor
   return "Intake";
 }
 
+/** Dispatched after sessionStorage mirror write or clear so the top bar can re-read `loadSession()`. */
+export const WORK_SESSION_MIRROR_CHANGED_EVENT = "ew-session-mirror-changed";
+
+/** True when the mirrored session has enough state to treat as an in-flight work thread (matches Dashboard pickup). */
+export function persistedSessionHasPickup(p: PersistedSession): boolean {
+  const msgs = p.messages?.length ?? 0;
+  if (msgs > 1) return true;
+  if ((p.generatedContent || "").trim().length > 40) return true;
+  if (p.outlineRows && p.outlineRows.length > 0) return true;
+  return false;
+}
+
+export function sessionTitleFromPersisted(p: PersistedSession): string {
+  const override = (p.sessionNameOverride || "").trim();
+  if (override) return override.slice(0, 200);
+  const st = (p.sessionTitle || "").trim();
+  if (st) return st.slice(0, 200);
+  const outline = p.outlineRows?.[0]?.content?.trim();
+  if (outline) return outline.slice(0, 200);
+  const userMsg = p.messages?.find(m => m.role === "user")?.content?.trim();
+  if (userMsg) return userMsg.slice(0, 200);
+  return "New session";
+}
+
+export function sessionTitleFromWorkSessionRow(row: WorkSessionDbRow): string {
+  const st = (row.session_title || "").trim();
+  if (st) return st.slice(0, 200);
+  const p = row.payload as PersistedSession | null;
+  const messages = (Array.isArray(row.messages) && row.messages.length > 0
+    ? row.messages
+    : p?.messages) as Array<{ role?: string; content?: string }> | undefined;
+  const userLine = messages?.find(m => m.role === "user")?.content?.trim();
+  if (userLine) return userLine.slice(0, 200);
+  return "Untitled session";
+}
+
 export function workProjectKeyFromShellId(activeProjectId: string | null | undefined): string {
   if (!activeProjectId || activeProjectId === "default") return "default";
   return activeProjectId;
@@ -211,6 +247,9 @@ export async function deleteRemoteWorkSession(userId: string, projectKey: string
 export function saveSessionLocalMirror(state: PersistedSession) {
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(WORK_SESSION_MIRROR_CHANGED_EVENT));
+    }
   } catch {
     /* ignore quota */
   }
@@ -234,6 +273,9 @@ export function loadSession(): PersistedSession | null {
 
 export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(WORK_SESSION_MIRROR_CHANGED_EVENT));
+  }
 }
 
 export const WORK_SESSION_OUTPUT_TYPE_ID_EVENT = "ew-work-session-output-type-id";

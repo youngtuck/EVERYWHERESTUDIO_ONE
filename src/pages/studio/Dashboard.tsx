@@ -9,6 +9,7 @@ import { useShell } from "../../components/studio/StudioShell";
 import {
   loadSession,
   getWorkStageFromPersisted,
+  persistedSessionHasPickup,
   workSessionRowHasMeaningfulWork,
   type PersistedSession,
   type WorkSessionDbRow,
@@ -36,14 +37,6 @@ function trunc60(s: string): string {
   const t = s.trim();
   if (t.length <= 60) return t;
   return `${t.slice(0, 57)}...`;
-}
-
-function persistedSessionHasPickup(p: PersistedSession): boolean {
-  const msgs = p.messages?.length ?? 0;
-  if (msgs > 1) return true;
-  if ((p.generatedContent || "").trim().length > 40) return true;
-  if (p.outlineRows && p.outlineRows.length > 0) return true;
-  return false;
 }
 
 function pickupTitleFromRow(row: WorkSessionDbRow): string {

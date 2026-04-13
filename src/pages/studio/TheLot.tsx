@@ -11,7 +11,13 @@ import { useToast } from "../../context/ToastContext";
 import { useShell } from "../../components/studio/StudioShell";
 import { useMobile } from "../../hooks/useMobile";
 import { timeAgo } from "../../utils/timeAgo";
-import { loadSession, clearSession, getWorkStageFromPersisted, type PersistedSession } from "../../lib/sessionPersistence";
+import {
+  loadSession,
+  clearSession,
+  getWorkStageFromPersisted,
+  type PersistedSession,
+} from "../../lib/sessionPersistence";
+import { publishWorkSessionMeta } from "../../lib/workSessionMetaBridge";
 import "./shared.css";
 
 const FONT = "var(--font)";
@@ -312,9 +318,11 @@ export default function TheLot() {
         const pk = selectedItem.workSessionProjectKey || "default";
         await supabase.from("work_sessions").delete().eq("user_id", user.id).eq("project_key", pk);
         clearSession();
+        publishWorkSessionMeta({ title: "", active: false });
         setInProgressItems(prev => prev.filter(i => i.id !== selectedItem.id));
       } else if (k === "local") {
         clearSession();
+        publishWorkSessionMeta({ title: "", active: false });
         setInProgressItems(prev => prev.filter(i => i.id !== selectedItem.id));
       }
       setSelectedId(null);
