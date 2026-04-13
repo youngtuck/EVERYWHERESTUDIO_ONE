@@ -888,6 +888,7 @@ function SearchIconButton({ onClick }: { onClick: () => void }) {
 // ── Main TopBar ─────────────────────────────────────────────────
 export default function StudioTopBar() {
   const nav = useNavigate();
+  const loc = useLocation();
   const { setDiscoverOpen, setSearchOpen } = useShell();
   const { center, showReturnPill, onReturnToSession } = useStudioTopBarCenterBreadcrumbs();
 
@@ -912,6 +913,10 @@ export default function StudioTopBar() {
           type="button"
           className="liquid-glass-btn-gold"
           onClick={() => {
+            if (loc.pathname === "/studio/work") {
+              window.dispatchEvent(new CustomEvent("ew-new-session-request"));
+              return;
+            }
             sessionStorage.setItem("ew-new-session", "1");
             nav("/studio/work");
           }}

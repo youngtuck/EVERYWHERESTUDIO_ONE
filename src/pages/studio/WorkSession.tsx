@@ -69,6 +69,9 @@ import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
+/** Top bar "+ New Session" when already on Work (same-route nav does not remount). */
+const EW_NEW_SESSION_REQUEST = "ew-new-session-request";
+const PARKED_OUTPUT_CONTENT_MAX_CHARS = 120_000;
 
 /** Health probe before Review wording checks (short, no retries, no global toast). */
 const STUDIO_API_HEALTH_TIMEOUT_MS = 4000;
@@ -3444,6 +3447,8 @@ export default function WorkSession() {
 
   const [restorePromptRow, setRestorePromptRow] = useState<WorkSessionDbRow | null>(null);
   const [restoreResolved, setRestoreResolved] = useState(false);
+  const [newSessionParkConfirmOpen, setNewSessionParkConfirmOpen] = useState(false);
+  const [newSessionParkBusy, setNewSessionParkBusy] = useState(false);
 
   // Mark restored so we don't re-read persisted on re-renders
   useEffect(() => { restored.current = true; }, []);
@@ -3507,6 +3512,12 @@ export default function WorkSession() {
     };
     window.addEventListener("ew-session-rename-request", onRename);
     return () => window.removeEventListener("ew-session-rename-request", onRename);
+  }, []);
+
+  useEffect(() => {
+    const onNewSessionRequest = () => setNewSessionParkConfirmOpen(true);
+    window.addEventListener(EW_NEW_SESSION_REQUEST, onNewSessionRequest);
+    return () => window.removeEventListener(EW_NEW_SESSION_REQUEST, onNewSessionRequest);
   }, []);
 
   useEffect(() => {
@@ -5025,6 +5036,78 @@ export default function WorkSession() {
     setEditWordTargetDraftInput("");
   }, [user?.id, workSessionProjectKey]);
 
+  const handleNewSessionConfirmNo = useCallback(() => {
+    setNewSessionParkConfirmOpen(false);
+    setNewSessionParkBusy(false);
+    handleNewSession();
+  }, [handleNewSession]);
+
+  const handleNewSessionConfirmYes = useCallback(async () => {
+    if (!user?.id) {
+      toast("Sign in to park this in the Pipeline.", "info");
+      setNewSessionParkConfirmOpen(false);
+      handleNewSession();
+      return;
+    }
+    setNewSessionParkBusy(true);
+    try {
+      const title = (
+        outlineRows[0]?.content?.trim()
+        || messages.find(m => m.role === "user")?.content?.slice(0, 80)
+        || resolvedSessionTitle
+        || "Parked session"
+      ).slice(0, 200);
+      let content = draft.trim();
+      if (!content) {
+        const parts = messages
+          .filter(m => m.role === "user" || m.role === "reed")
+          .map(m => `**${m.role === "reed" ? "Reed" : "You"}**:\n${m.content}`);
+        content = parts.join("\n\n").trim();
+      }
+      if (!content) {
+        toast("Nothing to park yet. Starting a new session.", "info");
+        setNewSessionParkConfirmOpen(false);
+        setNewSessionParkBusy(false);
+        handleNewSession();
+        return;
+      }
+      if (content.length > PARKED_OUTPUT_CONTENT_MAX_CHARS) {
+        content = content.slice(0, PARKED_OUTPUT_CONTENT_MAX_CHARS);
+      }
+      const outputTypeId = catalogOutputTypeForApi(outputType) || "freestyle";
+      const { error } = await supabase.from("outputs").insert({
+        user_id: user.id,
+        title,
+        content,
+        output_type: outputTypeId,
+        project_id: projectId ?? undefined,
+        score: 0,
+        gates: null,
+        content_state: "lot",
+      });
+      if (error) throw error;
+      toast("Parked in the Pipeline.", "success");
+    } catch (err) {
+      console.error("[WorkSession][park-new-session]", err);
+      toast("Could not park in the Pipeline. Try again.", "error");
+      setNewSessionParkBusy(false);
+      return;
+    }
+    setNewSessionParkBusy(false);
+    setNewSessionParkConfirmOpen(false);
+    handleNewSession();
+  }, [
+    user?.id,
+    toast,
+    outlineRows,
+    messages,
+    resolvedSessionTitle,
+    draft,
+    outputType,
+    projectId,
+    handleNewSession,
+  ]);
+
   const handleCloudRestoreAccept = useCallback(() => {
     if (!restorePromptRow) return;
     const p = rowToPersistedSession(restorePromptRow);
@@ -5052,7 +5135,7 @@ export default function WorkSession() {
 
     if (wantsNew) {
       sessionStorage.removeItem("ew-new-session");
-      handleNewSession();
+      setNewSessionParkConfirmOpen(true);
     }
 
     if (!signalText) return;
@@ -5077,7 +5160,7 @@ export default function WorkSession() {
       { role: "user", content: `I want to write about this: ${signalText}.${detail}` },
       { role: "reed", content: "Good signal. Let me shape this into something worth publishing.\n\nTell me more about what you want to say." },
     ]);
-  }, [handleNewSession]);
+  }, []);
 
   const handleGoBackToEdit = useCallback((instructions: string) => {
     // Clear stale Review data
@@ -5661,6 +5744,8 @@ export default function WorkSession() {
   // ─────────────────────────────────────────────────────────────
 
   const hasUserMessage = messages.some(m => m.role === "user");
+  /** Empty Intake: fill stage height so StageIntake can vertically center greeting + composer. */
+  const workIntakeWelcomeFill = stage === "Intake" && !hasUserMessage;
   const dockIntakeOutlineShell = (stage === "Intake" && hasUserMessage) || stage === "Outline";
   const showOutlineBridgeLoading = stage === "Outline" && buildingOutline && ioTransitionStep === 2;
   const showOutlineMain = stage === "Outline" && !(buildingOutline && ioTransitionStep === 2);
@@ -5725,7 +5810,7 @@ export default function WorkSession() {
       flexDirection: "column",
       overflow: "visible",
       fontFamily: FONT,
-      ...(workViewportFill ? { flex: 1, minHeight: 0, height: "100%" } : { flex: "0 1 auto" }),
+      ...(workViewportFill || workIntakeWelcomeFill ? { flex: 1, minHeight: 0, height: "100%" } : { flex: "0 1 auto" }),
     }}>
       {restorePromptRow ? (
         <div
@@ -5790,13 +5875,78 @@ export default function WorkSession() {
           </div>
         </div>
       ) : null}
+      {newSessionParkConfirmOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ew-new-session-park-title"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 130,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+            background: "rgba(12, 26, 41, 0.55)",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            className="liquid-glass-card"
+            style={{
+              width: "min(420px, 100%)",
+              padding: "20px 20px 16px",
+              borderRadius: 14,
+              boxShadow: "0 20px 48px rgba(0,0,0,0.22)",
+            }}
+          >
+            <h2 id="ew-new-session-park-title" style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "var(--fg)" }}>
+              New session
+            </h2>
+            <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55 }}>
+              Would you like to send &ldquo;{resolvedSessionTitle}&rdquo; to the Pipeline and park it for later? Choose Yes to save a copy you can reopen from the Pipeline, or No to start fresh without parking.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" as const }}>
+              <button
+                type="button"
+                disabled={newSessionParkBusy}
+                onClick={handleNewSessionConfirmNo}
+                style={{
+                  padding: "8px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  border: "1px solid var(--glass-border)",
+                  background: "transparent",
+                  color: "var(--fg-2)",
+                  cursor: newSessionParkBusy ? "default" : "pointer",
+                  fontFamily: FONT,
+                  opacity: newSessionParkBusy ? 0.55 : 1,
+                }}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                disabled={newSessionParkBusy}
+                onClick={() => void handleNewSessionConfirmYes()}
+                className="liquid-glass-btn-gold"
+                style={{ padding: "8px 18px", fontSize: 12, fontFamily: FONT, opacity: newSessionParkBusy ? 0.7 : 1 }}
+              >
+                <span className="liquid-glass-btn-gold-label">{newSessionParkBusy ? "Saving..." : "Yes"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div style={{
         width: "100%",
         minWidth: 0,
         display: "flex",
         flexDirection: "column",
         overflow: "visible",
-        ...(workViewportFill ? { flex: 1, minHeight: 0 } : {}),
+        ...(workViewportFill || workIntakeWelcomeFill ? { flex: 1, minHeight: 0 } : {}),
       }}>
       {stage === "Intake" && !hasUserMessage && (
         <StageIntake
