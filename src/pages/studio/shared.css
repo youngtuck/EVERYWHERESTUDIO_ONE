@@ -119,7 +119,7 @@ html:has(.studio-app-shell--viewport-lock) body {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .studio-app-shell--viewport-lock .studio-main-inner.studio-stage-scroll {
@@ -130,7 +130,7 @@ html:has(.studio-app-shell--viewport-lock) body {
   flex-direction: column;
   align-items: stretch;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
 }

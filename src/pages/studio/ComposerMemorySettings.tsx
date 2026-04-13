@@ -59,10 +59,17 @@ export default function ComposerMemorySettings() {
 
     if (error) {
       console.error("[ComposerMemory]", error);
-      toast(error.message.includes("does not exist")
-        ? "Composer memory table is not on this project yet. Apply migration 022 (and 023 for titles) in Supabase."
-        : `Could not load memory: ${error.message}`,
-      "error");
+      const msg = (error.message || "").toLowerCase();
+      const missingTable =
+        msg.includes("does not exist")
+        || msg.includes("schema cache")
+        || msg.includes("could not find the table");
+      toast(
+        missingTable
+          ? "Composer memory table is missing on this Supabase project. Apply migrations 022_composer_memory.sql and 023_composer_memory_title.sql, or run supabase db push from the repo."
+          : `Could not load memory: ${error.message}`,
+        "error",
+      );
       setRows([]);
     } else {
       setRows((data || []) as ComposerMemoryRow[]);
