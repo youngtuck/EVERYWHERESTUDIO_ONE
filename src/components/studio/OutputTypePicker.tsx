@@ -60,13 +60,17 @@ interface OutputTypePickerProps {
   selected: string | null;
   onSelect: (typeId: string) => void;
   compact?: boolean;
+  /** When set, opens this category tab first (for example a sidebar overlay for one catalog group). */
+  initialCategory?: OutputCategory;
 }
 
-export default function OutputTypePicker({ selected, onSelect, compact }: OutputTypePickerProps) {
+export default function OutputTypePicker({ selected, onSelect, compact, initialCategory }: OutputTypePickerProps) {
   const [activeCategory, setActiveCategory] = useState<OutputCategory>(
-    selected
-      ? OUTPUT_TYPES.find(t => t.id === selected)?.category || "Content"
-      : "Content"
+    () =>
+      initialCategory
+        ?? (selected
+          ? OUTPUT_TYPES.find(t => t.id === selected)?.category || "Content"
+          : "Content"),
   );
 
   const typesForCategory = activeCategory === "Freestyle"

@@ -1,7 +1,8 @@
 import { supabase } from "./supabase";
 import type { StructuredIntake } from "./reedStructuredIntake";
 
-const SESSION_KEY = "ew-active-work-session";
+/** sessionStorage key for the active Work session payload (see `PersistedSession`). */
+export const SESSION_KEY = "ew-active-work-session";
 
 /** Persisted Work stage (matches WorkSession.tsx WorkStage). */
 export type PersistedWorkStage = "Intake" | "Outline" | "Edit" | "Review";
@@ -105,4 +106,32 @@ export function loadSession(): PersistedSession | null {
 
 export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
+}
+
+/** Dispatched when the user changes catalog output type without leaving the Work route (e.g. Studio sidebar overlay). */
+export const WORK_SESSION_OUTPUT_TYPE_ID_EVENT = "ew-work-session-output-type-id";
+
+export function hasPersistedWorkSession(): boolean {
+  return loadSession() != null;
+}
+
+/** Updates `outputTypeId` in the persisted session and notifies WorkSession (if mounted). Returns false if no session. */
+export function patchPersistedSessionOutputTypeId(
+  outputTypeId: string,
+  opts?: { userId?: string | null },
+): boolean {
+  const p = loadSession();
+  if (!p) return false;
+  const next: PersistedSession = {
+    ...p,
+    outputTypeId,
+    timestamp: Date.now(),
+  };
+  saveSession(next, opts);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent(WORK_SESSION_OUTPUT_TYPE_ID_EVENT, { detail: { outputTypeId } }),
+    );
+  }
+  return true;
 }

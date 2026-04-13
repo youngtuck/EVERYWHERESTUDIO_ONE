@@ -23,6 +23,7 @@ import { useMobile } from "../../hooks/useMobile";
 import { useHoldToTranscribe } from "../../hooks/useHoldToTranscribe";
 import {
   saveSession, loadSession, clearSession, deleteRemoteWorkSession, getWorkStageFromPersisted,
+  WORK_SESSION_OUTPUT_TYPE_ID_EVENT,
   type PersistedSession,
 } from "../../lib/sessionPersistence";
 import {
@@ -3111,6 +3112,19 @@ export default function WorkSession() {
     };
     window.addEventListener("ew-session-rename-request", onRename);
     return () => window.removeEventListener("ew-session-rename-request", onRename);
+  }, []);
+
+  useEffect(() => {
+    const onOutputTypeId = (e: Event) => {
+      const ce = e as CustomEvent<{ outputTypeId?: string }>;
+      const id = ce.detail?.outputTypeId;
+      if (typeof id !== "string" || !id.trim()) return;
+      setOutputType(id);
+      if (id === "talk") setTalkLengthGatePassed(false);
+      else setTalkLengthGatePassed(true);
+    };
+    window.addEventListener(WORK_SESSION_OUTPUT_TYPE_ID_EVENT, onOutputTypeId);
+    return () => window.removeEventListener(WORK_SESSION_OUTPUT_TYPE_ID_EVENT, onOutputTypeId);
   }, []);
 
   // ── Auto-save session on every meaningful state change ─────────
