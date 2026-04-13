@@ -188,6 +188,12 @@ const FORMAT_TO_OUTPUT_TYPE: Record<Format, string> = {
   Presentation: "presentation", "Book Chapter": "book",
 };
 
+/** Catalog OUTPUT_TYPES id for APIs: only explicit Outline picker (or restored row); never inferred from Review channels. */
+function catalogOutputTypeForApi(outputTypeId: string | null | undefined): string {
+  const id = (outputTypeId ?? "").trim();
+  return id.length > 0 ? id : "freestyle";
+}
+
 function formatsFromPersisted(raw: string[] | undefined): Format[] {
   if (!raw?.length) return [];
   const allowed = new Set<string>(Object.keys(FORMAT_TO_OUTPUT_TYPE));
@@ -2304,17 +2310,20 @@ function GenerationProgress() {
 
 // ── Review progress (format adaptation + quality pipeline) ───────────────────
 function ReviewProgress({
-  formatDrafts, selectedFormats,
+  formatDrafts, selectedFormats, awaitingChannelPreviews,
 }: {
   formatDrafts: Record<string, { content: string; metadata: Record<string, string>; status: string }>;
   selectedFormats: string[];
+  /** When false, we are not waiting on parallel adapt-format jobs. */
+  awaitingChannelPreviews: boolean;
 }) {
   const formatStatuses = selectedFormats.map(f => ({
     name: f,
     status: formatDrafts[f]?.status || "pending",
   }));
-  const allFormatsComplete = formatStatuses.length > 0
-    && formatStatuses.every(f => f.status === "done" || f.status === "error");
+  const allFormatsComplete =
+    !awaitingChannelPreviews
+    || (formatStatuses.length > 0 && formatStatuses.every(f => f.status === "done" || f.status === "error"));
 
   return (
     <div
@@ -2357,9 +2366,11 @@ function ReviewProgress({
         lineHeight: 1.55,
         fontFamily: FONT,
       }}>
-        {allFormatsComplete
-          ? "Channel previews are ready. When quality checks finish, you can move on to export."
-          : "Channel previews for Wrap are building in parallel. You will choose Catalog formats after this step."}
+        {!awaitingChannelPreviews
+          ? "When quality checks finish, you can review results and choose where this goes next."
+          : allFormatsComplete
+            ? "Channel previews are ready. When quality checks finish, you can move on to export."
+            : "Channel previews for Wrap are building in parallel. You will choose Catalog formats after this step."}
       </div>
       <style>{`@keyframes work-review-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -2762,7 +2773,9 @@ function StageReview({
   showChannelPicker,
 }: {
   draft: string; pipelineRun: PipelineRun | null; running: boolean;
-  activeTab: Format; tabs: Format[]; onTabClick: (t: Format) => void;
+  activeTab: Format | null;
+  tabs: Format[];
+  onTabClick: (t: Format) => void;
   onAdvance: () => void; onGoBack: (instructions: string) => void;
   onFix: (instruction: string) => Promise<void>;
   onDirectReplace: (original: string, replacement: string) => void;
@@ -2820,7 +2833,7 @@ function StageReview({
               </label>
               <select
                 id="review-channel-preview"
-                value={activeTab}
+                value={activeTab ?? tabs[0] ?? ""}
                 onChange={e => onTabClick(e.target.value as Format)}
                 className="liquid-glass-input"
                 style={{
@@ -2853,10 +2866,25 @@ function StageReview({
             <ReviewProgress
               formatDrafts={formatDrafts}
               selectedFormats={tabs}
+              awaitingChannelPreviews={tabs.length > 0}
             />
           ) : (
             <>
               {(() => {
+              if (!activeTab || tabs.length === 0) {
+                return (
+                  <ReviewFormatPreview
+                    format="Sunday Story"
+                    draft={draft}
+                    hvtFlaggedLines={hvtFlaggedLines}
+                    onApplySuggestion={async (suggestion) => {
+                      setHvtFixing(true);
+                      try { await onFix(suggestion); } finally { setHvtFixing(false); }
+                    }}
+                    onDirectReplace={onDirectReplace}
+                  />
+                );
+              }
               const fd = formatDrafts[activeTab];
               const isAdapting = fd?.status === "generating" || fd?.status === "pending";
               const adaptedContent = fd?.status === "done" ? fd.content : draft;
@@ -3123,10 +3151,17 @@ export default function WorkSession() {
   const [fixingGate, setFixingGate] = useState<string | null>(null);
   const [rerunningPipeline, setRerunningPipeline] = useState(false);
   const [pipelineRunning, setPipelineRunning] = useState(false);
-  const [activeReviewTab, setActiveReviewTab] = useState<Format>(selectedFormats[0] ?? "LinkedIn");
+  const [activeReviewTab, setActiveReviewTab] = useState<Format | null>(null);
+  useEffect(() => {
+    setActiveReviewTab(prev => {
+      if (selectedFormats.length === 0) return null;
+      if (prev && selectedFormats.includes(prev)) return prev;
+      return selectedFormats[0];
+    });
+  }, [selectedFormats]);
   const [hvtAttempts, setHvtAttempts] = useState(0);
   const [hvtRunning, setHvtRunning] = useState(false);
-  /** Chosen OUTPUT_TYPES ids on the Pre-Wrap full screen; defaults to Reed recommendation when the gate opens. */
+  /** Chosen OUTPUT_TYPES ids on the Pre-Wrap full screen (user toggles only; no auto-selection). */
   const [preWrapPickIds, setPreWrapPickIds] = useState<string[]>([]);
   /** Talk length for presentation output type (Wrap target words = minutes × 300). */
   const [preWrapPresentationMins, setPreWrapPresentationMins] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
@@ -3136,9 +3171,6 @@ export default function WorkSession() {
   const [backgroundPipelineRunning, setBackgroundPipelineRunning] = useState(false);
   const [draftChangedSinceBackground, setDraftChangedSinceBackground] = useState(false);
   const backgroundDraftRef = useRef<string>("");
-  /** Pre-Wrap gate: seed selection once per gate open so recommended format is pre-selected. */
-  const preWrapGatePrimed = useRef(false);
-
   // ── Export ────────────────────────────────────────────────────
   const [exportedTabs, setExportedTabs] = useState<Record<string, boolean>>({});
   const [outputId, setOutputId] = useState<string | null>(persisted?.generatedOutputId || null);
@@ -3248,7 +3280,7 @@ export default function WorkSession() {
         ts: Date.now(),
       })),
       input: "",
-      outputType: selectedFormats[0] || "LinkedIn",
+      outputType: catalogOutputTypeForApi(outputType),
       outputTypeId: outputType,
       sessionTitle: resolvedSessionTitle,
       sessionNameOverride,
@@ -3378,7 +3410,6 @@ export default function WorkSession() {
     const f = formatsFromPersisted(p.selectedFormats);
     const nextFormats = f.length > 0 ? f : DEFAULT_FORMATS;
     setSelectedFormats(nextFormats);
-    setActiveReviewTab(nextFormats[0] ?? "LinkedIn");
     setPipelineRun(null);
     setPipelineRunning(false);
     setBackgroundPipelineRun(null);
@@ -3560,7 +3591,7 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role === "reed" ? "assistant" : "user", content: m.content })),
-          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle",
+          outputType: catalogOutputTypeForApi(outputType),
           voiceDnaMd,
           userId: user?.id,
           userName: displayName || undefined,
@@ -3616,7 +3647,7 @@ export default function WorkSession() {
     } finally {
       setIntakeSending(false);
     }
-  }, [messages, selectedFormats, voiceDnaMd, user?.id, outputType, intakeReady]);
+  }, [messages, voiceDnaMd, user?.id, outputType, intakeReady]);
 
   const handleIntakeBarSend = useCallback(() => {
     if (intakeSending) return;
@@ -3654,9 +3685,7 @@ export default function WorkSession() {
 
     const buildPromise = (async () => {
       try {
-        const ot = outputType || (selectedFormats.length > 0
-          ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle"
-          : "freestyle");
+        const ot = catalogOutputTypeForApi(outputType);
 
         const mapRows = (rows: Array<{ label: string; content: string; indent?: boolean }>): OutlineRow[] =>
           rows.map(r => ({ label: r.label || "", content: r.content || "", ...(r.indent ? { indent: true } : {}) }));
@@ -3752,7 +3781,7 @@ export default function WorkSession() {
         outlineBuildLockRef.current = false;
       }
     })();
-  }, [messages, selectedFormats, goToStage, outputType, user?.id, toast]);
+  }, [messages, goToStage, outputType, user?.id, toast]);
 
   // ── BACKGROUND: Silent quality check after draft generation (Redesign 2) ──
   const handleBackgroundQualityCheck = useCallback(async (generatedDraft: string) => {
@@ -3767,7 +3796,7 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft: generatedDraft,
-          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: catalogOutputTypeForApi(outputType),
           voiceDnaMd,
           brandDnaMd,
           methodDnaMd,
@@ -3797,8 +3826,7 @@ export default function WorkSession() {
           .join("\n");
 
         try {
-          const bgOt =
-            outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+          const bgOt = catalogOutputTypeForApi(outputType);
           const revRes = await fetchWithRetry(`${API_BASE}/api/generate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -3834,7 +3862,7 @@ export default function WorkSession() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   draft: revData.content,
-                  outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+                  outputType: catalogOutputTypeForApi(outputType),
                   voiceDnaMd,
                   brandDnaMd,
                   methodDnaMd,
@@ -3867,7 +3895,7 @@ export default function WorkSession() {
     } finally {
       setBackgroundPipelineRunning(false);
     }
-  }, [user, outputType, selectedFormats, talkDuration, voiceDnaMd, brandDnaMd, methodDnaMd, draftChangedSinceBackground, structuredIntakePayload]);
+  }, [user, outputType, talkDuration, voiceDnaMd, brandDnaMd, methodDnaMd, draftChangedSinceBackground, structuredIntakePayload]);
 
   // Track when user edits draft after background check started
   const handleDraftChangeWithTracking = useCallback((newDraft: string) => {
@@ -3894,7 +3922,7 @@ export default function WorkSession() {
       purpose: "",
     }));
     const resolvedOt =
-      outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+      catalogOutputTypeForApi(outputType);
 
     try {
       setGeneratingLabel("Writing in your voice...");
@@ -3944,7 +3972,6 @@ export default function WorkSession() {
           if (error) console.error("[Draft save] Error:", error.message, error.details, error.hint);
           if (savedOutput?.id) {
             setOutputId(savedOutput.id);
-            setOutputType(prev => prev ?? outputTypeId);
           }
         });
       }
@@ -3955,7 +3982,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage, handleBackgroundQualityCheck, outputType, talkDuration, structuredIntakePayload]);
+  }, [buildConvSummary, outlineRows, user?.id, toast, goToStage, handleBackgroundQualityCheck, outputType, talkDuration, structuredIntakePayload]);
 
   const handleGenerateDraft = useCallback(() => {
     if (outputType === "talk" && !talkLengthGatePassed) {
@@ -3992,7 +4019,7 @@ export default function WorkSession() {
     }
 
     const resolvedOt =
-      outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+      catalogOutputTypeForApi(outputType);
 
     const revisionScope = classifyEditRevisionScope(instructions);
     const sectionSlice =
@@ -4050,7 +4077,7 @@ export default function WorkSession() {
       if (fromChip) setApplyingSuggestion(false);
       else setGenerating(false);
     }
-  }, [draft, buildConvSummary, selectedFormats, outputType, talkDuration, user?.id, activeVersionIdx, toast, structuredIntakePayload]);
+  }, [draft, buildConvSummary, outputType, talkDuration, user?.id, activeVersionIdx, toast, structuredIntakePayload]);
 
   const lastAppliedChipRequestIdRef = useRef<number | null>(null);
   useEffect(() => {
@@ -4077,7 +4104,7 @@ export default function WorkSession() {
         : "Write a third variation. Try a bolder, more unexpected angle. Change the structure significantly. Take a creative risk with the opening.";
 
       const resolvedOt =
-        outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+        catalogOutputTypeForApi(outputType);
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4109,13 +4136,17 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [draft, generating, draftVersions, buildConvSummary, outputType, selectedFormats, talkDuration, user?.id, toast, structuredIntakePayload]);
+  }, [draft, generating, draftVersions, buildConvSummary, outputType, talkDuration, user?.id, toast, structuredIntakePayload]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
   // ── Format adaptation (parallel with pipeline) ──────────────
   const handleFormatAdaptation = useCallback(async () => {
     if (!draft || !user) return;
-    const formatsToAdapt = selectedFormats.length > 0 ? selectedFormats : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[];
+    if (selectedFormats.length === 0) {
+      setFormatDrafts({});
+      return;
+    }
+    const formatsToAdapt = selectedFormats;
     const initial: Record<string, { content: string; metadata: Record<string, string>; status: "pending" | "generating" | "done" | "error" }> = {};
     formatsToAdapt.forEach(f => { initial[f] = { content: "", metadata: {}, status: "pending" }; });
     setFormatDrafts(initial);
@@ -4125,7 +4156,7 @@ export default function WorkSession() {
       try {
         const apiFormat = reviewFormatToApiFormat(format);
         const sourceOt =
-          outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "freestyle";
+          catalogOutputTypeForApi(outputType);
         const presMins = outputType === "presentation" ? preWrapPresentationMins : null;
         const talkMins = outputType === "talk" ? talkDuration : null;
         const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins, talkMins);
@@ -4288,7 +4319,7 @@ export default function WorkSession() {
       // Save to Supabase
       const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
       const score = backgroundPipelineRun.impactScore?.total ?? 0;
-      const outputTypeId = outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay";
+      const outputTypeId = catalogOutputTypeForApi(outputType);
 
       if (outputId) {
         await supabase.from("outputs").update({
@@ -4323,7 +4354,7 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft,
-          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: catalogOutputTypeForApi(outputType),
           voiceDnaMd,
           brandDnaMd,
           methodDnaMd,
@@ -4354,7 +4385,7 @@ export default function WorkSession() {
       if (user) {
         const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
         const score = result.impactScore?.total ?? 0;
-        const outputTypeId = outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay";
+        const outputTypeId = catalogOutputTypeForApi(outputType);
 
         if (outputId) {
           // Update existing record with pipeline results
@@ -4390,7 +4421,7 @@ export default function WorkSession() {
     } finally {
       setPipelineRunning(false);
     }
-  }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, selectedFormats, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId, backgroundPipelineRun, draftChangedSinceBackground]);
+  }, [draft, user, voiceDnaMd, brandDnaMd, methodDnaMd, outputId, outlineRows, messages, toast, goToStage, handleFormatAdaptation, outputType, projectId, backgroundPipelineRun, draftChangedSinceBackground]);
 
   // ── REVIEW: Export all (save to Catalog first, then hand off to Wrap) ──
   const handleExportAll = useCallback(async (forcedOutputType?: string | string[]) => {
@@ -4408,9 +4439,7 @@ export default function WorkSession() {
       setOutputType(primaryTypeId);
     }
 
-    const formats: Format[] = selectedFormats.length > 0
-      ? selectedFormats
-      : ["LinkedIn", "Newsletter", "Podcast", "Sunday Story"];
+    const formats: Format[] = selectedFormats;
     const exported: Record<string, boolean> = {};
     formats.forEach(f => { exported[f] = true; });
 
@@ -4549,17 +4578,15 @@ export default function WorkSession() {
     void handleExportAll(preWrapPickIds);
   }, [preWrapPickIds, handleExportAll]);
 
-  const reviewChannelTabs = useMemo((): Format[] => (
-    selectedFormats.length > 0
-      ? selectedFormats
-      : (["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[])
-  ), [selectedFormats]);
+  const reviewChannelTabs = useMemo((): Format[] => selectedFormats, [selectedFormats]);
 
   const reviewFormatAdaptationComplete = useMemo(
-    () => reviewChannelTabs.length > 0 && reviewChannelTabs.every(t => {
-      const fd = formatDrafts[t];
-      return fd && (fd.status === "done" || fd.status === "error");
-    }),
+    () =>
+      reviewChannelTabs.length === 0
+      || reviewChannelTabs.every(t => {
+        const fd = formatDrafts[t];
+        return fd && (fd.status === "done" || fd.status === "error");
+      }),
     [reviewChannelTabs, formatDrafts],
   );
 
@@ -4574,17 +4601,6 @@ export default function WorkSession() {
     () => inferRecommendedWrapOutputId(draft || ""),
     [draft],
   );
-
-  useEffect(() => {
-    if (!showPreWrapOutputGate) {
-      preWrapGatePrimed.current = false;
-      return;
-    }
-    if (!preWrapGatePrimed.current) {
-      preWrapGatePrimed.current = true;
-      setPreWrapPickIds([recommendedWrapOutputId]);
-    }
-  }, [showPreWrapOutputGate, recommendedWrapOutputId]);
 
   useEffect(() => {
     if (!preWrapPickIds.includes("presentation")) {
@@ -4603,7 +4619,7 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft,
-          outputType: (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay",
+          outputType: catalogOutputTypeForApi(outputType),
           voiceDnaMd,
           userId: user.id,
           hvtOnly: true,
@@ -4629,7 +4645,7 @@ export default function WorkSession() {
     } finally {
       setHvtRunning(false);
     }
-  }, [draft, user, hvtAttempts, selectedFormats, voiceDnaMd, toast]);
+  }, [draft, user, hvtAttempts, outputType, voiceDnaMd, toast]);
 
   // ── REVIEW → EDIT: Send back ──────────────────────────────────
   // ── NEW SESSION: Reset everything ────────────────────────────
@@ -4765,7 +4781,7 @@ export default function WorkSession() {
     if (!draft) throw new Error("No draft to fix");
 
     const fixOt =
-      outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+      catalogOutputTypeForApi(outputType);
 
     try {
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
@@ -4792,50 +4808,50 @@ export default function WorkSession() {
       if (data.content && data.content !== draft) {
         setDraft(data.content);
 
-        // Immediately update the displayed format draft so user sees the change
-        setFormatDrafts(prev => ({
-          ...prev,
-          [activeReviewTab]: {
-            content: data.content,
-            metadata: prev[activeReviewTab]?.metadata || {},
-            status: "done" as const,
-          },
-        }));
-        toast("Draft updated.");
+        if (activeReviewTab) {
+          setFormatDrafts(prev => ({
+            ...prev,
+            [activeReviewTab]: {
+              content: data.content,
+              metadata: prev[activeReviewTab]?.metadata || {},
+              status: "done" as const,
+            },
+          }));
 
-        // Re-adapt the current format with the new draft (improves formatting)
-        try {
-          const apiFormat = reviewFormatToApiFormat(activeReviewTab);
-          const sourceOt =
-            outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "freestyle";
-          const presMins = outputType === "presentation" ? preWrapPresentationMins : null;
-          const talkMins = outputType === "talk" ? talkDuration : null;
-          const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins, talkMins);
-          const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              draft: data.content,
-              format: apiFormat,
-              voiceDnaMd,
-              brandDnaMd,
-              userId: user?.id,
-              wrapConstraintSupplement,
-              ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
-            }),
-          }, { timeout: 60000 });
-          if (adaptRes.ok) {
-            const adaptData = await adaptRes.json();
-            const adapted =
-              typeof adaptData.content === "string" && adaptData.content.trim().length > 0
-                ? adaptData.content
-                : data.content;
-            setFormatDrafts(prev => ({
-              ...prev,
-              [activeReviewTab]: { content: adapted, metadata: adaptData.metadata || {}, status: "done" as const },
-            }));
-          }
-        } catch { /* Non-critical: format re-adaptation failed, raw draft already shown */ }
+          try {
+            const apiFormat = reviewFormatToApiFormat(activeReviewTab);
+            const sourceOt = catalogOutputTypeForApi(outputType);
+            const presMins = outputType === "presentation" ? preWrapPresentationMins : null;
+            const talkMins = outputType === "talk" ? talkDuration : null;
+            const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins, talkMins);
+            const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                draft: data.content,
+                format: apiFormat,
+                voiceDnaMd,
+                brandDnaMd,
+                userId: user?.id,
+                wrapConstraintSupplement,
+                ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
+              }),
+            }, { timeout: 60000 });
+            if (adaptRes.ok) {
+              const adaptData = await adaptRes.json();
+              const adapted =
+                typeof adaptData.content === "string" && adaptData.content.trim().length > 0
+                  ? adaptData.content
+                  : data.content;
+              setFormatDrafts(prev => ({
+                ...prev,
+                [activeReviewTab]: { content: adapted, metadata: adaptData.metadata || {}, status: "done" as const },
+              }));
+            }
+          } catch { /* Non-critical: format re-adaptation failed, raw draft already shown */ }
+        }
+
+        toast("Draft updated.");
       } else {
         toast("No changes detected.");
       }
@@ -4844,7 +4860,7 @@ export default function WorkSession() {
       toast("Fix failed. Try again.", "error");
       throw err;
     }
-  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast, preWrapPresentationMins, talkDuration, structuredIntakePayload]);
+  }, [draft, buildConvSummary, outputType, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast, preWrapPresentationMins, talkDuration, structuredIntakePayload]);
 
   // ── REVIEW: Instant text replacement (Grammarly-style accept) ──
   const handleDirectReplace = useCallback((original: string, replacement: string) => {
@@ -4872,14 +4888,16 @@ export default function WorkSession() {
     if (newDraft !== draft) {
       setDraft(newDraft);
 
-      setFormatDrafts(prev => ({
-        ...prev,
-        [activeReviewTab]: {
-          content: newDraft,
-          metadata: prev[activeReviewTab]?.metadata || {},
-          status: "done" as const,
-        },
-      }));
+      if (activeReviewTab) {
+        setFormatDrafts(prev => ({
+          ...prev,
+          [activeReviewTab]: {
+            content: newDraft,
+            metadata: prev[activeReviewTab]?.metadata || {},
+            status: "done" as const,
+          },
+        }));
+      }
       toast("Fix applied.");
     } else {
       toast("Could not apply fix. Try using Ask Reed instead.", "info");
@@ -4897,7 +4915,7 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft,
-          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: catalogOutputTypeForApi(outputType),
           voiceDnaMd,
           brandDnaMd,
           methodDnaMd,
@@ -4927,7 +4945,7 @@ export default function WorkSession() {
     } finally {
       setRerunningPipeline(false);
     }
-  }, [draft, user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, toast]);
+  }, [draft, user, outputType, voiceDnaMd, brandDnaMd, methodDnaMd, toast]);
 
   // ── REVIEW: Let Reed fix failing gates and refresh the pipeline ──
   const handleRepairPipeline = useCallback(async () => {
@@ -4949,7 +4967,7 @@ export default function WorkSession() {
 
       // Revise the draft
       const repairOt =
-        outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+        catalogOutputTypeForApi(outputType);
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4975,14 +4993,16 @@ export default function WorkSession() {
       }
 
       setDraft(newDraft);
-      setFormatDrafts(prev => ({
-        ...prev,
-        [activeReviewTab]: {
-          content: newDraft,
-          metadata: prev[activeReviewTab]?.metadata || {},
-          status: "done" as const,
-        },
-      }));
+      if (activeReviewTab) {
+        setFormatDrafts(prev => ({
+          ...prev,
+          [activeReviewTab]: {
+            content: newDraft,
+            metadata: prev[activeReviewTab]?.metadata || {},
+            status: "done" as const,
+          },
+        }));
+      }
 
       setFixingGate(null);
 
@@ -5022,7 +5042,7 @@ export default function WorkSession() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             draft: newDraft,
-            outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+            outputType: catalogOutputTypeForApi(outputType),
             voiceDnaMd,
             brandDnaMd,
             methodDnaMd,
@@ -5077,7 +5097,7 @@ export default function WorkSession() {
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, talkDuration, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd, outputId, structuredIntakePayload]);
+  }, [draft, user, pipelineRun, buildConvSummary, outputType, talkDuration, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd, outputId, structuredIntakePayload]);
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
@@ -5201,13 +5221,13 @@ export default function WorkSession() {
           );
         }
         case "Review": {
-          const reviewTabs = selectedFormats.length > 0
-            ? selectedFormats
-            : (["LinkedIn", "Newsletter", "Podcast", "Sunday Story"] as Format[]);
-          const adaptationDone = reviewTabs.length > 0 && reviewTabs.every(t => {
-            const fd = formatDrafts[t];
-            return fd && (fd.status === "done" || fd.status === "error");
-          });
+          const reviewTabs = selectedFormats;
+          const adaptationDone =
+            reviewTabs.length === 0
+            || reviewTabs.every(t => {
+              const fd = formatDrafts[t];
+              return fd && (fd.status === "done" || fd.status === "error");
+            });
           let exportLockedReason: string | null = null;
           if (pipelineRun && !pipelineRunning && !allExported) {
             if (!adaptationDone) {

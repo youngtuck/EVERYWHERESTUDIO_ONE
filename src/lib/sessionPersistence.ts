@@ -155,7 +155,7 @@ export function rowToPersistedSession(row: WorkSessionDbRow): PersistedSession {
       ? messages
       : [{ id: "0", role: "assistant", content: "Good to see you. What are you working on?", ts: Date.now() }],
     input: "",
-    outputType: "LinkedIn",
+    outputType: row.output_type ?? "freestyle",
     outputTypeId: row.output_type ?? null,
     talkDuration: null,
     sessionTitle: row.session_title || "",
@@ -294,6 +294,7 @@ export function patchPersistedSessionOutputTypeId(
   const next: PersistedSession = {
     ...p,
     outputTypeId,
+    outputType: outputTypeId,
     timestamp: Date.now(),
     projectKey,
   };
