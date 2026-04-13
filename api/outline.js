@@ -28,6 +28,135 @@ function sanitizeOutlineObj(obj) {
   return obj;
 }
 
+const OUTPUT_TYPE_LABELS = {
+  freestyle: "Freestyle",
+  essay: "Essay",
+  talk: "Talk",
+  podcast: "Podcast",
+  linkedin_post: "LinkedIn post",
+  presentation: "Presentation",
+  email: "Email",
+  newsletter: "Newsletter",
+  case_study: "Case study",
+  white_paper: "White paper",
+  video_script: "Video script",
+  sales_deck: "Sales deck",
+  proposal: "Proposal",
+  memo: "Memo",
+  blog_post: "Blog post",
+};
+
+function formatOutputTypeLabel(outputType) {
+  const key = String(outputType || "freestyle").toLowerCase().trim();
+  if (OUTPUT_TYPE_LABELS[key]) return OUTPUT_TYPE_LABELS[key];
+  return key
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
+/** User-side lines only (intake subject, purpose, audience live here). */
+function buildUserTranscript(messages) {
+  if (!Array.isArray(messages)) return "";
+  const parts = [];
+  for (const m of messages) {
+    const role = typeof m.role === "string" ? m.role.toLowerCase() : "";
+    const c = typeof m.content === "string" ? m.content.trim() : String(m.content || "").trim();
+    if (!c) continue;
+    if (role === "user") parts.push(c);
+  }
+  return parts.join("\n\n");
+}
+
+/** Pull "about X to/for Y" style clauses from user text. */
+function inferTopicAndAudienceFromTranscript(text) {
+  const p = text.replace(/\s+/g, " ").trim();
+  if (!p) return { core: "", audience: "" };
+  const patterns = [
+    /\b(?:giving|give|giving a|I am giving|I'?m giving|we are giving|we're giving)\s+(?:a\s+)?(?:talk|speech|presentation)\s+about\s+(.+?)\s+to\s+([^.!?]+)/i,
+    /\b(?:writing|write|I am writing|I'?m writing)\s+(?:a\s+)?(?:an?\s+)?(?:essay|article|piece|post)\s+about\s+(.+?)\s+for\s+([^.!?]+)/i,
+    /\bpresentation\s+(?:on|about)\s+(.+?)\s+for\s+([^.!?]+)/i,
+    /\bpodcast\s+(?:on|about)\s+(.+?)\s+for\s+([^.!?]+)/i,
+    /\babout\s+([^.!?]{6,140}?)\s+to\s+(?:the\s+)?([A-Za-z0-9][^.!?]{3,100})/i,
+  ];
+  for (const re of patterns) {
+    const m = p.match(re);
+    if (m) {
+      const core = m[1].replace(/[.,;]+$/, "").trim();
+      const audience = m[2].replace(/[.,;]+$/, "").trim();
+      if (core.length >= 2 && audience.length >= 2) return { core, audience };
+    }
+  }
+  return { core: "", audience: "" };
+}
+
+function inferAudienceStandalone(text) {
+  const p = text.replace(/\s+/g, " ").trim();
+  const m = p.match(/\b(?:for|to)\s+(?:the\s+)?([A-Za-z0-9][^.!?\n]{3,100})(?=\s*[.!?\n]|$)/i);
+  if (!m) return "";
+  const g = m[1].trim().replace(/[.,;]+$/, "");
+  if (/^(write|build|create|draft|outline|help|me|us|you)\b/i.test(g)) return "";
+  return g.length >= 4 ? g : "";
+}
+
+function inferCoreTopicFallback(text) {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (!t) return "the subject the user stated";
+  const about = t.match(/\babout\s+([^.!?]{10,220})/i);
+  if (about) {
+    const chunk = about[1].trim();
+    const cut = chunk.split(/\s+(?:to|for)\s+/i)[0];
+    return (cut || chunk).slice(0, 220).trim() || chunk.slice(0, 220).trim();
+  }
+  const on = t.match(/\b(?:on|regarding)\s+([^.!?]{10,220})/i);
+  if (on) return on[1].trim().slice(0, 220);
+  const lines = t.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  let best = "";
+  for (const line of lines) {
+    if (line.length > best.length && line.length <= 320) best = line;
+  }
+  const pick = (best || t).slice(0, 220).trim();
+  return pick || "the subject the user stated";
+}
+
+/**
+ * Topic lock: reinforce core topic and audience from intake before any structural outline rules.
+ */
+function buildTopicLockBlock(messages, outputType) {
+  const typeLabel = formatOutputTypeLabel(outputType);
+  const transcript = buildUserTranscript(messages);
+  const { core, audience } = inferTopicAndAudienceFromTranscript(transcript);
+  const coreTopic = (core && core.trim()) || inferCoreTopicFallback(transcript);
+  const aud =
+    (audience && audience.trim()) ||
+    inferAudienceStandalone(transcript) ||
+    "the audience described in the conversation";
+  const topicLine = `This is a ${typeLabel} about ${coreTopic} for ${aud}. Every structural element must directly serve this topic. Do not generalize or drift into adjacent themes.`;
+  const voicing = formatStructuralVoicingHint(outputType);
+  return `${topicLine}\n\n${voicing}`;
+}
+
+function formatStructuralVoicingHint(outputType) {
+  const o = String(outputType || "freestyle").toLowerCase();
+  if (o === "talk" || o === "presentation") {
+    return "STRUCTURE AND VOICE FOR THIS OUTPUT TYPE: Spoken delivery. Hooks and body beats must work when said aloud: short, concrete, rhythmic lines the speaker can deliver to listeners. Avoid essay-style academic framing, dense stacked clauses, and print-only hedging. Stakes land as spoken tension; the close sounds like an ending you would say out loud.";
+  }
+  if (o === "podcast") {
+    return "STRUCTURE AND VOICE FOR THIS OUTPUT TYPE: Spoken audio. Hooks and beats should feel conversational (host to listener). Prefer sayable rhythms over written-only density.";
+  }
+  if (o === "essay" || o === "freestyle") {
+    return "STRUCTURE AND VOICE FOR THIS OUTPUT TYPE: Written longform. Hooks may be analytical; body points can build argument with evidence and transitions suited to reading on the page.";
+  }
+  if (o === "linkedin_post" || o === "linkedin") {
+    return "STRUCTURE AND VOICE FOR THIS OUTPUT TYPE: Short professional social prose. Hooks must earn the stop-scroll moment; body stays tight; stakes and close fit on-platform reading.";
+  }
+  if (o === "email" || o === "newsletter") {
+    return "STRUCTURE AND VOICE FOR THIS OUTPUT TYPE: Inbox or newsletter format. Hook with subject-plus-lead energy; scannable body; close with a clear reader action.";
+  }
+  return `STRUCTURE AND VOICE FOR THIS OUTPUT TYPE: Match how a ${formatOutputTypeLabel(outputType)} is consumed. Shape Title, Hook, Body, Stakes, and Close for that medium, not a generic template.`;
+}
+
 const OUTLINE_SINGLE_ANGLE_RULES = `You are Reed, generating ONE structured outline angle from the conversation you just had with the user. You captured their thesis, audience, goal, hook, and format during intake.
 
 CRITICAL RULES:
@@ -152,17 +281,21 @@ export default async function handler(req, res) {
     });
     const A = DNA_LIMITS.auxiliary;
 
-    let systemBase = OUTLINE_SINGLE_ANGLE_RULES;
+    const typeLabel = formatOutputTypeLabel(outputType);
+    const topicLockBlock = buildTopicLockBlock(messages, outputType);
+
+    let systemBase = `${topicLockBlock}\n\n`;
     if (resources.voiceDna) {
-      systemBase = `## Voice DNA (write in this voice)\n${clipDna(resources.voiceDna, A.voice)}\n\n` + systemBase;
+      systemBase += `## Voice DNA (write in this voice)\n${clipDna(resources.voiceDna, A.voice)}\n\n`;
     }
     if (resources.brandDna) {
-      systemBase = `## Brand DNA\n${clipDna(resources.brandDna, A.brand)}\n\n` + systemBase;
+      systemBase += `## Brand DNA\n${clipDna(resources.brandDna, A.brand)}\n\n`;
     }
     if (resources.methodDna) {
-      systemBase = `## Method DNA (use proprietary terms exactly)\n${clipDna(resources.methodDna, A.method)}\n\n` + systemBase;
+      systemBase += `## Method DNA (use proprietary terms exactly)\n${clipDna(resources.methodDna, A.method)}\n\n`;
     }
-    systemBase += `\n\nOutput type for this session: ${outputType}. Tailor the outline structure to this format.`;
+    systemBase += OUTLINE_SINGLE_ANGLE_RULES;
+    systemBase += `\n\nOutput format: ${typeLabel} (technical id: ${outputType}). Every outline row must obey the topic lock at the top of this system prompt and match this delivery format.`;
 
     const claudeBase = messages.map((m) => ({
       role: m.role === "reed" ? "assistant" : "user",

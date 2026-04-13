@@ -448,16 +448,39 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
           </button>
         </div>
 
-        <div className="studio-advisor-scroll" style={{ flex: 1, minHeight: 0, padding: "12px 12px 10px" }}>
-          <InspectorEyebrow>Feedback</InspectorEyebrow>
-          <div style={{ marginBottom: 2 }}>
-            {feedbackBody ?? <AdvisorFeedbackFallback pathname={pathname} />}
+        <div style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+        >
+          <div
+            className="studio-advisor-scroll"
+            style={{
+              flex: "0 1 auto",
+              maxHeight: "50%",
+              minHeight: 0,
+              overflowY: "auto",
+              padding: "12px 12px 8px",
+            }}
+          >
+            <InspectorEyebrow>Feedback</InspectorEyebrow>
+            <div style={{ marginBottom: 2 }}>
+              {feedbackBody ?? <AdvisorFeedbackFallback pathname={pathname} />}
+            </div>
+            <InspectorDivider />
           </div>
-
-          <InspectorDivider />
-
-          <InspectorEyebrow>Ask Reed</InspectorEyebrow>
-          <div style={{ marginBottom: 2 }}>
+          <div style={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            padding: "10px 12px 8px",
+            borderTop: "1px solid var(--glass-border)",
+          }}
+          >
+            <InspectorEyebrow>Ask Reed</InspectorEyebrow>
             <ReedPanel />
           </div>
         </div>
@@ -479,7 +502,7 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
 function ReedPanel() {
   const { reedThread, setReedThread, reedPrefill, setReedPrefill } = useShell();
   const location = useLocation();
-  const [input, setInput] = useState(reedPrefill || "");
+  const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const workStage = useWorkStageFromShell();
@@ -490,24 +513,25 @@ function ReedPanel() {
       : workStage;
   const stageChips = REED_STAGE_CHIPS[stageKey] || REED_STAGE_CHIPS.Review;
 
-  // Pick up prefill
+  const prefillAndFocus = useCallback((text: string) => {
+    setInput(text);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }, []);
+
+  // Same path as stage chips: external pages call setReedPrefill; we only fill the one composer.
   useEffect(() => {
-    if (reedPrefill) {
-      setInput(reedPrefill);
-      setReedPrefill("");
-      setTimeout(() => inputRef.current?.focus(), 0);
-    }
-  }, [reedPrefill, setReedPrefill]);
+    const t = (reedPrefill || "").trim();
+    if (!t) return;
+    setReedPrefill("");
+    prefillAndFocus(t);
+  }, [reedPrefill, setReedPrefill, prefillAndFocus]);
 
   // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [reedThread.length]);
-
-  const prefillAndFocus = (text: string) => {
-    setInput(text);
-    setTimeout(() => inputRef.current?.focus(), 0);
-  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -519,7 +543,7 @@ function ReedPanel() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, width: "100%" }}>
       {stageChips.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8, flexShrink: 0 }}>
           {stageChips.map((chip, ci) => (
@@ -538,7 +562,7 @@ function ReedPanel() {
           ))}
         </div>
       )}
-      <div style={{ flex: 1, overflowY: "auto", marginBottom: 8, minHeight: 0 }}>
+      <div style={{ flex: 1, overflowY: "auto", marginBottom: 8, minHeight: 0, width: "100%" }}>
         {reedThread.map((m, i) => {
           if (m.type === "note") {
             return (
@@ -557,9 +581,9 @@ function ReedPanel() {
                 </div>
                 <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.6, marginBottom: 6 }}>{m.text}</div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  <button onClick={() => prefillAndFocus(`Let's work on this now: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Work on this now</button>
-                  <button onClick={() => prefillAndFocus(`Apply this to the current ${stageKey} context: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Apply to {stageKey}</button>
-                  <button onClick={() => prefillAndFocus("Set this aside for now. Flag it for Review.")} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Set aside</button>
+                  <button type="button" onClick={() => prefillAndFocus(`Let's work on this now: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Work on this now</button>
+                  <button type="button" onClick={() => prefillAndFocus(`Apply this to the current ${stageKey} context: ${m.text}`)} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Apply to {stageKey}</button>
+                  <button type="button" onClick={() => prefillAndFocus("Set this aside for now. Flag it for Review.")} style={{ fontSize: 9, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.92)", color: "#0D1B2A", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Set aside</button>
                 </div>
               </div>
             );
@@ -595,27 +619,55 @@ function ReedPanel() {
         <div ref={bottomRef} />
       </div>
       <div style={{
-        display: "flex", alignItems: "center", gap: 6,
-        background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.1)",
-        borderRadius: 8, padding: "8px 10px", flexShrink: 0,
-      }}>
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        width: "100%",
+        boxSizing: "border-box",
+        background: "rgba(0,0,0,0.03)",
+        border: "1px solid rgba(0,0,0,0.1)",
+        borderRadius: 8,
+        padding: "8px 10px",
+        flexShrink: 0,
+      }}
+      >
         <input
           ref={inputRef}
+          type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Reply to Reed..."
+          placeholder="Ask Reed..."
+          aria-label="Ask Reed"
           style={{
-            flex: 1, background: "transparent", border: "none", outline: "none",
-            fontSize: 12, color: "var(--fg)", fontFamily: "var(--font)",
+            flex: 1,
+            minWidth: 0,
+            width: "100%",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            fontSize: 12,
+            color: "var(--fg)",
+            fontFamily: "var(--font)",
           }}
         />
         <button
+          type="button"
           onClick={handleSend}
+          disabled={!input.trim()}
+          aria-label="Send message to Reed"
           style={{
-            width: 28, height: 28, borderRadius: 6, background: input.trim() ? "var(--fg)" : "rgba(0,0,0,0.06)",
-            border: "none", cursor: input.trim() ? "pointer" : "not-allowed", display: "flex",
-            alignItems: "center", justifyContent: "center", transition: "background 0.15s",
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            background: input.trim() ? "var(--fg)" : "rgba(0,0,0,0.06)",
+            border: "none",
+            cursor: input.trim() ? "pointer" : "not-allowed",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 0.15s",
+            flexShrink: 0,
           }}
         >
           <svg style={{ width: 11, height: 11, stroke: input.trim() ? "#F5F3EF" : "var(--fg-3)", strokeWidth: 2.5, fill: "none" }} viewBox="0 0 24 24">
