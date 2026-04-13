@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useMobile } from "../hooks/useMobile";
 import Logo from "../components/Logo";
 import EverywhereDemo from "../components/studio/EverywhereDemo";
@@ -137,6 +137,7 @@ const ROOMS = [
 
 const GATES = ["Dedup", "Research", "Voice", "Engage", "SLOP", "Editorial", "Risk"];
 const SIGNAL_TAGS = ["Brand Voice", "Enterprise Copy", "SEO", "Distribution", "Analytics"];
+
 // ═══════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════
@@ -419,16 +420,30 @@ export default function ExplorePage() {
         <div className="xp-footer-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
           <Logo size="sm" variant="light" />
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-            {["Terms of Service", "Privacy Policy", "Cookie Policy"].map(label => (
-              <button key={label} style={{
-                fontSize: 12, color: "var(--xp-ter)", cursor: "pointer",
-                background: "none", border: "none", fontFamily: "var(--xp-font)",
-                transition: "color 0.2s",
-              }}
+            <Link
+              to="/terms"
+              style={{ fontSize: 12, color: "var(--xp-ter)", textDecoration: "none", fontFamily: "var(--xp-font)", transition: "color 0.2s" }}
               onMouseOver={e => (e.currentTarget.style.color = "var(--xp-text)")}
               onMouseOut={e => (e.currentTarget.style.color = "var(--xp-ter)")}
-              >{label}</button>
-            ))}
+            >
+              Terms of Service
+            </Link>
+            <Link
+              to="/privacy"
+              style={{ fontSize: 12, color: "var(--xp-ter)", textDecoration: "none", fontFamily: "var(--xp-font)", transition: "color 0.2s" }}
+              onMouseOver={e => (e.currentTarget.style.color = "var(--xp-text)")}
+              onMouseOut={e => (e.currentTarget.style.color = "var(--xp-ter)")}
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              to="/cookies"
+              style={{ fontSize: 12, color: "var(--xp-ter)", textDecoration: "none", fontFamily: "var(--xp-font)", transition: "color 0.2s" }}
+              onMouseOver={e => (e.currentTarget.style.color = "var(--xp-text)")}
+              onMouseOut={e => (e.currentTarget.style.color = "var(--xp-ter)")}
+            >
+              Cookie Policy
+            </Link>
           </div>
           <span style={{ fontSize: 12, color: "var(--xp-ter)" }}>&copy; {new Date().getFullYear()} Mixed Grill, LLC. All rights reserved.</span>
         </div>

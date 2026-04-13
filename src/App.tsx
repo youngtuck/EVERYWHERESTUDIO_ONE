@@ -13,6 +13,9 @@ const HowItWorksPage = lazy(() => import("./pages/HowItWorksPage"));
 const WhoItsForPage = lazy(() => import("./pages/WhoItsForPage"));
 const TheSystemPage = lazy(() => import("./pages/TheSystemPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
+const TermsOfServicePage = lazy(() => import("./pages/TermsOfServicePage"));
+const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
+const CookiePolicyPage = lazy(() => import("./pages/CookiePolicyPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 
@@ -137,6 +140,27 @@ const App = () => (
             <Route path="workbench" element={<Workbench />} />
             <Route path="admin" element={<AdminPanel />} />
           </Route>
+          <Route path="/terms" element={
+            <PageTransition>
+              <Suspense fallback={suspenseFallback}>
+                <TermsOfServicePage />
+              </Suspense>
+            </PageTransition>
+          } />
+          <Route path="/privacy" element={
+            <PageTransition>
+              <Suspense fallback={suspenseFallback}>
+                <PrivacyPolicyPage />
+              </Suspense>
+            </PageTransition>
+          } />
+          <Route path="/cookies" element={
+            <PageTransition>
+              <Suspense fallback={suspenseFallback}>
+                <CookiePolicyPage />
+              </Suspense>
+            </PageTransition>
+          } />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

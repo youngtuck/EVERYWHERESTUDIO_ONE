@@ -1,15 +1,8 @@
 import { useState, useEffect, useCallback, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
-import { APP_VERSION, OUTPUT_TYPES_FULL } from "../../lib/constants";
-import {
-  hasPersistedWorkSession,
-  loadSession,
-  patchPersistedSessionOutputTypeId,
-} from "../../lib/sessionPersistence";
-import OutputTypePicker, { type OutputCategory } from "./OutputTypePicker";
+import { APP_VERSION } from "../../lib/constants";
 import { StudioUserAccountMenu } from "./StudioUserAccountMenu";
 
 type NavItemDef = {
@@ -119,23 +112,10 @@ interface SidebarProps {
 
 const STORAGE_OUTPUTS_OPEN = "ew-sidebar-outputs-open";
 
-type OutputNavOverlayConfig =
-  | { mode: "picker"; initialCategory: OutputCategory; title: string }
-  | { mode: "social"; title: string };
-
-/** Sidebar catalog links that share the full-page library; guarded when a Work session exists in sessionStorage. */
-const GUARDED_OUTPUT_NAV: Record<string, OutputNavOverlayConfig> = {
-  "/studio/outputs/content": { mode: "picker", initialCategory: "Content", title: "Content output types" },
-  "/studio/outputs/business": { mode: "picker", initialCategory: "Business", title: "Business output types" },
-  "/studio/outputs/extended": { mode: "picker", initialCategory: "Extended", title: "Extended output types" },
-  "/studio/outputs/social": { mode: "social", title: "Social output types" },
-};
-
 export default function StudioSidebar({ collapsed = false, onToggleCollapsed, onMobileClose }: SidebarProps) {
   const nav = useNavigate();
   const loc = useLocation();
   const { user } = useAuth();
-  const [outputOverlay, setOutputOverlay] = useState<OutputNavOverlayConfig | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [outputsOpen, setOutputsOpen] = useState(() => {
     try {
@@ -177,13 +157,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
     return loc.pathname === p || loc.pathname.startsWith(p + "/");
   };
 
-  const navigateOrOutputOverlay = useCallback((path: string) => {
-    const guard = GUARDED_OUTPUT_NAV[path];
-    if (guard && hasPersistedWorkSession()) {
-      setOutputOverlay(guard);
-      onMobileClose?.();
-      return;
-    }
+  const goNav = useCallback((path: string) => {
     nav(path);
     onMobileClose?.();
   }, [nav, onMobileClose]);
@@ -286,7 +260,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
                     icon={icon}
                     active={active}
                     collapsed={collapsed}
-                    onClick={() => navigateOrOutputOverlay(path)}
+                    onClick={() => goNav(path)}
                   />
                 );
               })}
@@ -337,158 +311,7 @@ export default function StudioSidebar({ collapsed = false, onToggleCollapsed, on
       )}
         </div>
       </div>
-
-      {outputOverlay && (
-        <WorkSessionOutputTypeOverlay
-          config={outputOverlay}
-          userId={user?.id}
-          onClose={() => setOutputOverlay(null)}
-        />
-      )}
     </aside>
-  );
-}
-
-function WorkSessionOutputTypeOverlay({
-  config,
-  userId,
-  onClose,
-}: {
-  config: OutputNavOverlayConfig;
-  userId?: string;
-  onClose: () => void;
-}) {
-  const selected = loadSession()?.outputTypeId ?? null;
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  const applyType = (id: string) => {
-    patchPersistedSessionOutputTypeId(id, { userId });
-    onClose();
-  };
-
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="ew-sidebar-output-picker-title"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 280,
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        padding: "max(24px, env(safe-area-inset-top)) 16px 24px",
-        fontFamily: "var(--font)",
-        boxSizing: "border-box",
-      }}
-    >
-      <button
-        type="button"
-        aria-label="Close"
-        onClick={onClose}
-        style={{
-          position: "absolute",
-          inset: 0,
-          border: "none",
-          margin: 0,
-          padding: 0,
-          cursor: "pointer",
-          background: "rgba(12, 26, 41, 0.52)",
-        }}
-      />
-      <div
-        className="liquid-glass-card"
-        style={{
-          position: "relative",
-          width: "min(440px, 100%)",
-          marginTop: "max(48px, 10vh)",
-          padding: "18px 18px 16px",
-          borderRadius: 14,
-          boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
-          maxHeight: "min(78vh, 640px)",
-          overflow: "auto",
-          boxSizing: "border-box",
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        <h2
-          id="ew-sidebar-output-picker-title"
-          style={{
-            margin: "0 0 6px",
-            fontSize: 16,
-            fontWeight: 700,
-            color: "var(--fg)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {config.title}
-        </h2>
-        <p style={{ margin: "0 0 14px", fontSize: 11, color: "var(--fg-3)", lineHeight: 1.5 }}>
-          You have an active Work session. Pick a format here to update the session without leaving this page.
-        </p>
-        {config.mode === "picker" ? (
-          <OutputTypePicker
-            key={config.initialCategory}
-            selected={selected}
-            onSelect={applyType}
-            compact
-            initialCategory={config.initialCategory}
-          />
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {OUTPUT_TYPES_FULL.social.types.map(t => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => applyType(t.id)}
-                style={{
-                  textAlign: "left" as const,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  border: selected === t.id ? "2px solid var(--gold-bright)" : "1px solid var(--glass-border)",
-                  background: selected === t.id ? "rgba(245,198,66,0.08)" : "var(--glass-card)",
-                  fontSize: 12,
-                  fontWeight: selected === t.id ? 600 : 500,
-                  color: "var(--fg)",
-                  cursor: "pointer",
-                  fontFamily: "var(--font)",
-                }}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
-        )}
-        <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: "8px 14px",
-              fontSize: 11,
-              fontWeight: 600,
-              borderRadius: 8,
-              border: "1px solid var(--glass-border)",
-              background: "transparent",
-              color: "var(--fg-2)",
-              cursor: "pointer",
-              fontFamily: "var(--font)",
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body,
   );
 }
 
