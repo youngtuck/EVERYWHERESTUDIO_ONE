@@ -128,17 +128,23 @@ const IO_INTAKE_FADE_MS = 200;
 const IO_OUTLINE_ENTER_MS = 300;
 const IO_OUTLINE_ENTER_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
-/** Same wrapper as StageIntake active chat so Outline matches Intake. */
+/** Same wrapper as StageIntake active chat so Outline matches Intake. Sticky in Work so it stays above main scroll. */
 const INTAKE_DOCKED_COMPOSER_WRAP = {
   display: "flex",
   flexDirection: "column",
+  position: "sticky" as const,
+  bottom: 0,
   padding: "8px clamp(12px, 4vw, 24px) max(12px, env(safe-area-inset-bottom))",
-  background: "transparent",
+  marginTop: "auto",
+  background: "var(--bg)",
+  borderTop: "1px solid var(--glass-border)",
   flexShrink: 0,
-  zIndex: 10,
+  zIndex: 20,
   width: "100%",
   minWidth: 0,
   boxSizing: "border-box" as const,
+  backdropFilter: "blur(14px) saturate(1.2)",
+  WebkitBackdropFilter: "blur(14px) saturate(1.2)",
 };
 
 /** Build attachment block for Intake messages (shared with composer queue + send). */
@@ -1130,7 +1136,6 @@ function StageIntake({
   const setInput = useDockedComposer ? dockedComposer!.onChange : setInternalInput;
   const pendingFiles = useDockedComposer ? dockedComposer!.pendingFiles : internalPendingFiles;
   const bottomRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile();
 
   const reedQuestionCount = messages.filter(m => m.role === "reed" && m.content.trim().endsWith("?")).length;
@@ -1218,7 +1223,7 @@ function StageIntake({
   if (!hasUserMessage && !sending) {
     return (
       <div style={{
-        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden",
+        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "visible",
         background: "transparent", alignItems: "center", justifyContent: "center",
       }}>
         <div
@@ -1259,22 +1264,25 @@ function StageIntake({
     );
   }
 
-  // Active chat state: messages + input bar at bottom
+  // Active chat state: messages flow in Work main scroll; composer is docked sticky in parent when docked
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0, alignItems: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "visible", background: "transparent", minHeight: 0, alignItems: "center" }}>
       <div
         className="work-stage-content-column"
         style={{
-          flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden",
+          flex: useDockedComposer ? ("none" as const) : 1,
+          minHeight: useDockedComposer ? undefined : 0,
+          display: "flex", flexDirection: "column", overflow: "visible",
           width: "100%",
         }}
       >
-        {/* Scrollable message area */}
+        {/* Messages (Work main scroll when docked; local scroll when welcome-only composer) */}
         <div
-          ref={scrollAreaRef}
           className="work-intake-messages-scroll"
           style={{
-            flex: 1, minHeight: 0, overflowY: "auto",
+            flex: useDockedComposer ? ("none" as const) : 1,
+            minHeight: useDockedComposer ? undefined : 0,
+            overflowY: useDockedComposer ? ("visible" as const) : "auto",
             padding: "20px clamp(12px, 4vw, 24px)",
             display: "flex", flexDirection: "column",
             justifyContent: messages.length <= 3 ? "flex-end" : "flex-start",
@@ -1379,7 +1387,7 @@ function StageIntake({
         </div>
 
         {!useDockedComposer ? (
-          <div style={INTAKE_DOCKED_COMPOSER_WRAP}>
+          <div style={{ ...INTAKE_DOCKED_COMPOSER_WRAP }}>
             <ChatInputBar
               placeholder="What's on your mind?"
               value={input}
@@ -1500,20 +1508,12 @@ function ChatBubble({ role, text, userInitials, isChallenge }: { role: "reed" | 
         </>
       ) : (
         <>
-          <div className="liquid-glass-dark liquid-glass-dark--static user-bubble-wrap">
+          <div className="liquid-glass-card user-bubble-wrap">
             <p>{text}</p>
           </div>
-          <div style={{
-            width: 28, height: 28, borderRadius: "50%",
-            background: "linear-gradient(165deg, #D4AE4A 0%, #B8892E 55%, #9A7224 100%)",
-            border: "1px solid rgba(12, 26, 41, 0.22)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 10, fontWeight: 700, color: "#FFFBF5",
-            letterSpacing: "-0.03em",
-            textShadow: "0 0.5px 0 rgba(12, 26, 41, 0.35)",
-            flexShrink: 0, marginTop: 2,
-          }}>{userInitials || "U"}</div>
+          <div className="user-chat-avatar-glass">
+            <span className="user-chat-avatar-initials">{userInitials || "U"}</span>
+          </div>
         </>
       )}
     </div>
@@ -1887,13 +1887,35 @@ function StageOutline({
     desc: angles?.bMeta?.description || "Hook-led structure. Emotional opening, narrative build, reflective close.",
   };
 
+  const docked = omitBottomComposer;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden", alignItems: "center" }}>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      flex: docked ? ("none" as const) : 1,
+      minHeight: docked ? undefined : 0,
+      overflow: docked ? ("visible" as const) : "hidden",
+      alignItems: "center",
+    }}>
       <div
         className="work-stage-content-column"
-        style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", width: "100%" }}
+        style={{
+          flex: docked ? ("none" as const) : 1,
+          minHeight: docked ? undefined : 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: docked ? ("visible" as const) : "hidden",
+          width: "100%",
+        }}
       >
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 20 }}>
+        <div style={{
+          flex: docked ? ("none" as const) : 1,
+          minHeight: docked ? undefined : 0,
+          overflowY: docked ? ("visible" as const) : "auto",
+          padding: 20,
+        }}
+        >
           {building ? (
             <LoadingDots label="Building outline from your conversation..." />
           ) : (
@@ -2162,10 +2184,10 @@ function StageEdit({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden", alignItems: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "visible", alignItems: "center" }}>
       <div
         className="work-stage-content-column"
-        style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", width: "100%" }}
+        style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "visible", width: "100%" }}
       >
         <div
           className="edit-area"
@@ -2317,7 +2339,19 @@ function StageEdit({
         {!generating && draft && <AdvanceButton label="Finish and Review &#8594;" onClick={onAdvance} />}
       </div>
 
-      <div style={{ borderTop: "1px solid var(--glass-border)", flexShrink: 0, background: "var(--glass-topbar)", backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)", width: "100%", minWidth: 0, boxSizing: "border-box" as const }}>
+      <div style={{
+        position: "sticky" as const,
+        bottom: 0,
+        borderTop: "1px solid var(--glass-border)",
+        flexShrink: 0,
+        background: "var(--bg)",
+        backdropFilter: "blur(14px) saturate(1.2)",
+        WebkitBackdropFilter: "blur(14px) saturate(1.2)",
+        width: "100%",
+        minWidth: 0,
+        boxSizing: "border-box" as const,
+        zIndex: 12,
+      }}>
         <div className="work-stage-content-column" style={{ padding: "10px clamp(10px, 3vw, 14px)", display: "flex", alignItems: "center", gap: 6 }}>
           <input
             value={input} onChange={e => setInput(e.target.value)}
@@ -5640,24 +5674,33 @@ export default function WorkSession() {
           transition: `opacity ${IO_OUTLINE_ENTER_MS}ms ${IO_OUTLINE_ENTER_EASE}, transform ${IO_OUTLINE_ENTER_MS}ms ${IO_OUTLINE_ENTER_EASE}`,
         }
       : {
-          flex: 1,
+          flex: "0 1 auto" as const,
           minHeight: 0,
           display: "flex",
           flexDirection: "column" as const,
-          overflow: "hidden",
+          overflow: "visible" as const,
           opacity: 1,
           transform: "none" as const,
         }),
   };
-  const intakeMainFadeWrap = {
-    position: "absolute" as const,
-    inset: 0,
-    display: "flex",
-    flexDirection: "column" as const,
-    minHeight: 0,
-    opacity: intakeMainFadeOut ? 0 : 1,
-    transition: ioTransitionStep === 1 ? `opacity ${IO_INTAKE_FADE_MS}ms ease` : "none",
-  };
+  const intakeMainFadeWrap = (() => {
+    const base = {
+      display: "flex" as const,
+      flexDirection: "column" as const,
+      overflow: "visible" as const,
+      opacity: intakeMainFadeOut ? 0 : 1,
+      transition: (ioTransitionStep === 1 ? `opacity ${IO_INTAKE_FADE_MS}ms ease` : "none") as const,
+    };
+    if (stage === "Intake" && ioTransitionStep === 1) {
+      return { ...base, position: "absolute" as const, inset: 0, flex: 1, minHeight: 0 };
+    }
+    return { ...base, position: "relative" as const, width: "100%", flex: "none" as const };
+  })();
+
+  /** Intake fade-out and outline enter use absolute layers; otherwise main scrolls with sticky composer. */
+  const dockMainClip =
+    (stage === "Intake" && ioTransitionStep === 1)
+    || (stage === "Outline" && ioTransitionStep === 2);
 
   const intakeDocked = {
     value: intakeBarInput,
@@ -5675,10 +5718,10 @@ export default function WorkSession() {
   return (
     <div style={{
       position: "relative",
-      height: "100%",
-      minHeight: 0,
+      minHeight: "100%",
+      height: "auto",
       display: "flex", flexDirection: "column",
-      overflow: "hidden", fontFamily: FONT,
+      overflow: "visible", fontFamily: FONT,
     }}>
       {restorePromptRow ? (
         <div
@@ -5744,12 +5787,12 @@ export default function WorkSession() {
         </div>
       ) : null}
       <div style={{
-        flex: 1,
+        flex: "1 1 auto",
         minHeight: 0,
         minWidth: 0,
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        overflow: "visible",
       }}>
       {stage === "Intake" && !hasUserMessage && (
         <StageIntake
@@ -5771,15 +5814,21 @@ export default function WorkSession() {
       )}
       {dockIntakeOutlineShell && (
         <div style={{
-          flex: 1,
+          flex: "1 1 auto",
           minHeight: 0,
           minWidth: 0,
           display: "flex",
           flexDirection: "column",
-          overflow: "hidden",
+          overflow: "visible",
         }}
         >
-          <div style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
+          <div style={{
+            flex: dockMainClip ? 1 : ("0 1 auto" as const),
+            minHeight: dockMainClip ? 0 : undefined,
+            position: "relative",
+            overflow: dockMainClip ? "hidden" : "visible",
+          }}
+          >
             {stage === "Intake" && (
               <div style={intakeMainFadeWrap}>
                 <StageIntake

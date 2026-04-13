@@ -1,7 +1,7 @@
 /**
- * Side-profile mark for Reed (conversation UI). Right-facing head silhouette, bold stroke, cornflower outline.
+ * Reed mark: bust-in-silhouette side profile (same visual idea as 👤), facing right, cornflower fill.
  */
-const STROKE = "#4A90D9";
+const FILL = "#4A90D9";
 
 export function ReedProfileIcon({ size = 22, title }: { size?: number; title?: string }) {
   return (
@@ -15,30 +15,10 @@ export function ReedProfileIcon({ size = 22, title }: { size?: number; title?: s
       aria-hidden={title ? undefined : true}
     >
       {title ? <title>{title}</title> : null}
-      {/* Neck base → throat / jaw → chin → lip notch → nose → brow → crown → back of head → nape → neck */}
+      {/* Shoulder → back of head → crown → face/nose → chin → neck → shoulder (smooth C curves) */}
       <path
-        d="M 4.25 20.5
-           H 14.75
-           C 15.6 20.5 16.35 20.05 16.75 19.25
-           L 18.1 15.5
-           C 18.75 13.75 18.8 11.85 18.2 10.05
-           L 17.75 8.65
-           C 17.45 7.55 17.7 6.35 18.5 5.45
-           L 19.85 3.65
-           C 20.65 2.55 20.15 1.45 18.95 1.15
-           C 15.9 0.45 12.55 1.05 10.35 3.05
-           L 8.85 4.85
-           C 7.1 7.2 6.35 10.05 6.45 12.95
-           L 6.55 17.85
-           C 6.58 18.95 6.35 20.05 5.6 20.75
-           L 4.85 20.95
-           L 4.25 20.5
-           Z"
-        fill="none"
-        stroke={STROKE}
-        strokeWidth={1.9}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M 2.75 22.25 L 2.75 20.1 C 2.75 18.3 4.1 17.2 6 16.65 C 7.9 16.1 9.45 15.15 9.75 13.25 C 10.05 11.1 9.1 9.55 7.8 8.55 C 6.5 7.55 6.75 5.85 8.4 4.75 C 10.3 3.5 13.05 3.25 15.6 3.75 C 18.2 4.25 20.1 6.35 20.45 9.05 C 20.8 11.75 19.65 14.2 17.55 15.45 C 15.45 16.7 12.85 17 10.65 16.75 C 8.45 16.5 6.45 17.1 5.35 18.4 C 4.25 19.7 3.95 21.05 3.95 22.25 Z"
+        fill={FILL}
       />
     </svg>
   );
