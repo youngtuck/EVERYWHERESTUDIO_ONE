@@ -358,6 +358,23 @@ interface OutlineRow {
   indent?: boolean;
 }
 
+/** Client guard: false if row bodies match entirely or too many parallel lines match (tab switch would look broken). */
+function outlineAnglesDistinctEnough(a: OutlineRow[], b: OutlineRow[]): boolean {
+  if (!a?.length || !b?.length) return false;
+  const fingerprint = (rows: OutlineRow[]) =>
+    rows.map(r => (r.content || "").trim().toLowerCase()).join("\u0001");
+  if (fingerprint(a) === fingerprint(b)) return false;
+  const n = Math.min(a.length, b.length);
+  let identicalLines = 0;
+  for (let i = 0; i < n; i++) {
+    const ca = (a[i].content || "").trim().toLowerCase();
+    const cb = (b[i].content || "").trim().toLowerCase();
+    if (ca.length > 0 && ca === cb) identicalLines++;
+  }
+  if (n > 0 && identicalLines / n >= 0.45) return false;
+  return true;
+}
+
 interface CheckpointResult {
   gate: string;
   status: "PASS" | "FAIL" | "FLAG";
@@ -1830,7 +1847,7 @@ function StageOutline({
             <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: 14, minHeight: 200, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
               {outlineRows.map((row, i) => (
                 <OutlineRowComponent
-                  key={i}
+                  key={`${activeAngle}-row-${i}`}
                   rowIndex={i}
                   label={row.label}
                   content={row.content}
@@ -3614,34 +3631,57 @@ export default function WorkSession() {
           ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle"
           : "freestyle");
 
-        const res = await fetchWithRetry(`${API_BASE}/api/outline`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: messages.map(m => ({ role: m.role, content: m.content })),
-            userId: user?.id,
-            outputType: ot,
-          }),
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || `Outline API returned ${res.status}`);
-        }
-
-        const data = await res.json();
-
         const mapRows = (rows: Array<{ label: string; content: string; indent?: boolean }>): OutlineRow[] =>
           rows.map(r => ({ label: r.label || "", content: r.content || "", ...(r.indent ? { indent: true } : {}) }));
 
-        const angleA = mapRows(data.angleA.rows);
-        const angleB = mapRows(data.angleB.rows);
+        let angleA: OutlineRow[] = [];
+        let angleB: OutlineRow[] = [];
+        let aMeta = { name: "Angle A", description: "" };
+        let bMeta = { name: "Angle B", description: "" };
+        let distinct = false;
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const res = await fetchWithRetry(`${API_BASE}/api/outline`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: messages.map(m => ({ role: m.role, content: m.content })),
+              userId: user?.id,
+              outputType: ot,
+            }),
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Outline API returned ${res.status}`);
+          }
+
+          const data = await res.json() as {
+            angleA: { name: string; description: string; rows: Array<{ label: string; content: string; indent?: boolean }> };
+            angleB: { name: string; description: string; rows: Array<{ label: string; content: string; indent?: boolean }> };
+          };
+
+          angleA = mapRows(data.angleA.rows);
+          angleB = mapRows(data.angleB.rows);
+          aMeta = { name: data.angleA.name || "Angle A", description: data.angleA.description || "" };
+          bMeta = { name: data.angleB.name || "Angle B", description: data.angleB.description || "" };
+
+          if (outlineAnglesDistinctEnough(angleA, angleB)) {
+            distinct = true;
+            break;
+          }
+          console.warn("[handleBuildOutline] outlineAngles A/B not distinct enough; re-requesting outline from API.", { attempt });
+        }
+
+        if (!distinct) {
+          console.warn("[handleBuildOutline] outlineAngles still not distinct after re-request; applying last response.");
+        }
 
         setOutlineAngles({
           a: angleA,
           b: angleB,
-          aMeta: { name: data.angleA.name, description: data.angleA.description },
-          bMeta: { name: data.angleB.name, description: data.angleB.description },
+          aMeta,
+          bMeta,
         });
         setSelectedAngle("a");
         setOutlineRows(angleA);

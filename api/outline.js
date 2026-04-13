@@ -28,49 +28,32 @@ function sanitizeOutlineObj(obj) {
   return obj;
 }
 
-const OUTLINE_SYSTEM = `You are Reed, generating a structured outline from a conversation you just had with the user. You captured their thesis, audience, goal, hook, and format during intake. Now produce two genuinely different structural approaches to the piece.
+const OUTLINE_SINGLE_ANGLE_RULES = `You are Reed, generating ONE structured outline angle from the conversation you just had with the user. You captured their thesis, audience, goal, hook, and format during intake.
 
 CRITICAL RULES:
 - Never use em-dashes. Use commas, periods, colons, or semicolons instead.
 - Every outline row must contain specific, opinionated editorial content. Never use generic filler like "Supporting evidence and examples" or "What changes if the reader acts on this." Every line should be a real editorial decision that could only apply to THIS piece.
-- The two angles must be structurally different, not the same content reshuffled. Different titles, different hooks, different organizational logic.
 - Each outline row should be 5 to 20 words. Concise and directional. Not a full sentence, more like a section heading with enough specificity to guide the draft.
 - Sub-points (indented rows) should be genuine structural sub-sections, not generic placeholders.
 
 OUTPUT FORMAT: Respond with ONLY valid JSON, no markdown backticks, no preamble. Use this exact structure:
 
 {
-  "angleA": {
-    "name": "Short 2-5 word name for this angle's approach",
-    "description": "One sentence describing the structural strategy. E.g. 'Opens with the myth, pivots to structural diagnosis, closes with the system as solution.'",
-    "rows": [
-      {"label": "Title", "content": "The actual title for this angle"},
-      {"label": "Hook", "content": "The specific opening approach"},
-      {"label": "Body", "content": "The core argument or narrative move"},
-      {"label": "", "content": "A specific sub-point that develops the body", "indent": true},
-      {"label": "", "content": "Another specific sub-point", "indent": true},
-      {"label": "Stakes", "content": "What is at risk, specific to this piece"},
-      {"label": "", "content": "A specific sub-point on stakes", "indent": true},
-      {"label": "Close", "content": "How this piece lands"}
-    ]
-  },
-  "angleB": {
-    "name": "Short 2-5 word name for this angle's approach",
-    "description": "One sentence describing how this angle differs structurally from A.",
-    "rows": [
-      {"label": "Title", "content": "A different title reflecting this angle"},
-      {"label": "Hook", "content": "A structurally different opening"},
-      {"label": "Body", "content": "Different organizational logic for the argument"},
-      {"label": "", "content": "Sub-point specific to this angle", "indent": true},
-      {"label": "", "content": "Sub-point specific to this angle", "indent": true},
-      {"label": "Stakes", "content": "Stakes framed differently than angle A"},
-      {"label": "", "content": "Sub-point on stakes", "indent": true},
-      {"label": "Close", "content": "A different landing than angle A"}
-    ]
-  }
+  "name": "Short 2-5 word name for this angle's approach",
+  "description": "One sentence describing the structural strategy.",
+  "rows": [
+    {"label": "Title", "content": "The actual title for this angle"},
+    {"label": "Hook", "content": "The specific opening approach"},
+    {"label": "Body", "content": "The core argument or narrative move"},
+    {"label": "", "content": "A specific sub-point that develops the body", "indent": true},
+    {"label": "", "content": "Another specific sub-point", "indent": true},
+    {"label": "Stakes", "content": "What is at risk, specific to this piece"},
+    {"label": "", "content": "A specific sub-point on stakes", "indent": true},
+    {"label": "Close", "content": "How this piece lands"}
+  ]
 }
 
-Each angle should have 7-9 rows. The rows array should use the exact label names: "Title", "Hook", "Body", "Stakes", "Close" for labeled rows, and "" for indented sub-point rows. Indented rows must have "indent": true.
+The rows array should have 7-9 rows. Use the exact label names: "Title", "Hook", "Body", "Stakes", "Close" for labeled rows, and "" for indented sub-point rows. Indented rows must have "indent": true.
 
 EXAMPLES OF GOOD VS BAD OUTLINE ROWS:
 
@@ -78,13 +61,70 @@ BAD (generic): "Supporting evidence and examples."
 GOOD (specific): "Why willpower cannot bridge the gap."
 
 BAD (generic): "What changes if the reader acts on this."
-GOOD (specific): "Every week without infrastructure, someone else says what you have been thinking."
+GOOD (specific): "Every week without infrastructure, someone else says what you have been thinking."`;
 
-BAD (generic): "Circle back to the opening image."
-GOOD (specific): "The thinking is in your head. It belongs in the world."
+const OUTLINE_ANGLE_B_SYSTEM_APPEND = `
 
-BAD (reshuffled): Angle B title is "A different take on: [Angle A title]"
-GOOD (genuinely different): Angle A is "The Infrastructure Reframe", Angle B is "The Articulation Gap"`;
+SECOND ANGLE (ANGLE B ONLY): Angle A has already been written. It will appear in the next user message as JSON. You must output ONLY Angle B as JSON with the same keys: "name", "description", "rows".
+Angle B must be a genuinely different structural approach, not the same content with different card text. Change the argumentative spine, not only wording.
+If your previous attempt matched Angle A too closely, you must rewrite Angle B from scratch with zero overlapping sentences and a different structure.`;
+
+function parseJsonFromModel(raw) {
+  let cleaned = (raw || "").trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/, "").replace(/```\s*$/, "").trim();
+  }
+  return JSON.parse(cleaned);
+}
+
+function validateSingleAngle(obj) {
+  return (
+    obj &&
+    typeof obj.name === "string" &&
+    typeof obj.description === "string" &&
+    Array.isArray(obj.rows) &&
+    obj.rows.length >= 5
+  );
+}
+
+/** True if outlines are effectively duplicated (same row texts or most lines identical). */
+function outlineRowsTooSimilar(rowsA, rowsB) {
+  if (!Array.isArray(rowsA) || !Array.isArray(rowsB) || rowsA.length === 0 || rowsB.length === 0) {
+    return true;
+  }
+  const norm = (r) => (r.content || "").trim().toLowerCase();
+  const sigA = rowsA.map(norm).join("\u0001");
+  const sigB = rowsB.map(norm).join("\u0001");
+  if (sigA === sigB) return true;
+  const n = Math.min(rowsA.length, rowsB.length);
+  let identical = 0;
+  for (let i = 0; i < n; i++) {
+    const a = norm(rowsA[i]);
+    const b = norm(rowsB[i]);
+    if (a.length > 0 && a === b) identical++;
+  }
+  return n > 0 && identical / n >= 0.35;
+}
+
+function normalizeAngle(raw) {
+  const o = sanitizeOutlineObj(raw);
+  return {
+    name: typeof o.name === "string" && o.name.trim() ? o.name.trim() : "Angle",
+    description: typeof o.description === "string" ? o.description.trim() : "",
+    rows: Array.isArray(o.rows) ? o.rows : [],
+  };
+}
+
+async function createOutlineMessage(client, systemPrompt, messages, maxTokens = 4096) {
+  return callWithRetry(() =>
+    client.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages,
+    }),
+  );
+}
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -105,7 +145,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Load user resources for voice/brand/method context
     const resources = await getUserResources(userId, { caller: "outline" });
     dnaDebug("outline.handler", {
       hasUserId: !!userId,
@@ -113,76 +152,123 @@ export default async function handler(req, res) {
     });
     const A = DNA_LIMITS.auxiliary;
 
-    // Build system prompt with voice/brand context
-    let systemPrompt = OUTLINE_SYSTEM;
+    let systemBase = OUTLINE_SINGLE_ANGLE_RULES;
     if (resources.voiceDna) {
-      systemPrompt = `## Voice DNA (write in this voice)\n${clipDna(resources.voiceDna, A.voice)}\n\n` + systemPrompt;
+      systemBase = `## Voice DNA (write in this voice)\n${clipDna(resources.voiceDna, A.voice)}\n\n` + systemBase;
     }
     if (resources.brandDna) {
-      systemPrompt = `## Brand DNA\n${clipDna(resources.brandDna, A.brand)}\n\n` + systemPrompt;
+      systemBase = `## Brand DNA\n${clipDna(resources.brandDna, A.brand)}\n\n` + systemBase;
     }
     if (resources.methodDna) {
-      systemPrompt = `## Method DNA (use proprietary terms exactly)\n${clipDna(resources.methodDna, A.method)}\n\n` + systemPrompt;
+      systemBase = `## Method DNA (use proprietary terms exactly)\n${clipDna(resources.methodDna, A.method)}\n\n` + systemBase;
     }
-    systemPrompt += `\n\nOutput type for this session: ${outputType}. Tailor the outline structure to this format.`;
+    systemBase += `\n\nOutput type for this session: ${outputType}. Tailor the outline structure to this format.`;
 
-    // Build Claude messages from conversation history
-    const claudeMessages = messages.map((m) => ({
+    const claudeBase = messages.map((m) => ({
       role: m.role === "reed" ? "assistant" : "user",
       content: typeof m.content === "string" ? m.content : String(m.content),
     }));
 
-    // Add a final user message requesting the outline
-    claudeMessages.push({
-      role: "user",
-      content: "Generate two structurally distinct outlines based on our conversation. Return ONLY valid JSON.",
+    const client = new Anthropic({ apiKey });
+
+    // ── Call 1: Angle A only ─────────────────────────────────────
+    const messagesA = [
+      ...claudeBase,
+      {
+        role: "user",
+        content:
+          "From our conversation, generate the first structural approach as Angle A. Return ONLY valid JSON with keys \"name\", \"description\", and \"rows\" as specified in your instructions.",
+      },
+    ];
+
+    const resA = await createOutlineMessage(client, systemBase, messagesA);
+    const rawA = resA.content?.[0]?.text || "";
+    let parsedA;
+    try {
+      parsedA = parseJsonFromModel(rawA);
+    } catch (e) {
+      console.error("[api/outline] Angle A JSON parse failed. Raw:", rawA.slice(0, 500));
+      return res.status(502).json({ error: "Failed to parse Angle A outline from Claude." });
+    }
+    if (!validateSingleAngle(parsedA)) {
+      console.error("[api/outline] Invalid Angle A structure:", JSON.stringify(parsedA).slice(0, 500));
+      return res.status(502).json({ error: "Invalid Angle A outline structure from Claude." });
+    }
+    const angleA = normalizeAngle(parsedA);
+
+    // ── Call 2: Angle B only (explicit contrast to A); retry if too similar ──
+    const systemB = systemBase + OUTLINE_ANGLE_B_SYSTEM_APPEND;
+    const aMetaName = angleA.name || "Angle A";
+    const aMetaDesc = angleA.description || "";
+    const angleAPayload = JSON.stringify({
+      name: angleA.name,
+      description: angleA.description,
+      rows: angleA.rows,
     });
 
-    const client = new Anthropic({ apiKey });
-    const response = await callWithRetry(() =>
-      client.messages.create({
-        model: CLAUDE_MODEL,
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: claudeMessages,
-      })
-    );
+    let angleB = null;
+    const maxBAttempts = 3;
+    for (let attempt = 0; attempt < maxBAttempts; attempt++) {
+      const strictNote =
+        attempt === 0
+          ? ""
+          : attempt === 1
+            ? "\n\nYour last Angle B was too close to Angle A. Regenerate Angle B from scratch: new Title, Hook, every Body line, Stakes, Close. Zero reused sentences from Angle A."
+            : "\n\nStill too similar. Use a different rhetorical lens entirely (for example, if Angle A is thesis-first, make Angle B story-first or contrarian-first). Every row must be new text.";
 
-    const raw = response.content?.[0]?.text || "";
+      const userBContent = `Generate two genuinely different structural approaches to this idea. Angle A: ${aMetaName} — ${aMetaDesc}. Angle B: you will invent a new name, description, and rows in your JSON response. The Title, Hook, Body structure, Stakes framing, and Close must be meaningfully different between the two. Do not reuse the same sentences or structure across both angles.
 
-    // Parse JSON from response, handling possible markdown code fences
-    let cleaned = raw.trim();
-    if (cleaned.startsWith("```")) {
-      cleaned = cleaned.replace(/^```(?:json)?\s*/, "").replace(/```\s*$/, "").trim();
+Angle A is already fixed. Here is its full JSON (reference only; do not copy its wording into Angle B):
+${angleAPayload}
+
+Now output ONLY Angle B as JSON with keys "name", "description", "rows". Angle B must differ in every row from Angle A.${strictNote}`;
+
+      const messagesB = [...claudeBase, { role: "user", content: userBContent }];
+
+      const resB = await createOutlineMessage(client, systemB, messagesB);
+      const rawB = resB.content?.[0]?.text || "";
+      let parsedB;
+      try {
+        parsedB = parseJsonFromModel(rawB);
+      } catch (e) {
+        console.error("[api/outline] Angle B JSON parse failed. Raw:", rawB.slice(0, 500));
+        return res.status(502).json({ error: "Failed to parse Angle B outline from Claude." });
+      }
+      if (!validateSingleAngle(parsedB)) {
+        console.error("[api/outline] Invalid Angle B structure:", JSON.stringify(parsedB).slice(0, 500));
+        return res.status(502).json({ error: "Invalid Angle B outline structure from Claude." });
+      }
+      const candidateB = normalizeAngle(parsedB);
+
+      if (outlineRowsTooSimilar(angleA.rows, candidateB.rows)) {
+        console.warn("[api/outline] Angle B too similar to Angle A; retrying B generation", {
+          attempt: attempt + 1,
+          aName: angleA.name,
+          bName: candidateB.name,
+        });
+        continue;
+      }
+      angleB = candidateB;
+      break;
     }
 
-    let parsed;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch (parseErr) {
-      console.error("[api/outline] JSON parse failed. Raw response:", raw.slice(0, 500));
-      return res.status(502).json({ error: "Failed to parse outline response from Claude." });
+    if (!angleB) {
+      console.error("[api/outline] Angle B remained too similar after retries");
+      return res.status(502).json({
+        error: "Could not produce a distinct second outline angle. Please try again.",
+      });
     }
-
-    // Validate structure
-    if (!parsed.angleA?.rows || !parsed.angleB?.rows) {
-      console.error("[api/outline] Invalid structure:", JSON.stringify(parsed).slice(0, 500));
-      return res.status(502).json({ error: "Invalid outline structure from Claude." });
-    }
-
-    // Sanitize em-dashes from all text fields
-    const result = sanitizeOutlineObj(parsed);
 
     return res.json({
       angleA: {
-        name: result.angleA.name || "Angle A",
-        description: result.angleA.description || "",
-        rows: result.angleA.rows,
+        name: angleA.name || "Angle A",
+        description: angleA.description || "",
+        rows: angleA.rows,
       },
       angleB: {
-        name: result.angleB.name || "Angle B",
-        description: result.angleB.description || "",
-        rows: result.angleB.rows,
+        name: angleB.name || "Angle B",
+        description: angleB.description || "",
+        rows: angleB.rows,
       },
     });
   } catch (err) {
