@@ -1275,14 +1275,28 @@ function StageIntake({
 
   // Active chat state: message list scrolls; composer pinned in column (parent also pins when docked).
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", background: "transparent", minHeight: 0, alignItems: "center" }}>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      flex: 1,
+      minHeight: 0,
+      overflow: "hidden",
+      width: "100%",
+    }}
+    >
       <div
         className="work-stage-content-column"
         style={{
-          flex: 1,
+          flex: "1 1 0%",
           minHeight: 0,
-          display: "flex", flexDirection: "column", overflow: "hidden",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
           width: "100%",
+          alignSelf: "stretch",
+          maxWidth: 680,
+          margin: "0 auto",
         }}
       >
         {/* Messages: bounded flex child so overflow-y scrolls instead of growing the stage. */}
