@@ -74,6 +74,11 @@ function useBreadcrumbs(): { left: React.ReactNode } {
 const WORK_STAGES = ["Intake", "Outline", "Edit", "Review"] as const;
 type WorkStage = typeof WORK_STAGES[number];
 
+/** Display-only: internal stage id stays `"Edit"`. */
+function workStagePillLabel(s: WorkStage): string {
+  return s === "Edit" ? "Draft" : s;
+}
+
 function WorkBreadcrumb() {
   const stageRaw = useWorkStageFromShell();
   const stage: WorkStage = WORK_STAGES.includes(stageRaw as WorkStage)
@@ -129,7 +134,7 @@ function WorkBreadcrumb() {
                   color: isActive ? "var(--fg)" : "var(--fg-3)",
                 }}
               >
-                {s}
+                {workStagePillLabel(s)}
               </span>
             </span>
           </div>
@@ -140,7 +145,7 @@ function WorkBreadcrumb() {
 }
 
 // ── Project dropdown (Supabase, matches StudioSidebar query) ──
-function ProjectSwitcher() {
+function ProjectSwitcher({ appearance = "context" }: { appearance?: "default" | "context" }) {
   const { user } = useAuth();
   const { projects, activeProject, activeProjectId, setActiveProjectId, refreshProjects, loading } = useStudioProject();
   const [open, setOpen] = useState(false);
@@ -476,33 +481,102 @@ function ProjectSwitcher() {
       )
     : null;
 
+  const isContext = appearance === "context";
+  const triggerStyle = isContext
+    ? {
+        display: "flex" as const,
+        alignItems: "center" as const,
+        gap: 4,
+        maxWidth: 200,
+        minWidth: 0,
+        flexShrink: 1,
+        padding: "2px 4px",
+        borderRadius: 4,
+        border: "none",
+        background: "transparent",
+        cursor: "pointer" as const,
+        fontFamily: "inherit" as const,
+      }
+    : {
+        display: "flex" as const,
+        alignItems: "center" as const,
+        gap: 6,
+        maxWidth: 200,
+        padding: "5px 10px",
+        borderRadius: 10,
+        border: "1px solid rgba(0,0,0,0.08)",
+        background: "rgba(255,255,255,0.45)",
+        cursor: "pointer" as const,
+        fontFamily: "inherit" as const,
+      };
+  const labelStyle = isContext
+    ? {
+        fontSize: 12,
+        fontWeight: 500,
+        color: "rgba(255,255,255,0.4)",
+        whiteSpace: "nowrap" as const,
+        overflow: "hidden",
+        textOverflow: "ellipsis" as const,
+        flex: 1,
+        minWidth: 0,
+      }
+    : {
+        fontSize: 12,
+        fontWeight: 600,
+        color: "var(--fg)",
+        whiteSpace: "nowrap" as const,
+        overflow: "hidden",
+        textOverflow: "ellipsis" as const,
+        flex: 1,
+        minWidth: 0,
+      };
+  const chevronColor = isContext ? "rgba(255,255,255,0.35)" : "var(--fg-3)";
+
   return (
-    <div style={{ position: "relative", flexShrink: 0 }}>
+    <div style={{ position: "relative", flexShrink: isContext ? 1 : 0, minWidth: 0 }}>
       <button
         type="button"
         ref={anchorRef}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
-        style={{
-          display: "flex", alignItems: "center", gap: 6,
-          maxWidth: 200, padding: "5px 10px", borderRadius: 10,
-          border: "1px solid rgba(0,0,0,0.08)", background: "rgba(255,255,255,0.45)",
-          cursor: "pointer", fontFamily: "inherit",
-        }}
+        style={triggerStyle}
       >
-        <span style={{
-          fontSize: 12, fontWeight: 600, color: "var(--fg)",
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, minWidth: 0,
-        }}>
+        <span style={labelStyle}>
           {displayName}
         </span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ color: "var(--fg-3)", flexShrink: 0 }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ color: chevronColor, flexShrink: 0 }}>
           <polyline points="6 9 12 15 18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
       {menuPortal}
     </div>
+  );
+}
+
+/** "/" between project and session on Work when a session is active. */
+function WorkSessionPathDivider() {
+  const loc = useLocation();
+  const meta = useSyncExternalStore(
+    subscribeWorkSessionMeta,
+    getWorkSessionMetaSnapshot,
+    getServerWorkSessionMetaSnapshot,
+  );
+  if (!loc.pathname.startsWith("/studio/work") || !meta.active) return null;
+  return (
+    <span
+      aria-hidden
+      style={{
+        fontSize: 12,
+        color: "rgba(255,255,255,0.4)",
+        flexShrink: 0,
+        userSelect: "none",
+        lineHeight: 1,
+        padding: "0 2px",
+      }}
+    >
+      /
+    </span>
   );
 }
 
@@ -551,16 +625,16 @@ function WorkSessionTitleChip() {
         }}
         style={{
           width: 200,
-          maxWidth: "min(200px, 28vw)",
+          maxWidth: "min(280px, 36vw)",
           boxSizing: "border-box",
-          padding: "4px 8px",
-          borderRadius: 8,
-          fontSize: 11,
-          fontWeight: 600,
+          padding: "4px 10px",
+          borderRadius: 6,
+          fontSize: 13,
+          fontWeight: 500,
           fontFamily: "inherit",
-          border: "1px solid rgba(245,198,66,0.45)",
-          background: "var(--glass-input)",
-          color: "var(--fg)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          background: "rgba(255,255,255,0.07)",
+          color: "rgba(255,255,255,0.9)",
           outline: "none",
         }}
       />
@@ -576,22 +650,23 @@ function WorkSessionTitleChip() {
       }}
       title="Click to name this session (search and sync use this title)"
       style={{
-        maxWidth: "min(220px, 30vw)",
+        maxWidth: "min(280px, 36vw)",
         padding: "4px 10px",
-        borderRadius: 8,
-        border: "1px solid var(--glass-border)",
-        background: "var(--glass-card)",
+        borderRadius: 6,
+        border: "1px solid rgba(255,255,255,0.1)",
+        background: "rgba(255,255,255,0.07)",
         cursor: "pointer",
         fontFamily: "inherit",
         textAlign: "left" as const,
         overflow: "hidden",
+        flexShrink: 0,
       }}
     >
       <span style={{
         display: "block",
-        fontSize: 11,
-        fontWeight: 600,
-        color: "var(--fg-2)",
+        fontSize: 13,
+        fontWeight: 500,
+        color: "rgba(255,255,255,0.9)",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
@@ -649,8 +724,12 @@ export default function StudioTopBar() {
       gap: 12,
       flexShrink: 0,
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-        <ProjectSwitcher />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flexShrink: 1 }}>
+          <ProjectSwitcher />
+          <WorkSessionPathDivider />
+          <WorkSessionTitleChip />
+        </div>
         <button
           type="button"
           className="liquid-glass-btn-gold"
@@ -662,7 +741,6 @@ export default function StudioTopBar() {
         >
           <span className="liquid-glass-btn-gold-label">+ New Session</span>
         </button>
-        <WorkSessionTitleChip />
       </div>
 
       {/* Breadcrumbs */}

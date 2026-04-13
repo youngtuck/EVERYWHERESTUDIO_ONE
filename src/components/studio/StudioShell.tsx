@@ -53,7 +53,9 @@ const ADVISOR_CONTENT: Record<string, AdvisorContext> = {
 function getAdvisorCtx(pathname: string): { ctx: AdvisorContext; stageLabel: string } {
   if (pathname.includes("/watch")) return { ctx: ADVISOR_CONTENT.watch, stageLabel: "Watch" };
   if (pathname.includes("/wrap")) return { ctx: ADVISOR_CONTENT.wrap, stageLabel: "Wrap" };
-  return { ctx: ADVISOR_CONTENT.work, stageLabel: window.__ewWorkStage || "Work" };
+  const raw = window.__ewWorkStage || "Work";
+  const stageLabel = raw === "Edit" ? "Draft" : raw;
+  return { ctx: ADVISOR_CONTENT.work, stageLabel };
 }
 
 function InspectorEyebrow({ children }: { children: React.ReactNode }) {

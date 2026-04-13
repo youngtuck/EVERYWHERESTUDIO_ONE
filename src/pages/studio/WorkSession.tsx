@@ -877,7 +877,7 @@ function ReviewDash({
                 backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
               }}
             >
-              Go back to Edit
+              Go back to Draft
             </button>
           )}
 
@@ -1835,7 +1835,7 @@ function StageOutline({
               onClick={onAdvance}
               style={{ fontSize: 12, padding: "8px 22px", fontFamily: FONT }}
             >
-              <span className="liquid-glass-btn-gold-label">Write draft →</span>
+              <span className="liquid-glass-btn-gold-label">Write Draft →</span>
             </button>
           </div>
         )}
@@ -1976,7 +1976,7 @@ function OutlineRowComponent({
               <p className="os-outline-same">Both angles use the same wording for this line.</p>
             )}
             <button type="button" className="os-outline-done" onClick={focusEditorEnd}>
-              Edit on the right
+              Continue on the right
             </button>
           </div>
         ) : null}
@@ -2867,7 +2867,7 @@ function StageReview({
         <div className="work-stage-content-column" style={{ padding: "10px clamp(10px, 3vw, 14px)", display: "flex", alignItems: "center", gap: 6 }}>
           <input
             value={input} onChange={e => setInput(e.target.value)}
-            placeholder="Send back to Edit, tell Reed what to change..."
+            placeholder="Send back to Draft, tell Reed what to change..."
             style={{ flex: 1, background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10, padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}
             onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
             onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
@@ -2876,8 +2876,8 @@ function StageReview({
           <button
             type="button"
             className="liquid-glass-btn-gold liquid-glass-btn-gold--square"
-            title="Send back to Edit"
-            aria-label="Send back to Edit"
+            title="Send back to Draft"
+            aria-label="Send back to Draft"
             onClick={() => { if (input.trim()) { onGoBack(input.trim()); setInput(""); } }}
             style={{ cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
@@ -3307,7 +3307,7 @@ export default function WorkSession() {
         setMessages([
           { role: "reed", content: "What's on your mind?" },
           { role: "user", content: `I want to continue working on: ${title}` },
-          { role: "reed", content: "Picking up where we left off. I've loaded your draft. Jump to Edit to continue, or tell me what you'd like to change." },
+          { role: "reed", content: "Picking up where we left off. I've loaded your draft. Jump to Draft to continue, or tell me what you'd like to change." },
         ]);
         setDraft(data.content);
         setOutputId(data.id);
@@ -3356,7 +3356,7 @@ export default function WorkSession() {
         setMessages([
           { role: "reed", content: "What's on your mind?" },
           { role: "user", content: `I want to continue working on: ${reopenTitle}` },
-          { role: "reed", content: `Picking up where we left off. I've loaded your draft. Jump to Edit to continue, or tell me what you'd like to change.` },
+          { role: "reed", content: `Picking up where we left off. I've loaded your draft. Jump to Draft to continue, or tell me what you'd like to change.` },
         ]);
       }
 
