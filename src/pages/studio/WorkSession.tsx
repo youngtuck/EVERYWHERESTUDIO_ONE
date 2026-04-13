@@ -1134,17 +1134,17 @@ function StageIntake({
               margin: "0 auto",
               textAlign: "center" as const,
             }}>
-              <p style={{
-                fontSize: 12,
-                lineHeight: 1.55,
-                color: "var(--fg-2)",
-                margin: "0 0 12px",
-                fontFamily: FONT,
-              }}>
-                {reedQuestionCount >= totalQuestions
-                  ? "You have reached the last planned question. You are not stuck: keep replying if you want more from Reed, or move on when you are ready to structure this piece."
-                  : "Reed has enough to work with. You can keep the conversation going below, or continue to outline whenever you want."}
-              </p>
+              {reedQuestionCount < totalQuestions ? (
+                <p style={{
+                  fontSize: 12,
+                  lineHeight: 1.55,
+                  color: "var(--fg-2)",
+                  margin: "0 0 12px",
+                  fontFamily: FONT,
+                }}>
+                  Reed has enough to work with. You can keep the conversation going below, or continue to outline whenever you want.
+                </p>
+              ) : null}
               <button
                 type="button"
                 className="liquid-glass-btn-gold"
