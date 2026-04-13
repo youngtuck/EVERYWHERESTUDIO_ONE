@@ -1,22 +1,21 @@
-import { useEffect, useState, useLayoutEffect } from "react";
+import { useEffect, useState, useLayoutEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMobile } from "../../hooks/useMobile";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { useStudioProject } from "../../context/ProjectContext";
 import { timeAgo } from "../../utils/timeAgo";
 import { useShell } from "../../components/studio/StudioShell";
+import {
+  loadSession,
+  getWorkStageFromPersisted,
+  workSessionRowHasMeaningfulWork,
+  type PersistedSession,
+  type WorkSessionDbRow,
+} from "../../lib/sessionPersistence";
 import "./shared.css";
 
 // ── Helpers ────────────────────────────────────────────────────
-function formatFullDate(date: string | Date): string {
-  const d = new Date(date);
-  return d.toLocaleDateString("en-US", {
-    month: "long", day: "numeric", year: "numeric",
-  }) + " at " + d.toLocaleTimeString("en-US", {
-    hour: "numeric", minute: "2-digit", hour12: true,
-  });
-}
-
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -32,6 +31,35 @@ function getDateLabel(): string {
     year: "numeric",
   });
 }
+
+function trunc60(s: string): string {
+  const t = s.trim();
+  if (t.length <= 60) return t;
+  return `${t.slice(0, 57)}...`;
+}
+
+function persistedSessionHasPickup(p: PersistedSession): boolean {
+  const msgs = p.messages?.length ?? 0;
+  if (msgs > 1) return true;
+  if ((p.generatedContent || "").trim().length > 40) return true;
+  if (p.outlineRows && p.outlineRows.length > 0) return true;
+  return false;
+}
+
+function pickupTitleFromRow(row: WorkSessionDbRow): string {
+  const st = (row.session_title || "").trim();
+  if (st) return trunc60(st);
+  const p = row.payload as PersistedSession | null;
+  const messages = (Array.isArray(row.messages) && row.messages.length > 0
+    ? row.messages
+    : p?.messages) as Array<{ role?: string; content?: string }> | undefined;
+  const userLine = messages?.find(m => m.role === "user")?.content?.trim();
+  return trunc60(userLine || "Untitled session");
+}
+
+type WorkSessionPickupRow = WorkSessionDbRow & {
+  projects?: { name: string } | null;
+};
 
 // ── Types ──────────────────────────────────────────────────────
 interface RecentOutput {
@@ -167,10 +195,13 @@ export default function Dashboard() {
   const nav = useNavigate();
   const isMobile = useMobile();
   const { user, displayName } = useAuth();
+  const { setActiveProjectId } = useStudioProject();
   const { setDashContent } = useShell();
 
   const [outputs, setOutputs] = useState<RecentOutput[]>([]);
   const [loading, setLoading] = useState(true);
+  const [workPickupRows, setWorkPickupRows] = useState<WorkSessionPickupRow[]>([]);
+  const [workPickupsLoading, setWorkPickupsLoading] = useState(true);
 
   // Pull recent outputs
   useEffect(() => {
@@ -190,6 +221,68 @@ export default function Dashboard() {
       }
     })();
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setWorkPickupRows([]);
+      setWorkPickupsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setWorkPickupsLoading(true);
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("work_sessions")
+          .select(`
+            id,
+            session_title,
+            stage,
+            work_stage,
+            updated_at,
+            project_key,
+            project_id,
+            messages,
+            outline_rows,
+            draft,
+            payload,
+            projects ( name )
+          `)
+          .eq("user_id", user.id)
+          .neq("stage", "complete")
+          .order("updated_at", { ascending: false })
+          .limit(12);
+        if (error) throw error;
+        const rows = (data || []) as WorkSessionPickupRow[];
+        const filtered = rows
+          .filter(r => workSessionRowHasMeaningfulWork(r as WorkSessionDbRow))
+          .slice(0, 3);
+        if (!cancelled) setWorkPickupRows(filtered);
+      } catch {
+        if (!cancelled) setWorkPickupRows([]);
+      } finally {
+        if (!cancelled) setWorkPickupsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const localFallbackSession = useMemo(() => {
+    if (workPickupsLoading) return null;
+    if (workPickupRows.length > 0) return null;
+    const p = loadSession();
+    if (!p || !persistedSessionHasPickup(p)) return null;
+    return p;
+  }, [workPickupsLoading, workPickupRows.length]);
+
+  const goToWorkSessionRow = (row: WorkSessionPickupRow) => {
+    const pk = row.project_key || "default";
+    if (pk !== "default") setActiveProjectId(pk);
+    else setActiveProjectId("default");
+    nav(`/studio/work?resume=work_session&projectKey=${encodeURIComponent(pk)}`);
+  };
 
   // Inject dashboard panel content
   useLayoutEffect(() => {
@@ -212,8 +305,15 @@ export default function Dashboard() {
 
   const firstName = displayName ? displayName.split(" ")[0] : "there";
 
-  const inProgress = outputs.find(o => !o.score || o.score < 75);
   const pipelineIdea = outputs[1] ?? null;
+  const inProgress = outputs.find(o => !o.score || o.score < 75);
+
+  const pickupSectionVisible =
+    workPickupsLoading
+    || workPickupRows.length > 0
+    || localFallbackSession != null
+    || outputs.length > 0
+    || loading;
 
   // ── Briefing signals — live from Watch only, no static fallback
   const signals: BriefingSignal[] = [];
@@ -291,8 +391,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Section divider */}
-      {(outputs.length > 0 || loading) && (
+      {/* Pick up where you left off (work_sessions, up to 3; sessionStorage fallback) */}
+      {pickupSectionVisible && (
         <div style={{
           fontFamily: "var(--studio-mono-font)",
           fontSize: "var(--studio-label-size)",
@@ -308,15 +408,55 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Loading skeleton */}
-      {loading && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%" }}>
+      {pickupSectionVisible && workPickupsLoading && user?.id && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", marginBottom: 12 }}>
           {[1, 2, 3].map(i => (
             <div key={i} className="liquid-glass-card dashboard-home-card" style={{ padding: "20px 22px", width: "100%" }}>
               <div style={{ height: 13, width: "55%", background: "var(--bg-2)", borderRadius: 3, margin: "0 auto 10px" }} />
               <div style={{ height: 11, width: "75%", background: "var(--bg-2)", borderRadius: 3, margin: "0 auto" }} />
             </div>
           ))}
+        </div>
+      )}
+
+      {pickupSectionVisible && !workPickupsLoading && workPickupRows.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", marginBottom: 12 }}>
+          {workPickupRows.map(row => {
+            const stageLabel = (row.stage || row.work_stage || "Intake").trim() || "Intake";
+            const projectName = row.projects?.name?.trim()
+              || (row.project_key === "default" ? "My Studio" : "Project");
+            const updated = row.updated_at;
+            return (
+              <HomeCard
+                key={row.id}
+                accentColor="var(--gold-bright)"
+                label="Work"
+                labelColor="var(--fg-3)"
+                title={pickupTitleFromRow(row as WorkSessionDbRow)}
+                meta={`${stageLabel} · ${projectName} · ${timeAgo(updated)}`}
+                cta="Resume"
+                onCta={() => goToWorkSessionRow(row)}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {pickupSectionVisible && !workPickupsLoading && workPickupRows.length === 0 && localFallbackSession && (
+        <div style={{ marginBottom: 12, width: "100%" }}>
+          <HomeCard
+            accentColor="var(--gold-bright)"
+            label="Work"
+            labelColor="var(--fg-3)"
+            title={trunc60(
+              (localFallbackSession.sessionTitle || "").trim()
+                || localFallbackSession.messages?.find(m => m.role === "user")?.content?.trim()
+                || "Saved on this device",
+            )}
+            meta={`${getWorkStageFromPersisted(localFallbackSession)} · This browser · ${timeAgo(new Date(localFallbackSession.timestamp).toISOString())}`}
+            cta="Resume"
+            onCta={() => nav("/studio/work?resume=local")}
+          />
         </div>
       )}
 
@@ -343,17 +483,6 @@ export default function Dashboard() {
               meta="Watch scans your landscape and surfaces what matters."
               cta="Go to Watch"
               onCta={() => nav("/studio/watch")}
-            />
-          )}
-
-          {/* Resume in-progress session */}
-          {inProgress && (
-            <HomeCard
-              accentColor="var(--gold-bright)"
-              title={inProgress.title}
-              meta={`Last edit ${formatFullDate(inProgress.updated_at || inProgress.created_at)}`}
-              cta="Resume"
-              onCta={() => nav(`/studio/work`)}
             />
           )}
 
