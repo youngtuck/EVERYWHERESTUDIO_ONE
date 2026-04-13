@@ -57,6 +57,9 @@ const serverBarSnapshot: StudioWorkSessionBarSnapshot = {
   projectKey: null,
 };
 
+/** Same reference until fields change, so useSyncExternalStore does not infinite-loop. */
+let cachedBarSnapshot: StudioWorkSessionBarSnapshot | null = null;
+
 export function getStudioWorkSessionBarSnapshot(): StudioWorkSessionBarSnapshot {
   const m = getWorkSessionMetaSnapshot();
   const p = typeof window !== "undefined" ? loadSession() : null;
@@ -64,7 +67,36 @@ export function getStudioWorkSessionBarSnapshot(): StudioWorkSessionBarSnapshot 
   const hasWorkSessionContext = hasLocalMirror || m.active;
   const title = ((m.title || "").trim() || (p ? sessionTitleFromPersisted(p) : "") || "New session").slice(0, 200);
   const projectKey = p?.projectKey ?? null;
-  return { hasLocalMirror, metaActive: m.active, hasWorkSessionContext, title, projectKey };
+
+  if (
+    !hasLocalMirror &&
+    !m.active &&
+    !(m.title || "").trim() &&
+    cachedBarSnapshot === null
+  ) {
+    return serverBarSnapshot;
+  }
+
+  if (
+    cachedBarSnapshot &&
+    cachedBarSnapshot.hasLocalMirror === hasLocalMirror &&
+    cachedBarSnapshot.metaActive === m.active &&
+    cachedBarSnapshot.hasWorkSessionContext === hasWorkSessionContext &&
+    cachedBarSnapshot.title === title &&
+    cachedBarSnapshot.projectKey === projectKey
+  ) {
+    return cachedBarSnapshot;
+  }
+
+  const next: StudioWorkSessionBarSnapshot = {
+    hasLocalMirror,
+    metaActive: m.active,
+    hasWorkSessionContext,
+    title,
+    projectKey,
+  };
+  cachedBarSnapshot = next;
+  return next;
 }
 
 export function getServerStudioWorkSessionBarSnapshot(): StudioWorkSessionBarSnapshot {

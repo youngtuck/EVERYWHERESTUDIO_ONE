@@ -18,8 +18,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(_error: Error, _errorInfo: ErrorInfo) {
-    // Error captured in state; UI shows fallback.
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("[ErrorBoundary]", error?.message || error, errorInfo?.componentStack || "");
   }
 
   render() {

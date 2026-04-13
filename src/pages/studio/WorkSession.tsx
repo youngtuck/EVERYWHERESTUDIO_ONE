@@ -46,6 +46,10 @@ import {
   type StructuredIntake,
 } from "../../lib/reedStructuredIntake";
 import { publishWorkSessionMeta } from "../../lib/workSessionMetaBridge";
+import {
+  classifyEditRevisionScope,
+  extractDraftSectionForTargetedEdit,
+} from "../../lib/editRevisionIntent";
 
 import OutputTypePicker, { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
 import { DEFAULT_PRESENTATION_MINUTES, buildWrapConstraintSupplement, talkTargetWords } from "../../lib/wrapFormatRules";
@@ -58,6 +62,9 @@ import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
+
+/** Match api/generate.js: oversized excerpts use full revision instead. */
+const TARGETED_EDIT_EXCERPT_MAX_CHARS = 12000;
 
 /** Intake → Outline: fade main content only; docked composer stays fixed. */
 const IO_INTAKE_FADE_MS = 200;
@@ -2032,12 +2039,13 @@ function OutlineRowComponent({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StageEdit({
-  draft, generating, generatingLabel, onDraftChange, onAdvance, onRevise,
+  draft, generating, generatingLabel, applyingSuggestion, onDraftChange, onAdvance, onRevise,
   versions, activeVersionIdx, onVersionSelect, onGenerateVersion, canGenerateMore,
 }: {
   draft: string; generating: boolean; generatingLabel: string;
+  applyingSuggestion?: boolean;
   onDraftChange: (v: string) => void; onAdvance: () => void;
-  onRevise: (instructions: string) => void;
+  onRevise: (instructions: string, opts?: { fromChip?: boolean }) => void;
   versions: Array<{ content: string; label: string }>;
   activeVersionIdx: number;
   onVersionSelect: (idx: number) => void;
@@ -2133,6 +2141,24 @@ function StageEdit({
               overflow: "hidden",
             }}
           >
+            {applyingSuggestion && (
+              <div style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 2,
+                padding: "8px 12px",
+                background: "rgba(245,198,66,0.08)",
+                borderBottom: "1px solid rgba(245,198,66,0.2)",
+                fontSize: 11,
+                color: "var(--gold-bright)",
+                fontWeight: 500,
+              }}
+              >
+                Applying suggestion...
+              </div>
+            )}
             {(() => {
               const lines = draft.split("\n");
               const rawTitle = lines[0] || "";
@@ -2964,7 +2990,7 @@ function readResumeQuery(): string | null {
 }
 
 export default function WorkSession() {
-  const { setFeedbackContent, setReedPrefill, setReedThread } = useShell();
+  const { setFeedbackContent, setReedPrefill, setReedThread, reedChipRequest, setReedChipRequest } = useShell();
   const prefillReed = useCallback((text: string) => {
     setReedPrefill(text);
   }, [setReedPrefill]);
@@ -3087,6 +3113,7 @@ export default function WorkSession() {
   const [activeVersionIdx, setActiveVersionIdx] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [generatingLabel, setGeneratingLabel] = useState("Writing draft...");
+  const [applyingSuggestion, setApplyingSuggestion] = useState(false);
   const [dismissedFlags, setDismissedFlags] = useState<Set<string>>(new Set());
   const [fixedFlags, setFixedFlags] = useState<Map<string, string>>(new Map());
 
@@ -3954,13 +3981,27 @@ export default function WorkSession() {
   }, [talkLengthDraftInput, toast, runGenerateDraftFromOutline]);
 
   // ── EDIT: Revise draft ────────────────────────────────────────
-  const handleRevise = useCallback(async (instructions: string) => {
+  const handleRevise = useCallback(async (instructions: string, opts?: { fromChip?: boolean }) => {
     if (!draft) return;
-    setGenerating(true);
-    setGeneratingLabel("Revising...");
+    const fromChip = opts?.fromChip === true;
+    if (fromChip) {
+      setApplyingSuggestion(true);
+    } else {
+      setGenerating(true);
+      setGeneratingLabel("Revising...");
+    }
 
     const resolvedOt =
       outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+
+    const revisionScope = classifyEditRevisionScope(instructions);
+    const sectionSlice =
+      revisionScope === "targeted" ? extractDraftSectionForTargetedEdit(draft, instructions) : null;
+    const useTargeted =
+      revisionScope === "targeted" &&
+      !!sectionSlice &&
+      sectionSlice.excerpt.trim().length > 0 &&
+      sectionSlice.excerpt.length <= TARGETED_EDIT_EXCERPT_MAX_CHARS;
 
     try {
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
@@ -3969,18 +4010,29 @@ export default function WorkSession() {
         body: JSON.stringify({
           conversationSummary: buildConvSummary(),
           outputType: resolvedOt,
-          originalDraft: draft,
           revisionNotes: instructions,
+          revisionScope: useTargeted ? "targeted" : "full",
+          ...(useTargeted && sectionSlice
+            ? { sectionExcerpt: sectionSlice.excerpt }
+            : { originalDraft: draft }),
           userId: user?.id,
-          maxTokens: 4096,
+          maxTokens: useTargeted ? 2048 : 4096,
           ...(resolvedOt === "talk" ? { talkDurationMinutes: talkDuration } : {}),
-          ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
+          ...(structuredIntakePayload && !useTargeted ? { structuredIntake: structuredIntakePayload } : {}),
         }),
-      }, { timeout: 90000 });
+      }, { timeout: useTargeted ? 45000 : 90000 });
 
       if (!res.ok) throw new Error(`Revision error ${res.status}`);
       const data = await res.json();
-      const revised = data.content || draft;
+      let revised: string;
+      if (data.targeted && typeof data.revisedExcerpt === "string" && sectionSlice && useTargeted) {
+        const rep = data.revisedExcerpt.trim();
+        revised = rep
+          ? `${sectionSlice.prefix}${rep}${sectionSlice.suffix ? `\n\n${sectionSlice.suffix}` : ""}`
+          : draft;
+      } else {
+        revised = data.content || draft;
+      }
       setDraft(revised);
       setDismissedFlags(new Set());
       setFixedFlags(new Map());
@@ -3995,9 +4047,21 @@ export default function WorkSession() {
       toast("Revision failed. Your draft is unchanged.", "error");
       console.error("[WorkSession][revise]", err);
     } finally {
-      setGenerating(false);
+      if (fromChip) setApplyingSuggestion(false);
+      else setGenerating(false);
     }
   }, [draft, buildConvSummary, selectedFormats, outputType, talkDuration, user?.id, activeVersionIdx, toast, structuredIntakePayload]);
+
+  const lastAppliedChipRequestIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (stage !== "Edit") return;
+    if (!reedChipRequest?.text || typeof reedChipRequest.id !== "number") return;
+    if (lastAppliedChipRequestIdRef.current === reedChipRequest.id) return;
+    if (generating || applyingSuggestion) return;
+    lastAppliedChipRequestIdRef.current = reedChipRequest.id;
+    void handleRevise(reedChipRequest.text, { fromChip: true });
+    setReedChipRequest(null);
+  }, [stage, reedChipRequest, handleRevise, setReedChipRequest, generating, applyingSuggestion]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
   // ── EDIT: Generate another draft version ─────────────────────
@@ -5117,12 +5181,19 @@ export default function WorkSession() {
                   "Cut 100 words without losing the point",
                 ]}
                 onChipClick={(chip) => {
+                  const run = (msg: string) => {
+                    if (stage === "Edit") {
+                      void handleRevise(msg, { fromChip: true });
+                      return;
+                    }
+                    prefillReed(msg);
+                  };
                   if (chip.startsWith("Tighten to")) {
-                    prefillReed(`Tighten this to ${targetWords}. Cut what doesn't earn its place. Keep the voice.`);
+                    run(`Tighten this to ${targetWords}. Cut what doesn't earn its place. Keep the voice.`);
                   } else if (chip.startsWith("Expand")) {
-                    prefillReed(`Expand this. Add a second example and deepen the stakes. Stay under ${Math.round(targetWords * 1.3)} words.`);
+                    run(`Expand this. Add a second example and deepen the stakes. Stay under ${Math.round(targetWords * 1.3)} words.`);
                   } else {
-                    prefillReed(chip);
+                    run(chip);
                   }
                 }}
               />
@@ -5178,7 +5249,7 @@ export default function WorkSession() {
     pipelineRun, pipelineRunning, allExported, outputId,
     hvtAttempts, handleRerunHVT, hvtRunning, outputType, talkDuration,
     handleRepairPipeline, fixingGate, handleRerunPipeline, rerunningPipeline,
-    prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
+    prefillReed, handleRevise, activeReviewTab, handleReviewFix, handleExportAll,
     dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
     formatDrafts,
     methodDnaMd, methodTermHits, methodLintLoading, methodLintSkipped,
@@ -5521,6 +5592,7 @@ export default function WorkSession() {
           draft={draft}
           generating={generating}
           generatingLabel={generatingLabel}
+          applyingSuggestion={applyingSuggestion}
           onDraftChange={handleDraftChangeWithTracking}
           onAdvance={handleRunPipeline}
           onRevise={handleRevise}

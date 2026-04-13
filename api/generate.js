@@ -16,6 +16,24 @@ function sanitizeContent(text) {
   return result;
 }
 
+const TARGETED_EXCERPT_MAX_CHARS = 12000;
+
+function parseTargetedRevisionExcerpt(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  const t = raw.trim();
+  const fence = t.match(/^```(?:json)?\s*([\s\S]*?)```$/i);
+  const inner = fence ? fence[1].trim() : t;
+  const m = inner.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try {
+    const o = JSON.parse(m[0]);
+    if (typeof o.revisedExcerpt === "string" && o.revisedExcerpt.trim()) return o.revisedExcerpt.trim();
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -38,6 +56,8 @@ export default async function handler(req, res) {
     revisionNotes = "",
     originalDraft = "",
     edits = null,
+    revisionScope = "full",
+    sectionExcerpt = "",
   } = req.body;
 
   const rawTalkMins = req.body?.talkDurationMinutes;
@@ -49,9 +69,16 @@ export default async function handler(req, res) {
   /** WorkSession sends Reed-locked checklist; read in system prompt below. */
   const structuredIntake = req.body?.structuredIntake;
 
+  const trimmedRevisionNotes = String(revisionNotes || "").trim();
+  const trimmedSectionExcerpt = typeof sectionExcerpt === "string" ? sectionExcerpt.trim() : "";
+  const isTargetedRevision =
+    revisionScope === "targeted" &&
+    trimmedSectionExcerpt.length > 0 &&
+    trimmedRevisionNotes.length > 0;
+
   let resources = { voiceDna: "", brandDna: "", methodDna: "", references: "", composerMemory: "" };
   const userId = req.body?.userId;
-  if (userId) {
+  if (userId && !isTargetedRevision) {
     try {
       resources = await getUserResources(userId, { caller: "generate" });
     } catch (e) {
@@ -62,6 +89,7 @@ export default async function handler(req, res) {
   dnaDebug("generate.handler", {
     hasUserId: !!userId,
     hasComposerMemory: !!(resources.composerMemory && String(resources.composerMemory).trim()),
+    skippedResources: isTargetedRevision,
   });
 
   console.log("[generate] Voice DNA length:", resources.voiceDna?.length || 0);
@@ -73,6 +101,63 @@ export default async function handler(req, res) {
 
   try {
     const client = new Anthropic({ apiKey });
+
+    if (isTargetedRevision) {
+      const clippedExcerpt =
+        trimmedSectionExcerpt.length > TARGETED_EXCERPT_MAX_CHARS
+          ? `${trimmedSectionExcerpt.slice(0, TARGETED_EXCERPT_MAX_CHARS)}\n\n[TRUNCATED_FOR_REVISION]`
+          : trimmedSectionExcerpt;
+
+      let targetedSystem = `You are a fast line editor. You receive ONE excerpt from a longer draft (plain text). Revise ONLY that excerpt to satisfy the instruction.
+
+RULES:
+1. Match the excerpt's existing voice, register, and formatting. Do not shift genre or add frameworks or brands that are not already implied in the excerpt.
+2. Make the minimum change that fulfills the instruction. If the instruction asks to cut length, actually remove words.
+3. Never use em-dashes. Never use the word "vibe" or "vibes."
+4. Output ONLY valid JSON with a single key "revisedExcerpt" whose value is the replacement text for the excerpt (plain text, same internal paragraph breaks as needed). No markdown fences, no commentary.`;
+
+      if (outputType === "talk") {
+        targetedSystem +=
+          "\n\nSPOKEN TALK SCRIPT: preserve short paragraphs and any inline [pause] or [beat] markers. Do not add ## headings or footnotes.";
+      }
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Targeted revision timed out after 45 seconds")), 45000)
+      );
+
+      const response = await Promise.race([
+        callWithRetry(() =>
+          client.messages.create({
+            model: CLAUDE_MODEL,
+            max_tokens: Math.min(req.body.maxTokens || 2048, 4096),
+            system: targetedSystem,
+            messages: [
+              {
+                role: "user",
+                content: `EXCERPT:\n${clippedExcerpt}\n\nINSTRUCTION:\n${trimmedRevisionNotes}`,
+              },
+            ],
+          })
+        ),
+        timeoutPromise,
+      ]);
+
+      const raw =
+        response.content?.[0]?.type === "text" ? response.content[0].text : "";
+      let revisedExcerpt = parseTargetedRevisionExcerpt(raw);
+      if (!revisedExcerpt) revisedExcerpt = sanitizeContent(raw).trim();
+      if (!revisedExcerpt) {
+        return res.status(500).json({ error: "Empty revision result.", content: null });
+      }
+
+      return res.json({
+        content: revisedExcerpt,
+        revisedExcerpt,
+        targeted: true,
+        score: null,
+        gates: null,
+      });
+    }
 
     let system = `You are producing a single piece of content for EVERYWHERE Studio. Use the captured conversation to write in the user's voice. Output only the final content. No meta-commentary, no preamble, no "Here is your essay:" headers. Format appropriately for the type: ${outputType}.
 

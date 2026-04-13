@@ -13,6 +13,8 @@ export interface ShellCtx {
   setFeedbackContent: (node: React.ReactNode | null) => void;
   reedPrefill: string;
   setReedPrefill: (text: string) => void;
+  reedChipRequest: { id: number; text: string } | null;
+  setReedChipRequest: (req: { id: number; text: string } | null) => void;
   reedThread: Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>;
   setReedThread: (fn: (prev: any[]) => any[]) => void;
 }
@@ -30,6 +32,8 @@ export const ShellContext = createContext<ShellCtx>({
   setFeedbackContent: () => {},
   reedPrefill: "",
   setReedPrefill: () => {},
+  reedChipRequest: null,
+  setReedChipRequest: () => {},
   reedThread: [],
   setReedThread: () => {},
 });

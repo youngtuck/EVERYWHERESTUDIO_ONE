@@ -265,6 +265,7 @@ export default function StudioShell() {
   const [dashContent, setDashContent] = useState<React.ReactNode | null>(null);
   const [feedbackContent, setFeedbackContent] = useState<React.ReactNode | null>(null);
   const [reedPrefill, setReedPrefill] = useState("");
+  const [reedChipRequest, setReedChipRequest] = useState<{ id: number; text: string } | null>(null);
   const [reedThread, setReedThread] = useState<Array<{ type: "user" | "reed" | "note"; text: string; from?: string; to?: string }>>([]);
 
   const studioGlassDense =
@@ -283,6 +284,7 @@ export default function StudioShell() {
       dashContent, setDashContent,
       feedbackContent, setFeedbackContent,
       reedPrefill, setReedPrefill,
+      reedChipRequest, setReedChipRequest,
       reedThread, setReedThread,
     }}>
       <ProjectProvider>
@@ -500,7 +502,7 @@ function FloatingReedPanel({ isMobile, open, setOpen }: { isMobile: boolean; ope
 }
 
 function ReedPanel() {
-  const { reedThread, setReedThread, reedPrefill, setReedPrefill } = useShell();
+  const { reedThread, setReedThread, reedPrefill, setReedPrefill, setReedChipRequest } = useShell();
   const location = useLocation();
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -519,6 +521,14 @@ function ReedPanel() {
       inputRef.current?.focus();
     });
   }, []);
+
+  const runChip = useCallback((text: string) => {
+    if (stageKey === "Edit") {
+      setReedChipRequest({ id: Date.now(), text });
+      return;
+    }
+    prefillAndFocus(text);
+  }, [prefillAndFocus, setReedChipRequest, stageKey]);
 
   // Same path as stage chips: external pages call setReedPrefill; we only fill the one composer.
   useEffect(() => {
@@ -550,7 +560,7 @@ function ReedPanel() {
             <button
               key={ci}
               type="button"
-              onClick={() => prefillAndFocus(chip.prefill)}
+              onClick={() => runChip(chip.prefill)}
               style={{
                 fontSize: 10, padding: "4px 10px", borderRadius: 99,
                 background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.1)",
