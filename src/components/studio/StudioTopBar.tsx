@@ -708,7 +708,7 @@ function ProjectSwitcher({ appearance = "context" }: { appearance?: "default" | 
         flex: 1,
         minWidth: 0,
       };
-  const chevronColor = isContext ? "var(--fg-3)" : "var(--fg-3)";
+  const chevronColor = "var(--fg-3)";
 
   return (
     <div style={{ position: "relative", flexShrink: isContext ? 1 : 0, minWidth: 0 }}>
@@ -811,7 +811,7 @@ function WorkSessionTitleChip() {
           fontWeight: 500,
           fontFamily: "inherit",
           border: "1px solid var(--glass-border)",
-          background: "rgba(0,0,0,0.04)",
+          background: "rgba(0,0,0,0.03)",
           color: "var(--fg)",
           outline: "none",
         }}
@@ -832,7 +832,7 @@ function WorkSessionTitleChip() {
         padding: "4px 10px",
         borderRadius: 6,
         border: "1px solid var(--glass-border)",
-        background: "rgba(0,0,0,0.04)",
+        background: "rgba(0,0,0,0.03)",
         cursor: "pointer",
         fontFamily: "inherit",
         textAlign: "left" as const,
