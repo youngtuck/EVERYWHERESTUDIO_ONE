@@ -15,6 +15,7 @@ import {
   getWrapRuleSummaryLines,
   outputTypeDisplayLabel,
   presentationTargetWords,
+  talkTargetWords,
   DEFAULT_PRESENTATION_MINUTES,
 } from "../../lib/wrapFormatRules";
 import { OUTPUT_TYPES } from "../../lib/constants";
@@ -297,7 +298,7 @@ function WrapStepRail({ phase }: { phase: WrapPhase }) {
 
 function WrapDashPanel({
   outputType, formatCount, onExportAll, exported, exporting, prefillReed,
-  ruleSummaryLines, presentationMinutes, phase,
+  ruleSummaryLines, presentationMinutes, talkDurationMinutes, phase,
 }: {
   outputType: string;
   formatCount: number;
@@ -307,6 +308,7 @@ function WrapDashPanel({
   prefillReed: (text: string) => void;
   ruleSummaryLines: string[];
   presentationMinutes: number | null;
+  talkDurationMinutes: number | null;
   phase: WrapPhase;
 }) {
   const isFreestyle = !outputType || outputType === "freestyle";
@@ -364,6 +366,11 @@ function WrapDashPanel({
           {outputType === "presentation" && presentationMinutes != null && (
             <span style={{ fontWeight: 500, color: "var(--fg-3)" }}>
               {" "}· {presentationMinutes} min (~{presentationTargetWords(presentationMinutes)} words)
+            </span>
+          )}
+          {outputType === "talk" && talkDurationMinutes != null && (
+            <span style={{ fontWeight: 500, color: "var(--fg-3)" }}>
+              {" "}· {talkDurationMinutes} min (~{talkTargetWords(talkDurationMinutes)} words)
             </span>
           )}
         </div>
@@ -434,6 +441,7 @@ export default function WrapPage() {
   const [formatContents, setFormatContents] = useState<Record<string, FormatEntry>>({});
   const [catalogLinkId, setCatalogLinkId] = useState<string | null>(null);
   const [wrapPresentationMinutes, setWrapPresentationMinutes] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
+  const [wrapTalkDurationMinutes, setWrapTalkDurationMinutes] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
 
   const [wrapPhase, setWrapPhase] = useState<WrapPhase>("choose");
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
@@ -518,6 +526,15 @@ export default function WrapPage() {
       }
     }
     sessionStorage.removeItem("ew-wrap-presentation-minutes");
+
+    const wrapTalk = sessionStorage.getItem("ew-wrap-talk-duration");
+    if (wrapTalk != null) {
+      const n = parseInt(wrapTalk, 10);
+      if (Number.isFinite(n) && n >= 3) {
+        setWrapTalkDurationMinutes(Math.min(180, n));
+      }
+    }
+    sessionStorage.removeItem("ew-wrap-talk-duration");
 
     setLoading(false);
     sessionStorage.removeItem("ew-wrap-draft");
@@ -641,7 +658,8 @@ export default function WrapPage() {
 
     const ot = wrapCatalogTypeId || "freestyle";
     const presMins = ot === "presentation" ? wrapPresentationMinutes : null;
-    const wrapConstraintSupplement = buildWrapConstraintSupplement(ot, format, presMins);
+    const talkMins = ot === "talk" ? wrapTalkDurationMinutes : null;
+    const wrapConstraintSupplement = buildWrapConstraintSupplement(ot, format, presMins, talkMins);
 
     setFormatContents(prev => ({ ...prev, [format]: { content: "", metadata: {}, status: "loading" } }));
 
@@ -696,7 +714,7 @@ export default function WrapPage() {
     } finally {
       adaptingRef.current.delete(format);
     }
-  }, [activeOutput, user, wrapPresentationMinutes, wrapCatalogTypeId]);
+  }, [activeOutput, user, wrapPresentationMinutes, wrapTalkDurationMinutes, wrapCatalogTypeId]);
 
   const runBuildForChannels = useCallback(async (channels: string[]) => {
     if (!activeOutput?.content || !user || channels.length === 0) {
@@ -872,12 +890,13 @@ export default function WrapPage() {
       ? getWrapRuleSummaryLines(
         wrapCatalogTypeId || "freestyle",
         wrapCatalogTypeId === "presentation" ? wrapPresentationMinutes : null,
+        wrapCatalogTypeId === "talk" ? wrapTalkDurationMinutes : null,
       )
       : []),
-    [hasContent, wrapCatalogTypeId, wrapPresentationMinutes],
+    [hasContent, wrapCatalogTypeId, wrapPresentationMinutes, wrapTalkDurationMinutes],
   );
 
-  const applyPresentationLength = useCallback(() => {
+  const applyWrapSourceLength = useCallback(() => {
     setFormatContents({});
     adaptingRef.current.clear();
     void adaptFormat(activeFormat);
@@ -895,6 +914,7 @@ export default function WrapPage() {
           prefillReed={prefillReed}
           ruleSummaryLines={wrapRuleLines}
           presentationMinutes={wrapCatalogTypeId === "presentation" ? wrapPresentationMinutes : null}
+          talkDurationMinutes={wrapCatalogTypeId === "talk" ? wrapTalkDurationMinutes : null}
           phase={wrapPhase}
         />,
       );
@@ -902,7 +922,7 @@ export default function WrapPage() {
       setFeedbackContent(null);
     }
     return () => setFeedbackContent(null);
-  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent, wrapRuleLines, wrapPresentationMinutes, wrapPhase, wrapCatalogTypeId]);
+  }, [activeOutput, formats, exported, exporting, hasContent, handleExportAll, prefillReed, setFeedbackContent, wrapRuleLines, wrapPresentationMinutes, wrapTalkDurationMinutes, wrapPhase, wrapCatalogTypeId]);
 
   if (loading) {
     return (
@@ -1775,7 +1795,32 @@ export default function WrapPage() {
                 style={{ width: 72, fontSize: 12, padding: "6px 10px" }}
               />
             </label>
-            <button type="button" className="liquid-glass-btn" onClick={applyPresentationLength} style={{ padding: "6px 12px" }}>
+            <button type="button" className="liquid-glass-btn" onClick={applyWrapSourceLength} style={{ padding: "6px 12px" }}>
+              <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Apply length and re-adapt</span>
+            </button>
+          </div>
+        </div>
+      )}
+      {wrapCatalogTypeId === "talk" && (
+        <div className="liquid-glass-card" style={{ margin: "0 20px 16px", padding: "12px 16px", flexShrink: 0 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+            <label style={{ fontSize: 11, color: "var(--fg-2)", display: "flex", alignItems: "center", gap: 8 }}>
+              <span>Talk length (min)</span>
+              <input
+                type="number"
+                className="liquid-glass-input"
+                min={3}
+                max={180}
+                step={1}
+                value={wrapTalkDurationMinutes}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10);
+                  if (Number.isFinite(v)) setWrapTalkDurationMinutes(Math.min(180, Math.max(3, v)));
+                }}
+                style={{ width: 72, fontSize: 12, padding: "6px 10px" }}
+              />
+            </label>
+            <button type="button" className="liquid-glass-btn" onClick={applyWrapSourceLength} style={{ padding: "6px 12px" }}>
               <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Apply length and re-adapt</span>
             </button>
           </div>

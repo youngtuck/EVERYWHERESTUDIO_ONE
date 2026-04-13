@@ -33,8 +33,8 @@ import {
 } from "../../lib/reedStructuredIntake";
 import { publishWorkSessionMeta } from "../../lib/workSessionMetaBridge";
 
-import { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
-import { DEFAULT_PRESENTATION_MINUTES, buildWrapConstraintSupplement } from "../../lib/wrapFormatRules";
+import OutputTypePicker, { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
+import { DEFAULT_PRESENTATION_MINUTES, buildWrapConstraintSupplement, talkTargetWords } from "../../lib/wrapFormatRules";
 import { ReedProfileIcon } from "../../components/studio/ReedProfileIcon";
 import "./shared.css";
 
@@ -169,7 +169,7 @@ function catalogOutputTypeLabel(id: string | null): string | null {
 }
 
 const WORD_TARGETS: Record<string, number> = {
-  essay: 2500, podcast: 1500, video_script: 800, email: 300,
+  essay: 2500, talk: 3000, podcast: 1500, video_script: 800, email: 300,
   presentation: 1200, proposal: 1500, one_pager: 400, report: 2000,
   executive_summary: 500, case_study: 1200, sow: 1500,
   meeting: 600, bio: 400, white_paper: 3000, session_brief: 600,
@@ -182,6 +182,7 @@ type PreWrapPickCategory = "Content" | "Business" | "Social";
 const PRE_WRAP_PICK_GROUPS: Record<PreWrapPickCategory, { id: string; label: string }[]> = {
   Content: [
     { id: "essay", label: "Essay" },
+    { id: "talk", label: "Talk" },
     { id: "podcast", label: "Podcast" },
     { id: "video_script", label: "Video Script" },
     { id: "email", label: "Email" },
@@ -196,6 +197,7 @@ const PRE_WRAP_PICK_GROUPS: Record<PreWrapPickCategory, { id: string; label: str
 /** Heuristic primary output type for Pre-Wrap highlight (not a model call). */
 function inferRecommendedWrapOutputId(draft: string): string {
   const t = draft.slice(0, 14000).toLowerCase();
+  if (/\[(pause|beat)\]/i.test(t)) return "talk";
   if (/\b(slide|deck|presentation|q[1-4])\b/.test(t) || /##\s*slide/i.test(t)) return "presentation";
   if (/\b(podcast|episode|\[open\]|\[hook\])\b/.test(t)) return "podcast";
   if (/\b(newsletter|subject line|preview text|unsubscribe)\b/.test(t)) return "newsletter";
@@ -1606,12 +1608,15 @@ function ChatInputBar({
 
 function StageOutline({
   outlineRows, onUpdateRow, onAdvance, building, angles, currentAngle, onSelectAngle,
+  catalogOutputTypeId, onCatalogOutputTypeChange,
 }: {
   outlineRows: OutlineRow[]; onUpdateRow: (i: number, v: string) => void;
   onAdvance: () => void; building: boolean;
   angles?: { a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null;
   currentAngle?: "a" | "b";
   onSelectAngle?: (angle: "a" | "b") => void;
+  catalogOutputTypeId: string | null;
+  onCatalogOutputTypeChange: (typeId: string) => void;
 }) {
   const [input, setInput] = useState("");
   const inputRef = useRef(input);
@@ -1702,6 +1707,26 @@ function StageOutline({
             }}>
               Click Title, Hook, Body, Stakes, or Close on the left to compare the two angles for that line and drop one in. Edit the field on the right anytime.
             </p>
+            <div style={{
+              marginBottom: 14,
+              padding: 12,
+              borderRadius: 10,
+              border: "1px solid var(--glass-border)",
+              background: "var(--glass-card)",
+              maxWidth: 560,
+            }}>
+              <div style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)",
+                marginBottom: 8, textTransform: "uppercase" as const,
+              }}>
+                Output format
+              </div>
+              <OutputTypePicker
+                selected={catalogOutputTypeId}
+                onSelect={onCatalogOutputTypeChange}
+                compact
+              />
+            </div>
             <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: 14, minHeight: 200, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
               {outlineRows.map((row, i) => (
                 <OutlineRowComponent
@@ -2358,6 +2383,8 @@ function PreWrapOutputGate({
   onStartWrap,
   presentationMinutes,
   onPresentationMinutesChange,
+  talkDuration,
+  onTalkDurationChange,
 }: {
   pipelineRun: PipelineRun | null;
   recommendedId: string;
@@ -2366,6 +2393,8 @@ function PreWrapOutputGate({
   onStartWrap: () => void;
   presentationMinutes: number;
   onPresentationMinutesChange: (n: number) => void;
+  talkDuration: number;
+  onTalkDurationChange: (n: number) => void;
 }) {
   const reviewStatusLine = !pipelineRun
     ? "When you are ready, continue below."
@@ -2514,7 +2543,7 @@ function PreWrapOutputGate({
             marginRight: "auto",
           }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", marginBottom: 8, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
-              Talk length
+              Presentation length
             </div>
             <label style={{ fontSize: 12, color: "var(--fg-2)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
               <span>Duration (minutes)</span>
@@ -2539,6 +2568,49 @@ function PreWrapOutputGate({
               />
               <span style={{ fontSize: 11, color: "var(--fg-3)" }}>
                 Target ≈ {presentationMinutes * 300} words in Wrap
+              </span>
+            </label>
+          </div>
+        )}
+
+        {selectedIds.includes("talk") && (
+          <div style={{
+            marginBottom: 24,
+            padding: "14px 16px",
+            borderRadius: 10,
+            border: "1px solid var(--glass-border)",
+            background: "var(--glass-card)",
+            fontFamily: FONT,
+            maxWidth: 420,
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fg-3)", marginBottom: 8, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+              Talk length
+            </div>
+            <label style={{ fontSize: 12, color: "var(--fg-2)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
+              <span>Duration (minutes)</span>
+              <input
+                type="number"
+                min={3}
+                max={180}
+                step={1}
+                value={talkDuration}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10);
+                  if (Number.isFinite(v)) onTalkDurationChange(Math.min(180, Math.max(3, v)));
+                }}
+                style={{
+                  width: 72,
+                  padding: "6px 8px",
+                  borderRadius: 8,
+                  border: "1px solid var(--glass-border)",
+                  fontSize: 13,
+                  fontFamily: FONT,
+                }}
+              />
+              <span style={{ fontSize: 11, color: "var(--fg-3)" }}>
+                Target ≈ {talkDuration * 300} words in Wrap
               </span>
             </label>
           </div>
@@ -2871,6 +2943,20 @@ export default function WorkSession() {
 
   // ── Output type (CO-003) ─────────────────────────────────────
   const [outputType, setOutputType] = useState<string | null>(() => persisted?.outputTypeId ?? null);
+  /** Minutes for Talk output; Wrap and draft targets use minutes × 300 words. */
+  const [talkDuration, setTalkDuration] = useState<number>(() => {
+    const t = persisted?.talkDuration;
+    if (typeof t === "number" && Number.isFinite(t)) return Math.min(180, Math.max(3, Math.round(t)));
+    return DEFAULT_PRESENTATION_MINUTES;
+  });
+  /** After user confirms length in the Talk modal, Write draft may run. Reset when they pick Talk again in the catalog picker. */
+  const [talkLengthGatePassed, setTalkLengthGatePassed] = useState(() => persisted?.outputTypeId !== "talk");
+  const [talkLengthModalOpen, setTalkLengthModalOpen] = useState(false);
+  const [talkLengthDraftInput, setTalkLengthDraftInput] = useState(() => {
+    const t = persisted?.talkDuration;
+    if (typeof t === "number" && Number.isFinite(t)) return String(Math.min(180, Math.max(3, Math.round(t))));
+    return String(DEFAULT_PRESENTATION_MINUTES);
+  });
   const [projectId, setProjectId] = useState<string | null>(null);
   /** User-set thread name in the top bar. Null means follow auto title from outline or intake. */
   const [sessionNameOverride, setSessionNameOverride] = useState<string | null>(
@@ -3002,12 +3088,22 @@ export default function WorkSession() {
       outlineRows: outlineRows.map(r => ({ label: r.label, content: r.content, indent: r.indent })),
       selectedFormats,
       structuredIntake,
+      talkDuration,
     }, { userId: user?.id });
-  }, [messages, draft, intakeReady, outputId, stage, outlineRows, selectedFormats, outputType, user?.id, resolvedSessionTitle, sessionNameOverride, structuredIntake]);
+  }, [messages, draft, intakeReady, outputId, stage, outlineRows, selectedFormats, outputType, talkDuration, user?.id, resolvedSessionTitle, sessionNameOverride, structuredIntake]);
 
   // ── Stage navigation ──────────────────────────────────────────
   const goToStage = useCallback((s: WorkStage) => {
     setStage(s);
+  }, []);
+
+  const handleCatalogOutputTypeChange = useCallback((id: string) => {
+    setOutputType(id);
+    if (id === "talk") {
+      setTalkLengthGatePassed(false);
+    } else {
+      setTalkLengthGatePassed(true);
+    }
   }, []);
 
   const hydrateFromPersisted = useCallback((p: PersistedSession) => {
@@ -3026,6 +3122,17 @@ export default function WorkSession() {
     setDraft(p.generatedContent || "");
     setOutputId(p.generatedOutputId ? p.generatedOutputId : null);
     setOutputType(p.outputTypeId ?? null);
+    const td = p.talkDuration;
+    if (typeof td === "number" && Number.isFinite(td)) {
+      const clamped = Math.min(180, Math.max(3, Math.round(td)));
+      setTalkDuration(clamped);
+      setTalkLengthDraftInput(String(clamped));
+    } else {
+      setTalkDuration(DEFAULT_PRESENTATION_MINUTES);
+      setTalkLengthDraftInput(String(DEFAULT_PRESENTATION_MINUTES));
+    }
+    setTalkLengthGatePassed(p.outputTypeId !== "talk");
+    setTalkLengthModalOpen(false);
     setOutlineRows((p.outlineRows || []).map(r => ({ label: r.label, content: r.content, indent: r.indent })));
     setSessionNameOverride(p.sessionNameOverride ?? null);
     const f = formatsFromPersisted(p.selectedFormats);
@@ -3386,16 +3493,19 @@ export default function WorkSession() {
           .join("\n");
 
         try {
+          const bgOt =
+            outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
           const revRes = await fetchWithRetry(`${API_BASE}/api/generate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               conversationSummary: "",
-              outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+              outputType: bgOt,
               originalDraft: result.finalDraft || generatedDraft,
               revisionNotes: `Fix these quality checkpoint issues while preserving the voice and argument:\n\n${issues}`,
               userId: user.id,
               maxTokens: 4096,
+              ...(bgOt === "talk" ? { talkDurationMinutes: talkDuration } : {}),
               ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
             }),
           }, { timeout: 90000 });
@@ -3453,7 +3563,7 @@ export default function WorkSession() {
     } finally {
       setBackgroundPipelineRunning(false);
     }
-  }, [user, outputType, selectedFormats, voiceDnaMd, brandDnaMd, methodDnaMd, draftChangedSinceBackground, structuredIntakePayload]);
+  }, [user, outputType, selectedFormats, talkDuration, voiceDnaMd, brandDnaMd, methodDnaMd, draftChangedSinceBackground, structuredIntakePayload]);
 
   // Track when user edits draft after background check started
   const handleDraftChangeWithTracking = useCallback((newDraft: string) => {
@@ -3464,7 +3574,7 @@ export default function WorkSession() {
   }, []);
 
   // ── OUTLINE → EDIT: Generate draft ───────────────────────────
-  const handleGenerateDraft = useCallback(async () => {
+  const runGenerateDraftFromOutline = useCallback(async () => {
     goToStage("Edit");
     setGenerating(true);
     setGeneratingLabel("Generating draft...");
@@ -3476,6 +3586,8 @@ export default function WorkSession() {
       beats: [row.content].filter(Boolean),
       purpose: "",
     }));
+    const resolvedOt =
+      outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
 
     try {
       setGeneratingLabel("Writing in your voice...");
@@ -3484,11 +3596,12 @@ export default function WorkSession() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversationSummary: convSummary,
-          outputType: FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: resolvedOt,
           outline: outlineForAPI,
           thesis: outlineRows[0]?.content || "",
           userId: user?.id,
           maxTokens: 4096,
+          ...(resolvedOt === "talk" ? { talkDurationMinutes: talkDuration } : {}),
           ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
@@ -3512,9 +3625,7 @@ export default function WorkSession() {
       // Save draft to Supabase immediately (fire and forget, don't block UI)
       if (user && data.content) {
         const title = outlineRows[0]?.content || messages.find(m => m.role === "user")?.content?.slice(0, 80) || "Untitled";
-        const outputTypeId = outputType
-          || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null)
-          || "freestyle";
+        const outputTypeId = resolvedOt;
         supabase.from("outputs").insert({
           user_id: user.id,
           title: title.slice(0, 200),
@@ -3526,7 +3637,7 @@ export default function WorkSession() {
           if (error) console.error("[Draft save] Error:", error.message, error.details, error.hint);
           if (savedOutput?.id) {
             setOutputId(savedOutput.id);
-            setOutputType(outputTypeId);
+            setOutputType(prev => prev ?? outputTypeId);
           }
         });
       }
@@ -3537,7 +3648,30 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage, handleBackgroundQualityCheck, outputType, structuredIntakePayload]);
+  }, [buildConvSummary, outlineRows, selectedFormats, user?.id, toast, goToStage, handleBackgroundQualityCheck, outputType, talkDuration, structuredIntakePayload]);
+
+  const handleGenerateDraft = useCallback(() => {
+    if (outputType === "talk" && !talkLengthGatePassed) {
+      setTalkLengthDraftInput(String(talkDuration));
+      setTalkLengthModalOpen(true);
+      return;
+    }
+    void runGenerateDraftFromOutline();
+  }, [outputType, talkLengthGatePassed, talkDuration, runGenerateDraftFromOutline]);
+
+  const confirmTalkLengthAndGenerate = useCallback(() => {
+    const v = parseInt(talkLengthDraftInput, 10);
+    if (!Number.isFinite(v) || v < 3 || v > 180) {
+      toast("Enter a duration between 3 and 180 minutes.", "error");
+      return;
+    }
+    const clamped = Math.min(180, Math.max(3, v));
+    setTalkDuration(clamped);
+    setTalkLengthDraftInput(String(clamped));
+    setTalkLengthGatePassed(true);
+    setTalkLengthModalOpen(false);
+    void runGenerateDraftFromOutline();
+  }, [talkLengthDraftInput, toast, runGenerateDraftFromOutline]);
 
   // ── EDIT: Revise draft ────────────────────────────────────────
   const handleRevise = useCallback(async (instructions: string) => {
@@ -3545,17 +3679,21 @@ export default function WorkSession() {
     setGenerating(true);
     setGeneratingLabel("Revising...");
 
+    const resolvedOt =
+      outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+
     try {
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversationSummary: buildConvSummary(),
-          outputType: FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: resolvedOt,
           originalDraft: draft,
           revisionNotes: instructions,
           userId: user?.id,
           maxTokens: 4096,
+          ...(resolvedOt === "talk" ? { talkDurationMinutes: talkDuration } : {}),
           ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
@@ -3579,7 +3717,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [draft, buildConvSummary, selectedFormats, user?.id, activeVersionIdx, toast, structuredIntakePayload]);
+  }, [draft, buildConvSummary, selectedFormats, outputType, talkDuration, user?.id, activeVersionIdx, toast, structuredIntakePayload]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
   // ── EDIT: Generate another draft version ─────────────────────
@@ -3594,16 +3732,19 @@ export default function WorkSession() {
         ? "Write a distinctly different version of this content. Change the opening hook, restructure the argument flow, and try a different closing. Same core message, different execution."
         : "Write a third variation. Try a bolder, more unexpected angle. Change the structure significantly. Take a creative risk with the opening.";
 
+      const resolvedOt =
+        outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversationSummary: buildConvSummary(),
-          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: resolvedOt,
           originalDraft: draft,
           revisionNotes: variationInstruction,
           userId: user?.id,
           maxTokens: 4096,
+          ...(resolvedOt === "talk" ? { talkDurationMinutes: talkDuration } : {}),
           ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
@@ -3624,7 +3765,7 @@ export default function WorkSession() {
     } finally {
       setGenerating(false);
     }
-  }, [draft, generating, draftVersions, buildConvSummary, outputType, selectedFormats, user?.id, toast, structuredIntakePayload]);
+  }, [draft, generating, draftVersions, buildConvSummary, outputType, selectedFormats, talkDuration, user?.id, toast, structuredIntakePayload]);
 
   // ── EDIT → REVIEW: Run pipeline ──────────────────────────────
   // ── Format adaptation (parallel with pipeline) ──────────────
@@ -3642,7 +3783,8 @@ export default function WorkSession() {
         const sourceOt =
           outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "freestyle";
         const presMins = outputType === "presentation" ? preWrapPresentationMins : null;
-        const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins);
+        const talkMins = outputType === "talk" ? talkDuration : null;
+        const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins, talkMins);
         const res = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -3666,7 +3808,7 @@ export default function WorkSession() {
       }
     });
     await Promise.allSettled(promises);
-  }, [draft, user, selectedFormats, voiceDnaMd, brandDnaMd, outputType, preWrapPresentationMins, structuredIntakePayload]);
+  }, [draft, user, selectedFormats, voiceDnaMd, brandDnaMd, outputType, preWrapPresentationMins, talkDuration, structuredIntakePayload]);
 
   const ensureMethodDnaLint = useCallback(async (draftText: string): Promise<boolean> => {
     const trimmed = draftText.trim();
@@ -4033,6 +4175,11 @@ export default function WorkSession() {
       } else {
         sessionStorage.removeItem("ew-wrap-presentation-minutes");
       }
+      if (resolvedTypeIds.includes("talk")) {
+        sessionStorage.setItem("ew-wrap-talk-duration", String(talkDuration));
+      } else {
+        sessionStorage.removeItem("ew-wrap-talk-duration");
+      }
       const adaptedContent = buildWrapSeededContentFromFormatDrafts(formats, formatDrafts);
       if (Object.keys(adaptedContent).length > 0) {
         sessionStorage.setItem("ew-wrap-formats", JSON.stringify(adaptedContent));
@@ -4050,7 +4197,7 @@ export default function WorkSession() {
     }
 
     nav("/studio/wrap");
-  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins, projectId, methodDnaMd, ensureMethodDnaLint]);
+  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins, talkDuration, projectId, methodDnaMd, ensureMethodDnaLint]);
 
   const handleStartWrapFromGate = useCallback(() => {
     if (preWrapPickIds.length === 0) return;
@@ -4182,6 +4329,10 @@ export default function WorkSession() {
     setSelectedAngle("a");
     setPreWrapPickIds([]);
     setPreWrapPresentationMins(DEFAULT_PRESENTATION_MINUTES);
+    setTalkDuration(DEFAULT_PRESENTATION_MINUTES);
+    setTalkLengthDraftInput(String(DEFAULT_PRESENTATION_MINUTES));
+    setTalkLengthGatePassed(true);
+    setTalkLengthModalOpen(false);
     setSessionNameOverride(null);
   }, [user?.id]);
 
@@ -4243,17 +4394,21 @@ export default function WorkSession() {
   const handleReviewFix = useCallback(async (instruction: string) => {
     if (!draft) throw new Error("No draft to fix");
 
+    const fixOt =
+      outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
+
     try {
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversationSummary: buildConvSummary(),
-          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: fixOt,
           originalDraft: draft,
           revisionNotes: `Apply this specific improvement to the draft. Keep everything else the same. Only change what is necessary to address this note: ${instruction}`,
           userId: user?.id,
           maxTokens: 4096,
+          ...(fixOt === "talk" ? { talkDurationMinutes: talkDuration } : {}),
           ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
@@ -4284,7 +4439,8 @@ export default function WorkSession() {
           const sourceOt =
             outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "freestyle";
           const presMins = outputType === "presentation" ? preWrapPresentationMins : null;
-          const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins);
+          const talkMins = outputType === "talk" ? talkDuration : null;
+          const wrapConstraintSupplement = buildWrapConstraintSupplement(sourceOt, apiFormat, presMins, talkMins);
           const adaptRes = await fetchWithRetry(`${API_BASE}/api/adapt-format`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -4318,7 +4474,7 @@ export default function WorkSession() {
       toast("Fix failed. Try again.", "error");
       throw err;
     }
-  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast, preWrapPresentationMins, structuredIntakePayload]);
+  }, [draft, buildConvSummary, outputType, selectedFormats, user?.id, voiceDnaMd, brandDnaMd, activeReviewTab, toast, preWrapPresentationMins, talkDuration, structuredIntakePayload]);
 
   // ── REVIEW: Instant text replacement (Grammarly-style accept) ──
   const handleDirectReplace = useCallback((original: string, replacement: string) => {
@@ -4422,16 +4578,19 @@ export default function WorkSession() {
       }
 
       // Revise the draft
+      const repairOt =
+        outputType || (selectedFormats[0] ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] : null) || "essay";
       const res = await fetchWithRetry(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversationSummary: buildConvSummary(),
-          outputType: outputType || FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "essay",
+          outputType: repairOt,
           originalDraft: draft,
           revisionNotes: `Fix these quality checkpoint issues while preserving the voice and argument:\n\n${issues}`,
           userId: user.id,
           maxTokens: 4096,
+          ...(repairOt === "talk" ? { talkDurationMinutes: talkDuration } : {}),
           ...(structuredIntakePayload ? { structuredIntake: structuredIntakePayload } : {}),
         }),
       }, { timeout: 90000 });
@@ -4548,7 +4707,7 @@ export default function WorkSession() {
     } finally {
       setFixingGate(null);
     }
-  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd, outputId, structuredIntakePayload]);
+  }, [draft, user, pipelineRun, buildConvSummary, outputType, selectedFormats, talkDuration, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd, outputId, structuredIntakePayload]);
 
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
@@ -4560,7 +4719,9 @@ export default function WorkSession() {
           return <OutlineDash selectedFormats={selectedFormats} />;
         case "Edit": {
           const wordCount = (draft || "").split(/\s+/).filter(Boolean).length;
-          const targetWords = WORD_TARGETS[outputType || "freestyle"] || 700;
+          const targetWords = outputType === "talk"
+            ? talkTargetWords(talkDuration)
+            : (WORD_TARGETS[outputType || "freestyle"] || 700);
           const flagCounts = countDraftFlags(draft, dismissedFlags, fixedFlags);
           const hasDraftText = (draft || "").trim().length > 0;
 
@@ -4709,7 +4870,7 @@ export default function WorkSession() {
   }, [
     stage, selectedFormats, selectedTemplate, draft, generating, generatingLabel,
     pipelineRun, pipelineRunning, allExported, outputId,
-    hvtAttempts, handleRerunHVT, hvtRunning, outputType,
+    hvtAttempts, handleRerunHVT, hvtRunning, outputType, talkDuration,
     handleRepairPipeline, fixingGate, handleRerunPipeline, rerunningPipeline,
     prefillReed, activeReviewTab, handleReviewFix, handleExportAll,
     dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
@@ -4872,20 +5033,100 @@ export default function WorkSession() {
         />
       )}
       {stage === "Outline" && (
-        <StageOutline
-          outlineRows={outlineRows}
-          onUpdateRow={(i, v) => setOutlineRows(rows => rows.map((r, idx) => idx === i ? { ...r, content: v } : r))}
-          onAdvance={handleGenerateDraft}
-          building={buildingOutline}
-          angles={outlineAngles}
-          currentAngle={selectedAngle}
-          onSelectAngle={(angle) => {
-            setSelectedAngle(angle);
-            if (outlineAngles) {
-              setOutlineRows(angle === "a" ? [...outlineAngles.a] : [...outlineAngles.b]);
-            }
-          }}
-        />
+        <>
+          <StageOutline
+            outlineRows={outlineRows}
+            onUpdateRow={(i, v) => setOutlineRows(rows => rows.map((r, idx) => idx === i ? { ...r, content: v } : r))}
+            onAdvance={handleGenerateDraft}
+            building={buildingOutline}
+            angles={outlineAngles}
+            currentAngle={selectedAngle}
+            onSelectAngle={(angle) => {
+              setSelectedAngle(angle);
+              if (outlineAngles) {
+                setOutlineRows(angle === "a" ? [...outlineAngles.a] : [...outlineAngles.b]);
+              }
+            }}
+            catalogOutputTypeId={outputType}
+            onCatalogOutputTypeChange={handleCatalogOutputTypeChange}
+          />
+          {talkLengthModalOpen && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="talk-length-modal-title"
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 200,
+                background: "rgba(12,26,41,0.55)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 20,
+                fontFamily: FONT,
+              }}
+            >
+              <div style={{
+                width: "min(400px, 100%)",
+                borderRadius: 14,
+                padding: "22px 22px 18px",
+                background: "var(--surface, #fff)",
+                border: "1px solid var(--glass-border)",
+                boxShadow: "0 24px 48px rgba(0,0,0,0.18)",
+              }}>
+                <h2
+                  id="talk-length-modal-title"
+                  style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "var(--fg)" }}
+                >
+                  Talk length
+                </h2>
+                <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
+                  How many minutes should this talk run? Wrap will target about {300} words per minute.
+                </p>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--fg-2)", marginBottom: 8 }}>
+                  Duration (minutes)
+                </label>
+                <input
+                  type="number"
+                  min={3}
+                  max={180}
+                  step={1}
+                  value={talkLengthDraftInput}
+                  onChange={e => setTalkLengthDraftInput(e.target.value)}
+                  style={{
+                    width: "100%",
+                    maxWidth: 120,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid var(--glass-border)",
+                    fontSize: 15,
+                    marginBottom: 18,
+                    fontFamily: FONT,
+                  }}
+                />
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                  <button
+                    type="button"
+                    className="liquid-glass-btn"
+                    onClick={() => setTalkLengthModalOpen(false)}
+                    style={{ padding: "8px 16px", fontSize: 12 }}
+                  >
+                    <span className="liquid-glass-btn-label">Cancel</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="liquid-glass-btn-gold"
+                    onClick={confirmTalkLengthAndGenerate}
+                    style={{ padding: "8px 16px", fontSize: 12 }}
+                  >
+                    <span className="liquid-glass-btn-gold-label">Continue</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
       {stage === "Edit" && (
         <StageEdit
@@ -4919,6 +5160,8 @@ export default function WorkSession() {
             onStartWrap={handleStartWrapFromGate}
             presentationMinutes={preWrapPresentationMins}
             onPresentationMinutesChange={setPreWrapPresentationMins}
+            talkDuration={talkDuration}
+            onTalkDurationChange={setTalkDuration}
           />
         ) : (
           <StageReview

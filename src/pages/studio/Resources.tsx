@@ -425,8 +425,8 @@ export default function Resources() {
         ) : resources.length === 0 ? (
           <div className="liquid-glass-card" style={{ padding: "32px 20px", textAlign: "center" as const, marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fg)", marginBottom: 6 }}>No project files yet</div>
-            <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.6 }}>
-              Upload reference files, brand guides, or any documents Reed should know about.
+            <div style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.65 }}>
+              Uploads here become reference material for Reed and for draft generation. We store extracted text from your file (PDF, Word, and similar formats) on your account. They do not replace or retrain Voice DNA or Brand DNA. Update Voice or Brand under Settings, or from onboarding.
             </div>
           </div>
         ) : (
@@ -453,11 +453,15 @@ export default function Resources() {
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          <p style={{ fontSize: 11, color: "var(--fg-3)" }}>
+          <p style={{ fontSize: 11, color: "var(--fg-3)", lineHeight: 1.65, maxWidth: 520, margin: "0 auto" }}>
             {uploading
               ? "Uploading..."
-              : <><span style={{ color: "var(--blue)", fontWeight: 600 }}>Upload a file</span>: reference files, brand guides, or any documents Reed should know about</>
-            }
+              : (
+                <>
+                  <span style={{ color: "var(--blue)", fontWeight: 600 }}>Upload a file</span>
+                  {" "}to add background Reed can use in Work chat, outlines, and drafts. Stored as reference text, not as a new Voice or Brand DNA profile.
+                </>
+              )}
           </p>
         </div>
 

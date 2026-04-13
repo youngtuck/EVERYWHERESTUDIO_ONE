@@ -2,7 +2,7 @@
  * OutputTypePicker: Category/Type selector for Work sessions.
  *
  * Four categories:
- *   Content: Essay, Podcast, Video Script, Email (4)
+ *   Content: Essay, Talk, Podcast, Video Script, Email (5)
  *   Business: Presentation, Proposal, One-Pager, Report, Executive Summary,
  *             Case Study, Statement of Work, Meeting Agenda/Recap,
  *             Bio/Speaker Profile, White Paper, Session Brief (11)
@@ -24,8 +24,9 @@ export interface OutputTypeOption {
 }
 
 export const OUTPUT_TYPES: OutputTypeOption[] = [
-  // Content (4)
+  // Content (5)
   { id: "essay", label: "Essay", category: "Content" },
+  { id: "talk", label: "Talk", category: "Content" },
   { id: "podcast", label: "Podcast", category: "Content" },
   { id: "video_script", label: "Video Script", category: "Content" },
   { id: "email", label: "Email", category: "Content" },

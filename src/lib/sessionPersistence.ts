@@ -18,6 +18,8 @@ export interface PersistedSession {
   outputType: string;
   /** OUTPUT_TYPES id when set (e.g. essay, linkedin_post). */
   outputTypeId?: string | null;
+  /** Minutes of spoken talk when outputTypeId is talk (Wrap and draft targets use minutes × 300 words). */
+  talkDuration?: number | null;
   sessionTitle: string;
   /** User-chosen thread name. When null or empty on save, title is derived from outline or intake. */
   sessionNameOverride?: string | null;

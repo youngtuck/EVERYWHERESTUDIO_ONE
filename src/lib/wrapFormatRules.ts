@@ -13,8 +13,14 @@ export function presentationTargetWords(minutes: number | null | undefined): num
   return m * WORDS_PER_PRESENTATION_MINUTE;
 }
 
+/** Same pacing rule as presentation: 300 words per minute of spoken time. */
+export function talkTargetWords(minutes: number | null | undefined): number {
+  return presentationTargetWords(minutes);
+}
+
 const OUTPUT_LABELS: Record<string, string> = {
   essay: "Essay",
+  talk: "Talk",
   social_media: "Social / LinkedIn-style",
   newsletter: "Newsletter",
   podcast: "Podcast",
@@ -34,11 +40,19 @@ export function outputTypeDisplayLabel(id: string): string {
 /**
  * Short bullets for Wrap UI (no em-dashes).
  */
-export function getWrapRuleSummaryLines(outputTypeId: string, presentationMinutes: number | null | undefined): string[] {
+export function getWrapRuleSummaryLines(
+  outputTypeId: string,
+  presentationMinutes: number | null | undefined,
+  talkDurationMinutes?: number | null | undefined,
+): string[] {
   const pm = typeof presentationMinutes === "number" && presentationMinutes > 0
     ? Math.round(presentationMinutes)
     : DEFAULT_PRESENTATION_MINUTES;
   const pw = presentationTargetWords(presentationMinutes);
+  const tm = typeof talkDurationMinutes === "number" && talkDurationMinutes > 0
+    ? Math.round(talkDurationMinutes)
+    : DEFAULT_PRESENTATION_MINUTES;
+  const tw = talkTargetWords(talkDurationMinutes);
 
   switch (outputTypeId) {
     case "social_media":
@@ -62,6 +76,11 @@ export function getWrapRuleSummaryLines(outputTypeId: string, presentationMinute
     case "presentation":
       return [
         `Talk / Presentation: target length about ${pw} words (${pm} min × ${WORDS_PER_PRESENTATION_MINUTE} words/min).`,
+      ];
+    case "talk":
+      return [
+        `Talk: target length about ${tw} words (${tm} min × ${WORDS_PER_PRESENTATION_MINUTE} words/min).`,
+        "Spoken script: short paragraphs, no ## subheads, inline [pause] and [beat] only, no footnotes, no academic structure.",
       ];
     case "email":
       return [
@@ -119,11 +138,16 @@ export function buildWrapConstraintSupplement(
   outputTypeId: string,
   channelFormat: string,
   presentationMinutes: number | null | undefined,
+  talkDurationMinutes?: number | null | undefined,
 ): string {
   const pm = typeof presentationMinutes === "number" && presentationMinutes > 0
     ? Math.min(180, Math.max(3, Math.round(presentationMinutes)))
     : DEFAULT_PRESENTATION_MINUTES;
   const presWords = pm * WORDS_PER_PRESENTATION_MINUTE;
+  const tdm = typeof talkDurationMinutes === "number" && talkDurationMinutes > 0
+    ? Math.min(180, Math.max(3, Math.round(talkDurationMinutes)))
+    : DEFAULT_PRESENTATION_MINUTES;
+  const talkWords = tdm * WORDS_PER_PRESENTATION_MINUTE;
   const lines: string[] = [];
   const ot = normalizeWorkSourceTypeId(outputTypeId);
 
@@ -170,6 +194,12 @@ export function buildWrapConstraintSupplement(
     if (channelFormat === "Executive Brief") {
       lines.push("Map slide beats to brief sections where helpful.");
     }
+  }
+
+  if (ot === "talk") {
+    lines.push(`Talk profile (spoken keynote or script, not an essay): target about ${talkWords} words for this session (${tdm} minutes at ${WORDS_PER_PRESENTATION_MINUTE} words per minute), unless the channel template forces a shorter cap.`);
+    lines.push("Structure: short paragraphs only. No markdown ## subheads, no numbered academic sections, no footnotes or citations block. Use natural spoken transitions. Mark rhythm with inline [pause] or [beat] only (lowercase inside brackets as shown). No table of contents.");
+    lines.push("Tone: one voice addressing an audience out loud. If the channel is long-form markdown, still avoid essay subheads; use blank-line breaks between beats instead.");
   }
 
   if (ot === "email" && (channelFormat === "Email" || channelFormat === "Newsletter")) {

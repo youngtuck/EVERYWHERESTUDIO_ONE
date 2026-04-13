@@ -40,6 +40,12 @@ export default async function handler(req, res) {
     edits = null,
   } = req.body;
 
+  const rawTalkMins = req.body?.talkDurationMinutes;
+  const talkDurationMinutes =
+    typeof rawTalkMins === "number" && Number.isFinite(rawTalkMins)
+      ? Math.min(180, Math.max(3, Math.round(rawTalkMins)))
+      : null;
+
   /** WorkSession sends Reed-locked checklist; read in system prompt below. */
   const structuredIntake = req.body?.structuredIntake;
 
@@ -171,6 +177,15 @@ Do not use markdown formatting in the output. No asterisks for bold. No hashtags
       system += `\n\nCORE THESIS (this is the one thing the piece argues): ${thesis}\n`;
     }
 
+    if (outputType === "talk" && outline && Array.isArray(outline) && outline.length > 0) {
+      const m = talkDurationMinutes ?? 15;
+      const targetWords = m * 300;
+      system += `
+
+OUTPUT TYPE: talk (spoken script, not an essay). Aim near ${targetWords} words for roughly ${m} minutes at about 300 spoken words per minute, within the token limit you have.
+TALK STRUCTURE: Short paragraphs. No ## headings or subheads. No footnotes, citations block, or academic section labels. Natural spoken transitions for the ear. Use inline [pause] or [beat] where a speaker would breathe or land emphasis (exactly those bracket labels, lowercase inside the brackets). Plain text only; first line is the title, no markdown.`;
+    }
+
     // Build the user message based on mode: outline-based, revision, or standard
     let userContent;
     if (revisionNotes || originalDraft) {
@@ -186,7 +201,7 @@ ABSOLUTE RULES:
 6. If the revision notes say "fix repetition," CUT the redundant sections. Don't rephrase them.
 7. If the revision notes say "source claims," either add a credible source or soften the claim to "some research suggests" or remove it. Do NOT invent sources.
 8. NEVER add consulting language, sales copy, or strategic frameworks unless they existed in the original.
-9. PRESERVE ALL FORMATTING. If the original uses markdown headings (##), bold (**text**), or other formatting, the revision must maintain identical formatting. Do not strip headings, subheads, or structural markers.
+9. PRESERVE ALL FORMATTING. If the original uses markdown headings (##), bold (**text**), or other formatting, the revision must maintain identical formatting. Do not strip headings, subheads, or structural markers, unless the piece is a spoken talk script (outputType talk): then keep plain paragraphs and inline [pause] or [beat] markers only, never add ## headings.
 
 YOUR JOB: Make the minimum changes necessary to address the specific feedback. A good revision is one where a reader can barely tell what changed, but the flagged issues are gone.
 
@@ -204,6 +219,11 @@ Output ONLY the complete revised draft. No commentary, no explanation.`;
       }
       if (resources.brandDna) {
         system += "\n\nBRAND DNA:\n" + clipDna(resources.brandDna, G.brand);
+      }
+
+      if (outputType === "talk") {
+        const m = talkDurationMinutes ?? 15;
+        system += `\n\nSPOKEN TALK SCRIPT: keep short paragraphs, inline [pause] and [beat] markers, no ## headings, no footnotes. If length must shift, stay near ${m * 300} words for about ${m} minutes spoken unless revision notes say otherwise.`;
       }
 
       let revisionParts = [`ORIGINAL DRAFT:\n${originalDraft.slice(0, 8000)}`];

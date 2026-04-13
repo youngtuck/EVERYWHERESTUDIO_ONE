@@ -1,6 +1,8 @@
 /**
- * Side-profile mark for Reed (conversation UI). Line silhouette suggesting someone speaking, not an emoji.
+ * Side-profile mark for Reed (conversation UI). Right-facing head silhouette, stroke only.
  */
+const STROKE = "rgba(74, 144, 217, 0.68)";
+
 export function ReedProfileIcon({ size = 22, title }: { size?: number; title?: string }) {
   return (
     <svg
@@ -13,27 +15,23 @@ export function ReedProfileIcon({ size = 22, title }: { size?: number; title?: s
       aria-hidden={title ? undefined : true}
     >
       {title ? <title>{title}</title> : null}
-      {/* Facing right: crown, nose, slightly open mouth, chin, neck (stroke-only silhouette) */}
+      {/* Nape → back of head → crown → forehead → nose tip → upper lip → chin → jaw → nape */}
       <path
-        d="M10.2 3.25c2.35-.45 4.55.85 5.45 3.05.28.68.32 1.38.14 2.02.92.42 1.58 1.22 1.78 2.22.28 1.45-.32 2.85-1.48 3.55.08.95-.22 1.85-.82 2.48-.62.65-1.48.98-2.38.92l-4.85-.95c-1.35-.26-2.28-1.35-2.52-2.72l-.35-6.1c.22-2.05 1.62-3.72 3.53-4.47z"
+        d="M 8.45 19.4
+           C 7.05 18.85 6.1 17.45 5.9 15.85
+           C 5.65 13.75 6.35 11.65 7.85 10.1
+           C 9.55 8.35 12.1 7.45 14.65 7.55
+           C 16.9 7.7 18.75 9.15 19.35 11.25
+           C 19.85 12.95 19.75 13.85 19.05 14.85
+           C 19.55 15.35 19.85 16.15 19.45 16.95
+           C 18.95 17.85 17.75 18.05 16.85 17.55
+           C 15.1 18.85 12.85 19.55 10.5 19.5
+           C 9.55 19.48 8.85 19.25 8.45 19.4 Z"
         fill="none"
-        stroke="rgba(74, 144, 217, 0.62)"
-        strokeWidth="1.12"
+        stroke={STROKE}
+        strokeWidth="1.2"
+        strokeLinecap="round"
         strokeLinejoin="round"
-      />
-      <path
-        d="M15.35 11.15c.55.18 1.05.62 1.22 1.18"
-        stroke="rgba(74, 144, 217, 0.58)"
-        strokeWidth="1"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d="M14.05 12.35q.65.52.35 1.05"
-        stroke="rgba(74, 144, 217, 0.52)"
-        strokeWidth="0.9"
-        strokeLinecap="round"
-        fill="none"
       />
     </svg>
   );
