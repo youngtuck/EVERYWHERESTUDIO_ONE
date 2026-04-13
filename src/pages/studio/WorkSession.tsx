@@ -1232,15 +1232,14 @@ function StageIntake({
   if (!hasUserMessage && !sending) {
     return (
       <div style={{
-        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden",
-        background: "transparent", alignItems: "center", justifyContent: "center",
+        display: "flex", flexDirection: "column", flex: 1, minHeight: 0, height: "100%",
+        overflow: "hidden", background: "transparent", alignItems: "center", justifyContent: "center",
       }}>
         <div
-          className="work-stage-content-column"
           style={{
             display: "flex", flexDirection: "column", alignItems: "center",
             minWidth: 0, padding: "0 clamp(12px, 4vw, 24px)",
-            marginBottom: 40,
+            width: "100%", maxWidth: "clamp(400px, 60vw, 780px)",
           }}
         >
           {/* Greeting */}
@@ -1299,16 +1298,10 @@ function StageIntake({
       <div
         className="work-stage-content-column"
         style={{
-          flex: "1 1 0%",
-          minHeight: 0,
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          overflow: "hidden",
-          width: "100%",
           alignSelf: "stretch",
-          maxWidth: 680,
-          margin: "0 auto",
         }}
       >
         {/* Messages: bounded flex child so overflow-y scrolls instead of growing the stage. */}
@@ -1387,41 +1380,43 @@ function StageIntake({
           </div>
         )}
 
-        {/* Intake progress bar */}
-        <div style={{
-          padding: "8px clamp(12px, 4vw, 24px) 8px",
-          background: "transparent",
-          borderTop: "1px solid rgba(0,0,0,0.06)",
-          flexShrink: 0,
-        }}>
-          <div style={{ width: "100%", height: 4, background: "var(--glass-border)", borderRadius: 2, overflow: "hidden" }}>
-            <div style={{
-              height: "100%", width: `${Math.round(progress * 100)}%`,
-              background: "var(--gold-bright, #F5C642)", borderRadius: 2,
-              transition: "width 0.3s ease",
-            }} />
+        {/* Intake progress bar (only when composer is NOT docked; docked shell renders its own) */}
+        {!useDockedComposer && (
+          <div style={{
+            padding: "8px clamp(12px, 4vw, 24px) 8px",
+            background: "transparent",
+            borderTop: "1px solid rgba(0,0,0,0.06)",
+            flexShrink: 0,
+          }}>
+            <div style={{ width: "100%", height: 4, background: "var(--glass-border)", borderRadius: 2, overflow: "hidden" }}>
+              <div style={{
+                height: "100%", width: `${Math.round(progress * 100)}%`,
+                background: "var(--gold-bright, #F5C642)", borderRadius: 2,
+                transition: "width 0.3s ease",
+              }} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+              <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
+                {reedQuestionCount >= totalQuestions
+                  ? `${totalQuestions} of ${totalQuestions} questions answered`
+                  : `Question ${Math.min(reedQuestionCount, totalQuestions)} of ${totalQuestions}`}
+              </span>
+              {showJustWriteEscape ? (
+                <button
+                  type="button"
+                  onClick={onAdvance}
+                  style={{
+                    fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
+                    border: "none", cursor: "pointer", padding: "4px 2px", fontFamily: FONT,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  Just write it →
+                </button>
+              ) : null}
+            </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-            <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
-              {reedQuestionCount >= totalQuestions
-                ? `${totalQuestions} of ${totalQuestions} questions answered`
-                : `Question ${Math.min(reedQuestionCount, totalQuestions)} of ${totalQuestions}`}
-            </span>
-            {showJustWriteEscape ? (
-              <button
-                type="button"
-                onClick={onAdvance}
-                style={{
-                  fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
-                  border: "none", cursor: "pointer", padding: "4px 2px", fontFamily: FONT,
-                  letterSpacing: "0.01em",
-                }}
-              >
-                Just write it →
-              </button>
-            ) : null}
-          </div>
-        </div>
+        )}
 
         {!useDockedComposer ? (
           <div style={{ ...INTAKE_DOCKED_COMPOSER_WRAP }}>
@@ -5775,6 +5770,10 @@ export default function WorkSession() {
   // ─────────────────────────────────────────────────────────────
 
   const hasUserMessage = messages.some(m => m.role === "user");
+  const intakeReedQCount = messages.filter(m => m.role === "reed" && m.content.trim().endsWith("?")).length;
+  const intakeTotalQ = 5;
+  const intakeProgressValue = Math.min(intakeReedQCount / intakeTotalQ, 1);
+  const intakeShowJustWrite = intakeReedQCount < 3 && !(intakeReady || intakeReedQCount >= intakeTotalQ);
   const dockIntakeOutlineShell = (stage === "Intake" && hasUserMessage) || stage === "Outline";
   const showOutlineBridgeLoading = stage === "Outline" && buildingOutline && ioTransitionStep === 2;
   const showOutlineMain = stage === "Outline" && !(buildingOutline && ioTransitionStep === 2);
@@ -6072,38 +6071,72 @@ export default function WorkSession() {
           </div>
           <div style={INTAKE_DOCKED_COMPOSER_WRAP}>
             {stage === "Intake" && (
-              <ChatInputBar
-                placeholder="What's on your mind?"
-                value={intakeBarInput}
-                onChange={setIntakeBarInput}
-                onSend={handleIntakeBarSend}
-                disabled={intakeSending}
-                autoFocus
-                pendingFiles={intakeBarPendingFiles}
-                onAddPendingFiles={files => {
-                  setIntakeBarPendingFiles(prev => [...prev, ...Array.from(files)]);
-                }}
-                onRemovePendingFile={idx => {
-                  setIntakeBarPendingFiles(prev => prev.filter((_, i) => i !== idx));
-                }}
-              />
+              <div style={{ width: "100%", maxWidth: "clamp(400px, 60vw, 780px)", margin: "0 auto" }}>
+                {/* Progress bar: same width as composer, directly above it */}
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ width: "100%", height: 4, background: "var(--glass-border)", borderRadius: 2, overflow: "hidden" }}>
+                    <div style={{
+                      height: "100%", width: `${Math.round(intakeProgressValue * 100)}%`,
+                      background: "var(--gold-bright, #F5C642)", borderRadius: 2,
+                      transition: "width 0.3s ease",
+                    }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+                    <span style={{ fontSize: 10, color: "var(--fg-3)", fontWeight: 500, letterSpacing: "0.04em" }}>
+                      {intakeReedQCount >= intakeTotalQ
+                        ? `${intakeTotalQ} of ${intakeTotalQ} questions answered`
+                        : `Question ${Math.min(intakeReedQCount, intakeTotalQ)} of ${intakeTotalQ}`}
+                    </span>
+                    {intakeShowJustWrite ? (
+                      <button
+                        type="button"
+                        onClick={handleBuildOutline}
+                        style={{
+                          fontSize: 10, color: "var(--blue, #4A90D9)", background: "none",
+                          border: "none", cursor: "pointer", padding: "4px 2px", fontFamily: FONT,
+                          letterSpacing: "0.01em",
+                        }}
+                      >
+                        Just write it →
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                <ChatInputBar
+                  placeholder="What's on your mind?"
+                  value={intakeBarInput}
+                  onChange={setIntakeBarInput}
+                  onSend={handleIntakeBarSend}
+                  disabled={intakeSending}
+                  autoFocus
+                  pendingFiles={intakeBarPendingFiles}
+                  onAddPendingFiles={files => {
+                    setIntakeBarPendingFiles(prev => [...prev, ...Array.from(files)]);
+                  }}
+                  onRemovePendingFile={idx => {
+                    setIntakeBarPendingFiles(prev => prev.filter((_, i) => i !== idx));
+                  }}
+                />
+              </div>
             )}
             {stage === "Outline" && (
-              <ChatInputBar
-                placeholder="Ask Reed to restructure, or click a section label to compare angles..."
-                value={outlineBarInput}
-                onChange={setOutlineBarInput}
-                onSend={handleOutlineBarSend}
-                disabled={false}
-                autoFocus={false}
-                pendingFiles={outlineBarPendingFiles}
-                onAddPendingFiles={files => {
-                  setOutlineBarPendingFiles(prev => [...prev, ...Array.from(files)]);
-                }}
-                onRemovePendingFile={idx => {
-                  setOutlineBarPendingFiles(prev => prev.filter((_, i) => i !== idx));
-                }}
-              />
+              <div style={{ width: "100%", maxWidth: "clamp(400px, 60vw, 780px)", margin: "0 auto" }}>
+                <ChatInputBar
+                  placeholder="Ask Reed to restructure, or click a section label to compare angles..."
+                  value={outlineBarInput}
+                  onChange={setOutlineBarInput}
+                  onSend={handleOutlineBarSend}
+                  disabled={false}
+                  autoFocus={false}
+                  pendingFiles={outlineBarPendingFiles}
+                  onAddPendingFiles={files => {
+                    setOutlineBarPendingFiles(prev => [...prev, ...Array.from(files)]);
+                  }}
+                  onRemovePendingFile={idx => {
+                    setOutlineBarPendingFiles(prev => prev.filter((_, i) => i !== idx));
+                  }}
+                />
+              </div>
             )}
           </div>
         </div>
