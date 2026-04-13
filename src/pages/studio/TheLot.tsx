@@ -32,6 +32,8 @@ interface PipelineItem {
   action: string;
   outputId?: string;
   progressKind?: ProgressKind;
+  /** When progressKind is work_session, row key for Supabase work_sessions.project_key */
+  workSessionProjectKey?: string;
 }
 
 const STATIC_SIGNALS: PipelineItem[] = [];
@@ -148,8 +150,10 @@ export default function TheLot() {
       const [wsRes, outRes, parkedRes] = await Promise.all([
         supabase
           .from("work_sessions")
-          .select("session_title, work_stage, updated_at, payload")
+          .select("session_title, work_stage, stage, updated_at, payload, project_key")
           .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
           .maybeSingle(),
         supabase
           .from("outputs")
@@ -181,10 +185,11 @@ export default function TheLot() {
       }
 
       if (hasWsContent && ws) {
-        const stage = (ws.work_stage || "Intake") as string;
+        const stage = ((ws as { stage?: string }).stage || ws.work_stage || "Intake") as string;
         const title = (ws.session_title || "").trim() || "Work in progress";
+        const pk = String((ws as { project_key?: string }).project_key || "default");
         progressList.push({
-          id: `progress:ws:${user.id}`,
+          id: `progress:ws:${user.id}:${pk}`,
           type: "progress",
           title: title.slice(0, 60),
           meta: `${stage} · ${timeAgo(ws.updated_at)}`,
@@ -192,6 +197,7 @@ export default function TheLot() {
           detail: "Continue in Work at the stage you left off.",
           action: "Continue",
           progressKind: "work_session",
+          workSessionProjectKey: pk,
         });
       }
 
@@ -265,7 +271,8 @@ export default function TheLot() {
     if (selectedItem.type === "progress") {
       const k = selectedItem.progressKind;
       if (k === "work_session") {
-        nav("/studio/work?resume=work_session");
+        const pk = selectedItem.workSessionProjectKey || "default";
+        nav(`/studio/work?resume=work_session&projectKey=${encodeURIComponent(pk)}`);
         return;
       }
       if (k === "local") {
@@ -302,7 +309,8 @@ export default function TheLot() {
         await supabase.from("outputs").delete().eq("id", selectedItem.outputId).eq("user_id", user.id);
         setInProgressItems(prev => prev.filter(i => i.id !== selectedItem.id));
       } else if (k === "work_session" && user) {
-        await supabase.from("work_sessions").delete().eq("user_id", user.id);
+        const pk = selectedItem.workSessionProjectKey || "default";
+        await supabase.from("work_sessions").delete().eq("user_id", user.id).eq("project_key", pk);
         clearSession();
         setInProgressItems(prev => prev.filter(i => i.id !== selectedItem.id));
       } else if (k === "local") {

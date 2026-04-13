@@ -1,8 +1,11 @@
 import { supabase } from "./supabase";
 import type { StructuredIntake } from "./reedStructuredIntake";
 
-/** sessionStorage key for the active Work session payload (see `PersistedSession`). */
+/** sessionStorage mirror key for quick reads (sidebar guard, offline hint). Cloud is source of truth when signed in. */
 export const SESSION_KEY = "ew-active-work-session";
+
+export const WORK_SESSION_CLOUD_DEBOUNCE_MS = 2000;
+export const WORK_SESSION_RESTORE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 /** Persisted Work stage (matches WorkSession.tsx WorkStage). */
 export type PersistedWorkStage = "Intake" | "Outline" | "Edit" | "Review";
@@ -36,7 +39,26 @@ export interface PersistedSession {
   selectedFormats?: string[];
   /** Reed-locked Thesis / Audience / Goal / Hook / Format; synced to work_sessions.payload. */
   structuredIntake?: StructuredIntake | null;
+  /** Studio project key for Supabase row (matches work_sessions.project_key). */
+  projectKey?: string;
 }
+
+export type WorkSessionDbRow = {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  project_key: string;
+  session_title: string;
+  work_stage: string;
+  stage: string;
+  output_type: string | null;
+  messages: unknown;
+  outline_rows: unknown;
+  draft: string;
+  payload: unknown;
+  updated_at: string;
+  created_at: string;
+};
 
 export function getWorkStageFromPersisted(state: PersistedSession): PersistedWorkStage {
   if (state.workStage === "Intake" || state.workStage === "Outline" || state.workStage === "Edit" || state.workStage === "Review") {
@@ -46,20 +68,103 @@ export function getWorkStageFromPersisted(state: PersistedSession): PersistedWor
   return "Intake";
 }
 
-export async function syncWorkSessionToSupabase(userId: string, state: PersistedSession) {
+export function workProjectKeyFromShellId(activeProjectId: string | null | undefined): string {
+  if (!activeProjectId || activeProjectId === "default") return "default";
+  return activeProjectId;
+}
+
+export function studioProjectUuidForRow(activeProjectId: string | null | undefined): string | null {
+  if (!activeProjectId || activeProjectId === "default") return null;
+  return activeProjectId;
+}
+
+export function workSessionRowHasMeaningfulWork(row: WorkSessionDbRow): boolean {
+  const msgs = Array.isArray(row.messages) ? row.messages.length : 0;
+  if (msgs > 1) return true;
+  if ((row.draft || "").trim().length > 40) return true;
+  const orows = row.outline_rows;
+  if (Array.isArray(orows) && orows.length > 0) return true;
+  const p = row.payload as Partial<PersistedSession> | null;
+  if (p?.messages && Array.isArray(p.messages) && p.messages.length > 1) return true;
+  if (p?.generatedContent && String(p.generatedContent).trim().length > 40) return true;
+  if (p?.outlineRows && Array.isArray(p.outlineRows) && p.outlineRows.length > 0) return true;
+  return false;
+}
+
+/** Offer cloud restore when the row is recent, has content, and is newer than the local mirror (if any). */
+export function shouldOfferWorkSessionRestore(row: WorkSessionDbRow, localMirror: PersistedSession | null): boolean {
+  const updated = new Date(row.updated_at).getTime();
+  if (Number.isNaN(updated)) return false;
+  if (Date.now() - updated > WORK_SESSION_RESTORE_MAX_AGE_MS) return false;
+  if (!workSessionRowHasMeaningfulWork(row)) return false;
+  const localTs = localMirror?.timestamp ?? 0;
+  if (localTs >= updated) return false;
+  return true;
+}
+
+export function rowToPersistedSession(row: WorkSessionDbRow): PersistedSession {
+  const fromPayload = row.payload as PersistedSession | null;
+  if (fromPayload && typeof fromPayload === "object" && Array.isArray(fromPayload.messages)) {
+    return {
+      ...fromPayload,
+      timestamp: new Date(row.updated_at).getTime(),
+      projectKey: row.project_key,
+    };
+  }
+  const messages = (Array.isArray(row.messages) ? row.messages : []) as PersistedSession["messages"];
+  const outlineRows = (Array.isArray(row.outline_rows) ? row.outline_rows : []) as PersistedOutlineRow[];
+  const stage = (row.stage || row.work_stage || "Intake") as PersistedWorkStage;
+  return {
+    messages: messages.length
+      ? messages
+      : [{ id: "0", role: "assistant", content: "Good to see you. What are you working on?", ts: Date.now() }],
+    input: "",
+    outputType: "LinkedIn",
+    outputTypeId: row.output_type ?? null,
+    talkDuration: null,
+    sessionTitle: row.session_title || "",
+    sessionNameOverride: null,
+    phase: (row.draft || "").trim() ? "complete" : "input",
+    generatedContent: row.draft || "",
+    generatedScore: 0,
+    generatedOutputId: "",
+    generatedGates: null,
+    isReady: false,
+    timestamp: new Date(row.updated_at).getTime(),
+    workStage: stage,
+    outlineRows,
+    selectedFormats: undefined,
+    structuredIntake: null,
+    projectKey: row.project_key,
+  };
+}
+
+async function upsertWorkSessionRow(userId: string, projectKey: string, projectId: string | null, state: PersistedSession) {
   const workStage = getWorkStageFromPersisted(state);
   const title = (state.sessionTitle || "").trim() || "Untitled";
+  const messagesJson = state.messages.map(m => ({ id: m.id, role: m.role, content: m.content, ts: m.ts }));
+  const outlineJson = (state.outlineRows || []).map(r => ({ label: r.label, content: r.content, indent: r.indent }));
+  const draftText = state.generatedContent || "";
+  const outputTypeCol = state.outputTypeId ?? state.outputType ?? null;
+  const payload = { ...state, projectKey } as unknown as Record<string, unknown>;
+
   try {
     const { error } = await supabase.from("work_sessions").upsert(
       {
         user_id: userId,
+        project_key: projectKey,
+        project_id: projectId,
         session_title: title.slice(0, 200),
         work_stage: workStage,
-        output_type: state.outputType || null,
-        payload: state as unknown as Record<string, unknown>,
+        stage: workStage,
+        output_type: outputTypeCol,
+        messages: messagesJson,
+        outline_rows: outlineJson,
+        draft: draftText,
+        payload,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id" },
+      { onConflict: "user_id,project_key" },
     );
     if (error) console.error("[work_sessions] upsert", error.message);
   } catch (e) {
@@ -67,26 +172,53 @@ export async function syncWorkSessionToSupabase(userId: string, state: Persisted
   }
 }
 
-export async function deleteRemoteWorkSession(userId: string) {
+export async function flushWorkSessionToSupabase(
+  userId: string,
+  projectKey: string,
+  projectId: string | null,
+  state: PersistedSession,
+) {
+  await upsertWorkSessionRow(userId, projectKey, projectId, state);
+}
+
+export async function fetchWorkSessionRow(userId: string, projectKey: string): Promise<WorkSessionDbRow | null> {
+  const { data, error } = await supabase
+    .from("work_sessions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("project_key", projectKey)
+    .maybeSingle();
+  if (error) {
+    console.error("[work_sessions] fetch", error.message);
+    return null;
+  }
+  return data as WorkSessionDbRow | null;
+}
+
+export async function deleteRemoteWorkSession(userId: string, projectKey: string) {
   try {
-    const { error } = await supabase.from("work_sessions").delete().eq("user_id", userId);
+    const { error } = await supabase
+      .from("work_sessions")
+      .delete()
+      .eq("user_id", userId)
+      .eq("project_key", projectKey);
     if (error) console.error("[work_sessions] delete", error.message);
   } catch (e) {
     console.error("[work_sessions] delete", e);
   }
 }
 
-export function saveSession(state: PersistedSession, opts?: { userId?: string | null }) {
+export function saveSessionLocalMirror(state: PersistedSession) {
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
   } catch {
     /* ignore quota */
   }
+}
 
-  const userId = opts?.userId;
-  if (userId) {
-    void syncWorkSessionToSupabase(userId, state);
-  }
+/** Mirror only. Signed-in cloud sync uses debounced `flushWorkSessionToSupabase` from WorkSession. */
+export function saveSession(state: PersistedSession, _opts?: { userId?: string | null }) {
+  saveSessionLocalMirror(state);
 }
 
 export function loadSession(): PersistedSession | null {
@@ -94,10 +226,6 @@ export function loadSession(): PersistedSession | null {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedSession;
-    if (Date.now() - parsed.timestamp > 2 * 60 * 60 * 1000) {
-      sessionStorage.removeItem(SESSION_KEY);
-      return null;
-    }
     return parsed;
   } catch {
     return null;
@@ -108,26 +236,38 @@ export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
 }
 
-/** Dispatched when the user changes catalog output type without leaving the Work route (e.g. Studio sidebar overlay). */
 export const WORK_SESSION_OUTPUT_TYPE_ID_EVENT = "ew-work-session-output-type-id";
 
 export function hasPersistedWorkSession(): boolean {
   return loadSession() != null;
 }
 
-/** Updates `outputTypeId` in the persisted session and notifies WorkSession (if mounted). Returns false if no session. */
 export function patchPersistedSessionOutputTypeId(
   outputTypeId: string,
   opts?: { userId?: string | null },
 ): boolean {
   const p = loadSession();
   if (!p) return false;
+  const projectKey = p.projectKey ?? "default";
   const next: PersistedSession = {
     ...p,
     outputTypeId,
     timestamp: Date.now(),
+    projectKey,
   };
-  saveSession(next, opts);
+  saveSessionLocalMirror(next);
+  const uid = opts?.userId;
+  if (uid) {
+    void supabase
+      .from("work_sessions")
+      .update({
+        output_type: outputTypeId,
+        payload: next as unknown as Record<string, unknown>,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", uid)
+      .eq("project_key", projectKey);
+  }
   if (typeof window !== "undefined") {
     window.dispatchEvent(
       new CustomEvent(WORK_SESSION_OUTPUT_TYPE_ID_EVENT, { detail: { outputTypeId } }),

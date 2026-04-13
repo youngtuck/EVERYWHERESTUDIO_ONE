@@ -22,9 +22,21 @@ import { fetchWithRetry } from "../../lib/retry";
 import { useMobile } from "../../hooks/useMobile";
 import { useHoldToTranscribe } from "../../hooks/useHoldToTranscribe";
 import {
-  saveSession, loadSession, clearSession, deleteRemoteWorkSession, getWorkStageFromPersisted,
+  saveSessionLocalMirror,
+  loadSession,
+  clearSession,
+  deleteRemoteWorkSession,
+  flushWorkSessionToSupabase,
+  fetchWorkSessionRow,
+  shouldOfferWorkSessionRestore,
+  rowToPersistedSession,
+  workProjectKeyFromShellId,
+  studioProjectUuidForRow,
+  getWorkStageFromPersisted,
   WORK_SESSION_OUTPUT_TYPE_ID_EVENT,
+  WORK_SESSION_CLOUD_DEBOUNCE_MS,
   type PersistedSession,
+  type WorkSessionDbRow,
 } from "../../lib/sessionPersistence";
 import {
   mergeStoredAndParsed,
@@ -2938,7 +2950,7 @@ export default function WorkSession() {
   const prefillReed = useCallback((text: string) => {
     setReedPrefill(text);
   }, [setReedPrefill]);
-  const { user, displayName } = useAuth();
+  const { user, displayName, loading: authLoading } = useAuth();
   const { activeProjectId: shellProjectId } = useStudioProject();
   const { toast } = useToast();
   const nav = useNavigate();
@@ -3016,6 +3028,15 @@ export default function WorkSession() {
     setProjectId(shellProjectId);
   }, [shellProjectId]);
 
+  const workSessionProjectKey = useMemo(
+    () => workProjectKeyFromShellId(shellProjectId),
+    [shellProjectId],
+  );
+  const workSessionProjectUuid = useMemo(
+    () => studioProjectUuidForRow(shellProjectId),
+    [shellProjectId],
+  );
+
   // ── Formats + templates ───────────────────────────────────────
   const [selectedFormats, setSelectedFormats] = useState<Format[]>(() => {
     const f = formatsFromPersisted(persisted?.selectedFormats);
@@ -3086,8 +3107,37 @@ export default function WorkSession() {
 
   const draftLintFp = useMemo(() => draftFingerprintForLint(draft || ""), [draft]);
 
+  const [restorePromptRow, setRestorePromptRow] = useState<WorkSessionDbRow | null>(null);
+  const [restoreResolved, setRestoreResolved] = useState(false);
+
   // Mark restored so we don't re-read persisted on re-renders
   useEffect(() => { restored.current = true; }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user?.id) {
+      setRestoreResolved(true);
+      return;
+    }
+    if (readResumeQuery()) {
+      setRestoreResolved(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const row = await fetchWorkSessionRow(user.id, workSessionProjectKey);
+      if (cancelled) return;
+      const local = loadSession();
+      if (row && shouldOfferWorkSessionRestore(row, local)) {
+        setRestorePromptRow(row);
+      } else {
+        setRestoreResolved(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user?.id, workSessionProjectKey]);
 
   const firstUserSnippet = useMemo(
     () => messages.find(m => m.role === "user")?.content?.trim().slice(0, 60) || "",
@@ -3127,13 +3177,15 @@ export default function WorkSession() {
     return () => window.removeEventListener(WORK_SESSION_OUTPUT_TYPE_ID_EVENT, onOutputTypeId);
   }, []);
 
-  // ── Auto-save session on every meaningful state change ─────────
-  useEffect(() => {
-    if (!restored.current) return; // skip the initial mount
-    const hasContent = messages.length > 1 || draft || Boolean(sessionNameOverride?.trim());
-    if (!hasContent) return;
+  const workSessionFlushRef = useRef<PersistedSession | null>(null);
 
-    saveSession({
+  // ── Mirror + debounced Supabase sync (2s) on tracked field changes ─────────
+  useEffect(() => {
+    if (authLoading) return;
+    if (!restoreResolved) return;
+    if (!restored.current) return;
+
+    const snap: PersistedSession = {
       messages: messages.map((m, i) => ({
         id: String(i),
         role: m.role === "reed" ? "assistant" : "user",
@@ -3157,8 +3209,45 @@ export default function WorkSession() {
       selectedFormats,
       structuredIntake,
       talkDuration,
-    }, { userId: user?.id });
-  }, [messages, draft, intakeReady, outputId, stage, outlineRows, selectedFormats, outputType, talkDuration, user?.id, resolvedSessionTitle, sessionNameOverride, structuredIntake]);
+      projectKey: workSessionProjectKey,
+    };
+
+    const hasContent =
+      messages.length > 1 || !!draft.trim() || Boolean(sessionNameOverride?.trim());
+    if (!user?.id) {
+      if (!hasContent) return;
+      saveSessionLocalMirror(snap);
+      return;
+    }
+
+    saveSessionLocalMirror(snap);
+    workSessionFlushRef.current = snap;
+    const t = window.setTimeout(() => {
+      const payload = workSessionFlushRef.current;
+      if (payload && user.id) {
+        void flushWorkSessionToSupabase(user.id, workSessionProjectKey, workSessionProjectUuid, payload);
+      }
+    }, WORK_SESSION_CLOUD_DEBOUNCE_MS);
+    return () => window.clearTimeout(t);
+  }, [
+    authLoading,
+    restoreResolved,
+    messages,
+    draft,
+    intakeReady,
+    outputId,
+    stage,
+    outlineRows,
+    selectedFormats,
+    outputType,
+    talkDuration,
+    user?.id,
+    resolvedSessionTitle,
+    sessionNameOverride,
+    structuredIntake,
+    workSessionProjectKey,
+    workSessionProjectUuid,
+  ]);
 
   // ── Stage navigation ──────────────────────────────────────────
   const goToStage = useCallback((s: WorkStage) => {
@@ -3257,6 +3346,7 @@ export default function WorkSession() {
         next.delete("resume");
         next.delete("outputId");
         next.delete("title");
+        next.delete("projectKey");
         return next;
       },
       { replace: true },
@@ -3284,13 +3374,10 @@ export default function WorkSession() {
       }
 
       if (resumeParam === "work_session") {
-        const { data } = await supabase
-          .from("work_sessions")
-          .select("payload")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (data?.payload) {
-          hydrateFromPersisted(data.payload as PersistedSession);
+        const pk = searchParams.get("projectKey") || workProjectKeyFromShellId(shellProjectId);
+        const row = await fetchWorkSessionRow(user.id, pk);
+        if (row) {
+          hydrateFromPersisted(rowToPersistedSession(row));
         }
         stripResumeParams();
         return;
@@ -3336,7 +3423,7 @@ export default function WorkSession() {
     };
 
     void run();
-  }, [resumeParam, resumeOutputId, resumeTitle, user?.id, hydrateFromPersisted, stripResumeParams, goToStage]);
+  }, [resumeParam, resumeOutputId, resumeTitle, user?.id, searchParams, shellProjectId, hydrateFromPersisted, stripResumeParams, goToStage]);
 
   // ── Reopen from Catalog or Pipeline ──────────────────────────
   // When a user hits "Reopen in Work" from OutputLibrary or TheLot,
@@ -4275,7 +4362,7 @@ export default function WorkSession() {
             }
           }
         }
-        void deleteRemoteWorkSession(user.id);
+        void deleteRemoteWorkSession(user.id, workSessionProjectKey);
         clearSession();
         catalogOk = true;
       } catch (e) {
@@ -4339,7 +4426,7 @@ export default function WorkSession() {
     }
 
     nav("/studio/wrap");
-  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins, talkDuration, projectId, methodDnaMd, ensureMethodDnaLint]);
+  }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins, talkDuration, projectId, methodDnaMd, ensureMethodDnaLint, workSessionProjectKey]);
 
   const handleStartWrapFromGate = useCallback(() => {
     if (preWrapPickIds.length === 0) return;
@@ -4430,9 +4517,9 @@ export default function WorkSession() {
 
   // ── REVIEW → EDIT: Send back ──────────────────────────────────
   // ── NEW SESSION: Reset everything ────────────────────────────
-  const handleNewSession = useCallback(() => {
+  const handleNewSession = useCallback((opts?: { skipRemoteDelete?: boolean }) => {
     clearSession();
-    if (user?.id) void deleteRemoteWorkSession(user.id);
+    if (user?.id && !opts?.skipRemoteDelete) void deleteRemoteWorkSession(user.id, workSessionProjectKey);
     setIntakeComposerSeed(null);
     setMessages([{ role: "reed", content: "Good to see you. What are you working on?" }]);
     setStage("Intake");
@@ -4484,7 +4571,23 @@ export default function WorkSession() {
     setTalkLengthGatePassed(true);
     setTalkLengthModalOpen(false);
     setSessionNameOverride(null);
-  }, [user?.id]);
+  }, [user?.id, workSessionProjectKey]);
+
+  const handleCloudRestoreAccept = useCallback(() => {
+    if (!restorePromptRow) return;
+    const p = rowToPersistedSession(restorePromptRow);
+    hydrateFromPersisted(p);
+    saveSessionLocalMirror(p);
+    setRestorePromptRow(null);
+    setRestoreResolved(true);
+  }, [restorePromptRow, hydrateFromPersisted]);
+
+  const handleCloudRestoreDecline = useCallback(async () => {
+    if (user?.id) await deleteRemoteWorkSession(user.id, workSessionProjectKey);
+    handleNewSession({ skipRemoteDelete: true });
+    setRestorePromptRow(null);
+    setRestoreResolved(true);
+  }, [user?.id, workSessionProjectKey, handleNewSession]);
 
   const clearIntakeComposerSeed = useCallback(() => setIntakeComposerSeed(null), []);
 
@@ -5081,11 +5184,75 @@ export default function WorkSession() {
 
   return (
     <div style={{
+      position: "relative",
       height: "100%",
       minHeight: 0,
       display: "flex", flexDirection: "column",
       overflow: "hidden", fontFamily: FONT,
     }}>
+      {restorePromptRow ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ew-cloud-restore-title"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 120,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+            background: "rgba(12, 26, 41, 0.55)",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            className="liquid-glass-card"
+            style={{
+              width: "min(400px, 100%)",
+              padding: "20px 20px 16px",
+              borderRadius: 14,
+              boxShadow: "0 20px 48px rgba(0,0,0,0.22)",
+            }}
+          >
+            <h2 id="ew-cloud-restore-title" style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "var(--fg)" }}>
+              Continue saved session?
+            </h2>
+            <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55 }}>
+              We found in-progress Work for this project from{" "}
+              {new Date(restorePromptRow.updated_at).toLocaleString()}. Restore it, or start fresh and discard the cloud copy.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" as const }}>
+              <button
+                type="button"
+                onClick={() => void handleCloudRestoreDecline()}
+                style={{
+                  padding: "8px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  border: "1px solid var(--glass-border)",
+                  background: "transparent",
+                  color: "var(--fg-2)",
+                  cursor: "pointer",
+                  fontFamily: FONT,
+                }}
+              >
+                Start fresh
+              </button>
+              <button
+                type="button"
+                onClick={handleCloudRestoreAccept}
+                className="liquid-glass-btn-gold"
+                style={{ padding: "8px 18px", fontSize: 12, fontFamily: FONT }}
+              >
+                <span className="liquid-glass-btn-gold-label">Restore session</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div style={{
         flex: 1,
         minHeight: 0,
