@@ -1447,6 +1447,22 @@ function ChatInputBar({
 
   const { recording, transcribing, micHandlers } = useHoldToTranscribe(appendTranscript);
 
+  const adjustComposerHeight = useCallback(() => {
+    const t = textareaRef.current;
+    if (!t) return;
+    const maxPx = Math.min(Math.round(window.innerHeight * 0.72), 800);
+    t.style.maxHeight = `${maxPx}px`;
+    t.style.height = "auto";
+    const scroll = t.scrollHeight;
+    const next = Math.min(scroll, maxPx);
+    t.style.height = `${Math.max(44, next)}px`;
+    t.style.overflowY = scroll > maxPx ? "auto" : "hidden";
+  }, []);
+
+  useLayoutEffect(() => {
+    adjustComposerHeight();
+  }, [value, adjustComposerHeight]);
+
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
       textareaRef.current.focus();
@@ -1533,18 +1549,13 @@ function ChatInputBar({
               background: "transparent", border: "none", outline: "none",
               fontSize: 14, color: "var(--fg)", fontFamily: FONT,
               lineHeight: 1.5,
-              maxHeight: "min(120px, 35vh)",
-              overflowY: "auto",
+              maxHeight: "min(72vh, 800px)",
+              overflowY: "hidden",
               opacity: disabled ? 0.5 : 1,
-              minHeight: 24,
+              minHeight: 44,
               padding: "8px 4px 8px 0",
             }}
-            onInput={e => {
-              const t = e.target as HTMLTextAreaElement;
-              t.style.height = "auto";
-              const maxH = parseFloat(getComputedStyle(t).maxHeight) || 120;
-              t.style.height = `${Math.min(t.scrollHeight, maxH)}px`;
-            }}
+            onInput={adjustComposerHeight}
           />
           <IaBtn title="Attach file" onClick={handleFileClick}><AttachIcon /></IaBtn>
           <IaBtn

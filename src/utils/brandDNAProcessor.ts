@@ -70,3 +70,40 @@ export async function generateBrandDNAFromConversation(payload: {
   return res.json();
 }
 
+/** Merge website-based Brand DNA with user notes and extracted file text. Requires auth. */
+export async function enrichBrandDnaWithSupplements(payload: {
+  brandDna: Record<string, unknown>;
+  markdown: string;
+  supplementaryNotes: string;
+  supplementaryFileTexts: { name: string; text: string }[];
+  accessToken: string;
+}): Promise<BrandDNAResponse> {
+  const url = `${API_BASE}/api/brand-dna-enrich`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${payload.accessToken}`,
+    },
+    body: JSON.stringify({
+      brandDna: payload.brandDna,
+      markdown: payload.markdown,
+      supplementaryNotes: payload.supplementaryNotes,
+      supplementaryFileTexts: payload.supplementaryFileTexts,
+    }),
+  });
+  const data = (await res.json().catch(() => ({}))) as BrandDNAResponse & { error?: string };
+  if (!res.ok) {
+    const err =
+      typeof data?.error === "string" && data.error.trim()
+        ? data.error.trim()
+        : `Brand DNA enrich failed (${res.status}).`;
+    throw new Error(err);
+  }
+  const raw = data as Record<string, unknown>;
+  return {
+    brandDna: (raw.brandDna ?? raw.brand_dna ?? {}) as BrandDNA | Record<string, unknown>,
+    markdown: typeof data.markdown === "string" ? data.markdown : "",
+  };
+}
+

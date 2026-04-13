@@ -4,6 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { useMobile } from "../../hooks/useMobile";
+import { getVoiceTraitDeepDive } from "../../lib/voiceTraitDeepDives";
 import "./shared.css";
 
 const VOICE_QUESTIONS = [
@@ -111,7 +112,23 @@ function buildNarrativeSummary(traits: TraitSet): string {
   ].join(" ");
 }
 
-function TraitBar({ label, score, delay, explanation, isMobile }: { label: string; score: number; delay: number; explanation: string; isMobile: boolean }) {
+function TraitBar({
+  label,
+  score,
+  delay,
+  explanation,
+  isMobile,
+  traitKey,
+}: {
+  label: string;
+  score: number;
+  delay: number;
+  explanation: string;
+  isMobile: boolean;
+  traitKey: keyof TraitSet;
+}) {
+  const deep = getVoiceTraitDeepDive(traitKey);
+  const indent = isMobile ? 0 : 196;
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -133,9 +150,42 @@ function TraitBar({ label, score, delay, explanation, isMobile }: { label: strin
         </div>
         <div style={{ fontFamily: "var(--font)", fontSize: 13, fontWeight: 600, color: "var(--gold)", width: 72, textAlign: "right" }}>{scoreToLabel(score)}</div>
       </div>
-      <div style={{ marginLeft: isMobile ? 136 : 196, fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, marginTop: 4 }}>
+      <div style={{ marginLeft: indent, fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5, marginTop: 4 }}>
         {explanation}
       </div>
+      {deep ? (
+        <details
+          style={{
+            marginTop: 8,
+            marginLeft: indent,
+            borderRadius: 10,
+            border: "1px solid var(--glass-border)",
+            background: "rgba(0,0,0,0.02)",
+            padding: "8px 12px",
+          }}
+        >
+          <summary
+            style={{
+              fontFamily: "var(--font)",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "var(--gold)",
+              cursor: "pointer",
+            }}
+          >
+            Full guide: {deep.label}
+          </summary>
+          <p style={{ fontFamily: "var(--font)", fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, margin: "10px 0 8px" }}>
+            {deep.tagline}
+          </p>
+          <p style={{ fontFamily: "var(--font)", fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55, margin: "0 0 8px" }}>{deep.summary}</p>
+          {deep.paragraphs.map((p, i) => (
+            <p key={i} style={{ fontFamily: "var(--font)", fontSize: 13, color: "var(--fg-2)", lineHeight: 1.65, margin: "0 0 10px" }}>
+              {p}
+            </p>
+          ))}
+        </details>
+      ) : null}
     </div>
   );
 }
@@ -304,7 +354,15 @@ export default function VoiceDnaSettings() {
         <SectionLabel>Trait Profile</SectionLabel>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {TRAIT_META.map((t, i) => (
-            <TraitBar key={t.key} label={t.label} score={traits[t.key] || 0} delay={i * 100} explanation={getTraitExplanation(t, traits[t.key] || 0)} isMobile={isMobile} />
+            <TraitBar
+              key={t.key}
+              traitKey={t.key}
+              label={t.label}
+              score={traits[t.key] || 0}
+              delay={i * 100}
+              explanation={getTraitExplanation(t, traits[t.key] || 0)}
+              isMobile={isMobile}
+            />
           ))}
         </div>
         <p style={{ fontSize: 14, color: "var(--fg-2)", lineHeight: 1.6, margin: "8px 0 0" }}>

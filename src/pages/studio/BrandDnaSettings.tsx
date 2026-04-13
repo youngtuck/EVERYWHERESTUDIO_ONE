@@ -4,6 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { useMobile } from "../../hooks/useMobile";
+import { BRAND_FIELD_GUIDES } from "../../lib/brandFieldDeepDives";
 import "./shared.css";
 
 function renderMarkdown(md: string): string {
@@ -158,6 +159,42 @@ export default function BrandDnaSettings() {
         )}
       </section>
 
+      <section style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 32, marginBottom: 24, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
+        <div style={{ fontFamily: "var(--font)", fontSize: 14, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--fg-3)", marginBottom: 14 }}>
+          Field guides
+        </div>
+        <p style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6, margin: "0 0 16px" }}>
+          Each block explains what Reed listens for in Brand DNA, similar to how Voice DNA traits have full guides in Preferences.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {BRAND_FIELD_GUIDES.map(g => {
+            const hasValue = Boolean(brandDna && typeof brandDna === "object" && (brandDna as Record<string, unknown>)[g.field]);
+            return (
+              <details
+                key={g.field}
+                style={{
+                  borderRadius: 10,
+                  border: "1px solid var(--glass-border)",
+                  background: "rgba(0,0,0,0.02)",
+                  padding: "10px 12px",
+                }}
+              >
+                <summary style={{ fontFamily: "var(--font)", fontSize: 13, fontWeight: 600, color: "var(--fg)", cursor: "pointer" }}>
+                  {g.title}
+                  {hasValue ? <span style={{ fontSize: 11, fontWeight: 500, color: "var(--fg-3)", marginLeft: 8 }}>(in your profile)</span> : null}
+                </summary>
+                <p style={{ fontFamily: "var(--font)", fontSize: 12, color: "var(--fg-3)", lineHeight: 1.55, margin: "10px 0 6px" }}>{g.summary}</p>
+                {g.paragraphs.map((p, i) => (
+                  <p key={i} style={{ fontFamily: "var(--font)", fontSize: 13, color: "var(--fg-2)", lineHeight: 1.65, margin: "0 0 8px" }}>
+                    {p}
+                  </p>
+                ))}
+              </details>
+            );
+          })}
+        </div>
+      </section>
+
       {/* SECTION B: Brand DNA Fields */}
       {brandFields.length > 0 && (
         <section style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 12, padding: 32, marginBottom: 24, backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)" }}>
@@ -185,7 +222,7 @@ export default function BrandDnaSettings() {
           Retrain
         </div>
         <p style={{ fontSize: 14, color: "var(--fg-2)", margin: "0 0 16px", lineHeight: 1.6 }}>
-          Re-run the brand conversation with Reed to update your brand positioning, values, or voice guidelines.
+          Re-run onboarding to refresh Brand DNA from your site, Reed chat, or blended notes and documents.
         </p>
         <button
           type="button"

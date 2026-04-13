@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { MessageSquare, FileUp } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -8,6 +8,7 @@ import { VoiceInterviewChat } from "../components/onboarding/VoiceInterviewChat"
 import { VoiceUpload } from "../components/onboarding/VoiceUpload";
 import { VoiceDNAReview } from "../components/onboarding/VoiceDNAReview";
 import { BrandDNAChat } from "../components/onboarding/BrandDNAChat";
+import { BrandDnaUrlEnrichment } from "../components/onboarding/BrandDnaUrlEnrichment";
 import type { VoiceDNA, VoiceDNAResponse } from "../utils/voiceDNAProcessor";
 import { generateVoiceDNAFromInterview, generateVoiceDNAFromWritingSamples } from "../utils/voiceDNAProcessor";
 import type { BrandDNAResponse } from "../utils/brandDNAProcessor";
@@ -63,6 +64,8 @@ export default function OnboardingPage() {
   const [brandUrl, setBrandUrl] = useState("");
   const [brandUrlLoading, setBrandUrlLoading] = useState(false);
   const [brandUrlError, setBrandUrlError] = useState<string | null>(null);
+  /** After URL analyze succeeds: review, optional enrichment, then save. */
+  const [brandFromUrlDraft, setBrandFromUrlDraft] = useState<BrandDNAResponse | null>(null);
 
   useEffect(() => {
     if (!overlayVisible) return;
@@ -337,6 +340,15 @@ export default function OnboardingPage() {
     setOverlayComplete(true);
   };
 
+  const resolveAccessToken = useCallback(async () => {
+    let t = session?.access_token ?? null;
+    if (!t) {
+      const { data } = await supabase.auth.getSession();
+      t = data.session?.access_token ?? null;
+    }
+    return t;
+  }, [session?.access_token]);
+
   const handleBrandUrlAnalyze = async () => {
     if (!brandUrl.trim() || !brandUrl.startsWith("http")) {
       setBrandUrlError("Enter a valid URL (must start with http or https).");
@@ -362,8 +374,10 @@ export default function OnboardingPage() {
         brandDna: data.brandDna ?? data.brand_dna ?? {},
         markdown: data.markdown ?? "",
       };
-      pendingBrandResultRef.current = result;
-      setOverlayComplete(true);
+      setBrandFromUrlDraft(result);
+      setOverlayVisible(false);
+      setOverlayComplete(false);
+      setBrandUrlLoading(false);
     } catch (err) {
       console.error("Brand DNA URL analysis failed", err);
       setOverlayVisible(false);
@@ -847,7 +861,19 @@ export default function OnboardingPage() {
           />
         )}
 
-        {showStep4 && (
+        {showStep4 && brandFromUrlDraft ? (
+          <BrandDnaUrlEnrichment
+            draft={brandFromUrlDraft}
+            getAccessToken={resolveAccessToken}
+            onBack={() => setBrandFromUrlDraft(null)}
+            onComplete={async result => {
+              await runBrandDnaSave(result);
+              setBrandFromUrlDraft(null);
+            }}
+          />
+        ) : null}
+
+        {showStep4 && !brandFromUrlDraft ? (
           <section>
             <div
               style={{
@@ -870,7 +896,7 @@ export default function OnboardingPage() {
                   marginBottom: 8,
                 }}
               >
-                Or paste your website URL
+                Preferred: paste your website URL
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <input
@@ -956,7 +982,7 @@ export default function OnboardingPage() {
               </button>
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* ── STEP 5: WATCH TOPICS ──────────────────── */}
         {showStep5 && (

@@ -1,4 +1,5 @@
 import type { VoiceDNA } from "../../utils/voiceDNAProcessor";
+import { getVoiceTraitDeepDive } from "../../lib/voiceTraitDeepDives";
 
 interface VoiceDNAReviewProps {
   data: VoiceDNA;
@@ -110,6 +111,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
           {TRAIT_ENTRIES.map((item, index) => {
             const score = data.traits?.[item.key] ?? 0;
             const label = scoreToLabel(score);
+            const deep = getVoiceTraitDeepDive(item.key);
             return (
               <div key={item.key}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
@@ -143,7 +145,7 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
                     lineHeight: 1.4,
                   }}
                 >
-                  {item.description}
+                  {deep?.tagline ?? item.description}
                 </div>
                 <div
                   style={{
@@ -164,6 +166,55 @@ export function VoiceDNAReview({ data, onConfirm, onRefine, onUploadMore }: Voic
                     }}
                   />
                 </div>
+                {deep ? (
+                  <details
+                    style={{
+                      marginTop: 10,
+                      borderRadius: 10,
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "rgba(255,255,255,0.03)",
+                      padding: "8px 10px",
+                    }}
+                  >
+                    <summary
+                      style={{
+                        fontFamily: "'Afacad Flux', sans-serif",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "rgba(245,198,66,0.95)",
+                        cursor: "pointer",
+                        listStyle: "none",
+                      }}
+                    >
+                      Learn more about {deep.label}
+                    </summary>
+                    <p
+                      style={{
+                        fontFamily: "'Afacad Flux', sans-serif",
+                        fontSize: 12,
+                        color: "rgba(255,255,255,0.5)",
+                        lineHeight: 1.5,
+                        margin: "10px 0 8px",
+                      }}
+                    >
+                      {deep.summary}
+                    </p>
+                    {deep.paragraphs.map((p, i) => (
+                      <p
+                        key={i}
+                        style={{
+                          fontFamily: "'Afacad Flux', sans-serif",
+                          fontSize: 12,
+                          color: "rgba(255,255,255,0.72)",
+                          lineHeight: 1.55,
+                          margin: "0 0 8px",
+                        }}
+                      >
+                        {p}
+                      </p>
+                    ))}
+                  </details>
+                ) : null}
               </div>
             );
           })}
