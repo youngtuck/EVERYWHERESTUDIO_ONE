@@ -12,6 +12,7 @@
 import {
   useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo,
 } from "react";
+import type { CSSProperties } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useShell } from "../../components/studio/StudioShell";
 import { useStudioProject } from "../../context/ProjectContext";
@@ -229,6 +230,7 @@ const PRE_WRAP_PICK_GROUPS: Record<PreWrapPickCategory, { id: string; label: str
 /** Heuristic primary output type for Pre-Wrap highlight (not a model call). */
 function inferRecommendedWrapOutputId(draft: string): string {
   const t = draft.slice(0, 14000).toLowerCase();
+  const head = draft.slice(0, 1200).trim();
   if (/\[(pause|beat)\]/i.test(t)) return "talk";
   if (/\b(slide|deck|presentation|q[1-4])\b/.test(t) || /##\s*slide/i.test(t)) return "presentation";
   if (/\b(podcast|episode|\[open\]|\[hook\])\b/.test(t)) return "podcast";
@@ -238,7 +240,14 @@ function inferRecommendedWrapOutputId(draft: string): string {
   if (/\b(proposal|rfp|statement of work|\bsow\b)\b/.test(t)) return "proposal";
   if (/\b(executive summary|exec summary)\b/.test(t)) return "executive_summary";
   if (/\b(video script|b-roll|scene)\b/.test(t)) return "video_script";
-  if (/\b(email|e-mail|dear )\b/.test(t) && t.length < 4000) return "email";
+  // Email: short piece with letter layout, so longform essays that mention "email" still default to essay.
+  if (
+    t.length < 2200
+    && (/^dear\s+\S+/i.test(head) || /^hi\s+\S+,/i.test(head))
+    && /\b(subject\s*line|subject:|^re:|^fwd:)\b/im.test(head)
+  ) {
+    return "email";
+  }
   return "essay";
 }
 
@@ -798,30 +807,20 @@ function deriveReviewDisplayGates(
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
   pipelineRun, running, onExportAll, allExported, onRepairPipeline, fixingGate, rerunning,
-  exportLockedReason,
-  hasMethodDna,
   methodTermHits,
   methodLintLoading,
-  methodLintSkipped,
   methodLintLastCompletedFp,
   draftLintFp,
-  onCheckMethodTerms,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
   onRepairPipeline: () => void;
   fixingGate: string | null;
   rerunning: boolean;
-  prefillReed: (text: string) => void;
-  /** When set, Export / Wrap is blocked until the user completes the main Pre-Wrap picker. */
-  exportLockedReason?: string | null;
-  hasMethodDna: boolean;
   methodTermHits: MethodTermHit[];
   methodLintLoading: boolean;
-  methodLintSkipped: boolean;
   methodLintLastCompletedFp: string | null;
   draftLintFp: string;
-  onCheckMethodTerms: () => void;
 }) {
   /** Internal publish readiness from pipeline; never rendered as a number. */
   const publishAggregateOk = pipelineRun?.impactScore != null && pipelineRun.impactScore.total >= 75;
@@ -832,10 +831,19 @@ function ReviewDash({
   const nonPassGates = displayGates.filter(g => g.status !== "Pass");
   const allPass = nonPassGates.length === 0;
 
-  // Reed's natural language assessment
+  // Reed's natural language assessment (includes silent method-DNA wording pass when it finds something)
   const reedMessage = (() => {
     if (!pipelineRun) return "";
-    if (allPass && publishAggregateOk) return "This is ready to publish. The writing is clean and the voice matches.";
+    const methodWordingNote =
+      !methodLintLoading &&
+      methodLintLastCompletedFp === draftLintFp &&
+      methodTermHits.length > 0
+        ? " Reed noticed some wording that could be more specific to your method. Want to fix it?"
+        : "";
+
+    if (allPass && publishAggregateOk) {
+      return `This is ready to publish. The writing is clean and the voice matches.${methodWordingNote}`;
+    }
 
     const issueDescriptions = nonPassGates.map(g => {
       const name = (g.name || "").toLowerCase();
@@ -850,13 +858,15 @@ function ReviewDash({
       return g.name.toLowerCase();
     });
 
+    let core = "";
     if (issueDescriptions.length === 1) {
-      return `Almost there. Reed found ${issueDescriptions[0]}. One fix and this is ready.`;
+      core = `Almost there. Reed found ${issueDescriptions[0]}. One fix and this is ready.`;
+    } else if (issueDescriptions.length <= 3) {
+      core = `A few things to address: ${issueDescriptions.join(", ")}. Let Reed handle it, or go back and edit.`;
+    } else {
+      core = `${issueDescriptions.length} items need work. Let Reed fix them automatically for the fastest path to publish.`;
     }
-    if (issueDescriptions.length <= 3) {
-      return `A few things to address: ${issueDescriptions.join(", ")}. Let Reed handle it, or go back and edit.`;
-    }
-    return `${issueDescriptions.length} items need work. Let Reed fix them automatically for the fastest path to publish.`;
+    return core + methodWordingNote;
   })();
 
   return (
@@ -925,73 +935,20 @@ function ReviewDash({
             </button>
           )}
 
-          {exportLockedReason && (
-            <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 8, lineHeight: 1.45 }}>
-              {exportLockedReason}
-            </div>
-          )}
-
-          {hasMethodDna && (
-            <DpSection>
-              <DpLabel>Method terms</DpLabel>
-              <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 8, lineHeight: 1.45 }}>
-                Compare the draft to your Method DNA for generic wording that might replace a framework name.
-              </div>
-              <button
-                type="button"
-                onClick={onCheckMethodTerms}
-                disabled={methodLintLoading}
-                style={{
-                  width: "100%", padding: "8px 10px", borderRadius: 6, marginBottom: 8,
-                  background: "var(--glass-card)", border: "1px solid var(--glass-border)",
-                  fontSize: 11, fontWeight: 600, color: "var(--fg-2)",
-                  cursor: methodLintLoading ? "wait" : "pointer", fontFamily: FONT,
-                  opacity: methodLintLoading ? 0.75 : 1,
-                }}
-              >
-                {methodLintLoading ? "Checking…" : "Check method terms"}
-              </button>
-              {methodLintSkipped && (
-                <div style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 6 }}>
-                  No Method DNA on file for this account. Add Method DNA under Resources if you expect hits here.
-                </div>
-              )}
-              {!methodLintSkipped && methodTermHits.length > 0 && (
-                <ul style={{ margin: 0, paddingLeft: 14, fontSize: 10, color: "var(--fg-2)", lineHeight: 1.5 }}>
-                  {methodTermHits.map((h, i) => (
-                    <li key={i} style={{ marginBottom: 6 }}>
-                      <span style={{ color: "var(--fg-3)" }}>Draft: </span>
-                      {h.draftSnippet || h.genericPhrase}
-                      {h.methodTerm ? (
-                        <>
-                          <span style={{ color: "var(--fg-3)" }}> · Prefer: </span>
-                          {h.methodTerm}
-                        </>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {!methodLintSkipped && !methodLintLoading && methodLintLastCompletedFp === draftLintFp && methodTermHits.length === 0 && (
-                <div style={{ fontSize: 10, color: "var(--fg-3)" }}>No suspected generic replacements in this pass.</div>
-              )}
-            </DpSection>
-          )}
-
           <button
             onClick={onExportAll}
-            disabled={allExported || !!exportLockedReason}
+            disabled={allExported}
             style={{
               width: "100%", padding: 10, borderRadius: 6,
-              background: allExported ? "rgba(74,144,217,0.12)" : (exportLockedReason ? "var(--line)" : (publishAggregateOk ? "var(--gold)" : "var(--surface)")),
-              border: publishAggregateOk && !exportLockedReason ? "none" : "1px solid var(--glass-border)",
+              background: allExported ? "rgba(74,144,217,0.12)" : (publishAggregateOk ? "var(--gold)" : "var(--surface)"),
+              border: publishAggregateOk ? "none" : "1px solid var(--glass-border)",
               fontSize: 12, fontWeight: 700,
-              color: allExported ? "var(--blue)" : (exportLockedReason ? "var(--fg-3)" : (publishAggregateOk ? "var(--fg)" : "var(--fg)")),
-              cursor: allExported || exportLockedReason ? "default" : "pointer",
+              color: allExported ? "var(--blue)" : (publishAggregateOk ? "var(--fg)" : "var(--fg)"),
+              cursor: allExported ? "default" : "pointer",
               fontFamily: FONT, transition: "all 0.2s",
             }}
           >
-            {allExported ? "Exported" : (exportLockedReason ? "Wrap locked" : (publishAggregateOk ? "Export all" : "Export anyway"))}
+            {allExported ? "Exported" : (publishAggregateOk ? "Export all" : "Export anyway")}
           </button>
         </>
       )}
@@ -2487,11 +2444,46 @@ function ReviewFormatPreview({
 // STAGE: REVIEW
 // ─────────────────────────────────────────────────────────────────────────────
 
+function PreWrapCornerCheck() {
+  return (
+    <span
+      aria-hidden
+      style={{
+        position: "absolute",
+        top: 8,
+        right: 8,
+        width: 22,
+        height: 22,
+        borderRadius: "50%",
+        background: "rgba(245,198,66,0.95)",
+        border: "2px solid var(--gold-bright, #F5C642)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+      }}
+    >
+      <svg width="11" height="9" viewBox="0 0 11 9" fill="none" style={{ display: "block" }}>
+        <path
+          d="M1 4.5L4 7.5L10 1"
+          stroke="var(--bg)"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
 function PreWrapOutputGate({
   pipelineRun,
   recommendedId,
   selectedIds,
-  onToggle,
+  allowSecondFormat,
+  onEnableSecondFormat,
+  onDisableSecondFormat,
+  onPickFormat,
   onStartWrap,
   presentationMinutes,
   onPresentationMinutesChange,
@@ -2501,7 +2493,10 @@ function PreWrapOutputGate({
   pipelineRun: PipelineRun | null;
   recommendedId: string;
   selectedIds: string[];
-  onToggle: (id: string) => void;
+  allowSecondFormat: boolean;
+  onEnableSecondFormat: () => void;
+  onDisableSecondFormat: () => void;
+  onPickFormat: (id: string) => void;
   onStartWrap: () => void;
   presentationMinutes: number;
   onPresentationMinutesChange: (n: number) => void;
@@ -2520,12 +2515,47 @@ function PreWrapOutputGate({
       : "Human Voice Test: review flagged lines if needed.";
 
   const recLabel = OUTPUT_TYPES.find(t => t.id === recommendedId)?.label || recommendedId;
+  const wrapReady =
+    (!allowSecondFormat && selectedIds.length === 1)
+    || (allowSecondFormat && selectedIds.length === 2);
+  const startLabel = (() => {
+    if (allowSecondFormat && selectedIds.length === 1) return "Pick second format";
+    if (!wrapReady) return "Start Wrap";
+    if (selectedIds.length === 1) {
+      const one = OUTPUT_TYPES.find(t => t.id === selectedIds[0])?.label || selectedIds[0];
+      return `Start Wrap with ${one}`;
+    }
+    const a = OUTPUT_TYPES.find(t => t.id === selectedIds[0])?.label || selectedIds[0];
+    const b = OUTPUT_TYPES.find(t => t.id === selectedIds[1])?.label || selectedIds[1];
+    return `Start Wrap with ${a} and ${b}`;
+  })();
 
   const categories: { key: PreWrapPickCategory; title: string; items: { id: string; label: string }[] }[] = [
     { key: "Content", title: "Content", items: PRE_WRAP_PICK_GROUPS.Content },
     { key: "Business", title: "Business", items: PRE_WRAP_PICK_GROUPS.Business },
     { key: "Social", title: "Social", items: PRE_WRAP_PICK_GROUPS.Social },
   ];
+
+  const baseCard: CSSProperties = {
+    textAlign: "left" as const,
+    padding: "12px 14px",
+    borderRadius: 10,
+    fontFamily: FONT,
+    fontSize: 12,
+    fontWeight: 600,
+    color: "var(--fg)",
+    cursor: "pointer",
+    position: "relative" as const,
+    border: "1px solid var(--glass-border)",
+    background: "var(--glass-card)",
+    transition: "border-color 0.15s, background 0.15s, box-shadow 0.15s",
+    minHeight: 52,
+    display: "flex",
+    flexDirection: "column" as const,
+    justifyContent: "center",
+    gap: 4,
+    boxSizing: "border-box" as const,
+  };
 
   return (
     <div style={{
@@ -2555,25 +2585,33 @@ function PreWrapOutputGate({
           </p>
         ) : null}
         <p style={{ fontSize: 12, color: "var(--fg-3)", margin: "0 0 22px", lineHeight: 1.5, fontFamily: FONT }}>
-          Choose one or more formats to save to Catalog. Each becomes its own row tied to this draft.
+          Select exactly one Catalog format to start Wrap, or turn on Add another format and pick two.
         </p>
 
-        <div style={{
-          marginBottom: 28,
-          padding: "14px 16px",
-          borderRadius: 12,
-          border: "2px solid rgba(245,198,66,0.55)",
-          background: "linear-gradient(135deg, rgba(245,198,66,0.12) 0%, rgba(245,198,66,0.04) 100%)",
-          fontFamily: FONT,
-        }}>
+        <button
+          type="button"
+          onClick={() => onPickFormat(recommendedId)}
+          style={{
+            width: "100%",
+            marginBottom: 28,
+            padding: "14px 16px",
+            borderRadius: 12,
+            border: "2px dashed rgba(245,198,66,0.55)",
+            background: "rgba(245,198,66,0.06)",
+            fontFamily: FONT,
+            textAlign: "left" as const,
+            cursor: "pointer",
+            boxSizing: "border-box" as const,
+          }}
+        >
           <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "#9A7030", marginBottom: 6, textTransform: "uppercase" as const }}>
-            Reed recommends
+            Reed recommends (tap to select)
           </div>
           <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fg)" }}>{recLabel}</div>
           <div style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 6, lineHeight: 1.45 }}>
-            Based on how your draft reads. You can still pick any format below.
+            Suggestion only. Your pick in the grids below uses the gold selected style.
           </div>
-        </div>
+        </button>
 
         {categories.map(({ key, title, items }) => (
           <div key={key} style={{ marginBottom: 28 }}>
@@ -2591,56 +2629,80 @@ function PreWrapOutputGate({
               {items.map(item => {
                 const isRec = item.id === recommendedId;
                 const isSel = selectedIds.includes(item.id);
-                const receded = !isSel && !isRec;
-                const recOnly = !isSel && isRec;
-                const selRec = isSel && isRec;
-                const selOther = isSel && !isRec;
+                const suggestOnly = isRec && !isSel;
+                const selectedStyle: CSSProperties = isSel
+                  ? {
+                    border: "2px solid var(--gold-bright, #F5C642)",
+                    background: "rgba(245,198,66,0.18)",
+                    boxShadow: "0 4px 18px rgba(245,198,66,0.15)",
+                  }
+                  : suggestOnly
+                    ? {
+                      border: "2px dashed rgba(245,198,66,0.5)",
+                      background: "rgba(245,198,66,0.07)",
+                    }
+                    : {};
                 return (
                   <button
                     key={item.id}
                     type="button"
                     aria-pressed={isSel}
-                    onClick={() => onToggle(item.id)}
-                    style={{
-                      textAlign: "left" as const,
-                      padding: selRec ? "13px 15px" : "12px 14px",
-                      borderRadius: 10,
-                      fontFamily: FONT,
-                      fontSize: receded ? 11 : selRec ? 13 : 12,
-                      fontWeight: receded ? 500 : recOnly ? 600 : 700,
-                      color: receded ? "var(--fg-3)" : "var(--fg)",
-                      cursor: "pointer",
-                      border: selRec
-                        ? "2px solid var(--gold-bright, #F5C642)"
-                        : selOther
-                          ? "2px solid var(--gold-bright, #F5C642)"
-                          : recOnly
-                            ? "2px solid rgba(245,198,66,0.5)"
-                            : "1px solid rgba(0,0,0,0.08)",
-                      background: selRec || selOther
-                        ? "rgba(245,198,66,0.16)"
-                        : recOnly
-                          ? "rgba(245,198,66,0.08)"
-                          : "rgba(248,250,252,0.85)",
-                      boxShadow: selRec
-                        ? "0 6px 22px rgba(0,0,0,0.08)"
-                        : selOther
-                          ? "0 4px 16px rgba(0,0,0,0.05)"
-                          : "none",
-                      opacity: receded ? 0.82 : 1,
-                      transition: "border-color 0.15s, background 0.15s, opacity 0.15s, box-shadow 0.15s",
-                      minHeight: selRec ? 54 : 52,
-                      display: "flex", flexDirection: "column" as const, justifyContent: "center",
-                      gap: 4,
-                    }}
+                    onClick={() => onPickFormat(item.id)}
+                    style={{ ...baseCard, ...selectedStyle }}
                   >
-                    <span>{item.label}</span>
+                    {isSel ? <PreWrapCornerCheck /> : null}
+                    <span style={{ paddingRight: isSel ? 24 : 0 }}>{item.label}</span>
+                    {suggestOnly ? (
+                      <span style={{ fontSize: 9, fontWeight: 600, color: "#9A7030", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>
+                        Suggested
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
           </div>
         ))}
+
+        <div style={{ marginBottom: 20, display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" as const }}>
+          <button
+            type="button"
+            onClick={onEnableSecondFormat}
+            disabled={allowSecondFormat}
+            style={{
+              padding: "8px 14px",
+              borderRadius: 8,
+              fontSize: 11,
+              fontWeight: 600,
+              fontFamily: FONT,
+              border: allowSecondFormat ? "1px solid var(--glass-border)" : "1px dashed var(--gold-bright, #F5C642)",
+              background: allowSecondFormat ? "var(--glass-card)" : "rgba(245,198,66,0.08)",
+              color: allowSecondFormat ? "var(--fg-3)" : "var(--fg)",
+              cursor: allowSecondFormat ? "default" : "pointer",
+            }}
+          >
+            {allowSecondFormat ? "Second format slot on" : "Add another format"}
+          </button>
+          {allowSecondFormat ? (
+            <button
+              type="button"
+              onClick={onDisableSecondFormat}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                fontFamily: FONT,
+                border: "1px solid var(--glass-border)",
+                background: "transparent",
+                color: "var(--fg-2)",
+                cursor: "pointer",
+              }}
+            >
+              Single format only
+            </button>
+          ) : null}
+        </div>
 
         {selectedIds.includes("presentation") && (
           <div style={{
@@ -2738,16 +2800,20 @@ function PreWrapOutputGate({
           <button
             type="button"
             className="liquid-glass-btn-gold liquid-glass-btn-gold--lg"
-            disabled={selectedIds.length === 0}
-            aria-describedby={selectedIds.length === 0 ? "prewrap-start-hint" : undefined}
+            disabled={!wrapReady}
+            aria-describedby={!wrapReady ? "prewrap-start-hint" : undefined}
             onClick={onStartWrap}
-            style={{ minWidth: 240, fontFamily: FONT }}
+            style={{
+              minWidth: 240,
+              fontFamily: FONT,
+              opacity: wrapReady ? 1 : 0.45,
+              cursor: wrapReady ? "pointer" : "not-allowed",
+              filter: wrapReady ? "none" : "grayscale(0.35)",
+            }}
           >
-            <span className="liquid-glass-btn-gold-label">
-              {selectedIds.length > 1 ? `Start Wrap (${selectedIds.length} formats)` : "Start Wrap"}
-            </span>
+            <span className="liquid-glass-btn-gold-label">{startLabel}</span>
           </button>
-          {selectedIds.length === 0 && (
+          {!wrapReady && (
             <p
               id="prewrap-start-hint"
               style={{
@@ -2756,9 +2822,15 @@ function PreWrapOutputGate({
                 color: "var(--fg-3)",
                 fontFamily: FONT,
                 textAlign: "center" as const,
+                maxWidth: 360,
+                lineHeight: 1.45,
               }}
             >
-              Select a format to continue.
+              {allowSecondFormat && selectedIds.length === 1
+                ? "Pick a second Catalog format, or turn off the second slot above."
+                : allowSecondFormat && selectedIds.length === 0
+                  ? "Select two formats when the second slot is on, or turn it off to pick one."
+                  : "Select exactly one Catalog format to continue."}
             </p>
           )}
         </div>
@@ -3163,6 +3235,8 @@ export default function WorkSession() {
   const [hvtRunning, setHvtRunning] = useState(false);
   /** Chosen OUTPUT_TYPES ids on the Pre-Wrap full screen (user toggles only; no auto-selection). */
   const [preWrapPickIds, setPreWrapPickIds] = useState<string[]>([]);
+  /** When true, Start Wrap requires two Catalog picks; when false, exactly one. */
+  const [preWrapAllowSecond, setPreWrapAllowSecond] = useState(false);
   /** Talk length for presentation output type (Wrap target words = minutes × 300). */
   const [preWrapPresentationMins, setPreWrapPresentationMins] = useState<number>(DEFAULT_PRESENTATION_MINUTES);
 
@@ -3177,7 +3251,6 @@ export default function WorkSession() {
   const [allExported, setAllExported] = useState(false);
   const [methodTermHits, setMethodTermHits] = useState<MethodTermHit[]>([]);
   const [methodLintLoading, setMethodLintLoading] = useState(false);
-  const [methodLintSkipped, setMethodLintSkipped] = useState(false);
   const [methodLintLastCompletedFp, setMethodLintLastCompletedFp] = useState<string | null>(null);
   const methodLintSuccessDraftKeyRef = useRef<string | null>(null);
   const methodLintCoalesceRef = useRef<{ key: string; promise: Promise<boolean> } | null>(null);
@@ -3420,6 +3493,7 @@ export default function WorkSession() {
     setAllExported(false);
     setExportedTabs({});
     setPreWrapPickIds([]);
+    setPreWrapAllowSecond(false);
     setGenerating(false);
     setFixingGate(null);
     setRerunningPipeline(false);
@@ -4197,7 +4271,6 @@ export default function WorkSession() {
 
     const promise = (async (): Promise<boolean> => {
       setMethodLintLoading(true);
-      setMethodLintSkipped(false);
       try {
         const res = await fetchWithRetry(
           `${API_BASE}/api/method-dna-lint`,
@@ -4209,13 +4282,12 @@ export default function WorkSession() {
           { timeout: 28000, maxRetries: 1 },
         );
         if (!res.ok) {
-          toast("Method term check failed. You can still export.", "error");
+          toast("A quick wording pass could not finish. You can still export.", "error");
           return false;
         }
         const data = await res.json() as { skipped?: boolean; items?: unknown[] };
         if (data?.skipped) {
           setMethodTermHits([]);
-          setMethodLintSkipped(true);
           methodLintSuccessDraftKeyRef.current = fp;
           setMethodLintLastCompletedFp(fp);
           return true;
@@ -4236,13 +4308,12 @@ export default function WorkSession() {
           });
         }
         setMethodTermHits(hits);
-        setMethodLintSkipped(false);
         methodLintSuccessDraftKeyRef.current = fp;
         setMethodLintLastCompletedFp(fp);
         return true;
       } catch (e) {
         console.error("[WorkSession][method-dna-lint]", e);
-        toast("Method term check failed. You can still export.", "error");
+        toast("A quick wording pass could not finish. You can still export.", "error");
         return false;
       } finally {
         setMethodLintLoading(false);
@@ -4256,17 +4327,10 @@ export default function WorkSession() {
     return promise;
   }, [user?.id, methodDnaMd, toast]);
 
-  const handleCheckMethodTerms = useCallback(() => {
-    methodLintSuccessDraftKeyRef.current = null;
-    setMethodLintLastCompletedFp(null);
-    void ensureMethodDnaLint(draft);
-  }, [draft, ensureMethodDnaLint]);
-
   const prevDraftLintFpRef = useRef<string | null>(null);
   useEffect(() => {
     if (!methodDnaMd.trim()) {
       setMethodTermHits([]);
-      setMethodLintSkipped(false);
       setMethodLintLastCompletedFp(null);
       methodLintSuccessDraftKeyRef.current = null;
       prevDraftLintFpRef.current = null;
@@ -4279,7 +4343,6 @@ export default function WorkSession() {
     if (prevDraftLintFpRef.current !== draftLintFp) {
       prevDraftLintFpRef.current = draftLintFp;
       setMethodTermHits([]);
-      setMethodLintSkipped(false);
       setMethodLintLastCompletedFp(null);
       methodLintSuccessDraftKeyRef.current = null;
     }
@@ -4300,6 +4363,7 @@ export default function WorkSession() {
   // ── EDIT -> REVIEW: Run pipeline ──────────────────────────────
   const handleRunPipeline = useCallback(async () => {
     setPreWrapPickIds([]);
+    setPreWrapAllowSecond(false);
     goToStage("Review");
     if (!draft || !user) return;
 
@@ -4573,10 +4637,35 @@ export default function WorkSession() {
     nav("/studio/wrap");
   }, [selectedFormats, outputId, nav, draft, user, outlineRows, outputType, pipelineRun, messages, formatDrafts, toast, preWrapPresentationMins, talkDuration, projectId, methodDnaMd, ensureMethodDnaLint, workSessionProjectKey]);
 
+  const handlePreWrapPickFormat = useCallback((id: string) => {
+    setPreWrapPickIds(prev => {
+      if (!preWrapAllowSecond) {
+        if (prev.length === 1 && prev[0] === id) return [];
+        return [id];
+      }
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length === 0) return [id];
+      if (prev.length === 1) return [...prev, id];
+      return [prev[0], id];
+    });
+  }, [preWrapAllowSecond]);
+
+  const handlePreWrapEnableSecond = useCallback(() => {
+    setPreWrapAllowSecond(true);
+  }, []);
+
+  const handlePreWrapDisableSecond = useCallback(() => {
+    setPreWrapAllowSecond(false);
+    setPreWrapPickIds(prev => (prev.length > 1 ? [prev[0]] : prev));
+  }, []);
+
   const handleStartWrapFromGate = useCallback(() => {
-    if (preWrapPickIds.length === 0) return;
+    const ok =
+      (!preWrapAllowSecond && preWrapPickIds.length === 1)
+      || (preWrapAllowSecond && preWrapPickIds.length === 2);
+    if (!ok) return;
     void handleExportAll(preWrapPickIds);
-  }, [preWrapPickIds, handleExportAll]);
+  }, [preWrapAllowSecond, preWrapPickIds, handleExportAll]);
 
   const reviewChannelTabs = useMemo((): Format[] => selectedFormats, [selectedFormats]);
 
@@ -4685,7 +4774,6 @@ export default function WorkSession() {
     setAllExported(false);
     setExportedTabs({});
     setMethodTermHits([]);
-    setMethodLintSkipped(false);
     setMethodLintLastCompletedFp(null);
     methodLintSuccessDraftKeyRef.current = null;
     methodLintCoalesceRef.current = null;
@@ -4698,6 +4786,7 @@ export default function WorkSession() {
     setOutlineAngles(null);
     setSelectedAngle("a");
     setPreWrapPickIds([]);
+    setPreWrapAllowSecond(false);
     setPreWrapPresentationMins(DEFAULT_PRESENTATION_MINUTES);
     setTalkDuration(DEFAULT_PRESENTATION_MINUTES);
     setTalkLengthDraftInput(String(DEFAULT_PRESENTATION_MINUTES));
@@ -4771,6 +4860,7 @@ export default function WorkSession() {
     setDismissedFlags(new Set());
     setFixedFlags(new Map());
     setPreWrapPickIds([]);
+    setPreWrapAllowSecond(false);
 
     goToStage("Edit");
     handleRevise(instructions);
@@ -5221,21 +5311,6 @@ export default function WorkSession() {
           );
         }
         case "Review": {
-          const reviewTabs = selectedFormats;
-          const adaptationDone =
-            reviewTabs.length === 0
-            || reviewTabs.every(t => {
-              const fd = formatDrafts[t];
-              return fd && (fd.status === "done" || fd.status === "error");
-            });
-          let exportLockedReason: string | null = null;
-          if (pipelineRun && !pipelineRunning && !allExported) {
-            if (!adaptationDone) {
-              exportLockedReason = "Finish format previews in the main view, then pick where this goes.";
-            } else {
-              exportLockedReason = "Choose an output in the main view, then Start Wrap.";
-            }
-          }
           return (
             <ReviewDash
               pipelineRun={pipelineRun}
@@ -5245,15 +5320,10 @@ export default function WorkSession() {
               onRepairPipeline={handleRepairPipeline}
               fixingGate={fixingGate}
               rerunning={rerunningPipeline}
-              prefillReed={prefillReed}
-              exportLockedReason={exportLockedReason}
-              hasMethodDna={methodDnaMd.trim().length > 0}
               methodTermHits={methodTermHits}
               methodLintLoading={methodLintLoading}
-              methodLintSkipped={methodLintSkipped}
               methodLintLastCompletedFp={methodLintLastCompletedFp}
               draftLintFp={draftLintFp}
-              onCheckMethodTerms={handleCheckMethodTerms}
             />
           );
         }
@@ -5272,8 +5342,8 @@ export default function WorkSession() {
     prefillReed, handleRevise, activeReviewTab, handleReviewFix, handleExportAll,
     dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
     formatDrafts,
-    methodDnaMd, methodTermHits, methodLintLoading, methodLintSkipped,
-    methodLintLastCompletedFp, draftLintFp, handleCheckMethodTerms,
+    methodDnaMd, methodTermHits, methodLintLoading,
+    methodLintLastCompletedFp, draftLintFp,
   ]);
 
   // ─────────────────────────────────────────────────────────────
@@ -5632,11 +5702,10 @@ export default function WorkSession() {
             pipelineRun={pipelineRun}
             recommendedId={recommendedWrapOutputId}
             selectedIds={preWrapPickIds}
-            onToggle={(id) => {
-              setPreWrapPickIds(prev =>
-                prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id],
-              );
-            }}
+            allowSecondFormat={preWrapAllowSecond}
+            onEnableSecondFormat={handlePreWrapEnableSecond}
+            onDisableSecondFormat={handlePreWrapDisableSecond}
+            onPickFormat={handlePreWrapPickFormat}
             onStartWrap={handleStartWrapFromGate}
             presentationMinutes={preWrapPresentationMins}
             onPresentationMinutesChange={setPreWrapPresentationMins}
