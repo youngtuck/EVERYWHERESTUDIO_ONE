@@ -353,7 +353,7 @@ export default function StudioShell() {
           )}
 
           {/* Main canvas (Reed / dashboard is a floating glass flyout) */}
-          <div className="studio-stage-canvas" style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <div className="studio-stage-canvas" style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: "1 1 0%", overflow: "hidden" }}>
             <main
               className={`studio-main-inner studio-stage-scroll studio-content-substrate${studioGlassDense ? " studio-glass-dense" : ""}`}
               style={{
