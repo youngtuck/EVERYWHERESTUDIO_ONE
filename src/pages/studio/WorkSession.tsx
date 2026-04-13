@@ -6008,6 +6008,8 @@ export default function WorkSession() {
             minHeight: 0,
             position: "relative",
             overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
           }}
           >
             {stage === "Intake" && (
