@@ -3006,7 +3006,7 @@ function StageReview({
   const [hvtFixing, setHvtFixing] = useState(false);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
       {/* HVT suggestion fixing indicator */}
       {hvtFixing && (
         <div style={{

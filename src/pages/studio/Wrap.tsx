@@ -975,7 +975,7 @@ export default function WrapPage() {
 
     return (
       <div style={{
-        display: "flex", flexDirection: "column", flex: 1,
+        display: "flex", flexDirection: "column", flex: 1, minHeight: 0,
         overflow: "hidden", fontFamily: FONT,
       }}>
         <header className="liquid-glass" style={{ flexShrink: 0, borderRadius: 0, borderBottom: "1px solid var(--glass-border)" }}>
@@ -1090,9 +1090,9 @@ export default function WrapPage() {
   // ── Choose channels ─────────────────────────────────────────
   if (wrapPhase === "choose") {
     return (
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden", fontFamily: FONT }}>
         <WrapStepRail phase="choose" chooseConfirmed={wrapChooseConfirmed} refineConfirmed={wrapRefineConfirmed} />
-        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px 40px" }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px 40px" }}>
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <h1 style={{ fontSize: "clamp(22px, 3.5vw, 28px)", fontWeight: 700, color: "var(--fg)", margin: "0 0 8px", letterSpacing: "-0.02em" }}>
               Where should this land?
@@ -1449,7 +1449,7 @@ export default function WrapPage() {
     );
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden", fontFamily: FONT }}>
         <WrapStepRail phase="build" chooseConfirmed={wrapChooseConfirmed} refineConfirmed={wrapRefineConfirmed} />
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: isMobile ? "20px 16px" : "28px 32px" }}>
           <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>

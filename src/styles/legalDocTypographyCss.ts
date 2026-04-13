@@ -62,13 +62,4 @@ export const LEGAL_DOC_TYPOGRAPHY_CSS = `
   color: var(--xp-blue);
   text-decoration: underline;
 }
-.xp-legal-doc .xp-legal-doc-disclaimer {
-  font-size: 12px;
-  color: var(--xp-ter);
-  font-style: italic;
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top: 1px solid var(--xp-border);
-  margin-bottom: 0;
-}
 `;

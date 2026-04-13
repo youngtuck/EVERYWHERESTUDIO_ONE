@@ -314,6 +314,7 @@ export default function Dashboard() {
   return (
     <div style={{
       flex: 1,
+      minHeight: 0,
       overflowY: "auto",
       padding: isMobile ? "24px 20px" : "32px 28px 48px",
       width: "100%",

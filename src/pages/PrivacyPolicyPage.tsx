@@ -227,11 +227,6 @@ export default function PrivacyPolicyPage() {
             For privacy questions, contact{" "}
             <a href="mailto:privacy@everywhere.studio">privacy@everywhere.studio</a>.
           </p>
-
-          <p className="xp-legal-doc-disclaimer">
-            This policy should be reviewed by qualified legal counsel before publication. This Privacy Policy is provided
-            as a drafting aid only and does not constitute legal advice.
-          </p>
         </article>
         <MarketingFooter />
       </div>

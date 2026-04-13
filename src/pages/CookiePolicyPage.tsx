@@ -127,11 +127,6 @@ export default function CookiePolicyPage() {
             For questions about cookies, contact{" "}
             <a href="mailto:privacy@everywhere.studio">privacy@everywhere.studio</a>.
           </p>
-
-          <p className="xp-legal-doc-disclaimer">
-            This policy should be reviewed by qualified legal counsel before publication. This Cookie Policy is provided
-            as a drafting aid only and does not constitute legal advice.
-          </p>
         </article>
         <MarketingFooter />
       </div>

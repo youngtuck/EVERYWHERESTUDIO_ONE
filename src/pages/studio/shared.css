@@ -53,6 +53,9 @@ html:has(.studio-app-shell) body {
   /* Do not set height: 100% here: with flex parents it can make the box match
      the viewport without overflow, so nothing scrolls. min-height: 0 + flex
      is enough for a bounded scroll region. */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;

@@ -111,7 +111,7 @@ export default function OutputLibraryPage({ category }: { category: CategoryKey 
           >
             {data.types.length} formats
           </div>
-          <div style={{ overflowY: "auto", flex: 1, padding: 6 }}>
+          <div style={{ overflowY: "auto", flex: 1, minHeight: 0, padding: 6 }}>
             {data.types.map((t, i) => {
               const isSelected = selectedIdx === i;
               return (

@@ -234,11 +234,6 @@ export default function TermsOfServicePage() {
             For questions about these Terms, contact us at{" "}
             <a href="mailto:legal@everywhere.studio">legal@everywhere.studio</a>.
           </p>
-
-          <p className="xp-legal-doc-disclaimer">
-            This policy should be reviewed by qualified legal counsel before publication. These Terms are provided as a
-            drafting aid only and do not constitute legal advice.
-          </p>
         </article>
         <MarketingFooter />
       </div>

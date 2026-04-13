@@ -672,7 +672,7 @@ export default function Watch() {
   const activeHint = WATCH_TABS.find(t => t.id === activeTab)?.hint ?? "";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", fontFamily: FONT }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden", fontFamily: FONT }}>
       <header className="liquid-glass" style={{
         display: "flex", flexDirection: "column", flexShrink: 0, borderRadius: 0,
         borderBottom: "1px solid var(--glass-border)",
@@ -802,7 +802,7 @@ export default function Watch() {
       </header>
 
       {/* ── Tab Content ── */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {/* ── BRIEFING TAB ── */}
         {activeTab === "briefing" && (
           <div style={{ padding: "20px 20px 28px", maxWidth: 760, margin: "0 auto", width: "100%" }}>
@@ -954,7 +954,7 @@ export default function Watch() {
                 ) : null}
               </div>
 
-              <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
+              <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingRight: 4 }}>
                 {searching && (
                   <div style={{ fontSize: 12, color: "var(--fg-3)", textAlign: "center" as const, paddingTop: 36 }}>Searching...</div>
                 )}
