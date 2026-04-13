@@ -4869,13 +4869,18 @@ export default function WorkSession() {
       } else {
         sessionStorage.removeItem("ew-wrap-talk-duration");
       }
-      const adaptedContent = buildWrapSeededContentFromFormatDrafts(formats, formatDrafts);
+      const adaptedContent: Record<string, unknown> = {};
       if (Object.keys(adaptedContent).length > 0) {
         sessionStorage.setItem("ew-wrap-formats", JSON.stringify(adaptedContent));
       } else {
         sessionStorage.removeItem("ew-wrap-formats");
       }
-      const wrapChannelPicks = workReviewFormatsToWrapChannels(formats);
+      const wrapChannelPicks = resolvedTypeIds
+        .map(id => {
+          const match = OUTPUT_TYPES.find(ot => ot.id === id);
+          return match?.label ?? id;
+        })
+        .filter(Boolean);
       if (wrapChannelPicks.length > 0) {
         sessionStorage.setItem("ew-wrap-channel-picks", JSON.stringify(wrapChannelPicks));
       } else {
