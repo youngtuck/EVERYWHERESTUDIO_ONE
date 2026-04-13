@@ -1285,6 +1285,17 @@ function StageIntake({
       width: "100%",
     }}
     >
+      <div style={{
+        display: "flex",
+        flexDirection: "row",
+        flex: 1,
+        minHeight: 0,
+        width: "100%",
+        overflow: "hidden",
+        alignItems: "stretch",
+        height: "100%",
+      }}
+      >
       <div
         className="work-stage-content-column"
         style={{
@@ -1427,6 +1438,7 @@ function StageIntake({
             />
           </div>
         ) : null}
+      </div>
       </div>
     </div>
   );
