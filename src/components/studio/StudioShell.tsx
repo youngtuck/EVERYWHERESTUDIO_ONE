@@ -560,12 +560,10 @@ function ReedPanel() {
             return (
               <div key={i} style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "flex-start" }}>
                 <div style={{
-                  width: 22, height: 22, borderRadius: 7,
-                  background: "rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.22)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
+                  display: "flex", alignItems: "flex-start", justifyContent: "center",
+                  flexShrink: 0, width: 24, paddingTop: 1,
                 }}>
-                  <ReedProfileIcon size={14} title="Reed" />
+                  <ReedProfileIcon size={18} title="Reed" />
                 </div>
                 <div style={{
                   background: "rgba(74,144,217,0.06)", border: "1px solid rgba(74,144,217,0.2)",

@@ -160,38 +160,50 @@ export function BrandDNAChat({ userName, onComplete, onAnalyzeStart }: BrandDNAC
               marginBottom: 20,
             }}
           >
-            <div
-              style={{
-                maxWidth: m.role === "user" ? 400 : 480,
-                background: m.role === "user" ? "rgba(255,255,255,0.08)" : "transparent",
-                borderRadius: m.role === "user" ? "16px 16px 4px 16px" : 0,
-                padding: m.role === "user" ? "12px 18px" : 0,
-                fontFamily: "'Afacad Flux', sans-serif",
-                fontSize: 15,
-                color: "rgba(255,255,255,0.85)",
-                lineHeight: 1.6,
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {m.role === "assistant" && (
+            {m.role === "assistant" ? (
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start", maxWidth: 480 }}>
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: "rgba(74,144,217,0.12)",
-                    border: "1px solid rgba(74,144,217,0.22)",
-                    marginBottom: 8,
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     justifyContent: "center",
+                    flexShrink: 0,
+                    width: 32,
+                    paddingTop: 2,
                   }}
                 >
-                  <ReedProfileIcon size={18} title="Reed" />
+                  <ReedProfileIcon size={24} title="Reed" />
                 </div>
-              )}
-              {m.content}
-            </div>
+                <div
+                  style={{
+                    fontFamily: "'Afacad Flux', sans-serif",
+                    fontSize: 15,
+                    color: "rgba(255,255,255,0.85)",
+                    lineHeight: 1.6,
+                    whiteSpace: "pre-wrap",
+                    minWidth: 0,
+                  }}
+                >
+                  {m.content}
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  maxWidth: 400,
+                  background: "rgba(255,255,255,0.08)",
+                  borderRadius: "16px 16px 4px 16px",
+                  padding: "12px 18px",
+                  fontFamily: "'Afacad Flux', sans-serif",
+                  fontSize: 15,
+                  color: "rgba(255,255,255,0.85)",
+                  lineHeight: 1.6,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {m.content}
+              </div>
+            )}
           </div>
         ))}
         <div ref={bottomRef} />

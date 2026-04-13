@@ -263,11 +263,10 @@ export default function Templates() {
               <div className="liquid-glass-card" style={{ padding: "20px 18px", borderRadius: 14 }}>
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <div style={{
-                    width: 36, height: 36, borderRadius: 12,
-                    background: "rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.25)",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    display: "flex", alignItems: "flex-start", justifyContent: "center",
+                    flexShrink: 0, width: 36, paddingTop: 2,
                   }}>
-                    <ReedProfileIcon size={18} title="Reed" />
+                    <ReedProfileIcon size={24} title="Reed" />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "var(--fg-3)", marginBottom: 6 }}>Reed</div>

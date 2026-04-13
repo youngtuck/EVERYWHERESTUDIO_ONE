@@ -1223,14 +1223,17 @@ function StageIntake({
 
 function ReedAvatar() {
   return (
-    <div style={{
-      width: 28, height: 28, borderRadius: 9,
-      background: "linear-gradient(145deg, rgba(74,144,217,0.14) 0%, rgba(74,144,217,0.05) 100%)",
-      border: "1px solid rgba(74,144,217,0.24)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      flexShrink: 0, marginTop: 2,
-    }}>
-      <ReedProfileIcon size={17} title="Reed" />
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "center",
+        flexShrink: 0,
+        marginTop: 2,
+        width: 32,
+      }}
+    >
+      <ReedProfileIcon size={26} title="Reed" />
     </div>
   );
 }
@@ -1324,11 +1327,14 @@ function ChatBubble({ role, text, userInitials, isChallenge }: { role: "reed" | 
             <p>{text}</p>
           </div>
           <div style={{
-            width: 26, height: 26, borderRadius: "50%",
-            background: "rgba(245,198,66,0.15)",
-            border: "1px solid rgba(245,198,66,0.3)",
+            width: 28, height: 28, borderRadius: "50%",
+            background: "linear-gradient(165deg, #D4AE4A 0%, #B8892E 55%, #9A7224 100%)",
+            border: "1px solid rgba(12, 26, 41, 0.22)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 9, fontWeight: 700, color: "var(--gold)",
+            fontSize: 10, fontWeight: 700, color: "#FFFBF5",
+            letterSpacing: "-0.03em",
+            textShadow: "0 0.5px 0 rgba(12, 26, 41, 0.35)",
             flexShrink: 0, marginTop: 2,
           }}>{userInitials || "U"}</div>
         </>

@@ -230,18 +230,15 @@ export function VoiceInterviewChat({ onComplete, onCancel }: VoiceInterviewChatP
               >
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: "rgba(74,144,217,0.12)",
-                    border: "1px solid rgba(74,144,217,0.22)",
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     justifyContent: "center",
                     flexShrink: 0,
+                    width: 32,
+                    paddingTop: 2,
                   }}
                 >
-                  <ReedProfileIcon size={18} title="Reed" />
+                  <ReedProfileIcon size={24} title="Reed" />
                 </div>
                 <div
                   style={{
