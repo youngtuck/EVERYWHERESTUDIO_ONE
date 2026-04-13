@@ -23,6 +23,30 @@ function pickRecorderMime(): string {
   return "audio/webm";
 }
 
+/** Combine Whisper output with browser SR (API often drops the tail on long clips). */
+function mergeTranscriptSources(api: string, local: string): string {
+  const a = api.replace(/\s+/g, " ").trim();
+  const l = local.replace(/\s+/g, " ").trim();
+  if (!a) return l;
+  if (!l) return a;
+  const aL = a.toLowerCase();
+  const lL = l.toLowerCase();
+  if (lL === aL) return a;
+  if (lL.startsWith(aL)) return l;
+  if (aL.startsWith(lL)) return a;
+
+  const aw = a.split(/\s+/).filter(Boolean);
+  const lw = l.split(/\s+/).filter(Boolean);
+  let shared = 0;
+  const max = Math.min(aw.length, lw.length);
+  while (shared < max && aw[shared].toLowerCase() === lw[shared].toLowerCase()) shared += 1;
+  if (shared >= 6 && lw.length > aw.length) {
+    return `${aw.join(" ")} ${lw.slice(shared).join(" ")}`.replace(/\s+/g, " ").trim();
+  }
+
+  return a.length >= l.length ? a : l;
+}
+
 /**
  * Hold pointer on mic: MediaRecorder captures audio; optional parallel Web Speech for local fallback.
  * Release: stop, transcribe via /api/transcribe when configured, else use browser recognition text.
@@ -41,31 +65,53 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
   const finishingRef = useRef(false);
   const micAborterRef = useRef<AbortController | null>(null);
   const holdSessionRef = useRef(false);
+  /** False while tearing down so Web Speech onend does not start a new session. */
+  const wantSpeechRecognitionRef = useRef(false);
+  const startSpeechRecognitionRef = useRef<(opts?: { preserveAccumulated?: boolean }) => void>(() => {});
 
-  const stopSpeechRecognition = useCallback(() => {
-    const r = recognitionRef.current as any;
-    recognitionRef.current = null;
-    if (!r) return;
-    try {
-      r.onresult = null;
-      r.onerror = null;
-      r.onend = null;
-      r.stop();
-    } catch {
+  /** Let Web Speech deliver final / interim results before we drop handlers (clearing onresult first loses tail words). */
+  const drainSpeechRecognition = useCallback((): Promise<void> => {
+    return new Promise(resolve => {
+      const r = recognitionRef.current as any;
+      if (!r) {
+        resolve();
+        return;
+      }
+      recognitionRef.current = null;
+      const finish = () => {
+        try {
+          r.onresult = null;
+          r.onerror = null;
+          r.onend = null;
+        } catch { /* ignore */ }
+        resolve();
+      };
+      const t = window.setTimeout(finish, 2200);
+      const wrapUp = () => {
+        window.clearTimeout(t);
+        finish();
+      };
+      r.onend = wrapUp;
+      r.onerror = wrapUp;
       try {
-        r.abort();
-      } catch { /* ignore */ }
-    }
+        r.stop();
+      } catch {
+        window.clearTimeout(t);
+        finish();
+      }
+    });
   }, []);
 
-  const startSpeechRecognition = useCallback(() => {
+  const startSpeechRecognition = useCallback((opts?: { preserveAccumulated?: boolean }) => {
     if (typeof window === "undefined") return;
     const SR = (window as unknown as { SpeechRecognition?: new () => any; webkitSpeechRecognition?: new () => any })
       .SpeechRecognition || (window as unknown as { webkitSpeechRecognition?: new () => any }).webkitSpeechRecognition;
     if (!SR) return;
 
-    srFinalRef.current = "";
-    srInterimRef.current = "";
+    if (!opts?.preserveAccumulated) {
+      srFinalRef.current = "";
+      srInterimRef.current = "";
+    }
     const rec = new SR();
     rec.continuous = true;
     rec.interimResults = true;
@@ -73,18 +119,30 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
 
     rec.onresult = (event: any) => {
       let newFinal = "";
-      let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const row = event.results[i];
         if (row.isFinal) newFinal += row[0]?.transcript || "";
-        else interim += row[0]?.transcript || "";
       }
       if (newFinal) srFinalRef.current += newFinal;
-      srInterimRef.current = interim;
+      let fullInterim = "";
+      for (let i = 0; i < event.results.length; i++) {
+        const row = event.results[i];
+        if (!row.isFinal) fullInterim += row[0]?.transcript || "";
+      }
+      srInterimRef.current = fullInterim;
     };
 
     rec.onerror = () => {};
-    rec.onend = () => {};
+    rec.onend = () => {
+      if (!wantSpeechRecognitionRef.current) return;
+      if (mediaRecorderRef.current?.state !== "recording") return;
+      queueMicrotask(() => {
+        if (!wantSpeechRecognitionRef.current || mediaRecorderRef.current?.state !== "recording") return;
+        try {
+          startSpeechRecognitionRef.current({ preserveAccumulated: true });
+        } catch { /* ignore */ }
+      });
+    };
 
     try {
       rec.start();
@@ -93,6 +151,8 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
       recognitionRef.current = null;
     }
   }, []);
+
+  startSpeechRecognitionRef.current = startSpeechRecognition;
 
   const cleanupStream = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -115,9 +175,10 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
     }
 
     finishingRef.current = true;
-    stopSpeechRecognition();
+    wantSpeechRecognitionRef.current = false;
 
     if (!mr || mr.state === "inactive") {
+      await drainSpeechRecognition();
       cleanupStream();
       const local = (srFinalRef.current + srInterimRef.current).replace(/\s+/g, " ").trim();
       if (local) onAppendText(local);
@@ -125,6 +186,12 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
       holdSessionRef.current = false;
       return;
     }
+
+    try {
+      if (typeof (mr as MediaRecorder & { requestData?: () => void }).requestData === "function") {
+        (mr as MediaRecorder & { requestData: () => void }).requestData();
+      }
+    } catch { /* ignore */ }
 
     await new Promise<void>(resolve => {
       mr.addEventListener("stop", () => resolve(), { once: true });
@@ -135,6 +202,11 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
       }
     });
 
+    await new Promise<void>(r => {
+      window.setTimeout(r, 160);
+    });
+
+    await drainSpeechRecognition();
     cleanupStream();
 
     const blob = new Blob(chunksRef.current, { type: mimeRef.current });
@@ -168,7 +240,7 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
         fromApi = (j.text || "").trim();
       }
 
-      const out = fromApi || speechLocal;
+      const out = mergeTranscriptSources(fromApi, speechLocal);
       if (out) onAppendText(out);
     } catch {
       if (speechLocal) onAppendText(speechLocal);
@@ -177,7 +249,7 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
       finishingRef.current = false;
       holdSessionRef.current = false;
     }
-  }, [cleanupStream, onAppendText, stopSpeechRecognition]);
+  }, [cleanupStream, drainSpeechRecognition, onAppendText]);
 
   const onPointerDown = useCallback(async (e: React.PointerEvent) => {
     if (e.button !== 0) return;
@@ -215,6 +287,7 @@ export function useHoldToTranscribe(onAppendText: (text: string) => void) {
       mr.start(200);
       pointerDownRef.current = true;
       setRecording(true);
+      wantSpeechRecognitionRef.current = true;
       startSpeechRecognition();
     } catch {
       setRecording(false);
