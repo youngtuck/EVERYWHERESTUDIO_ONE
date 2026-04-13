@@ -45,6 +45,24 @@ import "./shared.css";
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
 
+/** Intake → Outline: fade main content only; docked composer stays fixed. */
+const IO_INTAKE_FADE_MS = 200;
+const IO_OUTLINE_ENTER_MS = 300;
+const IO_OUTLINE_ENTER_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+/** Same wrapper as StageIntake active chat so Outline matches Intake. */
+const INTAKE_DOCKED_COMPOSER_WRAP = {
+  display: "flex",
+  flexDirection: "column",
+  padding: "8px clamp(12px, 4vw, 24px) max(12px, env(safe-area-inset-bottom))",
+  background: "transparent",
+  flexShrink: 0,
+  zIndex: 10,
+  width: "100%",
+  minWidth: 0,
+  boxSizing: "border-box" as const,
+};
+
 /** Build attachment block for Intake messages (shared with composer queue + send). */
 async function formatIntakeFileAttachments(fileArr: File[]): Promise<string> {
   const TEXT_EXTS = [".txt", ".md", ".csv", ".json", ".html", ".xml", ".yml", ".yaml"];
@@ -941,10 +959,20 @@ function ReviewDash({
 // STAGE: INTAKE
 // ─────────────────────────────────────────────────────────────────────────────
 
+type IntakeDockedComposerProps = {
+  value: string;
+  onChange: (v: string) => void;
+  pendingFiles: File[];
+  onAddPendingFiles: (files: FileList) => void;
+  onRemovePendingFile: (index: number) => void;
+  onSend: () => void;
+};
+
 function StageIntake({
   messages, onSend, sending, isReady, onAdvance, userInitials, firstName,
   serializeSessionFiles, onCommitAttachedFiles, onNewSession,
   composerSeed, onConsumeComposerSeed,
+  dockedComposer,
 }: {
   messages: ChatMessage[]; onSend: (text: string) => void | Promise<void>;
   sending: boolean; isReady: boolean; onAdvance: () => void; userInitials?: string; firstName?: string;
@@ -953,9 +981,15 @@ function StageIntake({
   onNewSession?: () => void;
   composerSeed?: string | null;
   onConsumeComposerSeed?: () => void;
+  /** When set (active intake with docked shell), the parent renders ChatInputBar; this instance omits it. */
+  dockedComposer?: IntakeDockedComposerProps | null;
 }) {
-  const [input, setInput] = useState("");
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [internalInput, setInternalInput] = useState("");
+  const [internalPendingFiles, setInternalPendingFiles] = useState<File[]>([]);
+  const useDockedComposer = Boolean(dockedComposer);
+  const input = useDockedComposer ? dockedComposer!.value : internalInput;
+  const setInput = useDockedComposer ? dockedComposer!.onChange : setInternalInput;
+  const pendingFiles = useDockedComposer ? dockedComposer!.pendingFiles : internalPendingFiles;
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobile();
@@ -998,10 +1032,24 @@ function StageIntake({
     if (composerSeed == null || composerSeed === "") return;
     setInput(composerSeed);
     onConsumeComposerSeed?.();
-  }, [composerSeed, onConsumeComposerSeed]);
+  }, [composerSeed, setInput, onConsumeComposerSeed]);
+
+  const handleAddPendingFiles = useCallback((files: FileList) => {
+    if (useDockedComposer) dockedComposer!.onAddPendingFiles(files);
+    else setInternalPendingFiles(prev => [...prev, ...Array.from(files)]);
+  }, [useDockedComposer, dockedComposer]);
+
+  const handleRemovePendingFile = useCallback((idx: number) => {
+    if (useDockedComposer) dockedComposer!.onRemovePendingFile(idx);
+    else setInternalPendingFiles(prev => prev.filter((_, i) => i !== idx));
+  }, [useDockedComposer, dockedComposer]);
 
   const handleSend = () => {
     if (sending) return;
+    if (useDockedComposer) {
+      dockedComposer!.onSend();
+      return;
+    }
     void (async () => {
       const trimmed = input.trim();
       if (!trimmed && pendingFiles.length === 0) return;
@@ -1021,8 +1069,8 @@ function StageIntake({
       if (filesSnapshot.length > 0) {
         onCommitAttachedFiles?.(filesSnapshot);
       }
-      setInput("");
-      setPendingFiles([]);
+      setInternalInput("");
+      setInternalPendingFiles([]);
       await onSend(parts.join("\n\n"));
     })();
   };
@@ -1062,8 +1110,8 @@ function StageIntake({
               disabled={sending}
               autoFocus
               pendingFiles={pendingFiles}
-              onAddPendingFiles={files => setPendingFiles(prev => [...prev, ...Array.from(files)])}
-              onRemovePendingFile={idx => setPendingFiles(prev => prev.filter((_, i) => i !== idx))}
+              onAddPendingFiles={handleAddPendingFiles}
+              onRemovePendingFile={handleRemovePendingFile}
             />
           </div>
 
@@ -1191,20 +1239,21 @@ function StageIntake({
           </div>
         </div>
 
-        {/* Input bar */}
-        <div style={{ display: "flex", flexDirection: "column", padding: "8px clamp(12px, 4vw, 24px) max(12px, env(safe-area-inset-bottom))", background: "transparent", flexShrink: 0, zIndex: 10, width: "100%", minWidth: 0, boxSizing: "border-box" as const }}>
-          <ChatInputBar
-            placeholder="What's on your mind?"
-            value={input}
-            onChange={setInput}
-            onSend={handleSend}
-            disabled={sending}
-            autoFocus
-            pendingFiles={pendingFiles}
-            onAddPendingFiles={files => setPendingFiles(prev => [...prev, ...Array.from(files)])}
-            onRemovePendingFile={idx => setPendingFiles(prev => prev.filter((_, i) => i !== idx))}
-          />
-        </div>
+        {!useDockedComposer ? (
+          <div style={INTAKE_DOCKED_COMPOSER_WRAP}>
+            <ChatInputBar
+              placeholder="What's on your mind?"
+              value={input}
+              onChange={setInput}
+              onSend={handleSend}
+              disabled={sending}
+              autoFocus
+              pendingFiles={pendingFiles}
+              onAddPendingFiles={handleAddPendingFiles}
+              onRemovePendingFile={handleRemovePendingFile}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -1593,18 +1642,8 @@ function ChatInputBar({
 // STAGE: OUTLINE
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StageOutline({
-  outlineRows, onUpdateRow, onAdvance, building, angles, currentAngle, onSelectAngle,
-  catalogOutputTypeId, onCatalogOutputTypeChange,
-}: {
-  outlineRows: OutlineRow[]; onUpdateRow: (i: number, v: string) => void;
-  onAdvance: () => void; building: boolean;
-  angles?: { a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null;
-  currentAngle?: "a" | "b";
-  onSelectAngle?: (angle: "a" | "b") => void;
-  catalogOutputTypeId: string | null;
-  onCatalogOutputTypeChange: (typeId: string) => void;
-}) {
+/** Legacy single-line + mic strip when Outline is not using the shared docked ChatInputBar. */
+function OutlineStageComposer() {
   const [input, setInput] = useState("");
   const inputRef = useRef(input);
   inputRef.current = input;
@@ -1627,6 +1666,74 @@ function StageOutline({
     micHandlers: outlineMicHandlers,
   } = useHoldToTranscribe(appendOutlineTranscript);
 
+  return (
+    <div style={{
+      borderTop: "1px solid var(--glass-border)",
+      flexShrink: 0, background: "var(--glass-topbar)",
+      backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
+      width: "100%", minWidth: 0, boxSizing: "border-box" as const,
+    }}>
+      <div
+        className="work-stage-content-column"
+        style={{
+          padding: "8px clamp(10px, 3vw, 14px) max(10px, env(safe-area-inset-bottom))",
+          display: "flex", flexDirection: "column", gap: 4,
+        }}
+      >
+        {(outlineRecording || outlineTranscribing) && (
+          <div
+            role="status"
+            style={{
+              fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" as const,
+              color: outlineTranscribing ? "var(--fg-3)" : "#C24141",
+              paddingLeft: 2,
+            }}
+          >
+            {outlineTranscribing ? "Transcribing" : "Recording"}
+          </div>
+        )}
+        <div className="work-chat-input-row">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Ask Reed to restructure, or click a section label to compare angles..."
+            style={{
+              flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" as const,
+              background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10,
+              padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36,
+              backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
+            }}
+            onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
+            onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
+          />
+          <IaBtn
+            title="Hold to speak, release to insert text"
+            active={outlineRecording || outlineTranscribing}
+            onClick={e => e.preventDefault()}
+            {...outlineMicHandlers}
+          >
+            <MicIcon />
+          </IaBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StageOutline({
+  outlineRows, onUpdateRow, onAdvance, building, angles, currentAngle, onSelectAngle,
+  catalogOutputTypeId, onCatalogOutputTypeChange,
+  omitBottomComposer = false,
+}: {
+  outlineRows: OutlineRow[]; onUpdateRow: (i: number, v: string) => void;
+  onAdvance: () => void; building: boolean;
+  angles?: { a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null;
+  currentAngle?: "a" | "b";
+  onSelectAngle?: (angle: "a" | "b") => void;
+  catalogOutputTypeId: string | null;
+  onCatalogOutputTypeChange: (typeId: string) => void;
+  omitBottomComposer?: boolean;
+}) {
   const activeAngle = currentAngle || "a";
 
   const lensA = {
@@ -1734,56 +1841,7 @@ function StageOutline({
         )}
       </div>
 
-      <div style={{
-        borderTop: "1px solid var(--glass-border)",
-        flexShrink: 0, background: "var(--glass-topbar)",
-        backdropFilter: "var(--glass-blur)", WebkitBackdropFilter: "var(--glass-blur)",
-        width: "100%", minWidth: 0, boxSizing: "border-box" as const,
-      }}>
-        <div
-          className="work-stage-content-column"
-          style={{
-            padding: "8px clamp(10px, 3vw, 14px) max(10px, env(safe-area-inset-bottom))",
-            display: "flex", flexDirection: "column", gap: 4,
-          }}
-        >
-          {(outlineRecording || outlineTranscribing) && (
-            <div
-              role="status"
-              style={{
-                fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" as const,
-                color: outlineTranscribing ? "var(--fg-3)" : "#C24141",
-                paddingLeft: 2,
-              }}
-            >
-              {outlineTranscribing ? "Transcribing" : "Recording"}
-            </div>
-          )}
-          <div className="work-chat-input-row">
-            <input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder="Ask Reed to restructure, or click a section label to compare angles..."
-              style={{
-                flex: "1 1 0%", minWidth: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" as const,
-                background: "var(--glass-input)", border: "1px solid var(--glass-border)", borderRadius: 10,
-                padding: "0 12px", fontSize: 12, color: "var(--fg)", fontFamily: FONT, outline: "none", height: 36,
-                backdropFilter: "var(--glass-blur-light)", WebkitBackdropFilter: "var(--glass-blur-light)",
-              }}
-              onFocus={e => { e.target.style.borderColor = "rgba(245,198,66,0.4)"; }}
-              onBlur={e => { e.target.style.borderColor = "var(--glass-border)"; }}
-            />
-            <IaBtn
-              title="Hold to speak, release to insert text"
-              active={outlineRecording || outlineTranscribing}
-              onClick={e => e.preventDefault()}
-              {...outlineMicHandlers}
-            >
-              <MicIcon />
-            </IaBtn>
-          </div>
-        </div>
-      </div>
+      {!omitBottomComposer ? <OutlineStageComposer /> : null}
     </div>
   );
 }
@@ -2969,6 +3027,16 @@ export default function WorkSession() {
   const [outlineAngles, setOutlineAngles] = useState<{ a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null>(null);
   const [selectedAngle, setSelectedAngle] = useState<"a" | "b">("a");
   const [buildingOutline, setBuildingOutline] = useState(false);
+  const outlineBuildLockRef = useRef(false);
+  /** Shared docked composer (Intake active + Outline) so the bar does not jump on stage change. */
+  const [intakeBarInput, setIntakeBarInput] = useState("");
+  const [intakeBarPendingFiles, setIntakeBarPendingFiles] = useState<File[]>([]);
+  const [outlineBarInput, setOutlineBarInput] = useState("");
+  const [outlineBarPendingFiles, setOutlineBarPendingFiles] = useState<File[]>([]);
+  /** 0 idle, 1 intake main fading out, 2 outline main (enter animation until cleared). */
+  const [ioTransitionStep, setIoTransitionStep] = useState(0);
+  const [intakeMainFadeOut, setIntakeMainFadeOut] = useState(false);
+  const [outlineEnterActive, setOutlineEnterActive] = useState(false);
 
   // ── Edit ─────────────────────────────────────────────────────
   const [draft, setDraft] = useState(persisted?.generatedContent || "");
@@ -3079,6 +3147,34 @@ export default function WorkSession() {
   const goToStage = useCallback((s: WorkStage) => {
     setStage(s);
   }, []);
+
+  useLayoutEffect(() => {
+    if (ioTransitionStep !== 1) return;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIntakeMainFadeOut(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [ioTransitionStep]);
+
+  useEffect(() => {
+    if (stage !== "Outline" || ioTransitionStep !== 2) return;
+    if (buildingOutline) return;
+    setOutlineEnterActive(false);
+    let cancelled = false;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!cancelled) setOutlineEnterActive(true);
+      });
+    });
+    const t = window.setTimeout(() => {
+      if (!cancelled) setIoTransitionStep(0);
+    }, IO_OUTLINE_ENTER_MS + 60);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(id);
+      window.clearTimeout(t);
+    };
+  }, [stage, buildingOutline, ioTransitionStep]);
 
   const handleCatalogOutputTypeChange = useCallback((id: string) => {
     setOutputType(id);
@@ -3363,74 +3459,117 @@ export default function WorkSession() {
     }
   }, [messages, selectedFormats, voiceDnaMd, user?.id, outputType, intakeReady]);
 
+  const handleIntakeBarSend = useCallback(() => {
+    if (intakeSending) return;
+    void (async () => {
+      const trimmed = intakeBarInput.trim();
+      if (!trimmed && intakeBarPendingFiles.length === 0) return;
+      const parts: string[] = [];
+      if (trimmed) parts.push(trimmed);
+      const filesSnapshot = [...intakeBarPendingFiles];
+      if (filesSnapshot.length > 0) {
+        const fileBlock = await formatIntakeFileAttachments(filesSnapshot);
+        if (fileBlock) {
+          parts.push(`I've attached the following for this session:\n\n${fileBlock}`);
+        }
+      }
+      if (parts.length === 0) return;
+      if (filesSnapshot.length > 0) {
+        setSessionFiles(prev => [...prev, ...filesSnapshot.map(f => f.name)]);
+      }
+      setIntakeBarInput("");
+      setIntakeBarPendingFiles([]);
+      await handleIntakeSend(parts.join("\n\n"));
+    })();
+  }, [intakeSending, intakeBarInput, intakeBarPendingFiles, handleIntakeSend]);
+
+  const handleOutlineBarSend = useCallback(() => {}, []);
+
   // ── INTAKE → OUTLINE: Build outline from conversation ─────────
-  const handleBuildOutline = useCallback(async () => {
-    goToStage("Outline");
+  const handleBuildOutline = useCallback(() => {
+    if (outlineBuildLockRef.current) return;
+    outlineBuildLockRef.current = true;
+    setIntakeMainFadeOut(false);
+    setIoTransitionStep(1);
     setBuildingOutline(true);
 
-    try {
-      const ot = outputType || (selectedFormats.length > 0
-        ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle"
-        : "freestyle");
+    const buildPromise = (async () => {
+      try {
+        const ot = outputType || (selectedFormats.length > 0
+          ? FORMAT_TO_OUTPUT_TYPE[selectedFormats[0]] || "freestyle"
+          : "freestyle");
 
-      const res = await fetchWithRetry(`${API_BASE}/api/outline`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
-          userId: user?.id,
-          outputType: ot,
-        }),
-      });
+        const res = await fetchWithRetry(`${API_BASE}/api/outline`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: messages.map(m => ({ role: m.role, content: m.content })),
+            userId: user?.id,
+            outputType: ot,
+          }),
+        });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Outline API returned ${res.status}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Outline API returned ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        const mapRows = (rows: Array<{ label: string; content: string; indent?: boolean }>): OutlineRow[] =>
+          rows.map(r => ({ label: r.label || "", content: r.content || "", ...(r.indent ? { indent: true } : {}) }));
+
+        const angleA = mapRows(data.angleA.rows);
+        const angleB = mapRows(data.angleB.rows);
+
+        setOutlineAngles({
+          a: angleA,
+          b: angleB,
+          aMeta: { name: data.angleA.name, description: data.angleA.description },
+          bMeta: { name: data.angleB.name, description: data.angleB.description },
+        });
+        setSelectedAngle("a");
+        setOutlineRows(angleA);
+      } catch (err: unknown) {
+        console.error("[handleBuildOutline]", err);
+        toast?.("Outline generation failed. Using fallback.", "error");
+
+        const userMsgs = messages.filter(m => m.role === "user").map(m => m.content);
+        const firstMsg = userMsgs.find(m => m.length > 20) || userMsgs[0] || "Untitled piece";
+        const fallbackTitle = firstMsg.length > 80 ? firstMsg.slice(0, 77) + "..." : firstMsg;
+
+        const fallback: OutlineRow[] = [
+          { label: "Title", content: fallbackTitle },
+          { label: "Hook", content: "Opening that earns the read" },
+          { label: "Body", content: "Core argument" },
+          { label: "Stakes", content: "Why this matters now" },
+          { label: "Close", content: "Landing" },
+        ];
+        setOutlineAngles({
+          a: fallback,
+          b: fallback,
+          aMeta: { name: "Draft Outline", description: "Fallback outline. Edit freely." },
+          bMeta: { name: "Draft Outline", description: "Fallback outline. Edit freely." },
+        });
+        setSelectedAngle("a");
+        setOutlineRows(fallback);
+      } finally {
+        setBuildingOutline(false);
       }
+    })();
 
-      const data = await res.json();
-
-      const mapRows = (rows: Array<{ label: string; content: string; indent?: boolean }>): OutlineRow[] =>
-        rows.map(r => ({ label: r.label || "", content: r.content || "", ...(r.indent ? { indent: true } : {}) }));
-
-      const angleA = mapRows(data.angleA.rows);
-      const angleB = mapRows(data.angleB.rows);
-
-      setOutlineAngles({
-        a: angleA,
-        b: angleB,
-        aMeta: { name: data.angleA.name, description: data.angleA.description },
-        bMeta: { name: data.angleB.name, description: data.angleB.description },
-      });
-      setSelectedAngle("a");
-      setOutlineRows(angleA);
-    } catch (err: any) {
-      console.error("[handleBuildOutline]", err);
-      toast?.("Outline generation failed. Using fallback.", "error");
-
-      // Fallback: minimal outline from user's first message
-      const userMsgs = messages.filter(m => m.role === "user").map(m => m.content);
-      const firstMsg = userMsgs.find(m => m.length > 20) || userMsgs[0] || "Untitled piece";
-      const fallbackTitle = firstMsg.length > 80 ? firstMsg.slice(0, 77) + "..." : firstMsg;
-
-      const fallback: OutlineRow[] = [
-        { label: "Title", content: fallbackTitle },
-        { label: "Hook", content: "Opening that earns the read" },
-        { label: "Body", content: "Core argument" },
-        { label: "Stakes", content: "Why this matters now" },
-        { label: "Close", content: "Landing" },
-      ];
-      setOutlineAngles({
-        a: fallback,
-        b: fallback,
-        aMeta: { name: "Draft Outline", description: "Fallback outline. Edit freely." },
-        bMeta: { name: "Draft Outline", description: "Fallback outline. Edit freely." },
-      });
-      setSelectedAngle("a");
-      setOutlineRows(fallback);
-    } finally {
-      setBuildingOutline(false);
-    }
+    void (async () => {
+      try {
+        await new Promise<void>(resolve => { window.setTimeout(resolve, IO_INTAKE_FADE_MS); });
+        goToStage("Outline");
+        setIntakeMainFadeOut(false);
+        setOutlineEnterActive(false);
+        setIoTransitionStep(2);
+        await buildPromise;
+      } finally {
+        outlineBuildLockRef.current = false;
+      }
+    })();
   }, [messages, selectedFormats, goToStage, outputType, user?.id, toast]);
 
   // ── BACKGROUND: Silent quality check after draft generation (Redesign 2) ──
@@ -3559,6 +3698,9 @@ export default function WorkSession() {
   // ── OUTLINE → EDIT: Generate draft ───────────────────────────
   const runGenerateDraftFromOutline = useCallback(async () => {
     goToStage("Edit");
+    setIoTransitionStep(0);
+    setIntakeMainFadeOut(false);
+    setOutlineEnterActive(false);
     setGenerating(true);
     setGeneratingLabel("Generating draft...");
     setDraft("");
@@ -4277,6 +4419,14 @@ export default function WorkSession() {
     setIntakeComposerSeed(null);
     setMessages([{ role: "reed", content: "Good to see you. What are you working on?" }]);
     setStage("Intake");
+    setIntakeBarInput("");
+    setIntakeBarPendingFiles([]);
+    setOutlineBarInput("");
+    setOutlineBarPendingFiles([]);
+    setIoTransitionStep(0);
+    setIntakeMainFadeOut(false);
+    setOutlineEnterActive(false);
+    outlineBuildLockRef.current = false;
     setIntakeSending(false);
     setIntakeReady(false);
     setReadySummary("");
@@ -4866,6 +5016,52 @@ export default function WorkSession() {
   // RENDER
   // ─────────────────────────────────────────────────────────────
 
+  const hasUserMessage = messages.some(m => m.role === "user");
+  const dockIntakeOutlineShell = (stage === "Intake" && hasUserMessage) || stage === "Outline";
+  const showOutlineBridgeLoading = stage === "Outline" && buildingOutline && ioTransitionStep === 2;
+  const showOutlineMain = stage === "Outline" && !(buildingOutline && ioTransitionStep === 2);
+  const outlineMotionOuter = {
+    ...(ioTransitionStep === 2
+      ? {
+          position: "absolute" as const,
+          inset: 0,
+          opacity: outlineEnterActive ? 1 : 0,
+          transform: outlineEnterActive ? "translateY(0)" : "translateY(8px)",
+          transition: `opacity ${IO_OUTLINE_ENTER_MS}ms ${IO_OUTLINE_ENTER_EASE}, transform ${IO_OUTLINE_ENTER_MS}ms ${IO_OUTLINE_ENTER_EASE}`,
+        }
+      : {
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column" as const,
+          overflow: "hidden",
+          opacity: 1,
+          transform: "none" as const,
+        }),
+  };
+  const intakeMainFadeWrap = {
+    position: "absolute" as const,
+    inset: 0,
+    display: "flex",
+    flexDirection: "column" as const,
+    minHeight: 0,
+    opacity: intakeMainFadeOut ? 0 : 1,
+    transition: ioTransitionStep === 1 ? `opacity ${IO_INTAKE_FADE_MS}ms ease` : "none",
+  };
+
+  const intakeDocked = {
+    value: intakeBarInput,
+    onChange: setIntakeBarInput,
+    pendingFiles: intakeBarPendingFiles,
+    onAddPendingFiles: (files: FileList) => {
+      setIntakeBarPendingFiles(prev => [...prev, ...Array.from(files)]);
+    },
+    onRemovePendingFile: (idx: number) => {
+      setIntakeBarPendingFiles(prev => prev.filter((_, i) => i !== idx));
+    },
+    onSend: handleIntakeBarSend,
+  };
+
   return (
     <div style={{
       height: "100%",
@@ -4881,7 +5077,7 @@ export default function WorkSession() {
         flexDirection: "column",
         overflow: "hidden",
       }}>
-      {stage === "Intake" && (
+      {stage === "Intake" && !hasUserMessage && (
         <StageIntake
           messages={messages}
           onSend={handleIntakeSend}
@@ -4899,101 +5095,189 @@ export default function WorkSession() {
           onConsumeComposerSeed={clearIntakeComposerSeed}
         />
       )}
-      {stage === "Outline" && (
-        <>
-          <StageOutline
-            outlineRows={outlineRows}
-            onUpdateRow={(i, v) => setOutlineRows(rows => rows.map((r, idx) => idx === i ? { ...r, content: v } : r))}
-            onAdvance={handleGenerateDraft}
-            building={buildingOutline}
-            angles={outlineAngles}
-            currentAngle={selectedAngle}
-            onSelectAngle={(angle) => {
-              setSelectedAngle(angle);
-              if (outlineAngles) {
-                setOutlineRows(angle === "a" ? [...outlineAngles.a] : [...outlineAngles.b]);
-              }
-            }}
-            catalogOutputTypeId={outputType}
-            onCatalogOutputTypeChange={handleCatalogOutputTypeChange}
-          />
-          {talkLengthModalOpen && (
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="talk-length-modal-title"
-              style={{
-                position: "fixed",
+      {dockIntakeOutlineShell && (
+        <div style={{
+          flex: 1,
+          minHeight: 0,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+        >
+          <div style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
+            {stage === "Intake" && (
+              <div style={intakeMainFadeWrap}>
+                <StageIntake
+                  messages={messages}
+                  onSend={handleIntakeSend}
+                  sending={intakeSending}
+                  isReady={intakeReady}
+                  onAdvance={handleBuildOutline}
+                  userInitials={displayName ? displayName.split(" ").map(w => w[0]).join("").slice(0, 2) : "U"}
+                  firstName={displayName ? displayName.split(" ")[0] : undefined}
+                  serializeSessionFiles={formatIntakeFileAttachments}
+                  onCommitAttachedFiles={files => {
+                    setSessionFiles(prev => [...prev, ...files.map(f => f.name)]);
+                  }}
+                  onNewSession={handleNewSession}
+                  composerSeed={intakeComposerSeed}
+                  onConsumeComposerSeed={clearIntakeComposerSeed}
+                  dockedComposer={intakeDocked}
+                />
+              </div>
+            )}
+            {showOutlineBridgeLoading && (
+              <div style={{
+                position: "absolute",
                 inset: 0,
-                zIndex: 200,
-                background: "rgba(12,26,41,0.55)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: 20,
+                flexDirection: "column",
+                minHeight: 0,
+                pointerEvents: "none",
+              }}
+              >
+                <LoadingDots label="Building outline from your conversation..." />
+              </div>
+            )}
+            {showOutlineMain && (
+              <div style={outlineMotionOuter}>
+                <StageOutline
+                  outlineRows={outlineRows}
+                  onUpdateRow={(i, v) => setOutlineRows(rows => rows.map((r, idx) => idx === i ? { ...r, content: v } : r))}
+                  onAdvance={handleGenerateDraft}
+                  building={buildingOutline}
+                  angles={outlineAngles}
+                  currentAngle={selectedAngle}
+                  onSelectAngle={(angle) => {
+                    setSelectedAngle(angle);
+                    if (outlineAngles) {
+                      setOutlineRows(angle === "a" ? [...outlineAngles.a] : [...outlineAngles.b]);
+                    }
+                  }}
+                  catalogOutputTypeId={outputType}
+                  onCatalogOutputTypeChange={handleCatalogOutputTypeChange}
+                  omitBottomComposer
+                />
+              </div>
+            )}
+          </div>
+          <div style={INTAKE_DOCKED_COMPOSER_WRAP}>
+            {stage === "Intake" && (
+              <ChatInputBar
+                placeholder="What's on your mind?"
+                value={intakeBarInput}
+                onChange={setIntakeBarInput}
+                onSend={handleIntakeBarSend}
+                disabled={intakeSending}
+                autoFocus
+                pendingFiles={intakeBarPendingFiles}
+                onAddPendingFiles={files => {
+                  setIntakeBarPendingFiles(prev => [...prev, ...Array.from(files)]);
+                }}
+                onRemovePendingFile={idx => {
+                  setIntakeBarPendingFiles(prev => prev.filter((_, i) => i !== idx));
+                }}
+              />
+            )}
+            {stage === "Outline" && (
+              <ChatInputBar
+                placeholder="Ask Reed to restructure, or click a section label to compare angles..."
+                value={outlineBarInput}
+                onChange={setOutlineBarInput}
+                onSend={handleOutlineBarSend}
+                disabled={false}
+                autoFocus={false}
+                pendingFiles={outlineBarPendingFiles}
+                onAddPendingFiles={files => {
+                  setOutlineBarPendingFiles(prev => [...prev, ...Array.from(files)]);
+                }}
+                onRemovePendingFile={idx => {
+                  setOutlineBarPendingFiles(prev => prev.filter((_, i) => i !== idx));
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+      {stage === "Outline" && talkLengthModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="talk-length-modal-title"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "rgba(12,26,41,0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+            fontFamily: FONT,
+          }}
+        >
+          <div style={{
+            width: "min(400px, 100%)",
+            borderRadius: 14,
+            padding: "22px 22px 18px",
+            background: "var(--surface, #fff)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "0 24px 48px rgba(0,0,0,0.18)",
+          }}
+          >
+            <h2
+              id="talk-length-modal-title"
+              style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "var(--fg)" }}
+            >
+              Talk length
+            </h2>
+            <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
+              How many minutes should this talk run? Wrap will target about {300} words per minute.
+            </p>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--fg-2)", marginBottom: 8 }}>
+              Duration (minutes)
+            </label>
+            <input
+              type="number"
+              min={3}
+              max={180}
+              step={1}
+              value={talkLengthDraftInput}
+              onChange={e => setTalkLengthDraftInput(e.target.value)}
+              style={{
+                width: "100%",
+                maxWidth: 120,
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--glass-border)",
+                fontSize: 15,
+                marginBottom: 18,
                 fontFamily: FONT,
               }}
-            >
-              <div style={{
-                width: "min(400px, 100%)",
-                borderRadius: 14,
-                padding: "22px 22px 18px",
-                background: "var(--surface, #fff)",
-                border: "1px solid var(--glass-border)",
-                boxShadow: "0 24px 48px rgba(0,0,0,0.18)",
-              }}>
-                <h2
-                  id="talk-length-modal-title"
-                  style={{ margin: "0 0 8px", fontSize: 17, fontWeight: 700, color: "var(--fg)" }}
-                >
-                  Talk length
-                </h2>
-                <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--fg-2)", lineHeight: 1.5 }}>
-                  How many minutes should this talk run? Wrap will target about {300} words per minute.
-                </p>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--fg-2)", marginBottom: 8 }}>
-                  Duration (minutes)
-                </label>
-                <input
-                  type="number"
-                  min={3}
-                  max={180}
-                  step={1}
-                  value={talkLengthDraftInput}
-                  onChange={e => setTalkLengthDraftInput(e.target.value)}
-                  style={{
-                    width: "100%",
-                    maxWidth: 120,
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    border: "1px solid var(--glass-border)",
-                    fontSize: 15,
-                    marginBottom: 18,
-                    fontFamily: FONT,
-                  }}
-                />
-                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                  <button
-                    type="button"
-                    className="liquid-glass-btn"
-                    onClick={() => setTalkLengthModalOpen(false)}
-                    style={{ padding: "8px 16px", fontSize: 12 }}
-                  >
-                    <span className="liquid-glass-btn-label">Cancel</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="liquid-glass-btn-gold"
-                    onClick={confirmTalkLengthAndGenerate}
-                    style={{ padding: "8px 16px", fontSize: 12 }}
-                  >
-                    <span className="liquid-glass-btn-gold-label">Continue</span>
-                  </button>
-                </div>
-              </div>
+            />
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                className="liquid-glass-btn"
+                onClick={() => setTalkLengthModalOpen(false)}
+                style={{ padding: "8px 16px", fontSize: 12 }}
+              >
+                <span className="liquid-glass-btn-label">Cancel</span>
+              </button>
+              <button
+                type="button"
+                className="liquid-glass-btn-gold"
+                onClick={confirmTalkLengthAndGenerate}
+                style={{ padding: "8px 16px", fontSize: 12 }}
+              >
+                <span className="liquid-glass-btn-gold-label">Continue</span>
+              </button>
             </div>
-          )}
-        </>
+          </div>
+        </div>
       )}
       {stage === "Edit" && (
         <StageEdit
