@@ -1,6 +1,3 @@
-/**
- * Reed mark: bust-in-silhouette side profile (same visual idea as 👤), facing right, cornflower fill.
- */
 const FILL = "#4A90D9";
 
 export function ReedProfileIcon({ size = 22, title }: { size?: number; title?: string }) {
@@ -15,9 +12,8 @@ export function ReedProfileIcon({ size = 22, title }: { size?: number; title?: s
       aria-hidden={title ? undefined : true}
     >
       {title ? <title>{title}</title> : null}
-      {/* Shoulder → back of head → crown → face/nose → chin → neck → shoulder (smooth C curves) */}
       <path
-        d="M 2.75 22.25 L 2.75 20.1 C 2.75 18.3 4.1 17.2 6 16.65 C 7.9 16.1 9.45 15.15 9.75 13.25 C 10.05 11.1 9.1 9.55 7.8 8.55 C 6.5 7.55 6.75 5.85 8.4 4.75 C 10.3 3.5 13.05 3.25 15.6 3.75 C 18.2 4.25 20.1 6.35 20.45 9.05 C 20.8 11.75 19.65 14.2 17.55 15.45 C 15.45 16.7 12.85 17 10.65 16.75 C 8.45 16.5 6.45 17.1 5.35 18.4 C 4.25 19.7 3.95 21.05 3.95 22.25 Z"
+        d="M8 3.5C10 3 13 3.5 14.5 5.5C15.5 7 15.5 8.5 15 10L16.5 11C17 11.5 17 12.5 16.5 13L15 13.5C15 15 14 16 12.5 16.5L13 18C16 18.5 19.5 19.5 20.5 20.5C21 21 21 21.5 21 22L3 22C3 21.5 3 21 3.5 20.5C4.5 19.5 8 18.5 11 18L11.5 16.5C10 16 9 15 8.5 13.5C7.5 13 7 12 7.5 11C7 9.5 6.5 7 7.5 5C7.8 4.3 8 3.8 8 3.5Z"
         fill={FILL}
       />
     </svg>
