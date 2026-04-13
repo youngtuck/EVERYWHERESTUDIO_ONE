@@ -5675,7 +5675,6 @@ export default function WorkSession() {
         }
       : {
           flex: "0 1 auto" as const,
-          minHeight: 0,
           display: "flex",
           flexDirection: "column" as const,
           overflow: "visible" as const,
@@ -5702,6 +5701,9 @@ export default function WorkSession() {
     (stage === "Intake" && ioTransitionStep === 1)
     || (stage === "Outline" && ioTransitionStep === 2);
 
+  /** Only during those transitions do we fill the viewport (flex + minHeight 0). Otherwise content height drives main scroll. */
+  const workViewportFill = dockIntakeOutlineShell && dockMainClip;
+
   const intakeDocked = {
     value: intakeBarInput,
     onChange: setIntakeBarInput,
@@ -5718,10 +5720,12 @@ export default function WorkSession() {
   return (
     <div style={{
       position: "relative",
-      minHeight: "100%",
-      height: "auto",
-      display: "flex", flexDirection: "column",
-      overflow: "visible", fontFamily: FONT,
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "visible",
+      fontFamily: FONT,
+      ...(workViewportFill ? { flex: 1, minHeight: 0, height: "100%" } : { flex: "0 1 auto" }),
     }}>
       {restorePromptRow ? (
         <div
@@ -5787,12 +5791,12 @@ export default function WorkSession() {
         </div>
       ) : null}
       <div style={{
-        flex: "1 1 auto",
-        minHeight: 0,
+        width: "100%",
         minWidth: 0,
         display: "flex",
         flexDirection: "column",
         overflow: "visible",
+        ...(workViewportFill ? { flex: 1, minHeight: 0 } : {}),
       }}>
       {stage === "Intake" && !hasUserMessage && (
         <StageIntake
@@ -5814,12 +5818,12 @@ export default function WorkSession() {
       )}
       {dockIntakeOutlineShell && (
         <div style={{
-          flex: "1 1 auto",
-          minHeight: 0,
+          width: "100%",
           minWidth: 0,
           display: "flex",
           flexDirection: "column",
           overflow: "visible",
+          ...(workViewportFill ? { flex: 1, minHeight: 0 } : { flex: "0 1 auto" }),
         }}
         >
           <div style={{
