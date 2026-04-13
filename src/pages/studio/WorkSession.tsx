@@ -1280,6 +1280,7 @@ function StageIntake({
       flexDirection: "column",
       flex: 1,
       minHeight: 0,
+      height: "100%",
       overflow: "hidden",
       width: "100%",
     }}
