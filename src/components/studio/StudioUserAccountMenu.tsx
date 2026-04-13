@@ -6,7 +6,6 @@ import { supabase } from "../../lib/supabase";
 import { APP_VERSION } from "../../lib/constants";
 
 const USER_MENU_OVERLAY_Z = 10050;
-const STUDIO_CENTER_MODAL_Z = 10100;
 
 export type StudioUserAccountMenuVariant = "topbar" | "sidebar";
 
@@ -20,7 +19,6 @@ export function StudioUserAccountMenu({
   const { user, displayName, signOut } = useAuth();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState<string | null>(null);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [menuPos, setMenuPos] = useState<
     | { kind: "topbar"; top: number; right: number }
@@ -80,19 +78,9 @@ export function StudioUserAccountMenu({
     };
   }, [open, variant]);
 
-  useEffect(() => {
-    if (!activeModal) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActiveModal(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [activeModal]);
-
   if (!user) return null;
 
   const menuItems: { label: string; action: () => void }[] = [
-    { label: "System Settings", action: () => { setActiveModal("system"); setOpen(false); } },
     { label: "Preferences", action: () => { nav("/studio/settings"); setOpen(false); } },
     ...(isAdmin
       ? [{
@@ -181,95 +169,6 @@ export function StudioUserAccountMenu({
       )
     : null;
 
-  const centerModalShell = (
-    id: string,
-    title: string,
-    rows: { label: string; value: string }[],
-  ) => (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={id}
-      onClick={() => setActiveModal(null)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: STUDIO_CENTER_MODAL_Z,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        boxSizing: "border-box",
-        background: "rgba(13,27,42,0.45)",
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        className="liquid-glass-card"
-        style={{
-          width: "min(440px, calc(100vw - 48px))",
-          maxHeight: "min(560px, calc(100vh - 48px))",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          padding: 0,
-          borderRadius: 16,
-          boxShadow: "0 24px 80px rgba(0,0,0,0.16)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "18px 22px",
-            flexShrink: 0,
-            borderBottom: "1px solid var(--line)",
-          }}
-        >
-          <span id={id} style={{ fontSize: 16, fontWeight: 600, color: "var(--fg)" }}>{title}</span>
-          <button
-            type="button"
-            onClick={() => setActiveModal(null)}
-            aria-label="Close dialog"
-            style={{ background: "none", border: "none", color: "var(--fg-3)", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 4 }}
-          >
-            ×
-          </button>
-        </div>
-        <div style={{ padding: "8px 22px 22px", overflowY: "auto", minHeight: 0 }}>
-          {rows.map(field => (
-            <div
-              key={field.label}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 16,
-                padding: "12px 0",
-                borderBottom: "1px solid var(--line)",
-              }}
-            >
-              <span style={{ fontSize: 13, color: "var(--fg-2)" }}>{field.label}</span>
-              <span style={{ fontSize: 13, color: "var(--fg)", fontWeight: 500, textAlign: "right" as const }}>{field.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const systemModalPortal = activeModal === "system" && typeof document !== "undefined"
-    ? createPortal(
-        centerModalShell("studio-system-settings-title", "System Settings", [
-          { label: "Default AI Model", value: "Claude Opus 4" },
-          { label: "Session Timeout", value: "30 minutes" },
-          { label: "Data Region", value: "US East" },
-        ]),
-        document.body,
-      )
-    : null;
-
   const avatarCircle = (
     <span
       style={{
@@ -316,7 +215,6 @@ export function StudioUserAccountMenu({
           </button>
         </div>
         {menuPortal}
-        {systemModalPortal}
       </>
     );
   }
@@ -373,7 +271,6 @@ export function StudioUserAccountMenu({
         )}
       </button>
       {menuPortal}
-      {systemModalPortal}
     </>
   );
 }

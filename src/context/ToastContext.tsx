@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 
 export type ToastType = "success" | "error" | "info";
 
@@ -30,7 +30,7 @@ const TOAST_DURATION_MS = 3800;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [nextId, setNextId] = useState(0);
+  const nextToastIdRef = useRef(0);
 
   const dismiss = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -38,12 +38,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const toast = useCallback(
     (message: string, type: ToastType = "success") => {
-      const id = nextId;
-      setNextId((n) => n + 1);
+      const id = nextToastIdRef.current;
+      nextToastIdRef.current += 1;
       setToasts((prev) => [...prev, { id, message, type }]);
       setTimeout(() => dismiss(id), TOAST_DURATION_MS);
     },
-    [nextId, dismiss]
+    [dismiss]
   );
 
   // Register global toast so non-React code can fire toasts
