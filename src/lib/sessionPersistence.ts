@@ -24,6 +24,8 @@ export interface PersistedSession {
   outputTypeId?: string | null;
   /** Minutes of spoken talk when outputTypeId is talk (Wrap and draft targets use minutes × 300 words). */
   talkDuration?: number | null;
+  /** Edit inspector: user override for draft word target (null = follow type defaults). */
+  editDraftWordTarget?: number | null;
   sessionTitle: string;
   /** User-chosen thread name. When null or empty on save, title is derived from outline or intake. */
   sessionNameOverride?: string | null;

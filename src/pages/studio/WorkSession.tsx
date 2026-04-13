@@ -53,7 +53,13 @@ import {
 } from "../../lib/editRevisionIntent";
 
 import OutputTypePicker, { OUTPUT_TYPES } from "../../components/studio/OutputTypePicker";
-import { DEFAULT_PRESENTATION_MINUTES, buildWrapConstraintSupplement, talkTargetWords } from "../../lib/wrapFormatRules";
+import {
+  DEFAULT_PRESENTATION_MINUTES,
+  buildWrapConstraintSupplement,
+  outputTypeDisplayLabel,
+  presentationTargetWords,
+  talkTargetWords,
+} from "../../lib/wrapFormatRules";
 import { ReedProfileIcon } from "../../components/studio/ReedProfileIcon";
 import "./shared.css";
 
@@ -63,6 +69,56 @@ import "./shared.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
 const FONT = "var(--font)";
+
+/** Health probe before Review wording checks (short, no retries, no global toast). */
+const STUDIO_API_HEALTH_TIMEOUT_MS = 4000;
+/** Hard cap for method-dna-lint in Review; avoids hanging spinners. */
+const METHOD_DNA_LINT_REQUEST_MS = 8000;
+
+type MethodLintInspectorError = "timeout" | "unreachable" | "failed";
+
+async function probeStudioApiReachable(apiBase: string, timeoutMs: number): Promise<boolean> {
+  const base = (apiBase || "").replace(/\/$/, "");
+  const url = base ? `${base}/api/health` : "/api/health";
+  const c = new AbortController();
+  const tid = setTimeout(() => c.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { method: "GET", signal: c.signal });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
+async function fetchWithAuthTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  let authHeaders: Record<string, string> = {};
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) authHeaders = { Authorization: `Bearer ${session.access_token}` };
+  } catch { /* ignore */ }
+  const c = new AbortController();
+  const tid = setTimeout(() => c.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...init,
+      headers: {
+        ...(init.headers && typeof init.headers === "object" && !Array.isArray(init.headers)
+          ? (init.headers as Record<string, string>)
+          : {}),
+        ...authHeaders,
+      },
+      signal: c.signal,
+    });
+  } finally {
+    clearTimeout(tid);
+  }
+}
 
 /** Match api/generate.js: oversized excerpts use full revision instead. */
 const TARGETED_EDIT_EXCERPT_MAX_CHARS = 12000;
@@ -208,6 +264,24 @@ const WORD_TARGETS: Record<string, number> = {
   meeting: 600, bio: 400, white_paper: 3000, session_brief: 600,
   freestyle: 700,
 };
+
+function clampEditWordTarget(n: number): number {
+  if (!Number.isFinite(n)) return WORD_TARGETS.freestyle;
+  return Math.min(50000, Math.max(50, Math.round(n)));
+}
+
+/** Baseline word target for Edit inspector (before user override). */
+function baselineEditWordTarget(
+  outputTypeId: string | null | undefined,
+  talkMin: number,
+  presentationMin: number,
+): number {
+  const id = (outputTypeId ?? "").trim();
+  if (!id) return WORD_TARGETS.freestyle;
+  if (id === "talk") return talkTargetWords(talkMin);
+  if (id === "presentation") return presentationTargetWords(presentationMin);
+  return WORD_TARGETS[id] ?? WORD_TARGETS.freestyle;
+}
 
 /** Pre-Wrap full-screen picker: Content, Business, Social (maps to OUTPUT_TYPES ids for Catalog / Wrap). */
 type PreWrapPickCategory = "Content" | "Business" | "Social";
@@ -500,7 +574,7 @@ function useUserDNA(userId: string | undefined) {
 
 function SendIcon() {
   return (
-    <svg style={{ width: 13, height: 13, stroke: "#fff", strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
+    <svg style={{ width: 13, height: 13, stroke: "currentColor", strokeWidth: 2.5, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }} viewBox="0 0 24 24">
       <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
     </svg>
   );
@@ -651,7 +725,7 @@ function InputBar({
         </IaBtn>
         <button
           type="button"
-          className="liquid-glass-btn-gold liquid-glass-btn-gold--square"
+          className="liquid-glass-btn liquid-glass-btn--square"
           onClick={onSend}
           disabled={disabled}
           aria-label="Send"
@@ -659,6 +733,7 @@ function InputBar({
           style={{
             cursor: disabled ? "not-allowed" : "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            opacity: disabled ? 0.45 : 1,
           }}
         >
           <SendIcon />
@@ -807,20 +882,26 @@ function deriveReviewDisplayGates(
 // ── Review dashboard ──────────────────────────────────────────
 function ReviewDash({
   pipelineRun, running, onExportAll, allExported, onRepairPipeline, fixingGate, rerunning,
+  hasMethodDna,
   methodTermHits,
   methodLintLoading,
+  methodLintInspectorError,
   methodLintLastCompletedFp,
   draftLintFp,
+  onRetryMethodLint,
 }: {
   pipelineRun: PipelineRun | null; running: boolean;
   onExportAll: () => void; allExported: boolean;
   onRepairPipeline: () => void;
   fixingGate: string | null;
   rerunning: boolean;
+  hasMethodDna: boolean;
   methodTermHits: MethodTermHit[];
   methodLintLoading: boolean;
+  methodLintInspectorError: MethodLintInspectorError | null;
   methodLintLastCompletedFp: string | null;
   draftLintFp: string;
+  onRetryMethodLint: () => void;
 }) {
   /** Internal publish readiness from pipeline; never rendered as a number. */
   const publishAggregateOk = pipelineRun?.impactScore != null && pipelineRun.impactScore.total >= 75;
@@ -933,6 +1014,63 @@ function ReviewDash({
             >
               Go back to Draft
             </button>
+          )}
+
+          {hasMethodDna && (methodLintLoading || methodLintInspectorError != null) && (
+            <div style={{ marginBottom: 12 }}>
+              {methodLintLoading ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--fg-2)", lineHeight: 1.45 }}>
+                  <span
+                    aria-hidden
+                    style={{
+                      flexShrink: 0, width: 12, height: 12, borderRadius: "50%",
+                      border: "2px solid var(--glass-border)", borderTopColor: "var(--gold-bright)",
+                      animation: "ew-method-lint-spin 0.7s linear infinite",
+                    }}
+                  />
+                  Checking...
+                </div>
+              ) : methodLintInspectorError === "timeout" ? (
+                <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5 }}>
+                  <div style={{ marginBottom: 8 }}>Check timed out. Try again.</div>
+                  <button
+                    type="button"
+                    className="liquid-glass-btn"
+                    onClick={onRetryMethodLint}
+                    style={{ padding: "6px 12px", fontSize: 10, fontFamily: FONT }}
+                  >
+                    <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Retry</span>
+                  </button>
+                </div>
+              ) : methodLintInspectorError === "unreachable" ? (
+                <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5 }}>
+                  <div style={{ marginBottom: 8 }}>
+                    The studio API is not reachable from this browser. Check your connection or VPN, then try again.
+                  </div>
+                  <button
+                    type="button"
+                    className="liquid-glass-btn"
+                    onClick={onRetryMethodLint}
+                    style={{ padding: "6px 12px", fontSize: 10, fontFamily: FONT }}
+                  >
+                    <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Retry</span>
+                  </button>
+                </div>
+              ) : (
+                <div style={{ fontSize: 11, color: "var(--fg-2)", lineHeight: 1.5 }}>
+                  <div style={{ marginBottom: 8 }}>Check could not finish. Try again.</div>
+                  <button
+                    type="button"
+                    className="liquid-glass-btn"
+                    onClick={onRetryMethodLint}
+                    style={{ padding: "6px 12px", fontSize: 10, fontFamily: FONT }}
+                  >
+                    <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Retry</span>
+                  </button>
+                </div>
+              )}
+              <style>{`@keyframes ew-method-lint-spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
           )}
 
           <button
@@ -2193,12 +2331,16 @@ function StageEdit({
           <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
           <button
             type="button"
-            className="liquid-glass-btn-gold liquid-glass-btn-gold--square"
+            className="liquid-glass-btn liquid-glass-btn--square"
             onClick={handleRevise}
             disabled={generating}
             aria-label="Send to Reed"
             title="Send to Reed"
-            style={{ cursor: generating ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{
+              cursor: generating ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              opacity: generating ? 0.45 : 1,
+            }}
           >
             <SendIcon />
           </button>
@@ -3035,7 +3177,7 @@ function StageReview({
           <IaBtn title="Hold to speak"><MicIcon /></IaBtn>
           <button
             type="button"
-            className="liquid-glass-btn-gold liquid-glass-btn-gold--square"
+            className="liquid-glass-btn liquid-glass-btn--square"
             title="Send back to Draft"
             aria-label="Send back to Draft"
             onClick={() => { if (input.trim()) { onGoBack(input.trim()); setInput(""); } }}
@@ -3158,6 +3300,14 @@ export default function WorkSession() {
     if (typeof t === "number" && Number.isFinite(t)) return String(Math.min(180, Math.max(3, Math.round(t))));
     return String(DEFAULT_PRESENTATION_MINUTES);
   });
+  /** Edit inspector: null = follow Catalog output type defaults for word target. */
+  const [editWordTargetOverride, setEditWordTargetOverride] = useState<number | null>(() => {
+    const v = persisted?.editDraftWordTarget;
+    if (typeof v === "number" && Number.isFinite(v)) return clampEditWordTarget(v);
+    return null;
+  });
+  const [editWordTargetEditorOpen, setEditWordTargetEditorOpen] = useState(false);
+  const [editWordTargetDraftInput, setEditWordTargetDraftInput] = useState("");
   const [projectId, setProjectId] = useState<string | null>(null);
   /** User-set thread name in the top bar. Null means follow auto title from outline or intake. */
   const [sessionNameOverride, setSessionNameOverride] = useState<string | null>(
@@ -3251,6 +3401,7 @@ export default function WorkSession() {
   const [allExported, setAllExported] = useState(false);
   const [methodTermHits, setMethodTermHits] = useState<MethodTermHit[]>([]);
   const [methodLintLoading, setMethodLintLoading] = useState(false);
+  const [methodLintInspectorError, setMethodLintInspectorError] = useState<MethodLintInspectorError | null>(null);
   const [methodLintLastCompletedFp, setMethodLintLastCompletedFp] = useState<string | null>(null);
   const methodLintSuccessDraftKeyRef = useRef<string | null>(null);
   const methodLintCoalesceRef = useRef<{ key: string; promise: Promise<boolean> } | null>(null);
@@ -3369,6 +3520,7 @@ export default function WorkSession() {
       selectedFormats,
       structuredIntake,
       talkDuration,
+      editDraftWordTarget: editWordTargetOverride,
       projectKey: workSessionProjectKey,
     };
 
@@ -3407,6 +3559,7 @@ export default function WorkSession() {
     structuredIntake,
     workSessionProjectKey,
     workSessionProjectUuid,
+    editWordTargetOverride,
   ]);
 
   // ── Stage navigation ──────────────────────────────────────────
@@ -3478,6 +3631,11 @@ export default function WorkSession() {
     }
     setTalkLengthGatePassed(p.outputTypeId !== "talk");
     setTalkLengthModalOpen(false);
+    const ewt = p.editDraftWordTarget;
+    if (typeof ewt === "number" && Number.isFinite(ewt)) setEditWordTargetOverride(clampEditWordTarget(ewt));
+    else setEditWordTargetOverride(null);
+    setEditWordTargetEditorOpen(false);
+    setEditWordTargetDraftInput("");
     setOutlineRows((p.outlineRows || []).map(r => ({ label: r.label, content: r.content, indent: r.indent })));
     setSessionNameOverride(p.sessionNameOverride ?? null);
     const f = formatsFromPersisted(p.selectedFormats);
@@ -4269,23 +4427,41 @@ export default function WorkSession() {
     const coalesced = methodLintCoalesceRef.current;
     if (coalesced?.key === fp) return coalesced.promise;
 
+    const lintUrl = `${API_BASE}/api/method-dna-lint`;
+
     const promise = (async (): Promise<boolean> => {
       setMethodLintLoading(true);
+      setMethodLintInspectorError(null);
       try {
-        const res = await fetchWithRetry(
-          `${API_BASE}/api/method-dna-lint`,
+        const healthy = await probeStudioApiReachable(API_BASE, STUDIO_API_HEALTH_TIMEOUT_MS);
+        if (!healthy) {
+          setMethodLintInspectorError("unreachable");
+          return false;
+        }
+
+        const res = await fetchWithAuthTimeout(
+          lintUrl,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ draft: trimmed }),
           },
-          { timeout: 28000, maxRetries: 1 },
+          METHOD_DNA_LINT_REQUEST_MS,
         );
+
         if (!res.ok) {
-          toast("A quick wording pass could not finish. You can still export.", "error");
+          setMethodLintInspectorError("failed");
           return false;
         }
-        const data = await res.json() as { skipped?: boolean; items?: unknown[] };
+
+        let data: { skipped?: boolean; items?: unknown[] };
+        try {
+          data = await res.json() as { skipped?: boolean; items?: unknown[] };
+        } catch {
+          setMethodLintInspectorError("failed");
+          return false;
+        }
+
         if (data?.skipped) {
           setMethodTermHits([]);
           methodLintSuccessDraftKeyRef.current = fp;
@@ -4312,8 +4488,15 @@ export default function WorkSession() {
         setMethodLintLastCompletedFp(fp);
         return true;
       } catch (e) {
-        console.error("[WorkSession][method-dna-lint]", e);
-        toast("A quick wording pass could not finish. You can still export.", "error");
+        const aborted =
+          (typeof DOMException !== "undefined" && e instanceof DOMException && e.name === "AbortError")
+          || (e instanceof Error && e.name === "AbortError");
+        if (aborted) {
+          setMethodLintInspectorError("timeout");
+        } else {
+          console.error("[WorkSession][method-dna-lint]", e);
+          setMethodLintInspectorError("failed");
+        }
         return false;
       } finally {
         setMethodLintLoading(false);
@@ -4325,13 +4508,20 @@ export default function WorkSession() {
 
     methodLintCoalesceRef.current = { key: fp, promise };
     return promise;
-  }, [user?.id, methodDnaMd, toast]);
+  }, [user?.id, methodDnaMd]);
+
+  const handleRetryMethodLint = useCallback(() => {
+    methodLintSuccessDraftKeyRef.current = null;
+    setMethodLintInspectorError(null);
+    void ensureMethodDnaLint(draft);
+  }, [draft, ensureMethodDnaLint]);
 
   const prevDraftLintFpRef = useRef<string | null>(null);
   useEffect(() => {
     if (!methodDnaMd.trim()) {
       setMethodTermHits([]);
       setMethodLintLastCompletedFp(null);
+      setMethodLintInspectorError(null);
       methodLintSuccessDraftKeyRef.current = null;
       prevDraftLintFpRef.current = null;
       return;
@@ -4344,6 +4534,7 @@ export default function WorkSession() {
       prevDraftLintFpRef.current = draftLintFp;
       setMethodTermHits([]);
       setMethodLintLastCompletedFp(null);
+      setMethodLintInspectorError(null);
       methodLintSuccessDraftKeyRef.current = null;
     }
   }, [draftLintFp, methodDnaMd]);
@@ -4775,6 +4966,8 @@ export default function WorkSession() {
     setExportedTabs({});
     setMethodTermHits([]);
     setMethodLintLastCompletedFp(null);
+    setMethodLintLoading(false);
+    setMethodLintInspectorError(null);
     methodLintSuccessDraftKeyRef.current = null;
     methodLintCoalesceRef.current = null;
     prevDraftLintFpRef.current = null;
@@ -4793,6 +4986,9 @@ export default function WorkSession() {
     setTalkLengthGatePassed(true);
     setTalkLengthModalOpen(false);
     setSessionNameOverride(null);
+    setEditWordTargetOverride(null);
+    setEditWordTargetEditorOpen(false);
+    setEditWordTargetDraftInput("");
   }, [user?.id, workSessionProjectKey]);
 
   const handleCloudRestoreAccept = useCallback(() => {
@@ -5189,6 +5385,17 @@ export default function WorkSession() {
     }
   }, [draft, user, pipelineRun, buildConvSummary, outputType, talkDuration, toast, activeReviewTab, handleRerunPipeline, voiceDnaMd, brandDnaMd, methodDnaMd, outputId, structuredIntakePayload]);
 
+  const commitEditWordTargetDraft = useCallback(() => {
+    const raw = editWordTargetDraftInput.replace(/,/g, "").trim();
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || raw === "") {
+      toast("Enter a whole number between 50 and 50000.", "error");
+      return;
+    }
+    setEditWordTargetOverride(clampEditWordTarget(n));
+    setEditWordTargetEditorOpen(false);
+  }, [editWordTargetDraftInput, toast]);
+
   // ── Inject dashboard panel ────────────────────────────────────
   useLayoutEffect(() => {
     const dashNode = (() => {
@@ -5199,9 +5406,12 @@ export default function WorkSession() {
           return <OutlineDash selectedFormats={selectedFormats} />;
         case "Edit": {
           const wordCount = (draft || "").split(/\s+/).filter(Boolean).length;
-          const targetWords = outputType === "talk"
-            ? talkTargetWords(talkDuration)
-            : (WORD_TARGETS[outputType || "freestyle"] || 700);
+          const hasCatalogOutputType = outputType != null && String(outputType).trim().length > 0;
+          const baselineWords = baselineEditWordTarget(outputType, talkDuration, preWrapPresentationMins);
+          const targetWords = editWordTargetOverride != null ? editWordTargetOverride : baselineWords;
+          const typeLabel = hasCatalogOutputType
+            ? outputTypeDisplayLabel(catalogOutputTypeForApi(outputType))
+            : "";
           const flagCounts = countDraftFlags(draft, dismissedFlags, fixedFlags);
           const hasDraftText = (draft || "").trim().length > 0;
 
@@ -5222,8 +5432,70 @@ export default function WorkSession() {
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
                       {wordCount} words
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
-                      <span style={{ color: "var(--fg-3)" }}>Target {targetWords}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditWordTargetEditorOpen(prev => {
+                          if (!prev) {
+                            setEditWordTargetDraftInput(String(targetWords));
+                            return true;
+                          }
+                          return false;
+                        });
+                      }}
+                      style={{
+                        width: "100%", textAlign: "left" as const, marginBottom: editWordTargetEditorOpen ? 8 : 3,
+                        padding: 0, border: "none", background: "none", cursor: "pointer",
+                        fontFamily: FONT,
+                      }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fg)", marginBottom: 4 }}>
+                        Target: {targetWords} words{hasCatalogOutputType ? "" : " (default)"}
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--fg-3)", lineHeight: 1.45 }}>
+                        {hasCatalogOutputType
+                          ? `Set for ${typeLabel}. Tap to adjust.`
+                          : "Tap to adjust."}
+                      </div>
+                    </button>
+                    {editWordTargetEditorOpen ? (
+                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <input
+                          type="number"
+                          min={50}
+                          max={50000}
+                          step={1}
+                          className="liquid-glass-input"
+                          value={editWordTargetDraftInput}
+                          onChange={e => setEditWordTargetDraftInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              commitEditWordTargetDraft();
+                            }
+                          }}
+                          aria-label="Target word count"
+                          style={{ width: 100, fontSize: 12, padding: "6px 8px" }}
+                        />
+                        <button
+                          type="button"
+                          className="liquid-glass-btn-gold"
+                          onClick={commitEditWordTargetDraft}
+                          style={{ padding: "6px 12px", fontSize: 10 }}
+                        >
+                          <span className="liquid-glass-btn-gold-label">Apply</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="liquid-glass-btn"
+                          onClick={() => setEditWordTargetEditorOpen(false)}
+                          style={{ padding: "6px 12px", fontSize: 10 }}
+                        >
+                          <span className="liquid-glass-btn-label" style={{ fontWeight: 600 }}>Cancel</span>
+                        </button>
+                      </div>
+                    ) : null}
+                    <div style={{ display: "flex", justifyContent: "flex-end", fontSize: 11, marginBottom: 3 }}>
                       <span style={{ color: "var(--gold)" }}>
                         {wordCount > targetWords ? `+${wordCount - targetWords}` : wordCount < targetWords ? `-${targetWords - wordCount}` : "on target"}
                       </span>
@@ -5231,7 +5503,7 @@ export default function WorkSession() {
                     <div style={{ height: 5, background: "var(--glass-border)", borderRadius: 3, overflow: "hidden" }}>
                       <div style={{
                         height: "100%", borderRadius: 3,
-                        width: `${Math.min(100, (wordCount / targetWords) * 100)}%`,
+                        width: `${Math.min(100, (wordCount / Math.max(1, targetWords)) * 100)}%`,
                         background: wordCount > targetWords * 1.2 ? "rgba(245,198,66,0.5)" : "var(--blue, #4A90D9)",
                       }} />
                     </div>
@@ -5320,10 +5592,13 @@ export default function WorkSession() {
               onRepairPipeline={handleRepairPipeline}
               fixingGate={fixingGate}
               rerunning={rerunningPipeline}
+              hasMethodDna={methodDnaMd.trim().length > 0}
               methodTermHits={methodTermHits}
               methodLintLoading={methodLintLoading}
+              methodLintInspectorError={methodLintInspectorError}
               methodLintLastCompletedFp={methodLintLastCompletedFp}
               draftLintFp={draftLintFp}
+              onRetryMethodLint={handleRetryMethodLint}
             />
           );
         }
@@ -5337,13 +5612,14 @@ export default function WorkSession() {
   }, [
     stage, selectedFormats, selectedTemplate, draft, generating, generatingLabel,
     pipelineRun, pipelineRunning, allExported, outputId,
-    hvtAttempts, handleRerunHVT, hvtRunning, outputType, talkDuration,
+    hvtAttempts, handleRerunHVT, hvtRunning, outputType, talkDuration, preWrapPresentationMins,
     handleRepairPipeline, fixingGate, handleRerunPipeline, rerunningPipeline,
     prefillReed, handleRevise, activeReviewTab, handleReviewFix, handleExportAll,
     dismissedFlags, fixedFlags, backgroundPipelineRun, backgroundPipelineRunning,
     formatDrafts,
-    methodDnaMd, methodTermHits, methodLintLoading,
-    methodLintLastCompletedFp, draftLintFp,
+    methodDnaMd, methodTermHits, methodLintLoading, methodLintInspectorError,
+    methodLintLastCompletedFp, draftLintFp, handleRetryMethodLint,
+    editWordTargetOverride, editWordTargetEditorOpen, editWordTargetDraftInput, commitEditWordTargetDraft,
   ]);
 
   // ─────────────────────────────────────────────────────────────
