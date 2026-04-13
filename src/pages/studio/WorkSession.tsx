@@ -1897,7 +1897,6 @@ function OutlineStageComposer() {
 
 function StageOutline({
   outlineRows, onUpdateRow, onAdvance, building, angles, currentAngle, onSelectAngle,
-  catalogOutputTypeId, onCatalogOutputTypeChange,
   omitBottomComposer = false,
 }: {
   outlineRows: OutlineRow[]; onUpdateRow: (i: number, v: string) => void;
@@ -1905,8 +1904,6 @@ function StageOutline({
   angles?: { a: OutlineRow[]; b: OutlineRow[]; aMeta?: { name: string; description: string }; bMeta?: { name: string; description: string } } | null;
   currentAngle?: "a" | "b";
   onSelectAngle?: (angle: "a" | "b") => void;
-  catalogOutputTypeId: string | null;
-  onCatalogOutputTypeChange: (typeId: string) => void;
   omitBottomComposer?: boolean;
 }) {
   const activeAngle = currentAngle || "a";
@@ -1985,26 +1982,6 @@ function StageOutline({
               </div>
             </div>
 
-            <div style={{
-              marginBottom: 14,
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid var(--glass-border)",
-              background: "var(--glass-card)",
-              maxWidth: 560,
-            }}>
-              <div style={{
-                fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "var(--fg-3)",
-                marginBottom: 8, textTransform: "uppercase" as const,
-              }}>
-                Output format
-              </div>
-              <OutputTypePicker
-                selected={catalogOutputTypeId}
-                onSelect={onCatalogOutputTypeChange}
-                compact
-              />
-            </div>
             <div style={{ background: "var(--glass-card)", border: "1px solid var(--glass-border)", borderRadius: 8, padding: 14, minHeight: 200, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
               {outlineRows.map((row, i) => (
                 <OutlineRowComponent
@@ -6062,8 +6039,6 @@ export default function WorkSession() {
                       setOutlineRows(angle === "a" ? [...outlineAngles.a] : [...outlineAngles.b]);
                     }
                   }}
-                  catalogOutputTypeId={outputType}
-                  onCatalogOutputTypeChange={handleCatalogOutputTypeChange}
                   omitBottomComposer
                 />
               </div>
